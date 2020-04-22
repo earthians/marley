@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2017, earthians and contributors
+# Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe, json
+import frappe
+import json
 from frappe import _
+from frappe.utils import cint
 from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
 
-class ClinicalProcedureTemplate(Document):
+class TherapyType(Document):
 	def validate(self):
 		self.enable_disable_item()
 
 	def after_insert(self):
-		create_item_from_template(self)
+		create_item_from_therapy(self)
 
 	def on_update(self):
 		if self.change_in_item:
@@ -29,16 +31,18 @@ class ClinicalProcedureTemplate(Document):
 	def update_item_and_item_price(self):
 		if self.is_billable and self.item:
 			item_doc = frappe.get_doc('Item', {'item_code': self.item})
-			item_doc.item_name = self.template
+			item_doc.item_name = self.item_name
 			item_doc.item_group = self.item_group
 			item_doc.description = self.description
 			item_doc.disabled = 0
+			item_doc.ignore_mandatory = True
 			item_doc.save(ignore_permissions=True)
 
 			if self.rate:
 				item_price = frappe.get_doc('Item Price', {'item_code': self.item})
-				item_price.item_name = self.template
-				item_price.price_list_rate = self.rate
+				item_price.item_name = self.item_name
+				item_price.price_list_name = self.rate
+				item_price.ignore_mandatory = True
 				item_price.save()
 
 		elif not self.is_billable and self.item:
@@ -46,46 +50,43 @@ class ClinicalProcedureTemplate(Document):
 
 		self.db_set('change_in_item', 0)
 
+	def add_exercises(self):
+		exercises = self.get_exercises_for_body_parts()
+		last_idx = max([cint(d.idx) for d in self.get('exercises')] or [0,])
+		for i, d in enumerate(exercises):
+			ch = self.append('exercises', {})
+			ch.exercise_type = d.parent
+			ch.idx = last_idx + i + 1
 
-@frappe.whitelist()
-def get_item_details(args=None):
-	if not isinstance(args, dict):
-		args = json.loads(args)
+	def get_exercises_for_body_parts(self):
+		body_parts = [entry.body_part for entry in self.therapy_for]
 
-	item = frappe.db.get_all('Item',
-		filters={
-			'disabled': 0,
-			'name': args.get('item_code')
-		},
-		fields=['stock_uom', 'item_name']
-	)
+		exercises = frappe.db.sql(
+			"""
+				SELECT DISTINCT
+					b.parent, e.name, e.difficulty_level
+				FROM
+				 	`tabExercise Type` e, `tabBody Part Link` b
+				WHERE
+					b.body_part IN %(body_parts)s AND b.parent=e.name
+			""", {'body_parts': body_parts}, as_dict=1)
 
-	if not item:
-		frappe.throw(_('Item {0} is not active').format(args.get('item_code')))
+		return exercises
 
-	item = item[0]
-	ret = {
-		'uom': item.stock_uom,
-		'stock_uom': item.stock_uom,
-		'item_name': item.item_name,
-		'qty': 1,
-		'transfer_qty': 0,
-		'conversion_factor': 1
-	}
-	return ret
 
-def create_item_from_template(doc):
+def create_item_from_therapy(doc):
 	disabled = doc.disabled
 	if doc.is_billable and not doc.disabled:
 		disabled = 0
 
 	uom = frappe.db.exists('UOM', 'Unit') or frappe.db.get_single_value('Stock Settings', 'stock_uom')
+
 	item = frappe.get_doc({
 		'doctype': 'Item',
-		'item_code': doc.template,
-		'item_name':doc.template,
+		'item_code': doc.item_code,
+		'item_name': doc.item_name,
 		'item_group': doc.item_group,
-		'description':doc.description,
+		'description': doc.description,
 		'is_sales_item': 1,
 		'is_service_item': 1,
 		'is_purchase_item': 0,
@@ -99,6 +100,7 @@ def create_item_from_template(doc):
 	make_item_price(item.name, doc.rate)
 	doc.db_set('item', item.name)
 
+
 def make_item_price(item, item_price):
 	price_list_name = frappe.db.get_value('Price List', {'selling': 1})
 	frappe.get_doc({
@@ -109,13 +111,12 @@ def make_item_price(item, item_price):
 	}).insert(ignore_permissions=True, ignore_mandatory=True)
 
 @frappe.whitelist()
-def change_item_code_from_template(item_code, doc):
+def change_item_code_from_therapy(item_code, doc):
 	doc = frappe._dict(json.loads(doc))
 
 	if frappe.db.exists('Item', {'item_code': item_code}):
 		frappe.throw(_('Item with Item Code {0} already exists').format(item_code))
 	else:
-		rename_doc('Item', doc.item_code, item_code, ignore_permissions=True)
-		frappe.db.set_value('Clinical Procedure Template', doc.name, 'item_code', item_code)
+		rename_doc('Item', doc.item, item_code, ignore_permissions=True)
+		frappe.db.set_value('Therapy Type', doc.name, 'item_code', item_code)
 	return
-
