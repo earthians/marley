@@ -668,6 +668,9 @@ def set_invoiced(item, method, ref_invoice=None):
 				# 'Healthcare Service Unit': 'Inpatient Occupancy'
 			}
 
+	elif item.reference_dt == "Healthcare Service Order":
+		frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
+
 
 def validate_invoiced_on_submit(item):
 	if (
