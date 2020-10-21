@@ -9,7 +9,7 @@ import math
 import frappe
 from erpnext.setup.utils import insert_record
 from frappe import _
-from frappe.utils import cstr, get_link_to_form, rounded, time_diff_in_hours
+from frappe.utils import cstr, rounded, time_diff_in_hours, getdate, get_link_to_form
 from frappe.utils.formatters import format_value
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -17,6 +17,8 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 )
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
 from healthcare.setup import setup_healthcare
+
+from six import string_types
 
 
 @frappe.whitelist()
@@ -862,6 +864,24 @@ def update_address_links(address, method):
 		if customer and not address.has_link("Customer", customer):
 			address.append("links", dict(link_doctype="Customer", link_name=customer))
 
+	return {'html': doc_html}
+
+
+def update_address_links(address, method):
+	'''
+	Hook validate Address
+	If Patient is linked in Address, also link the associated Customer
+	'''
+	if 'Healthcare' not in frappe.get_active_domains():
+		return
+
+	patient_links = list(filter(lambda link: link.get('link_doctype') == 'Patient', address.links))
+
+	for link in patient_links:
+		customer = frappe.db.get_value('Patient', link.get('link_name'), 'customer')
+		if customer and not address.has_link('Customer', customer):
+			address.append('links', dict(link_doctype = 'Customer', link_name = customer))
+
 
 def update_patient_email_and_phone_numbers(contact, method):
 	"""
@@ -974,3 +994,15 @@ def company_on_trash(doc, method):
 		service_unit_doc = frappe.get_doc("Healthcare Service Unit", su.get("name"))
 		service_unit_doc.flags.on_trash_company = True
 		service_unit_doc.delete()
+
+@frappe.whitelist()
+def make_healthcare_service_order(args):
+	healthcare_service_order = frappe.new_doc('Healthcare Service Order')
+	for key in args:
+		if key == 'order_date':
+			healthcare_service_order.set(key, getdate(args[key]))
+		elif key == 'expected_date':
+			healthcare_service_order.set(key, getdate(args[key]))
+		else:
+			healthcare_service_order.set(key, args[key] if args[key] else '')
+	healthcare_service_order.save(ignore_permissions=True)
