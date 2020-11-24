@@ -5,12 +5,9 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 class HealthcareSalesInvoice(SalesInvoice):
 	def validate(self):
-		super(SalesInvoice, self).validate()
-		domain_settings = frappe.get_doc('Domain Settings')
-		active_domains = [d.domain for d in domain_settings.active_domains]
+		self.calculate_healthcare_insurance_claim()
+		super(HealthcareSalesInvoice, self).validate()
 
-		if 'Healthcare' in active_domains:
-			self.calculate_healthcare_insurance_claim()
 	
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
