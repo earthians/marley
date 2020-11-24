@@ -115,6 +115,15 @@ frappe.ui.form.on('Lab Test', {
 			frm.clear_table("codification_table")
 			frm.refresh_field("codification_table");
 		}
+
+		frm.set_query('insurance_subscription', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'docstatus': 1
+				}
+			};
+		});
 	}
 });
 

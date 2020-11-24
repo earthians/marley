@@ -28,6 +28,14 @@
   "start_date",
   "start_time",
   "sample",
+  "sb_source",
+  "source",
+  "column_break_26",
+  "referring_practitioner",
+  "insurance_section",
+  "insurance_subscription",
+  "column_break_31",
+  "insurance_company",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -309,6 +317,35 @@
    "options": "Service Request",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "referring_practitioner",
+   "fieldtype": "Link",
+   "label": "Referring Practitioner",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fieldname": "insurance_section",
+   "fieldtype": "Section Break",
+   "label": "Insurance"
+  },
+  {
+   "fieldname": "column_break_31",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "insurance_subscription.insurance_company",
+   "fieldname": "insurance_company",
+   "fieldtype": "Link",
+   "label": "Insurance Company",
+   "options": "Healthcare Insurance Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "insurance_subscription",
+   "fieldtype": "Link",
+   "label": "Insurance Subscription",
+   "options": "Healthcare Insurance Subscription"
   }
  ],
  "is_submittable": 1,

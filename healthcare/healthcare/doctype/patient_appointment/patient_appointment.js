@@ -63,6 +63,15 @@ frappe.ui.form.on('Patient Appointment', {
 			};
 		});
 
+		frm.set_query('insurance_subscription', function(){
+			return{
+				filters:{
+					'patient': frm.doc.patient,
+					'docstatus': 1
+				}
+			};
+		});
+
 		frm.trigger('set_therapy_type_filter');
 
 		if (frm.is_new()) {

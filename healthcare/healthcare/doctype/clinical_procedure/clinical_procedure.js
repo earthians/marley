@@ -97,7 +97,7 @@ frappe.ui.form.on('Clinical Procedure', {
 				}
 
 				frm.add_custom_button(__(btn_label), function () {
-					frappe.confirm(
+					frappe.confirm( // TODO: refactor
 						msg,
 						function() {
 							frappe.call({
@@ -118,7 +118,7 @@ frappe.ui.form.on('Clinical Procedure', {
 					);
 				}).addClass("btn-primary");
 
-			} else if (frm.doc.status == 'Pending') {
+			} else if (frm.doc.status == 'Pending') { // TODO: refactor
 				frm.add_custom_button(__('Start'), function() {
 					frappe.call({
 						doc: frm.doc,
@@ -153,6 +153,7 @@ frappe.ui.form.on('Clinical Procedure', {
 				}).addClass("btn-primary");
 			}
 		}
+
 		if(frm.doc.__islocal) {
 			frm.add_custom_button(__('Get from Patient Encounter'), function () {
 				get_procedure_prescribed(frm);
@@ -167,6 +168,14 @@ frappe.ui.form.on('Clinical Procedure', {
 					frappe.new_doc("Clinical Note");
 		},__('Create'));
 
+		frm.set_query('insurance_subscription', function(){
+			return{
+				filters:{
+					'patient': frm.doc.patient,
+					'docstatus': 1
+				}
+			};
+		});
 	},
 
 	onload: function(frm) {

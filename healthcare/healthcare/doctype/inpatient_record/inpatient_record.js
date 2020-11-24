@@ -117,6 +117,50 @@ frappe.ui.form.on('Inpatient Record', {
 				"reference_name": frm.doc.name}
 					frappe.new_doc("Clinical Note");
 		},__('Create'));
+
+		if (!frm.doc.__islocal && frm.doc.status == 'Admission Scheduled') {
+			frm.add_custom_button(__('Admit'), function() {
+				admit_patient_dialog(frm);
+			} );
+		}
+
+		if (!frm.doc.__islocal && frm.doc.status == 'Discharge Scheduled') {
+			frm.add_custom_button(__('Discharge'), function() {
+				discharge_patient(frm);
+			} );
+		}
+		if (!frm.doc.__islocal && frm.doc.status != 'Admitted') {
+			frm.disable_save();
+			frm.set_df_property('btn_transfer', 'hidden', 1);
+		} else {
+			frm.set_df_property('btn_transfer', 'hidden', 0);
+		}
+
+		frm.set_query('referring_practitioner', function() {
+			if (frm.doc.source == 'External Referral') {
+				return {
+					filters: {
+						'healthcare_practitioner_type': 'External'
+					}
+				};
+			}
+			else {
+				return {
+					filters: {
+						'healthcare_practitioner_type': 'Internal'
+					}
+				};
+			}
+		});
+
+		frm.set_query('insurance_subscription', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'docstatus': 1
+				}
+			};
+		});
 	},
 
 	onload: function(frm) {
