@@ -13,6 +13,7 @@ from frappe.utils import getdate, nowdate
 class HealthcareServiceInsuranceCoverage(Document):
 	def validate(self):
 		self.validate_service_overlap()
+		self.set_title()
 
 	def validate_service_overlap(self):
 		filters = {
@@ -42,6 +43,18 @@ class HealthcareServiceInsuranceCoverage(Document):
 				title=_("Not Allowed"),
 			)
 
+	def set_title(self):
+		if self.coverage_based_on == "Service" and self.healthcare_service_template:
+			self.title = _("{0} - {1} - {2}").format(
+				self.coverage_based_on, self.healthcare_service, self.healthcare_service_template
+			)
+		elif self.coverage_based_on == "Medical Code" and self.medical_code:
+			self.title = _("{0} - {1}").format(self.coverage_based_on, self.medical_code)
+		elif self.coverage_based_on == "Item" and self.item:
+			self.title = _("{0} - {1}").format(self.coverage_based_on, self.item)
+		elif self.coverage_based_on == "Item Group" and self.item_group:
+			self.title = _("{0} - {1}").format(self.coverage_based_on, self.item_group)
+
 
 def get_service_insurance_coverage_details(
 	service_doctype, service, service_item, insurance_subscription
@@ -64,7 +77,6 @@ def get_service_insurance_coverage_details(
 					"healthcare_insurance_coverage_plan": insurance_subscription.healthcare_insurance_coverage_plan,
 					"is_active": 1,
 					"start_date": ("<=", getdate(valid_date)),
-					"end_date": (">=", getdate(valid_date)),
 				},
 				fields=["name", "healthcare_service_template", "item", "medical_code", "item_group"],
 			)
