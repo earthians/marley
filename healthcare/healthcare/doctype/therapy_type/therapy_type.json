@@ -31,7 +31,12 @@
   "exercises",
   "change_in_item",
   "codification",
-  "codification_table"
+  "codification_table",
+  "service_order_defaults_section",
+  "service_order_category",
+  "patient_care_type",
+  "column_break_16",
+  "staff_role"
  ],
  "fields": [
   {
@@ -184,9 +189,39 @@
    "options": "Nursing Checklist Template"
   },
   {
-   "fieldname": "exercises_tab",
-   "fieldtype": "Tab Break",
-   "label": "Exercises"
+   "collapsible": 1,
+   "fieldname": "service_order_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Order Defaults"
+  },
+  {
+   "fieldname": "service_order_category",
+   "fieldtype": "Link",
+   "label": "Service Order Category",
+   "options": "Healthcare Service Order Category"
+  },
+  {
+   "fetch_from": "service_order_category.patient_care_type",
+   "fetch_if_empty": 1,
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "column_break_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+  "fieldname": "exercises_tab",
+  "fieldtype": "Tab Break",
+  "label": "Exercises"
   }
  ],
  "links": [],
