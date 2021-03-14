@@ -1,4 +1,4 @@
-{
+P{
  "actions": [],
  "allow_copy": 1,
  "allow_import": 1,
@@ -10,7 +10,6 @@
  "field_order": [
   "lab_test_name",
   "department",
-  "column_break_3",
   "disabled",
   "nursing_checklist_template",
   "billing_section",
