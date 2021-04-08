@@ -30,6 +30,7 @@
  ],
  "fields": [
   {
+   "fetch_from": "medication.item",
    "fieldname": "drug_code",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -38,7 +39,7 @@
    "options": "Item"
   },
   {
-   "fetch_from": "drug_code.medication_name",
+   "fetch_from": "drug_code.item_name",
    "fieldname": "drug_name",
    "fieldtype": "Data",
    "in_list_view": 1,
