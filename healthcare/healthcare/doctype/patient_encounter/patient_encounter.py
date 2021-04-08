@@ -16,6 +16,7 @@ class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
 		validate_codification_table(self)
+		self.validate_medications()
 
 	def on_update(self):
 		if self.appointment:
@@ -110,6 +111,11 @@ class PatientEncounter(Document):
 				{"therapy_type": plan_item.template, "no_of_sessions": plan_item.qty},
 			)
 
+	def validate_medications(self):
+		if self.drug_prescription:
+			for item in self.drug_prescription:
+				if not item.medication and not item.drug_code:
+					frappe.throw(_('Error: <b>Drug Prescription</b> Row #{} Medication or Item Code is mandatory').format(item.idx))
 
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):
