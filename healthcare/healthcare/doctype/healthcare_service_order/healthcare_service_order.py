@@ -14,7 +14,6 @@ from frappe.utils import getdate
 
 class HealthcareServiceOrder(Document):
 	def validate(self):
-		self.set_practitioner_details()
 		self.set_patient_details()
 		self.set_order_details()
 
@@ -54,9 +53,9 @@ class HealthcareServiceOrder(Document):
 				not self.healthcare_service_order_category and order_template.healthcare_service_order_category
 			):
 				self.healthcare_service_order_category = order_template.healthcare_service_order_category
-			if not self.patient_care_type and order_template.patient_care_type:
+			if not self.patient_care_type and order_template.get("patient_care_type"):
 				self.patient_care_type = order_template.patient_care_type
-			if not self.staff_role and order_template.staff_role:
+			if not self.staff_role and order_template.get("staff_role"):
 				self.staff_role = order_template.staff_role
 		else:
 			frappe.throw(

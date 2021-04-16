@@ -1294,7 +1294,7 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 				child=child if child else "",
 			)
 		else:
-			# create sample_colleciton child row for  sample_collection_reqd individual templates
+			# create sample_collection child row for  sample_collection_reqd individual templates
 			sample_collection.append(
 				"observation_sample_collection",
 				{
