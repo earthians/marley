@@ -38,7 +38,7 @@
    "options": "Item"
   },
   {
-   "fetch_from": "drug_code.item_name",
+   "fetch_from": "drug_code.medication_name",
    "fieldname": "drug_name",
    "fieldtype": "Data",
    "in_list_view": 1,
