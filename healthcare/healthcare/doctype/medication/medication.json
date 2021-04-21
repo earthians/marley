@@ -13,7 +13,6 @@
   "national_drug_code",
   "is_combination",
   "column_break_4",
-  "disabled",
   "strength",
   "strength_uom",
   "combinations_section",
@@ -146,7 +145,8 @@
    "fieldname": "dosage_form",
    "fieldtype": "Link",
    "label": "Dosage Form",
-   "options": "Dosage Form"
+   "options": "Dosage Form",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_16",
@@ -189,7 +189,7 @@
   {
    "fieldname": "linked_items",
    "fieldtype": "Table",
-   "label": "Linked Items",
+   "label": " Linked Items",
    "options": "Medication Linked Item"
   },
   {
