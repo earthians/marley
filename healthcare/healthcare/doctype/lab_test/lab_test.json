@@ -73,7 +73,8 @@
   "descriptive_toggle",
   "sensitivity_toggle",
   "amended_from",
-  "prescription"
+  "prescription",
+  "healthcare_service_order"
  ],
  "fields": [
   {
@@ -569,6 +570,16 @@
    "read_only": 1,
    "report_hide": 1
   },
+  {
+   "fieldname": "healthcare_service_order",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Healthcare Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1
+  }
   {
    "collapsible": 1,
    "fieldname": "medical_coding_section",

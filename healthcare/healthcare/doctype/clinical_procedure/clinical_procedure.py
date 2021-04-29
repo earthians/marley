@@ -35,7 +35,8 @@ class ClinicalProcedure(Document):
 
 	def after_insert(self):
 		if self.prescription:
-			frappe.db.set_value("Procedure Prescription", self.prescription, "procedure_created", 1)
+			frappe.db.set_value('Procedure Prescription', self.prescription, 'procedure_created', 1)
+
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
@@ -44,7 +45,7 @@ class ClinicalProcedure(Document):
 			if template.sample:
 				patient = frappe.get_doc("Patient", self.patient)
 				sample_collection = create_sample_doc(template, patient, None, self.company)
-				frappe.db.set_value("Clinical Procedure", self.name, "sample", sample_collection.name)
+				self.db_set('sample', sample_collection.name)
 
 		self.reload()
 
@@ -133,7 +134,9 @@ class ClinicalProcedure(Document):
 					title=_("Customer Not Found"),
 				)
 
-		self.db_set("status", "Completed")
+		self.db_set('status', 'Completed')
+		if self.healthcare_service_order:
+			frappe.db.set_value('Healthcare Service Order', self.healthcare_service_order, 'status', 'Completed')
 
 		# post op nursing tasks
 		if self.procedure_template:
