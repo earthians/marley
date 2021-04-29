@@ -44,6 +44,7 @@
   "sb_refs",
   "column_break_34",
   "prescription",
+  "healthcare_service_order",
   "amended_from"
  ],
  "fields": [
@@ -303,6 +304,24 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "fetch_from": "procedure_template.medical_code",
+   "fieldname": "medical_code",
+   "fieldtype": "Link",
+   "label": "Medical Code",
+   "options": "Medical Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "healthcare_service_order",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Healthcare Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
