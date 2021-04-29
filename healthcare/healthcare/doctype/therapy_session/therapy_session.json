@@ -35,6 +35,7 @@
   "total_counts_completed",
   "medical_coding_section",
   "codification_table",
+  "healthcare_service_order",
   "amended_from"
  ],
  "fields": [
@@ -226,6 +227,24 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "fetch_from": "therapy_type.medical_code",
+   "fieldname": "medical_code",
+   "fieldtype": "Link",
+   "label": "Medical Code",
+   "options": "Medical Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "healthcare_service_order",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Healthcare Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
