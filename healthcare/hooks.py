@@ -243,8 +243,6 @@ global_search_doctypes = {
 	]
 }
 
-healthcare_service_order_doctypes = ["Medication", "Therapy Type", "Lab Test Template", "Clinical Procedure Template"]
-
 domains = {
 	"Healthcare": "healthcare.setup",
 }
