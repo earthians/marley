@@ -6,6 +6,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cstr, getdate, add_days
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_days, getdate
 from healthcare.healthcare.utils import get_medical_codes
@@ -26,7 +27,7 @@ class PatientEncounter(Document):
 		if self.therapies:
 			create_therapy_plan(self)
 
-		make_healthcare_service_order(self)
+		self.make_healthcare_service_order()
 
 	def on_cancel(self):
 		if self.appointment:
@@ -121,6 +122,67 @@ class PatientEncounter(Document):
 			if not item.medication and not item.drug_code:
 				frappe.throw(_('Row #{0} (Drug Prescription): Medication or Item Code is mandatory').format(item.idx))
 
+	def make_healthcare_service_order(self):
+		if self.drug_prescription:
+			for drug in self.drug_prescription:
+				medication = frappe.get_doc('Medication', drug.drug_code)
+				order = self.get_order_details(medication, drug)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+		if self.lab_test_prescription:
+			for lab_test in self.lab_test_prescription:
+				lab_template = frappe.get_doc('Lab Test Template', lab_test.lab_test_code)
+				order = self.get_order_details(lab_template, lab_test)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+		if self.procedure_prescription:
+			for procedure in self.procedure_prescription:
+				procedure_template = frappe.get_doc('Clinical Procedure Template', procedure.procedure)
+				order = self.get_order_details(procedure_template, procedure)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+		if self.therapies:
+			for therapy in self.therapies:
+				therapy_type = frappe.get_doc('Therapy Type', therapy.therapy_type)
+				order = self.get_order_details(therapy_type, therapy)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+	def get_order_details(self, doc, line_item):
+		order = frappe.get_doc({
+			'doctype': 'Healthcare Service Order',
+			'order_doctype': doc.doctype,
+			'order_template': doc.name,
+			'order_date': self.encounter_date,
+			'order_time': self.encounter_time,
+			'company': self.company,
+			'status': 'Draft',
+			'patient': self.get('patient'),
+			'practitioner': self.practitioner,
+			'order_group': self.name,
+			'sequence': line_item.get('sequence'),
+			'healthcare_service_order_category': doc.get('healthcare_service_order_category'),
+			'patient_care_type': doc.get('patient_care_type'),
+			'intent': line_item.get('intent'),
+			'priority': line_item.get('priority'),
+			'quantity': line_item.get_quantity() if line_item.doctype == 'Drug Prescription' else 1,
+			'dosage': line_item.get('dosage'),
+			'dosage_form': line_item.get('dosage_form'),
+			'expected_date': line_item.get('expected_date'),
+			'as_needed': line_item.get('as_needed'),
+			'occurrence': line_item.get('occurrence'),
+			'staff_role': doc.get('staff_role'),
+			'note': line_item.get('note'),
+			'patient_instruction': line_item.get('patient_instruction')
+		})
+
+		if doc.doctype == 'Lab Test Template':
+			description = doc.get('lab_test_description')
+		else:
+			description = doc.get('description')
+
+		order.update({'order_description': description})
+		return order
+
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):
 	def set_missing_values(source, target):
@@ -195,4 +257,24 @@ def create_therapy_plan(encounter):
 def delete_ip_medication_order(encounter):
 	record = frappe.db.exists("Inpatient Medication Order", {"patient_encounter": encounter.name})
 	if record:
+		frappe.delete_doc('Inpatient Medication Order', record, force=1)
+
+
+def validate_codification_table(doc):
+	if doc.diagnosis:
+		doc.codification_table = []
+		for diag in doc.diagnosis:
+			medical_code_details = get_medical_codes("Diagnosis", diag.diagnosis)
+			if medical_code_details and len(medical_code_details) > 0:
+				for m_code in medical_code_details:
+					doc.append(
+						"codification_table",
+						{
+							"medical_code": m_code.get("medical_code"),
+							"medical_code_standard": m_code.get("medical_code_standard"),
+							"code": m_code.get("code"),
+							"description": m_code.get("description"),
+							"system": m_code.get("system"),
+						},
+					)
 		frappe.delete_doc('Inpatient Medication Order', record, force=1)
