@@ -11,12 +11,11 @@ import frappe
 from frappe import _
 from frappe.utils import cstr, rounded, time_diff_in_hours, getdate
 from frappe.utils.formatters import format_value
-
-from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
-from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
-
+from frappe.utils import time_diff_in_hours, rounded, getdate, flt
 from six import string_types
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
+from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
+from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
 
 
 @frappe.whitelist()
@@ -128,7 +127,8 @@ def get_lab_tests_to_invoice(patient, company):
 	lab_tests = frappe.get_list(
 		'Lab Test',
 		fields=['name', 'template'],
-		filters={'patient': patient.name, 'company': company, 'invoiced': False, 'docstatus': 1}
+		filters={'patient': patient.name, 'company': company, 'invoiced': False,
+			'docstatus': 1, 'healthcare_service_order': ''}
 	)
 	for lab_test in lab_tests:
 		item, is_billable = frappe.get_cached_value('Lab Test Template', lab_test.template, ['item', 'is_billable'])
@@ -147,7 +147,8 @@ def get_clinical_procedures_to_invoice(patient, company):
 	procedures = frappe.get_list(
 		'Clinical Procedure',
 		fields='*',
-		filters={'patient': patient.name, 'company': company, 'invoiced': False, 'docstatus': 1}
+		filters={'patient': patient.name, 'company': company, 'invoiced': False,
+			'docstatus': 1, 'healthcare_service_order': ''}
 	)
 	for procedure in procedures:
 		if not procedure.appointment:
@@ -200,7 +201,7 @@ def get_inpatient_services_to_invoice(patient, company):
 		service_unit_type = frappe.db.get_value('Healthcare Service Unit', inpatient_occupancy.service_unit, 'service_unit_type')
 		service_unit_type = frappe.get_cached_doc('Healthcare Service Unit Type', service_unit_type)
 		if service_unit_type and service_unit_type.is_billable:
-			hours_occupied = time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in)
+			hours_occupied = flt(time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2)
 			qty = 0.5
 			if hours_occupied > 0:
 				actual_qty = hours_occupied / service_unit_type.no_of_hours
@@ -259,7 +260,8 @@ def get_therapy_sessions_to_invoice(patient, company):
 			'invoiced': 0,
 			'company': company,
 			'therapy_plan': ('not in', therapy_plans_created_from_template),
-			'docstatus': 1
+			'docstatus': 1,
+			'healthcare_service_order': ''
 		}
 	)
 	for therapy in therapy_sessions:
@@ -440,7 +442,24 @@ def set_invoiced(item, method, ref_invoice=None):
 		manage_prescriptions(invoiced, item.reference_dt, item.reference_dn, 'Clinical Procedure', 'procedure_created')
 
 	elif item.reference_dt == 'Healthcare Service Order':
+		# if order is invoiced, set both order and service transaction as invoiced
 		frappe.db.set_value(item.reference_dt, item.reference_dn, 'invoiced', invoiced)
+
+		order_doctype = frappe.db.get_value('Healthcare Service Order', item.reference_dn, 'order_doctype')
+
+		order_map = {
+			'Clinical Procedure Template': 'Clinical Procedure',
+			'Therapy Type': 'Therapy Session',
+			'Lab Test Template': 'Lab Test'
+		}
+		dt = order_map.get(order_doctype)
+		if dt:
+			frappe.db.set_value(dt,
+				{'healthcare_service_order': item.reference_dn},
+				'invoiced',
+				invoiced
+			)
+
 
 def validate_invoiced_on_submit(item):
 	if item.reference_dt == 'Clinical Procedure' and \
