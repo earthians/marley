@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import cstr, rounded, time_diff_in_hours, getdate
 from frappe.utils.formatters import format_value
-from frappe.utils import time_diff_in_hours, rounded, getdate, flt
+from frappe.utils import time_diff_in_hours, rounded, flt, get_link_to_form
 from six import string_types
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
@@ -166,9 +166,10 @@ def get_clinical_procedures_to_invoice(patient, company):
 
 			service_item = frappe.db.get_single_value('Healthcare Settings', 'clinical_procedure_consumable_item')
 			if not service_item:
-				frappe.throw(_('Please configure Clinical Procedure Consumable Item in {0}').format(
-					frappe.utils.get_link_to_form('Healthcare Settings', 'Healthcare Settings')),
-					title=_('Missing Configuration'))
+				msg = _('Please Configure Clinical Procedure Consumable Item in {0}').format(
+					get_link_to_form('Healthcare Settings', 'Healthcare Settings'))
+
+				frappe.throw(msg, title=_('Missing Configuration'))
 
 			clinical_procedures_to_invoice.append({
 				'reference_type': 'Clinical Procedure',
