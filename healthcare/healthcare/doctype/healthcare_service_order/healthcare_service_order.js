@@ -89,7 +89,7 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	set_status: function(frm, status) {
 		frappe.call({
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_status',
+			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_status',
 			async: false,
 			freeze: true,
 			args: {
@@ -131,7 +131,7 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	make_clinical_procedure: function(frm) {
 		frappe.call({
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_clinical_procedure',
+			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_clinical_procedure',
 			args: { service_order: frm.doc },
 			freeze: true,
 			callback: function(r) {
@@ -143,7 +143,7 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	make_lab_test: function(frm) {
 		frappe.call({
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_lab_test',
+			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_lab_test',
 			args: { service_order: frm.doc },
 			freeze: true,
 			callback: function(r) {
@@ -155,7 +155,7 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	make_therapy_session: function(frm) {
 		frappe.call({
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_therapy_session',
+			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_therapy_session',
 			args: { service_order: frm.doc },
 			freeze: true,
 			callback: function(r) {
