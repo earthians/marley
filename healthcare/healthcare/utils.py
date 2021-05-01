@@ -182,22 +182,18 @@ def get_clinical_procedures_to_invoice(patient, company):
 				"Healthcare Settings", "clinical_procedure_consumable_item"
 			)
 			if not service_item:
-				frappe.throw(
-					_("Please configure Clinical Procedure Consumable Item in {0}").format(
-						frappe.utils.get_link_to_form("Healthcare Settings", "Healthcare Settings")
-					),
-					title=_("Missing Configuration"),
-				)
+				msg = _('Please Configure Clinical Procedure Consumable Item in {0}').format(
+					get_link_to_form('Healthcare Settings', 'Healthcare Settings'))
 
-			clinical_procedures_to_invoice.append(
-				{
-					"reference_type": "Clinical Procedure",
-					"reference_name": procedure.name,
-					"service": service_item,
-					"rate": procedure.consumable_total_amount,
-					"description": procedure.consumption_details,
-				}
-			)
+				frappe.throw(msg, title=_('Missing Configuration'))
+
+			clinical_procedures_to_invoice.append({
+				'reference_type': 'Clinical Procedure',
+				'reference_name': procedure.name,
+				'service': service_item,
+				'rate': procedure.consumable_total_amount,
+				'description': procedure.consumption_details
+			})
 
 	return clinical_procedures_to_invoice
 
