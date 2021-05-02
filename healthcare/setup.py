@@ -1,5 +1,7 @@
 # isort: skip_file
 import frappe
+
+
 from erpnext.setup.utils import insert_record
 from frappe import _
 
