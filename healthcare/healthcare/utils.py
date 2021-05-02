@@ -42,7 +42,6 @@ def get_healthcare_services_to_invoice(patient, customer, company, link_customer
 		items_to_invoice += get_inpatient_services_to_invoice(patient, company)
 		items_to_invoice += get_therapy_plans_to_invoice(patient, company)
 		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
-		items_to_invoice += get_service_requests_to_invoice(patient, company)
 		items_to_invoice += get_observations_to_invoice(patient, company)
 		validate_customer_created(patient, customer, link_customer)
 		return items_to_invoice
@@ -109,15 +108,36 @@ def get_appointments_to_invoice(patient, company):
 				service_item = details.get("service_item")
 				practitioner_charge = details.get("practitioner_charge")
 				income_account = get_income_account(appointment.practitioner, appointment.company)
-			appointments_to_invoice.append(
-				{
-					"reference_type": "Patient Appointment",
-					"reference_name": appointment.name,
-					"service": service_item,
-					"rate": practitioner_charge,
-					"income_account": income_account,
-				}
-			)
+
+			if appointment.insurance_claim:
+				if appointment.claim_status == "Approved":
+					coverage, discount, price_list_rate = frappe.get_cached_value(
+						"Healthcare Insurance Claim",
+						appointment.insurance_claim,
+						["coverage", "discount", "price_list_rate"],
+					)
+					appointments_to_invoice.append(
+						{
+							"reference_type": "Patient Appointment",
+							"reference_name": appointment.name,
+							"service": service_item,
+							"rate": price_list_rate,
+							"income_account": income_account,
+							"discount_percentage": discount,
+							"insurance_claim_coverage": coverage,
+							"insurance_claim": appointment.insurance_claim,
+						}
+					)
+				else:
+					appointments_to_invoice.append(
+						{
+							"reference_type": "Patient Appointment",
+							"reference_name": appointment.name,
+							"service": service_item,
+							"rate": practitioner_charge,
+							"income_account": income_account,
+						}
+					)
 
 	return appointments_to_invoice
 
@@ -148,15 +168,35 @@ def get_encounters_to_invoice(patient, company):
 					practitioner_charge = details.get("practitioner_charge")
 					income_account = get_income_account(encounter.practitioner, encounter.company)
 
-				encounters_to_invoice.append(
-					{
-						"reference_type": "Patient Encounter",
-						"reference_name": encounter.name,
-						"service": service_item,
-						"rate": practitioner_charge,
-						"income_account": income_account,
-					}
-				)
+				if encounter.insurance_claim:
+					if encounter.claim_status == "Approved":
+						coverage, discount, price_list_rate = frappe.get_cached_value(
+							"Healthcare Insurance Claim",
+							encounter.insurance_claim,
+							["coverage", "discount", "price_list_rate"],
+						)
+						encounters_to_invoice.append(
+							{
+								"reference_type": "Patient Encounter",
+								"reference_name": encounter.name,
+								"service": service_item,
+								"rate": price_list_rate,
+								"income_account": income_account,
+								"discount_percentage": discount,
+								"insurance_claim_coverage": coverage,
+								"insurance_claim": encounter.insurance_claim,
+							}
+						)
+					else:
+						encounters_to_invoice.append(
+							{
+								"reference_type": "Patient Encounter",
+								"reference_name": encounter.name,
+								"service": service_item,
+								"rate": practitioner_charge,
+								"income_account": income_account,
+							}
+						)
 
 	return encounters_to_invoice
 
@@ -165,13 +205,13 @@ def get_lab_tests_to_invoice(patient, company):
 	lab_tests_to_invoice = []
 	lab_tests = frappe.get_list(
 		"Lab Test",
-		fields=["name", "template"],
+		fields=["*"],
 		filters={
 			"patient": patient.name,
 			"company": company,
 			"invoiced": False,
 			"docstatus": 1,
-			"service_request": "",
+			"healthcare_service_request": "",
 		},
 	)
 	for lab_test in lab_tests:
@@ -179,6 +219,25 @@ def get_lab_tests_to_invoice(patient, company):
 			"Lab Test Template", lab_test.template, ["item", "is_billable"]
 		)
 		if is_billable:
+			if lab_test.insurance_claim:
+				if lab_test.claim_status == "Approved":
+					coverage, discount, price_list_rate = frappe.get_cached_value(
+						"Healthcare Insurance Claim",
+						lab_test.insurance_claim,
+						["coverage", "discount", "price_list_rate"],
+					)
+					lab_tests_to_invoice.append(
+						{
+							"reference_type": "Lab Test",
+							"reference_name": lab_test.name,
+							"service": item,
+							"rate": price_list_rate,
+							"discount_percentage": discount,
+							"insurance_claim_coverage": coverage,
+							"insurance_claim": lab_test.insurance_claim,
+						}
+					)
+		else:
 			lab_tests_to_invoice.append(
 				{"reference_type": "Lab Test", "reference_name": lab_test.name, "service": item}
 			)
@@ -251,15 +310,28 @@ def get_clinical_procedures_to_invoice(patient, company):
 
 				frappe.throw(msg, title=_("Missing Configuration"))
 
-			clinical_procedures_to_invoice.append(
-				{
-					"reference_type": "Clinical Procedure",
-					"reference_name": procedure.name,
-					"service": service_item,
-					"rate": procedure.consumable_total_amount,
-					"description": procedure.consumption_details,
-				}
-			)
+			if procedure.insurance_claim:
+				if procedure.claim_status == "Approved":
+					coverage, discount, rate = frappe.get_cached_value(
+						"Healthcare Insurance Claim",
+						procedure.insurance_claim,
+						["coverage", "discount", "price_list_rate"],
+					)
+					clinical_procedures_to_invoice.append(
+						{
+							"reference_type": "Clinical Procedure",
+							"reference_name": procedure.name,
+							"service": item,
+							"rate": rate,
+							"discount_percentage": discount,
+							"insurance_claim_coverage": coverage,
+							"insurance_claim": procedure.insurance_claim,
+						}
+					)
+			else:
+				clinical_procedures_to_invoice.append(
+					{"reference_type": "Clinical Procedure", "reference_name": procedure.name, "service": item}
+				)
 
 	return clinical_procedures_to_invoice
 
@@ -407,10 +479,11 @@ def get_therapy_sessions_to_invoice(patient, company):
 	return therapy_sessions_to_invoice
 
 
-def get_service_requests_to_invoice(patient, company):
-	orders_to_invoice = []
+def get_healthcare_service_requests_to_invoice(patient, company):
+	service_request_to_invoice = []
+
 	service_requests = frappe.get_list(
-		"Service Request",
+		"Healthcare Service Order",
 		fields=["*"],
 		filters={
 			"patient": patient.name,
@@ -435,15 +508,35 @@ def get_service_requests_to_invoice(patient, company):
 			"conversion_rate": 1.0,
 		}
 		if is_billable:
-			orders_to_invoice.append(
-				{
-					"reference_type": "Service Request",
-					"reference_name": service_request.name,
-					"service": item,
-					"qty": service_request.quantity if service_request.quantity else 1,
-				}
-			)
-	return orders_to_invoice
+			if service_request.insurance_claim:
+				if service_request.claim_status == "Approved":
+					coverage, discount, rate = frappe.get_cached_value(
+						"Healthcare Insurance Claim",
+						service_request.insurance_claim,
+						["coverage", "discount", "price_list_rate"],
+					)
+					service_request_to_invoice.append(
+						{
+							"reference_type": "Healthcare Service Order",
+							"reference_name": service_request.name,
+							"service": item,
+							"rate": rate,
+							"qty": service_request.quantity if service_request.quantity else 1,
+							"discount_percentage": discount,
+							"insurance_claim_coverage": coverage,
+							"insurance_claim": service_request.insurance_claim,
+						}
+					)
+			else:
+				service_request_to_invoice.append(
+					{
+						"reference_type": "Healthcare Service Order",
+						"reference_name": service_request.name,
+						"service": item,
+						"qty": service_request.quantity if service_request.quantity else 1,
+					}
+				)
+	return service_request_to_invoice
 
 
 @frappe.whitelist()
@@ -581,9 +674,10 @@ def manage_invoice_submit_cancel(doc, method):
 	if doc.items:
 		for item in doc.items:
 			if item.get("reference_dt") and item.get("reference_dn"):
-				# TODO check
-				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
-				set_invoiced(item, method, doc.name)
+				if frappe.get_meta(item.reference_dt).has_field("invoiced"):
+					set_invoiced(item, method, doc.name)
+			if item.get("insurance_claim"):
+				update_insurance_claim(item.insurance_claim, doc.name, doc.posting_date, doc.total)
 
 				# update Fee validity with Sales Invoice Reference if exists
 				if item.reference_dt == "Patient Appointment":
@@ -1414,3 +1508,13 @@ def get_insurance_price_list_rate(
 				rate = frappe.db.get_value("Item Price", item_price, "price_list_rate")
 				print(rate)
 	return rate
+
+
+def update_insurance_claim(insurance_claim, sales_invoice_name, posting_date, total_amount):
+	insurance_claim = frappe.get_doc("Healthcare Insurance Claim", insurance_claim)
+	insurance_claim.sales_invoice = sales_invoice_name
+	insurance_claim.sales_invoice_posting_date = posting_date
+	insurance_claim.billing_date = nowdate()
+	insurance_claim.billing_amount = total_amount
+	insurance_claim.claim_status = "Invoiced"
+	insurance_claim.save(ignore_permissions=True)
