@@ -20,3 +20,4 @@ healthcare.patches.v15_0.setup_basic_code_systems
 healthcare.patches.v15_0.setup_diagnostic_module_codes
 healthcare.patches.v15_0.setup_order_status_codes
 healthcare.patches.v13_0.setup_healthcare_service_order_masters
+healthcare.patches.v13_0.setup_healthcare_service_order_and_insurance
