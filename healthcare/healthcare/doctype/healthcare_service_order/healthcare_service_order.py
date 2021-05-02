@@ -4,7 +4,10 @@
 
 from __future__ import unicode_literals
 
+import json
+
 import dateutil
+from six import string_types
 
 import frappe
 from frappe import _
@@ -17,6 +20,12 @@ class HealthcareServiceOrder(Document):
 		self.set_patient_details()
 		self.set_order_details()
 		self.set_title()
+
+		if self.insurance_subscription and self.claim_status == "Pending":
+			self.status = "Waiting"
+
+	def after_insert(self):
+		make_insurance_claim(self)
 
 	def set_title(self):
 		if frappe.flags.in_import and self.title:
@@ -66,3 +75,96 @@ class HealthcareServiceOrder(Document):
 			frappe.throw(
 				_("Order Type and Order Template are mandatory to create Healthcare Service Order")
 			)
+
+
+@frappe.whitelist()
+def set_status(docname, status):
+	frappe.db.set_value("Healthcare Service Order", docname, "status", status)
+
+
+@frappe.whitelist()
+def make_clinical_procedure(service_order):
+	if isinstance(service_order, string_types):
+		service_order = json.loads(service_order)
+		service_order = frappe._dict(service_order)
+
+	doc = frappe.new_doc("Clinical Procedure")
+	doc.procedure_template = service_order.order_template
+	doc.healthcare_service_order = service_order.name
+	doc.company = service_order.company
+	doc.patient = service_order.patient
+	doc.patient_name = service_order.patient_name
+	doc.patient_sex = service_order.patient_gender
+	doc.patient_age = service_order.patient_age_data
+	doc.inpatient_record = service_order.inpatient_record
+	doc.practitioner = service_order.practitioner
+	doc.start_date = service_order.occurrence_date
+	doc.start_time = service_order.occurrence_time
+	doc.medical_department = service_order.medical_department
+	doc.medical_code = service_order.medical_code
+
+	return doc
+
+
+@frappe.whitelist()
+def make_lab_test(service_order):
+	if isinstance(service_order, string_types):
+		service_order = json.loads(service_order)
+		service_order = frappe._dict(service_order)
+
+	doc = frappe.new_doc("Lab Test")
+	doc.template = service_order.order_template
+	doc.healthcare_service_order = service_order.name
+	doc.company = service_order.company
+	doc.patient = service_order.patient
+	doc.patient_name = service_order.patient_name
+	doc.patient_sex = service_order.patient_gender
+	doc.patient_age = service_order.patient_age_data
+	doc.inpatient_record = service_order.inpatient_record
+	doc.email = service_order.patient_email
+	doc.mobile = service_order.patient_mobile
+	doc.practitioner = service_order.practitioner
+	doc.requesting_department = service_order.medical_department
+	doc.date = service_order.occurrence_date
+	doc.time = service_order.occurrence_time
+	doc.invoiced = service_order.invoiced
+	doc.medical_code = service_order.medical_code
+
+	return doc
+
+
+@frappe.whitelist()
+def make_therapy_session(service_order):
+	if isinstance(service_order, string_types):
+		service_order = json.loads(service_order)
+		service_order = frappe._dict(service_order)
+
+	doc = frappe.new_doc("Therapy Session")
+	doc.therapy_type = service_order.order_template
+	doc.healthcare_service_order = service_order.name
+	doc.company = service_order.company
+	doc.patient = service_order.patient
+	doc.patient_name = service_order.patient_name
+	doc.gender = service_order.patient_gender
+	doc.patient_age = service_order.patient_age_data
+	doc.practitioner = service_order.practitioner
+	doc.department = service_order.medical_department
+	doc.start_date = service_order.occurrence_date
+	doc.start_time = service_order.occurrence_time
+	doc.invoiced = service_order.invoiced
+	doc.medical_code = service_order.medical_code
+
+	return doc
+
+
+def make_insurance_claim(doc):
+	if doc.insurance_subscription and not doc.insurance_claim:
+		from erpnext.healthcare.utils import create_insurance_claim
+
+		insurance_claim, claim_status = create_insurance_claim(
+			doc, doc.order_doctype, doc.order, doc.quantity, doc.billing_item
+		)
+		if insurance_claim:
+			frappe.set_value(doc.doctype, doc.name, "insurance_claim", insurance_claim)
+			frappe.set_value(doc.doctype, doc.name, "claim_status", claim_status)
+			doc.reload()

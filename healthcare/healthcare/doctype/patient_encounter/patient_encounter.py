@@ -35,6 +35,7 @@ class PatientEncounter(Document):
 			create_therapy_plan(self)
 		self.make_service_request()
 		self.make_medication_request()
+		make_insurance_claim(self)
 		# to save service_request name in prescription
 		self.save("Update")
 		self.db_set("status", "Completed")
@@ -598,3 +599,20 @@ def create_patient_referral(encounter, references):
 		)
 		order.insert(ignore_permissions=True, ignore_mandatory=True)
 		order.submit()
+
+
+def make_insurance_claim(doc):
+	if doc.insurance_subscription and not doc.insurance_claim:
+		from healthcare.healthcare.utils import (
+			create_insurance_claim,
+			get_service_item_and_practitioner_charge,
+		)
+
+		billing_item, rate = get_service_item_and_practitioner_charge(doc)
+		insurance_claim, claim_status = create_insurance_claim(
+			doc, "Appointment Type", doc.appointment_type, 1, billing_item
+		)
+		if insurance_claim:
+			frappe.set_value(doc.doctype, doc.name, "insurance_claim", insurance_claim)
+			frappe.set_value(doc.doctype, doc.name, "claim_status", claim_status)
+			doc.reload()

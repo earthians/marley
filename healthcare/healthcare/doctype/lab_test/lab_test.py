@@ -29,6 +29,8 @@ class LabTest(Document):
 				"Service Request", self.service_request, "status", "completed-Request Status"
 			)
 
+		make_insurance_claim(self)
+
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
 		if self.service_request:
@@ -444,3 +446,34 @@ def get_lab_test_prescribed(patient):
 		.where(hso.template_dt == "Lab Test Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
+	# return frappe.db.sql(
+	# 	'''
+	# 		select
+	# 			lp.name,
+	# 			lp.lab_test_code,
+	# 			lp.parent,
+	# 			lp.invoiced,
+	# 			pe.practitioner,
+	# 			pe.practitioner_name,
+	# 			pe.encounter_date
+	# 		from
+	# 			`tabPatient Encounter` pe, `tabLab Prescription` lp
+	# 		where
+	# 			pe.patient=%s
+	# 			and lp.parent=pe.name
+	# 			and lp.lab_test_created=0
+	# 	''', (patient))
+
+
+def make_insurance_claim(doc):
+	if doc.insurance_subscription and not doc.insurance_claim:
+		from erpnext.healthcare.utils import create_insurance_claim
+
+		billing_item = frappe.get_cached_value("Lab Test Template", doc.template, "item")
+		insurance_claim, claim_status = create_insurance_claim(
+			doc, "Lab Test Template", doc.template, 1, billing_item
+		)
+		if insurance_claim:
+			frappe.set_value(doc.doctype, doc.name, "insurance_claim", insurance_claim)
+			frappe.set_value(doc.doctype, doc.name, "claim_status", claim_status)
+			doc.reload()

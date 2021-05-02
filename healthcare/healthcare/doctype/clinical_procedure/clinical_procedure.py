@@ -359,3 +359,19 @@ def get_procedure_prescribed(patient, encounter=False):
 		.where(hso.template_dt == "Clinical Procedure Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
+
+
+def make_insurance_claim(doc):
+	if doc.insurance_subscription and not doc.insurance_claim:
+		from erpnext.healthcare.utils import create_insurance_claim
+
+		billing_item = frappe.get_cached_value(
+			"Clinical Procedure Template", doc.procedure_template, "item"
+		)
+		insurance_claim, claim_status = create_insurance_claim(
+			doc, "Clinical Procedure Template", doc.procedure_template, 1, billing_item
+		)
+		if insurance_claim:
+			frappe.set_value(doc.doctype, doc.name, "insurance_claim", insurance_claim)
+			frappe.set_value(doc.doctype, doc.name, "claim_status", claim_status)
+			doc.reload()
