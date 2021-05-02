@@ -581,11 +581,27 @@
    "fieldtype": "Link",
    "label": "Insurance Subscription",
    "options": "Healthcare Insurance Subscription"
+  },
+  {
+   "fieldname": "insurance_claim",
+   "fieldtype": "Link",
+   "label": "Insurance Claim",
+   "options": "Healthcare Insurance Claim",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "insurance_claim.claim_status",
+   "fetch_if_empty": 1,
+   "fieldname": "claim_status",
+   "fieldtype": "Select",
+   "label": "Claim Status",
+   "options": "\nPending\nApproved\nRejected\nInvoiced",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-04-01 12:45:08.615248",
+ "modified": "2021-05-02 06:54:40.770467",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
