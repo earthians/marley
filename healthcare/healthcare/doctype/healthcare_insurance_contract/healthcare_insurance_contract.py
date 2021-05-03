@@ -30,3 +30,28 @@ class HealthcareInsuranceContract(Document):
 					),
 					title=_("Duplicate Contract"),
 				)
+				frappe.throw(
+					_("An active contract with this insurance company already exists: {0}").format(
+						get_link_to_form("Healthcare Insurance Contract", contract)
+					),
+					title=_("Duplicate Contract"),
+				)
+
+
+def validate_insurance_contract(insurance_company):
+	contract = frappe.db.exists(
+		"Healthcare Insurance Contract",
+		{
+			"insurance_company": insurance_company,
+			"end_date": (">=", getdate()),
+			"is_active": 1,
+			"docstatus": 1,
+		},
+	)
+
+	if not contract:
+		frappe.throw(
+			_("There is no valid contract with this Insurance Company {1}").format(insurance_company)
+		)
+
+	return contract

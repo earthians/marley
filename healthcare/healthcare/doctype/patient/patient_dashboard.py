@@ -19,8 +19,14 @@ def get_data():
 				"label": _("Rehab and Physiotherapy"),
 				"items": ["Patient Assessment", "Therapy Session", "Therapy Plan"],
 			},
+			{
+				"label": _("Rehab and Physiotherapy"),
+				"items": ["Patient Assessment", "Therapy Session", "Therapy Plan"],
+			},
 			{"label": _("Surgery"), "items": ["Clinical Procedure"]},
 			{"label": _("Admissions"), "items": ["Inpatient Record", "Inpatient Medication Order"]},
 			{"label": _("Billing and Payments"), "items": ["Sales Invoice", "Payment Entry"]},
+			{"label": _("Orders"), "items": ["Inpatient Medication Order"]},
+			{"label": _("Subscriptions"), "items": ["Healthcare Insurance Subscription"]},
 		],
 	}

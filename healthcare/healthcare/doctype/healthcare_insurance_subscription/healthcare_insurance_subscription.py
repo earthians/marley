@@ -9,10 +9,14 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import nowdate
 
+from erpnext.healthcare.doctype.healthcare_insurance_contract.healthcare_insurance_contract import (
+	validate_insurance_contract,
+)
+
 
 class HealthcareInsuranceSubscription(Document):
 	def validate(self):
-		self.validate_insurance_company()
+		validate_insurance_contract(self.insurance_company)
 		self.validate_subscription_overlap()
 		self.set_title()
 
@@ -43,7 +47,7 @@ class HealthcareInsuranceSubscription(Document):
 				"subscription_end_date": ["<=", self.subscription_end_date],
 			},
 		)
-		if insurance_subscription:
+		if insurance_subscription:  # remove this validation
 			frappe.throw(
 				_("Patient {0} has already subscribed coverage plan {1} this period").format(
 					frappe.bold(self.patient), frappe.bold(self.healthcare_insurance_coverage_plan)
