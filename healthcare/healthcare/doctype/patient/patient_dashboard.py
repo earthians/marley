@@ -35,6 +35,14 @@ def get_data():
 			{
 				'label': _('Billing and Payments'),
 				'items': ['Sales Invoice', 'Payment Entry']
+			},
+			{
+				'label': _('Orders'),
+				'items': ['Inpatient Medication Order']
+			},
+			{
+				'label': _('Subscriptions'),
+				'items': ['Healthcare Insurance Subscription']
 			}
 		]
 	}
