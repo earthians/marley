@@ -1437,7 +1437,7 @@ def add_node():
 
 
 def create_insurance_claim(doc, service_doctype, service, qty, billing_item):
-	from erpnext.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import (
+	from healthcare.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import (
 		get_service_insurance_coverage_details,
 	)
 
