@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import flt
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
@@ -40,7 +41,7 @@ class HealthcareSalesInvoice(SalesInvoice):
 				item_line.rate = checked_item["rate"]
 			else:
 				item_line.rate = item_details.price_list_rate
-			# item_line.amount = float(item_line.rate) * float(item_line.qty)
+
 			if checked_item["income_account"]:
 				item_line.income_account = checked_item["income_account"]
 			if checked_item["dt"]:
@@ -55,24 +56,31 @@ class HealthcareSalesInvoice(SalesInvoice):
 				item_line.insurance_claim_coverage = checked_item["insurance_claim_coverage"]
 			if checked_item["insurance_claim"]:
 				item_line.insurance_claim = checked_item["insurance_claim"]
-			if item_line.discount_percentage and float(item_line.discount_percentage) > 0:
-				item_line.discount_amount = float(item_line.rate) * float(item_line.discount_percentage) * 0.01
-				item_line.rate = float(item_line.rate) - float(item_line.discount_amount)
-			item_line.amount = float(item_line.rate) * float(item_line.qty)
-			if item_line.insurance_claim_coverage and float(item_line.insurance_claim_coverage) > 0:
+
+			if item_line.discount_percentage:
+				item_line.discount_amount = flt(item_line.rate) * flt(item_line.discount_percentage) * 0.01
+				item_line.rate = flt(item_line.rate) - flt(item_line.discount_amount)
+
+			item_line.amount = flt(item_line.rate) * flt(item_line.qty)
+
+			if item_line.insurance_claim_coverage:
 				item_line.insurance_claim_amount = (
-					float(item_line.amount) * 0.01 * float(item_line.insurance_claim_coverage)
+					flt(item_line.amount) * 0.01 * flt(item_line.insurance_claim_coverage)
 				)
+
 		self.calculate_healthcare_insurance_claim()
 		self.set_missing_values(for_validate=True)
 
 	def calculate_healthcare_insurance_claim(self):
-		total_claim_amount = 0
+		total_claim_amount = 0.0
+
 		for item in self.items:
-			if item.amount and item.insurance_claim_coverage and float(item.insurance_claim_coverage) > 0:
-				item.insurance_claim_amount = item.amount * 0.01 * float(item.insurance_claim_coverage)
-			if item.insurance_claim_amount and float(item.insurance_claim_amount) > 0:
-				total_claim_amount += float(item.insurance_claim_amount)
+			if item.amount and item.insurance_claim_coverage:
+				item.insurance_claim_amount = item.amount * 0.01 * flt(item.insurance_claim_coverage)
+
+			if item.insurance_claim_amount and flt(item.insurance_claim_amount) > 0:
+				total_claim_amount += flt(item.insurance_claim_amount)
+
 		self.total_insurance_claim_amount = total_claim_amount
 		if self.total_insurance_claim_amount and self.outstanding_amount:
 			self.patient_payable_amount = self.outstanding_amount - self.total_insurance_claim_amount
