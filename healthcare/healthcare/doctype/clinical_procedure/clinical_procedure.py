@@ -67,9 +67,22 @@ class ClinicalProcedure(Document):
 
 	def on_submit(self):
 		self.create_nursing_tasks(post_event=False)
+
 		if self.service_request:
 			frappe.db.set_value(
 				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
+
+		template_doc = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
+		if template_doc.sample:
+			patient = frappe.get_doc("Patient", self.patient)
+			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
+			self.db_set("sample", sample_collection.name)
+			self.reload()
+
+		if self.insurance_subscription and not self.insurance_claim:
+			make_insurance_claim(
+				doc=self, service_doctype="Clinical Procedure Template", service=self.procedure_template, qty=1
 			)
 
 	def create_nursing_tasks(self, post_event=True):
@@ -90,13 +103,6 @@ class ClinicalProcedure(Document):
 			NursingTask.create_nursing_tasks_from_template(
 				template, self, start_time=start_time, post_event=post_event
 			)
-
-		template_doc = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
-		if template_doc.sample:
-			patient = frappe.get_doc("Patient", self.patient)
-			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
-			self.db_set("sample", sample_collection.name)
-			self.reload()
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -363,7 +369,7 @@ def get_procedure_prescribed(patient, encounter=False):
 
 def make_insurance_claim(doc):
 	if doc.insurance_subscription and not doc.insurance_claim:
-		from erpnext.healthcare.utils import create_insurance_claim
+		from healthcare.healthcare.utils import create_insurance_claim
 
 		billing_item = frappe.get_cached_value(
 			"Clinical Procedure Template", doc.procedure_template, "item"

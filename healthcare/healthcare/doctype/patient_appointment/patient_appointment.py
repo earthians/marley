@@ -65,6 +65,19 @@ class PatientAppointment(Document):
 				"Service Request", self.service_request, "status", "completed-Request Status"
 			)
 
+		if self.appointment_type and self.insurance_subscription and not self.insurance_claim:
+			from healthcare.healthcare.utils import get_service_item_and_practitioner_charge
+
+			billing_item, rate = get_service_item_and_practitioner_charge(self)
+
+			make_insurance_claim(
+				doc=self,
+				service_doctype="Appointment Type",
+				service=self.appointment_type,
+				qty=1,
+				billing_item=billing_item,
+			)
+
 	def set_title(self):
 		if self.practitioner:
 			self.title = _("{0} with {1}").format(

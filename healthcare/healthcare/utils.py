@@ -764,6 +764,14 @@ def set_invoiced(item, method, ref_invoice=None):
 
 	elif item.reference_dt == "Healthcare Service Order":
 		frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
+		order_map = {
+			"Clinical Procedure Template": "Clinical Procedure",
+			"Therapy Type": "Therapy Session",
+			"Lab Test Template": "Lab Test",
+		}
+		dt = order_map.get(item.reference_dt)
+		if dt:
+			frappe.db.set_value(dt, {"healthcare_service_order": item.reference_dn}, "invoiced", invoiced)
 
 
 def validate_invoiced_on_submit(item):

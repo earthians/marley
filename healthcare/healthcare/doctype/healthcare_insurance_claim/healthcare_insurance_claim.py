@@ -33,7 +33,7 @@ def create_journal_entry_insurance_claim(self):
 	# create jv
 	sales_invoice = frappe.get_doc("Sales Invoice", self.sales_invoice)
 	insurance_company = frappe.get_doc("Healthcare Insurance Company", self.insurance_company)
-	from healthcare.accounts.party import get_party_account
+	from erpnext.accounts.party import get_party_account
 
 	journal_entry = frappe.new_doc("Journal Entry")
 	journal_entry.company = sales_invoice.company

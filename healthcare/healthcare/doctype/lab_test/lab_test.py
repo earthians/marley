@@ -29,7 +29,10 @@ class LabTest(Document):
 				"Service Request", self.service_request, "status", "completed-Request Status"
 			)
 
-		make_insurance_claim(self)
+		if self.insurance_subscription and not self.insurance_claim:
+			make_insurance_claim(
+				doc=self, service_doctype="Lab Test Template", service=self.template, qty=1
+			)
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")

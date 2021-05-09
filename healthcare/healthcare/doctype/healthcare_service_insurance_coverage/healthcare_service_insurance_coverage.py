@@ -136,7 +136,7 @@ def get_insurance_coverage_details(
 	coverage_plan, service=None, service_item=None, medical_code=None, item_group=None
 ):
 	coverage = discount = 0
-	is_auto_approval = True
+	claim_approval_mode = "Automatic"
 
 	filters = {"healthcare_insurance_coverage_plan": coverage_plan, "is_active": 1}
 
@@ -164,6 +164,7 @@ def get_insurance_coverage_details(
 
 		coverage = insurance_coverage.coverage
 		discount = insurance_coverage.discount
+		claim_approval_mode = insurance_coverage.claim_approval_mode
 
 		if insurance_coverage.claim_approval_mode != "Automatic":
 			is_auto_approval = False

@@ -65,7 +65,10 @@
   "order_history_html",
   "encounter_details",
   "notes_tab",
-  "clinical_notes"
+  "clinical_notes",
+  "patient_vitals_summary_section",
+  "patient_vitals",
+  "section_break_3"
  ],
  "fields": [
   {
@@ -444,11 +447,13 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "appointment_type",
    "fieldname": "insurance_section",
    "fieldtype": "Section Break",
    "label": "Insurance"
   },
   {
+   "depends_on": "appointment_type",
    "fieldname": "insurance_subscription",
    "fieldtype": "Link",
    "label": "Insurance Subscription",
@@ -486,7 +491,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2020-05-06 11:57:00.783119",
+ "modified": "2021-05-09 21:06:28.907320",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

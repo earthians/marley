@@ -159,7 +159,7 @@ def make_therapy_session(service_order):
 
 def make_insurance_claim(doc):
 	if doc.insurance_subscription and not doc.insurance_claim:
-		from erpnext.healthcare.utils import create_insurance_claim
+		from healthcare.healthcare.utils import create_insurance_claim
 
 		insurance_claim, claim_status = create_insurance_claim(
 			doc, doc.order_doctype, doc.order, doc.quantity, doc.billing_item
