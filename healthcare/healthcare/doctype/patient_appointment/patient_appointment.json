@@ -52,6 +52,7 @@
   "insurance_subscription",
   "column_break_49",
   "insurance_company",
+  "approval_status",
   "section_break_16",
   "mode_of_payment",
   "billing_item",
@@ -522,9 +523,9 @@
    "read_only": 1
   },
   {
-   "fetch_from": "insurance_claim.claim_status",
+   "fetch_from": "insurance_claim.approval_status",
    "fetch_if_empty": 1,
-   "fieldname": "claim_status",
+   "fieldname": "approval_status",
    "fieldtype": "Select",
    "label": "Claim Status",
    "options": "\nPending\nApproved\nRejected\nInvoiced",
@@ -533,7 +534,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2021-05-02 06:54:40.770467",
+ "modified": "2021-05-06 11:59:40.770467",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

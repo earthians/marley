@@ -583,7 +583,7 @@ def check_sales_invoice_exists(appointment):
 @frappe.whitelist()
 def get_availability_data(date, practitioner, appointment):
 	"""
-	Get availability data of 'practitioner' on 'date'
+	Get availability data of "practitioner" on "date"
 	:param date: Date to check in schedule
 	:param practitioner: Name of the practitioner
 	:return: dict containing a list of available slots, list of appointments and time of appointments
@@ -867,14 +867,14 @@ def get_events(start, end, filters=None):
 		`tabPatient Appointment`.name, `tabPatient Appointment`.patient,
 		`tabPatient Appointment`.practitioner, `tabPatient Appointment`.status,
 		`tabPatient Appointment`.duration,
-		timestamp(`tabPatient Appointment`.appointment_date, `tabPatient Appointment`.appointment_time) as 'start',
+		timestamp(`tabPatient Appointment`.appointment_date, `tabPatient Appointment`.appointment_time) as "start",
 		`tabAppointment Type`.color
 		from
 		`tabPatient Appointment`
 		left join `tabAppointment Type` on `tabPatient Appointment`.appointment_type=`tabAppointment Type`.name
 		where
 		(`tabPatient Appointment`.appointment_date between %(start)s and %(end)s)
-		and `tabPatient Appointment`.status != 'Cancelled' and `tabPatient Appointment`.docstatus < 2 {conditions}""".format(
+		and `tabPatient Appointment`.status != "Cancelled" and `tabPatient Appointment`.docstatus < 2 {conditions}""".format(
 			conditions=conditions
 		),
 		{"start": start, "end": end},
@@ -939,16 +939,16 @@ def update_appointment_status():
 
 def make_insurance_claim(doc):
 	if doc.insurance_subscription and not doc.insurance_claim:
-		from erpnext.healthcare.utils import (
+		from healthcare.healthcare.utils import (
 			create_insurance_claim,
 			get_service_item_and_practitioner_charge,
 		)
 
 		billing_item, rate = get_service_item_and_practitioner_charge(doc)
-		insurance_claim, claim_status = create_insurance_claim(
+		insurance_claim, approval_status = create_insurance_claim(
 			doc, "Appointment Type", doc.appointment_type, 1, billing_item
 		)
 		if insurance_claim:
 			frappe.set_value(doc.doctype, doc.name, "insurance_claim", insurance_claim)
-			frappe.set_value(doc.doctype, doc.name, "claim_status", claim_status)
+			frappe.set_value(doc.doctype, doc.name, "approval_status", approval_status)
 			doc.reload()
