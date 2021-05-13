@@ -50,7 +50,6 @@ class PatientAppointment(Document):
 		send_confirmation_msg(self)
 
 		if self.appointment_type and self.insurance_subscription and not self.insurance_claim:
-			from erpnext.healthcare.utils import create_insurance_claim, get_service_item_and_practitioner_charge
 			billing_item, rate = get_service_item_and_practitioner_charge(self)
 
 			make_insurance_claim(
@@ -346,7 +345,7 @@ def check_employee_wise_availability(date, practitioner_doc):
 	if employee:
 		# check holiday
 		if is_holiday(employee, date):
-			frappe.throw(_('{0} is a holiday'.format(date)), title=_('Not Available'))
+			frappe.throw(_('{0} is a holiday').format(date), title=_('Not Available'))
 
 		# check leave status
 		leave_record = frappe.db.sql("""select half_day from `tabLeave Application`
