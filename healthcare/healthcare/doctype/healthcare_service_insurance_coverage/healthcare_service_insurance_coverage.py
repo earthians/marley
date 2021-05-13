@@ -74,7 +74,6 @@ def get_service_insurance_coverage_details(
 ):
 	valid_date = getdate()
 	coverage = discount = 0
-	is_auto_approval = True
 	insurance_details = False
 
 	insurance_subscription = frappe.db.get_value(
