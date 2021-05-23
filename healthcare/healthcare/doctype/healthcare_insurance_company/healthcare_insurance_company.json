@@ -1,9 +1,8 @@
 {
  "actions": [],
- "allow_copy": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "field:insurance_company_name",
  "beta": 1,
  "creation": "2020-10-16 08:41:43.197991",
  "description": "Healthcare Insurance Company",
@@ -12,56 +11,39 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
   "insurance_company_name",
   "customer",
-  "column_break_3",
-  "company",
+  "image",
   "address_and_contacts_section",
   "address_html",
   "website",
   "column_break_9",
   "contact_html",
   "accounts_section",
-  "insurance_company_receivable_account",
-  "column_break_14",
-  "rejected_claims_account"
+  "claims_receivable_accounts",
+  "rejected_claims_expense_accounts"
  ],
  "fields": [
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Series",
-   "options": "HIC-",
-   "set_only_once": 1
-  },
   {
    "fieldname": "insurance_company_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Insurance Company Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company"
+   "no_copy": 1,
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "customer",
    "fieldtype": "Link",
-   "label": "Customer",
+   "label": "Linked Party (Customer)",
+   "no_copy": 1,
    "options": "Customer",
    "read_only": 1
   },
   {
    "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "address_and_contacts_section",
    "fieldtype": "Section Break",
    "label": "Address and Contacts",
@@ -76,7 +58,8 @@
   {
    "fieldname": "website",
    "fieldtype": "Data",
-   "label": "Website"
+   "label": "Website",
+   "no_copy": 1
   },
   {
    "fieldname": "column_break_9",
@@ -93,26 +76,30 @@
    "label": "Accounts"
   },
   {
-   "fieldname": "column_break_14",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "rejected_claims_account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Rejected Claims Account",
-   "options": "Account",
+   "fieldname": "claims_receivable_accounts",
+   "fieldtype": "Table",
+   "label": "Claims Receivable Account",
+   "options": "Party Account",
    "reqd": 1
   },
   {
-   "fieldname": "insurance_company_receivable_account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Insurance Company Receivable Account",
-   "options": "Account",
+   "fieldname": "rejected_claims_expense_accounts",
+   "fieldtype": "Table",
+   "label": "Rejected Claims Expense Account",
+   "options": "Party Account",
    "reqd": 1
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image",
+   "no_copy": 1,
+   "print_hide": 1,
+   "width": "50%"
   }
  ],
+ "image_field": "image",
  "links": [
   {
    "link_doctype": "Healthcare Insurance Contract",
@@ -127,7 +114,7 @@
    "link_fieldname": "insurance_company"
   }
  ],
- "modified": "2021-05-02 15:24:26.677522",
+ "modified": "2021-05-18 06:03:02.436183",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Company",
@@ -160,7 +147,6 @@
   },
   {
    "create": 1,
-   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
@@ -176,6 +162,5 @@
  "sort_field": "modified",
  "sort_order": "ASC",
  "title_field": "insurance_company_name",
- "track_changes": 1,
- "track_seen": 1
+ "track_changes": 1
 }

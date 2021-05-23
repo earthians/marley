@@ -2,6 +2,16 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Healthcare Insurance Coverage Plan', {
+	onload: function(frm) {
+		frm.set_query('price_list', function() {
+			return {
+				filters: {
+					'selling': 1
+				}
+			};
+		});
+	},
+
 	insurance_company: function(frm) {
 		if (frm.doc.insurance_company) {
 			frappe.call({

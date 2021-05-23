@@ -17,6 +17,7 @@ from erpnext.healthcare.doctype.healthcare_insurance_contract.healthcare_insuran
 class HealthcareInsuranceSubscription(Document):
 	def validate(self):
 		validate_insurance_contract(self.insurance_company)
+		self.validate_expiry_date()
 		self.validate_subscription_overlap()
 		self.set_title()
 

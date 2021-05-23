@@ -36,6 +36,7 @@
   "customer",
   "customer_group",
   "territory",
+  "country",
   "column_break_24",
   "default_currency",
   "default_price_list",
@@ -483,7 +484,13 @@
    "fieldname": "medical_history_tab",
    "fieldtype": "Tab Break",
    "label": "Medical History"
-  }
+  },
+  {
+    "fieldname": "country",
+    "fieldtype": "Link",
+    "label": "Country",
+    "options": "Country"
+   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",

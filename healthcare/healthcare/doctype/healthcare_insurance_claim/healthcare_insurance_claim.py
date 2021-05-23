@@ -9,7 +9,11 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_link_to_form, getdate, nowdate
 
-from healthcare.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import (
+from erpnext.accounts.party import get_party_account
+from erpnext.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import (
+	get_insurance_party_details,
+)
+from erpnext.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import (
 	get_service_insurance_coverage_details,
 )
 
@@ -20,10 +24,78 @@ class HealthcareInsuranceClaim(Document):
 			create_coverage_for_service_or_item(self)
 
 	def on_update_after_submit(self):
-		if self.claim_status != "Pending":
-			update_claim_status_to_service(self)
-		if self.claim_status == "Invoiced":
-			create_journal_entry_insurance_claim(self)
+		self.update_approval_status_in_service()
+
+		if self.status == "Invoiced" and not self.ref_journal_entry:
+			self.create_journal_entry()
+
+	def before_cancel(self):
+		if self.approval_status == "Approved":
+			frappe.throw(_("Cannot cancel Approved Insurance Claim"))
+
+	def on_cancel(self):
+		if self.status != "Invoiced":
+			self.update_approval_status_in_service(cancel=True)
+
+	def update_approval_status_in_service(self, cancel=False):
+		service_docname = frappe.db.exists(self.service_doctype, {"insurance_claim": self.name})
+
+		if service_docname:
+			# unlink claim from service
+			if cancel:
+				frappe.db.set_value(
+					self.service_doctype, service_docname, {"insurance_claim": "", "approval_status": ""}
+				)
+				frappe.msgprint(
+					_("Insurance Claim unlinked from the {0} {1}").format(self.service_doctype, service_docname)
+				)
+			else:
+				frappe.db.set_value(
+					self.service_doctype, service_docname, "approval_status", self.approval_status
+				)
+
+	def create_journal_entry(self):
+		if not self.sales_invoice:
+			frappe.throw(_("Insurance Claim Status cannot be Invoiced without Sales Invoice reference"))
+
+		sales_invoice = frappe.db.get_value(
+			"Sales Invoice", self.sales_invoice, ["customer", "debit_to", "company"], as_dict=True
+		)
+
+		# Linked Party and Receivable Account for Insurance Company
+		insurance_company_details = get_insurance_party_details(self.insurance_company, self.company)
+
+		journal_entry = frappe.new_doc("Journal Entry")
+		journal_entry.company = sales_invoice.company
+		journal_entry.posting_date = self.billing_date
+
+		journal_entry.append(
+			"accounts",
+			{
+				"account": sales_invoice.debit_to,
+				"credit_in_account_currency": self.coverage_amount,
+				"party_type": "Customer",
+				"party": sales_invoice.customer,
+				"reference_type": "Sales Invoice",
+				"reference_name": self.sales_invoice,
+			},
+		)
+
+		journal_entry.append(
+			"accounts",
+			{
+				"account": insurance_company_details.receivable_account,
+				"debit_in_account_currency": self.coverage_amount,
+				"party_type": "Customer",
+				"party": insurance_company_details.party,
+			},
+		)
+
+		journal_entry.flags.ignore_permissions = True
+		journal_entry.flags.ignore_mandatory = True
+		journal_entry.submit()
+
+		self.db_set("ref_journal_entry", journal_entry.name)
 
 
 def update_claim_status_to_service(doc):
@@ -38,7 +110,6 @@ def create_journal_entry_insurance_claim(self):
 	# create jv
 	sales_invoice = frappe.get_doc("Sales Invoice", self.sales_invoice)
 	insurance_company = frappe.get_doc("Healthcare Insurance Company", self.insurance_company)
-	from erpnext.accounts.party import get_party_account
 
 	journal_entry = frappe.new_doc("Journal Entry")
 	journal_entry.company = sales_invoice.company

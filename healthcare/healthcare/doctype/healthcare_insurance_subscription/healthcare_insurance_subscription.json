@@ -15,29 +15,26 @@
   "patient_details_section",
   "patient",
   "patient_name",
-  "age_html",
-  "mobile_number",
-  "column_break_8",
-  "customer",
   "gender",
+  "birth_date",
+  "column_break_8",
+  "email",
+  "mobile_number",
   "country",
   "insurance_details_section",
   "insurance_company",
-  "insurance_company_name",
-  "insurance_company_customer",
-  "column_break_15",
-  "subscription_expiry",
   "healthcare_insurance_coverage_plan",
-  "coverage_plan_name",
+  "column_break_15",
+  "insurance_policy_number",
+  "subscription_expiry_date",
   "amended_from"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "hidden": 1,
    "label": "Series",
-   "options": "HIS-.YYYY.-",
+   "options": "HI-SUB-.YYYY.-",
    "set_only_once": 1
   },
   {
@@ -54,6 +51,7 @@
    "reqd": 1
   },
   {
+   "depends_on": "patient",
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
@@ -61,16 +59,12 @@
    "read_only": 1
   },
   {
-   "fieldname": "age_html",
-   "fieldtype": "HTML",
-   "label": "Age",
-   "read_only": 1
-  },
-  {
+   "depends_on": "patient",
    "fetch_from": "patient.mobile",
    "fieldname": "mobile_number",
    "fieldtype": "Data",
    "label": "Mobile Number",
+   "options": "Phone",
    "read_only": 1
   },
   {
@@ -78,14 +72,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "patient.customer",
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer",
-   "read_only": 1
-  },
-  {
+   "depends_on": "patient",
    "fetch_from": "patient.sex",
    "fieldname": "gender",
    "fieldtype": "Link",
@@ -94,18 +81,12 @@
    "read_only": 1
   },
   {
-   "fieldname": "country",
-   "fieldtype": "Link",
-   "label": "Country",
-   "options": "Country",
-   "read_only": 1
-  },
-  {
    "fieldname": "insurance_details_section",
    "fieldtype": "Section Break",
    "label": "Insurance Details"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "insurance_company",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -114,18 +95,11 @@
    "reqd": 1
   },
   {
-   "fetch_from": "insurance_company.customer",
-   "fieldname": "insurance_company_customer",
-   "fieldtype": "Link",
-   "label": "Insurance Company Customer",
-   "options": "Customer",
-   "read_only": 1
-  },
-  {
    "fieldname": "column_break_15",
    "fieldtype": "Column Break"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "healthcare_insurance_coverage_plan",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -144,13 +118,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "insurance_company.insurance_company_name",
-   "fieldname": "insurance_company_name",
-   "fieldtype": "Data",
-   "label": "Insurance Company Name",
-   "read_only": 1
-  },
-  {
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -158,18 +125,47 @@
    "read_only": 1
   },
   {
-   "fetch_from": "healthcare_insurance_coverage_plan.coverage_plan_name",
-   "fieldname": "coverage_plan_name",
+   "allow_in_quick_entry": 1,
+   "fieldname": "insurance_policy_number",
    "fieldtype": "Data",
-   "label": "Coverage Plan Name",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Insurance Policy Number",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "depends_on": "patient",
+   "fetch_from": "patient.email",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
    "read_only": 1
   },
   {
-   "fieldname": "subscription_expiry",
+   "allow_in_quick_entry": 1,
+   "fieldname": "subscription_expiry_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Subscription Expiry",
+   "label": "Subscription Expiry Date",
    "reqd": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "birth_date",
+   "fieldtype": "Date",
+   "label": "Birth Date",
+   "read_only": 1
+  },
+  {
+   "depends_on": "patient",
+   "fetch_from": "patient.country",
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
@@ -199,7 +195,7 @@
    "link_fieldname": "insurance_subscription"
   }
  ],
- "modified": "2021-05-03 21:52:39.294101",
+ "modified": "2021-05-18 09:10:31.569542",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Subscription",
@@ -291,10 +287,9 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
- "search_fields": "patient_name,insurance_company_name",
+ "search_fields": "patient,patient_name,insurance_company,insurance_policy_number",
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "title",
- "track_changes": 1,
- "track_seen": 1
+ "track_changes": 1
 }

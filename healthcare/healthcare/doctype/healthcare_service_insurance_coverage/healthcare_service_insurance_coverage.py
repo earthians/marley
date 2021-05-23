@@ -12,8 +12,14 @@ from frappe.utils import get_link_to_form, getdate
 
 class HealthcareServiceInsuranceCoverage(Document):
 	def validate(self):
+		self.validate_dates()
 		self.validate_service_overlap()
 		self.set_title()
+
+	def validate_dates(self):
+		if self.start_date and self.end_date:
+			if self.start_date > self.end_date:
+				frappe.throw(_("Start Date must be before End Date."))
 
 	def validate_service_overlap(self):
 		filters, or_filters = self.get_filters()
