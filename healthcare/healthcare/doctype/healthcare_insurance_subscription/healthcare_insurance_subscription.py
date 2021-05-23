@@ -12,8 +12,13 @@ from erpnext.healthcare.doctype.healthcare_insurance_contract.healthcare_insuran
 class HealthcareInsuranceSubscription(Document):
 	def validate(self):
 		validate_insurance_contract(self.insurance_company)
+		self.validate_expiry_date()
 		self.validate_subscription_overlap()
 		self.set_title()
+
+	def validate_expiry_date(self):
+		if frappe.utils.getdate(self.subscription_expiry_date) < frappe.utils.getdate():
+			frappe.throw(_('Subscription Expiry Date cannot be a past date'))
 
 	def validate_subscription_overlap(self):
 		insurance_subscription = frappe.db.exists('Healthcare Insurance Subscription', {
@@ -21,12 +26,12 @@ class HealthcareInsuranceSubscription(Document):
 			'docstatus': 1,
 			'insurance_company': self.insurance_company,
 			'patient': self.patient,
-			'subscription_expiry':['<=', self.subscription_expiry]
+			'subscription_expiry_date': ['<=', self.subscription_expiry_date]
 		})
 		if insurance_subscription:
 			frappe.throw(_('Patient {0} already has an active insurance subscription {1} with the coverage plan {2} for this period').format(
 				frappe.bold(self.patient), get_link_to_form('Healthcare Insurance Subscription', insurance_subscription),
-				frappe.bold(self.coverage_plan_name)), title=_('Duplicate'))
+				frappe.bold(self.healthcare_insurance_coverage_plan)), title=_('Duplicate'))
 
 	def set_title(self):
-		self.title = _('{0} with {1}').format(self.patient_name or self.patient, self.insurance_company_name or self.insurance_company)
+		self.title = _('{0} - {1}').format(self.patient_name or self.patient, self.insurance_policy_number)

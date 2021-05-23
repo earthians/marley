@@ -13,8 +13,8 @@ class HealthcareInsuranceContract(Document):
 		if self.is_active:
 			contract = frappe.db.exists('Healthcare Insurance Contract', {
 				'insurance_company': self.insurance_company,
-				'start_date':('<=', getdate()),
-				'end_date':('>=', getdate()),
+				'start_date': ('<=', self.end_date),
+				'end_date': ('>=', self.start_date),
 				'is_active': 1,
 				'name': ('!=', self.name)
 			})

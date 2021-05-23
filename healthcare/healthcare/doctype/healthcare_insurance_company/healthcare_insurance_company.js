@@ -3,7 +3,7 @@
 
 frappe.ui.form.on('Healthcare Insurance Company', {
 	refresh: function(frm) {
-		frappe.dynamic_link = {doc: frm.doc, fieldname: 'name', doctype: 'Insurance Company'};
+		frappe.dynamic_link = {doc: frm.doc, fieldname: 'name', doctype: 'Healthcare Insurance Company'};
 
 		if (frm.doc.__islocal) {
 			hide_field(['address_html', 'contact_html', 'address_contacts']);
@@ -13,22 +13,25 @@ frappe.ui.form.on('Healthcare Insurance Company', {
 			frappe.contacts.render_address_and_contact(frm);
 		}
 
-		frm.set_query('insurance_company_receivable_account', function() {
+		frm.set_query('account', 'claims_receivable_accounts', function(doc, cdt, cdn) {
+			var child = locals[cdt][cdn];
 			return {
 				filters: {
 					'account_type': 'Receivable',
-					'company': frm.doc.company,
-					'is_group': 0
+					'is_group': 0,
+					'disabled' : 0,
+					'company': child.company,
 				}
 			};
 		});
-
-		frm.set_query('rejected_claims_account', function() {
+		frm.set_query('account', 'rejected_claims_expense_accounts', function(doc, cdt, cdn) {
+			var child  = locals[cdt][cdn];
 			return {
 				filters: {
 					'root_type': 'Expense',
-					'company': frm.doc.company,
-					'is_group': 0
+					'is_group': 0,
+					'disabled' : 0,
+					'company': child.company
 				}
 			};
 		});

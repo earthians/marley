@@ -8,6 +8,8 @@ from frappe import _
 from frappe.utils import getdate, flt, get_link_to_form
 from frappe.model.document import Document
 from erpnext.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import get_service_insurance_coverage_details
+from erpnext.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import get_insurance_party_details
+from erpnext.accounts.party import get_party_account
 
 class HealthcareInsuranceClaim(Document):
 	def on_update(self):
@@ -42,32 +44,33 @@ class HealthcareInsuranceClaim(Document):
 				frappe.db.set_value(self.service_doctype, service_docname, 'approval_status', self.approval_status)
 
 	def create_journal_entry(self):
-		from erpnext.accounts.party import get_party_account
+		if not self.sales_invoice:
+			frappe.throw(_('Insurance Claim Status cannot be Invoiced without Sales Invoice reference'))
 
 		sales_invoice = frappe.db.get_value('Sales Invoice', self.sales_invoice,
-			['customer', 'company'], as_dict=True)
+			['customer', 'debit_to', 'company'], as_dict=True)
 
-		insurance_company = frappe.get_doc('Healthcare Insurance Company', self.insurance_company,
-			fields=['insurance_company_receivable_account', 'customer'], as_dict=True)
+		# Linked Party and Receivable Account for Insurance Company
+		insurance_company_details = get_insurance_party_details(self.insurance_company, self.company)
 
 		journal_entry = frappe.new_doc('Journal Entry')
 		journal_entry.company = sales_invoice.company
 		journal_entry.posting_date = self.billing_date
 
 		journal_entry.append('accounts', {
-			'account': get_party_account('Customer', sales_invoice.customer, sales_invoice.company),
+			'account': sales_invoice.debit_to,
 			'credit_in_account_currency': self.coverage_amount,
 			'party_type': 'Customer',
 			'party': sales_invoice.customer,
-			'reference_type': 'DocType',
+			'reference_type': 'Sales Invoice',
 			'reference_name': self.sales_invoice
 		})
 
 		journal_entry.append('accounts', {
-			'account': insurance_company.insurance_company_receivable_account,
+			'account': insurance_company_details.receivable_account,
 			'debit_in_account_currency': self.coverage_amount,
 			'party_type': 'Customer',
-			'party': insurance_company.customer
+			'party': insurance_company_details.party
 		})
 
 		journal_entry.flags.ignore_permissions = True

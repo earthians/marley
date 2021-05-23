@@ -13,22 +13,22 @@
  "field_order": [
   "naming_series",
   "insurance_company",
-  "insurance_company_name",
-  "insurance_company_customer",
-  "default_price_list",
-  "apply_coverage_on_amount_with_tax",
-  "is_active",
   "column_break_6",
+  "company",
+  "posting_date",
+  "amended_from",
+  "contract_details_section",
   "start_date",
   "end_date",
-  "amended_from"
+  "column_break_10",
+  "is_active",
+  "default_price_list"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Contract ",
+   "label": "Series",
    "options": "HLC-IC-.YYYY.-",
    "set_only_once": 1
   },
@@ -38,22 +38,6 @@
    "label": "Insurance Company",
    "options": "Healthcare Insurance Company",
    "reqd": 1
-  },
-  {
-   "fetch_from": "insurance_company.insurance_company_name",
-   "fieldname": "insurance_company_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Insurance Company Name",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "insurance_company.customer",
-   "fieldname": "insurance_company_customer",
-   "fieldtype": "Link",
-   "label": "Insurance Company Customer",
-   "options": "Customer",
-   "read_only": 1
   },
   {
    "fieldname": "default_price_list",
@@ -89,12 +73,6 @@
    "reqd": 1
   },
   {
-   "default": "0",
-   "fieldname": "apply_coverage_on_amount_with_tax",
-   "fieldtype": "Check",
-   "label": "Apply Coverage on Amount with Tax"
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -102,11 +80,34 @@
    "options": "Healthcare Insurance Contract",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contract_details_section",
+   "fieldtype": "Section Break",
+   "label": "Contract Details"
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-05-02 22:54:31.958241",
+ "modified": "2021-05-18 07:26:47.985944",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Contract",
@@ -159,7 +160,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "insurance_company_name",
- "track_changes": 1,
- "track_seen": 1
+ "title_field": "insurance_company",
+ "track_changes": 1
 }

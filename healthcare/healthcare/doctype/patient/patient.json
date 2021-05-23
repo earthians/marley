@@ -37,6 +37,7 @@
   "address_html",
   "column_break_22",
   "contact_html",
+  "country",
   "customer_details_section",
   "customer",
   "customer_group",
@@ -469,13 +470,19 @@
    "in_standard_filter": 1,
    "label": "Identification Number (UID)",
    "unique": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2021-03-14 13:21:09.759906",
+ "modified": "2021-05-23 16:05:29.358732",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",

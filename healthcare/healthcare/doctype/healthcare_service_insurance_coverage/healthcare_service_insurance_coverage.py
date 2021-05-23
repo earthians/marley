@@ -10,8 +10,14 @@ from frappe.model.document import Document
 
 class HealthcareServiceInsuranceCoverage(Document):
 	def validate(self):
+		self.validate_dates()
 		self.validate_service_overlap()
 		self.set_title()
+
+	def validate_dates(self):
+		if self.start_date and self.end_date:
+			if self.start_date > self.end_date:
+				frappe.throw(_("Start Date must be before End Date."))
 
 	def validate_service_overlap(self):
 		filters, or_filters = self.get_filters()
@@ -26,14 +32,20 @@ class HealthcareServiceInsuranceCoverage(Document):
 
 	def get_filters(self):
 		filters = {
-			'healthcare_insurance_coverage_plan': self.healthcare_insurance_coverage_plan,
 			'is_active': 1,
-			'name': ['!=', self.name]
+			'name': ['!=', self.name],
 		}
-		or_filters = {
-			'start_date': ['<=', self.start_date],
-			'end_date': ['>=', self.end_date]
-		}
+
+		if self.start_date and self.end_date:
+			filters.update({
+				'start_date': ['<=', self.end_date],
+				'end_date': ['>=', self.start_date]
+			})
+
+		or_filters = {} # TODO: start and end dates are not mandatory
+
+		if self.healthcare_insurance_coverage_plan:
+			filters['healthcare_insurance_coverage_plan'] = self.healthcare_insurance_coverage_plan
 
 		if self.coverage_based_on == 'Service':
 			filters['healthcare_service_template'] = self.healthcare_service_template
@@ -138,13 +150,13 @@ def get_insurance_coverage_details(coverage_plan, service=None, service_item=Non
 def is_valid_insurance(insurance_subscription, posting_date):
 	if frappe.db.exists('Healthcare Insurance Contract', {
 		'insurance_company': insurance_subscription.insurance_company,
-		'start_date':('<=', getdate(posting_date)),
-		'end_date':('>=', getdate(posting_date)),
+		'start_date': ('<=', getdate(posting_date)),
+		'end_date': ('>=', getdate(posting_date)),
 		'is_active': 1
 	}):
 		if frappe.db.exists('Healthcare Insurance Subscription', {
 			'name': insurance_subscription.name,
-			'subscription_expiry':('>=', getdate(posting_date))
+			'subscription_expiry_date': ('>=', getdate(posting_date))
 		}):
 			return True
 	return False
@@ -155,6 +167,6 @@ def get_insurance_coverage_list(coverage_plan, date):
 		filters={
 			'healthcare_insurance_coverage_plan': coverage_plan,
 			'is_active': 1,
-			'start_date':('<=', getdate(date))
+			'start_date': ('<=', getdate(date))
 		}, fields= ['name', 'healthcare_service_template','item', 'medical_code', 'item_group']
 	)

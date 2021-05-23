@@ -3,7 +3,7 @@
  "allow_copy": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "field:coverage_plan_name",
  "beta": 1,
  "creation": "2020-10-16 09:54:50.763071",
  "description": "Healthcare Insurance Coverage Plan",
@@ -11,27 +11,18 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
   "coverage_plan_name",
-  "insurance_company",
-  "insurance_company_name",
-  "column_break_5",
   "is_active",
+  "insurance_company",
   "price_list"
  ],
  "fields": [
   {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "HLC-ICP-.YYYY.-",
-   "set_only_once": 1
-  },
-  {
    "fieldname": "coverage_plan_name",
    "fieldtype": "Data",
    "label": "Coverage Plan Name",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "insurance_company",
@@ -42,24 +33,14 @@
    "reqd": 1
   },
   {
-   "fetch_from": "insurance_company.insurance_company_name",
-   "fieldname": "insurance_company_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Insurance Company Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_5",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "1",
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active"
   },
   {
+   "description": "Overrides the Default Price List in Healthcare Insurance Contract",
    "fieldname": "price_list",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -69,7 +50,7 @@
   }
  ],
  "links": [],
- "modified": "2021-05-02 15:59:28.220674",
+ "modified": "2021-05-18 19:13:16.209270",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Coverage Plan",
@@ -149,10 +130,9 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
- "search_fields": "coverage_plan_name,insurance_company_name",
+ "search_fields": "coverage_plan_name,insurance_company",
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "coverage_plan_name",
- "track_changes": 1,
- "track_seen": 1
+ "track_changes": 1
 }

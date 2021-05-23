@@ -2,14 +2,16 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Healthcare Insurance Subscription', {
-	refresh: function(frm) {
+	onload: function(frm) {
 		frm.set_query('healthcare_insurance_coverage_plan', function() {
 			return {
-				filters: {'insurance_company': frm.doc.insurance_company}
+				filters: {
+					'insurance_company': frm.doc.insurance_company
+				}
 			};
 		});
 
-		frm.set_query('patient', function () {
+		frm.set_query('patient', function() {
 			return {
 				filters: {
 					'status': 'Active'

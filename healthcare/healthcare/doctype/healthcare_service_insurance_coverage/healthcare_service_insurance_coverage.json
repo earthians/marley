@@ -1,6 +1,5 @@
 {
  "actions": [],
- "autoname": "naming_series:",
  "beta": 1,
  "creation": "2020-10-16 10:11:39.077709",
  "description": "Healthcare Service Insurance Coverage",
@@ -8,25 +7,22 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
   "title",
   "coverage_based_on",
-  "healthcare_insurance_coverage_plan",
-  "insurance_coverage_plan_name",
-  "is_active",
-  "column_break_3",
   "healthcare_service",
   "healthcare_service_template",
   "medical_code_standard",
   "medical_code",
   "item",
   "item_group",
+  "column_break_3",
+  "healthcare_insurance_coverage_plan",
   "coverage_deatils_section",
   "claim_approval_mode",
   "coverage",
   "discount",
-  "maximum_number_of_claims",
   "column_break_12",
+  "is_active",
   "start_date",
   "end_date"
  ],
@@ -40,12 +36,12 @@
    "options": "DocType"
   },
   {
+   "depends_on": "eval:doc.coverage_based_on ==='Service' && doc.healthcare_service",
    "fieldname": "healthcare_service_template",
    "fieldtype": "Dynamic Link",
    "label": "Healthcare Service Template",
    "mandatory_depends_on": "eval:doc.coverage_based_on==='Service'",
-   "options": "healthcare_service",
-   "reqd": 1
+   "options": "healthcare_service"
   },
   {
    "fieldname": "column_break_3",
@@ -54,6 +50,7 @@
   {
    "allow_on_submit": 1,
    "default": "1",
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active"
@@ -63,8 +60,7 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Healthcare Insurance Coverage Plan",
-   "options": "Healthcare Insurance Coverage Plan",
-   "reqd": 1
+   "options": "Healthcare Insurance Coverage Plan"
   },
   {
    "fieldname": "coverage_deatils_section",
@@ -74,7 +70,6 @@
   {
    "fieldname": "coverage",
    "fieldtype": "Percent",
-   "in_list_view": 1,
    "label": "Coverage Percentage",
    "reqd": 1
   },
@@ -82,12 +77,6 @@
    "fieldname": "discount",
    "fieldtype": "Percent",
    "label": "Discount Percentage"
-  },
-  {
-   "description": "Number of claims allowed per year",
-   "fieldname": "maximum_number_of_claims",
-   "fieldtype": "Int",
-   "label": "Maximum Number of Claims"
   },
   {
    "fieldname": "column_break_12",
@@ -99,21 +88,15 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Start Date",
-   "reqd": 1
+   "search_index": 1
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "End Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "HSIC-.YYYY.-",
-   "set_only_once": 1
+   "search_index": 1
   },
   {
    "fieldname": "coverage_based_on",
@@ -132,7 +115,7 @@
    "options": "Medical Code Standard"
   },
   {
-   "depends_on": "eval:doc.coverage_based_on==='Medical Code' && doc.medical_code_standard;",
+   "depends_on": "eval:doc.coverage_based_on ==='Medical Code' && doc.medical_code_standard",
    "fieldname": "medical_code",
    "fieldtype": "Link",
    "label": "Medical Code",
@@ -160,15 +143,8 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Title",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "healthcare_insurance_coverage_plan.coverage_plan_name",
-   "fieldname": "insurance_coverage_plan_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Insurance Coverage Plan Name",
+   "no_copy": 1,
+   "print_hide": 1,
    "read_only": 1
   },
   {
@@ -182,7 +158,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-05-06 15:23:47.720845",
+ "modified": "2021-05-20 16:29:15.263945",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Insurance Coverage",
@@ -216,6 +192,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "title",
- "track_changes": 1,
- "track_seen": 1
+ "track_changes": 1
 }
