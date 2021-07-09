@@ -2,6 +2,7 @@
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+from __future__ import unicode_literals
 
 import datetime
 
@@ -11,22 +12,30 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, get_link_to_form, get_time, getdate
 
+from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
+	update_service_order_status,
+)
+
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class TherapySession(Document):
 	def validate(self):
-		self.set_exercises_from_therapy_type()
 		self.validate_duplicate()
 		self.set_total_counts()
 
 	def after_insert(self):
-		self.create_nursing_tasks(post_event=False)
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
+
+	def on_submit(self):
+		self.update_sessions_count_in_therapy_plan()
+
+		if self.service_order:
+			frappe.db.set_value("Healthcare Service Order", self.service_order, "status", "Completed")
 
 	def on_update(self):
 		if self.appointment:
@@ -35,8 +44,6 @@ class TherapySession(Document):
 	def on_cancel(self):
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
-		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
 
 		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 
@@ -77,28 +84,6 @@ class TherapySession(Document):
 			)
 			frappe.throw(overlapping_details, title=_("Therapy Sessions Overlapping"))
 
-	def on_submit(self):
-		validate_nursing_tasks(self)
-		self.update_sessions_count_in_therapy_plan()
-
-		if self.service_request:
-			status = "active-Request Status"
-			sessions_completed = self.check_sessions_completed()
-			if sessions_completed:
-				status = "completed-Request Status"
-
-			frappe.db.set_value("Service Request", self.service_request, "status", status)
-
-	def create_nursing_tasks(self, post_event=True):
-		template = frappe.db.get_value("Therapy Type", self.therapy_type, "nursing_checklist_template")
-		if template:
-			NursingTask.create_nursing_tasks_from_template(
-				template,
-				self,
-				start_time=frappe.utils.get_datetime(f"{self.start_date} {self.start_time}"),
-				post_event=post_event,
-			)
-
 	def update_sessions_count_in_therapy_plan(self, on_cancel=False):
 		therapy_plan = frappe.get_doc("Therapy Plan", self.therapy_plan)
 		for entry in therapy_plan.therapy_plan_details:
@@ -120,41 +105,6 @@ class TherapySession(Document):
 
 		self.db_set("total_counts_targeted", target_total)
 		self.db_set("total_counts_completed", counts_completed)
-
-	def set_exercises_from_therapy_type(self):
-		if self.therapy_type and not self.exercises:
-			therapy_type_doc = frappe.get_cached_doc("Therapy Type", self.therapy_type)
-			if therapy_type_doc.exercises:
-				for exercise in therapy_type_doc.exercises:
-					self.append(
-						"exercises",
-						(frappe.copy_doc(exercise)).as_dict(),
-					)
-
-	def before_insert(self):
-		if self.service_request:
-			therapy_session = frappe.db.exists(
-				"Therapy Session",
-				{"service_request": self.service_request, "docstatus": 0},
-			)
-			if therapy_session:
-				frappe.throw(
-					_("Therapy Session {0} already created from service request {1}").format(
-						frappe.bold(get_link_to_form("Therapy Session", therapy_session)),
-						frappe.bold(get_link_to_form("Service Request", self.service_request)),
-					),
-					title=_("Already Exist"),
-				)
-
-	def check_sessions_completed(self):
-		total_sessions_requested = frappe.db.get_value(
-			"Service Request", self.service_request, "quantity"
-		)
-		sessions = frappe.db.count(
-			"Therapy Session", filters={"docstatus": ["!=", 2], "service_request": self.service_request}
-		)
-
-		return True if total_sessions_requested == sessions else False
 
 
 @frappe.whitelist()

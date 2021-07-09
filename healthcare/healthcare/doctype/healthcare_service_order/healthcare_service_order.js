@@ -3,6 +3,12 @@
 
 frappe.ui.form.on('Healthcare Service Order', {
 	onload: function(frm) {
+		if (frm.doc.__islocal) {
+			frm.set_value('order_time', frappe.datetime.now_time())
+		}
+	},
+
+	refresh: function(frm) {
 		frm.set_query('order_group', function () {
 			return {
 				filters: {
@@ -13,12 +19,12 @@ frappe.ui.form.on('Healthcare Service Order', {
 			};
 		});
 
-		frm.set_query('order_doctype', function() {
-			let service_order_doctypes = ['Medication', 'Therapy Type', 'Lab Test Template',
+		frm.set_query('template_dt', function() {
+			let order_template_doctypes = ['Medication', 'Therapy Type', 'Lab Test Template',
 				'Clinical Procedure Template'];
 			return {
 				filters: {
-					name: ['in', service_order_doctypes]
+					name: ['in', order_template_doctypes]
 				}
 			};
 		});
@@ -38,6 +44,154 @@ frappe.ui.form.on('Healthcare Service Order', {
 				}
 			};
 		});
+
+		frm.set_query('insurance_subscription', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'docstatus': 1
+				}
+			};
+		});
+
+		frm.trigger('setup_status_buttons');
+		frm.trigger('setup_create_buttons');
+	},
+
+	setup_status_buttons: function(frm) {
+		if (frm.doc.docstatus === 1) {
+
+			if (frm.doc.status === 'Active') {
+				frm.add_custom_button(__('On Hold'), function() {
+					frm.events.set_status(frm, 'On Hold');
+				}, __('Status'));
+
+				// frm.add_custom_button(__('Completed'), function() {
+				// 	frm.events.set_status(frm, 'Completed');
+				// }, __('Status'));
+			}
+
+			if (frm.doc.status === 'On Hold') {
+				frm.add_custom_button(__('Active'), function() {
+					frm.events.set_status(frm, 'Active');
+				}, __('Status'));
+
+				// frm.add_custom_button(__('Completed'), function() {
+				// 	frm.events.set_status(frm, 'Completed');
+				// }, __('Status'));
+			}
+
+		} else if (frm.doc.docstatus === 2) {
+
+			frm.add_custom_button(__('Revoked'), function() {
+				frm.events.set_status(frm, 'Revoked');
+			}, __('Status'));
+
+			frm.add_custom_button(__('Replaced'), function() {
+				frm.events.set_status(frm, 'Replaced');
+			}, __('Status'));
+
+			frm.add_custom_button(__('Entered in Error'), function() {
+				frm.events.set_status(frm, 'Entered in Error');
+			}, __('Status'));
+
+			frm.add_custom_button(__('Unknown'), function() {
+				frm.events.set_status(frm, 'Unknown');
+			}, __('Status'));
+
+		}
+	},
+
+	set_status: function(frm, status) {
+		frappe.call({
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_service_order_status',
+			async: false,
+			freeze: true,
+			args: {
+				service_order: frm.doc.name,
+				status: status
+			},
+			callback: function(r) {
+				if (!r.exc) frm.reload_doc();
+			}
+		});
+	},
+
+	setup_create_buttons: function(frm) {
+		if (frm.doc.docstatus !== 1 || frm.doc.status === 'Completed') return;
+
+		if (frm.doc.template_dt === 'Clinical Procedure Template') {
+
+			frm.add_custom_button(__('Clinical Procedure'), function() {
+				frm.trigger('make_clinical_procedure');
+			}, __('Create'));
+
+
+		} else if (frm.doc.template_dt === 'Lab Test Template') {
+
+			frm.add_custom_button(__('Lab Test'), function() {
+				frm.trigger('make_lab_test');
+			}, __('Create'));
+
+		} else if (frm.doc.template_dt === 'Therapy Type') {
+
+			frm.add_custom_button(__('Therapy Session'), function() {
+				frm.trigger('make_therapy_session');
+			}, __('Create'));
+		}
+
+		frm.page.set_inner_btn_group_as_primary(__('Create'));
+	},
+
+	make_clinical_procedure: function(frm) {
+		frappe.call({
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_clinical_procedure',
+			args: { service_order: frm.doc },
+			freeze: true,
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_lab_test: function(frm) {
+		frappe.call({
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_lab_test',
+			args: { service_order: frm.doc },
+			freeze: true,
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_therapy_session: function(frm) {
+		frappe.call({
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_therapy_session',
+			args: { service_order: frm.doc },
+			freeze: true,
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	after_cancel: function(frm) {
+		frappe.prompt([
+			{
+				fieldname: 'reason_for_cancellation',
+				label: __('Reason for Cancellation'),
+				fieldtype: 'Select',
+				options: ['Revoked', 'Replaced', 'Entered in Error', 'Unknown'],
+				reqd: 1
+			}
+		],
+		function(data) {
+			frm.events.set_status(frm, data.reason_for_cancellation);
+		}, __('Reason for Cancellation'), __('Submit'));
 	},
 
 	patient: function(frm) {
@@ -55,7 +209,7 @@ frappe.ui.form.on('Healthcare Service Order', {
 	},
 
 	birth_date: function(frm) {
-		age_str = calculate_age(frm.doc.birth_date);
+		let age_str = calculate_age(frm.doc.birth_date);
 		frm.set_value('patient_age', age_str);
 	}
 });

@@ -30,7 +30,6 @@ frappe.ui.form.on('Healthcare Insurance Coverage Plan', {
 					if (!data.message.name) {
 						frappe.msgprint(__('No valid contract found with the Insurance Company {0}', [frm.doc.insurance_company]));
 						frm.set_value('insurance_company', '');
-						frm.set_value('insurance_company_name', '');
 					}
 				}
 			});

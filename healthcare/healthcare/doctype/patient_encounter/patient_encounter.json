@@ -3,6 +3,7 @@
  "allow_copy": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
+ "beta": 1,
  "creation": "2016-04-21 10:53:44.637684",
  "doctype": "DocType",
  "document_type": "Document",
@@ -21,15 +22,13 @@
   "inpatient_status",
   "column_break_6",
   "company",
-  "status",
   "encounter_date",
   "encounter_time",
   "practitioner",
   "practitioner_name",
   "medical_department",
-  "google_meet_link",
+  "amended_from",
   "invoiced",
-  "submit_orders_on_save",
   "sb_symptoms",
   "symptoms",
   "symptoms_in_print",
@@ -43,9 +42,10 @@
   "referring_practitioner",
   "insurance_section",
   "insurance_subscription",
+  "insurance_claim",
   "column_break_35",
   "insurance_company",
-  "approval_status",
+  "claim_status",
   "codification",
   "codification_table",
   "sb_drug_prescription",
@@ -58,17 +58,7 @@
   "therapy_plan",
   "therapies",
   "section_break_33",
-  "encounter_comment",
-  "sb_refs",
-  "amended_from",
-  "encounter_details_tab",
-  "order_history_html",
-  "encounter_details",
-  "notes_tab",
-  "clinical_notes",
-  "patient_vitals_summary_section",
-  "patient_vitals",
-  "section_break_3"
+  "encounter_comment"
  ],
  "fields": [
   {
@@ -152,7 +142,6 @@
    "reqd": 1
   },
   {
-   "default": "Now",
    "fieldname": "encounter_time",
    "fieldtype": "Time",
    "label": "Encounter Time",
@@ -325,10 +314,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "sb_refs",
-   "fieldtype": "Section Break"
-  },
-  {
    "fetch_from": "practitioner.practitioner_name",
    "fieldname": "practitioner_name",
    "fieldtype": "Data",
@@ -353,62 +338,6 @@
    "label": "Get Applicable Treatment Plans"
   },
   {
-   "fetch_from": "appointment.google_meet_link",
-   "fieldname": "google_meet_link",
-   "fieldtype": "Data",
-   "label": "Google Meet Link",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.__islocal && doc.docstatus == 0;",
-   "fieldname": "encounter_details_tab",
-   "fieldtype": "Tab Break",
-   "label": "Encounter Details"
-  },
-  {
-   "fieldname": "encounter_details",
-   "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "\nOpen\nOrdered\nCompleted\nCancelled",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:!doc.__islocal;",
-   "fieldname": "submit_orders_on_save",
-   "fieldtype": "Check",
-   "label": "Submit Orders on Save"
-  },
-  {
-   "depends_on": "eval:!doc.__islocal && doc.docstatus == 0;",
-   "fieldname": "notes_tab",
-   "fieldtype": "Tab Break",
-   "label": "Notes"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "clinical_notes",
-   "fieldtype": "HTML",
-   "label": "Clinical Notes"
-  },
-  {
-   "fieldname": "order_history_html",
-   "fieldtype": "HTML",
-   "label": "Order History"
-  },
-  {
-   "link_doctype": "Clinical Note",
-   "link_fieldname": "reference_name"
-  },
-  {
-   "link_doctype": "Treatment Counselling",
-   "link_fieldname": "admission_encounter"
-  },
-  {
    "fieldname": "sb_source",
    "fieldtype": "Section Break",
    "label": "Source"
@@ -431,20 +360,6 @@
    "ignore_user_permissions": 1,
    "label": "Referring Practitioner",
    "options": "Healthcare Practitioner"
-  },
-  {
-   "fieldname": "patient_vitals_summary_section",
-   "fieldtype": "Section Break",
-   "label": "Patient Vitals Summary"
-  },
-  {
-   "fieldname": "patient_vitals",
-   "fieldtype": "HTML",
-   "label": "Patient Vitals"
-  },
-  {
-   "fieldname": "section_break_3",
-   "fieldtype": "Section Break"
   },
   {
    "depends_on": "appointment_type",
@@ -480,22 +395,20 @@
   },
   {
    "allow_on_submit": 1,
-   "fetch_from": "insurance_claim.approval_status",
+   "fetch_from": "insurance_claim.status",
    "fetch_if_empty": 1,
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
+   "fieldname": "claim_status",
+   "fieldtype": "Data",
    "label": "Claim Status",
-   "options": "\nPending\nApproved\nRejected\nInvoiced",
    "read_only": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-05-09 21:06:28.907320",
+ "modified": "2021-06-13 17:25:50.833336",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
- "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -519,20 +432,6 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [
-  {
-   "color": "Orange",
-   "title": "Ordered"
-  },
-  {
-   "color": "Blue",
-   "title": "Completed"
-  },
-  {
-   "color": "Red",
-   "title": "Cancelled"
-  }
- ],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1

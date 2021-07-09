@@ -1,6 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
+ "beta": 1,
  "creation": "2017-04-07 12:52:43.542429",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -8,8 +9,10 @@
  "field_order": [
   "naming_series",
   "title",
+  "service_order",
   "appointment",
   "procedure_template",
+  "medical_code",
   "column_break_30",
   "company",
   "section_break_6",
@@ -28,15 +31,13 @@
   "start_date",
   "start_time",
   "sample",
-  "sb_source",
-  "source",
-  "column_break_26",
   "referring_practitioner",
   "insurance_section",
   "insurance_subscription",
+  "insurance_claim",
   "column_break_31",
   "insurance_company",
-  "approval_status",
+  "claim_status",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -47,10 +48,7 @@
   "consumable_total_amount",
   "column_break_27",
   "consumption_details",
-  "medical_coding_section",
-  "codification_table",
   "sb_refs",
-  "service_request",
   "invoiced",
   "prescription",
   "amended_from"
@@ -299,24 +297,11 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "medical_coding_section",
-   "fieldtype": "Section Break",
-   "label": "Medical Coding"
-  },
-  {
-   "fieldname": "codification_table",
-   "fieldtype": "Table",
-   "label": "Medical Codes",
-   "options": "Codification Table"
-  },
-  {
-   "fieldname": "service_request",
+   "fetch_from": "procedure_template.medical_code",
+   "fieldname": "medical_code",
    "fieldtype": "Link",
-   "label": "Service Request",
-   "no_copy": 1,
-   "options": "Service Request",
-   "print_hide": 1,
+   "label": "Medical Code",
+   "options": "Medical Code",
    "read_only": 1
   },
   {
@@ -349,10 +334,6 @@
    "options": "Healthcare Insurance Subscription"
   },
   {
-   "link_doctype": "Nursing Task",
-   "link_fieldname": "reference_name"
-  },
-  {
    "allow_on_submit": 1,
    "fieldname": "insurance_claim",
    "fieldtype": "Link",
@@ -362,22 +343,29 @@
   },
   {
    "allow_on_submit": 1,
-   "fetch_from": "insurance_claim.approval_status",
-   "fetch_if_empty": 1,
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
+   "fieldname": "claim_status",
+   "fieldtype": "Data",
    "label": "Claim Status",
-   "options": "\nPending\nApproved\nRejected\nInvoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "service_order",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-02 11:23:39.692352",
+ "modified": "2021-06-13 18:33:36.572674",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
- "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -411,7 +399,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
  "title_field": "title",
  "track_changes": 1
 }

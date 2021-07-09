@@ -22,12 +22,30 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 			};
 		});
 
-		frm.set_query('healthcare_service_type', function() {
-			let service_doctypes = ['Therapy Type', 'Lab Test Template',
-				'Clinical Procedure Template', 'Appointment Type'];
+		frm.set_query('template_dt', function() {
+			let service_templates = ['Appointment Type', 'Clinical Procedure Template', 'Therapy Type',
+				'Medication', 'Lab Test Template', 'Healthcare Service Unit Type'];
 			return {
 				filters: {
-					name: ['in', service_doctypes]
+					name: ['in', service_templates],
+				}
+			};
+		});
+
+		frm.set_query('template_dn', function() {
+			if (frm.doc.template_dt != 'Appointment Type') {
+				return {
+					filters: { is_billable: 1 }
+				};
+			}
+		});
+
+		frm.set_query('item_code', function() {
+			return {
+				filters: {
+					'is_sales_item': 1,
+					'disabled': 0,
+					'is_fixed_asset': 0
 				}
 			};
 		});
@@ -40,7 +58,32 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 			};
 		});
 
-		if (frm.doc.docstatus===1) {
+		if (!frm.is_new()) {
+
+		}
+		if (!frm.is_new() && frm.doc.docstatus === 0 && frm.doc.status == 'Draft') {
+
+			frm.add_custom_button(__('Mark Approved'), () => {
+				frm.set_value('status', 'Approved');
+				frm.save();
+			});
+
+			frm.add_custom_button(__('Mark Rejected'), () => {
+				frm.set_value('status', 'Rejected');
+				frm.save();
+			});
+
+		} else if (!frm.is_new() && frm.doc.docstatus === 0 && ['Approved', 'Rejected'].includes(frm.doc.status) && frm.doc.mode_of_approval == 'Manual') {
+
+			frm.add_custom_button(__('Mark Draft'), () => {
+				frm.set_value('status', 'Draft');
+				frm.save();
+			});
+
+		}
+
+		// Allow creating coverage if claim does not link a coverage
+		if (!frm.doc.coverage && frm.doc.docstatus === 1) {
 			frm.add_custom_button(__('Create Coverage'), () => {
 				frappe.call({
 					method: 'erpnext.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim.create_insurance_coverage',
@@ -54,7 +97,7 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 			});
 
 			frm.add_custom_button(__(frm.doc.service_doctype), () => {
-				frappe.db.get_value(frm.doc.service_doctype, {'insurance_claim': frm.doc.name}, 'name', (r) => {
+				frappe.db.get_value(frm.doc.service_doctype, { 'insurance_claim': frm.doc.name }, 'name', (r) => {
 					if (r && r.name) {
 						frappe.set_route('Form', frm.doc.service_doctype, r.name);
 					}
@@ -63,41 +106,45 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 		}
 	},
 
+	template_dt: function(frm) {
+		frm.set_value('template_dn', '');
+	},
+
+	qty: function(frm) {
+		frm.trigger('calculate_claim_amount_on_update');
+	},
+
 	price_list_rate: function(frm) {
-		if (frm.doc.price_list_rate) {
-			frm.trigger('calculate_claim_amount_on_update');
-		}
+		frm.trigger('calculate_claim_amount_on_update');
 	},
 
 	discount: function(frm) {
-		if (frm.doc.discount) {
-			frm.trigger('calculate_claim_amount_on_update');
-		}
+		frm.trigger('calculate_claim_amount_on_update');
 	},
 
 	coverage: function(frm) {
-		if (frm.doc.coverage) {
-			frm.trigger('calculate_claim_amount_on_update');
-		}
+		frm.trigger('calculate_claim_amount_on_update');
 	},
 
 	calculate_claim_amount_on_update: function(frm) {
-		if (frm.doc.price_list_rate) {
-			let discount_amount = 0.0;
-			let rate = frm.doc.price_list_rate;
-
-			if (frm.doc.discount) {
-				discount_amount = flt(frm.doc.price_list_rate) * flt(frm.doc.discount) * 0.01;
-				rate = flt(rate) - flt(discount_amount);
+		if (frm.doc.price_list_rate && frm.doc.qty) {
+			// discount
+			if (frm.doc.discount > 0) {
+				frm.set_value('discount_amount', flt(frm.doc.price_list_rate) * flt(frm.doc.discount) * 0.01 * frm.doc.qty);
+			} else {
+				frm.set_value('discount_amount', 0);
 			}
-
-			let amount = flt(frm.doc.quantity) * flt(rate);
-			frm.set_value('amount', amount);
+			// amount
+			frm.set_value('amount', (flt(frm.doc.qty) * flt(frm.doc.price_list_rate)) - frm.doc.discount_amount);
+		}
+		// coverage amount
+		if (frm.doc.amount > 0 && frm.doc.coverage > 0) {
+			frm.set_value('claim_amount', flt(frm.doc.amount) * flt(frm.doc.coverage) * 0.01);
+		} else {
+			frm.set_value('claim_amount', 0);
 		}
 
-		if (frm.doc.amount && frm.doc.coverage) {
-			let coverage_amount = flt(frm.doc.amount) * 0.01 * flt(frm.doc.coverage);
-			frm.set_value('coverage_amount', coverage_amount);
-		}
+		// patient payable
+		frm.set_value('patient_payable', flt(frm.doc.amount) - frm.doc.claim_amount);
 	}
 });

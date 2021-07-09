@@ -2,19 +2,22 @@
 # Copyright (c) 2017, ESS LLP and contributors
 # For license information, please see license.txt
 
+from __future__ import unicode_literals
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, get_link_to_form, now_datetime, nowdate, nowtime
+from frappe.utils import flt, nowdate, nowtime
 
+from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
+	update_service_order_status,
+)
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
-from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class ClinicalProcedure(Document):
@@ -34,75 +37,22 @@ class ClinicalProcedure(Document):
 		if self.consume_stock:
 			self.set_actual_qty()
 
-		if self.service_request:
-			therapy_session = frappe.db.exists(
-				"Clinical Procedure",
-				{"service_request": self.service_request, "docstatus": ["!=", 2]},
-			)
-			if therapy_session:
-				frappe.throw(
-					_("Clinical Procedure {0} already created from service request {1}").format(
-						frappe.bold(get_link_to_form("Clinical Procedure", therapy_session)),
-						frappe.bold(get_link_to_form("Service Request", self.service_request)),
-					),
-					title=_("Already Exist"),
-				)
-
-	def on_cancel(self):
-		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
-
 	def after_insert(self):
+		if self.prescription:
+			frappe.db.set_value("Procedure Prescription", self.prescription, "procedure_created", 1)
+
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
-		if self.procedure_template:
-			template = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
-			if template.sample:
-				patient = frappe.get_doc("Patient", self.patient)
-				sample_collection = create_sample_doc(template, patient, None, self.company)
-				self.db_set("sample", sample_collection.name)
-
-		self.reload()
-
-	def on_submit(self):
-		self.create_nursing_tasks(post_event=False)
-
-		if self.service_request:
-			frappe.db.set_value(
-				"Service Request", self.service_request, "status", "completed-Request Status"
-			)
-
-		template_doc = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
-		if template_doc.sample:
+		template = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
+		if template.sample:
 			patient = frappe.get_doc("Patient", self.patient)
-			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
+			sample_collection = create_sample_doc(template, patient, None, self.company)
 			self.db_set("sample", sample_collection.name)
 			self.reload()
 
-		if self.insurance_subscription and not self.insurance_claim:
-			make_insurance_claim(
-				doc=self, service_doctype="Clinical Procedure Template", service=self.procedure_template, qty=1
-			)
-
-	def create_nursing_tasks(self, post_event=True):
-		if post_event:
-			template = frappe.db.get_value(
-				"Clinical Procedure Template", self.procedure_template, "post_op_nursing_checklist_template"
-			)
-			start_time = now_datetime()
-
-		else:
-			template = frappe.db.get_value(
-				"Clinical Procedure Template", self.procedure_template, "pre_op_nursing_checklist_template"
-			)
-			# pre op tasks to be created on Clinical Procedure submit, use scheduled date
-			start_time = frappe.utils.get_datetime(f"{self.start_date} {self.start_time}")
-
-		if template:
-			NursingTask.create_nursing_tasks_from_template(
-				template, self, start_time=start_time, post_event=post_event
-			)
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -168,15 +118,8 @@ class ClinicalProcedure(Document):
 				)
 
 		self.db_set("status", "Completed")
-
-		if self.service_request:
-			frappe.db.set_value(
-				"Service Request", self.service_request, "status", "completed-Request Status"
-			)
-
-		# post op nursing tasks
-		if self.procedure_template:
-			self.create_nursing_tasks()
+		if self.service_order:
+			frappe.db.set_value("Healthcare Service Order", self.service_order, "status", "Completed")
 
 		if self.consume_stock and self.items:
 			return stock_entry
@@ -184,13 +127,9 @@ class ClinicalProcedure(Document):
 	@frappe.whitelist()
 	def start_procedure(self):
 		allow_start = self.set_actual_qty()
-
 		if allow_start:
-			validate_nursing_tasks(self)
-
 			self.db_set("status", "In Progress")
 			return "success"
-
 		return "insufficient stock"
 
 	def set_actual_qty(self):
@@ -350,34 +289,3 @@ def make_procedure(source_name, target_doc=None):
 	)
 
 	return doc
-
-
-@frappe.whitelist()
-def get_procedure_prescribed(patient, encounter=False):
-	hso = frappe.qb.DocType("Service Request")
-	return (
-		frappe.qb.from_(hso)
-		.select(
-			hso.template_dn, hso.order_group, hso.billing_status, hso.practitioner, hso.order_date, hso.name
-		)
-		.where(hso.patient == patient)
-		.where(hso.status != "completed-Request Status")
-		.where(hso.template_dt == "Clinical Procedure Template")
-		.orderby(hso.creation, order=frappe.qb.desc)
-	).run()
-
-
-def make_insurance_claim(doc):
-	if doc.insurance_subscription and not doc.insurance_claim:
-		from healthcare.healthcare.utils import create_insurance_claim
-
-		billing_item = frappe.get_cached_value(
-			"Clinical Procedure Template", doc.procedure_template, "item"
-		)
-		insurance_claim, claim_status = create_insurance_claim(
-			doc, "Clinical Procedure Template", doc.procedure_template, 1, billing_item
-		)
-		if insurance_claim:
-			frappe.set_value(doc.doctype, doc.name, "insurance_claim", insurance_claim)
-			frappe.set_value(doc.doctype, doc.name, "claim_status", claim_status)
-			doc.reload()

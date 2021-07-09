@@ -108,7 +108,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-05-13 16:21:25.157406",
+ "modified": "2021-07-11 10:22:15.695839",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Payment Request",
@@ -127,6 +127,7 @@
    "write": 1
   }
  ],
+ "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "insurance_company_name",
