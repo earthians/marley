@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_copy": 1,
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
@@ -12,6 +11,9 @@
  "field_order": [
   "naming_series",
   "title",
+  "date",
+  "column_break_2",
+  "amended_from",
   "patient_details_section",
   "patient",
   "patient_name",
@@ -23,11 +25,10 @@
   "country",
   "insurance_details_section",
   "insurance_company",
-  "healthcare_insurance_coverage_plan",
+  "policy_expiry_date",
   "column_break_15",
-  "insurance_policy_number",
-  "subscription_expiry_date",
-  "amended_from"
+  "policy_number",
+  "insurance_coverage_plan"
  ],
  "fields": [
   {
@@ -91,22 +92,13 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Insurance Company",
+   "no_copy": 1,
    "options": "Healthcare Insurance Company",
    "reqd": 1
   },
   {
    "fieldname": "column_break_15",
    "fieldtype": "Column Break"
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "fieldname": "healthcare_insurance_coverage_plan",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Coverage Plan",
-   "options": "Healthcare Insurance Coverage Plan",
-   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -125,16 +117,6 @@
    "read_only": 1
   },
   {
-   "allow_in_quick_entry": 1,
-   "fieldname": "insurance_policy_number",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Insurance Policy Number",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
    "depends_on": "patient",
    "fetch_from": "patient.email",
    "fieldname": "email",
@@ -142,14 +124,6 @@
    "label": "Email",
    "options": "Email",
    "read_only": 1
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "fieldname": "subscription_expiry_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Subscription Expiry Date",
-   "reqd": 1
   },
   {
    "fetch_from": "patient.dob",
@@ -166,10 +140,52 @@
    "label": "Country",
    "options": "Country",
    "read_only": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "insurance_coverage_plan",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Insurance Coverage Plan",
+   "no_copy": 1,
+   "options": "Healthcare Insurance Coverage Plan"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "policy_expiry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Policy Expiry Date",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "policy_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Policy Number",
+   "no_copy": 1,
+   "reqd": 1
   }
  ],
  "is_submittable": 1,
  "links": [
+  {
+   "link_doctype": "Healthcare Insurance Claim",
+   "link_fieldname": "insurance_subscription"
+  },
   {
    "link_doctype": "Patient Appointment",
    "link_fieldname": "insurance_subscription"
@@ -195,7 +211,7 @@
    "link_fieldname": "insurance_subscription"
   }
  ],
- "modified": "2021-05-18 09:10:31.569542",
+ "modified": "2021-07-11 10:22:13.565032",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Subscription",
@@ -287,7 +303,7 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
- "search_fields": "patient,patient_name,insurance_company,insurance_policy_number",
+ "search_fields": "title,patient,patient_name,policy_number,insurance_coverage_plan,insurance_company",
  "sort_field": "modified",
  "sort_order": "DESC",
  "title_field": "title",

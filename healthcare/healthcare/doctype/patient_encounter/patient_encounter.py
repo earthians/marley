@@ -10,12 +10,12 @@ from frappe.model.document import Document
 from frappe.utils import cstr, getdate, add_days
 from frappe.model.mapper import get_mapped_doc
 from erpnext.healthcare.utils import get_service_item_and_practitioner_charge
-from erpnext.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
 
 class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
 		self.validate_medications()
+		self.validate_therapies()
 
 	def on_update(self):
 		if self.appointment:
@@ -27,15 +27,12 @@ class PatientEncounter(Document):
 
 		self.make_healthcare_service_order()
 
-		if self.appointment_type and self.insurance_subscription and not self.insurance_claim:
-			billing_item, rate = get_service_item_and_practitioner_charge(self)
-			make_insurance_claim(
-				doc=self,
-				service_doctype='Appointment Type',
-				service=self.appointment_type,
-				qty=1,
-				billing_item=billing_item
-			)
+	def before_cancel(self):
+		orders = frappe.get_all('Healthcare Service Order', {'order_group': self.name})
+		for order in orders:
+			order_doc = frappe.get_doc('Healthcare Service Order', order.name)
+			if order_doc.docstatus == 1:
+				order_doc.cancel()
 
 	def on_cancel(self):
 		if self.appointment:
@@ -134,36 +131,49 @@ class PatientEncounter(Document):
 			if not item.medication and not item.drug_code:
 				frappe.throw(_('Row #{0} (Drug Prescription): Medication or Item Code is mandatory').format(item.idx))
 
+	def validate_therapies(self):
+		if not self.therapies:
+			return
+
+		for therapy in self.therapies:
+			if therapy.get_quantity() <= 0:
+				frappe.throw(_('Row #{0} (Therapies): Number of Sessions should be at least 1').format(therapy.idx))
+
+
 	def make_healthcare_service_order(self):
 		if self.drug_prescription:
 			for drug in self.drug_prescription:
 				medication = frappe.get_doc('Medication', drug.drug_code)
 				order = self.get_order_details(medication, drug)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
 		if self.lab_test_prescription:
 			for lab_test in self.lab_test_prescription:
 				lab_template = frappe.get_doc('Lab Test Template', lab_test.lab_test_code)
 				order = self.get_order_details(lab_template, lab_test)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
 		if self.procedure_prescription:
 			for procedure in self.procedure_prescription:
 				procedure_template = frappe.get_doc('Clinical Procedure Template', procedure.procedure)
 				order = self.get_order_details(procedure_template, procedure)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
 		if self.therapies:
 			for therapy in self.therapies:
 				therapy_type = frappe.get_doc('Therapy Type', therapy.therapy_type)
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
-	def get_order_details(self, doc, line_item):
+	def get_order_details(self, template_doc, line_item):
 		order = frappe.get_doc({
 			'doctype': 'Healthcare Service Order',
-			'order_doctype': doc.doctype,
-			'order_template': doc.name,
+			'template_dt': template_doc.doctype,
+			'template_dn': template_doc.name,
 			'order_date': self.encounter_date,
 			'order_time': self.encounter_time,
 			'company': self.company,
@@ -174,24 +184,25 @@ class PatientEncounter(Document):
 			'referring_practitioner': self.referring_practitioner,
 			'order_group': self.name,
 			'sequence': line_item.get('sequence'),
-			'patient_care_type': doc.get('patient_care_type'),
+			'patient_care_type': template_doc.get('patient_care_type'),
 			'intent': line_item.get('intent'),
 			'priority': line_item.get('priority'),
-			'quantity': line_item.get_quantity() if line_item.doctype == 'Drug Prescription' else 1,
+			'quantity': line_item.get_quantity() if line_item.doctype in ['Drug Prescription', 'Therapy Plan Detail'] else 1,
 			'dosage': line_item.get('dosage'),
 			'dosage_form': line_item.get('dosage_form'),
 			'period': line_item.get('period'),
-			'expected_date': line_item.get('expected_date'),
+			'expected_date': line_item.get('expected_date') or line_item.get('date'),
+			'occurrence_date': line_item.get('expected_date') or line_item.get('date'),
 			'as_needed': line_item.get('as_needed'),
-			'staff_role': doc.get('staff_role'),
+			'staff_role': template_doc.get('staff_role'),
 			'note': line_item.get('note'),
 			'patient_instruction': line_item.get('patient_instruction')
 		})
 
-		if doc.doctype == 'Lab Test Template':
-			description = doc.get('lab_test_description')
+		if template_doc.doctype == 'Lab Test Template':
+			description = template_doc.get('lab_test_description')
 		else:
-			description = doc.get('description')
+			description = template_doc.get('description')
 
 		order.update({'order_description': description})
 		return order

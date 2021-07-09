@@ -10,6 +10,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "service_order",
   "template",
   "lab_test_name",
   "lab_test_group",
@@ -49,7 +50,7 @@
   "insurance_claim",
   "column_break_41",
   "insurance_company",
-  "approval_status",
+  "claim_status",
   "sb_normal",
   "lab_test_html",
   "normal_test_items",
@@ -69,7 +70,6 @@
   "legend_print_position",
   "result_legend",
   "more_information_section",
-  "healthcare_service_order",
   "invoiced",
   "section_break_50",
   "email_sent",
@@ -567,15 +567,6 @@
    "print_hide": 1
   },
   {
-   "fieldname": "healthcare_service_order",
-   "fieldtype": "Link",
-   "label": "Healthcare Service Order",
-   "no_copy": 1,
-   "options": "Healthcare Service Order",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
    "allow_in_quick_entry": 1,
    "fieldname": "date",
    "fieldtype": "Date",
@@ -630,18 +621,26 @@
   },
   {
    "allow_on_submit": 1,
-   "fetch_from": "insurance_claim.approval_status",
-   "fetch_if_empty": 1,
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
+   "fieldname": "claim_status",
+   "fieldtype": "Data",
    "label": "Claim Status",
-   "options": "\nPending\nApproved\nRejected",
    "read_only": 1
+  },
+  {
+   "fieldname": "service_order",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-05-08 23:05:01.864400",
+ "modified": "2021-06-13 18:34:29.949879",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",

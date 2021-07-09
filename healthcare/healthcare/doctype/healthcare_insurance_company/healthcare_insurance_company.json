@@ -13,6 +13,8 @@
  "field_order": [
   "insurance_company_name",
   "customer",
+  "column_break_3",
+  "disabled",
   "image",
   "address_and_contacts_section",
   "address_html",
@@ -97,6 +99,17 @@
    "no_copy": 1,
    "print_hide": 1,
    "width": "50%"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
   }
  ],
  "image_field": "image",
@@ -114,7 +127,7 @@
    "link_fieldname": "insurance_company"
   }
  ],
- "modified": "2021-05-18 06:03:02.436183",
+ "modified": "2021-07-11 10:22:14.710654",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Company",

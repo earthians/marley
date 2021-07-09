@@ -32,8 +32,10 @@ def create_fee_validity(appointment):
 	fee_validity.max_visits = frappe.db.get_single_value('Healthcare Settings', 'max_visits') or 1
 	valid_days = frappe.db.get_single_value('Healthcare Settings', 'valid_days') or 1
 	fee_validity.visited = 0
-	fee_validity.start_date = getdate(appointment.appointment_date)
 	fee_validity.valid_till = getdate(appointment.appointment_date) + datetime.timedelta(days=int(valid_days))
+	# fee_validity.append('ref_appointments', {
+	# 	'appointment': appointment.name
+	# })
 	fee_validity.save(ignore_permissions=True)
 	return fee_validity
 

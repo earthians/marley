@@ -42,6 +42,7 @@ class PatientAppointment(Document):
 		self.set_status()
 		self.set_title()
 
+
 	def after_insert(self):
 		self.update_prescription_details()
 		self.set_payment_details()
@@ -49,16 +50,28 @@ class PatientAppointment(Document):
 		self.update_fee_validity()
 		send_confirmation_msg(self)
 
-		if self.appointment_type and self.insurance_subscription and not self.insurance_claim:
-			billing_item, rate = get_service_item_and_practitioner_charge(self)
+		if self.insurance_subscription and self.appointment_type and not check_fee_validity(self):
+			if frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing'):
+				#TODO: apply insurance claim
+				frappe.msgprint(_('Insurance Claim not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled'),
+					alert=True, indicator='warning')
+			else:
+				self.make_insurance_claim()
 
-			make_insurance_claim(
-				doc=self,
-				service_doctype='Appointment Type',
-				service=self.appointment_type,
-				qty=1,
-				billing_item=billing_item
-			)
+	def make_insurance_claim(self):
+		billing_detail = get_service_item_and_practitioner_charge(self)
+		claim = make_insurance_claim(
+			patient=self.patient,
+			policy=self.insurance_subscription,
+			company=self.company,
+			template_dt='Appointment Type',
+			template_dn=self.appointment_type,
+			item_code=billing_detail.get('service_item'),
+			qty=1
+		)
+
+		if claim and claim.get('claim'):
+			self.db_set({'insurance_claim': claim.get('claim'), 'claim_status': claim.get('claim_status')})
 
 	def set_title(self):
 		self.title = _('{0} with {1}').format(self.patient_name or self.patient,
@@ -135,7 +148,6 @@ class PatientAppointment(Document):
 				msg = _('Patient {0} is not admitted in the service unit {1}').format(frappe.bold(self.patient), frappe.bold(self.service_unit)) + '<br>'
 				msg += _('Appointment for service units with Inpatient Occupancy can only be created against the unit where patient has been admitted.')
 				frappe.throw(msg, title=_('Invalid Healthcare Service Unit'))
-
 
 	def set_appointment_datetime(self):
 		self.appointment_datetime = "%s %s" % (self.appointment_date, self.appointment_time or "00:00:00")
@@ -270,6 +282,10 @@ def get_appointment_item(appointment_doc, item):
 
 def cancel_appointment(appointment_id):
 	appointment = frappe.get_doc('Patient Appointment', appointment_id)
+	if appointment.insurance_claim:
+		claim = frappe.get_doc('Healthcare Insurance Claim', appointment.insurance_claim)
+		claim.cancel()
+
 	if appointment.invoiced:
 		sales_invoice = check_sales_invoice_exists(appointment)
 		if sales_invoice and cancel_sales_invoice(sales_invoice):

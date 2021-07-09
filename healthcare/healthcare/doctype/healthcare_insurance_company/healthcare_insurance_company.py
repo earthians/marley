@@ -3,22 +3,22 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe
+import frappe, erpnext
 from frappe import _
 from frappe.model.document import Document
 from frappe.contacts.address_and_contact import load_address_and_contact
-
+from frappe.utils import getdate
 
 class HealthcareInsuranceCompany(Document):
 	def validate(self):
 		# Verify if party account entries are duplicated for company
 		receivable_accounts_list = [account.get('company') for account in self.claims_receivable_accounts]
 		if len(receivable_accounts_list) != len(set(receivable_accounts_list)):
-			frappe.throw(_("Receivable Account is entered more than once for same Company"))
+			frappe.throw(_('Receivable Account is entered more than once for same Company'))
 
 		expense_accounts_list = [account.get('company') for account in self.rejected_claims_expense_accounts]
 		if len(expense_accounts_list) != len(set(expense_accounts_list)):
-			frappe.throw(_("Rejected Claims Expense Account is entered more than once for same company"))
+			frappe.throw(_('Rejected Claims Expense Account is entered more than once for same company'))
 
 	def onload(self):
 		load_address_and_contact(self)
@@ -40,7 +40,7 @@ class HealthcareInsuranceCompany(Document):
 						'company': party_account.company
 					})
 				else:
-					frappe.throw(_('Claims Receivable Account is mandatory for Company {}').format(party_account.company))
+					frappe.throw(_('Claims Receivable Account is mandatory for Company {}').format(frappe.bold(party_account.company)))
 
 		customer_group = frappe.db.exists('Customer Group', {'customer_group_name': _('Healthcare Insurance Company')})
 		if not customer_group:
@@ -67,7 +67,7 @@ class HealthcareInsuranceCompany(Document):
 
 		for party_account in self.claims_receivable_accounts:
 			if not party_account.account:
-				frappe.throw(_('Claims Receivable Account is mandatory for Company {}').format(party_account.company))
+				frappe.throw(_('Claims Receivable Account is mandatory for Company {}').format(frappe.bold(party_account.company)))
 
 			customer_party_account = next((customer_account for customer_account in customer.accounts if customer_account.get('company') == party_account.get('company')), None)
 			if customer_party_account:
@@ -85,27 +85,45 @@ class HealthcareInsuranceCompany(Document):
 		customer.save(ignore_permissions=True)
 
 
-def get_receivable_account(insurance_company, company):
-	if insurance_company and company:
-		return frappe.db.get_value('Party Account',
-			{'parenttype': 'Healthcare Insurance Company', 'parentfield': 'claims_receivable_accounts', 'parent': insurance_company, 'company': company},
-			'account'
-		)
-
-def get_rejected_claims_expense_account(insurance_company, company):
-	if insurance_company and company:
-		return frappe.db.get_value('Party Account',
-			{'parenttype': 'Healthcare Insurance Company', 'parentfield': 'rejected_claims_expense_accounts', 'parent': insurance_company, 'company': company},
-			'account'
-		)
-
 def get_insurance_party_details(insurance_company, company):
 	'''
-	Returns linked Customer, Receivable Account and Rejected Claims Expense Account
+	Returns linked Customer, Receivable Account configured for Insurance Company or Default Receivable Account for Company
 	'''
 	if insurance_company and company:
 		return {
 			'party': frappe.db.get_value('Healthcare Insurance Company', insurance_company, 'customer'),
-			'receivable_account': get_receivable_account(insurance_company, company),
-			'rejected_claims_expense_account' : get_rejected_claims_expense_account(insurance_company, company)
+			'receivable_account': get_account('claims_receivable_accounts', insurance_company, company) or
+				frappe.get_cached_value('Company', company, 'default_receivable_account')
 		}
+
+
+def get_insurance_company_expense_account(insurance_company, company):
+	'''
+	Returns the Rejected Claims Expense Account if configured for Insurance Company
+	'''
+	if insurance_company and company:
+		account = get_account('rejected_claims_expense_accounts', insurance_company, company)
+		if not account:
+			frappe.throw(_('Rejected Claims Expense account is not configured for Company {}').format(frappe.bold(company)))
+
+		return account
+
+
+def get_account(parent_field, insurance_company, company):
+	if parent_field and insurance_company and company:
+		return frappe.db.get_value('Party Account',
+			{'parenttype': 'Healthcare Insurance Company', 'parentfield': parent_field, 'parent': insurance_company, 'company': company},
+			'account'
+		)
+
+@frappe.whitelist()
+def has_active_contract(insurance_company, company=None, on_date=None):
+	if not frappe.db.get_value('Healthcare Insurance Company', insurance_company, 'disabled'):
+		return frappe.db.exists('Healthcare Insurance Contract', {
+				'insurance_company': insurance_company,
+				'company': company or erpnext.get_default_company(),
+				'is_active': 1,
+				'docstatus': 1,
+				'start_date': ('<=', getdate(on_date) or getdate()),
+				'end_date':('>=', getdate(on_date) or getdate())
+			})

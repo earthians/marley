@@ -16,12 +16,33 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
+from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
 
 
 class TherapySession(Document):
 	def validate(self):
 		self.validate_duplicate()
 		self.set_total_counts()
+
+	def after_insert(self):
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
+
+	def on_submit(self):
+		self.update_sessions_count_in_therapy_plan()
+
+		if self.service_order:
+			frappe.db.set_value('Healthcare Service Order', self.service_order, 'status', 'Completed')
+
+	def on_update(self):
+		if self.appointment:
+			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Closed')
+
+	def on_cancel(self):
+		if self.appointment:
+			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Open')
+
+		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 
 	def validate_duplicate(self):
 		end_time = datetime.datetime.combine(getdate(self.start_date), get_time(self.start_time)) \
@@ -44,22 +65,6 @@ class TherapySession(Document):
 		if overlaps:
 			overlapping_details = _('Therapy Session overlaps with {0}').format(get_link_to_form('Therapy Session', overlaps[0][0]))
 			frappe.throw(overlapping_details, title=_('Therapy Sessions Overlapping'))
-
-	def on_submit(self):
-		self.update_sessions_count_in_therapy_plan()
-
-		if self.healthcare_service_order:
-			frappe.db.set_value('Healthcare Service Order', self.healthcare_service_order, 'status', 'Completed')
-
-	def on_update(self):
-		if self.appointment:
-			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Closed')
-
-	def on_cancel(self):
-		if self.appointment:
-			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Open')
-
-		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 
 	def update_sessions_count_in_therapy_plan(self, on_cancel=False):
 		therapy_plan = frappe.get_doc('Therapy Plan', self.therapy_plan)

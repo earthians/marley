@@ -17,11 +17,24 @@ frappe.ui.form.on('Lab Test', {
 			{ fieldname: 'lab_test_uom', columns: 1 },
 			{ fieldname: 'normal_range', columns: 2 }
 		];
+
 		frm.get_field('descriptive_test_items').grid.editable_fields = [
 			{ fieldname: 'lab_test_particulars', columns: 3 },
 			{ fieldname: 'result_value', columns: 7 }
 		];
+
+		frm.set_query('service_order', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'status': 'Active',
+					'docstatus': 1,
+					'template_dt': 'Lab Test template'
+				}
+			};
+		});
 	},
+
 	refresh: function (frm) {
 		refresh_field('normal_test_items');
 		refresh_field('descriptive_test_items');
@@ -30,6 +43,7 @@ frappe.ui.form.on('Lab Test', {
 				get_lab_test_prescribed(frm);
 			});
 		}
+
 		if (frappe.defaults.get_default('lab_test_approval_required') && frappe.user.has_role('LabTest Approver')) {
 			if (frm.doc.docstatus === 1 && frm.doc.status !== 'Approved' && frm.doc.status !== 'Rejected') {
 				frm.add_custom_button(__('Approve'), function () {
@@ -145,6 +159,7 @@ var show_lab_tests = function (frm, lab_test_list) {
 			fieldtype: 'HTML', fieldname: 'lab_test'
 		}]
 	});
+
 	var html_field = d.fields_dict.lab_test.$wrapper;
 	html_field.empty();
 	$.each(lab_test_list, function (x, y) {
@@ -179,6 +194,7 @@ var show_lab_tests = function (frm, lab_test_list) {
 			return false;
 		});
 	});
+
 	if (!lab_test_list.length) {
 		var msg = __('No Lab Tests found for the Patient {0}', [frm.doc.patient_name.bold()]);
 		html_field.empty();
@@ -208,6 +224,7 @@ var make_dialog = function (frm, emailed, printed) {
 			dialog.hide();
 		}
 	});
+
 	if (frm.doc.report_preference === 'Print') {
 		dialog.set_values({
 			'result_format': 'Printed',
@@ -221,6 +238,7 @@ var make_dialog = function (frm, emailed, printed) {
 			'message': emailed
 		});
 	}
+
 	var fd = dialog.fields_dict;
 	$(fd.result_format.input).change(function () {
 		if (dialog.get_value('result_format') === 'Emailed') {
@@ -235,6 +253,7 @@ var make_dialog = function (frm, emailed, printed) {
 			});
 		}
 	});
+
 	dialog.show();
 };
 
@@ -245,6 +264,7 @@ var send_sms = function (vals, frm) {
 	if (!number || !message) {
 		frappe.throw(__('Did not send SMS, missing patient mobile number or message content.'));
 	}
+
 	frappe.call({
 		method: 'frappe.core.doctype.sms_settings.sms_settings.send_sms',
 		args: {

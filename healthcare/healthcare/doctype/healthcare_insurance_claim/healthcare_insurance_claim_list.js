@@ -3,10 +3,15 @@ frappe.listview_settings['Healthcare Insurance Claim'] = {
 	filters: [['docstatus', '=', '1']],
 	get_indicator: function(doc) {
 		return [__(doc.status), {
+			'Draft': 'red',
+			'Approved': 'blue',
 			'Invoiced': 'orange',
+			'Partially Invoiced': 'orange',
 			'Paid': 'green',
-			'Resubmitted': 'light-blue',
-			'Submitted': 'blue'
+			'Partially Paid': 'orange',
+			'Resubmitted': 'blue',
+			'Rejected': 'grey',
+			'Payment Rejected': 'grey'
 		}[doc.status], 'status,=,' + doc.status];
 	}
 };

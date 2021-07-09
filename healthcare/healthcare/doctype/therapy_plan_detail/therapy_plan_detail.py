@@ -9,4 +9,5 @@ from frappe.model.document import Document
 
 
 class TherapyPlanDetail(Document):
-	pass
+	def get_quantity(self):
+		return self.no_of_sessions or 0

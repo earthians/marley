@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:medication_name",
  "creation": "2020-03-24 15:56:36.583587",
@@ -10,7 +11,7 @@
   "medication_name",
   "medication_class",
   "abbr",
-  "national_drug_code",
+  "drug_code",
   "generic_name",
   "column_break_4",
   "strength",
@@ -34,15 +35,12 @@
   "default_interval_uom",
   "section_break_36",
   "reference_url",
-  "change_in_item"
+  "change_in_item",
+  "service_order_defaults_section",
+  "patient_care_type",
+  "staff_role"
  ],
  "fields": [
-  {
-   "fieldname": "national_drug_code",
-   "fieldtype": "Data",
-   "label": "National Drug Code",
-   "no_copy": 1
-  },
   {
    "fieldname": "medication_name",
    "fieldtype": "Data",
@@ -60,6 +58,8 @@
   {
    "fieldname": "medication_class",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Medication Class",
    "options": "Medication Class",
    "reqd": 1
@@ -86,6 +86,7 @@
   {
    "fieldname": "item",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Item",
    "no_copy": 1,
    "options": "Item",
@@ -192,9 +193,9 @@
    "fieldname": "abbr",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Abbr",
-   "no_copy": 1,
-   "reqd": 1
+   "no_copy": 1
   },
   {
    "fieldname": "dosage_form",
@@ -229,10 +230,36 @@
    "fieldtype": "Float",
    "label": "Rate",
    "mandatory_depends_on": "is_billable"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "service_order_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Order Defaults"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "drug_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Drug Code",
+   "no_copy": 1
   }
  ],
  "links": [],
- "modified": "2021-04-21 17:17:52.995701",
+ "modified": "2021-07-11 10:17:25.315098",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
@@ -261,9 +288,30 @@
    "role": "Healthcare Administrator",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "share": 1
   }
  ],
- "search_fields": "abbr, national_drug_code, generic_name",
+ "restrict_to_domain": "Healthcare",
+ "search_fields": "abbr, drug_code, generic_name",
  "sort_field": "modified",
  "sort_order": "DESC",
  "track_changes": 1

@@ -26,26 +26,27 @@
   "section_break_12",
   "appointment_type",
   "duration",
+  "appointment_date",
+  "appointment_time",
+  "appointment_datetime",
+  "column_break_17",
+  "service_order",
   "procedure_template",
   "get_procedure_from_encounter",
   "procedure_prescription",
   "therapy_plan",
   "therapy_type",
   "get_prescribed_therapies",
-  "column_break_17",
-  "appointment_date",
-  "appointment_time",
-  "appointment_datetime",
   "sb_source",
   "source",
   "column_break_30",
   "referring_practitioner",
   "insurance_section",
   "insurance_subscription",
-  "insurance_claim",
-  "column_break_49",
   "insurance_company",
-  "approval_status",
+  "column_break_49",
+  "insurance_claim",
+  "claim_status",
   "section_break_16",
   "mode_of_payment",
   "billing_item",
@@ -285,6 +286,7 @@
    "label": "Notes"
   },
   {
+   "depends_on": "eval:doc.source!='Direct'",
    "fieldname": "referring_practitioner",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -406,6 +408,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "patient",
    "fieldname": "insurance_section",
    "fieldtype": "Section Break",
    "label": "Insurance "
@@ -423,11 +426,11 @@
    "read_only": 1
   },
   {
-   "depends_on": "appointment_type",
    "fieldname": "insurance_subscription",
    "fieldtype": "Link",
    "label": "Insurance Subscription",
-   "options": "Healthcare Insurance Subscription"
+   "options": "Healthcare Insurance Subscription",
+   "read_only_depends_on": "eval:doc.insurance_claim"
   },
   {
    "fieldname": "insurance_claim",
@@ -437,17 +440,24 @@
    "read_only": 1
   },
   {
-   "fetch_from": "insurance_claim.approval_status",
+   "fetch_from": "insurance_claim.status",
    "fetch_if_empty": 1,
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
+   "fieldname": "claim_status",
+   "fieldtype": "Data",
    "label": "Claim Status",
-   "options": "\nPending\nApproved\nRejected\nInvoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "service_order",
+   "fieldtype": "Link",
+   "label": "Service Order",
+   "options": "Healthcare Service Order",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "links": [],
- "modified": "2021-05-09 21:05:08.353654",
+ "modified": "2021-06-27 17:09:05.876180",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

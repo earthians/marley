@@ -21,6 +21,17 @@ frappe.ui.form.on('Clinical Procedure', {
 				};
 			}
 		});
+
+		frm.set_query('service_order', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'status': 'Active',
+					'docstatus': 1,
+					'template_dt': 'Clinical Procedure template'
+				}
+			};
+		});
 	},
 
 	refresh: function(frm) {

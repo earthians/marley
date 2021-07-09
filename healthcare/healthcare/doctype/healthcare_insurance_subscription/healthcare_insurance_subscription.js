@@ -2,8 +2,8 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Healthcare Insurance Subscription', {
-	onload: function(frm) {
-		frm.set_query('healthcare_insurance_coverage_plan', function() {
+	onload: function (frm) {
+		frm.set_query('insurance_coverage_plan', function () {
 			return {
 				filters: {
 					'insurance_company': frm.doc.insurance_company
@@ -11,7 +11,7 @@ frappe.ui.form.on('Healthcare Insurance Subscription', {
 			};
 		});
 
-		frm.set_query('patient', function() {
+		frm.set_query('patient', function () {
 			return {
 				filters: {
 					'status': 'Active'
@@ -20,7 +20,7 @@ frappe.ui.form.on('Healthcare Insurance Subscription', {
 		});
 	},
 
-	insurance_company: function(frm) {
+	insurance_company: function (frm) {
 		if (frm.doc.insurance_company) {
 			frappe.call({
 				'method': 'frappe.client.get_value',
@@ -34,11 +34,10 @@ frappe.ui.form.on('Healthcare Insurance Subscription', {
 					},
 					fieldname: ['name']
 				},
-				callback: function(data) {
+				callback: function (data) {
 					if (!data.message.name) {
 						frappe.msgprint(__('No valid contract found with the Insurance Company {0}', [frm.doc.insurance_company]));
 						frm.set_value('insurance_company', '');
-						frm.set_value('insurance_company_name', '');
 					}
 				}
 			});

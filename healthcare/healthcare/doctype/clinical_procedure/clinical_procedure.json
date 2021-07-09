@@ -9,6 +9,7 @@
  "field_order": [
   "naming_series",
   "title",
+  "service_order",
   "appointment",
   "procedure_template",
   "medical_code",
@@ -30,16 +31,13 @@
   "start_date",
   "start_time",
   "sample",
-  "sb_source",
-  "source",
-  "column_break_26",
   "referring_practitioner",
   "insurance_section",
   "insurance_subscription",
   "insurance_claim",
   "column_break_31",
   "insurance_company",
-  "approval_status",
+  "claim_status",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -51,7 +49,6 @@
   "column_break_27",
   "consumption_details",
   "sb_refs",
-  "healthcare_service_order",
   "invoiced",
   "prescription",
   "amended_from"
@@ -308,15 +305,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "healthcare_service_order",
-   "fieldtype": "Link",
-   "label": "Healthcare Service Order",
-   "no_copy": 1,
-   "options": "Healthcare Service Order",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "referring_practitioner",
    "fieldtype": "Link",
    "label": "Referring Practitioner",
@@ -355,18 +343,26 @@
   },
   {
    "allow_on_submit": 1,
-   "fetch_from": "insurance_claim.approval_status",
-   "fetch_if_empty": 1,
-   "fieldname": "approval_status",
-   "fieldtype": "Select",
+   "fieldname": "claim_status",
+   "fieldtype": "Data",
    "label": "Claim Status",
-   "options": "\nPending\nApproved\nRejected\nInvoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "service_order",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Service Order",
+   "no_copy": 1,
+   "options": "Healthcare Service Order",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-05-06 11:23:38.692352",
+ "modified": "2021-06-13 18:33:36.572674",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

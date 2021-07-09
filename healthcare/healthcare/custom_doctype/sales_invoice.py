@@ -30,8 +30,10 @@ class HealthcareSalesInvoice(SalesInvoice):
 			item_details = get_item_details(args)
 			item_line.item_code = checked_item['item']
 			item_line.qty = 1
+
 			if checked_item['qty']:
 				item_line.qty = checked_item['qty']
+
 			if checked_item['rate']:
 				item_line.rate = checked_item['rate']
 			else:
@@ -39,18 +41,33 @@ class HealthcareSalesInvoice(SalesInvoice):
 
 			if checked_item['income_account']:
 				item_line.income_account = checked_item['income_account']
+
 			if checked_item['dt']:
 				item_line.reference_dt = checked_item['dt']
+
 			if checked_item['dn']:
 				item_line.reference_dn = checked_item['dn']
+
 			if checked_item['description']:
 				item_line.description = checked_item['description']
+
 			if checked_item['discount_percentage']:
 				item_line.discount_percentage = checked_item['discount_percentage']
+
 			if checked_item['insurance_claim_coverage']:
 				item_line.insurance_claim_coverage = checked_item['insurance_claim_coverage']
+
+			if checked_item['patient_insurance_policy']:
+				item_line.patient_insurance_policy = checked_item['patient_insurance_policy']
+
 			if checked_item['insurance_claim']:
 				item_line.insurance_claim = checked_item['insurance_claim']
+
+			if checked_item['insurance_company']:
+				item_line.insurance_company = checked_item['insurance_company']
+
+			if checked_item['claim_qty']:
+				item_line.claim_qty = checked_item['claim_qty']
 
 			if item_line.discount_percentage:
 				item_line.discount_amount = flt(item_line.rate) * flt(item_line.discount_percentage) * 0.01

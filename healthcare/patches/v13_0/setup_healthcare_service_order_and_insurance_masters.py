@@ -9,6 +9,10 @@ def execute():
 	if "Healthcare" not in frappe.get_active_domains():
 		return
 
+	frappe.reload_doc('healthcare', 'doctype', 'Patient Care Type')
+	frappe.reload_doc('healthcare', 'doctype', 'Healthcare Service Order Intent')
+	frappe.reload_doc('healthcare', 'doctype', 'Healthcare Service Order Priority')
+
 	setup_healthcare_service_order_masters()
 	create_customer_groups()
 
