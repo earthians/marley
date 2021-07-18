@@ -61,11 +61,12 @@
   "order_description",
   "patient_instructions",
   "billing_and_insurance_section",
-  "invoiced",
-  "insurance_subscription",
-  "insurance_claim",
+  "billing_status",
+  "qty_invoiced",
   "column_break_26",
+  "insurance_subscription",
   "insurance_company",
+  "insurance_claim",
   "claim_status",
   "medical_code_section",
   "medical_code_standard",
@@ -241,13 +242,6 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "invoiced",
-   "fieldtype": "Check",
-   "label": "Invoiced",
-   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -462,6 +456,7 @@
    "label": "Insurance Claim",
    "no_copy": 1,
    "options": "Healthcare Insurance Claim",
+   "read_only": 1,
    "read_only_depends_on": "eval:doc.docstatus!=0",
    "search_index": 1
   },
@@ -505,6 +500,21 @@
    "fieldname": "billing_and_insurance_section",
    "fieldtype": "Section Break",
    "label": "Billing and Insurance"
+  },
+  {
+   "default": "0",
+   "fieldname": "qty_invoiced",
+   "fieldtype": "Float",
+   "label": "Quantity Invoiced",
+   "read_only": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "billing_status",
+   "fieldtype": "Select",
+   "label": "Billing Status",
+   "options": "Pending\nPartially Invoiced\nInvoiced",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -523,7 +533,7 @@
    "link_fieldname": "service_order"
   }
  ],
- "modified": "2021-07-11 10:22:12.402723",
+ "modified": "2021-07-18 14:35:24.567300",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Order",

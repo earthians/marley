@@ -410,3 +410,13 @@ var add_to_item_line = function(frm, checked_values, invoice_healthcare_services
 		frm.refresh_fields();
 	}
 };
+
+frappe.ui.form.on('Sales Invoice Item', {
+	qty: function(frm, cdt, cdn) {
+		var d = locals[cdt][cdn];
+		if (d.insurance_claim && (d.qty > d.claim_qty)) {
+			frappe.throw(__('Row #{0} Item under Insurance Claim {1}, quantity cannot be more than approved quantity <b>{2}</b>',
+				[d.idx, d.insurance_claim, d.claim_qty]));
+		}
+	}
+});
