@@ -68,10 +68,39 @@ class HealthcareInsuranceClaim(Document):
 
 		self.flags.silent = False
 
-	def on_update_after_submit(self):
-		qty_invoiced = sum(detail.get('invoice_qty') or 0 for detail in self.insurance_claim_details)
-		claim_amount_invoiced = sum(detail.get('invoice_amount') or 0 for detail in self.insurance_claim_details)
-		status = 'Partially Invoiced' if qty_invoiced < self.qty else 'Invoiced'
+	# def on_update_after_submit(self):
+	# 	qty_invoiced = sum(detail.get('invoice_qty', 0) for detail in self.insurance_claim_details)
+	# 	claim_amount_invoiced = sum(detail.get('invoice_amount', 0) for detail in self.insurance_claim_details)
+
+	# 	if qty_invoiced == 0:
+	# 		status = 'Approved'
+	# 	if qty_invoiced < self.qty:
+	# 		status = 'Partially Invoiced'
+	# 	else:
+	# 		status = 'Invoiced'
+
+	# 	self.db_set({
+	# 		'qty_invoiced': qty_invoiced,
+	# 		'claim_amount_invoiced': claim_amount_invoiced,
+	# 		'status': status
+	# 	})
+
+	def update_invoice_details(self, qty, amount):
+		'''
+		updates qty_invoiced, claim_amount_invoiced and sets status
+		NOTE: on invoice cancel, qty and amount ca be negative
+		'''
+
+		print(self.template_dt, qty)
+		qty_invoiced = self.qty_invoiced + qty
+		claim_amount_invoiced = self.claim_amount_invoiced + amount
+
+		if qty_invoiced == 0:
+			status = 'Approved'
+		if qty_invoiced < self.qty:
+			status = 'Partially Invoiced'
+		else:
+			status = 'Invoiced'
 
 		self.db_set({
 			'qty_invoiced': qty_invoiced,
@@ -80,10 +109,10 @@ class HealthcareInsuranceClaim(Document):
 		})
 
 	def before_cancel(self):
-		not_allowed = ['Partially Paid', 'Paid']
-		if self.status in ['Invoiced', 'Partially Paid', 'Paid', 'Payment Rejected']:
+		not_allowed = ['Invoiced', 'Partially Paid', 'Paid', 'Payment Rejected']
+		if self.status in not_allowed:
 			frappe.throw(_('Cannot cancel Insurance Claim with Status {}').format(', '.join(not_allowed)),
-			title=_('Not Allowed'))
+				title=_('Not Allowed'))
 
 	def set_title(self):
 		self.title = f'{self.patient_name} - {self.template_dn} - {self.status}'
@@ -105,13 +134,13 @@ class HealthcareInsuranceClaim(Document):
 			if not details.get('is_billable'):
 				frappe.throw(_('Invalid Service Template, Insurance Claim can only be created for Templates marked <b>Is Billable</b>'), title=_('Not Allowed'))
 
-		self.item_code = details.get('item')
-		self.medical_code = details.get('medical_code')
-		self.medical_code_standard = details.get('medical_code_standard')
+			self.item_code = details.get('item')
+			self.medical_code = details.get('medical_code')
+			self.medical_code_standard = details.get('medical_code_standard')
 
-		# item code is mandatory for all claims
-		if not self.item_code:
-			frappe.throw(_('Invalid Service Template, Item is required to create Insurance Claim'), title=_('Missing Mandatory Fields'))
+			# item code is mandatory for all claims
+			if not self.item_code:
+				frappe.throw(_('Invalid Service Template, Item is required to create Insurance Claim'), title=_('Missing Mandatory Fields'))
 
 	def set_insurance_coverage(self):
 		'''
@@ -208,7 +237,7 @@ def make_insurance_claim(patient, policy, company, template_dt=None, template_dn
 
 	claim = frappe.new_doc('Healthcare Insurance Claim')
 	claim.status = 'Draft'
-	claim.mode_of_approval = 'Automatic'
+	claim.mode_of_approval = 'Automatic' # setting to Manual will create claim in draft mode
 	claim.patient = patient
 	claim.company = company
 	claim.posting_date = getdate()

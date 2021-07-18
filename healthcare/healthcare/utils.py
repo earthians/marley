@@ -384,7 +384,7 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 		filters={
 			'patient': patient.name,
 			'company': company,
-			'invoiced': 0,
+			'billing_status': ['in', ['Pending', 'Partially Invoiced']],
 			'docstatus': 1
 		}
 	)
@@ -393,12 +393,18 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 			['item', 'is_billable'])
 
 		if is_billable:
+			billable_order_qty = service_order.get('quantity', 1) - service_order.get('qty_invoiced', 0)
+
 			claim_details = None
 			if service_order.insurance_claim:
 				claim_details = frappe.get_cached_value('Healthcare Insurance Claim', service_order.insurance_claim,
-					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'claim_validity_end_date'], as_dict=True)
+					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'qty_invoiced', 'policy_number', 'claim_validity_end_date'], as_dict=True)
 
 			if claim_details and claim_details.status in ['Approved', 'Partially Invoiced'] and getdate() <= claim_details.claim_validity_end_date:
+
+				# billable qty from insurance claim
+				billable_claim_qty = claim_details.get('qty', 1) - claim_details.get('qty_invoiced', 0)
+
 				orders_to_invoice.append({
 					'reference_type': 'Healthcare Service Order',
 					'reference_name': service_order.name,
@@ -409,17 +415,23 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 					'rate': claim_details.price_list_rate,
 					'insurance_claim_coverage': claim_details.coverage,
 					'discount_percentage':claim_details.discount,
-					'qty': service_order.quantity or 1 if (service_order.quantity or 1) >= claim_details.qty else claim_details.qty,
+					'qty': min(billable_claim_qty, billable_order_qty),
 					'claim_qty': claim_details.qty
 				})
-				# if (service_order.quantity or 1) > claim_details.qty:
-			else:
-				orders_to_invoice.append({
-					'reference_type': 'Healthcare Service Order',
-					'reference_name': service_order.name,
-					'service': item,
-					'qty': service_order.quantity if service_order.template_dt == 'Medication' else 1,
-				})
+				# if order quantity is not fully billed, update billable_order_qty
+				# bill remianing qty as new line without insurance
+				if billable_order_qty > billable_claim_qty:
+					billable_order_qty = billable_order_qty - billable_claim_qty
+				else:
+					# order qty fully billed
+					continue
+
+			orders_to_invoice.append({
+				'reference_type': 'Healthcare Service Order',
+				'reference_name': service_order.name,
+				'service': item,
+				'qty': billable_order_qty
+			})
 
 	return orders_to_invoice
 
@@ -531,33 +543,37 @@ def manage_invoice_submit_cancel(doc, method):
 	if doc.items:
 		for item in doc.items:
 			if item.get('reference_dt') and item.get('reference_dn'):
-				if frappe.get_meta(item.reference_dt).has_field('invoiced'):
-					set_invoiced(item, method, doc.name)
+				set_invoiced(item, method, doc.name)
 
-	if any(item.get('insurance_claim') for item in doc.items):
-		if method == 'on_submit':
-			post_transfer_journal_entry_and_update_claim(doc)
-		else:
-			cancel_transfer_journal_entry_and_update_claim(doc)
+	# handle insurance
+	if method == 'on_submit':
+		post_transfer_journal_entry_and_update_claim(doc)
+	else:
+		update_insurance_claim(doc)
 
 	if method=='on_submit' and frappe.db.get_single_value('Healthcare Settings', 'create_lab_test_on_si_submit'):
 		from erpnext.healthcare.doctype.lab_test.lab_test import create_multiple
 		create_multiple('Sales Invoice', doc.name)
 
 
-def cancel_transfer_journal_entry_and_update_claim(sales_invoice):
+def update_insurance_claim(sales_invoice):
+	'''
+	Updates Insurance claim invoice details
+	NOTE: Journal entries should be cancelled by now via Cancel All
+	'''
 	for item in sales_invoice.items:
-		pass
+		if not item.insurance_claim:
+			claim = frappe.get_doc('Healthcare Insurance Claim', item.insurance_claim)
+			claim.update_invoice_details(item.qty * -1, item.amount * -1)
 
 def post_transfer_journal_entry_and_update_claim(sales_invoice):
 	'''
-	1 - Journal Entry to Transfer Patient balance or each claim
+	1 - Post Journal Entry to Transfer Patient balance or each claim
 	2 - Update Insurance Claim Detail
-	TODO: Posting Journal Entries based on Insurance Company will reduce number of journal entries, but cannot allow claim cancel after invoice. Fix based on feedback
+	TODO: Posting Journal Entries based on Insurance Company will reduce number of journal entries, 
+	but won't be able allow claim cancel after invoicing. Fix based on feedback
 	'''
-
 	for item in sales_invoice.items:
-		jv_accounts = []
 		if not item.insurance_claim:
 			continue
 
@@ -567,6 +583,7 @@ def post_transfer_journal_entry_and_update_claim(sales_invoice):
 		if not insurance_company_details or not insurance_company_details.get('receivable_account') or not insurance_company_details.get('party'):
 			frappe.throw(_('Receivable Account not configured for Insurance Company').format(item.insurance_company))
 
+		jv_accounts = []
 
 		# Post Journal Entry
 		jv_accounts.append({
@@ -594,23 +611,13 @@ def post_transfer_journal_entry_and_update_claim(sales_invoice):
 				journal_entry.append('accounts', account)
 
 			journal_entry.flags.ignore_permissions = True
-			journal_entry.flags.ignore_mandatory = True
+			# journal_entry.flags.ignore_mandatory = True
 			journal_entry.submit()
 
 		# Update Insurance Claim
 		if journal_entry:
 			claim = frappe.get_doc('Healthcare Insurance Claim', item.insurance_claim)
-
-			claim.append('insurance_claim_details', {
-				'sales_invoice': sales_invoice.name,
-				'journal_entry': journal_entry.name,
-				'invoice_qty': item.qty,
-				'invoice_amount': item.amount,
-				'claim_amount': item.insurance_claim_amount,
-				'discount_amount': item.discount_amount,
-				'sales_invoice_item': item.name
-			})
-			claim.save(ignore_permissions=True)
+			claim.update_invoice_details(item.qty, item.amount)
 
 
 def set_invoiced(item, method, ref_invoice=None):
@@ -625,7 +632,8 @@ def set_invoiced(item, method, ref_invoice=None):
 			frappe.db.set_value(item.reference_dt, item.reference_dn, 'consumption_invoiced', invoiced)
 		else:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, 'invoiced', invoiced)
-	else:
+
+	elif frappe.get_meta(item.reference_dt).has_field('invoiced'):
 		frappe.db.set_value(item.reference_dt, item.reference_dn, 'invoiced', invoiced)
 
 	if item.reference_dt == 'Patient Appointment':
@@ -643,26 +651,37 @@ def set_invoiced(item, method, ref_invoice=None):
 
 	elif item.reference_dt == 'Healthcare Service Order':
 		# if order is invoiced, set both order and service transaction as invoiced
-		frappe.db.set_value(item.reference_dt, item.reference_dn, 'invoiced', invoiced)
+		hso = frappe.get_doc(item.reference_dt, item.reference_dn)
+		if invoiced:
+			hso.update_invoice_details(item.qty)
+		else:
+			hso.update_invoice_details(item.qty * -1)
 
-		template_dt = frappe.db.get_value('Healthcare Service Order', item.reference_dn, 'template_dt')
-
-		order_map = {
+		# service transaction linking to HSO
+		template_map = {
 			'Clinical Procedure Template': 'Clinical Procedure',
 			'Therapy Type': 'Therapy Session',
 			'Lab Test Template': 'Lab Test'
+			# 'Healthcare Service Unit': 'Inpatient Occupancy'
 		}
-		dt = order_map.get(template_dt)
-		if dt:
+		dt = template_map.get(hso.template_dt)
+
+		if dt and frappe.db.exists(dt, {'service_order': item.reference_dn}):
 			frappe.db.set_value(dt, {'service_order': item.reference_dn}, 'invoiced', invoiced)
 
 
 def validate_invoiced_on_submit(item):
 	if item.reference_dt == 'Clinical Procedure' and \
 		frappe.db.get_single_value('Healthcare Settings', 'clinical_procedure_consumable_item') == item.item_code:
-		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, 'consumption_invoiced')
+			is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, 'consumption_invoiced')
+
+	elif item.reference_dt == 'Healthcare Service Order':
+		billing_status = frappe.db.get_value(item.reference_dt, item.reference_dn, 'billing_status')
+		is_invoiced = True if billing_status == 'Invoiced' else False
+
 	else:
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, 'invoiced')
+
 	if is_invoiced:
 		frappe.throw(_('Row #{} Item referenced by {} - {} is already invoiced').format(
 			item.idx, item.reference_dt, item.reference_dn))

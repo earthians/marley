@@ -91,6 +91,24 @@ class HealthcareServiceOrder(Document):
 		if not self.priority:
 			self.priority = 'Routine'
 
+	def update_invoice_details(self, qty):
+		'''
+		updates qty_invoiced and set  billing status
+		'''
+		qty_invoiced = self.qty_invoiced + qty
+
+		if qty_invoiced == 0:
+			status = 'Pending'
+		if qty_invoiced < self.quantity:
+			status = 'Partially Invoiced'
+		else:
+			status = 'Invoiced'
+
+		self.db_set({
+			'qty_invoiced': qty_invoiced,
+			'billing_status': status
+		})
+
 
 def update_service_order_status(service_order, service_dt, service_dn, status=None, qty=1):
 	# TODO: fix status updates from linked docs

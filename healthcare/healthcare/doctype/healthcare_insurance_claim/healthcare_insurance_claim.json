@@ -46,9 +46,7 @@
   "amount",
   "claim_amount",
   "patient_payable",
-  "insurance_claim_details_section_section",
-  "insurance_claim_details",
-  "invoice_details_section",
+  "insurance_claim_billing_summary_section",
   "qty_invoiced",
   "column_break_31",
   "claim_amount_invoiced"
@@ -175,7 +173,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nApproved\nRejected\nInvoiced\nPartially Invoiced\nPaid\nPartially Paid\nPayment Rejected\nCancelled",
+   "options": "Draft\nApproved\nCancelled\nRejected\nInvoiced\nPartially Invoiced\nSubmitted\nCompleted\nPayment Error\nPayment Rejected",
    "read_only": 1,
    "reqd": 1
   },
@@ -219,11 +217,6 @@
    "no_copy": 1,
    "options": "Item",
    "read_only_depends_on": "eval: doc.template_dt"
-  },
-  {
-   "depends_on": "eval:doc.status != 'Rejected'",
-   "fieldname": "invoice_details_section",
-   "fieldtype": "Section Break"
   },
   {
    "description": "<b>Expiry Date of Patient's Insurance Policy</b> (via Healthcare Insurance Subscription) or <b>Validity End Date of Coverage</b> (via Healthcare Service Insurance Coverage)",
@@ -286,20 +279,6 @@
    "label": "Service Coverage",
    "no_copy": 1,
    "options": "Healthcare Service Insurance Coverage",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.status != 'Rejected'",
-   "fieldname": "insurance_claim_details_section_section",
-   "fieldtype": "Section Break",
-   "label": "Insurance Claim Details"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "insurance_claim_details",
-   "fieldtype": "Table",
-   "no_copy": 1,
-   "options": "Healthcare Insurance Claim Detail",
    "read_only": 1
   },
   {
@@ -368,7 +347,6 @@
   {
    "allow_on_submit": 1,
    "default": "0",
-   "depends_on": "doc.qty_invoiced > 0",
    "fieldname": "qty_invoiced",
    "fieldtype": "Float",
    "label": "Total Qty Invoiced",
@@ -378,7 +356,6 @@
   {
    "allow_on_submit": 1,
    "default": "0",
-   "depends_on": "doc.qty_invoiced > 0",
    "fieldname": "claim_amount_invoiced",
    "fieldtype": "Currency",
    "label": "Total Claim Amount Invoiced",
@@ -391,12 +368,18 @@
    "label": "Medical Code Standard",
    "options": "Medical Code Standard",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.status != 'Rejected'",
+   "fieldname": "insurance_claim_billing_summary_section",
+   "fieldtype": "Section Break",
+   "label": "Insurance Billing Summary"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-07-11 11:04:19.998823",
+ "modified": "2021-07-18 17:02:32.151849",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Claim",

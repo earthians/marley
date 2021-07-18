@@ -58,9 +58,6 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 			};
 		});
 
-		if (!frm.is_new()) {
-
-		}
 		if (!frm.is_new() && frm.doc.docstatus === 0 && frm.doc.status == 'Draft') {
 
 			frm.add_custom_button(__('Mark Approved'), () => {
@@ -111,22 +108,22 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 	},
 
 	qty: function(frm) {
-		frm.trigger('calculate_claim_amount_on_update');
+		frm.trigger('calculate_claim_amount');
 	},
 
 	price_list_rate: function(frm) {
-		frm.trigger('calculate_claim_amount_on_update');
+		frm.trigger('calculate_claim_amount');
 	},
 
 	discount: function(frm) {
-		frm.trigger('calculate_claim_amount_on_update');
+		frm.trigger('calculate_claim_amount');
 	},
 
 	coverage: function(frm) {
-		frm.trigger('calculate_claim_amount_on_update');
+		frm.trigger('calculate_claim_amount');
 	},
 
-	calculate_claim_amount_on_update: function(frm) {
+	calculate_claim_amount: function(frm) {
 		if (frm.doc.price_list_rate && frm.doc.qty) {
 			// discount
 			if (frm.doc.discount > 0) {
