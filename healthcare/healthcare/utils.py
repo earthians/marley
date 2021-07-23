@@ -355,7 +355,7 @@ def get_inpatient_services_to_invoice(patient, company):
 	inpatient_services = frappe.db.sql(
 		"""
 			SELECT
-				io.*
+				io.*,ip.insurance_claim
 			FROM
 				`tabInpatient Record` ip, `tabInpatient Occupancy` io
 			WHERE
@@ -375,29 +375,70 @@ def get_inpatient_services_to_invoice(patient, company):
 		)
 		service_unit_type = frappe.get_cached_doc("Healthcare Service Unit Type", service_unit_type)
 		if service_unit_type and service_unit_type.is_billable:
-			hours_occupied = flt(
-				time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2
-			)
-			qty = 0.5
-			if hours_occupied > 0 and service_unit_type.no_of_hours:
-				actual_qty = hours_occupied / service_unit_type.no_of_hours
-				floor = math.floor(actual_qty)
-				decimal_part = actual_qty - floor
-				if decimal_part > 0.5:
-					qty = rounded(floor + 1, 1)
-				elif decimal_part < 0.5 and decimal_part > 0:
-					qty = rounded(floor + 0.5, 1)
-				if qty <= 0:
-					qty = 0.5
-			services_to_invoice.append(
-				{
-					"reference_type": "Inpatient Occupancy",
-					"reference_name": inpatient_occupancy.name,
-					"service": service_unit_type.item,
-					"qty": qty,
-				}
-			)
+			claim_details = None
+			if inpatient_occupancy.insurance_claim:
+				claim_details = frappe.get_cached_value(
+					"Healthcare Insurance Claim",
+					inpatient_occupancy.insurance_claim,
+					[
+						"status",
+						"coverage",
+						"discount",
+						"price_list_rate",
+						"item_code",
+						"qty",
+						"policy_number",
+						"claim_validity_end_date",
+						"company",
+						"insurance_company",
+					],
+					as_dict=True,
+				)
 
+			if (
+				claim_details
+				and claim_details.status in ["Approved", "Partially Invoiced"]
+				and getdate() <= claim_details.claim_validity_end_date
+				and company == claim_details.company
+			):
+				services_to_invoice.append(
+					{
+						"reference_type": "Inpatient Occupancy",
+						"reference_name": inpatient_occupancy.name,
+						"insurance_claim": inpatient_occupancy.insurance_claim,
+						"patient_insurance_policy": claim_details.policy_number,
+						"insurance_company": claim_details.insurance_company,
+						"service": claim_details.item_code,
+						"rate": claim_details.price_list_rate,
+						"insurance_claim_coverage": claim_details.coverage,
+						"discount_percentage": claim_details.discount,
+						"claim_qty": claim_details.qty,
+						"qty": claim_details.qty,
+					}
+				)
+			else:
+				hours_occupied = flt(
+					time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2
+				)
+				qty = 0.5
+				if hours_occupied > 0 and service_unit_type.no_of_hours:
+					actual_qty = hours_occupied / service_unit_type.no_of_hours
+					floor = math.floor(actual_qty)
+					decimal_part = actual_qty - floor
+					if decimal_part > 0.5:
+						qty = rounded(floor + 1, 1)
+					elif decimal_part < 0.5 and decimal_part > 0:
+						qty = rounded(floor + 0.5, 1)
+					if qty <= 0:
+						qty = 0.5
+				services_to_invoice.append(
+					{
+						"reference_type": "Inpatient Occupancy",
+						"reference_name": inpatient_occupancy.name,
+						"service": service_unit_type.item,
+						"qty": qty,
+					}
+				)
 	return services_to_invoice
 
 
@@ -576,9 +617,18 @@ def get_service_item_and_practitioner_charge(doc):
 
 	service_item = None
 	practitioner_charge = None
-	department = doc.medical_department if doc.doctype == "Patient Encounter" else doc.department
+	department = (
+		doc.medical_department
+		if doc.doctype in ["Patient Encounter", "Inpatient Record"]
+		else doc.department
+	)
 
-	is_inpatient = doc.inpatient_record
+	if doc.doctype == "Inpatient Record":
+		is_inpatient = doc.name
+		practitioner = doc.primary_practitioner
+	else:
+		is_inpatient = doc.inpatient_record
+		practitioner = doc.practitioner
 
 	if doc.get("appointment_type"):
 		service_item, practitioner_charge = get_appointment_type_service_item(
@@ -586,7 +636,7 @@ def get_service_item_and_practitioner_charge(doc):
 		)
 
 	if not service_item and not practitioner_charge:
-		service_item, practitioner_charge = get_practitioner_service_item(doc.practitioner, is_inpatient)
+		service_item, practitioner_charge = get_practitioner_service_item(practitioner, is_inpatient)
 		if not service_item:
 			service_item = get_healthcare_service_item(is_inpatient)
 
@@ -594,7 +644,7 @@ def get_service_item_and_practitioner_charge(doc):
 		throw_config_service_item(is_inpatient)
 
 	if not practitioner_charge:
-		throw_config_practitioner_charge(is_inpatient, doc.practitioner)
+		throw_config_practitioner_charge(is_inpatient, practitioner)
 
 	return {"service_item": service_item, "practitioner_charge": practitioner_charge}
 
