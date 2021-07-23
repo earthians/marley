@@ -27,6 +27,11 @@ frappe.ui.form.on('Inpatient Record', {
 			frm.add_custom_button(__('Discharge'), function() {
 				discharge_patient(frm);
 			} );
+			if (frm.doc.insurance_subscription) {
+				frm.add_custom_button(__('Create Insurance Claim'), function() {
+					create_insurance_claim(frm);
+				});
+			}
 		}
 		if (!frm.doc.__islocal && frm.doc.status != 'Admitted') {
 			frm.disable_save();
@@ -102,6 +107,7 @@ let admit_patient_dialog = function(frm) {
 			let service_unit = dialog.get_value('service_unit');
 			let check_in = dialog.get_value('check_in');
 			let expected_discharge = null;
+			let service_unit_type = dialog.get_value('service_unit_type');
 			if (dialog.get_value('expected_discharge')) {
 				expected_discharge = dialog.get_value('expected_discharge');
 			}
@@ -235,5 +241,19 @@ let transfer_patient_dialog = function(frm) {
 	}
 	dialog.set_values({
 		'leave_from': not_left_service_unit
+	});
+};
+
+let create_insurance_claim = function(frm) {
+	frappe.call({
+		doc: frm.doc,
+		method: 'create_insurance_claim',
+		callback: function(data) {
+			if (!data.exc) {
+				frm.reload_doc();
+			}
+		},
+		freeze: true,
+		freeze_message: __('Creating Insurance Claim')
 	});
 };
