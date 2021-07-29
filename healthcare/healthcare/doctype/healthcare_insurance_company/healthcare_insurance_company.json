@@ -15,6 +15,7 @@
   "customer",
   "column_break_3",
   "disabled",
+  "medical_code_standard",
   "image",
   "address_and_contacts_section",
   "address_html",
@@ -110,6 +111,13 @@
   {
    "fieldname": "column_break_3",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "Default Medical Code Standard for use while Insurance Claim Submission",
+   "fieldname": "medical_code_standard",
+   "fieldtype": "Link",
+   "label": "Medical Code Standard",
+   "options": "Medical Code Standard"
   }
  ],
  "image_field": "image",
@@ -127,7 +135,7 @@
    "link_fieldname": "insurance_company"
   }
  ],
- "modified": "2021-07-11 10:22:14.710654",
+ "modified": "2021-08-03 19:46:21.382244",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Insurance Company",
@@ -171,7 +179,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
- "search_fields": "insurance_company_name,customer",
+ "search_fields": "insurance_company_name",
  "sort_field": "modified",
  "sort_order": "ASC",
  "title_field": "insurance_company_name",

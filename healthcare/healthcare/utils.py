@@ -731,9 +731,9 @@ def update_insurance_claim(sales_invoice):
 	NOTE: Journal entries should be cancelled by now via Cancel All
 	"""
 	for item in sales_invoice.items:
-		if not item.insurance_claim:
+		if item.insurance_claim:
 			claim = frappe.get_doc("Healthcare Insurance Claim", item.insurance_claim)
-			claim.update_invoice_details(item.qty * -1, item.amount * -1)
+			claim.update_invoice_details(item.qty * -1, item.insurance_claim_amount * -1)
 
 
 def post_transfer_journal_entry_and_update_claim(sales_invoice):
@@ -802,7 +802,7 @@ def post_transfer_journal_entry_and_update_claim(sales_invoice):
 		# Update Insurance Claim
 		if journal_entry:
 			claim = frappe.get_doc("Healthcare Insurance Claim", item.insurance_claim)
-			claim.update_invoice_details(item.qty, item.amount)
+			claim.update_invoice_details(item.qty, item.insurance_claim_amount)
 
 
 def set_invoiced(item, method, ref_invoice=None):
