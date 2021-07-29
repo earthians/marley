@@ -68,30 +68,11 @@ class HealthcareInsuranceClaim(Document):
 
 		self.flags.silent = False
 
-	# def on_update_after_submit(self):
-	# 	qty_invoiced = sum(detail.get('invoice_qty', 0) for detail in self.insurance_claim_details)
-	# 	claim_amount_invoiced = sum(detail.get('invoice_amount', 0) for detail in self.insurance_claim_details)
-
-	# 	if qty_invoiced == 0:
-	# 		status = 'Approved'
-	# 	if qty_invoiced < self.qty:
-	# 		status = 'Partially Invoiced'
-	# 	else:
-	# 		status = 'Invoiced'
-
-	# 	self.db_set({
-	# 		'qty_invoiced': qty_invoiced,
-	# 		'claim_amount_invoiced': claim_amount_invoiced,
-	# 		'status': status
-	# 	})
-
-	def update_invoice_details(self, qty, amount):
+	def update_invoice_details(self, qty=0, amount=0):
 		'''
 		updates qty_invoiced, claim_amount_invoiced and sets status
 		NOTE: on invoice cancel, qty and amount ca be negative
 		'''
-
-		print(self.template_dt, qty)
 		qty_invoiced = self.qty_invoiced + qty
 		claim_amount_invoiced = self.claim_amount_invoiced + amount
 
@@ -230,7 +211,7 @@ def make_insurance_claim(patient, policy, company, template_dt=None, template_dn
 	'''
 	Inserts a new Insurance Claim for the service
 	If claim status is Approved, Submits the claim
-	Returns claim name and status if Insurance Claim inserted
+	Returns dict with claim name and status if Insurance Claim inserted
 	'''
 	if not (template_dt and template_dn) and not item_code:
 		return None
@@ -300,6 +281,6 @@ def create_insurance_coverage(doc):
 	coverage.coverage = doc.coverage
 	coverage.discount = doc.discount
 	coverage.start_date = doc.posting_date or getdate()
-	# coverage.end_date = doc.approval_validity_end_date # leave blank as this is dependent on policy end date
+	# coverage.end_date = doc.approval_validity_end_date # leave blank as claim.approval_validity_end_date is dependent on policy end date
 
 	return coverage

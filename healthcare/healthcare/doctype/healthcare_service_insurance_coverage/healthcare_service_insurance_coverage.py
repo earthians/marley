@@ -23,8 +23,14 @@ class HealthcareServiceInsuranceCoverage(Document):
 		self.set_title()
 
 	def validate_coverage_percentages(self):
-		if flt(self.coverage) <= 0 or flt(self.discount) < 0: # discount can be zero
-			frappe.throw(_('Invalid Coverage / Discount percentage'))
+		if self.coverage == 100:
+			self.discount = 0
+
+		if flt(self.coverage) <= 0 or \
+			flt(self.coverage) > 100 or \
+			flt(self.discount) < 0 or \
+			((flt(self.discount) + flt(self.discount)) > 100):
+				frappe.throw(_('Invalid Coverage / Discount percentage'))
 
 	def validate_dates(self):
 		if self.valid_from and self.valid_till:
@@ -96,16 +102,9 @@ def get_insurance_coverage(item_code, template_dt=None, template_dn=None, on_dat
 
 	coverage = frappe.db.sql('''
 		SELECT
-			name,
-			template_dt,
-			medical_code, item_code,
-			item_group,
-			valid_from,
-			valid_till,
-			insurance_coverage_plan,
-			mode_of_approval,
-			coverage,
-			discount
+			name, template_dt, medical_code, item_code, item_group,
+			valid_from, valid_till, insurance_coverage_plan,
+			mode_of_approval, coverage, discount
 		FROM `tabHealthcare Service Insurance Coverage`
 		WHERE {}
 		ORDER BY valid_from DESC
