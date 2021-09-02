@@ -9,7 +9,7 @@ import frappe
 from frappe.utils import add_days, now_datetime, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
-from erpnext.healthcare.doctype.patient_appointment.patient_appointment import (
+from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
 	check_is_new_patient,
 	check_payment_fields_reqd,
 	make_encounter,
@@ -138,12 +138,12 @@ class TestPatientAppointment(unittest.TestCase):
 		self.assertEqual(frappe.db.get_value('Sales Invoice', sales_invoice_name, 'status'), 'Cancelled')
 
 	def test_appointment_booking_for_admission_service_unit(self):
-		from erpnext.healthcare.doctype.inpatient_record.inpatient_record import (
+		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 			admit_patient,
 			discharge_patient,
 			schedule_discharge,
 		)
-		from erpnext.healthcare.doctype.inpatient_record.test_inpatient_record import (
+		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 			create_inpatient,
 			get_healthcare_service_unit,
 			mark_invoiced_inpatient_occupancy,
@@ -171,12 +171,12 @@ class TestPatientAppointment(unittest.TestCase):
 		discharge_patient(ip_record1)
 
 	def test_invalid_healthcare_service_unit_validation(self):
-		from erpnext.healthcare.doctype.inpatient_record.inpatient_record import (
+		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 			admit_patient,
 			discharge_patient,
 			schedule_discharge,
 		)
-		from erpnext.healthcare.doctype.inpatient_record.test_inpatient_record import (
+		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 			create_inpatient,
 			get_healthcare_service_unit,
 			mark_invoiced_inpatient_occupancy,
@@ -248,7 +248,7 @@ class TestPatientAppointment(unittest.TestCase):
 		assert len(appointments) == 2
 
 	def test_overlap_appointment(self):
-		from erpnext.healthcare.doctype.patient_appointment.patient_appointment import OverlapError
+		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import OverlapError
 		patient, practitioner = create_healthcare_docs(id=1)
 		patient_1, practitioner_1 = create_healthcare_docs(id=2)
 		service_unit = create_service_unit(id=0)
@@ -280,7 +280,7 @@ class TestPatientAppointment(unittest.TestCase):
 		self.assertRaises(OverlapError, appointment.save)
 
 	def test_service_unit_capacity(self):
-		from erpnext.healthcare.doctype.patient_appointment.patient_appointment import (
+		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
 			MaximumCapacityError,
 			OverlapError,
 		)

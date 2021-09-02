@@ -14,11 +14,11 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, get_link_to_form, get_time, getdate
 
-from erpnext.healthcare.doctype.healthcare_settings.healthcare_settings import (
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
 )
-from erpnext.healthcare.utils import (
+from healthcare.healthcare.utils import (
 	check_fee_validity,
 	get_service_item_and_practitioner_charge,
 	manage_fee_validity,
@@ -111,7 +111,7 @@ class PatientAppointment(Document):
 
 	def validate_service_unit(self):
 		if self.inpatient_record and self.service_unit:
-			from erpnext.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry import (
+			from healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry import (
 				get_current_healthcare_service_unit,
 			)
 

@@ -80,7 +80,7 @@ let change_template_code = function(doc) {
 
 			if (values) {
 				frappe.call({
-					'method': 'erpnext.healthcare.doctype.therapy_type.therapy_type.change_item_code_from_therapy',
+					'method': 'healthcare.healthcare.doctype.therapy_type.therapy_type.change_item_code_from_therapy',
 					'args': {item_code: values.item_code, doc: doc},
 					callback: function () {
 						cur_frm.reload_doc();

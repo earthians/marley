@@ -15,7 +15,7 @@ frappe.ui.form.on('Sample Collection', {
 frappe.ui.form.on('Sample Collection', 'patient', function(frm) {
 	if(frm.doc.patient){
 		frappe.call({
-			'method': 'erpnext.healthcare.doctype.patient.patient.get_patient_detail',
+			'method': 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 			args: {
 				patient: frm.doc.patient
 			},

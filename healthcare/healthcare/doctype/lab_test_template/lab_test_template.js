@@ -54,7 +54,7 @@ let change_template_code = function(doc) {
 			let values = d.get_values();
 			if (values) {
 				frappe.call({
-					'method': 'erpnext.healthcare.doctype.lab_test_template.lab_test_template.change_test_code_from_template',
+					'method': 'healthcare.healthcare.doctype.lab_test_template.lab_test_template.change_test_code_from_template',
 					'args': {lab_test_code: values.lab_test_code, doc: doc},
 					callback: function (data) {
 						frappe.set_route('Form', 'Lab Test Template', data.message);

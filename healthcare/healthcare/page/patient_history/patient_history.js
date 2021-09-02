@@ -68,7 +68,7 @@ class PatientHistory {
 		let me = this;
 
 		frappe.xcall(
-			'erpnext.healthcare.page.patient_history.patient_history.get_patient_history_doctypes'
+			'healthcare.healthcare.page.patient_history.patient_history.get_patient_history_doctypes'
 		).then(document_types => {
 			let doctype_filter = frappe.ui.form.make_control({
 				parent: $('.doctype-filter'),
@@ -128,7 +128,7 @@ class PatientHistory {
 
 		let me = this;
 		frappe.call({
-			'method': 'erpnext.healthcare.page.patient_history.patient_history.get_feed',
+			'method': 'healthcare.healthcare.page.patient_history.patient_history.get_feed',
 			args: filters,
 			callback: function(r) {
 				let data = r.message;
@@ -257,7 +257,7 @@ class PatientHistory {
 	show_patient_details() {
 		let me = this;
 		frappe.call({
-			'method': 'erpnext.healthcare.doctype.patient.patient.get_patient_detail',
+			'method': 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 			args: {
 				patient: me.patient_id
 			},
@@ -316,7 +316,7 @@ class PatientHistory {
 				if (doctype && docname) {
 					let exclude = ['patient', 'patient_name', 'patient_sex', 'encounter_date', 'naming_series'];
 					frappe.call({
-						method: 'erpnext.healthcare.utils.render_doc_as_html',
+						method: 'healthcare.healthcare.utils.render_doc_as_html',
 						args: {
 							doctype: doctype,
 							docname: docname,
@@ -362,7 +362,7 @@ class PatientHistory {
 		let me = this;
 
 		frappe.call({
-			method: 'erpnext.healthcare.utils.get_patient_vitals',
+			method: 'healthcare.healthcare.utils.get_patient_vitals',
 			args: {
 				patient: me.patient_id
 			},

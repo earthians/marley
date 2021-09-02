@@ -9,7 +9,7 @@ import frappe
 from frappe.utils import add_days, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
-from erpnext.healthcare.doctype.patient_appointment.test_patient_appointment import (
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
 	create_healthcare_docs,
 	create_healthcare_service_items,

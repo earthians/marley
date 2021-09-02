@@ -47,7 +47,7 @@ var create_multiple_dialog = function (listview) {
 		primary_action_label: __('Create'),
 		primary_action: function () {
 			frappe.call({
-				method: 'erpnext.healthcare.doctype.lab_test.lab_test.create_multiple',
+				method: 'healthcare.healthcare.doctype.lab_test.lab_test.create_multiple',
 				args: {
 					'doctype': dialog.get_value('doctype'),
 					'docname': dialog.get_value('docname')

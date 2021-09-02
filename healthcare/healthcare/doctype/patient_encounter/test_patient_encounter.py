@@ -7,7 +7,7 @@ import unittest
 
 import frappe
 
-from erpnext.healthcare.doctype.patient_encounter.patient_encounter import PatientEncounter
+from healthcare.healthcare.doctype.patient_encounter.patient_encounter import PatientEncounter
 
 
 class TestPatientEncounter(unittest.TestCase):

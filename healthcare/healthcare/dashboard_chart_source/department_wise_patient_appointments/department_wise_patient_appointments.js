@@ -1,7 +1,7 @@
 frappe.provide('frappe.dashboards.chart_sources');
 
 frappe.dashboards.chart_sources["Department wise Patient Appointments"] = {
-	method: "erpnext.healthcare.dashboard_chart_source.department_wise_patient_appointments.department_wise_patient_appointments.get",
+	method: "healthcare.healthcare.dashboard_chart_source.department_wise_patient_appointments.department_wise_patient_appointments.get",
 	filters: [
 		{
 			fieldname: "company",

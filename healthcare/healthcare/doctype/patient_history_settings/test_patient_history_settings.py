@@ -9,7 +9,7 @@ import unittest
 import frappe
 from frappe.utils import getdate, strip_html
 
-from erpnext.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
 
 
 class TestPatientHistorySettings(unittest.TestCase):

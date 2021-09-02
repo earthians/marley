@@ -44,7 +44,7 @@ frappe.ui.form.on('Therapy Session', {
 		if (frm.doc.docstatus === 1) {
 			frm.add_custom_button(__('Patient Assessment'), function() {
 				frappe.model.open_mapped_doc({
-					method: 'erpnext.healthcare.doctype.patient_assessment.patient_assessment.create_patient_assessment',
+					method: 'healthcare.healthcare.doctype.patient_assessment.patient_assessment.create_patient_assessment',
 					frm: frm,
 				})
 			}, 'Create');
@@ -53,7 +53,7 @@ frappe.ui.form.on('Therapy Session', {
 				if (r && !r.therapy_plan_template) {
 					frm.add_custom_button(__('Sales Invoice'), function() {
 						frappe.model.open_mapped_doc({
-							method: 'erpnext.healthcare.doctype.therapy_session.therapy_session.invoice_therapy_session',
+							method: 'healthcare.healthcare.doctype.therapy_session.therapy_session.invoice_therapy_session',
 							frm: frm,
 						});
 					}, 'Create');
@@ -89,7 +89,7 @@ frappe.ui.form.on('Therapy Session', {
 	patient: function(frm) {
 		if (frm.doc.patient) {
 			frappe.call({
-				'method': 'erpnext.healthcare.doctype.patient.patient.get_patient_detail',
+				'method': 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 				args: {
 					patient: frm.doc.patient
 				},

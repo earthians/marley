@@ -11,7 +11,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, cstr
 
-from erpnext.healthcare.page.patient_history.patient_history import get_patient_history_doctypes
+from healthcare.healthcare.page.patient_history.patient_history import get_patient_history_doctypes
 
 
 class PatientHistorySettings(Document):

@@ -4,7 +4,7 @@ frappe.treeview_settings['Healthcare Service Unit'] = {
 	breadcrumbs: 'Healthcare Service Unit',
 	title: __('Service Unit Tree'),
 	get_tree_root: false,
-	get_tree_nodes: 'erpnext.healthcare.utils.get_children',
+	get_tree_nodes: 'healthcare.healthcare.utils.get_children',
 	filters: [{
 		fieldname: 'company',
 		fieldtype: 'Select',
@@ -154,7 +154,7 @@ frappe.treeview_settings['Healthcare Service Unit'] = {
 						if (!vals) return;
 
 						return frappe.call({
-							method: 'erpnext.healthcare.doctype.healthcare_service_unit.healthcare_service_unit.add_multiple_service_units',
+							method: 'healthcare.healthcare.doctype.healthcare_service_unit.healthcare_service_unit.add_multiple_service_units',
 							args: {
 								parent: node.data.value,
 								data: vals

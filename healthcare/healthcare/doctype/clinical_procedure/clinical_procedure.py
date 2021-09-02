@@ -10,8 +10,8 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, nowdate, nowtime
 
-from erpnext.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
-from erpnext.healthcare.doctype.lab_test.lab_test import create_sample_doc
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
+from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 

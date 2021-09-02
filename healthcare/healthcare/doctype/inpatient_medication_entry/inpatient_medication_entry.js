@@ -36,7 +36,7 @@ frappe.ui.form.on('Inpatient Medication Entry', {
 
 		frm.add_custom_button(__('Make Stock Entry'), function() {
 			frappe.call({
-				method: 'erpnext.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry.make_difference_stock_entry',
+				method: 'healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry.make_difference_stock_entry',
 				args: {	docname: frm.doc.name },
 				freeze: true,
 				callback: function(r) {

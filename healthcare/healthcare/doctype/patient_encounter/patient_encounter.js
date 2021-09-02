@@ -61,7 +61,7 @@ frappe.ui.form.on('Patient Encounter', {
 			if (frm.doc.drug_prescription && frm.doc.inpatient_record && frm.doc.inpatient_status === "Admitted") {
 				frm.add_custom_button(__('Inpatient Medication Order'), function() {
 					frappe.model.open_mapped_doc({
-						method: 'erpnext.healthcare.doctype.patient_encounter.patient_encounter.make_ip_medication_order',
+						method: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.make_ip_medication_order',
 						frm: frm
 					});
 				}, 'Create');
@@ -156,7 +156,7 @@ frappe.ui.form.on('Patient Encounter', {
 	set_patient_info: function(frm) {
 		if (frm.doc.patient) {
 			frappe.call({
-				method: 'erpnext.healthcare.doctype.patient.patient.get_patient_detail',
+				method: 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 				args: {
 					patient: frm.doc.patient
 				},
@@ -253,7 +253,7 @@ var schedule_inpatient = function(frm) {
 				admission_instruction: dialog.get_value('admission_instruction')
 			}
 			frappe.call({
-				method: 'erpnext.healthcare.doctype.inpatient_record.inpatient_record.schedule_inpatient',
+				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_inpatient',
 				args: {
 					args: args
 				},
@@ -311,7 +311,7 @@ var schedule_discharge = function(frm) {
 				discharge_note: dialog.get_value('discharge_note')
 			}
 			frappe.call ({
-				method: 'erpnext.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge',
+				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge',
 				args: {args},
 				callback: function(data) {
 					if(!data.exc){

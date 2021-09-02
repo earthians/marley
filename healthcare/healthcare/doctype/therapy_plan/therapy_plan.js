@@ -31,7 +31,7 @@ frappe.ui.form.on('Therapy Plan', {
 				frm.add_custom_button(__('Therapy Session'), function() {
 					frappe.prompt(fields, data => {
 						frappe.call({
-							method: 'erpnext.healthcare.doctype.therapy_plan.therapy_plan.make_therapy_session',
+							method: 'healthcare.healthcare.doctype.therapy_plan.therapy_plan.make_therapy_session',
 							args: {
 								therapy_plan: frm.doc.name,
 								patient: frm.doc.patient,
@@ -75,7 +75,7 @@ frappe.ui.form.on('Therapy Plan', {
 				'company': frm.doc.company,
 				'therapy_plan_template': frm.doc.therapy_plan_template
 			},
-			method: 'erpnext.healthcare.doctype.therapy_plan.therapy_plan.make_sales_invoice',
+			method: 'healthcare.healthcare.doctype.therapy_plan.therapy_plan.make_sales_invoice',
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
 				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);

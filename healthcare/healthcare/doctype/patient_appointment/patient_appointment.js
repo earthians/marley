@@ -63,7 +63,7 @@ frappe.ui.form.on('Patient Appointment', {
 					});
 				} else {
 					frappe.call({
-						method: 'erpnext.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
+						method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
 						args: { 'patient': frm.doc.patient },
 						callback: function(data) {
 							if (data.message == true) {
@@ -113,21 +113,21 @@ frappe.ui.form.on('Patient Appointment', {
 			if (frm.doc.procedure_template) {
 				frm.add_custom_button(__('Clinical Procedure'), function() {
 					frappe.model.open_mapped_doc({
-						method: 'erpnext.healthcare.doctype.clinical_procedure.clinical_procedure.make_procedure',
+						method: 'healthcare.healthcare.doctype.clinical_procedure.clinical_procedure.make_procedure',
 						frm: frm,
 					});
 				}, __('Create'));
 			} else if (frm.doc.therapy_type) {
 				frm.add_custom_button(__('Therapy Session'), function() {
 					frappe.model.open_mapped_doc({
-						method: 'erpnext.healthcare.doctype.therapy_session.therapy_session.create_therapy_session',
+						method: 'healthcare.healthcare.doctype.therapy_session.therapy_session.create_therapy_session',
 						frm: frm,
 					})
 				}, 'Create');
 			} else {
 				frm.add_custom_button(__('Patient Encounter'), function() {
 					frappe.model.open_mapped_doc({
-						method: 'erpnext.healthcare.doctype.patient_appointment.patient_appointment.make_encounter',
+						method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.make_encounter',
 						frm: frm,
 					});
 				}, __('Create'));
@@ -180,7 +180,7 @@ frappe.ui.form.on('Patient Appointment', {
 		frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing').then(val => {
 			if (val) {
 				frappe.call({
-					method: 'erpnext.healthcare.utils.get_service_item_and_practitioner_charge',
+					method: 'healthcare.healthcare.utils.get_service_item_and_practitioner_charge',
 					args: {
 						doc: frm.doc
 					},
@@ -229,7 +229,7 @@ frappe.ui.form.on('Patient Appointment', {
 
 	toggle_payment_fields: function(frm) {
 		frappe.call({
-			method: 'erpnext.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
+			method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
 			args: { 'patient': frm.doc.patient },
 			callback: function(data) {
 				if (data.message.fee_validity) {
@@ -264,7 +264,7 @@ frappe.ui.form.on('Patient Appointment', {
 	get_prescribed_therapies: function(frm) {
 		if (frm.doc.patient) {
 			frappe.call({
-				method: "erpnext.healthcare.doctype.patient_appointment.patient_appointment.get_prescribed_therapies",
+				method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_prescribed_therapies",
 				args: { patient: frm.doc.patient },
 				callback: function(r) {
 					if (r.message) {
@@ -375,7 +375,7 @@ let check_and_set_availability = function(frm) {
 		if (d.get_value('appointment_date') && d.get_value('practitioner')) {
 			fd.available_slots.html('');
 			frappe.call({
-				method: 'erpnext.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data',
+				method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data',
 				args: {
 					practitioner: d.get_value('practitioner'),
 					date: d.get_value('appointment_date')
@@ -505,7 +505,7 @@ let check_and_set_availability = function(frm) {
 let get_prescribed_procedure = function(frm) {
 	if (frm.doc.patient) {
 		frappe.call({
-			method: 'erpnext.healthcare.doctype.patient_appointment.patient_appointment.get_procedure_prescribed',
+			method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_procedure_prescribed',
 			args: { patient: frm.doc.patient },
 			callback: function(r) {
 				if (r.message && r.message.length) {
@@ -636,7 +636,7 @@ let update_status = function(frm, status) {
 	frappe.confirm(__('Are you sure you want to cancel this appointment?'),
 		function() {
 			frappe.call({
-				method: 'erpnext.healthcare.doctype.patient_appointment.patient_appointment.update_status',
+				method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_status',
 				args: { appointment_id: doc.name, status: status },
 				callback: function(data) {
 					if (!data.exc) {

@@ -8,13 +8,13 @@ import unittest
 import frappe
 from frappe.utils import getdate, nowtime
 
-from erpnext.healthcare.doctype.healthcare_settings.healthcare_settings import (
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
 )
-from erpnext.healthcare.doctype.lab_test.lab_test import create_multiple
-from erpnext.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
-from erpnext.healthcare.doctype.patient_medical_record.test_patient_medical_record import (
+from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
+from healthcare.healthcare.doctype.patient_medical_record.test_patient_medical_record import (
 	create_lab_test_template as create_blood_test_template,
 )
 

@@ -74,7 +74,7 @@ let change_template_code = function(doc) {
 
 			if (values) {
 				frappe.call({
-					'method': 'erpnext.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.change_item_code_from_template',
+					'method': 'healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.change_item_code_from_template',
 					'args': {item_code: values.item_code, doc: doc},
 					callback: function () {
 						cur_frm.reload_doc();
@@ -130,7 +130,7 @@ frappe.ui.form.on('Clinical Procedure Item', {
 				'quantity'			: d.qty
 			};
 			return frappe.call({
-				method: 'erpnext.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.get_item_details',
+				method: 'healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.get_item_details',
 				args: {args: args},
 				callback: function(r) {
 					if (r.message) {
