@@ -1,0 +1,2 @@
+pre-commit>=2.13.0,<=3.0.0
+responses~=0.13.3
