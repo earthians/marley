@@ -94,6 +94,6 @@ jobs:
 
 
       - name: Run Tests
-        run: cd ~/frappe-bench/ && bench --site test_site run-tests --app ecommerce_integrations
+        run: cd ~/frappe-bench/ && bench --site test_site run-tests --app healthcare
         env:
           TYPE: server
