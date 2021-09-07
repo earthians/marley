@@ -35,7 +35,7 @@ frappe.ui.form.on('Patient Appointment', {
 
 		frm.set_query('service_unit', function() {
 			return {
-				query: 'erpnext.controllers.queries.get_healthcare_service_units',
+				query: 'healthcare.controllers.queries.get_healthcare_service_units',
 				filters: {
 					company: frm.doc.company,
 					inpatient_record: frm.doc.inpatient_record
