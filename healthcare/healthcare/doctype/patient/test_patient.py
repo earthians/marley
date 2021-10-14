@@ -84,4 +84,4 @@ class TestPatient(unittest.TestCase):
 		patient.save()
 
 		customer = frappe.get_doc('Customer', patient.customer)
-		assert customer.image == patient.image
+		self.assertEqual(customer.image, patient.image)
