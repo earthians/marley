@@ -72,3 +72,16 @@ class TestPatient(unittest.TestCase):
 		})
 
 		self.assertRaises(frappe.exceptions.DuplicateEntryError, new_patient.insert)
+
+	def test_patient_image_update_should_update_customer_image(self):
+		settings = frappe.get_single('Healthcare Settings')
+		settings.link_customer_to_patient = 1
+		settings.save()
+
+		patient_name = create_patient()
+		patient = frappe.get_doc('Patient', patient_name)
+		patient.image = '/files/bar.png'
+		patient.save()
+
+		customer = frappe.get_doc('Customer', patient.customer)
+		self.assertEqual(customer.image, patient.image)

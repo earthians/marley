@@ -54,6 +54,7 @@ class Patient(Document):
 				customer.default_price_list = self.default_price_list
 				customer.default_currency = self.default_currency
 				customer.language = self.language
+				customer.image = self.image
 				customer.ignore_mandatory = True
 				customer.save(ignore_permissions=True)
 			else:
@@ -233,7 +234,8 @@ def create_customer(doc):
 		'customer_type': 'Individual',
 		'default_currency': doc.default_currency,
 		'default_price_list': doc.default_price_list,
-		'language': doc.language
+		'language': doc.language,
+		'image': doc.image,
 	}).insert(ignore_permissions=True, ignore_mandatory=True)
 
 	frappe.db.set_value('Patient', doc.name, 'customer', customer.name)
