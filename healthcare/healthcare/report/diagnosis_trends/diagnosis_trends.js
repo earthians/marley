@@ -59,7 +59,7 @@ frappe.query_reports['Diagnosis Trends'] = {
 					let new_datasets = raw_data.datasets;
 
 					let found = false;
-					for (let i=0; i < new_datasets.length;i++) {
+					for (let i=0; i < new_datasets.length; i++) {
 						if (new_datasets[i].name == row_name) {
 							found = true;
 							new_datasets.splice(i,1);
