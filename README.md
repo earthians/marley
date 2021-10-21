@@ -11,4 +11,4 @@ Read documentation at https://docs.erpnext.com/docs/user/manual/en/healthcare
 
 #### License
 
-MIT
+AGPL V3
