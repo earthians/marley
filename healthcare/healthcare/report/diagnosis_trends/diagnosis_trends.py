@@ -94,6 +94,7 @@ class DiagnosisTrends(object):
 	def get_data(self):
 		filters = self.get_common_filters()
 
+		print(filters)
 		self.entries = frappe.db.get_all('Patient Encounter Diagnosis',
 			fields=['*'],
 			filters=filters
@@ -118,7 +119,7 @@ class DiagnosisTrends(object):
 		return period
 
 	def get_common_filters(self):
-		filters = {'creation': ('between', [self.filters.from_date, self.filters.to_date])}
+		filters = {'creation': ['between', (self.filters.from_date, self.filters.to_date)]}
 
 		department = self.filters.get('department')
 		if department:

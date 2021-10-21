@@ -15,6 +15,7 @@ from frappe.utils.formatters import format_value
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
+from healthcare.healthcare.setup import setup_healthcare
 
 
 @frappe.whitelist()
@@ -790,3 +791,27 @@ def update_patient_email_and_phone_numbers(contact, method):
 				frappe.db.set_value('Patient', link.get('link_name'), 'mobile', contact.mobile_no)
 			if contact.phone and contact.phone != contact_details.get('phone'):
 				frappe.db.set_value('Patient', link.get('link_name'), 'phone', contact.phone)
+
+
+def before_tests():
+	# complete setup if missing
+	from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
+	if not frappe.get_list("Company"):
+		setup_complete({
+			"currency"          :"USD",
+			"full_name"         :"Test User",
+			"company_name"      :"Frappe Care LLC",
+			"timezone"          :"America/New_York",
+			"company_abbr"      :"WP",
+			"industry"          :"Healthcare",
+			"country"           :"United States",
+			"fy_start_date"     :"2021-01-01",
+			"fy_end_date"       :"2021-12-31",
+			"language"          :"english",
+			"company_tagline"   :"Testing",
+			"email"             :"test@erpnext.com",
+			"password"          :"test",
+			"chart_of_accounts" : "Standard",
+			"domains"           : ["Healthcare"],
+		})
+		setup_healthcare()
