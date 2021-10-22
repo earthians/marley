@@ -48,6 +48,9 @@ sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
 bench get-app https://github.com/frappe/erpnext
 
+if [ "$TYPE" == "server" ]; then bench setup requirements --dev; fi
+
+
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
 
