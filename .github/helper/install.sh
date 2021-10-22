@@ -46,7 +46,7 @@ sed -i 's/schedule:/# schedule:/g' Procfile
 sed -i 's/socketio:/# socketio:/g' Procfile
 sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
-bench get-app https://github.com/chillarAnand/erpnext --branch care
+bench get-app https://github.com/frappe/erpnext
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
