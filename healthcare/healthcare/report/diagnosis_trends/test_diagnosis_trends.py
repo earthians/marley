@@ -1,175 +1,115 @@
 import unittest
+from pprint import pprint
 
 import frappe
+from erpnext.tests.utils import ERPNextTestCase
 from frappe import DuplicateEntryError
 from frappe.utils import add_months, getdate
 
 from healthcare.healthcare.report.diagnosis_trends.diagnosis_trends import execute
+from healthcare.healthcare.test_utils import create_encounter
 
 months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 
-class TestDiagnosisTrends(unittest.TestCase):
+class TestDiagnosisTrends(ERPNextTestCase):
 	@classmethod
-	def setUpClass(self):
-		self.create_diagnosis()
+	def setUpClass(cls):
+		cls.create_diagnosis()
 
 	@classmethod
 	def create_diagnosis(cls):
+		medical_department = frappe.get_doc({
+			'doctype': 'Medical Department',
+			'department': 'Cardiology'
+		})
 		try:
-			diagnosis = frappe.get_doc({
+			medical_department.insert()
+		except:
+			pass
+
+		patient = frappe.get_list('Patient')[0]
+		practitioner = frappe.get_list('Healthcare Practitioner')[0]
+
+		encounter_cardiology = create_encounter(
+			patient=patient.name,
+			medical_department=medical_department,
+			practitioner=practitioner.name,
+		)
+		d = encounter = frappe.get_list('Patient Encounter'
+										# filters={'medical_department': medical_department}
+										)
+		print(d)
+		
+		print(encounter_cardiology.encounter_date)
+		print(encounter_cardiology.name)
+
+		try:
+			cls.diagnosis = frappe.get_doc({
 				'doctype': 'Diagnosis',
 				'diagnosis': 'Fever',
 			})
-			diagnosis.insert()
+			cls.diagnosis.insert()
 		except DuplicateEntryError:
 			pass
-		encounter = frappe.get_list('Patient Encounter')[0]
 
-		diagnosis = frappe.get_doc({
-			'doctype': 'Patient Encounter Diagnosis',
-			'diagnosis': 'Fever',
-			'parent': encounter,
-			'parenttype': 'Patient Encounter',
-		})
 		try:
+			cls.diagnosis_cardio = frappe.get_doc({
+				'doctype': 'Diagnosis',
+				'diagnosis': 'Heart Attack',
+			})
+			cls.diagnosis_cardio.insert()
+		except DuplicateEntryError:
+			pass
+
+		try:
+			diagnosis = frappe.get_doc({
+				'doctype': 'Patient Encounter Diagnosis',
+				'diagnosis': 'Fever',
+				'parent': encounter,
+				'parenttype': 'Patient Encounter',
+			})
 			diagnosis.insert()
 		except ValueError:
 			pass
 
-	def test_diagnosis_analytics(self):
-		self.compare_result_for_customer()
-		self.compare_result_for_Diagnosis_type()
-		self.compare_result_for_Diagnosis_priority()
-		self.compare_result_for_assignment()
+		try:
+			diagnosis = frappe.get_doc({
+				'doctype': 'Patient Encounter Diagnosis',
+				'diagnosis': 'Heart Attack',
+				'parent': encounter_cardiology.name,
+				'parenttype': 'Patient Encounter',
+			})
+			diagnosis.insert()
+		except ValueError:
+			pass
 
-	def compare_result_for_customer(self):
+		data = frappe.get_list('Patient Encounter Diagnosis', fields=['name', 'parent'])
+		# print(data)
+
+	def test_report_data(self):
 		filters = {
 			'from_date': str(add_months(getdate(), -12)),
 			'to_date': str(getdate()),
 			'range': 'Monthly',
 		}
 		report = execute(filters)
+		data = [i['diagnosis'] for i in report[1]]
+		self.assertIn(self.diagnosis.diagnosis, data)
 
-		expected_data = [
-			{
-				'customer': '__Test Customer 2',
-				self.last_month: 1.0,
-				self.current_month: 0.0,
-				'total': 1.0
-			},
-			{
-				'customer': '__Test Customer 1',
-				self.last_month: 0.0,
-				self.current_month: 1.0,
-				'total': 1.0
-			},
-			{
-				'customer': '__Test Customer',
-				self.last_month: 1.0,
-				self.current_month: 1.0,
-				'total': 2.0
-			}
-		]
+	def test_report_data_with_filters(self):
+		medical_department = frappe.get_doc('Medical Department', 'Cardiology')
 
-		self.assertEqual(expected_data, report[1]) # rows
-		self.assertEqual(len(report[0]), 4) # cols
-
-	def compare_result_for_Diagnosis_type(self):
 		filters = {
-			'company': '_Test Company',
-			'based_on': 'Diagnosis Type',
-			'from_date': add_months(getdate(), -1),
-			'to_date': getdate(),
-			'range': 'Monthly'
+			'from_date': str(add_months(getdate(), -12)),
+			'to_date': str(getdate()),
+			'range': 'Monthly',
+			'department': medical_department.name,
 		}
-
 		report = execute(filters)
+		# pprint(report)
 
-		expected_data = [
-			{
-				'Diagnosis_type': 'Discomfort',
-				self.last_month: 1.0,
-				self.current_month: 0.0,
-				'total': 1.0
-			},
-			{
-				'Diagnosis_type': 'Service Request',
-				self.last_month: 0.0,
-				self.current_month: 1.0,
-				'total': 1.0
-			},
-			{
-				'Diagnosis_type': 'Bug',
-				self.last_month: 1.0,
-				self.current_month: 1.0,
-				'total': 2.0
-			}
-		]
+		data = [i['diagnosis'] for i in report[1]]
+		print(data)
 
-		self.assertEqual(expected_data, report[1]) # rows
-		self.assertEqual(len(report[0]), 4) # cols
-
-	def compare_result_for_Diagnosis_priority(self):
-		filters = {
-			'company': '_Test Company',
-			'based_on': 'Diagnosis Priority',
-			'from_date': add_months(getdate(), -1),
-			'to_date': getdate(),
-			'range': 'Monthly'
-		}
-
-		report = execute(filters)
-
-		expected_data = [
-			{
-				'priority': 'Medium',
-				self.last_month: 1.0,
-				self.current_month: 1.0,
-				'total': 2.0
-			},
-			{
-				'priority': 'Low',
-				self.last_month: 1.0,
-				self.current_month: 0.0,
-				'total': 1.0
-			},
-			{
-				'priority': 'High',
-				self.last_month: 0.0,
-				self.current_month: 1.0,
-				'total': 1.0
-			}
-		]
-
-		self.assertEqual(expected_data, report[1]) # rows
-		self.assertEqual(len(report[0]), 4) # cols
-
-	def compare_result_for_assignment(self):
-		filters = {
-			'company': '_Test Company',
-			'based_on': 'Assigned To',
-			'from_date': add_months(getdate(), -1),
-			'to_date': getdate(),
-			'range': 'Monthly'
-		}
-
-		report = execute(filters)
-
-		expected_data = [
-			{
-				'user': 'test@example.com',
-				self.last_month: 1.0,
-				self.current_month: 1.0,
-				'total': 2.0
-			},
-			{
-				'user': 'test1@example.com',
-				self.last_month: 2.0,
-				self.current_month: 1.0,
-				'total': 3.0
-			}
-		]
-
-		self.assertEqual(expected_data, report[1]) # rows
-		self.assertEqual(len(report[0]), 4) # cols
+		self.assertIn(self.diagnosis_cardio.diagnosis, data)

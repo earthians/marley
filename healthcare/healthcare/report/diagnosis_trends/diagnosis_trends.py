@@ -94,12 +94,10 @@ class DiagnosisTrends(object):
 	def get_data(self):
 		filters = self.get_common_filters()
 
-		print(filters)
-		self.entries = frappe.db.get_all('Patient Encounter Diagnosis',
+		self.entries = frappe.get_all('Patient Encounter Diagnosis',
 			fields=['*'],
 			filters=filters
 		)
-
 		self.get_rows()
 
 	def get_period(self, appointment_date):
