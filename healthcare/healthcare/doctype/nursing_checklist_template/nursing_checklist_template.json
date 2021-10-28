@@ -1,33 +1,49 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:title",
  "creation": "2021-10-20 12:03:38.538651",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "title",
-  "department"
+  "department",
+  "tasks_section",
+  "tasks"
  ],
  "fields": [
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Title"
+   "label": "Title",
+   "unique": 1
   },
   {
    "fieldname": "department",
    "fieldtype": "Link",
    "label": "Department",
    "options": "Medical Department"
+  },
+  {
+   "fieldname": "tasks_section",
+   "fieldtype": "Section Break",
+   "label": "Tasks"
+  },
+  {
+   "fieldname": "tasks",
+   "fieldtype": "Table",
+   "label": "Tasks",
+   "options": "Nursing Checklist Template Task"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-10-20 12:03:38.538651",
+ "modified": "2021-10-28 06:44:15.954518",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
