@@ -14,6 +14,7 @@
   "lab_test_code",
   "lab_test_group",
   "department",
+  "nursing_checklist_template",
   "column_break_3",
   "disabled",
   "lab_test_template_type",
@@ -316,13 +317,21 @@
   {
    "fieldname": "column_break_33",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
   }
  ],
  "links": [],
- "modified": "2020-07-30 14:32:40.449818",
+ "migration_hash": "04ea062dcd8e59976e0c33bb708f4d77",
+ "modified": "2021-10-29 07:03:29.808489",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

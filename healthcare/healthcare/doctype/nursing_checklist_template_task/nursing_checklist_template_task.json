@@ -18,12 +18,14 @@
   {
    "fieldname": "activity",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Activity",
    "options": "Healthcare Activity"
   },
   {
    "fieldname": "description",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Description"
   },
   {
@@ -46,11 +48,13 @@
    "default": "0",
    "fieldname": "is_mandatory",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Is Mandatory"
   },
   {
    "fieldname": "role",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Role",
    "options": "Role"
   }
@@ -58,7 +62,8 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-10-28 06:37:45.949393",
+ "migration_hash": "bc7820f21e821210df5a4edeb732721e",
+ "modified": "2021-10-28 06:49:50.231588",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template Task",

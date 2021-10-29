@@ -6,18 +6,19 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "activity_type"
+  "activity"
  ],
  "fields": [
   {
-   "fieldname": "activity_type",
+   "fieldname": "activity",
    "fieldtype": "Data",
-   "label": "Activity Type"
+   "label": "Activity"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-10-28 06:33:43.654812",
+ "migration_hash": "9c742e1f281461f5c14b2d26247d908b",
+ "modified": "2021-10-29 08:22:25.111282",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Activity",

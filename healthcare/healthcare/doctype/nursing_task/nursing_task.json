@@ -57,9 +57,10 @@
   },
   {
    "fieldname": "status",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
+   "options": "Requested\nDraft\nReceived",
    "reqd": 1
   },
   {
@@ -99,7 +100,8 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-10-20 12:21:39.396729",
+ "migration_hash": "30192cebf6f0444cbb4a4647eb5e4a89",
+ "modified": "2021-10-29 08:12:39.706297",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Task",

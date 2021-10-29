@@ -8,6 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
 class LabTest(Document):
@@ -39,6 +40,12 @@ class LabTest(Document):
 		if self.template:
 			self.load_test_from_template()
 			self.reload()
+
+			lab_template = frappe.get_doc('Lab Test Template', self.template)
+			template = lab_template.nursing_checklist_template
+			if not template:
+				return
+			NursingTask.create_nursing_tasks_from_template(template, 'Lab Test', self.name)
 
 	def load_test_from_template(self):
 		lab_test = self
@@ -81,7 +88,8 @@ def create_test_from_template(lab_test):
 	lab_test.worksheet_instructions = template.worksheet_instructions
 
 	lab_test = create_sample_collection(lab_test, template, patient, None)
-	lab_test = load_result_format(lab_test, template, None, None)
+	load_result_format(lab_test, template, None, None)
+
 
 @frappe.whitelist()
 def update_status(status, name):
