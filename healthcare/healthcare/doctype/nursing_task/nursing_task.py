@@ -14,10 +14,10 @@ class NursingTask(Document):
 		)
 
 		for task in tasks:
-			print(task.activity)
 			doc = frappe.get_doc({
 				'doctype': 'Nursing Task',
 				'activity': task.activity,
+				'mandatory': task.mandatory,
 				'status': 'Requested',
 				'reference_doctype': dt,
 				'reference_name': dn,

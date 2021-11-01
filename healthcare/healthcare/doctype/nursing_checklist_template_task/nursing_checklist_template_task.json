@@ -11,7 +11,8 @@
   "starts_on",
   "duration",
   "type",
-  "is_mandatory",
+  "mandatory",
+  "reference_document",
   "role"
  ],
  "fields": [
@@ -45,25 +46,31 @@
    "options": "\nPre-Op\nPost-Op"
   },
   {
-   "default": "0",
-   "fieldname": "is_mandatory",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Is Mandatory"
-  },
-  {
    "fieldname": "role",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Role",
    "options": "Role"
+  },
+  {
+   "default": "0",
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Mandatory"
+  },
+  {
+   "fieldname": "reference_document",
+   "fieldtype": "Link",
+   "label": "Reference Document",
+   "options": "DocType"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
  "migration_hash": "bc7820f21e821210df5a4edeb732721e",
- "modified": "2021-10-28 06:49:50.231588",
+ "modified": "2021-11-01 05:28:58.539498",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template Task",
