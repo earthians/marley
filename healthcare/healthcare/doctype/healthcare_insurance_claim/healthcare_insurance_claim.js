@@ -83,7 +83,7 @@ frappe.ui.form.on('Healthcare Insurance Claim', {
 		if (!frm.doc.coverage && frm.doc.docstatus === 1) {
 			frm.add_custom_button(__('Create Coverage'), () => {
 				frappe.call({
-					method: 'erpnext.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim.create_insurance_coverage',
+					method: 'healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim.create_insurance_coverage',
 					args: { doc: frm.doc },
 					freeze: true,
 					callback: function(r) {

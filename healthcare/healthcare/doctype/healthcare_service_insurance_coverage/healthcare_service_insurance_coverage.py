@@ -102,7 +102,7 @@ def get_insurance_coverage(item_code, template_dt=None, template_dn=None, on_dat
 
 	coverage = frappe.db.sql('''
 		SELECT
-			name, template_dt, medical_code, item_code, item_group,
+			name, template_dt, medical_code, item_code,
 			valid_from, valid_till, insurance_coverage_plan,
 			mode_of_approval, coverage, discount
 		FROM `tabHealthcare Service Insurance Coverage`

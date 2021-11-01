@@ -8,9 +8,12 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, flt, get_link_to_form
 from frappe.model.document import Document
-from erpnext.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import get_insurance_coverage
-from erpnext.healthcare.doctype.healthcare_insurance_subscription.healthcare_insurance_subscription import is_insurance_policy_valid, get_insurance_price_lists
-from erpnext.healthcare.utils import get_appointment_type_service_item
+from healthcare.healthcare.doctype.healthcare_service_insurance_coverage.healthcare_service_insurance_coverage import get_insurance_coverage
+from healthcare.healthcare.doctype.healthcare_insurance_subscription.healthcare_insurance_subscription import (
+	is_insurance_policy_valid,
+	get_insurance_price_lists
+)
+from healthcare.healthcare.utils import get_appointment_type_service_item
 from erpnext.stock.get_item_details import get_item_details
 
 class CoverageNotFoundError(frappe.ValidationError): pass

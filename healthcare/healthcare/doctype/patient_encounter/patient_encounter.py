@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cstr, getdate, add_days
 from frappe.model.mapper import get_mapped_doc
-from erpnext.healthcare.utils import get_service_item_and_practitioner_charge
+from healthcare.healthcare.utils import get_service_item_and_practitioner_charge
 
 class PatientEncounter(Document):
 	def validate(self):

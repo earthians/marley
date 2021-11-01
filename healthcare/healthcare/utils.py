@@ -578,7 +578,7 @@ def manage_invoice_submit_cancel(doc, method):
 		update_insurance_claim(doc)
 
 	if method=='on_submit' and frappe.db.get_single_value('Healthcare Settings', 'create_lab_test_on_si_submit'):
-		from erpnext.healthcare.doctype.lab_test.lab_test import create_multiple
+		from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
 		create_multiple('Sales Invoice', doc.name)
 
 
@@ -603,7 +603,7 @@ def post_transfer_journal_entry_and_update_claim(sales_invoice):
 		if not item.insurance_claim:
 			continue
 
-		from erpnext.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import get_insurance_party_details
+		from healthcare.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import get_insurance_party_details
 		insurance_company_details = get_insurance_party_details(item.insurance_company, sales_invoice.company)
 
 		if not insurance_company_details or not insurance_company_details.get('receivable_account') or not insurance_company_details.get('party'):

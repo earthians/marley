@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import getdate, cstr, get_link_to_form
-from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
 
 class LabTest(Document):
 	def validate(self):

@@ -232,7 +232,7 @@ var get_drugs_to_invoice = function(frm) {
 		var encounter = dialog.fields_dict.encounter.input.value;
 		if (encounter && encounter != selected_encounter) {
 			selected_encounter = encounter;
-			var method = "erpnext.healthcare.utils.get_drugs_to_invoice";
+			var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
 			var args = { encounter: encounter };
 			var columns = (["drug_code", "quantity", "description"]);
 			get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);

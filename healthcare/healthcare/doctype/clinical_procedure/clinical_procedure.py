@@ -15,7 +15,7 @@ from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
-from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
 
 class ClinicalProcedure(Document):
 	def validate(self):

@@ -12,8 +12,12 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, get_link_to_form, get_time, getdate
-
+from frappe.utils import (
+	flt,
+	get_link_to_form,
+	get_time,
+	getdate
+)
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
@@ -24,9 +28,17 @@ from healthcare.healthcare.utils import (
 	manage_fee_validity,
 )
 from erpnext.hr.doctype.employee.employee import is_holiday
-from erpnext.healthcare.doctype.healthcare_settings.healthcare_settings import get_receivable_account, get_income_account
-from erpnext.healthcare.utils import check_fee_validity, get_service_item_and_practitioner_charge, manage_fee_validity
-from erpnext.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
+	get_receivable_account,
+	get_income_account
+)
+from healthcare.healthcare.utils import (
+	check_fee_validity,
+	get_service_item_and_practitioner_charge,
+	manage_fee_validity
+)
+from healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
+
 
 class MaximumCapacityError(frappe.ValidationError):
 	pass

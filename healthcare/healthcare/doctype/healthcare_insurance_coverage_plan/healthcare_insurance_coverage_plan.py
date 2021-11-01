@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from erpnext.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import has_active_contract
+from healthcare.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import has_active_contract
 
 class HealthcareInsuranceCoveragePlan(Document):
 	def validate(self):

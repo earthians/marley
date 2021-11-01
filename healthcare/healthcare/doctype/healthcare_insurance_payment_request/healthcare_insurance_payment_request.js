@@ -169,7 +169,7 @@ frappe.ui.form.on('Healthcare Insurance Payment Request', {
 
 	make_payment_entry: function(frm) {
 		return frappe.call({
-			method: 'erpnext.healthcare.doctype.healthcare_insurance_payment_request.healthcare_insurance_payment_request.create_payment_entry',
+			method: 'healthcare.healthcare.doctype.healthcare_insurance_payment_request.healthcare_insurance_payment_request.create_payment_entry',
 			args: { 'doc': frm.doc },
 			callback: function(r) {
 				let doc = frappe.model.sync(r.message);

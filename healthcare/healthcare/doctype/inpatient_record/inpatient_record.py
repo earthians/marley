@@ -11,7 +11,16 @@ from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
 import math
-from frappe.utils import today, now_datetime, getdate, get_datetime, get_link_to_form, flt, time_diff_in_hours, rounded
+from frappe.utils import (
+	today,
+	now_datetime,
+	getdate,
+	get_datetime,
+	get_link_to_form,
+	flt,
+	time_diff_in_hours,
+	rounded
+)
 from healthcare.healthcare.utils import get_service_item_and_practitioner_charge
 from healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
 

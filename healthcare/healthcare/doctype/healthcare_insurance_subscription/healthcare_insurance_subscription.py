@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_link_to_form, getdate
 from frappe.model.document import Document
-from erpnext.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import has_active_contract
+from healthcare.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import has_active_contract
 
 class HealthcareInsuranceSubscription(Document):
 	def validate(self):

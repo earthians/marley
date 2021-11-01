@@ -16,7 +16,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
 
 
 class TherapySession(Document):

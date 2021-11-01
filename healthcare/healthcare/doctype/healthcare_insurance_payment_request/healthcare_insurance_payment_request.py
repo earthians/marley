@@ -168,8 +168,6 @@ class HealthcareInsurancePaymentRequest(Document):
 				'statuses': tuple(['Invoiced', 'Payment Error'])
 		}, as_dict=1)
 
-		print(len(claims))
-
 		for claim in claims:
 			self.append('claims', claim)
 
