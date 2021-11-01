@@ -31,7 +31,6 @@
   "start_date",
   "start_time",
   "sample",
-  "referring_practitioner",
   "insurance_section",
   "insurance_subscription",
   "insurance_claim",
@@ -305,12 +304,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "referring_practitioner",
-   "fieldtype": "Link",
-   "label": "Referring Practitioner",
-   "options": "Healthcare Practitioner"
-  },
-  {
    "fieldname": "insurance_section",
    "fieldtype": "Section Break",
    "label": "Insurance"
@@ -362,10 +355,11 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-06-13 18:33:36.572674",
+ "modified": "2021-11-01 14:48:20.514464",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
