@@ -19,8 +19,10 @@
   "to_date",
   "task_reference",
   "reference_doctype",
+  "task_doctype",
   "column_break_8",
   "reference_name",
+  "task_document_name",
   "amended_from"
  ],
  "fields": [
@@ -103,7 +105,7 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Series",
+   "label": "Naming Series",
    "options": "HLC-NUR-.YYYY.-"
   },
   {
@@ -111,13 +113,25 @@
    "fieldname": "mandatory",
    "fieldtype": "Check",
    "label": "Mandatory"
+  },
+  {
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "label": "Task Doctype",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "task_document_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Task Document Name",
+   "options": "task_doctype"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
  "migration_hash": "30192cebf6f0444cbb4a4647eb5e4a89",
- "modified": "2021-11-01 05:28:11.663862",
+ "modified": "2021-11-01 06:05:42.214897",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Task",

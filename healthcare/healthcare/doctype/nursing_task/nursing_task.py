@@ -16,10 +16,11 @@ class NursingTask(Document):
 		for task in tasks:
 			doc = frappe.get_doc({
 				'doctype': 'Nursing Task',
-				'activity': task.activity,
-				'mandatory': task.mandatory,
 				'status': 'Requested',
 				'reference_doctype': dt,
 				'reference_name': dn,
+				'activity': task.activity,
+				'mandatory': task.mandatory,
+				'task_doctype': task.task_doctype,
 			})
 			doc.insert()
