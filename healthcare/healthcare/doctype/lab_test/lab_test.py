@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate
 
-from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
 	update_service_order_status,
 )
 
@@ -39,17 +39,14 @@ class LabTest(Document):
 			self.sensitivity_test_items = sensitivity
 
 	def after_insert(self):
-		if self.prescription:
-			frappe.db.set_value("Lab Prescription", self.prescription, "lab_test_created", 1)
-			if frappe.db.get_value("Lab Prescription", self.prescription, "invoiced"):
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
+			if frappe.db.get_value("Healthcare Service Order", self.service_order, "invoiced"):
 				self.invoiced = True
 
 		if not self.lab_test_name and self.template:
 			self.load_test_from_template()
 			self.reload()
-
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
 
 	def load_test_from_template(self):
 		lab_test = self
@@ -137,17 +134,28 @@ def create_lab_test_from_encounter(encounter):
 	lab_test_created = False
 	encounter = frappe.get_doc("Patient Encounter", encounter)
 
-	if encounter and encounter.lab_test_prescription:
+	if encounter:
 		patient = frappe.get_doc("Patient", encounter.patient)
-		for item in encounter.lab_test_prescription:
-			if not item.lab_test_created:
-				template = get_lab_test_template(item.lab_test_code)
+		service_orders = frappe.db.get_list(
+			"Healthcare Service Order",
+			filters={
+				"order_group": encounter.name,
+				"status": ["!=", "Completed"],
+				"template_dt": "Lab Test Template",
+			},
+			fields=["name"],
+		)
+		if service_orders:
+			for service_order in service_orders:
+				service_order_doc = frappe.get_doc("Healthcare Service Order", service_order)
+				template = get_lab_test_template(service_order_doc.template_dn)
 				if template:
 					lab_test = create_lab_test_doc(
-						item.invoiced, encounter.practitioner, patient, template, encounter.company
+						service_order_doc.invoiced, encounter.practitioner, patient, template, encounter.company
 					)
+					lab_test.service_order = service_order_doc.name
 					lab_test.save(ignore_permissions=True)
-					frappe.db.set_value("Lab Prescription", item.name, "lab_test_created", 1)
+					frappe.db.set_value("Healthcare Service Order", service_order_doc.name, "status", "Scheduled")
 					if not lab_test_created:
 						lab_test_created = lab_test.name
 					else:
@@ -372,7 +380,7 @@ def load_result_format(lab_test, template, prescription, invoice):
 		if prescription:
 			lab_test.prescription = prescription
 			if invoice:
-				frappe.db.set_value("Lab Prescription", prescription, "invoiced", True)
+				frappe.db.set_value("Healthcare Service Order", lab_test.service_order, "status", "Completed")
 		lab_test.save(ignore_permissions=True)  # Insert the result
 		return lab_test
 
@@ -390,19 +398,20 @@ def get_lab_test_prescribed(patient):
 	return frappe.db.sql(
 		"""
 			select
-				lp.name,
-				lp.lab_test_code,
-				lp.parent,
-				lp.invoiced,
-				pe.practitioner,
-				pe.practitioner_name,
-				pe.encounter_date
+				hso.template_dn as lab_test_code,
+				hso.order_group,
+				hso.invoiced,
+				hso.practitioner as practitioner,
+				hso.order_date as encounter_date,
+				hso.name,
+				hso.insurance_subscription,
+				hso.insurance_company
 			from
-				`tabPatient Encounter` pe, `tabLab Prescription` lp
+				`tabHealthcare Service Order` hso
 			where
-				pe.patient=%s
-				and lp.parent=pe.name
-				and lp.lab_test_created=0
+				hso.patient=%s
+				and hso.status!=%s
+				and hso.template_dt=%s
 		""",
-		(patient),
+		(patient, "Completed", "Lab Test Template"),
 	)

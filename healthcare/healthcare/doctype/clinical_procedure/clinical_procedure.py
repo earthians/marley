@@ -10,12 +10,12 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, nowdate, nowtime
 
-from erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
-	update_service_order_status,
-)
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
+	update_service_order_status,
+)
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 
@@ -38,8 +38,8 @@ class ClinicalProcedure(Document):
 			self.set_actual_qty()
 
 	def after_insert(self):
-		if self.prescription:
-			frappe.db.set_value("Procedure Prescription", self.prescription, "procedure_created", 1)
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
 
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
@@ -50,9 +50,6 @@ class ClinicalProcedure(Document):
 			sample_collection = create_sample_doc(template, patient, None, self.company)
 			self.db_set("sample", sample_collection.name)
 			self.reload()
-
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -289,3 +286,29 @@ def make_procedure(source_name, target_doc=None):
 	)
 
 	return doc
+
+
+@frappe.whitelist()
+def get_procedure_prescribed(patient, encounter=False):
+	return frappe.db.sql(
+		"""
+			select
+				hso.template_dn as procedure_template,
+				hso.order_group,
+				hso.invoiced,
+				hso.practitioner as practitioner,
+				hso.order_date as encounter_date,
+				hso.name,
+				hso.insurance_subscription,
+				hso.insurance_company
+			from
+				`tabHealthcare Service Order` hso
+			where
+				hso.patient=%s
+				and hso.status!=%s
+				and hso.template_dt=%s
+			order by
+				hso.creation desc
+		""",
+		(patient, "Completed", "Clinical Procedure Template"),
+	)
