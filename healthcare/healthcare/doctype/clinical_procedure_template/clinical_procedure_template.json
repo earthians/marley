@@ -21,6 +21,7 @@
   "is_billable",
   "rate",
   "medical_department",
+  "nursing_checklist_template",
   "medical_coding_section",
   "medical_code_standard",
   "medical_code",
@@ -194,13 +195,21 @@
    "fieldtype": "Link",
    "label": "Medical Code",
    "options": "Medical Code"
+  },
+  {
+   "fieldname": "nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
   }
  ],
  "links": [],
- "modified": "2020-06-29 14:12:27.158130",
+ "migration_hash": "6c2ae29db4e0e6af80e47f3af4bb8bf8",
+ "modified": "2021-11-01 11:03:14.322069",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

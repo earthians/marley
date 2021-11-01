@@ -14,6 +14,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
 class ClinicalProcedure(Document):
@@ -44,6 +45,13 @@ class ClinicalProcedure(Document):
 			sample_collection = create_sample_doc(template, patient, None, self.company)
 			frappe.db.set_value('Clinical Procedure', self.name, 'sample', sample_collection.name)
 		self.reload()
+
+		if self.procedure_template:
+			therapy_template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
+			template = therapy_template.nursing_checklist_template
+			if not template:
+				return
+			NursingTask.create_nursing_tasks_from_template(template, 'Clinical Procedure', self.name)
 
 	def set_status(self):
 		if self.docstatus == 0:
