@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.utils import flt, today
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
 class TherapyPlan(Document):
@@ -47,6 +48,14 @@ class TherapyPlan(Document):
 				'no_of_sessions': data.no_of_sessions
 			})
 		return self
+
+	def after_insert(self):
+		if self.therapy_plan_template:
+			therapy_template = frappe.get_doc('Therapy Plan Template', self.therapy_plan_template)
+			template = therapy_template.nursing_checklist_template
+			if not template:
+				return
+			NursingTask.create_nursing_tasks_from_template(template, 'Therapy Plan', self.name)
 
 
 @frappe.whitelist()
