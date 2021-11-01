@@ -15,6 +15,8 @@ from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
 
+from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+
 
 class ClinicalProcedure(Document):
 	def validate(self):
@@ -34,8 +36,8 @@ class ClinicalProcedure(Document):
 			self.set_actual_qty()
 
 	def after_insert(self):
-		if self.prescription:
-			frappe.db.set_value('Procedure Prescription', self.prescription, 'procedure_created', 1)
+		if self.service_order:
+			update_service_order_status(self.service_order, self.doctype, self.name)
 
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
@@ -70,6 +72,13 @@ class ClinicalProcedure(Document):
 			NursingTask.create_nursing_tasks_from_template(
 				template, self, start_time=start_time, post_event=post_event
 			)
+
+		template_doc = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
+		if template_doc.sample:
+			patient = frappe.get_doc('Patient', self.patient)
+			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
+			self.db_set('sample', sample_collection.name)
+			self.reload()
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -314,3 +323,26 @@ def make_procedure(source_name, target_doc=None):
 	)
 
 	return doc
+
+@frappe.whitelist()
+def get_procedure_prescribed(patient, encounter=False):
+    return frappe.db.sql(
+        '''
+			select
+				hso.template_dn as procedure_template,
+				hso.order_group,
+				hso.invoiced,
+				hso.practitioner as practitioner,
+				hso.order_date as encounter_date,
+				hso.name,
+				hso.insurance_subscription,
+				hso.insurance_company
+			from
+				`tabHealthcare Service Order` hso
+			where
+				hso.patient=%s
+				and hso.status!=%s
+				and hso.template_dt=%s
+			order by
+				hso.creation desc
+		''', (patient, 'Completed', 'Clinical Procedure Template'))

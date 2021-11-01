@@ -603,7 +603,7 @@
    "fieldname": "more_information_section",
    "fieldtype": "Section Break",
    "label": "More Information"
-  }
+  },
   {
    "collapsible": 1,
    "fieldname": "medical_coding_section",
