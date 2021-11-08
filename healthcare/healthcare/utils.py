@@ -813,3 +813,11 @@ def before_tests():
 			"chart_of_accounts" : "Standard",
 			"domains"           : ["Healthcare"],
 		})
+
+
+def validate_nursing_tasks(document):
+	tasks = frappe.get_all('Nursing Task', filters={'reference_name': document.name})
+	if not tasks:
+		return True
+	frappe.throw('Please complete related nursing tasks before submission')
+

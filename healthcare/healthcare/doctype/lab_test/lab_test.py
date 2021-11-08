@@ -20,6 +20,8 @@ class LabTest(Document):
 		self.validate_result_values()
 		self.db_set('submitted_date', getdate())
 		self.db_set('status', 'Completed')
+		from healthcare.healthcare.utils import validate_nursing_tasks
+		validate_nursing_tasks(self)
 
 	def on_cancel(self):
 		self.db_set('status', 'Cancelled')

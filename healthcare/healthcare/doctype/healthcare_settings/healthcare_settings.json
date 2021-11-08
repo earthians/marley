@@ -15,6 +15,7 @@
   "registration_fee",
   "automate_appointment_invoicing",
   "enable_free_follow_ups",
+  "validate_nursing_checklists",
   "max_visits",
   "valid_days",
   "inpatient_settings_section",
@@ -322,11 +323,19 @@
    "fieldname": "do_not_bill_inpatient_encounters",
    "fieldtype": "Check",
    "label": "Do Not Bill Patient Encounters for Inpatients"
+  },
+  {
+   "default": "0",
+   "description": "All tasks in nursing checklist will be validated before submission of patient transactional data.",
+   "fieldname": "validate_nursing_checklists",
+   "fieldtype": "Check",
+   "label": "Validate Nursing Checklists"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2021-01-13 09:04:35.877700",
+ "migration_hash": "04a26c596a30f6211256f7de8effc2fb",
+ "modified": "2021-11-02 05:46:49.553746",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

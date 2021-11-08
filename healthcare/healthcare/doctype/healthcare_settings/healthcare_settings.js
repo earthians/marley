@@ -57,6 +57,11 @@ frappe.tour['Healthcare Settings'] = [
 		description: __('Checking this will automatically create a Sales Invoice whenever an appointment is booked for a Patient.')
 	},
 	{
+		fieldname: 'validate_nursing_checklists',
+		title: __('validate_nursing_checklists'),
+		description: __('Checking this will automatically create a Sales Invoice whenever an appointment is booked for a Patient.')
+	},
+	{
 		fieldname: 'inpatient_visit_charge_item',
 		title: __('Healthcare Service Items'),
 		description: __('You can create a service item for Inpatient Visit Charge and set it here. Similarly, you can set up other Healthcare Service Items for billing in this section. Click ') + "<a href='https://docs.erpnext.com/docs/user/manual/en/healthcare/healthcare_settings#2-default-healthcare-service-items' target='_blank'>here</a>" + __(' to know more')
