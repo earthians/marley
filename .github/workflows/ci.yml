@@ -91,9 +91,10 @@ jobs:
           bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
           cd ~/frappe-bench/ && source env/bin/activate
           cd apps/healthcare && pip install -r dev-requirements.txt
-
+        env:
+          TYPE: server
 
       - name: Run Tests
-        run: cd ~/frappe-bench/ && bench --site test_site run-tests --app ecommerce_integrations
+        run: cd ~/frappe-bench/ && bench --site test_site run-tests --app healthcare
         env:
           TYPE: server

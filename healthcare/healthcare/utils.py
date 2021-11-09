@@ -777,7 +777,7 @@ def update_patient_email_and_phone_numbers(contact, method):
 	Hook validate Contact
 	Update linked Patients' primary mobile and phone numbers
 	'''
-	if 'Healthcare' not in frappe.get_active_domains():
+	if 'Healthcare' not in frappe.get_active_domains() or contact.flags.skip_patient_update:
 		return
 
 	if contact.is_primary_contact and (contact.email_id or contact.mobile_no or contact.phone):
