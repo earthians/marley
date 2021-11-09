@@ -50,7 +50,7 @@ class DiagnosisTrends(object):
 		else:
 			from_date = from_date + relativedelta(from_date, weekday=MO(-1))
 
-		for dummy in range(1, 53):
+		for _ in range(1, 53):
 			if self.filters.range == 'Weekly':
 				period_end_date = add_days(from_date, 6)
 			else:
@@ -93,18 +93,6 @@ class DiagnosisTrends(object):
 		})
 
 	def get_data(self):
-		filters = {'creation': ['between', (self.filters.from_date, self.filters.to_date)]}
-
-		department = self.filters.get('department')
-		if department:
-			encounters = frappe.get_all('Patient Encounter', filters={'medical_department': department}, pluck='name')
-			filters['parent'] = ['in', encounters]
-
-		self.entries = frappe.get_all('Patient Encounter Diagnosis',
-			fields=['*'],
-			filters=filters
-		)
-
 		pe_diagnosis = frappe.qb.DocType('Patient Encounter Diagnosis')
 		query = frappe.qb.from_(pe_diagnosis)\
 			.select('name', 'creation', 'diagnosis')\

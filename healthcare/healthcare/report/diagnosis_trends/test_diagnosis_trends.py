@@ -1,10 +1,8 @@
-import unittest
-from pprint import pprint
-
 import frappe
 from erpnext.tests.utils import ERPNextTestCase
 from frappe import DuplicateEntryError
-from frappe.utils import add_months, getdate
+from frappe.utils import add_months, getdate, add_days
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_practitioner
 
 from healthcare.healthcare.report.diagnosis_trends.diagnosis_trends import execute
 from healthcare.healthcare.test_utils import create_encounter
@@ -25,24 +23,18 @@ class TestDiagnosisTrends(ERPNextTestCase):
 		})
 		try:
 			medical_department.insert()
-		except:
+		except DuplicateEntryError:
 			pass
 
 		patient = frappe.get_list('Patient')[0]
-		practitioner = frappe.get_list('Healthcare Practitioner')[0]
-
+		practitioner_name = create_practitioner(medical_department=medical_department.name)
 		encounter_cardiology = create_encounter(
 			patient=patient.name,
-			medical_department=medical_department,
-			practitioner=practitioner.name,
+			practitioner=practitioner_name,
 		)
-		d = encounter = frappe.get_list('Patient Encounter'
-										# filters={'medical_department': medical_department}
-										)
-		print(d)
-		
-		print(encounter_cardiology.encounter_date)
-		print(encounter_cardiology.name)
+		encounter = frappe.get_list(
+			'Patient Encounter',
+		)[0]
 
 		try:
 			cls.diagnosis = frappe.get_doc({
@@ -62,37 +54,31 @@ class TestDiagnosisTrends(ERPNextTestCase):
 		except DuplicateEntryError:
 			pass
 
-		try:
-			diagnosis = frappe.get_doc({
-				'doctype': 'Patient Encounter Diagnosis',
+		encounter = frappe.get_doc('Patient Encounter', encounter['name'])
+		encounter.append(
+			'diagnosis',
+			{
 				'diagnosis': 'Fever',
-				'parent': encounter,
-				'parenttype': 'Patient Encounter',
-			})
-			diagnosis.insert()
-		except ValueError:
-			pass
+			}
+		)
+		encounter.save()
 
-		try:
-			diagnosis = frappe.get_doc({
-				'doctype': 'Patient Encounter Diagnosis',
+		encounter_cardiology.reload()
+		encounter_cardiology.append(
+			'diagnosis',
+			{
 				'diagnosis': 'Heart Attack',
-				'parent': encounter_cardiology.name,
-				'parenttype': 'Patient Encounter',
-			})
-			diagnosis.insert()
-		except ValueError:
-			pass
-
-		data = frappe.get_list('Patient Encounter Diagnosis', fields=['name', 'parent'])
-		# print(data)
+			}
+		)
+		encounter_cardiology.save()
 
 	def test_report_data(self):
 		filters = {
 			'from_date': str(add_months(getdate(), -12)),
-			'to_date': str(getdate()),
+			'to_date': str(add_days(getdate(), 1)),
 			'range': 'Monthly',
 		}
+
 		report = execute(filters)
 		data = [i['diagnosis'] for i in report[1]]
 		self.assertIn(self.diagnosis.diagnosis, data)
@@ -102,14 +88,12 @@ class TestDiagnosisTrends(ERPNextTestCase):
 
 		filters = {
 			'from_date': str(add_months(getdate(), -12)),
-			'to_date': str(getdate()),
+			'to_date': str(add_days(getdate(), 1)),
 			'range': 'Monthly',
 			'department': medical_department.name,
 		}
 		report = execute(filters)
-		# pprint(report)
 
 		data = [i['diagnosis'] for i in report[1]]
-		print(data)
 
 		self.assertIn(self.diagnosis_cardio.diagnosis, data)
