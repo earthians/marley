@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _, scrub
+from frappe.database.query import OPERATOR_MAP
 from frappe.utils import add_days, add_to_date, flt, getdate
 from six import iteritems
 
@@ -92,12 +93,32 @@ class DiagnosisTrends(object):
 		})
 
 	def get_data(self):
-		filters = self.get_common_filters()
+		filters = {'creation': ['between', (self.filters.from_date, self.filters.to_date)]}
+
+		department = self.filters.get('department')
+		if department:
+			encounters = frappe.get_all('Patient Encounter', filters={'medical_department': department}, pluck='name')
+			filters['parent'] = ['in', encounters]
 
 		self.entries = frappe.get_all('Patient Encounter Diagnosis',
 			fields=['*'],
 			filters=filters
 		)
+
+		pe_diagnosis = frappe.qb.DocType('Patient Encounter Diagnosis')
+		query = frappe.qb.from_(pe_diagnosis)\
+			.select('name', 'creation', 'diagnosis')\
+			.where(pe_diagnosis.creation[self.filters.from_date:self.filters.to_date])
+
+		department = self.filters.get('department')
+
+		if department:
+			encounters = frappe.get_all('Patient Encounter', filters={'medical_department': department}, pluck='name')
+			if encounters:
+				_operator = OPERATOR_MAP['in']
+				query = query.where(_operator('parent', encounters))
+
+		self.entries = query.run(as_dict=True)
 		self.get_rows()
 
 	def get_period(self, appointment_date):
@@ -115,16 +136,6 @@ class DiagnosisTrends(object):
 			period += ' ' + str(appointment_date.year)
 
 		return period
-
-	def get_common_filters(self):
-		filters = {'creation': ['between', (self.filters.from_date, self.filters.to_date)]}
-
-		department = self.filters.get('department')
-		if department:
-			encounters = frappe.get_all('Patient Encounter', filters={'medical_department': department}, pluck='name')
-			filters['parent'] = ['in', encounters]
-
-		return filters
 
 	def get_rows(self):
 		self.get_periodic_data()
