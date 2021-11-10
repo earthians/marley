@@ -9,7 +9,7 @@
  "filters": [],
  "idx": 0,
  "is_standard": "Yes",
- "modified": "2021-09-08 11:26:17.566266",
+ "modified": "2021-11-10 09:27:19.153846",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnosis Trends",
@@ -18,5 +18,18 @@
  "ref_doctype": "Patient Encounter Diagnosis",
  "report_name": "Diagnosis Trends",
  "report_type": "Script Report",
- "roles": []
+ "roles": [
+  {
+   "role": "Healthcare Administrator"
+  },
+  {
+   "role": "Nursing User"
+  },
+  {
+   "role": "Physician"
+  },
+  {
+   "role": "System Manager"
+  }
+ ]
 }
