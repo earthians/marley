@@ -157,7 +157,7 @@ frappe.ui.form.on('Healthcare Insurance Payment Request', {
 			rejected_amount += flt(claim.rejected_amount);
 		});
 
-		frm.set_values({
+		frm.set_value({
 			'payment_request_amount': payment_request_amount,
 			'approved_amount': approved_amount,
 			'rejected_amount': rejected_amount,
@@ -174,6 +174,16 @@ frappe.ui.form.on('Healthcare Insurance Payment Request', {
 			callback: function(r) {
 				let doc = frappe.model.sync(r.message);
 				frappe.set_route('Form', doc[0].doctype, doc[0].name);
+			}
+		});
+	},
+
+	mode_of_payment: function(frm) {
+		frappe.call({
+			method: 'erpnext.accounts.doctype.sales_invoice.sales_invoice.get_bank_cash_account',
+			args: { 'mode_of_payment': frm.doc.mode_of_payment, 'company': frm.doc.company},
+			callback: function(r) {
+				frm.set_value('paid_to', r.message.account)
 			}
 		});
 	}
