@@ -20,7 +20,7 @@ def setup_healthcare():
 
 def create_medical_departments():
 	departments = [
-		"Accident And Emergency Care" ,"Anaesthetics", "Biochemistry", "Cardiology", "Dermatology",
+		"Accident And Emergency Care", "Anaesthetics", "Biochemistry", "Cardiology", "Diabetology", "Dermatology",
 		"Diagnostic Imaging", "ENT", "Gastroenterology", "General Surgery", "Gynaecology",
 		"Haematology", "Maternity", "Microbiology", "Nephrology", "Neurology", "Oncology",
 		"Orthopaedics", "Pathology", "Physiotherapy", "Rheumatology", "Serology", "Urology"
@@ -201,7 +201,7 @@ def add_healthcare_service_unit_tree_root():
 			"healthcare_service_unit_name": "All Healthcare Service Units",
 			"is_group": 1,
 			"company": get_company()
-	 	}
+		}
 	]
 	insert_record(record)
 
