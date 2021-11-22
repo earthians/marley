@@ -20,6 +20,9 @@ class LabTest(Document):
 		self.validate_result_values()
 		self.db_set('submitted_date', getdate())
 		self.db_set('status', 'Completed')
+		healthcare_settings = frappe.get_single("Healthcare Settings")
+		if not healthcare_settings.validate_nursing_checklists:
+			return
 		from healthcare.healthcare.utils import validate_nursing_tasks
 		validate_nursing_tasks(self)
 

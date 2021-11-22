@@ -47,11 +47,19 @@ class ClinicalProcedure(Document):
 		self.reload()
 
 		if self.procedure_template:
-			therapy_template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
-			template = therapy_template.nursing_checklist_template
-			if not template:
-				return
-			NursingTask.create_nursing_tasks_from_template(template, 'Clinical Procedure', self.name)
+			cp_template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
+			templates = [cp_template.pre_op_nursing_checklist_template, cp_template.post_op_nursing_checklist_template]
+			for template in templates:
+				if not template:
+					continue
+				NursingTask.create_nursing_tasks_from_template(template, 'Clinical Procedure', self.name)
+
+	def on_submit(self):
+		healthcare_settings = frappe.get_single("Healthcare Settings")
+		if not healthcare_settings.validate_nursing_checklists:
+			return
+		from healthcare.healthcare.utils import validate_nursing_tasks
+		validate_nursing_tasks(self)
 
 	def set_status(self):
 		if self.docstatus == 0:

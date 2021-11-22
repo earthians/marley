@@ -21,7 +21,8 @@
   "is_billable",
   "rate",
   "medical_department",
-  "nursing_checklist_template",
+  "pre_op_nursing_checklist_template",
+  "post_op_nursing_checklist_template",
   "medical_coding_section",
   "medical_code_standard",
   "medical_code",
@@ -197,15 +198,20 @@
    "options": "Medical Code"
   },
   {
-   "fieldname": "nursing_checklist_template",
+   "fieldname": "pre_op_nursing_checklist_template",
    "fieldtype": "Link",
-   "label": "Nursing Checklist Template",
+   "label": "Pre-op Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "post_op_nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Post-op Nursing Checklist Template",
    "options": "Nursing Checklist Template"
   }
  ],
  "links": [],
- "migration_hash": "6c2ae29db4e0e6af80e47f3af4bb8bf8",
- "modified": "2021-11-01 11:03:14.322069",
+ "modified": "2021-11-22 06:42:56.910453",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
