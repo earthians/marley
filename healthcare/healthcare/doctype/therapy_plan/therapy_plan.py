@@ -15,6 +15,13 @@ class TherapyPlan(Document):
 		self.set_totals()
 		self.set_status()
 
+	def on_submit(self):
+		healthcare_settings = frappe.get_single("Healthcare Settings")
+		if not healthcare_settings.validate_nursing_checklists:
+			return
+		from healthcare.healthcare.utils import validate_nursing_tasks
+		validate_nursing_tasks(self)
+
 	def set_status(self):
 		if not self.total_sessions_completed:
 			self.status = 'Not Started'

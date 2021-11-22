@@ -16,6 +16,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
 class TherapySession(Document):
@@ -47,6 +48,11 @@ class TherapySession(Document):
 
 	def on_submit(self):
 		self.update_sessions_count_in_therapy_plan()
+		healthcare_settings = frappe.get_single("Healthcare Settings")
+		if not healthcare_settings.validate_nursing_checklists:
+			return
+		from healthcare.healthcare.utils import validate_nursing_tasks
+		validate_nursing_tasks(self)
 
 	def on_update(self):
 		if self.appointment:
@@ -57,6 +63,14 @@ class TherapySession(Document):
 			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Open')
 
 		self.update_sessions_count_in_therapy_plan(on_cancel=True)
+
+	def after_insert(self):
+		therapy_plan = frappe.get_doc('Therapy Plan', self.therapy_plan)
+		if therapy_plan.therapy_plan_template:
+			plan_template = frappe.get_doc('Therapy Plan Template', therapy_plan.therapy_plan_template)
+			template = plan_template.nursing_checklist_template
+			if template:
+				NursingTask.create_nursing_tasks_from_template(template, 'Therapy Session', self.name)
 
 	def update_sessions_count_in_therapy_plan(self, on_cancel=False):
 		therapy_plan = frappe.get_doc('Therapy Plan', self.therapy_plan)
