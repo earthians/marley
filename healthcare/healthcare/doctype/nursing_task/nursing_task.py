@@ -6,10 +6,10 @@ from frappe.model.document import Document
 
 class NursingTask(Document):
 	@classmethod
-	def create_nursing_tasks_from_template(cls, template, dt=None, dn=None):
+	def create_nursing_tasks_from_template(cls, template_name, dt=None, dn=None):
 		tasks = frappe.get_list(
 			'Nursing Checklist Template Task',
-			filters={'parent': template},
+			filters={'parent': template_name},
 			fields=['*'],
 		)
 

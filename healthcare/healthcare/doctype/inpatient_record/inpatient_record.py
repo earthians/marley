@@ -11,6 +11,8 @@ from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
 from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class InpatientRecord(Document):
@@ -59,10 +61,12 @@ class InpatientRecord(Document):
 
 	@frappe.whitelist()
 	def admit(self, service_unit, check_in, expected_discharge=None):
+		validate_nursing_tasks(self)
 		admit_patient(self, service_unit, check_in, expected_discharge)
 
 	@frappe.whitelist()
 	def discharge(self):
+		validate_nursing_tasks(self)
 		discharge_patient(self)
 
 	@frappe.whitelist()
@@ -119,6 +123,11 @@ def schedule_inpatient(args):
 
 	inpatient_record.status = 'Admission Scheduled'
 	inpatient_record.save(ignore_permissions = True)
+	template_name = inpatient_record.admission_nursing_checklist_template
+	if not template_name:
+		return
+
+	NursingTask.create_nursing_tasks_from_template(template_name, 'Inpatient Record', inpatient_record.name)
 
 
 @frappe.whitelist()
@@ -133,6 +142,11 @@ def schedule_discharge(args):
 		inpatient_record.save(ignore_permissions = True)
 		frappe.db.set_value('Patient', discharge_order['patient'], 'inpatient_status', inpatient_record.status)
 		frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
+
+		template_name = inpatient_record.discharge_nursing_checklist_template
+		if not template_name:
+			return
+		NursingTask.create_nursing_tasks_from_template(template_name, 'Inpatient Record', inpatient_record.name)
 
 
 def set_details_from_ip_order(inpatient_record, ip_order):

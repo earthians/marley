@@ -29,6 +29,8 @@
   "admission_ordered_for",
   "expected_length_of_stay",
   "admission_service_unit_type",
+  "admission_nursing_checklist_template",
+  "discharge_nursing_checklist_template",
   "cb_admission",
   "primary_practitioner",
   "secondary_practitioner",
@@ -408,14 +410,27 @@
    "fieldtype": "Datetime",
    "label": "Discharge Date",
    "permlevel": 2
+  },
+  {
+   "fieldname": "discharge_nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Discharge Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "admission_nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-18 15:59:17.318988",
+ "modified": "2021-11-23 10:00:59.274356",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

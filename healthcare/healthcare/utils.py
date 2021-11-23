@@ -816,9 +816,14 @@ def before_tests():
 
 
 def validate_nursing_tasks(document):
+	healthcare_settings = frappe.get_single("Healthcare Settings")
+	if not healthcare_settings.validate_nursing_checklists:
+		return True
+
 	filters = {'reference_name': document.name, 'docstatus': 0}
 	tasks = frappe.get_all('Nursing Task', filters=filters)
 	if not tasks:
 		return True
+
 	frappe.throw('Please complete related nursing tasks before submission')
 

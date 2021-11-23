@@ -17,6 +17,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class TherapySession(Document):
@@ -48,10 +49,6 @@ class TherapySession(Document):
 
 	def on_submit(self):
 		self.update_sessions_count_in_therapy_plan()
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		if not healthcare_settings.validate_nursing_checklists:
-			return
-		from healthcare.healthcare.utils import validate_nursing_tasks
 		validate_nursing_tasks(self)
 
 	def on_update(self):

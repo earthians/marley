@@ -15,6 +15,7 @@ from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class ClinicalProcedure(Document):
@@ -55,10 +56,6 @@ class ClinicalProcedure(Document):
 				NursingTask.create_nursing_tasks_from_template(template, 'Clinical Procedure', self.name)
 
 	def on_submit(self):
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		if not healthcare_settings.validate_nursing_checklists:
-			return
-		from healthcare.healthcare.utils import validate_nursing_tasks
 		validate_nursing_tasks(self)
 
 	def set_status(self):

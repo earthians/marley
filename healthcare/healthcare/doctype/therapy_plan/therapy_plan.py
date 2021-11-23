@@ -8,6 +8,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import flt, today
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class TherapyPlan(Document):
@@ -16,10 +17,6 @@ class TherapyPlan(Document):
 		self.set_status()
 
 	def on_submit(self):
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		if not healthcare_settings.validate_nursing_checklists:
-			return
-		from healthcare.healthcare.utils import validate_nursing_tasks
 		validate_nursing_tasks(self)
 
 	def set_status(self):
