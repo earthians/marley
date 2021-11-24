@@ -6,6 +6,7 @@ cur_frm.cscript.custom_refresh = function (doc) {
 	cur_frm.toggle_display('organisms_section', doc.descriptive_toggle);
 	cur_frm.toggle_display('sb_descriptive', doc.descriptive_toggle);
 	cur_frm.toggle_display('sb_normal', doc.normal_toggle);
+	cur_frm.toggle_display('modify_nursing_tasks', 0);
 };
 
 frappe.ui.form.on('Lab Test', {
@@ -60,9 +61,53 @@ frappe.ui.form.on('Lab Test', {
 		frm.add_custom_button(__("Nursing Tasks"), function () {
 				frappe.set_route("List", "Nursing Task", {"reference_name": frm.doc.name});
 		});
+	},
 
-	}
+	modify_nursing_tasks: function(frm) {
+		frappe.call({
+			method: 'get_nursing_tasks',
+			doc: frm.doc,
+			args: {'lab_test_template': frm.doc.template},
+			freeze: true,
+			freeze_message: __('Fetching Nursing Tasks'),
+			callback: function(response) {
+			    console.log(response);
+				new frappe.ui.form.MultiSelectDialog({
+					doctype: "Nursing Checklist Template Task",
+					setters: {
+						activity: null,
+					},
+					get_query() {
+                        return {
+                            filters: response.message
+                        }
+                    },
+					target: this.cur_frm,
+					primary_action_label: "Create Nursing Tasks",
+					action(nursing_tasks) {
+						frappe.call({
+							method: 'set_nursing_tasks',
+							doc: frm.doc,
+							args: nursing_tasks,
+						}).then(() => {
+						});
+						frm.doc.disable_nursing = true;
+						cur_dialog.hide();
+					}
+				});
+			}
+		});
+	},
 });
+
+frappe.ui.form.on('Lab Test', 'template', function (frm) {
+    if (frm.doc.template !== null) {
+        frm.toggle_display('modify_nursing_tasks', 1);
+    } else {
+        frm.toggle_display('modify_nursing_tasks', 0);
+    }
+});
+
 
 frappe.ui.form.on('Lab Test', 'patient', function (frm) {
 	if (frm.doc.patient) {

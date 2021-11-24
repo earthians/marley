@@ -76,6 +76,22 @@ class LabTest(Document):
 					frappe.throw(_('Row #{0}: Please enter the result value for {1}').format(
 						item.idx, frappe.bold(item.lab_test_particulars)), title=_('Mandatory Results'))
 
+	@frappe.whitelist()
+	def set_nursing_tasks(self, nursing_tasks):
+		self.save()
+		tasks = frappe.get_list(
+			'Nursing Checklist Template Task',
+			filters={'name': ['in', nursing_tasks]},
+			fields=['*']
+		)
+		NursingTask.create_nursing_tasks('Lab Test', self.name, tasks)
+
+	@frappe.whitelist()
+	def get_nursing_tasks(self, lab_test_template):
+		lab_test_template = frappe.get_doc('Lab Test Template', lab_test_template)
+		filters = {'parent': lab_test_template.nursing_checklist_template}
+		return filters
+
 
 def create_test_from_template(lab_test):
 	template = frappe.get_doc('Lab Test Template', lab_test.template)

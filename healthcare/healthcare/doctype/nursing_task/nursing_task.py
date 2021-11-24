@@ -6,15 +6,18 @@ from frappe.model.document import Document
 
 class NursingTask(Document):
 	@classmethod
-	def create_nursing_tasks_from_template(cls, template_name, dt=None, dn=None):
+	def create_nursing_tasks_from_template(cls, template_name=None, dt=None, dn=None):
 		tasks = frappe.get_list(
 			'Nursing Checklist Template Task',
 			filters={'parent': template_name},
 			fields=['*'],
 		)
+		NursingTask.create_nursing_tasks(dt, dn, tasks)
 
+	@classmethod
+	def create_nursing_tasks(cls, dt=None, dn=None, tasks=None):
 		for task in tasks:
-			doc = frappe.get_doc({
+			options = {
 				'doctype': 'Nursing Task',
 				'status': 'Requested',
 				'reference_doctype': dt,
@@ -22,5 +25,8 @@ class NursingTask(Document):
 				'activity': task.activity,
 				'mandatory': task.mandatory,
 				'task_doctype': task.task_doctype,
-			})
-			doc.insert()
+			}
+			options = {key: value for (key, value) in options.items() if value}
+
+			if not frappe.db.exists(options):
+				frappe.get_doc(options).insert()
