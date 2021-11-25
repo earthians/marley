@@ -10,6 +10,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
+from frappe.utils import flt
 
 
 class LabTestTemplate(Document):
@@ -20,6 +21,9 @@ class LabTestTemplate(Document):
 	def validate(self):
 		if self.is_billable and (not self.lab_test_rate or self.lab_test_rate <= 0.0):
 			frappe.throw(_('Standard Selling Rate should be greater than zero.'))
+
+		if self.sample and flt(self.sample_qty) <= 0:
+			frappe.throw(_('Sample Quantity cannot be negative or 0'), title=_('Invalid Quantity'))
 
 		self.validate_conversion_factor()
 		self.enable_disable_item()
