@@ -4,14 +4,6 @@ import frappe
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_healthcare_service_units(doctype, txt, searchfield, start, page_len, filters):
-	# query = """
-	# 	select name
-	# 	from `tabHealthcare Service Unit`
-	# 	where
-	# 		is_group = 0
-	# 		and company = {company}
-	# 		and name like {txt}""".format(
-	# 			company = frappe.db.escape(filters.get('company')), txt = frappe.db.escape('%{0}%'.format(txt)))
 	table = frappe.qb.DocType("Healthcare Service Unit")
 	query = frappe.qb.from_(table).where(table.is_group == 0) \
 	.where(table.company == frappe.db.escape(filters.get('company'))) \
