@@ -244,6 +244,7 @@
    "set_only_once": 1
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "gender",
    "fieldtype": "Link",
    "label": "Gender",
@@ -282,10 +283,11 @@
  ],
  "image_field": "image",
  "links": [],
- "modified": "2021-08-24 10:42:08.513054",
+ "modified": "2021-10-20 08:30:46.786977",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -326,6 +328,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
  "search_fields": "practitioner_name, mobile_phone, office_phone",
  "show_name_in_global_search": 1,

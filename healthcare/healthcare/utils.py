@@ -15,6 +15,7 @@ from frappe.utils.formatters import format_value
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
+from healthcare.healthcare.setup import setup_healthcare
 
 
 @frappe.whitelist()
@@ -814,6 +815,8 @@ def before_tests():
 			"domains"           : ["Healthcare"],
 		})
 
+		setup_healthcare()
+
 
 def validate_nursing_tasks(document):
 	healthcare_settings = frappe.get_single("Healthcare Settings")
@@ -826,4 +829,3 @@ def validate_nursing_tasks(document):
 		return True
 
 	frappe.throw('Please complete related nursing tasks before submission')
-
