@@ -2,15 +2,14 @@
 # See license.txt
 
 import frappe
-import unittest
 
 from erpnext.tests.utils import ERPNextTestCase
 from healthcare.healthcare.doctype.lab_test.test_lab_test import create_lab_test_template, create_lab_test
-from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
 class TestNursingTask(ERPNextTestCase):
 	def test_create_nursing_task(self):
+		task_count = frappe.db.count('Nursing Task')
 
 		template = frappe.get_doc({
 			'doctype': 'Nursing Checklist Template',
@@ -35,10 +34,10 @@ class TestNursingTask(ERPNextTestCase):
 		template.append('tasks', task)
 		template.save()
 
-		tasks = frappe.get_list('Nursing Checklist Template Task', filters={'parent': template})
-
 		lab_template = create_lab_test_template()
-		lab_test = create_lab_test(lab_template)
+		lab_template.nursing_checklist_template = template.name
+		lab_template.save()
 
-		NursingTask.create_nursing_tasks_from_template(template, 'Lab Test', lab_test.name)
+		create_lab_test(lab_template)
 
+		self.assertEqual(frappe.db.count('Nursing Task'), task_count + 1)
