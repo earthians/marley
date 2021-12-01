@@ -77,17 +77,29 @@ class LabTest(Document):
 						item.idx, frappe.bold(item.lab_test_particulars)), title=_('Mandatory Results'))
 
 	@frappe.whitelist()
-	def set_nursing_tasks(self, nursing_tasks):
-		self.save()
-		tasks = frappe.get_list(
+	def modify_nursing_tasks(self, nursing_tasks):
+		template_tasks = frappe.get_list(
 			'Nursing Checklist Template Task',
-			filters={'name': ['in', nursing_tasks]},
-			fields=['*']
+			filters=self.get_nursing_task_filters(self.template),
+			fields=['name', 'activity', 'mandatory', 'task_doctype'],
 		)
-		NursingTask.create_nursing_tasks('Lab Test', self.name, tasks)
+		existing_tasks = frappe.get_list(
+			'Nursing Task',
+			filters={'reference_name': self.name, 'docstatus': 0},
+		)
+
+		if not existing_tasks:
+			NursingTask.create_nursing_tasks('Lab Test', self.name, template_tasks)
+			return
+
+		for task in existing_tasks:
+			frappe.delete_doc('Nursing Task', task['name'])
+
+		selected_tasks = [task for task in template_tasks if task['name'] in nursing_tasks]
+		NursingTask.create_nursing_tasks('Lab Test', self.name, selected_tasks)
 
 	@frappe.whitelist()
-	def get_nursing_tasks(self, lab_test_template):
+	def get_nursing_task_filters(self, lab_test_template):
 		lab_test_template = frappe.get_doc('Lab Test Template', lab_test_template)
 		filters = {'parent': lab_test_template.nursing_checklist_template}
 		return filters

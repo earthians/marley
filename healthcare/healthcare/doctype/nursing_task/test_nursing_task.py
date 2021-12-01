@@ -8,7 +8,7 @@ from healthcare.healthcare.doctype.lab_test.test_lab_test import create_lab_test
 
 
 class TestNursingTask(ERPNextTestCase):
-	def test_create_nursing_task(self):
+	def test_creating_nursing_task_from_template(self):
 		task_count = frappe.db.count('Nursing Task')
 
 		template = frappe.get_doc({
@@ -34,10 +34,9 @@ class TestNursingTask(ERPNextTestCase):
 		template.append('tasks', task)
 		template.save()
 
-		lab_template = create_lab_test_template()
-		lab_template.nursing_checklist_template = template.name
-		lab_template.save()
-
-		create_lab_test(lab_template)
+		self.lab_template = create_lab_test_template()
+		self.lab_template.nursing_checklist_template = template.name
+		self.lab_template.save()
+		create_lab_test(self.lab_template)
 
 		self.assertEqual(frappe.db.count('Nursing Task'), task_count + 1)
