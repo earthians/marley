@@ -9,6 +9,9 @@ from frappe.utils import get_link_to_form, getdate
 from frappe.model.document import Document
 from healthcare.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import has_active_contract
 
+class OverlapError(frappe.ValidationError):
+	pass
+
 class HealthcareInsuranceSubscription(Document):
 	def validate(self):
 		# check if a contract exist for the insurance company
@@ -47,7 +50,7 @@ class HealthcareInsuranceSubscription(Document):
 		if insurance_subscription:
 			frappe.throw(_('Patient {0} already has an insurance subscription {1} with the same Policy Number {2}').format(
 				frappe.bold(self.patient), get_link_to_form('Healthcare Insurance Subscription', insurance_subscription),
-				frappe.bold(self.policy_number)), title=_('Duplicate'))
+				frappe.bold(self.policy_number)), title=_('Duplicate'), exc=OverlapError)
 
 	def set_title(self):
 		self.title = _('{0} - {1}').format(self.patient_name or self.patient, self.policy_number)
