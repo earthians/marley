@@ -40,13 +40,13 @@ data = {
 				'insert_after': 'customer'
 			},
 			{
-				'fieldname': 'total_insurance_claim_amount', 'label': 'Total Insurance Claim Amount', 'fieldtype': 'Currency',
+				'fieldname': 'total_insurance_coverage_amount', 'label': 'Total Insurance Coverage Amount', 'fieldtype': 'Currency',
 				'insert_after': 'total', 'read_only': True, 'no_copy': True
 			},
 			{
 				'fieldname': 'patient_payable_amount', 'label': 'Patient Payable Amount', 'fieldtype': 'Currency',
-				'insert_after': 'total_insurance_claim_amount', 'read_only': True, 'no_copy': True,
-				'depends_on':'eval: doc.total_insurance_claim_amount'
+				'insert_after': 'total_insurance_coverage_amount', 'read_only': True, 'no_copy': True,
+				'depends_on':'eval: doc.total_insurance_coverage_amount'
 			}
 		],
 		'Sales Invoice Item': [
@@ -60,35 +60,35 @@ data = {
 			},
 			{
 				'fieldname': 'healthcare_insurance_section', 'fieldtype': 'Section Break',
-				'insert_after': 'is_free_item', 'depends_on':'eval: doc.insurance_claim'
+				'insert_after': 'is_free_item', 'depends_on':'eval: doc.insurance_coverage'
 			},
 			{
-				'fieldname': 'insurance_claim_coverage', 'label': 'Healthcare Insurance Claim Coverage', 'fieldtype': 'Percent',
+				'fieldname': 'insurance_coverage_coverage', 'label': 'Insurance Coverage %', 'fieldtype': 'Percent',
 				'insert_after': 'healthcare_insurance_section', 'read_only': True, 'no_copy': True
 			},
 			{
-				'fieldname': 'insurance_claim_amount', 'label': 'Healthcare Insurance Claim Amount', 'fieldtype': 'Currency',
-				'insert_after': 'insurance_claim_coverage', 'read_only': True, 'no_copy': True
+				'fieldname': 'insurance_coverage_amount', 'label': 'Insurance Coverage Amount', 'fieldtype': 'Currency',
+				'insert_after': 'insurance_coverage_coverage', 'read_only': True, 'no_copy': True
 			},
 			{
-				'fieldname': 'claim_qty', 'label': 'Healthcare Insurance Claim Approved Qty', 'fieldtype': 'Float',
-				'insert_after': 'insurance_claim_amount', 'read_only': True, 'no_copy': True
+				'fieldname': 'coverage_qty', 'label': 'Insurance Coverage Approved Qty', 'fieldtype': 'Float',
+				'insert_after': 'insurance_coverage_amount', 'read_only': True, 'no_copy': True
 			},
 			{
 				'fieldname': 'healthcare_insurance_col_break', 'fieldtype': 'Column Break',
-				'insert_after': 'claim_qty'
+				'insert_after': 'coverage_qty'
 			},
 			{
 				'fieldname': 'patient_insurance_policy', 'label': 'Patient Insurance Policy Number', 'fieldtype': 'Data',
 				'read_only': True, 'insert_after': 'healthcare_insurance_col_break'
 			},
 			{
-				'fieldname': 'insurance_claim', 'label': 'Healthcare Insurance Claim', 'fieldtype': 'Link',
-				'read_only': True, 'insert_after': 'patient_insurance_policy', 'options': 'Healthcare Insurance Claim', 'no_copy': True
+				'fieldname': 'insurance_coverage', 'label': 'Patient Insurance Coverage', 'fieldtype': 'Link',
+				'read_only': True, 'insert_after': 'patient_insurance_policy', 'options': 'Patient Insurance Coverage', 'no_copy': True
 			},
 			{
-				'fieldname': 'insurance_company', 'label': 'Healthcare Insurance Company', 'fieldtype': 'Link',
-				'read_only': True, 'insert_after': 'insurance_claim', 'options': 'Healthcare Insurance Company', 'no_copy': True
+				'fieldname': 'insurance_payor', 'label': 'Insurance Payor', 'fieldtype': 'Link',
+				'read_only': True, 'insert_after': 'insurance_coverage', 'options': 'Insurance Payor', 'no_copy': True
 			}
 		],
 		'Stock Entry': [

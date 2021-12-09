@@ -11,8 +11,8 @@
   "check_out",
   "invoiced",
   "column_break_6",
-  "insurance_claim",
-  "claim_status"
+  "insurance_coverage",
+  "coverage_status"
  ],
  "fields": [
   {
@@ -54,14 +54,14 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "insurance_claim",
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Insurance Claim",
-   "options": "Healthcare Insurance Claim",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
    "read_only": 1
   },
   {
-   "fieldname": "claim_status",
+   "fieldname": "coverage_status",
    "fieldtype": "Select",
    "label": "Claim Status",
    "options": "\nPending\nApproved\nRejected\nInvoiced",
@@ -71,7 +71,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-07-23 14:08:17.204129",
+ "modified": "2021-12-03 11:57:35.142238",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Occupancy",

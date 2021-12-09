@@ -41,11 +41,11 @@
   "column_break_27",
   "referring_practitioner",
   "insurance_section",
-  "insurance_subscription",
-  "insurance_claim",
+  "insurance_policy",
+  "insurance_coverage",
   "column_break_35",
-  "insurance_company",
-  "claim_status",
+  "insurance_payor",
+  "coverage_status",
   "codification",
   "codification_table",
   "sb_drug_prescription",
@@ -369,35 +369,35 @@
   },
   {
    "depends_on": "appointment_type",
-   "fieldname": "insurance_subscription",
+   "fieldname": "insurance_policy",
    "fieldtype": "Link",
-   "label": "Insurance Subscription",
-   "options": "Healthcare Insurance Subscription"
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy"
   },
   {
    "fieldname": "column_break_35",
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "insurance_subscription.insurance_company",
-   "fieldname": "insurance_company",
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
    "fieldtype": "Link",
-   "label": "Insurance Company",
-   "options": "Healthcare Insurance Company"
+   "label": "Insurance Payor",
+   "options": "Insurance Payor"
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "insurance_claim",
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Insurance Claim",
-   "options": "Healthcare Insurance Claim",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
    "read_only": 1
   },
   {
    "allow_on_submit": 1,
-   "fetch_from": "insurance_claim.status",
+   "fetch_from": "insurance_coverage.status",
    "fetch_if_empty": 1,
-   "fieldname": "claim_status",
+   "fieldname": "coverage_status",
    "fieldtype": "Data",
    "label": "Claim Status",
    "read_only": 1
@@ -405,7 +405,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-06-13 17:25:50.833336",
+ "modified": "2021-12-03 13:32:42.689400",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

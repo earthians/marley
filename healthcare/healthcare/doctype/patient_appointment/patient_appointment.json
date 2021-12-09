@@ -42,11 +42,11 @@
   "column_break_30",
   "referring_practitioner",
   "insurance_section",
-  "insurance_subscription",
-  "insurance_company",
+  "insurance_policy",
+  "insurance_payor",
   "column_break_49",
-  "insurance_claim",
-  "claim_status",
+  "insurance_coverage",
+  "coverage_status",
   "section_break_16",
   "mode_of_payment",
   "billing_item",
@@ -418,31 +418,31 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "insurance_subscription.insurance_company",
-   "fieldname": "insurance_company",
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
    "fieldtype": "Link",
-   "label": "Insurance Company",
-   "options": "Healthcare Insurance Company",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor",
    "read_only": 1
   },
   {
-   "fieldname": "insurance_subscription",
+   "fieldname": "insurance_policy",
    "fieldtype": "Link",
-   "label": "Insurance Subscription",
-   "options": "Healthcare Insurance Subscription",
-   "read_only_depends_on": "eval:doc.insurance_claim"
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy",
+   "read_only_depends_on": "eval:doc.insurance_coverage"
   },
   {
-   "fieldname": "insurance_claim",
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Insurance Claim",
-   "options": "Healthcare Insurance Claim",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
    "read_only": 1
   },
   {
-   "fetch_from": "insurance_claim.status",
+   "fetch_from": "insurance_coverage.status",
    "fetch_if_empty": 1,
-   "fieldname": "claim_status",
+   "fieldname": "coverage_status",
    "fieldtype": "Data",
    "label": "Claim Status",
    "read_only": 1
@@ -457,7 +457,7 @@
   }
  ],
  "links": [],
- "modified": "2021-06-27 17:09:05.876180",
+ "modified": "2021-12-03 13:32:34.101977",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

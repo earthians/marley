@@ -64,10 +64,10 @@
   "billing_status",
   "qty_invoiced",
   "column_break_26",
-  "insurance_subscription",
-  "insurance_company",
-  "insurance_claim",
-  "claim_status",
+  "insurance_policy",
+  "insurance_payor",
+  "insurance_coverage",
+  "coverage_status",
   "medical_code_section",
   "medical_code_standard",
   "medical_code"
@@ -412,10 +412,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "insurance_subscription",
+   "fieldname": "insurance_policy",
    "fieldtype": "Link",
-   "label": "Insurance Subscription",
-   "options": "Healthcare Insurance Subscription",
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy",
    "search_index": 1
   },
   {
@@ -423,11 +423,11 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "insurance_subscription.insurance_company",
-   "fieldname": "insurance_company",
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
    "fieldtype": "Link",
-   "label": "Insurance Company",
-   "options": "Healthcare Insurance Company",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor",
    "read_only": 1
   },
   {
@@ -451,11 +451,11 @@
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "insurance_claim",
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Insurance Claim",
+   "label": "Insurance Coverage",
    "no_copy": 1,
-   "options": "Healthcare Insurance Claim",
+   "options": "Patient Insurance Coverage",
    "read_only": 1,
    "read_only_depends_on": "eval:doc.docstatus!=0",
    "search_index": 1
@@ -467,8 +467,8 @@
   },
   {
    "allow_on_submit": 1,
-   "fetch_from": "insurance_claim.status",
-   "fieldname": "claim_status",
+   "fetch_from": "insurance_coverage.status",
+   "fieldname": "coverage_status",
    "fieldtype": "Data",
    "label": "Claim Status",
    "no_copy": 1,
@@ -533,7 +533,7 @@
    "link_fieldname": "service_order"
   }
  ],
- "modified": "2021-07-18 14:35:24.567300",
+ "modified": "2021-12-03 13:46:45.110125",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Order",

@@ -71,7 +71,7 @@ frappe.ui.form.on('Lab Test', {
 			});
 		}
 
-		frm.set_query('insurance_subscription', function() {
+		frm.set_query('insurance_policy', function() {
 			return {
 				filters: {
 					'patient': frm.doc.patient,
@@ -172,12 +172,12 @@ var show_lab_tests = function (frm, lab_test_list) {
 				<a data-name="%(name)s" data-lab-test="%(lab_test)s"\
 				data-encounter="%(encounter)s" data-practitioner="%(practitioner)s" \
 				data-invoiced="%(invoiced)s" data-source="%(source)s"\
-				data-insurance-company="%(insurance_company)s" data-insurance-subscription="%(insurance_subscription)s"\
+				data-insurance-company="%(insurance_payor)s" data-insurance-subscription="%(insurance_policy)s"\
 				data-referring-practitioner="%(referring_practitioner)s" href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 			</div>\
 		</div><hr>',
 		{ lab_test: y[0], encounter: y[1], invoiced: y[2], practitioner: y[3], date: y[4],
-			name: y[5], insurance_subscription:(y[6]?y[6]:''), insurance_company:y[7]})
+			name: y[5], insurance_policy:(y[6]?y[6]:''), insurance_payor:y[7]})
 		).appendTo(html_field);
 
 
@@ -189,8 +189,8 @@ var show_lab_tests = function (frm, lab_test_list) {
 			frm.set_df_property('patient', 'read_only', 1);
 			frm.set_df_property('practitioner', 'read_only', 1);
 			if ($(this).attr("data-insurance-subscription")) {
-				frm.doc.insurance_subscription = $(this).attr("data-insurance-subscription");
-				frm.doc.insurance_company = $(this).attr("data-insurance-company");
+				frm.doc.insurance_policy = $(this).attr("data-insurance-subscription");
+				frm.doc.insurance_payor = $(this).attr("data-insurance-company");
 			}
 			frm.doc.invoiced = 0;
 			if ($(this).attr('data-invoiced') === 1) {
@@ -199,8 +199,8 @@ var show_lab_tests = function (frm, lab_test_list) {
 			refresh_field('invoiced');
 			refresh_field('template');
 			frm.refresh_field('service_order');
-			frm.refresh_field("insurance_subscription");
-			frm.refresh_field("insurance_company");
+			frm.refresh_field("insurance_policy");
+			frm.refresh_field("insurance_payor");
 			d.hide();
 			return false;
 		});

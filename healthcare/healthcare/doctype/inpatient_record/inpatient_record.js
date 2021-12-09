@@ -27,9 +27,9 @@ frappe.ui.form.on('Inpatient Record', {
 			frm.add_custom_button(__('Discharge'), function() {
 				discharge_patient(frm);
 			} );
-			if (frm.doc.insurance_subscription) {
-				frm.add_custom_button(__('Create Insurance Claim'), function() {
-					create_insurance_claim(frm);
+			if (frm.doc.insurance_policy) {
+				frm.add_custom_button(__('Create Insurance Coverage'), function() {
+					create_insurance_coverage(frm);
 				});
 			}
 		}
@@ -56,7 +56,7 @@ frappe.ui.form.on('Inpatient Record', {
 			}
 		});
 
-		frm.set_query('insurance_subscription', function() {
+		frm.set_query('insurance_policy', function() {
 			return {
 				filters: {
 					'patient': frm.doc.patient,
@@ -244,16 +244,16 @@ let transfer_patient_dialog = function(frm) {
 	});
 };
 
-let create_insurance_claim = function(frm) {
+let create_insurance_coverage = function(frm) {
 	frappe.call({
 		doc: frm.doc,
-		method: 'create_insurance_claim',
+		method: 'create_insurance_coverage',
 		callback: function(data) {
 			if (!data.exc) {
 				frm.reload_doc();
 			}
 		},
 		freeze: true,
-		freeze_message: __('Creating Insurance Claim')
+		freeze_message: __('Creating Insurance Coverage')
 	});
 };

@@ -10,7 +10,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import getdate
 from six import string_types
-from healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import make_insurance_claim
+from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
 
 class HealthcareServiceOrder(Document):
 	def validate(self):
@@ -34,13 +34,13 @@ class HealthcareServiceOrder(Document):
 			frappe.db.set_value('Healthcare Service Order', self.amended_from, 'status', 'Replaced')
 
 	def on_submit(self):
-		if self.insurance_subscription and not self.insurance_claim:
-			self.make_insurance_claim()
+		if self.insurance_policy and not self.insurance_coverage:
+			self.make_insurance_coverage()
 
-	def make_insurance_claim(self):
-		claim = make_insurance_claim(
+	def make_insurance_coverage(self):
+		coverage = make_insurance_coverage(
 			patient=self.patient,
-			policy=self.insurance_subscription,
+			policy=self.insurance_policy,
 			company=self.company,
 			template_dt=self.template_dt,
 			template_dn=self.template_dn,
@@ -48,8 +48,8 @@ class HealthcareServiceOrder(Document):
 			qty=self.quantity
 		)
 
-		if claim and claim.get('claim'):
-			self.db_set({'insurance_claim': claim.get('claim'), 'claim_status': claim.get('claim_status')})
+		if coverage and coverage.get('coverage'):
+			self.db_set({'insurance_coverage': coverage.get('coverage'), 'coverage_status': coverage.get('coverage_status')})
 
 	def before_cancel(self):
 		not_allowed = ['Scheduled', 'In Progress', 'Completed', 'On Hold']
@@ -58,9 +58,9 @@ class HealthcareServiceOrder(Document):
 			title=_('Not Allowed'))
 
 	def on_cancel(self):
-		if self.insurance_claim:
-			claim = frappe.get_doc('Healthcare Insurance Claim', self.insurance_claim)
-			claim.cancel()
+		if self.insurance_coverage:
+			coverage = frappe.get_doc('Patient Insurance Coverage', self.insurance_coverage)
+			coverage.cancel()
 
 		if self.status == 'Active':
 			self.db_set('status', 'Cancelled')
@@ -140,10 +140,10 @@ def make_clinical_procedure(service_order):
 	doc.start_time = service_order.occurrence_time
 	doc.medical_department = service_order.medical_department
 	doc.medical_code = service_order.medical_code
-	doc.insurance_subscription = service_order.insurance_subscription
-	doc.insurance_company = service_order.insurance_company
-	doc.insurance_claim = service_order.insurance_claim
-	doc.claim_status = service_order.claim_status
+	doc.insurance_policy = service_order.insurance_policy
+	doc.insurance_payor = service_order.insurance_payor
+	doc.insurance_coverage = service_order.insurance_coverage
+	doc.coverage_status = service_order.coverage_status
 
 	return doc
 
@@ -171,10 +171,10 @@ def make_lab_test(service_order):
 	doc.time = service_order.occurrence_time
 	doc.invoiced = service_order.invoiced
 	doc.medical_code = service_order.medical_code
-	doc.insurance_subscription = service_order.insurance_subscription
-	doc.insurance_company = service_order.insurance_company
-	doc.insurance_claim = service_order.insurance_claim
-	doc.claim_status = service_order.claim_status
+	doc.insurance_policy = service_order.insurance_policy
+	doc.insurance_payor = service_order.insurance_payor
+	doc.insurance_coverage = service_order.insurance_coverage
+	doc.coverage_status = service_order.coverage_status
 
 	return doc
 
@@ -198,9 +198,9 @@ def make_therapy_session(service_order):
 	doc.start_time = service_order.occurrence_time
 	doc.invoiced = service_order.invoiced
 	doc.medical_code = service_order.medical_code
-	doc.insurance_subscription = service_order.insurance_subscription
-	doc.insurance_company = service_order.insurance_company
-	doc.insurance_claim = service_order.insurance_claim
-	doc.claim_status = service_order.claim_status
+	doc.insurance_policy = service_order.insurance_policy
+	doc.insurance_payor = service_order.insurance_payor
+	doc.insurance_coverage = service_order.insurance_coverage
+	doc.coverage_status = service_order.coverage_status
 
 	return doc

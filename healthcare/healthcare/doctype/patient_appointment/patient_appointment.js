@@ -16,7 +16,7 @@ frappe.ui.form.on('Patient Appointment', {
 		}
 		frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing')
 			.then(automate_invoicing => {
-				frm.toggle_display('insurance_subscription', automate_invoicing === 0);
+				frm.toggle_display('insurance_policy', automate_invoicing === 0);
 			})
 	},
 
@@ -153,7 +153,7 @@ frappe.ui.form.on('Patient Appointment', {
 			}, __('Create'));
 		}
 
-		frm.set_query('insurance_subscription', function() {
+		frm.set_query('insurance_policy', function() {
 			return {
 				filters: {
 					'patient': frm.doc.patient,

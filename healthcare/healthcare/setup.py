@@ -187,7 +187,7 @@ def create_healthcare_item_groups():
 
 def create_customer_groups():
 	records = [
-		{'doctype': 'Customer Group', 'customer_group_name': _('Healthcare Insurance Company'),
+		{'doctype': 'Customer Group', 'customer_group_name': _('Insurance Payor'),
 			'is_group': 0, 'parent_customer_group': _('All Customer Groups')}
 	]
 	insert_record(records)
