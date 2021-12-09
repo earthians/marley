@@ -326,23 +326,34 @@ def make_procedure(source_name, target_doc=None):
 
 @frappe.whitelist()
 def get_procedure_prescribed(patient, encounter=False):
-    return frappe.db.sql(
-        '''
-			select
-				hso.template_dn as procedure_template,
-				hso.order_group,
-				hso.invoiced,
-				hso.practitioner as practitioner,
-				hso.order_date as encounter_date,
-				hso.name,
-				hso.insurance_subscription,
-				hso.insurance_company
-			from
-				`tabHealthcare Service Order` hso
-			where
-				hso.patient=%s
-				and hso.status!=%s
-				and hso.template_dt=%s
-			order by
-				hso.creation desc
-		''', (patient, 'Completed', 'Clinical Procedure Template'))
+	hso = frappe.qb.DocType('Healthcare Service Order')
+	return  (
+		frappe.qb.from_(hso)
+			.select(hso.template_dn, hso.order_group, hso.invoiced,\
+				hso.practitioner, hso.order_date, hso.name,\
+				hso.insurance_subscription, hso.insurance_company)
+			.where(hso.patient == patient)
+			.where(hso.status != 'Completed')
+			.where(hso.template_dt == 'Clinical Procedure Template')
+			.orderby(hso.creation, order=frappe.qb.desc)
+	).run()
+	# return frappe.db.sql(
+	# 	'''
+	# 		select
+	# 			hso.template_dn as procedure_template,
+	# 			hso.order_group,
+	# 			hso.invoiced,
+	# 			hso.practitioner as practitioner,
+	# 			hso.order_date as encounter_date,
+	# 			hso.name,
+	# 			hso.insurance_subscription,
+	# 			hso.insurance_company
+	# 		from
+	# 			`tabHealthcare Service Order` hso
+	# 		where
+	# 			hso.patient=%s
+	# 			and hso.status!=%s
+	# 			and hso.template_dt=%s
+	# 		order by
+	# 			hso.creation desc
+	# 	''', (patient, 'Completed', 'Clinical Procedure Template'))
