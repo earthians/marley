@@ -257,35 +257,35 @@ var get_checked_values = function($results) {
 			else {
 				checked_values['discount_percentage'] = false;
 			}
-			if ($(this).attr('data-insurance-claim-qty') != 'undefined') {
-				checked_values['claim_qty'] = $(this).attr('data-insurance-claim-qty');
+			if ($(this).attr('data-insurance-coverage-qty') != 'undefined') {
+				checked_values['coverage_qty'] = $(this).attr('data-insurance-coverage-qty');
 			}
 			else {
-				checked_values['claim_qty'] = false;
+				checked_values['coverage_qty'] = false;
 			}
-			if ($(this).attr('data-insurance-claim-company') != 'undefined') {
-				checked_values['insurance_company'] = $(this).attr('data-insurance-claim-company');
+			if ($(this).attr('data-insurance-coverage-company') != 'undefined') {
+				checked_values['insurance_payor'] = $(this).attr('data-insurance-coverage-company');
 			}
 			else {
-				checked_values['insurance_company'] = false;
+				checked_values['insurance_payor'] = false;
 			}
-			if ($(this).attr('data-insurance-claim-policy-number') != 'undefined') {
-				checked_values['patient_insurance_policy'] = $(this).attr('data-insurance-claim-policy-number');
+			if ($(this).attr('data-insurance-coverage-policy-number') != 'undefined') {
+				checked_values['patient_insurance_policy'] = $(this).attr('data-insurance-coverage-policy-number');
 			}
 			else {
 				checked_values['patient_insurance_policy'] = false;
 			}
-			if ($(this).attr('data-insurance-claim-coverage') != 'undefined') {
-				checked_values['insurance_claim_coverage'] = $(this).attr('data-insurance-claim-coverage');
+			if ($(this).attr('data-insurance-coverage-coverage') != 'undefined') {
+				checked_values['insurance_coverage_coverage'] = $(this).attr('data-insurance-coverage-coverage');
 			}
 			else {
-				checked_values['insurance_claim_coverage'] = false;
+				checked_values['insurance_coverage_coverage'] = false;
 			}
-			if ($(this).attr('data-insurance-claim') != 'undefined') {
-				checked_values['insurance_claim'] = $(this).attr('data-insurance-claim');
+			if ($(this).attr('data-insurance-coverage') != 'undefined') {
+				checked_values['insurance_coverage'] = $(this).attr('data-insurance-coverage');
 			}
 			else {
-				checked_values['insurance_claim'] = false;
+				checked_values['insurance_coverage'] = false;
 			}
 			return checked_values;
 		}
@@ -366,11 +366,11 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 				data-qty = ${result.qty}
 				data-description = "${result.description}"
 				data-discount-percentage = ${result.discount_percentage}
-				data-insurance-claim-qty = ${result.claim_qty}
-				data-insurance-claim-company = "${result.insurance_company}"
-				data-insurance-claim-policy-number = "${result.patient_insurance_policy}"
-				data-insurance-claim-coverage = ${result.insurance_claim_coverage}
-				data-insurance-claim = ${result.insurance_claim}>
+				data-insurance-coverage-qty = ${result.coverage_qty}
+				data-insurance-coverage-company = "${result.insurance_payor}"
+				data-insurance-coverage-policy-number = "${result.patient_insurance_policy}"
+				data-insurance-coverage-coverage = ${result.insurance_coverage_coverage}
+				data-insurance-coverage = ${result.insurance_coverage}>
 				</div>`).append($row);
 	}
 	else {
@@ -414,9 +414,9 @@ var add_to_item_line = function(frm, checked_values, invoice_healthcare_services
 frappe.ui.form.on('Sales Invoice Item', {
 	qty: function(frm, cdt, cdn) {
 		var d = locals[cdt][cdn];
-		if (d.insurance_claim && (d.qty > d.claim_qty)) {
-			frappe.throw(__('Row #{0} Item under Insurance Claim {1}, quantity cannot be more than approved quantity <b>{2}</b>',
-				[d.idx, d.insurance_claim, d.claim_qty]));
+		if (d.insurance_coverage && (d.qty > d.coverage_qty)) {
+			frappe.throw(__('Row #{0} Item under Insurance Coverage {1}, quantity cannot be more than approved quantity <b>{2}</b>',
+				[d.idx, d.insurance_coverage, d.coverage_qty]));
 		}
 	}
 });

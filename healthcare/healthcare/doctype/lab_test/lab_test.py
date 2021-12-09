@@ -405,8 +405,8 @@ def get_lab_test_prescribed(patient):
 			hso.practitioner,
 			hso.order_date,
 			hso.name,
-			hso.insurance_subscription,
-			hso.insurance_company,
+			hso.insurance_policy,
+			hso.insurance_payor,
 		)
 		.where(hso.patient == patient)
 		.where(hso.status != "Completed")
@@ -414,7 +414,7 @@ def get_lab_test_prescribed(patient):
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
 	# return frappe.db.sql(
-	# 	'''
+	# 	"""
 	# 		select
 	# 			hso.template_dn as lab_test_code,
 	# 			hso.order_group,
@@ -422,12 +422,12 @@ def get_lab_test_prescribed(patient):
 	# 			hso.practitioner as practitioner,
 	# 			hso.order_date as encounter_date,
 	# 			hso.name,
-	# 			hso.insurance_subscription,
-	# 			hso.insurance_company
+	# 			hso.insurance_policy,
+	# 			hso.insurance_payor
 	# 		from
 	# 			`tabHealthcare Service Order` hso
 	# 		where
 	# 			hso.patient=%s
 	# 			and hso.status!=%s
 	# 			and hso.template_dt=%s
-	# 	''', (patient, 'Completed', 'Lab Test Template'))
+	# 	""", (patient, "Completed", "Lab Test Template"))

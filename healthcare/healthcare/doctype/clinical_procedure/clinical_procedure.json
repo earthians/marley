@@ -32,11 +32,11 @@
   "start_time",
   "sample",
   "insurance_section",
-  "insurance_subscription",
-  "insurance_claim",
+  "insurance_policy",
+  "insurance_coverage",
   "column_break_31",
-  "insurance_company",
-  "claim_status",
+  "insurance_payor",
+  "coverage_status",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -313,30 +313,30 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "insurance_subscription.insurance_company",
-   "fieldname": "insurance_company",
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
    "fieldtype": "Link",
-   "label": "Insurance Company",
-   "options": "Healthcare Insurance Company",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor",
    "read_only": 1
   },
   {
-   "fieldname": "insurance_subscription",
+   "fieldname": "insurance_policy",
    "fieldtype": "Link",
-   "label": "Insurance Subscription",
-   "options": "Healthcare Insurance Subscription"
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy"
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "insurance_claim",
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Insurance Claim",
-   "options": "Healthcare Insurance Claim",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
    "read_only": 1
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "claim_status",
+   "fieldname": "coverage_status",
    "fieldtype": "Data",
    "label": "Claim Status",
    "read_only": 1
@@ -355,7 +355,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-11-01 14:48:20.514464",
+ "modified": "2021-12-03 12:32:31.126674",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

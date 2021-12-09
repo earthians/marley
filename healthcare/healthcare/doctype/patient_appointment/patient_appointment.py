@@ -16,17 +16,17 @@ from frappe.utils import flt, get_link_to_form, get_time, getdate
 
 from erpnext.setup.doctype.employee.employee import is_holiday
 
-from healthcare.healthcare.doctype.healthcare_insurance_claim.healthcare_insurance_claim import (
-	make_insurance_claim,
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
+	get_income_account,
+	get_receivable_account,
 )
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
 	get_fee_validity,
 	manage_fee_validity,
 )
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
-	get_income_account,
-	get_receivable_account,
+from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
+	make_insurance_coverage,
 )
 from healthcare.healthcare.utils import get_appointment_billing_item_and_rate
 
@@ -62,24 +62,24 @@ class PatientAppointment(Document):
 		self.set_payment_details()
 		send_confirmation_msg(self)
 
-		if self.insurance_subscription and self.appointment_type and not check_fee_validity(self):
+		if self.insurance_policy and self.appointment_type and not check_fee_validity(self):
 			if frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing"):
-				# TODO: apply insurance claim
+				# TODO: apply insurance coverage
 				frappe.msgprint(
 					_(
-						"Insurance Claim not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled"
+						"Insurance Coverage not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled"
 					),
 					alert=True,
 					indicator="warning",
 				)
 			else:
-				self.make_insurance_claim()
+				self.make_insurance_coverage()
 
-	def make_insurance_claim(self):
+	def make_insurance_coverage(self):
 		billing_detail = get_appointment_billing_item_and_rate(self)
-		claim = make_insurance_claim(
+		coverage = make_insurance_coverage(
 			patient=self.patient,
-			policy=self.insurance_subscription,
+			policy=self.insurance_policy,
 			company=self.company,
 			template_dt="Appointment Type",
 			template_dn=self.appointment_type,
@@ -87,8 +87,13 @@ class PatientAppointment(Document):
 			qty=1,
 		)
 
-		if claim and claim.get("claim"):
-			self.db_set({"insurance_claim": claim.get("claim"), "claim_status": claim.get("claim_status")})
+		if coverage and coverage.get("coverage"):
+			self.db_set(
+				{
+					"insurance_coverage": coverage.get("coverage"),
+					"coverage_status": coverage.get("coverage_status"),
+				}
+			)
 
 	def set_title(self):
 		self.title = _("{0} with {1}").format(
@@ -437,9 +442,9 @@ def cancel_appointment(appointment_id):
 	if not appointment.practitioner:
 		return
 
-	if appointment.insurance_claim:
-		claim = frappe.get_doc("Healthcare Insurance Claim", appointment.insurance_claim)
-		claim.cancel()
+	if appointment.insurance_coverage:
+		coverage = frappe.get_doc("Patient Insurance Coverage", appointment.insurance_coverage)
+		coverage.cancel()
 
 	if appointment.invoiced:
 		sales_invoice = check_sales_invoice_exists(appointment)
@@ -488,7 +493,7 @@ def check_sales_invoice_exists(appointment):
 @frappe.whitelist()
 def get_availability_data(date, practitioner):
 	"""
-	Get availability data of 'practitioner' on 'date'
+	Get availability data of "practitioner" on "date"
 	:param date: Date to check in schedule
 	:param practitioner: Name of the practitioner
 	:return: dict containing a list of available slots, list of appointments and time of appointments
@@ -705,8 +710,8 @@ def make_encounter(source_name, target_doc=None):
 					["invoiced", "invoiced"],
 					["company", "company"],
 					["appointment_type", "appointment_type"],
-					["insurance_subscription", "insurance_subscription"],
-					["insurance_claim", "insurance_claim"],
+					["insurance_policy", "insurance_policy"],
+					["insurance_coverage", "insurance_coverage"],
 				],
 			}
 		},
@@ -774,14 +779,14 @@ def get_events(start, end, filters=None):
 		`tabPatient Appointment`.name, `tabPatient Appointment`.patient,
 		`tabPatient Appointment`.practitioner, `tabPatient Appointment`.status,
 		`tabPatient Appointment`.duration,
-		timestamp(`tabPatient Appointment`.appointment_date, `tabPatient Appointment`.appointment_time) as 'start',
+		timestamp(`tabPatient Appointment`.appointment_date, `tabPatient Appointment`.appointment_time) as "start",
 		`tabAppointment Type`.color
 		from
 		`tabPatient Appointment`
 		left join `tabAppointment Type` on `tabPatient Appointment`.appointment_type=`tabAppointment Type`.name
 		where
 		(`tabPatient Appointment`.appointment_date between %(start)s and %(end)s)
-		and `tabPatient Appointment`.status != 'Cancelled' and `tabPatient Appointment`.docstatus < 2 {conditions}""".format(
+		and `tabPatient Appointment`.status != "Cancelled" and `tabPatient Appointment`.docstatus < 2 {conditions}""".format(
 			conditions=conditions
 		),
 		{"start": start, "end": end},

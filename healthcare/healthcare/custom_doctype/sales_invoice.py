@@ -6,7 +6,7 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 class HealthcareSalesInvoice(SalesInvoice):
 	def validate(self):
-		self.calculate_healthcare_insurance_claim()
+		self.calculate_patient_insurance_coverage()
 		super(HealthcareSalesInvoice, self).validate()
 
 	@frappe.whitelist()
@@ -82,19 +82,19 @@ class HealthcareSalesInvoice(SalesInvoice):
 					flt(item_line.amount) * 0.01 * flt(item_line.insurance_claim_coverage)
 				)
 
-		self.calculate_healthcare_insurance_claim()
+		self.calculate_patient_insurance_coverage()
 		self.set_missing_values(for_validate=True)
 
-	def calculate_healthcare_insurance_claim(self):
-		total_claim_amount = 0.0
+	def calculate_patient_insurance_coverage(self):
+		total_coverage_amount = 0.0
 
 		for item in self.items:
-			if item.amount and item.insurance_claim_coverage:
-				item.insurance_claim_amount = item.amount * 0.01 * flt(item.insurance_claim_coverage)
+			if item.amount and item.insurance_coverage_coverage:
+				item.insurance_coverage_amount = item.amount * 0.01 * flt(item.insurance_coverage_coverage)
 
 			if item.insurance_claim_amount and flt(item.insurance_claim_amount) > 0:
-				total_claim_amount += flt(item.insurance_claim_amount)
+				total_coverage_amount += flt(item.insurance_claim_amount)
 
-		self.total_insurance_claim_amount = total_claim_amount
-		if self.total_insurance_claim_amount and self.outstanding_amount:
-			self.patient_payable_amount = self.outstanding_amount - self.total_insurance_claim_amount
+		self.total_insurance_coverage_amount = total_coverage_amount
+		if self.total_insurance_coverage_amount and self.outstanding_amount:
+			self.patient_payable_amount = self.outstanding_amount - self.total_insurance_coverage_amount

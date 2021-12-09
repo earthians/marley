@@ -20,11 +20,11 @@
   "practitioner",
   "department",
   "insurance_section",
-  "insurance_subscription",
-  "insurance_claim",
+  "insurance_policy",
+  "insurance_coverage",
   "column_break_16",
-  "insurance_company",
-  "claim_status",
+  "insurance_payor",
+  "coverage_status",
   "details_section",
   "medical_code",
   "duration",
@@ -241,30 +241,30 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "fieldname": "insurance_subscription",
+   "fieldname": "insurance_policy",
    "fieldtype": "Link",
-   "label": "Insurance Subscription",
-   "options": "Healthcare Insurance Subscription"
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy"
   },
   {
-   "fieldname": "insurance_company",
+   "fieldname": "insurance_payor",
    "fieldtype": "Link",
-   "label": "Insurance Company",
-   "options": "Healthcare Insurance Company"
+   "label": "Insurance Payor",
+   "options": "Insurance Payor"
   },
   {
    "fieldname": "column_break_16",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "insurance_claim",
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Insurance Claim",
-   "options": "Healthcare Insurance Claim",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
    "read_only": 1
   },
   {
-   "fieldname": "claim_status",
+   "fieldname": "coverage_status",
    "fieldtype": "Data",
    "label": "Claim Status",
    "read_only": 1
@@ -283,7 +283,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-06-13 18:34:09.092959",
+ "modified": "2021-12-03 13:32:31.017185",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",

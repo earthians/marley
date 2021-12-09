@@ -188,7 +188,7 @@ class PatientEncounter(Document):
 				"order_date": self.encounter_date,
 				"order_time": self.encounter_time,
 				"company": self.company,
-				"insurance_subscription": self.insurance_subscription,
+				"insurance_policy": self.insurance_policy,
 				"status": "Draft",
 				"patient": self.get("patient"),
 				"practitioner": self.practitioner,

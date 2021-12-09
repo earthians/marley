@@ -1,8 +1,6 @@
 # isort: skip_file
-import frappe
-
-
 from erpnext.setup.utils import insert_record
+import frappe
 from frappe import _
 
 data = {
@@ -149,7 +147,7 @@ def setup_healthcare():
 		# already setup
 		return
 
-	from healthcare.regional.india.abdm.setup import setup as abdm_setup
+	from healthcare.regional.india.abdm.setup import setup as abdm_setup  # noqa
 
 	abdm_setup()
 

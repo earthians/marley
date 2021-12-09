@@ -45,7 +45,7 @@ frappe.ui.form.on('Healthcare Service Order', {
 			};
 		});
 
-		frm.set_query('insurance_subscription', function() {
+		frm.set_query('insurance_policy', function() {
 			return {
 				filters: {
 					'patient': frm.doc.patient,
