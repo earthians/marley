@@ -9,9 +9,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate
 
-from erpnext.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import (
+from healthcare.healthcare.doctype.healthcare_insurance_company.healthcare_insurance_company import (
 	has_active_contract,
 )
+
+
+class OverlapError(frappe.ValidationError):
+	pass
 
 
 class HealthcareInsuranceSubscription(Document):
@@ -69,6 +73,7 @@ class HealthcareInsuranceSubscription(Document):
 					frappe.bold(self.policy_number),
 				),
 				title=_("Duplicate"),
+				exc=OverlapError,
 			)
 
 	def set_title(self):
