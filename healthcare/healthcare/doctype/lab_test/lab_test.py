@@ -405,21 +405,32 @@ def get_employee_by_user_id(user_id):
 
 @frappe.whitelist()
 def get_lab_test_prescribed(patient):
-	return frappe.db.sql(
-		"""
-			select
-				hso.template_dn as lab_test_code,
-				hso.order_group,
-				hso.invoiced,
-				hso.practitioner as practitioner,
-				hso.order_date as encounter_date,
-				hso.name,
-				hso.insurance_subscription,
-				hso.insurance_company
-			from
-				`tabHealthcare Service Order` hso
-			where
-				hso.patient=%s
-				and hso.status!=%s
-				and hso.template_dt=%s
-		""", (patient, 'Completed', 'Lab Test Template'))
+	hso = frappe.qb.DocType('Healthcare Service Order')
+	return (
+		frappe.qb.from_(hso)
+			.select(hso.template_dn, hso.order_group, hso.invoiced,\
+				hso.practitioner, hso.order_date, hso.name,\
+				hso.insurance_subscription, hso.insurance_company)
+			.where(hso.patient == patient)
+			.where(hso.status != 'Completed')
+			.where(hso.template_dt == 'Lab Test Template')
+			.orderby(hso.creation, order=frappe.qb.desc)
+	).run()
+	# return frappe.db.sql(
+	# 	'''
+	# 		select
+	# 			hso.template_dn as lab_test_code,
+	# 			hso.order_group,
+	# 			hso.invoiced,
+	# 			hso.practitioner as practitioner,
+	# 			hso.order_date as encounter_date,
+	# 			hso.name,
+	# 			hso.insurance_subscription,
+	# 			hso.insurance_company
+	# 		from
+	# 			`tabHealthcare Service Order` hso
+	# 		where
+	# 			hso.patient=%s
+	# 			and hso.status!=%s
+	# 			and hso.template_dt=%s
+	# 	''', (patient, 'Completed', 'Lab Test Template'))
