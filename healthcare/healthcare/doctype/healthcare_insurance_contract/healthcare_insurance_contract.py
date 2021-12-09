@@ -8,6 +8,9 @@ from frappe import _
 from frappe.utils import getdate, get_link_to_form
 from frappe.model.document import Document
 
+class OverlapError(frappe.ValidationError):
+	pass
+
 class HealthcareInsuranceContract(Document):
 	def validate(self):
 		if self.start_date >= self.end_date:
@@ -24,4 +27,4 @@ class HealthcareInsuranceContract(Document):
 
 			if contract:
 				frappe.throw(_('An active contract for this insurance company already exists: {0}').format(
-					get_link_to_form('Healthcare Insurance Contract', contract)), title=_('Duplicate Contract'))
+					get_link_to_form('Healthcare Insurance Contract', contract)), exc=OverlapError)
