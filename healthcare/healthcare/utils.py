@@ -73,7 +73,7 @@ def get_appointments_to_invoice(patient, company):
 					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'coverage_validity_end_date', 'company', 'insurance_payor'],
 					as_dict=True)
 
-			if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] \
+			if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] \
 				and getdate() <= coverage_details.coverage_validity_end_date and company == coverage_details.company:
 					appointments_to_invoice.append({
 						'reference_type': 'Patient Appointment',
@@ -84,8 +84,9 @@ def get_appointments_to_invoice(patient, company):
 						'insurance_payor': coverage_details.insurance_payor,
 						'service': coverage_details.item_code,
 						'rate': coverage_details.price_list_rate,
-						'insurance_coverage_coverage': coverage_details.coverage,
+						'coverage_percentage': coverage_details.coverage,
 						'discount_percentage': coverage_details.discount,
+						'coverage_rate': coverage_details.price_list_rate,
 						'coverage_qty': coverage_details.qty
 					})
 			else:
@@ -126,7 +127,7 @@ def get_encounters_to_invoice(patient, company):
 					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'coverage_validity_end_date', 'company', 'insurance_payor'],
 					as_dict=True)
 
-			if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] \
+			if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] \
 				and getdate() <= coverage_details.coverage_validity_end_date and company == coverage_details.company:
 				encounters_to_invoice.append({
 					'reference_type': 'Patient Encounter',
@@ -137,8 +138,9 @@ def get_encounters_to_invoice(patient, company):
 					'insurance_payor': coverage_details.insurance_payor,
 					'service': coverage_details.item_code,
 					'rate': coverage_details.price_list_rate,
-					'insurance_coverage_coverage': coverage_details.coverage,
+					'coverage_percentage': coverage_details.coverage,
 					'discount_percentage': coverage_details.discount,
+					'coverage_rate': coverage_details.price_list_rate,
 					'coverage_qty': coverage_details.qty
 				})
 			else:
@@ -171,7 +173,7 @@ def get_lab_tests_to_invoice(patient, company):
 			# 		['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'coverage_validity_end_date', 'company', 'insurance_payor'],
 			# 		as_dict=True)
 
-			# if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] \
+			# if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] \
 			# 	and getdate() <= coverage_details.coverage_validity_end_date and company == coverage_details.company:
 			# 	lab_tests_to_invoice.append({
 			# 		'reference_type': 'Lab Test',
@@ -181,8 +183,9 @@ def get_lab_tests_to_invoice(patient, company):
 			# 		'insurance_payor': coverage_details.insurance_payor,
 			# 		'service': coverage_details.item_code,
 			# 		'rate': coverage_details.price_list_rate,
-			# 		'insurance_coverage_coverage': coverage_details.coverage,
+			# 		'coverage_percentage': coverage_details.coverage,
 			# 		'discount_percentage':coverage_details.discount,
+			#		'coverage_rate': coverage_details.price_list_rate,
 			# 		'coverage_qty': coverage_details.qty
 			# 	})
 			# else:
@@ -215,7 +218,7 @@ def get_clinical_procedures_to_invoice(patient, company):
 			# 		['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'coverage_validity_end_date', 'company', 'insurance_payor'],
 			# 		as_dict=True)
 
-			# if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] \
+			# if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] \
 			# 	and getdate() <= coverage_details.coverage_validity_end_date and company == coverage_details.company:
 			# 	clinical_procedures_to_invoice.append({
 			# 		'reference_type': 'Clinical Procedure',
@@ -225,8 +228,9 @@ def get_clinical_procedures_to_invoice(patient, company):
 			# 		'insurance_payor': coverage_details.insurance_payor,
 			# 		'service': coverage_details.item_code,
 			# 		'rate': coverage_details.price_list_rate,
-			# 		'insurance_coverage_coverage': coverage_details.coverage,
+			# 		'coverage_percentage': coverage_details.coverage,
 			# 		'discount_percentage':coverage_details.discount,
+			#		'coverage_rate': coverage_details.price_list_rate,
 			# 		'coverage_qty': coverage_details.qty
 			# 	})
 			# else:
@@ -285,7 +289,7 @@ def get_inpatient_services_to_invoice(patient, company):
 					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'coverage_validity_end_date', 'company', 'insurance_payor'],
 					as_dict=True)
 
-			if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] \
+			if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] \
 				and getdate() <= coverage_details.coverage_validity_end_date and company == coverage_details.company:
 				services_to_invoice.append({
 					'reference_type': 'Inpatient Occupancy',
@@ -295,8 +299,9 @@ def get_inpatient_services_to_invoice(patient, company):
 					'insurance_payor': coverage_details.insurance_payor,
 					'service': coverage_details.item_code,
 					'rate': coverage_details.price_list_rate,
-					'insurance_coverage_coverage': coverage_details.coverage,
+					'coverage_percentage': coverage_details.coverage,
 					'discount_percentage':coverage_details.discount,
+					'coverage_rate': coverage_details.price_list_rate,
 					'coverage_qty': coverage_details.qty,
 					'qty': coverage_details.qty
 				})
@@ -372,7 +377,7 @@ def get_therapy_sessions_to_invoice(patient, company):
 				# 		['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'policy_number', 'coverage_validity_end_date', 'company', 'insurance_payor'],
 				# 		as_dict=True)
 
-				# 	if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] \
+				# 	if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] \
 				# 		and getdate() <= coverage_details.coverage_validity_end_date and company == coverage_details.company:
 				# 		therapy_sessions_to_invoice.append({
 				# 			'reference_type': 'Therapy Session',
@@ -382,8 +387,9 @@ def get_therapy_sessions_to_invoice(patient, company):
 				# 			'insurance_payor': therapy.insurance_payor,
 				# 			'service': coverage_details.item_code,
 				# 			'rate': coverage_details.price_list_rate,
-				# 			'insurance_coverage_coverage': coverage_details.coverage,
+				# 			'coverage_percentage': coverage_details.coverage,
 				# 			'discount_percentage':coverage_details.discount,
+				#			'coverage_rate': coverage_details.price_list_rate,
 				# 			'coverage_qty': coverage_details.qty
 				# 		})
 				# else:
@@ -405,7 +411,7 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 		filters={
 			'patient': patient.name,
 			'company': company,
-			'billing_status': ['in', ['Pending', 'Partially Invoiced']],
+			'billing_status': ['in', ['Pending', 'Partly Invoiced']],
 			'docstatus': 1
 		}
 	)
@@ -421,7 +427,7 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 				coverage_details = frappe.get_cached_value('Patient Insurance Coverage', service_order.insurance_coverage,
 					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'qty_invoiced', 'policy_number', 'coverage_validity_end_date'], as_dict=True)
 
-			if coverage_details and coverage_details.status in ['Approved', 'Partially Invoiced'] and getdate() <= coverage_details.coverage_validity_end_date:
+			if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] and getdate() <= coverage_details.coverage_validity_end_date:
 
 				# billable qty from insurance coverage
 				billable_coverage_qty = coverage_details.get('qty', 1) - coverage_details.get('qty_invoiced', 0)
@@ -434,9 +440,10 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 					'insurance_payor': service_order.insurance_payor,
 					'service': coverage_details.item_code,
 					'rate': coverage_details.price_list_rate,
-					'insurance_coverage_coverage': coverage_details.coverage,
+					'coverage_percentage': coverage_details.coverage,
 					'discount_percentage':coverage_details.discount,
 					'qty': min(billable_coverage_qty, billable_order_qty),
+					'coverage_rate': coverage_details.price_list_rate,
 					'coverage_qty': coverage_details.qty
 				})
 				# if order quantity is not fully billed, update billable_order_qty
@@ -592,9 +599,10 @@ def update_insurance_coverage(sales_invoice):
 			coverage = frappe.get_doc('Patient Insurance Coverage', item.insurance_coverage)
 			coverage.update_invoice_details(item.qty * -1, item.insurance_coverage_amount * -1)
 
+
 def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 	'''
-	1 - Post Journal Entry to Transfer Patient balance or each coverage
+	1 - Post Journal Entry to Transfer Patient balance for each coverage
 	2 - Update Insurance Coverage Detail
 	TODO: Posting Journal Entries based on Insurance Payor will reduce number of journal entries, 
 	but won't be able allow coverage cancel after invoicing. Fix based on feedback
@@ -603,13 +611,20 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 		if not item.insurance_coverage:
 			continue
 
-		from healthcare.healthcare.doctype.insurance_payor.insurance_payor import get_insurance_party_details
-		insurance_payor_details = get_insurance_party_details(item.insurance_payor, sales_invoice.company)
+		from healthcare.healthcare.doctype.insurance_payor.insurance_payor import get_insurance_payor_details
+		insurance_payor_details = get_insurance_payor_details(item.insurance_payor, sales_invoice.company)
 
 		if not insurance_payor_details or not insurance_payor_details.get('receivable_account') or not insurance_payor_details.get('party'):
 			frappe.throw(_('Receivable Account not configured for Insurance Payor').format(item.insurance_payor))
 
 		jv_accounts = []
+
+		jv_accounts.append({
+			'account': insurance_payor_details.get('receivable_account'),
+			'debit_in_account_currency': item.insurance_coverage_amount,
+			'party_type': 'Customer',
+			'party': insurance_payor_details.get('party')
+		})
 
 		# Post Journal Entry
 		jv_accounts.append({
@@ -618,14 +633,9 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 			'party_type': 'Customer',
 			'party': sales_invoice.customer,
 			'reference_type': 'Sales Invoice',
-			'reference_name': sales_invoice.name
-		})
-
-		jv_accounts.append({
-			'account': insurance_payor_details.get('receivable_account'),
-			'debit_in_account_currency': item.insurance_coverage_amount,
-			'party_type': 'Customer',
-			'party': insurance_payor_details.get('party')
+			'reference_name': sales_invoice.name,
+			'reference_detail_no': item.name,
+			'insurance_coverage': item.insurance_coverage
 		})
 
 		if len(jv_accounts) > 0:
@@ -1017,7 +1027,6 @@ def update_address_links(address, method):
 		if customer and not address.has_link('Customer', customer):
 			address.append('links', dict(link_doctype = 'Customer', link_name = customer))
 
-	return {'html': doc_html}
 
 def before_tests():
 	# complete setup if missing

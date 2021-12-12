@@ -85,7 +85,7 @@ class InsurancePayor(Document):
 		customer.save(ignore_permissions=True)
 
 
-def get_insurance_party_details(insurance_payor, company):
+def get_insurance_payor_details(insurance_payor, company):
 	'''
 	Returns linked Customer, Receivable Account configured for Insurance Payor or Default Receivable Account for Company
 	'''

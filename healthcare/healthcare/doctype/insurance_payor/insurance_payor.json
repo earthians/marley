@@ -13,6 +13,7 @@
  "field_order": [
   "insurance_payor_name",
   "customer",
+  "insurance_claim_credit_days",
   "column_break_3",
   "disabled",
   "medical_code_standard",
@@ -118,6 +119,11 @@
    "fieldtype": "Link",
    "label": "Medical Code Standard",
    "options": "Medical Code Standard"
+  },
+  {
+   "fieldname": "insurance_claim_credit_days",
+   "fieldtype": "Int",
+   "label": "Insurance Claim Credit Days"
   }
  ],
  "image_field": "image",
@@ -127,7 +133,7 @@
    "link_fieldname": "insurance_payor"
   },
   {
-   "link_doctype": "Healthcare Insurance Plan",
+   "link_doctype": "Payor Insurance Plan",
    "link_fieldname": "insurance_payor"
   },
   {
@@ -135,7 +141,7 @@
    "link_fieldname": "insurance_payor"
   }
  ],
- "modified": "2021-12-05 10:59:01.372282",
+ "modified": "2021-12-18 18:43:50.831472",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor",

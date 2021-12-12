@@ -51,8 +51,19 @@
    "unique": 1
   }
  ],
- "links": [],
- "modified": "2021-12-03 12:46:31.155153",
+ "links": [
+  {
+   "group": "Insurance Policies",
+   "link_doctype": "Patient Insurance Policy",
+   "link_fieldname": "insurance_plan"
+  },
+  {
+   "group": "Transactions",
+   "link_doctype": "Patient Insurance Coverage",
+   "link_fieldname": "insurance_plan"
+  }
+ ],
+ "modified": "2021-12-18 19:17:03.008734",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor Eligibility Plan",

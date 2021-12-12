@@ -100,7 +100,7 @@ class HealthcareServiceOrder(Document):
 		if qty_invoiced == 0:
 			status = 'Pending'
 		if qty_invoiced < self.quantity:
-			status = 'Partially Invoiced'
+			status = 'Partly Invoiced'
 		else:
 			status = 'Invoiced'
 

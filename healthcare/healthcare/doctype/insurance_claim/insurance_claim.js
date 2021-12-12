@@ -7,20 +7,24 @@ frappe.ui.form.on('Insurance Claim', {
 			return {
 				'Draft': 'red',
 				'Submitted': 'blue',
-				'Payment Approved': 'green',
-				'Claim Error': 'orange',
-				'Payment Rejected': 'red',
+				'Approved': 'green',
+				'Error': 'orange',
+				'Rejected': 'red',
 				'Completed': 'green',
 				'Cancelled': 'grey'
 			}[coverage.status];
 		});
+
+		if (frm.is_new()) {
+			frm.set_value('from_date', frappe.datetime.add_months(get_today(), -1))
+		}
 	},
 
 	refresh: function(frm) {
 		frm.set_query('insurance_payor', function() {
 			return {
 				filters: {
-					'company': frm.doc.company
+					'disabled': 0
 				}
 			};
 		});
@@ -52,6 +56,21 @@ frappe.ui.form.on('Insurance Claim', {
 		}
 	},
 
+	patient: function(frm) {
+		frm.set_value({
+			'insurance_policy': '',
+			'insurance_plan': ''
+		});
+	},
+
+	insurance_policy: function(frm) {
+		frm.trigger('get_insurance_coverages');
+	},
+
+	posting_date_based_on: function(frm) {
+		frm.trigger('get_insurance_coverages');
+	},
+
 	from_date: function(frm) {
 		frm.trigger('get_insurance_coverages');
 	},
@@ -61,6 +80,14 @@ frappe.ui.form.on('Insurance Claim', {
 	},
 
 	insurance_payor: function(frm) {
+		if (frm.doc.insurance_payor) {
+			frappe.db.get_value('Insurance Payor', frm.doc.insurance_payor, 'insurance_claim_credit_days')
+			.then(r => {
+				frm.set_value({
+					'due_date': frappe.datetime.add_days(frm.doc.posting_date, r.message.insurance_claim_credit_days)
+				});
+			})
+		}
 		frm.trigger('get_insurance_coverages');
 	},
 
@@ -69,18 +96,20 @@ frappe.ui.form.on('Insurance Claim', {
 	},
 
 	get_insurance_coverages: function(frm) {
-		frm.doc.coverages = [];
+		if (frm.doc.insurance_payor && frm.doc.from_date && frm.doc.to_date && frm.doc.insurance_policy) {
+			frm.clear_table('coverages');
 
-		frappe.call({
-			method: 'get_coverages',
-			doc: frm.doc,
-			freeze: true,
-			freeze_message: __('Fetching Claims'),
-			callback: function() {
-				frm.refresh_field('coverages');
-				frm.trigger('set_totals');
-			}
-		});
+			frappe.call({
+				method: 'get_coverages',
+				doc: frm.doc,
+				freeze: true,
+				freeze_message: __('Fetching Coverages'),
+				callback: function() {
+					frm.refresh_field('coverages');
+					frm.trigger('set_totals');
+				}
+			});
+		}
 	},
 
 
@@ -101,10 +130,10 @@ frappe.ui.form.on('Insurance Claim', {
 						label: __('Status'),
 						fieldname: 'status',
 						fieldtype: 'Select',
-						options: 'Payment Approved\nClaim Error\nPayment Rejected',
+						options: 'Approved\nError\nRejected',
 						reqd: 1,
 						onchange: () => {
-							if (cur_dialog.fields_dict.status.value == 'Payment Approved') {
+							if (cur_dialog.fields_dict.status.value == 'Approved') {
 								cur_dialog.set_df_property('payment_error_reason', 'hidden', true);
 								cur_dialog.set_df_property('payment_error_reason', 'reqd', false);
 							} else {
@@ -126,8 +155,8 @@ frappe.ui.form.on('Insurance Claim', {
 					coverages.forEach(coverage => {
 						frappe.model.set_value(coverage.doctype, coverage.name, {
 							'status': values.status,
-							'approved_amount': values.status == 'Payment Approved' ? coverage.coverage_amount : 0,
-							'rejected_amount': values.status == 'Payment Approved' ? 0 : coverage.coverage_amount,
+							'approved_amount': values.status == 'Approved' ? coverage.claim_amount : 0,
+							'rejected_amount': values.status == 'Approved' ? 0 : coverage.claim_amount,
 							'payment_error_reason': values.payment_error_reason
 						});
 					});
@@ -146,7 +175,7 @@ frappe.ui.form.on('Insurance Claim', {
 		let rejected_amount = 0;
 
 		$.each(frm.doc.coverages || [], (_i, coverage) => {
-			insurance_claim_amount += flt(coverage.coverage_amount);
+			insurance_claim_amount += flt(coverage.claim_amount);
 			approved_amount += flt(coverage.approved_amount);
 			rejected_amount += flt(coverage.rejected_amount);
 		});
@@ -173,16 +202,18 @@ frappe.ui.form.on('Insurance Claim', {
 	},
 
 	mode_of_payment: function(frm) {
-		frappe.call({
-			method: 'erpnext.accounts.doctype.sales_invoice.sales_invoice.get_bank_cash_account',
-			args: {
-				'mode_of_payment': frm.doc.mode_of_payment,
-				'company': frm.doc.company
-			},
-			callback: function(r) {
-				frm.set_value('paid_to', r.message.account)
-			}
-		});
+		if (frm.doc.mode_of_payment) {
+			frappe.call({
+				method: 'erpnext.accounts.doctype.sales_invoice.sales_invoice.get_bank_cash_account',
+				args: {
+					'mode_of_payment': frm.doc.mode_of_payment,
+					'company': frm.doc.company
+				},
+				callback: function(r) {
+					frm.set_value('payment_account', r.message.account)
+				}
+			});
+		}
 	}
 });
 

@@ -13,7 +13,7 @@ from healthcare.healthcare.doctype.patient_insurance_policy.patient_insurance_po
 	is_insurance_policy_valid,
 	get_insurance_price_lists
 )
-from healthcare.healthcare.utils import get_appointment_type_service_item
+
 from erpnext.stock.get_item_details import get_item_details
 
 class CoverageNotFoundError(frappe.ValidationError): pass
@@ -82,7 +82,7 @@ class PatientInsuranceCoverage(Document):
 		if qty_invoiced == 0:
 			status = 'Approved'
 		if qty_invoiced < self.qty:
-			status = 'Partially Invoiced'
+			status = 'Partly Invoiced'
 		else:
 			status = 'Invoiced'
 
@@ -93,9 +93,9 @@ class PatientInsuranceCoverage(Document):
 		})
 
 	def before_cancel(self):
-		not_allowed = ['Invoiced', 'Partially Paid', 'Paid', 'Payment Rejected']
-		if self.status in not_allowed:
-			frappe.throw(_('Cannot cancel Insurance Coverage with Status {}').format(', '.join(not_allowed)),
+		allowed = ['Draft', 'Approved', 'Rejected']
+		if self.status not in allowed:
+			frappe.throw(_('You can only cancel Insurance Coverage with Status {}').format(', '.join(allowed)),
 				title=_('Not Allowed'))
 
 	def set_title(self):

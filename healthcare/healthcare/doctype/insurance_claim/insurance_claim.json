@@ -207,6 +207,15 @@
    "reqd": 1
   },
   {
+   "fieldname": "mode_of_payment_section",
+   "fieldtype": "Section Break",
+   "label": "Mode of Payment"
+  },
+  {
+    "fieldname": "column_break_133",
+    "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "due_date",
    "fieldtype": "Date",
    "label": "Due Date",
@@ -235,15 +244,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "mode_of_payment_section",
-   "fieldtype": "Section Break",
-   "label": "Mode of Payment"
-  },
-  {
-   "fieldname": "column_break_133",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "payment_account",
    "fieldtype": "Read Only",
    "label": "Payment Account",
@@ -251,9 +251,13 @@
    "reqd": 1
   },
   {
-   "fieldname": "patient_and_policy_details_section",
+   "fieldname": "mode_of_payment_section",
    "fieldtype": "Section Break",
-   "label": "Patient and Policy Details"
+   "label": "Mode of Payment"
+  },
+  {
+   "fieldname": "column_break_133",
+   "fieldtype": "Column Break"
   },
   {
    "fetch_from": "patient.inpatient_record",
@@ -264,6 +268,11 @@
    "read_only": 1
   },
   {
+   "fieldname": "patient_and_policy_details_section",
+   "fieldtype": "Section Break",
+   "label": "Patient and Policy Details"
+  },
+  {
    "fieldname": "column_break_24",
    "fieldtype": "Column Break"
   }
@@ -271,7 +280,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-21 19:15:00.863887",
+ "modified": "2021-12-11 12:44:42.672610",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",

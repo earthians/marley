@@ -383,6 +383,13 @@
   },
   {
    "default": "0",
+   "fieldname": "approved_amount",
+   "fieldtype": "Currency",
+   "label": "Approved Amount",
+   "read_only": 1
+  },
+  {
+   "default": "0",
    "fieldname": "paid_amount",
    "fieldtype": "Currency",
    "label": "Paid Amount",
@@ -415,7 +422,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-21 19:15:02.975724",
+ "modified": "2021-12-11 13:44:46.946612",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Coverage",

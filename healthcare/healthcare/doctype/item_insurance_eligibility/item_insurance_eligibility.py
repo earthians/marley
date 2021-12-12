@@ -17,13 +17,13 @@ class ItemInsuranceEligibility(Document):
 			self.set_service_item()
 
 		if self.is_active:
-			self.validate_coverage_percentages()
+			self.validate_coverage_percentageages()
 			self.validate_dates()
 			self.validate_overlaps()
 
 		self.set_title()
 
-	def validate_coverage_percentages(self):
+	def validate_coverage_percentageages(self):
 		if self.coverage == 100:
 			self.discount = 0
 
@@ -45,8 +45,7 @@ class ItemInsuranceEligibility(Document):
 			COALESCE(insurance_plan, '')={plan}
 		'''.format(
 			name=frappe.db.escape(self.name),
-			plan=frappe.db.escape(self.insurance_plan),
-			policy=frappe.db.escape(self.insurance_policy)
+			plan=frappe.db.escape(self.insurance_plan)
 		)
 
 		if self.valid_from and self.valid_till:
@@ -138,7 +137,6 @@ def get_insurance_eligibility(item_code, template_dt=None, template_dn=None, on_
 		dt=frappe.db.escape(template_dt),
 		dn=frappe.db.escape(template_dn)
 	)
-	print(conditions)
 
 	coverage = frappe.db.sql('''
 		SELECT
@@ -151,8 +149,7 @@ def get_insurance_eligibility(item_code, template_dt=None, template_dn=None, on_
 			discount,
 			valid_from,
 			valid_till,
-			insurance_plan,
-			insurance_policy
+			insurance_plan
 		FROM `tabItem Insurance Eligibility`
 		WHERE {conditions}
 		ORDER BY valid_from DESC
