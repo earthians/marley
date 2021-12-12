@@ -4,6 +4,7 @@ frappe.listview_settings['Healthcare Service Order'] = {
 	has_indicator_for_cancelled: 1,
 	get_indicator: function (doc) {
 		return [__(doc.status), {
+			'Scheduled': 'orange',
 			'Active': 'blue',
 			'On Hold': 'yellow',
 			'Completed': 'green',
