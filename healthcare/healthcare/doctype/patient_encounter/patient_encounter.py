@@ -171,7 +171,9 @@ class PatientEncounter(Document):
 			'as_needed': line_item.get('as_needed'),
 			'staff_role': doc.get('staff_role'),
 			'note': line_item.get('note'),
-			'patient_instruction': line_item.get('patient_instruction')
+			'patient_instruction': line_item.get('patient_instruction'),
+			'medical_code': template_doc.get('medical_code'),
+			'medical_code_standard': template_doc.get('medical_code_standard')
 		})
 
 		if doc.doctype == 'Lab Test Template':
