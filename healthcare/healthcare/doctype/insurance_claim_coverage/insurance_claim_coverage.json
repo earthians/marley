@@ -263,7 +263,8 @@
    "fieldname": "mode_of_approval",
    "fieldtype": "Data",
    "label": "Mode of Approval",
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "gender",
@@ -360,7 +361,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-12-21 19:15:02.207922",
+ "modified": "2021-12-21 19:36:35.915558",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim Coverage",

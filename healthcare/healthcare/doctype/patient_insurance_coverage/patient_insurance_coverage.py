@@ -117,7 +117,7 @@ class PatientInsuranceCoverage(Document):
 		if qty_invoiced == 0:
 			status = "Approved"
 		if qty_invoiced < self.qty:
-			status = "Partially Invoiced"
+			status = "Partly Invoiced"
 		else:
 			status = "Invoiced"
 
@@ -130,10 +130,10 @@ class PatientInsuranceCoverage(Document):
 		)
 
 	def before_cancel(self):
-		not_allowed = ["Invoiced", "Partially Paid", "Paid", "Payment Rejected"]
-		if self.status in not_allowed:
+		allowed = ["Draft", "Approved", "Rejected"]
+		if self.status not in allowed:
 			frappe.throw(
-				_("Cannot cancel Insurance Coverage with Status {}").format(", ".join(not_allowed)),
+				_("You can only cancel Insurance Coverage with Status {}").format(", ".join(allowed)),
 				title=_("Not Allowed"),
 			)
 
@@ -176,7 +176,7 @@ class PatientInsuranceCoverage(Document):
 	def set_insurance_coverage(self):
 		"""
 		Set Insurance coverage for the Item and set coverage details
-		Returns True if if Insurance Coverage present for template / item_code else show alert and return False
+		Retruns True if if Insurance Coverage present for template / item_code else show alert and return False
 		"""
 		eligibility = get_insurance_eligibility(
 			item_code=self.item_code,
@@ -210,7 +210,7 @@ class PatientInsuranceCoverage(Document):
 		"""
 		Set Insurance price list and price list rate for the Item
 		Fetch Item price for Price List in this order: 1: Insurance Plan 2: Insurance Payor 3: Default Selling Price List
-		Returns True if Item Price found else show alert and return False
+		Retruns True if Item Price found else show alert and return False
 		"""
 		insurance_price_lists = get_insurance_price_lists(self.insurance_policy, self.company)
 		price_list = price_list_rate = None
@@ -244,7 +244,7 @@ class PatientInsuranceCoverage(Document):
 	def set_insurance_coverage_details(self):
 		"""
 		Set coverage details (coverage amount, patient payable) based on Insurance Coverage and Item Price
-		Returns True if coverage amount calculated else show alert and return False
+		Retruns True if coverage amount calculated else show alert and return False
 		"""
 		if self.discount and self.discount > 0:
 			self.discount_amount = (flt(self.price_list_rate) * flt(self.discount) * 0.01) * flt(self.qty)

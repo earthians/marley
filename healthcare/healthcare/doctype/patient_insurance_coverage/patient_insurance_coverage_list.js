@@ -3,17 +3,17 @@ frappe.listview_settings['Patient Insurance Coverage'] = {
 	filters: [['docstatus', '=', '1']],
 	get_indicator: function(doc) {
 		return [__(doc.status), {
-			'Draft': 'red',
+			'Draft': 'orange',
 			'Approved': 'blue',
 			'Cancelled': 'grey',
 			'Rejected': 'darkgrey',
 			'Invoiced': 'lightblue',
-			'Partially Invoiced': 'lightblue',
-			'Claim Processing': 'blue',
-			'Payment Approved': 'green',
-			'Completed': 'green',
+			'Partly Invoiced': 'lightblue',
+			'Claim Submitted': 'blue',
+			'Claim Approved': 'blue',
 			'Claim Error': 'red',
-			'Payment Rejected': 'darkgrey'
+			'Claim Rejected': 'red',
+			'Completed': 'green'
 		}[doc.status], 'status,=,' + doc.status];
 	}
 };

@@ -101,7 +101,7 @@ var get_healthcare_services_to_invoice = function(frm, link_customer) {
 	var dialog = new frappe.ui.Dialog({
 		title: __("Get Items from Healthcare Services"),
 		size: 'large',
-		fields:[
+		fields: [
 			{
 				fieldtype: 'Link',
 				options: 'Patient',
@@ -109,7 +109,7 @@ var get_healthcare_services_to_invoice = function(frm, link_customer) {
 				fieldname: "patient",
 				reqd: true
 			},
-			{ fieldtype: 'Section Break'	},
+			{ fieldtype: 'Section Break' },
 			{ fieldtype: 'HTML', fieldname: 'results_area' }
 		]
 	});
@@ -121,14 +121,14 @@ var get_healthcare_services_to_invoice = function(frm, link_customer) {
 	});
 	dialog.fields_dict["patient"].df.onchange = () => {
 		var patient = dialog.fields_dict.patient.input.value;
-		if(patient && patient!=selected_patient){
+		if (patient && patient != selected_patient) {
 			selected_patient = patient;
 			var method = "healthcare.healthcare.utils.get_healthcare_services_to_invoice";
-			var args = {patient: patient, company: frm.doc.company};
+			var args = { patient: patient, company: frm.doc.company };
 			var columns = (["service", "reference_name", "reference_type"]);
 			get_healthcare_items(frm, true, $results, $placeholder, method, args, columns);
 		}
-		else if(!patient){
+		else if (!patient) {
 			selected_patient = '';
 			$results.empty();
 			$results.append($placeholder);
@@ -258,6 +258,12 @@ var get_checked_values = function($results) {
 				checked_values['discount_percentage'] = false;
 			}
 			if ($(this).attr('data-insurance-coverage-qty') != 'undefined') {
+				checked_values['coverage_rate'] = $(this).attr('data-insurance-coverage-rate');
+			}
+			else {
+				checked_values['coverage_rate'] = false;
+			}
+			if ($(this).attr('data-insurance-coverage-qty') != 'undefined') {
 				checked_values['coverage_qty'] = $(this).attr('data-insurance-coverage-qty');
 			}
 			else {
@@ -275,11 +281,11 @@ var get_checked_values = function($results) {
 			else {
 				checked_values['patient_insurance_policy'] = false;
 			}
-			if ($(this).attr('data-insurance-coverage-coverage') != 'undefined') {
-				checked_values['insurance_coverage_coverage'] = $(this).attr('data-insurance-coverage-coverage');
+			if ($(this).attr('data-coverage-percentage') != 'undefined') {
+				checked_values['coverage_percentage'] = $(this).attr('data-coverage-percentage');
 			}
 			else {
-				checked_values['insurance_coverage_coverage'] = false;
+				checked_values['coverage_percentage'] = false;
 			}
 			if ($(this).attr('data-insurance-coverage') != 'undefined') {
 				checked_values['insurance_coverage'] = $(this).attr('data-insurance-coverage');
@@ -287,6 +293,7 @@ var get_checked_values = function($results) {
 			else {
 				checked_values['insurance_coverage'] = false;
 			}
+
 			return checked_values;
 		}
 	}).get();
@@ -366,10 +373,11 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 				data-qty = ${result.qty}
 				data-description = "${result.description}"
 				data-discount-percentage = ${result.discount_percentage}
+				data-insurance-coverage-rate = ${result.coverage_rate}
 				data-insurance-coverage-qty = ${result.coverage_qty}
 				data-insurance-coverage-company = "${result.insurance_payor}"
 				data-insurance-coverage-policy-number = "${result.patient_insurance_policy}"
-				data-insurance-coverage-coverage = ${result.insurance_coverage_coverage}
+				data-coverage-percentage = ${result.coverage_percentage}
 				data-insurance-coverage = ${result.insurance_coverage}>
 				</div>`).append($row);
 	}
@@ -412,11 +420,19 @@ var add_to_item_line = function(frm, checked_values, invoice_healthcare_services
 };
 
 frappe.ui.form.on('Sales Invoice Item', {
+	// disable qty / rate change for items covered by insurance
 	qty: function(frm, cdt, cdn) {
 		var d = locals[cdt][cdn];
 		if (d.insurance_coverage && (d.qty > d.coverage_qty)) {
 			frappe.throw(__('Row #{0} Item under Insurance Coverage {1}, quantity cannot be more than approved quantity <b>{2}</b>',
 				[d.idx, d.insurance_coverage, d.coverage_qty]));
+		}
+	},
+	rate: function(frm, cdt, cdn) {
+		var d = locals[cdt][cdn];
+		if (d.insurance_coverage && (d.rate != d.coverage_rate)) {
+			frappe.throw(__('Row #{0} Item under Insurance Coverage {1}, rate should be equal to approved rate<b>{2}</b>',
+				[d.idx, d.insurance_coverage, d.coverage_rate]));
 		}
 	}
 });

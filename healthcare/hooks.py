@@ -139,7 +139,11 @@ doc_events = {
 	"Payment Entry": {
 		"on_submit": "healthcare.healthcare.custom_doctype.payment_entry.set_paid_amount_in_treatment_counselling",
 		"on_cancel": "healthcare.healthcare.custom_doctype.payment_entry.set_paid_amount_in_treatment_counselling",
+		"validate": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.validate_payment_entry_and_set_claim_fields",
 	},
+	# "Payment Entry": {
+	# 	"on_cancel": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.update_claim_paid_amount",
+	# },
 }
 
 scheduler_events = {

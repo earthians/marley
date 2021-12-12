@@ -11,6 +11,7 @@ class HealthcareSalesInvoice(SalesInvoice):
 
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
+
 		self.set("items", [])
 		from erpnext.stock.get_item_details import get_item_details
 
@@ -56,20 +57,23 @@ class HealthcareSalesInvoice(SalesInvoice):
 			if checked_item["discount_percentage"]:
 				item_line.discount_percentage = checked_item["discount_percentage"]
 
-			if checked_item["insurance_claim_coverage"]:
-				item_line.insurance_claim_coverage = checked_item["insurance_claim_coverage"]
+			if checked_item["insurance_coverage"]:
+				item_line.insurance_coverage = checked_item["insurance_coverage"]
 
 			if checked_item["patient_insurance_policy"]:
 				item_line.patient_insurance_policy = checked_item["patient_insurance_policy"]
 
-			if checked_item["insurance_claim"]:
-				item_line.insurance_claim = checked_item["insurance_claim"]
+			if checked_item["coverage_percentage"]:
+				item_line.coverage_percentage = checked_item["coverage_percentage"]
 
-			if checked_item["insurance_company"]:
-				item_line.insurance_company = checked_item["insurance_company"]
+			if checked_item["insurance_payor"]:
+				item_line.insurance_payor = checked_item["insurance_payor"]
 
-			if checked_item["claim_qty"]:
-				item_line.claim_qty = checked_item["claim_qty"]
+			if checked_item["coverage_rate"]:
+				item_line.coverage_rate = checked_item["coverage_rate"]
+
+			if checked_item["coverage_qty"]:
+				item_line.coverage_qty = checked_item["coverage_qty"]
 
 			if item_line.discount_percentage:
 				item_line.discount_amount = flt(item_line.rate) * flt(item_line.discount_percentage) * 0.01
@@ -77,9 +81,9 @@ class HealthcareSalesInvoice(SalesInvoice):
 
 			item_line.amount = flt(item_line.rate) * flt(item_line.qty)
 
-			if item_line.insurance_claim_coverage:
-				item_line.insurance_claim_amount = (
-					flt(item_line.amount) * 0.01 * flt(item_line.insurance_claim_coverage)
+			if item_line.insurance_coverage:
+				item_line.insurance_coverage_amount = (
+					flt(item_line.amount) * 0.01 * flt(item_line.coverage_percentage)
 				)
 
 		self.calculate_patient_insurance_coverage()
@@ -89,11 +93,11 @@ class HealthcareSalesInvoice(SalesInvoice):
 		total_coverage_amount = 0.0
 
 		for item in self.items:
-			if item.amount and item.insurance_coverage_coverage:
-				item.insurance_coverage_amount = item.amount * 0.01 * flt(item.insurance_coverage_coverage)
+			if item.amount and item.insurance_coverage:
+				item.insurance_coverage_amount = item.amount * 0.01 * flt(item.coverage_percentage)
 
-			if item.insurance_claim_amount and flt(item.insurance_claim_amount) > 0:
-				total_coverage_amount += flt(item.insurance_claim_amount)
+			if item.insurance_coverage_amount and flt(item.insurance_coverage_amount) > 0:
+				total_coverage_amount += flt(item.insurance_coverage_amount)
 
 		self.total_insurance_coverage_amount = total_coverage_amount
 		if self.total_insurance_coverage_amount and self.outstanding_amount:
