@@ -3,6 +3,7 @@
 
 frappe.ui.form.on('Healthcare Settings', {
 	setup: function(frm) {
+		set_naming_series(frm)
 		frm.set_query('account', 'receivable_account', function(doc, cdt, cdn) {
 			var d  = locals[cdt][cdn];
 			return {
@@ -73,3 +74,7 @@ frappe.tour['Healthcare Settings'] = [
 		description: __('If you want to send SMS alert on Patient Registration, you can enable this option. Similary, you can set up Out Patient SMS alerts for other functionalities in this section. Click ') + "<a href='https://docs.erpnext.com/docs/user/manual/en/healthcare/healthcare_settings#4-out-patient-sms-alerts' target='_blank'>here</a>" + __(' to know more')
 	}
 ];
+
+var set_naming_series = function(frm) {
+	frm.set_df_property("naming_series_for_journal_entry", "options", frm.doc.__onload.naming_series_for_journal_entry);
+};

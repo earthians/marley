@@ -37,7 +37,8 @@ class LabTest(Document):
 	def after_insert(self):
 		if self.service_order:
 			update_service_order_status(self.service_order, self.doctype, self.name)
-			if frappe.db.get_value('Healthcare Service Order', self.service_order, 'invoiced'):
+			billing_status = frappe.db.get_value('Healthcare Service Order', self.service_order, 'billing_status')
+			if billing_status == 'Invoiced':
 				self.invoiced = True
 
 		if not self.lab_test_name and self.template:

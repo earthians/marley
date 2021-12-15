@@ -28,6 +28,7 @@
   "sb_in_ac",
   "income_account",
   "receivable_account",
+  "naming_series_for_journal_entry",
   "out_patient_sms_alerts",
   "send_registration_msg",
   "registration_msg",
@@ -132,7 +133,7 @@
    "collapsible": 1,
    "fieldname": "sb_in_ac",
    "fieldtype": "Section Break",
-   "label": "Default Accounts"
+   "label": "Accounting Settings"
   },
   {
    "description": "Default income accounts to be used if not set in Healthcare Practitioner to book Appointment charges.",
@@ -322,11 +323,16 @@
    "fieldname": "do_not_bill_inpatient_encounters",
    "fieldtype": "Check",
    "label": "Do Not Bill Patient Encounters for Inpatients"
+  },
+  {
+   "fieldname": "naming_series_for_journal_entry",
+   "fieldtype": "Select",
+   "label": "Naming Series for Insurance Coverage Journal Entry"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2021-01-13 09:04:35.877700",
+ "modified": "2021-12-13 16:58:39.973700",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

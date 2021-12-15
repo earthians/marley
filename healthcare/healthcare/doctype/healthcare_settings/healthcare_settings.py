@@ -13,6 +13,9 @@ from frappe.model.document import Document
 
 
 class HealthcareSettings(Document):
+	def onload(self):
+		self.get_journal_entry_naming_series()
+
 	def validate(self):
 		for key in ['collect_registration_fee', 'link_customer_to_patient', 'patient_name_by',
 		'lab_test_approval_required', 'create_sample_collection_for_lab_test', 'default_medical_code_standard']:
@@ -28,6 +31,10 @@ class HealthcareSettings(Document):
 			validate_service_item(self.op_consulting_charge_item)
 		if self.clinical_procedure_consumable_item:
 			validate_service_item(self.clinical_procedure_consumable_item)
+
+	def get_journal_entry_naming_series(self):
+		meta = frappe.get_meta('Journal Entry')
+		self.set_onload('naming_series_for_journal_entry', meta.get_field("naming_series").options)
 
 
 def validate_service_item(item):
