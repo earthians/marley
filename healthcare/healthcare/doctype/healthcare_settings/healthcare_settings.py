@@ -12,6 +12,9 @@ from frappe.model.document import Document
 
 
 class HealthcareSettings(Document):
+	def onload(self):
+		self.get_journal_entry_naming_series()
+
 	def validate(self):
 		for key in [
 			"collect_registration_fee",
@@ -33,6 +36,10 @@ class HealthcareSettings(Document):
 			validate_service_item(self.op_consulting_charge_item)
 		if self.clinical_procedure_consumable_item:
 			validate_service_item(self.clinical_procedure_consumable_item)
+
+	def get_journal_entry_naming_series(self):
+		meta = frappe.get_meta("Journal Entry")
+		self.set_onload("naming_series_for_journal_entry", meta.get_field("naming_series").options)
 
 
 def validate_service_item(item):

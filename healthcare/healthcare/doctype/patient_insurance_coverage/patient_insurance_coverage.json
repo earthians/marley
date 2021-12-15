@@ -53,6 +53,7 @@
   "coverage_amount_invoiced",
   "insurance_payment_section",
   "approved_amount",
+  "insurance_claim_comments",
   "column_break_48",
   "paid_amount"
  ],
@@ -61,7 +62,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-CLAIM-.YYYY.-",
+   "options": "INS-COV-.YYYY.-",
    "read_only": 1,
    "set_only_once": 1
   },
@@ -178,7 +179,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nApproved\nCancelled\nRejected\nInvoiced\nPartly Invoiced",
+   "options": "Draft\nApproved\nCancelled\nRejected\nInvoiced\nPartly Invoiced\nClaim Submitted\nClaim Error\nClaim Approved\nClaim Rejected\nCompleted",
    "read_only": 1,
    "reqd": 1
   },
@@ -242,7 +243,7 @@
    "fieldtype": "Link",
    "label": "Insurance Plan",
    "no_copy": 1,
-   "options": "Insurance Payor Eligibility Plan",
+   "options": "Payor Insurance Plan",
    "read_only": 1
   },
   {
@@ -417,12 +418,18 @@
    "fieldtype": "Currency",
    "label": "Approved Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "insurance_claim_comments",
+   "fieldtype": "Small Text",
+   "label": "Insurance Claim Comments",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-11 13:44:46.946612",
+ "modified": "2021-12-21 20:11:45.795492",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Coverage",

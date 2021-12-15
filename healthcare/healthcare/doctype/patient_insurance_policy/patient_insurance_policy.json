@@ -35,7 +35,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HI-SUB-.YYYY.-",
+   "options": "INS-PLCY-.YYYY.-",
    "set_only_once": 1
   },
   {
@@ -148,7 +148,7 @@
    "in_standard_filter": 1,
    "label": "Insurance Plan",
    "no_copy": 1,
-   "options": "Insurance Payor Eligibility Plan"
+   "options": "Payor Insurance Plan"
   },
   {
    "allow_in_quick_entry": 1,
@@ -193,7 +193,7 @@
    "link_fieldname": "insurance_policy"
   }
  ],
- "modified": "2021-12-18 19:43:03.570447",
+ "modified": "2021-12-21 20:12:13.067037",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Policy",

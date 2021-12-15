@@ -29,7 +29,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-IC-.YYYY.-",
+   "options": "PAYOR-CONT-.YYYY.-",
    "set_only_once": 1
   },
   {
@@ -107,11 +107,12 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-03 12:46:32.105766",
+ "modified": "2021-12-21 20:11:16.609311",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor Contract",
  "name_case": "Title Case",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

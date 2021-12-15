@@ -41,7 +41,10 @@ class LabTest(Document):
 	def after_insert(self):
 		if self.service_order:
 			update_service_order_status(self.service_order, self.doctype, self.name)
-			if frappe.db.get_value("Healthcare Service Order", self.service_order, "invoiced"):
+			billing_status = frappe.db.get_value(
+				"Healthcare Service Order", self.service_order, "billing_status"
+			)
+			if billing_status == "Invoiced":
 				self.invoiced = True
 
 		if not self.lab_test_name and self.template:
@@ -414,7 +417,7 @@ def get_lab_test_prescribed(patient):
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
 	# return frappe.db.sql(
-	# 	"""
+	# 	'''
 	# 		select
 	# 			hso.template_dn as lab_test_code,
 	# 			hso.order_group,
@@ -430,4 +433,4 @@ def get_lab_test_prescribed(patient):
 	# 			hso.patient=%s
 	# 			and hso.status!=%s
 	# 			and hso.template_dt=%s
-	# 	""", (patient, "Completed", "Lab Test Template"))
+	# 	''', (patient, 'Completed', 'Lab Test Template'))

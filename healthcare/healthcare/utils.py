@@ -850,6 +850,11 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 
 		if len(jv_accounts) > 0:
 			journal_entry = frappe.new_doc("Journal Entry")
+			jv_naming_series = frappe.db.get_single_value(
+				"Healthcare Settings", "naming_series_for_journal_entry"
+			)
+			if jv_naming_series:
+				journal_entry.naming_series = jv_naming_series
 			journal_entry.company = sales_invoice.company
 			journal_entry.posting_date = sales_invoice.posting_date
 
