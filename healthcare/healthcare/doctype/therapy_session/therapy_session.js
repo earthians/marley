@@ -29,7 +29,7 @@ frappe.ui.form.on('Therapy Session', {
 			};
 		});
 
-		frm.set_query('service_order', function() {
+		frm.set_query('service_request', function() {
 			return {
 				filters: {
 					'patient': frm.doc.patient,

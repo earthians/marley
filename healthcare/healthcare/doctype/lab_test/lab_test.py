@@ -9,8 +9,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate
 
-from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
-	update_service_order_status,
+from healthcare.healthcare.doctype.service_request.service_request import (
+	update_service_request_status,
 )
 
 
@@ -24,8 +24,8 @@ class LabTest(Document):
 		self.db_set("submitted_date", getdate())
 		self.db_set("status", "Completed")
 
-		if self.service_order:
-			frappe.db.set_value("Healthcare Service Order", self.service_order, "status", "Completed")
+		if self.service_request:
+			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
@@ -39,11 +39,9 @@ class LabTest(Document):
 			self.sensitivity_test_items = sensitivity
 
 	def after_insert(self):
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
-			billing_status = frappe.db.get_value(
-				"Healthcare Service Order", self.service_order, "billing_status"
-			)
+		if self.service_request:
+			update_service_request_status(self.service_request, self.doctype, self.name)
+			billing_status = frappe.db.get_value("Service Request", self.service_request, "billing_status")
 			if billing_status == "Invoiced":
 				self.invoiced = True
 
@@ -139,8 +137,8 @@ def create_lab_test_from_encounter(encounter):
 
 	if encounter:
 		patient = frappe.get_doc("Patient", encounter.patient)
-		service_orders = frappe.db.get_list(
-			"Healthcare Service Order",
+		service_requests = frappe.db.get_list(
+			"Service Request",
 			filters={
 				"order_group": encounter.name,
 				"status": ["!=", "Completed"],
@@ -148,17 +146,17 @@ def create_lab_test_from_encounter(encounter):
 			},
 			fields=["name"],
 		)
-		if service_orders:
-			for service_order in service_orders:
-				service_order_doc = frappe.get_doc("Healthcare Service Order", service_order)
-				template = get_lab_test_template(service_order_doc.template_dn)
+		if service_requests:
+			for service_request in service_requests:
+				service_request_doc = frappe.get_doc("Service Request", service_request)
+				template = get_lab_test_template(service_request_doc.template_dn)
 				if template:
 					lab_test = create_lab_test_doc(
-						service_order_doc.invoiced, encounter.practitioner, patient, template, encounter.company
+						service_request_doc.invoiced, encounter.practitioner, patient, template, encounter.company
 					)
-					lab_test.service_order = service_order_doc.name
+					lab_test.service_request = service_request_doc.name
 					lab_test.save(ignore_permissions=True)
-					frappe.db.set_value("Healthcare Service Order", service_order_doc.name, "status", "Scheduled")
+					frappe.db.set_value("Service Request", service_request_doc.name, "status", "Scheduled")
 					if not lab_test_created:
 						lab_test_created = lab_test.name
 					else:
@@ -383,7 +381,7 @@ def load_result_format(lab_test, template, prescription, invoice):
 		if prescription:
 			lab_test.prescription = prescription
 			if invoice:
-				frappe.db.set_value("Healthcare Service Order", lab_test.service_order, "status", "Completed")
+				frappe.db.set_value("Service Request", lab_test.service_request, "status", "Completed")
 		lab_test.save(ignore_permissions=True)  # Insert the result
 		return lab_test
 
@@ -398,7 +396,7 @@ def get_employee_by_user_id(user_id):
 
 @frappe.whitelist()
 def get_lab_test_prescribed(patient):
-	hso = frappe.qb.DocType("Healthcare Service Order")
+	hso = frappe.qb.DocType("Service Request")
 	return (
 		frappe.qb.from_(hso)
 		.select(
@@ -428,7 +426,7 @@ def get_lab_test_prescribed(patient):
 	# 			hso.insurance_policy,
 	# 			hso.insurance_payor
 	# 		from
-	# 			`tabHealthcare Service Order` hso
+	# 			`tabService Request` hso
 	# 		where
 	# 			hso.patient=%s
 	# 			and hso.status!=%s

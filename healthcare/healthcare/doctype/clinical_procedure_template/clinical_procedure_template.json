@@ -39,8 +39,10 @@
   "sample_details",
   "change_in_item",
   "codification",
+  "medical_coding_section",
   "codification_table",
   "service_request_defaults_tab",
+  "service_request_defaults_section",
   "patient_care_type",
   "staff_role"
  ],
@@ -244,6 +246,11 @@
    "label": "Sample Collection"
   },
   {
+   "fieldname": "service_request_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request Defaults"
+  },
+  {
    "fieldname": "patient_care_type",
    "fieldtype": "Link",
    "label": "Patient Care Type",
@@ -262,7 +269,7 @@
   }
  ],
  "links": [],
- "modified": "2023-11-06 15:00:26.292044",
+ "modified": "2025-04-20 22:47:28.416311",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

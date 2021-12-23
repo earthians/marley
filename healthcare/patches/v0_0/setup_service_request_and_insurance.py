@@ -4,18 +4,15 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 from healthcare.healthcare.healthcare import data
-from healthcare.healthcare.setup import (
-	create_customer_groups,
-	setup_healthcare_service_order_masters,
-)
+from healthcare.healthcare.setup import create_customer_groups, setup_service_request_masters
 
 
 def execute():
 	frappe.reload_doc("healthcare", "doctype", "Patient Care Type")
-	frappe.reload_doc("healthcare", "doctype", "Healthcare Service Order Intent")
-	frappe.reload_doc("healthcare", "doctype", "Healthcare Service Order Priority")
+	frappe.reload_doc("healthcare", "doctype", "Service Request Intent")
+	frappe.reload_doc("healthcare", "doctype", "Service Request Priority")
 
-	setup_healthcare_service_order_masters()
+	setup_service_request_masters()
 	create_customer_groups()
 
 	frappe.reload_doc("accounts", "doctype", "sales_invoice")

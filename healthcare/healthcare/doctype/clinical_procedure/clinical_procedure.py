@@ -13,11 +13,11 @@ from frappe.utils import flt, nowdate, nowtime
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
-from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import (
-	update_service_order_status,
-)
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
+from healthcare.healthcare.doctype.service_request.service_request import (
+	update_service_request_status,
+)
 
 
 class ClinicalProcedure(Document):
@@ -38,8 +38,8 @@ class ClinicalProcedure(Document):
 			self.set_actual_qty()
 
 	def after_insert(self):
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
+		if self.service_request:
+			update_service_request_status(self.service_request, self.doctype, self.name)
 
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
@@ -115,8 +115,8 @@ class ClinicalProcedure(Document):
 				)
 
 		self.db_set("status", "Completed")
-		if self.service_order:
-			frappe.db.set_value("Healthcare Service Order", self.service_order, "status", "Completed")
+		if self.service_request:
+			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
 
 		if self.consume_stock and self.items:
 			return stock_entry
@@ -290,7 +290,7 @@ def make_procedure(source_name, target_doc=None):
 
 @frappe.whitelist()
 def get_procedure_prescribed(patient, encounter=False):
-	hso = frappe.qb.DocType("Healthcare Service Order")
+	hso = frappe.qb.DocType("Service Request")
 	return (
 		frappe.qb.from_(hso)
 		.select(
@@ -309,7 +309,7 @@ def get_procedure_prescribed(patient, encounter=False):
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
 	# return frappe.db.sql(
-	# 	'''
+	# 	"""
 	# 		select
 	# 			hso.template_dn as procedure_template,
 	# 			hso.order_group,
@@ -320,11 +320,11 @@ def get_procedure_prescribed(patient, encounter=False):
 	# 			hso.insurance_policy,
 	# 			hso.insurance_payor
 	# 		from
-	# 			`tabHealthcare Service Order` hso
+	# 			`tabService Request` hso
 	# 		where
 	# 			hso.patient=%s
 	# 			and hso.status!=%s
 	# 			and hso.template_dt=%s
 	# 		order by
 	# 			hso.creation desc
-	# 	''', (patient, 'Completed', 'Clinical Procedure Template'))
+	# 	""", (patient, "Completed", "Clinical Procedure Template"))

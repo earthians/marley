@@ -7,5 +7,5 @@ from __future__ import unicode_literals
 import unittest
 
 
-class TestHealthcareServiceOrder(unittest.TestCase):
+class TestServiceRequestPriority(unittest.TestCase):
 	pass

@@ -1,17 +1,27 @@
 // Copyright (c) 2020, earthians and contributors
 // For license information, please see license.txt
-// {% include "healthcare/public/js/service_request.js" %}
 
 frappe.ui.form.on('Service Request', {
+	onload: function(frm) {
+		if (frm.doc.__islocal) {
+			frm.set_value('order_time', frappe.datetime.now_time())
+		}
+	},
+
 	refresh: function(frm) {
+		frm.set_query('order_group', function () {
+			return {
+				filters: {
+					'docstatus': 1,
+					'patient': frm.doc.patient,
+					'practitioner': frm.doc.ordered_by
+				}
+			};
+		});
+
 		frm.set_query('template_dt', function() {
-			let order_template_doctypes = [
-				"Therapy Type",
-				"Lab Test Template",
-				"Clinical Procedure Template",
-				"Appointment Type",
-				"Observation Template",
-				"Healthcare Activity"];
+			let order_template_doctypes = ['Medication', 'Therapy Type', 'Lab Test Template',
+				'Clinical Procedure Template'];
 			return {
 				filters: {
 					name: ['in', order_template_doctypes]
@@ -19,17 +29,97 @@ frappe.ui.form.on('Service Request', {
 			};
 		});
 
-		frm.set_query("status", function () {
+		frm.set_query('patient', function () {
 			return {
-				"filters": {
-					"code_system": "Request Status",
+				filters: {
+					'status': 'Active'
 				}
 			};
 		});
 
+		frm.set_query('staff_role', function () {
+			return {
+				filters: {
+					'restrict_to_domain': 'Healthcare'
+				}
+			};
+		});
+
+		frm.set_query('insurance_policy', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'docstatus': 1
+				}
+			};
+		});
+
+		frm.trigger('setup_status_buttons');
 		frm.trigger('setup_create_buttons');
 	},
 
+	setup_status_buttons: function(frm) {
+		if (frm.doc.docstatus === 1) {
+
+			if (frm.doc.status === 'Active') {
+				frm.add_custom_button(__('On Hold'), function() {
+					frm.events.set_status(frm, 'On Hold');
+				}, __('Status'));
+
+				// frm.add_custom_button(__('Completed'), function() {
+				// 	frm.events.set_status(frm, 'Completed');
+				// }, __('Status'));
+			}
+
+			if (frm.doc.status === 'On Hold') {
+				frm.add_custom_button(__('Active'), function() {
+					frm.events.set_status(frm, 'Active');
+				}, __('Status'));
+
+				// frm.add_custom_button(__('Completed'), function() {
+				// 	frm.events.set_status(frm, 'Completed');
+				// }, __('Status'));
+			}
+
+		} else if (frm.doc.docstatus === 2) {
+
+			frm.add_custom_button(__('Revoked'), function() {
+				frm.events.set_status(frm, 'Revoked');
+			}, __('Status'));
+
+			frm.add_custom_button(__('Replaced'), function() {
+				frm.events.set_status(frm, 'Replaced');
+			}, __('Status'));
+
+			frm.add_custom_button(__('Entered in Error'), function() {
+				frm.events.set_status(frm, 'Entered in Error');
+			}, __('Status'));
+
+			frm.add_custom_button(__('Unknown'), function() {
+				frm.events.set_status(frm, 'Unknown');
+			}, __('Status'));
+
+		}
+	},
+
+	set_status: function(frm, status) {
+		frappe.call({
+<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_service_order_status',
+========
+			method: 'healthcare.healthcare.doctype.service_request.service_request.set_service_request_status',
+>>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
+			async: false,
+			freeze: true,
+			args: {
+				service_request: frm.doc.name,
+				status: status
+			},
+			callback: function(r) {
+				if (!r.exc) frm.reload_doc();
+			}
+		});
+	},
 
 	setup_create_buttons: function(frm) {
 		if (frm.doc.docstatus !== 1 || frm.doc.status === 'Completed') return;
@@ -37,100 +127,21 @@ frappe.ui.form.on('Service Request', {
 		if (frm.doc.template_dt === 'Clinical Procedure Template') {
 
 			frm.add_custom_button(__('Clinical Procedure'), function() {
-				frappe.db.get_value("Clinical Procedure", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
-				.then(r => {
-					if (Object.keys(r.message).length == 0) {
-						frm.trigger('make_clinical_procedure');
-					} else {
-						if (r.message && r.message.name) {
-							frappe.set_route("Form", "Clinical Procedure", r.message.name);
-							frappe.show_alert({
-								message: __(`Clinical Procedure is already created`),
-								indicator: "info",
-							});
-						}
-					}
-				})
+				frm.trigger('make_clinical_procedure');
 			}, __('Create'));
 
 
 		} else if (frm.doc.template_dt === 'Lab Test Template') {
-			frm.add_custom_button(__('Lab Test'), function() {
-				frappe.db.get_value("Lab Test", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
-				.then(r => {
-					if (Object.keys(r.message).length == 0) {
-						frm.trigger('make_lab_test');
-					} else {
-						if (r.message && r.message.name) {
-							frappe.set_route("Form", "Lab Test", r.message.name);
-							frappe.show_alert({
-								message: __(`Lab Test is already created`),
-								indicator: "info",
-							});
-						}
-					}
-				})
-			}, __('Create'));
 
+			frm.add_custom_button(__('Lab Test'), function() {
+				frm.trigger('make_lab_test');
+			}, __('Create'));
 
 		} else if (frm.doc.template_dt === 'Therapy Type') {
-			frm.add_custom_button(__("Therapy Session"), function() {
-				frappe.db.get_list("Therapy Session", {
-					filters: {
-						"service_request": frm.doc.name,
-						"docstatus":["!=", 2],
-						"therapy_type": frm.doc.template_dn
-					},
-					fields: ["name"]
-				}).then(response => {
-					if (response.length == frm.doc.quantity) {
-						frappe.set_route("List", "Therapy Session", {
-							service_request: frm.doc.name,
-						});
-					} else {
-						frappe.db.get_value("Therapy Session", {"service_request": frm.doc.name, "docstatus": 0}, "name")
-						.then(r => {
-							if (Object.keys(r.message).length == 0) {
-								frm.trigger('make_therapy_session');
-							} else {
-								if (r.message && r.message.name) {
-									frappe.set_route("Form", "Therapy Session", r.message.name);
-									frappe.show_alert({
-										message: __(`Therapy Session is already created`),
-										indicator: "info",
-									});
-								}
-							}
-						})
-					}
-				})
-			}, __('Create'));
 
-		} else if (frm.doc.template_dt === "Observation Template") {
-			frm.add_custom_button(__('Observation'), function() {
-				frm.trigger('make_observation');
+			frm.add_custom_button(__('Therapy Session'), function() {
+				frm.trigger('make_therapy_session');
 			}, __('Create'));
-
-		} else if (frm.doc.template_dt === "Appointment Type") {
-			frm.add_custom_button(__("Appointment"), function () {
-				frappe.db.get_value("Patient Appointment", { service_request: frm.doc.name, status: ["!=", "Cancelled"] }, "name")
-					.then(r => {
-						if (Object.keys(r.message).length == 0) {
-							frappe.model.open_mapped_doc({
-								method: "healthcare.healthcare.doctype.service_request.service_request.make_appointment",
-								frm: frm,
-							});
-						} else {
-							if (r.message && r.message.name) {
-								frappe.set_route("Form", "Patient Appointment", r.message.name);
-								frappe.show_alert({
-									message: __("Patient Appointment is already created"),
-									indicator: "info",
-								});
-							}
-						}
-					})
-			}, __("Create"));
 		}
 
 		frm.page.set_inner_btn_group_as_primary(__('Create'));
@@ -138,8 +149,13 @@ frappe.ui.form.on('Service Request', {
 
 	make_clinical_procedure: function(frm) {
 		frappe.call({
+<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_clinical_procedure',
+			args: { service_order: frm.doc },
+========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_clinical_procedure',
 			args: { service_request: frm.doc },
+>>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -150,8 +166,13 @@ frappe.ui.form.on('Service Request', {
 
 	make_lab_test: function(frm) {
 		frappe.call({
+<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_lab_test',
+			args: { service_order: frm.doc },
+========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_lab_test',
 			args: { service_request: frm.doc },
+>>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -162,8 +183,13 @@ frappe.ui.form.on('Service Request', {
 
 	make_therapy_session: function(frm) {
 		frappe.call({
+<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
+			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_therapy_session',
+			args: { service_order: frm.doc },
+========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_therapy_session',
 			args: { service_request: frm.doc },
+>>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -172,28 +198,46 @@ frappe.ui.form.on('Service Request', {
 		});
 	},
 
-	make_observation: function(frm) {
-		frappe.call({
-			method: 'healthcare.healthcare.doctype.service_request.service_request.make_observation',
-			args: { service_request: frm.doc },
-			freeze: true,
-			callback: function(r) {
-				if (r.message) {
-					var title = "";
-					var indicator =  "info";
-					if (r.message[2]) {
-						title = `${r.message[0]} is already created`
-					} else {
-						title = `${r.message[0]} is created`
-						indicator = "green"
-					}
-					frappe.show_alert({
-						message: __("{0}", [title]),
-						indicator: indicator,
-					});
-					frappe.set_route('Form', r.message[1], r.message[0]);
-				}
+	after_cancel: function(frm) {
+		frappe.prompt([
+			{
+				fieldname: 'reason_for_cancellation',
+				label: __('Reason for Cancellation'),
+				fieldtype: 'Select',
+				options: ['Revoked', 'Replaced', 'Entered in Error', 'Unknown'],
+				reqd: 1
 			}
-		});
+		],
+		function(data) {
+			frm.events.set_status(frm, data.reason_for_cancellation);
+		}, __('Reason for Cancellation'), __('Submit'));
 	},
+
+	patient: function(frm) {
+		if (!frm.doc.patient) {
+			frm.set_values ({
+				'patient_name': '',
+				'gender': '',
+				'patient_age': '',
+				'mobile': '',
+				'email': '',
+				'inpatient_record': '',
+				'inpatient_status': '',
+			});
+		}
+	},
+
+	birth_date: function(frm) {
+		let age_str = calculate_age(frm.doc.birth_date);
+		frm.set_value('patient_age', age_str);
+	}
 });
+
+
+let calculate_age = function(birth) {
+	let ageMS = Date.parse(Date()) - Date.parse(birth);
+	let age = new Date();
+	age.setTime(ageMS);
+	let years =  age.getFullYear() - 1970;
+	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
+};

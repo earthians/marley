@@ -189,11 +189,11 @@
   },
   {
    "group": "Transactions",
-   "link_doctype": "Healthcare Service Order",
+   "link_doctype": "Service Request",
    "link_fieldname": "insurance_policy"
   }
  ],
- "modified": "2021-12-21 20:12:13.067037",
+ "modified": "2021-12-23 07:25:32.809112",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Policy",

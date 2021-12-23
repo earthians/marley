@@ -25,12 +25,12 @@ class PatientEncounter(Document):
 		if self.therapies:
 			create_therapy_plan(self)
 
-		self.make_healthcare_service_order()
+		self.make_service_request()
 
 	def before_cancel(self):
-		orders = frappe.get_all("Healthcare Service Order", {"order_group": self.name})
+		orders = frappe.get_all("Service Request", {"order_group": self.name})
 		for order in orders:
-			order_doc = frappe.get_doc("Healthcare Service Order", order.name)
+			order_doc = frappe.get_doc("Service Request", order.name)
 			if order_doc.docstatus == 1:
 				order_doc.cancel()
 
@@ -150,7 +150,7 @@ class PatientEncounter(Document):
 					_("Row #{0} (Therapies): Number of Sessions should be at least 1").format(therapy.idx)
 				)
 
-	def make_healthcare_service_order(self):
+	def make_service_request(self):
 		if self.drug_prescription:
 			for drug in self.drug_prescription:
 				medication = frappe.get_doc("Medication", drug.drug_code)
@@ -182,7 +182,7 @@ class PatientEncounter(Document):
 	def get_order_details(self, template_doc, line_item):
 		order = frappe.get_doc(
 			{
-				"doctype": "Healthcare Service Order",
+				"doctype": "Service Request",
 				"template_dt": template_doc.doctype,
 				"template_dn": template_doc.name,
 				"order_date": self.encounter_date,

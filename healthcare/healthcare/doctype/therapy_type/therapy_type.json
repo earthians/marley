@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "field:therapy_type",
- "creation": "2022-01-26 12:22:05.283047",
+ "creation": "2020-03-29 20:48:31.715063",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -9,32 +9,32 @@
   "disabled",
   "section_break_2",
   "therapy_type",
-  "medical_department",
-  "description",
-  "column_break_3",
   "default_duration",
+  "medical_department",
+  "column_break_3",
+  "is_billable",
+  "rate",
   "healthcare_service_unit",
-  "nursing_checklist_template",
   "item_details_section",
   "item",
   "item_code",
   "item_name",
   "item_group",
   "column_break_12",
-  "is_billable",
-  "rate",
-  "exercises_tab",
+  "description",
+  "section_break_18",
   "section_break_6",
   "therapy_for",
   "add_exercises",
-  "section_break_18",
   "exercises",
-  "change_in_item",
-  "codification",
-  "codification_table",
-  "service_request_defaults_tab",
+  "medical_coding_section",
+  "medical_code_standard",
+  "column_break_34",
+  "medical_code",
+  "service_request_defaults_section",
   "patient_care_type",
-  "staff_role"
+  "staff_role",
+  "change_in_item"
  ],
  "fields": [
   {
@@ -169,22 +169,34 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "codification_table",
-   "fieldtype": "Table",
-   "label": "Medical Codes",
-   "options": "Codification Table"
+   "collapsible": 1,
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding",
+   "options": "Medical Coding"
+  },
+  {
+   "fieldname": "medical_code_standard",
+   "fieldtype": "Link",
+   "label": "Medical Code Standard",
+   "options": "Medical Code Standard"
+  },
+  {
+   "fieldname": "column_break_34",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "medical_code_standard",
+   "fieldname": "medical_code",
+   "fieldtype": "Link",
+   "label": "Medical Code",
+   "options": "Medical Code"
   },
   {
    "collapsible": 1,
-   "fieldname": "codification",
-   "fieldtype": "Tab Break",
-   "label": "Medical Coding"
-  },
-  {
-   "fieldname": "nursing_checklist_template",
-   "fieldtype": "Link",
-   "label": "Nursing Checklist Template",
-   "options": "Nursing Checklist Template"
+   "fieldname": "service_request_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request Defaults"
   },
   {
    "fetch_from": "service_request_category.patient_care_type",
@@ -199,25 +211,13 @@
    "fieldtype": "Link",
    "label": "Staff Role",
    "options": "Role"
-  },
-  {
-   "fieldname": "exercises_tab",
-   "fieldtype": "Tab Break",
-   "label": "Exercises"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "service_request_defaults_tab",
-   "fieldtype": "Tab Break",
-   "label": "Service Request Defaults"
   }
  ],
  "links": [],
- "modified": "2023-11-06 14:59:47.927972",
+ "modified": "2021-12-23 07:14:12.163347",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Type",
- "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -258,6 +258,5 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
  "track_changes": 1
 }

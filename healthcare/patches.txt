@@ -11,7 +11,7 @@ healthcare.patches.v15_0.create_custom_field_in_payment_entry
 healthcare.patches.v15_0.add_observation_to_patient_history
 healthcare.patches.v15_0.create_patient_medical_records_for_observations #25-12-2024
 healthcare.patches.v15_0.add_discharge_summary_to_patient_history
-healthcare.patches.v0_0.setup_healthcare_service_order_and_insurance
+healthcare.patches.v0_0.setup_service_request_and_insurance
 
 [post_model_sync]
 healthcare.patches.v15_0.rename_field_medical_department_in_appoitment_type_service_item
