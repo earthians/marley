@@ -41,7 +41,7 @@
   "medical_coding_section",
   "codification_table",
   "sb_refs",
-  "healthcare_service_order",
+  "service_request",
   "invoiced",
   "prescription",
   "amended_from"
@@ -310,11 +310,11 @@
    "read_only": 1
   },
   {
-   "fieldname": "healthcare_service_order",
+   "fieldname": "service_request",
    "fieldtype": "Link",
-   "label": "Healthcare Service Order",
+   "label": "Service Request",
    "no_copy": 1,
-   "options": "Healthcare Service Order",
+   "options": "Service Request",
    "print_hide": 1,
    "read_only": 1
   }

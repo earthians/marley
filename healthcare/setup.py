@@ -203,7 +203,7 @@ def create_custom_records():
 	create_healthcare_item_groups()
 	create_sensitivity()
 	setup_patient_history_settings()
-	setup_healthcare_service_order_masters()
+	setup_service_request_masters()
 
 
 def create_medical_departments():
@@ -737,27 +737,26 @@ def setup_patient_history_settings():
 		)
 	settings.save()
 
-
-def setup_healthcare_service_order_masters():
+def setup_service_request_masters():
 	records = [
 		{"doctype": "Patient Care Type", "patient_care_type": _("Preventive")},
 		{"doctype": "Patient Care Type", "patient_care_type": _("Intervention")},
 		{"doctype": "Patient Care Type", "patient_care_type": _("Diagnostic")},
 
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Order")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Proposal")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Plan")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Directive")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Original Order")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Reflex Order")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Filler Order")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Instance Order")},
-		{"doctype": "Healthcare Service Order Intent", "intent": _("Option")},
+		{"doctype": "Service Request Intent", "intent": _("Order")},
+		{"doctype": "Service Request Intent", "intent": _("Proposal")},
+		{"doctype": "Service Request Intent", "intent": _("Plan")},
+		{"doctype": "Service Request Intent", "intent": _("Directive")},
+		{"doctype": "Service Request Intent", "intent": _("Original Order")},
+		{"doctype": "Service Request Intent", "intent": _("Reflex Order")},
+		{"doctype": "Service Request Intent", "intent": _("Filler Order")},
+		{"doctype": "Service Request Intent", "intent": _("Instance Order")},
+		{"doctype": "Service Request Intent", "intent": _("Option")},
 
-		{"doctype": "Healthcare Service Order Priority", "priority": _("Routine"), "color": "#29CD42"},
-		{"doctype": "Healthcare Service Order Priority", "priority": _("Urgent"), "color": "#FFFF00"},
-		{"doctype": "Healthcare Service Order Priority", "priority": _("ASAP"), "color": "#FFA500"},
-		{"doctype": "Healthcare Service Order Priority", "priority": _("STAT"), "color": "#CB2929"}
+		{"doctype": "Service Request Priority", "priority": _("Routine"), "color": "#29CD42"},
+		{"doctype": "Service Request Priority", "priority": _("Urgent"), "color": "#FFFF00"},
+		{"doctype": "Service Request Priority", "priority": _("ASAP"), "color": "#FFA500"},
+		{"doctype": "Service Request Priority", "priority": _("STAT"), "color": "#CB2929"}
 	]
 	insert_record(records)
 
