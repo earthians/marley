@@ -22,6 +22,17 @@ frappe.ui.form.on('Lab Test', {
 			{ fieldname: 'lab_test_particulars', columns: 3 },
 			{ fieldname: 'result_value', columns: 7 }
 		];
+
+		frm.set_query('service_request', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'status': 'Active',
+					'docstatus': 1,
+					'template_dt': 'Lab Test template'
+				}
+			};
+		});
 	},
 
 	refresh: function (frm) {
@@ -208,7 +219,7 @@ var show_lab_tests = function (frm, lab_test_list) {
 
 		row.find("a").click(function () {
 			frm.doc.template = $(this).attr('data-lab-test');
-			frm.doc.service_order = $(this).attr('data-name');
+			frm.doc.service_request = $(this).attr('data-name');
 			frm.doc.practitioner = $(this).attr('data-practitioner');
 			frm.set_df_property('template', 'read_only', 1);
 			frm.set_df_property('patient', 'read_only', 1);
@@ -223,9 +234,7 @@ var show_lab_tests = function (frm, lab_test_list) {
 			}
 			refresh_field('invoiced');
 			refresh_field('template');
-			frm.refresh_field('service_order');
-			frm.refresh_field("insurance_subscription");
-			frm.refresh_field("insurance_company");
+			frm.refresh_field('service_request');
 			d.hide();
 			return false;
 		});

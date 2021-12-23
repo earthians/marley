@@ -1,4 +1,4 @@
-frappe.listview_settings['Healthcare Service Order'] = {
+frappe.listview_settings['Service Request'] = {
 	add_fields: ['name', 'status'],
 	filters: [['docstatus', '=', '1']],
 	has_indicator_for_cancelled: 1,

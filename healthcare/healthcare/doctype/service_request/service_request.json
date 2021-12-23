@@ -79,7 +79,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HSO-",
+   "options": "HSR-",
    "reqd": 1
   },
   {
@@ -186,14 +186,14 @@
    "fieldname": "intent",
    "fieldtype": "Link",
    "label": "Intent",
-   "options": "Healthcare Service Order Intent"
+   "options": "Service Request Intent"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Priority",
-   "options": "Healthcare Service Order Priority"
+   "options": "Service Request Priority"
   },
   {
    "collapsible": 1,
@@ -308,7 +308,7 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Healthcare Service Order",
+   "options": "Service Request",
    "read_only": 1
   },
   {
@@ -517,6 +517,7 @@
  "links": [
   {
    "link_doctype": "Lab Test",
+<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.json
    "link_fieldname": "healthcare_service_order"
   },
   {
@@ -529,9 +530,24 @@
   }
  ],
  "modified": "2021-04-30 16:04:12.671393",
+=======
+   "link_fieldname": "service_request"
+  },
+  {
+   "link_doctype": "Clinical Procedure",
+   "link_fieldname": "service_request"
+  },
+  {
+   "link_doctype": "Therapy Session",
+   "link_fieldname": "service_request"
+  }
+ ],
+ "modified": "2021-12-23 07:10:52.311333",
+>>>>>>> f17dbf5... rename doctypes:healthcare/healthcare/doctype/service_request/service_request.json
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Healthcare Service Order",
+ "name": "Service Request",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
