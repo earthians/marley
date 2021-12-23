@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "service_request",
   "appointment",
   "therapy_plan",
   "patient",
@@ -238,11 +239,12 @@
    "read_only": 1
   },
   {
-   "fieldname": "healthcare_service_order",
+   "fieldname": "service_request",
    "fieldtype": "Link",
-   "label": "Healthcare Service Order",
+   "in_standard_filter": 1,
+   "label": "Service Request",
    "no_copy": 1,
-   "options": "Healthcare Service Order",
+   "options": "Service Request",
    "print_hide": 1,
    "read_only": 1
   },

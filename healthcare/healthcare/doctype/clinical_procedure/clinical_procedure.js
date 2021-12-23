@@ -21,6 +21,17 @@ frappe.ui.form.on('Clinical Procedure', {
 				};
 			}
 		});
+
+		frm.set_query('service_request', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'status': 'Active',
+					'docstatus': 1,
+					'template_dt': 'Clinical Procedure template'
+				}
+			};
+		});
 	},
 
 	refresh: function(frm) {
@@ -471,7 +482,7 @@ let show_procedure_templates = function(frm, result){
 			).appendTo(html_field);
 			row.find("a").click(function() {
 			frm.doc.procedure_template = $(this).attr("data-procedure-template");
-			frm.doc.service_order = $(this).attr('data-name');
+			frm.doc.service_request = $(this).attr('data-name');
 			frm.doc.practitioner = $(this).attr("data-practitioner");
 			if($(this).attr("data-insurance-subscription")){
 				frm.doc.insurance_subscription = $(this).attr("data-insurance-subscription");
@@ -483,7 +494,7 @@ let show_procedure_templates = function(frm, result){
 				frm.doc.invoiced = 1;
 			}
 			frm.refresh_field("procedure_template");
-			frm.refresh_field("service_order");
+			frm.refresh_field("service_request");
 			frm.refresh_field("practitioner");
 			frm.refresh_field('insurance_subscription');
 			frm.refresh_field("insurance_company");

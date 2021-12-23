@@ -1,7 +1,17 @@
 // Copyright (c) 2020, earthians and contributors
 // For license information, please see license.txt
 
+<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
 frappe.ui.form.on('Healthcare Service Order', {
+=======
+frappe.ui.form.on('Service Request', {
+	onload: function(frm) {
+		if (frm.doc.__islocal) {
+			frm.set_value('order_time', frappe.datetime.now_time())
+		}
+	},
+
+>>>>>>> f17dbf5... rename doctypes:healthcare/healthcare/doctype/service_request/service_request.js
 	refresh: function(frm) {
 		frm.set_query('order_group', function () {
 			return {
@@ -89,11 +99,19 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	set_status: function(frm, status) {
 		frappe.call({
+<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
 			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_status',
 			async: false,
 			freeze: true,
 			args: {
 				docname: frm.doc.name,
+=======
+			method: 'healthcare.healthcare.doctype.service_request.service_request.set_service_request_status',
+			async: false,
+			freeze: true,
+			args: {
+				service_request: frm.doc.name,
+>>>>>>> f17dbf5... rename doctypes:healthcare/healthcare/doctype/service_request/service_request.js
 				status: status
 			},
 			callback: function(r) {
@@ -131,8 +149,8 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	make_clinical_procedure: function(frm) {
 		frappe.call({
-			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_clinical_procedure',
-			args: { service_order: frm.doc },
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_clinical_procedure',
+			args: { service_request: frm.doc },
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -143,8 +161,8 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	make_lab_test: function(frm) {
 		frappe.call({
-			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_lab_test',
-			args: { service_order: frm.doc },
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_lab_test',
+			args: { service_request: frm.doc },
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -155,8 +173,8 @@ frappe.ui.form.on('Healthcare Service Order', {
 
 	make_therapy_session: function(frm) {
 		frappe.call({
-			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_therapy_session',
-			args: { service_order: frm.doc },
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_therapy_session',
+			args: { service_request: frm.doc },
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);

@@ -6,5 +6,5 @@ from __future__ import unicode_literals
 # import frappe
 import unittest
 
-class TestHealthcareServiceOrderCategory(unittest.TestCase):
+class TestServiceRequestCategory(unittest.TestCase):
 	pass

@@ -34,7 +34,10 @@
   "default_interval_uom",
   "section_break_36",
   "reference_url",
-  "change_in_item"
+  "change_in_item",
+  "service_request_defaults_section",
+  "patient_care_type",
+  "staff_role"
  ],
  "fields": [
   {
@@ -229,10 +232,36 @@
    "fieldtype": "Float",
    "label": "Rate",
    "mandatory_depends_on": "is_billable"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "service_request_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request Defaults"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "drug_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Drug Code",
+   "no_copy": 1
   }
  ],
  "links": [],
- "modified": "2021-04-21 17:17:52.995701",
+ "modified": "2021-12-23 07:15:11.763152",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",

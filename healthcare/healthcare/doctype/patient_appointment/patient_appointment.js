@@ -52,6 +52,17 @@ frappe.ui.form.on('Patient Appointment', {
 			};
 		});
 
+		frm.set_query('service_request', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'status': 'Active',
+					'docstatus': 1,
+					'template_dt': ['in', ['Clinical Procedure', 'Therapy Type']]
+				}
+			};
+		});
+
 		frm.trigger('set_therapy_type_filter');
 
 		if (frm.is_new()) {
