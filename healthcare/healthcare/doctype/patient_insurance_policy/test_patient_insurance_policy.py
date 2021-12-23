@@ -10,12 +10,12 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 from healthcare.healthcare.doctype.patient_insurance_policy.patient_insurance_policy import OverlapError
 
 class TestPatientInsurancePolicy(unittest.TestCase):
-	def test_subscription(self):
+	def test_policy(self):
 		patient = create_patient()
 		insurance_policy = get_new_insurance_policy(self, patient)
 		insurance_policy.submit()
 
-		# subscription cannot have equal policy number
+		# policy number should be unique?
 		insurance_policy = get_new_insurance_policy(self, patient)
 		self.assertRaises(OverlapError, insurance_policy.submit)
 

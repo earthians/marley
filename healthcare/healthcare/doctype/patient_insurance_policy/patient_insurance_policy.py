@@ -14,21 +14,21 @@ class OverlapError(frappe.ValidationError):
 
 class PatientInsurancePolicy(Document):
 	def validate(self):
-		# check if a contract exist for the insurance company
+		# check if a contract exist for the Insurance Payor
 		if not has_active_contract(self.insurance_payor):
 			frappe.throw(_('No active contracts found for Insurance Payor {0}')
 				.format(self.insurance_payor))
 
 		self.validate_expiry_date()
-		self.validate_subscription_overlap()
+		self.validate_policy_overlap()
 		self.validate_policy_number()
 		self.set_title()
 
 	def validate_expiry_date(self):
 		if getdate(self.policy_expiry_date) < getdate():
-			frappe.throw(_('Expiry Date for the Subscription cannot be a past date'))
+			frappe.throw(_('Expiry Date for the Insruance Policy cannot be a past date'))
 
-	def validate_subscription_overlap(self):
+	def validate_policy_overlap(self):
 		insurance_policy = frappe.db.exists('Patient Insurance Policy', {
 			'patient': self.patient,
 			'docstatus': 1,
@@ -37,7 +37,7 @@ class PatientInsurancePolicy(Document):
 			'insurance_plan': self.insurance_plan or ''
 		})
 		if insurance_policy:
-			frappe.throw(_('Patient {0} already has an active insurance subscription {1} with the coverage plan {2} for this period').format(
+			frappe.throw(_('Patient {0} already has an active insurance policy {1} with the coverage plan {2} for this period').format(
 				frappe.bold(self.patient), get_link_to_form('Patient Insurance Policy', insurance_policy),
 				frappe.bold(self.insurance_plan)), title=_('Duplicate'))
 
@@ -48,7 +48,7 @@ class PatientInsurancePolicy(Document):
 			'policy_number': self.policy_number
 		})
 		if insurance_policy:
-			frappe.throw(_('Patient {0} already has an insurance subscription {1} with the same Policy Number {2}').format(
+			frappe.throw(_('Patient {0} already has an Insurance Policy {1} with the same Policy Number {2}').format(
 				frappe.bold(self.patient), get_link_to_form('Patient Insurance Policy', insurance_policy),
 				frappe.bold(self.policy_number)), title=_('Duplicate'), exc=OverlapError)
 
@@ -56,12 +56,12 @@ class PatientInsurancePolicy(Document):
 		self.title = _('{0} - {1}').format(self.patient_name or self.patient, self.policy_number)
 
 
-def is_insurance_policy_valid(subscription, on_date=None, company=None):
+def is_insurance_policy_valid(policy, on_date=None, company=None):
 	'''
 	Returns True if Patient Insurance Policy is valid
 	#TODO: If company is received, checks if the company has a valid contract
 	'''
-	policy_expiry = frappe.db.get_value('Patient Insurance Policy', subscription, ['policy_expiry_date'])
+	policy_expiry = frappe.db.get_value('Patient Insurance Policy', policy, ['policy_expiry_date'])
 	if getdate(policy_expiry) >= (getdate(on_date) or getdate()):
 		return True
 

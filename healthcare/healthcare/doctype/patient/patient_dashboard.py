@@ -41,7 +41,7 @@ def get_data():
 				'items': ['Inpatient Medication Order']
 			},
 			{
-				'label': _('Subscriptions'),
+				'label': _('Insurance Policies'),
 				'items': ['Patient Insurance Policy']
 			}
 		]

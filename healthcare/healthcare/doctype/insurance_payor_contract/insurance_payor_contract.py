@@ -26,5 +26,5 @@ class InsurancePayorContract(Document):
 			})
 
 			if contract:
-				frappe.throw(_('An active contract for this insurance company already exists: {0}').format(
+				frappe.throw(_('An active contract for this Insurance Payor already exists: {0}').format(
 					get_link_to_form('Insurance Payor Contract', contract)), exc=OverlapError)

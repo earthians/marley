@@ -89,7 +89,7 @@ class ItemInsuranceEligibility(Document):
 		'''.format(conditions=conditions), as_dict=1)
 
 		if overlap:
-			frappe.throw(_('Coverage overlaps with {eligibility}').format(eligibility=get_link_to_form(self.doctype, overlap[0].name)),
+			frappe.throw(_('Item Eligibility overlaps with {eligibility}').format(eligibility=get_link_to_form(self.doctype, overlap[0].name)),
 						 CoverageOverlapError, title=_('Not Allowed'))
 
 	def set_service_item(self):

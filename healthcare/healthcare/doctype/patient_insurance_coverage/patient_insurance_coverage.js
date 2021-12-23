@@ -79,11 +79,11 @@ frappe.ui.form.on('Patient Insurance Coverage', {
 
 		}
 
-		// Allow creating coverage if coverage does not link a coverage
-		if (!frm.doc.coverage && frm.doc.docstatus === 1) {
+		// Allow creating eligibility if coverage does not linked to one
+		if (!frm.doc.item_eligibility && frm.doc.docstatus === 1) {
 			frm.add_custom_button(__('Create Coverage'), () => {
 				frappe.call({
-					method: 'healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage.create_insurance_coverage',
+					method: 'healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage.create_insurance_eligibility',
 					args: { doc: frm.doc },
 					freeze: true,
 					callback: function(r) {
@@ -92,14 +92,6 @@ frappe.ui.form.on('Patient Insurance Coverage', {
 					}
 				});
 			});
-
-			frm.add_custom_button(__(frm.doc.service_doctype), () => {
-				frappe.db.get_value(frm.doc.service_doctype, { 'insurance_coverage': frm.doc.name }, 'name', (r) => {
-					if (r && r.name) {
-						frappe.set_route('Form', frm.doc.service_doctype, r.name);
-					}
-				});
-			}, __('View'));
 		}
 	},
 

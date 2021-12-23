@@ -140,13 +140,13 @@ class PatientInsuranceCoverage(Document):
 		)
 
 		if not eligibility:
-			frappe.msgprint(_('Insurance Coverage not found for {}.').format(self.item_code), alert=True, indicator='error')
+			frappe.msgprint(_('Insurance Eligibility not found for Item {}.').format(self.item_code), alert=True, indicator='error')
 
 			if self.mode_of_approval == 'Automatic':
 				# mode_of_approval cannot be automatic if coverage not based on coverage
 				raise CoverageNotFoundError
 		else:
-			self.service_coverage = eligibility.get('name')
+			self.item_eligibility = eligibility.get('name')
 			self.insurance_plan = eligibility.get('insurance_plan')
 			self.mode_of_approval = eligibility.get('mode_of_approval')
 			self.coverage = eligibility.get('coverage')
@@ -169,7 +169,7 @@ class PatientInsuranceCoverage(Document):
 			price_list = insurance_price_lists.get('plan_price_list')
 			price_list_rate = get_item_price_list_rate(self.item_code, price_list, self.qty, self.company)
 
-		# insurance company price list
+		# Insurance Payor price list
 		if not price_list_rate and insurance_price_lists.get('default_price_list'):
 			price_list = insurance_price_lists.get('default_price_list')
 			price_list_rate = get_item_price_list_rate(self.item_code, price_list, self.qty, self.company)
@@ -266,7 +266,7 @@ def get_item_price_list_rate(item_code, price_list, qty, company):
 
 
 @frappe.whitelist()
-def create_insurance_coverage(doc):
+def create_insurance_eligibility(doc):
 	from six import string_types
 	import json
 
@@ -274,17 +274,13 @@ def create_insurance_coverage(doc):
 		doc = json.loads(doc)
 		doc = frappe._dict(doc)
 
-	coverage = frappe.new_doc('Item Insurance Eligibility')
-	coverage.eligibility_for = 'Service' if doc.template_dt else 'Item'
-	coverage.insurance_plan = doc.insurance_plan
-	coverage.template_dt = doc.template_dt
-	coverage.template_dn = doc.template_dn
-	coverage.item = doc.item_code
+	item_eligibility = frappe.new_doc('Item Insurance Eligibility')
+	item_eligibility.eligibility_for = 'Service' if doc.template_dt else 'Item'
+	item_eligibility.insurance_plan = doc.insurance_plan
+	item_eligibility.template_dt = doc.template_dt
+	item_eligibility.template_dn = doc.template_dn
+	item_eligibility.item = doc.item_code
 
-	coverage.mode_of_approval = doc.mode_of_approval
-	coverage.coverage = doc.coverage
-	coverage.discount = doc.discount
-	coverage.start_date = doc.posting_date or getdate()
-	# coverage.end_date = doc.approval_validity_end_date # leave blank as coverage.approval_validity_end_date is dependent on policy end date
+	item_eligibility.start_date = doc.posting_date or getdate()
 
-	return coverage
+	return item_eligibility

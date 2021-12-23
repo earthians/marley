@@ -172,7 +172,7 @@ var show_lab_tests = function (frm, lab_test_list) {
 				<a data-name="%(name)s" data-lab-test="%(lab_test)s"\
 				data-encounter="%(encounter)s" data-practitioner="%(practitioner)s" \
 				data-invoiced="%(invoiced)s" data-source="%(source)s"\
-				data-insurance-company="%(insurance_payor)s" data-insurance-subscription="%(insurance_policy)s"\
+				data-insurance-payor="%(insurance_payor)s" data-insurance-policy="%(insurance_policy)s"\
 				data-referring-practitioner="%(referring_practitioner)s" href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 			</div>\
 		</div><hr>',
@@ -188,9 +188,9 @@ var show_lab_tests = function (frm, lab_test_list) {
 			frm.set_df_property('template', 'read_only', 1);
 			frm.set_df_property('patient', 'read_only', 1);
 			frm.set_df_property('practitioner', 'read_only', 1);
-			if ($(this).attr("data-insurance-subscription")) {
-				frm.doc.insurance_policy = $(this).attr("data-insurance-subscription");
-				frm.doc.insurance_payor = $(this).attr("data-insurance-company");
+			if ($(this).attr("data-insurance-policy")) {
+				frm.doc.insurance_policy = $(this).attr("data-insurance-policy");
+				frm.doc.insurance_payor = $(this).attr("data-insurance-payor");
 			}
 			frm.doc.invoiced = 0;
 			if ($(this).attr('data-invoiced') === 1) {

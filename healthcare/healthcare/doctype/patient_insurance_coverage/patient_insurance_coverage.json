@@ -18,7 +18,7 @@
   "posting_date",
   "status",
   "amended_from",
-  "subscription_details_section",
+  "policy_details_section",
   "insurance_policy",
   "insurance_payor",
   "column_break_10",
@@ -38,7 +38,7 @@
   "coverage_validity_end_date",
   "price_list",
   "price_list_rate",
-  "service_coverage",
+  "item_eligibility",
   "insurance_plan",
   "column_break_24",
   "discount",
@@ -53,7 +53,6 @@
   "coverage_amount_invoiced",
   "insurance_payment_section",
   "approved_amount",
-  "insurance_claim_comments",
   "column_break_48",
   "paid_amount"
  ],
@@ -105,7 +104,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "subscription_details_section",
+   "fieldname": "policy_details_section",
    "fieldtype": "Section Break",
    "label": "Patient Insurance Policy Details"
   },
@@ -179,7 +178,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nApproved\nCancelled\nRejected\nInvoiced\nPartly Invoiced\nClaim Submitted\nClaim Error\nClaim Approved\nClaim Rejected\nCompleted",
+   "options": "Draft\nApproved\nCancelled\nRejected\nInvoiced\nPartly Invoiced",
    "read_only": 1,
    "reqd": 1
   },
@@ -241,9 +240,9 @@
   {
    "fieldname": "insurance_plan",
    "fieldtype": "Link",
-   "label": "Insurance Plan",
+   "label": "Insurance Eligibility Plan",
    "no_copy": 1,
-   "options": "Payor Insurance Plan",
+   "options": "Insurance Payor Eligibility Plan",
    "read_only": 1
   },
   {
@@ -278,14 +277,6 @@
    "fieldtype": "Float",
    "label": " Quantity",
    "reqd": 1
-  },
-  {
-   "fieldname": "service_coverage",
-   "fieldtype": "Link",
-   "label": "Service Coverage",
-   "no_copy": 1,
-   "options": "Item Insurance Eligibility",
-   "read_only": 1
   },
   {
    "bold": 1,
@@ -420,16 +411,18 @@
    "read_only": 1
   },
   {
-   "fieldname": "insurance_claim_comments",
-   "fieldtype": "Small Text",
-   "label": "Insurance Claim Comments",
+   "fieldname": "item_eligibility",
+   "fieldtype": "Link",
+   "label": "Item Insurance Eligibility",
+   "no_copy": 1,
+   "options": "Item Insurance Eligibility",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-21 20:11:45.795492",
+ "modified": "2021-12-23 06:56:38.207765",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Coverage",
