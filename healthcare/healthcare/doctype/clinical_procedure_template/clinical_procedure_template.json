@@ -247,7 +247,7 @@
   {
    "fieldname": "service_order_defaults_section",
    "fieldtype": "Section Break",
-   "label": "Service Order Defaults"
+   "label": "Service Request Defaults"
   },
   {
    "fieldname": "patient_care_type",
@@ -263,7 +263,7 @@
   }
  ],
  "links": [],
- "modified": "2021-04-30 11:12:09.088800",
+ "modified": "2021-12-23 07:45:12.398227",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
