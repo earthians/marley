@@ -2,38 +2,30 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "field:priority",
+ "autoname": "field:service_request_reason",
  "beta": 1,
- "creation": "2020-07-20 16:55:08.862332",
+ "creation": "2020-07-20 16:49:29.504052",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "priority",
-  "color"
+  "service_request_reason"
  ],
  "fields": [
   {
-   "allow_in_quick_entry": 1,
-   "fieldname": "color",
-   "fieldtype": "Color",
-   "in_list_view": 1,
-   "label": "Color"
-  },
-  {
-   "fieldname": "priority",
+   "fieldname": "service_request_reason",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Priority",
+   "label": "Service Request Reason ",
    "reqd": 1,
    "unique": 1
   }
  ],
  "links": [],
- "modified": "2021-04-27 16:39:41.304396",
+ "modified": "2021-12-23 07:09:19.212113",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Healthcare Service Order Priority",
+ "name": "Service Request Reason",
  "owner": "Administrator",
  "permissions": [
   {
@@ -61,16 +53,6 @@
    "write": 1
   },
   {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Physician",
-   "share": 1
-  },
-  {
    "email": 1,
    "export": 1,
    "print": 1,
@@ -78,6 +60,17 @@
    "report": 1,
    "role": "Nursing User",
    "share": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "write": 1
   }
  ],
  "quick_entry": 1,

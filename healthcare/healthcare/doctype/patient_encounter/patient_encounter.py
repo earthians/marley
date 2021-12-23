@@ -27,7 +27,14 @@ class PatientEncounter(Document):
 		if self.therapies:
 			create_therapy_plan(self)
 
-		self.make_healthcare_service_order()
+		self.make_service_request()
+
+	def before_cancel(self):
+		orders = frappe.get_all('Service Request', {'order_group': self.name})
+		for order in orders:
+			order_doc = frappe.get_doc('Service Request', order.name)
+			if order_doc.docstatus == 1:
+				order_doc.cancel()
 
 	def on_cancel(self):
 		if self.appointment:
@@ -121,7 +128,16 @@ class PatientEncounter(Document):
 			if not item.medication and not item.drug_code:
 				frappe.throw(_('Row #{0} (Drug Prescription): Medication or Item Code is mandatory').format(item.idx))
 
-	def make_healthcare_service_order(self):
+	def validate_therapies(self):
+		if not self.therapies:
+			return
+
+		for therapy in self.therapies:
+			if therapy.get_quantity() <= 0:
+				frappe.throw(_('Row #{0} (Therapies): Number of Sessions should be at least 1').format(therapy.idx))
+
+
+	def make_service_request(self):
 		if self.drug_prescription:
 			for drug in self.drug_prescription:
 				medication = frappe.get_doc('Medication', drug.drug_code)
@@ -146,11 +162,11 @@ class PatientEncounter(Document):
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
 
-	def get_order_details(self, doc, line_item):
+	def get_order_details(self, template_doc, line_item):
 		order = frappe.get_doc({
-			'doctype': 'Healthcare Service Order',
-			'order_doctype': doc.doctype,
-			'order_template': doc.name,
+			'doctype': 'Service Request',
+			'template_dt': template_doc.doctype,
+			'template_dn': template_doc.name,
 			'order_date': self.encounter_date,
 			'order_time': self.encounter_time,
 			'company': self.company,
@@ -159,7 +175,7 @@ class PatientEncounter(Document):
 			'practitioner': self.practitioner,
 			'order_group': self.name,
 			'sequence': line_item.get('sequence'),
-			'patient_care_type': doc.get('patient_care_type'),
+			'patient_care_type': template_doc.get('patient_care_type'),
 			'intent': line_item.get('intent'),
 			'priority': line_item.get('priority'),
 			'quantity': line_item.get_quantity() if line_item.doctype == 'Drug Prescription' else 1,
@@ -168,17 +184,17 @@ class PatientEncounter(Document):
 			'period': line_item.get('period'),
 			'expected_date': line_item.get('expected_date'),
 			'as_needed': line_item.get('as_needed'),
-			'staff_role': doc.get('staff_role'),
+			'staff_role': template_doc.get('staff_role'),
 			'note': line_item.get('note'),
 			'patient_instruction': line_item.get('patient_instruction'),
 			'medical_code': template_doc.get('medical_code'),
 			'medical_code_standard': template_doc.get('medical_code_standard')
 		})
 
-		if doc.doctype == 'Lab Test Template':
-			description = doc.get('lab_test_description')
+		if template_doc.doctype == 'Lab Test Template':
+			description = template_doc.get('lab_test_description')
 		else:
-			description = doc.get('description')
+			description = template_doc.get('description')
 
 		order.update({'order_description': description})
 		return order
