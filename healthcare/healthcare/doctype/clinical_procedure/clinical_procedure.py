@@ -15,7 +15,7 @@ from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from erpnext.stock.get_item_details import get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
-from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+from healthcare.healthcare.doctype.service_request.service_request import update_service_request_status
 
 class ClinicalProcedure(Document):
 	def validate(self):
@@ -35,8 +35,8 @@ class ClinicalProcedure(Document):
 			self.set_actual_qty()
 
 	def after_insert(self):
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
+		if self.service_request:
+			update_service_request_status(self.service_request, self.doctype, self.name)
 
 		if self.appointment:
 			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Closed')
@@ -99,8 +99,8 @@ class ClinicalProcedure(Document):
 				frappe.throw(_('Please set Customer in Patient {0}').format(frappe.bold(self.patient)), title=_('Customer Not Found'))
 
 		self.db_set('status', 'Completed')
-		if self.service_order:
-			frappe.db.set_value('Healthcare Service Order', self.service_order, 'status', 'Completed')
+		if self.service_request:
+			frappe.db.set_value('Service Request', self.service_request, 'status', 'Completed')
 
 		if self.consume_stock and self.items:
 			return stock_entry
@@ -261,7 +261,7 @@ def make_procedure(source_name, target_doc=None):
 
 @frappe.whitelist()
 def get_procedure_prescribed(patient, encounter=False):
-	hso = frappe.qb.DocType('Healthcare Service Order')
+	hso = frappe.qb.DocType('Service Request')
 	return  (
 		frappe.qb.from_(hso)
 			.select(hso.template_dn, hso.order_group, hso.invoiced,\
@@ -284,7 +284,7 @@ def get_procedure_prescribed(patient, encounter=False):
 	# 			hso.insurance_policy,
 	# 			hso.insurance_payor
 	# 		from
-	# 			`tabHealthcare Service Order` hso
+	# 			`tabService Request` hso
 	# 		where
 	# 			hso.patient=%s
 	# 			and hso.status!=%s

@@ -36,7 +36,7 @@
   "section_break_36",
   "reference_url",
   "change_in_item",
-  "service_order_defaults_section",
+  "service_request_defaults_section",
   "patient_care_type",
   "staff_role"
  ],
@@ -233,9 +233,9 @@
   },
   {
    "collapsible": 1,
-   "fieldname": "service_order_defaults_section",
+   "fieldname": "service_request_defaults_section",
    "fieldtype": "Section Break",
-   "label": "Service Order Defaults"
+   "label": "Service Request Defaults"
   },
   {
    "fieldname": "patient_care_type",
@@ -259,7 +259,7 @@
   }
  ],
  "links": [],
- "modified": "2021-07-11 10:17:25.315098",
+ "modified": "2021-12-23 07:15:11.763152",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",

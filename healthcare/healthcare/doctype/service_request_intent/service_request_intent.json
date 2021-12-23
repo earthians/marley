@@ -20,10 +20,10 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-04-27 16:06:59.187669",
+ "modified": "2021-12-23 07:10:19.900127",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Healthcare Service Order Intent",
+ "name": "Service Request Intent",
  "owner": "Administrator",
  "permissions": [
   {

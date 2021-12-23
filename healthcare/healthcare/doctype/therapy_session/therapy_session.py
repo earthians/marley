@@ -16,7 +16,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order import update_service_order_status
+from healthcare.healthcare.doctype.service_request.service_request import update_service_request_status
 
 
 class TherapySession(Document):
@@ -25,14 +25,14 @@ class TherapySession(Document):
 		self.set_total_counts()
 
 	def after_insert(self):
-		if self.service_order:
-			update_service_order_status(self.service_order, self.doctype, self.name)
+		if self.service_request:
+			update_service_request_status(self.service_request, self.doctype, self.name)
 
 	def on_submit(self):
 		self.update_sessions_count_in_therapy_plan()
 
-		if self.service_order:
-			frappe.db.set_value('Healthcare Service Order', self.service_order, 'status', 'Completed')
+		if self.service_request:
+			frappe.db.set_value('Service Request', self.service_request, 'status', 'Completed')
 
 	def on_update(self):
 		if self.appointment:

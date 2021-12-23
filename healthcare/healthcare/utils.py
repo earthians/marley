@@ -31,7 +31,7 @@ def get_healthcare_services_to_invoice(patient, company):
 		items_to_invoice += get_inpatient_services_to_invoice(patient, company)
 		items_to_invoice += get_therapy_plans_to_invoice(patient, company)
 		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
-		items_to_invoice += get_healthcare_service_orders_to_invoice(patient, company)
+		items_to_invoice += get_service_requests_to_invoice(patient, company)
 
 		return items_to_invoice
 
@@ -162,7 +162,7 @@ def get_lab_tests_to_invoice(patient, company):
 		'Lab Test',
 		fields=['*'],
 		filters={'patient': patient.name, 'company': company, 'invoiced': False,
-			'docstatus': 1, 'service_order': ''}
+			'docstatus': 1, 'service_request': ''}
 	)
 	for lab_test in lab_tests:
 		item, is_billable = frappe.get_cached_value('Lab Test Template', lab_test.template, ['item', 'is_billable'])
@@ -204,7 +204,7 @@ def get_clinical_procedures_to_invoice(patient, company):
 		'Clinical Procedure',
 		fields='*',
 		filters={'patient': patient.name, 'company': company, 'invoiced': False,
-			'docstatus': 1, 'service_order': ''}
+			'docstatus': 1, 'service_request': ''}
 	)
 	for procedure in procedures:
 		if procedure.appointment:
@@ -365,7 +365,7 @@ def get_therapy_sessions_to_invoice(patient, company):
 			'company': company,
 			'therapy_plan': ('not in', therapy_plans_created_from_template),
 			'docstatus': 1,
-			'service_order': ''
+			'service_request': ''
 		}
 	)
 	for therapy in therapy_sessions:
@@ -402,11 +402,11 @@ def get_therapy_sessions_to_invoice(patient, company):
 	return therapy_sessions_to_invoice
 
 
-def get_healthcare_service_orders_to_invoice(patient, company):
+def get_service_requests_to_invoice(patient, company):
 	orders_to_invoice = []
 
-	service_orders = frappe.get_list(
-		'Healthcare Service Order',
+	service_requests = frappe.get_list(
+		'Service Request',
 		fields=['*'],
 		filters={
 			'patient': patient.name,
@@ -415,16 +415,16 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 			'docstatus': 1
 		}
 	)
-	for service_order in service_orders:
-		item, is_billable = frappe.get_cached_value(service_order.template_dt, service_order.template_dn,
+	for service_request in service_requests:
+		item, is_billable = frappe.get_cached_value(service_request.template_dt, service_request.template_dn,
 			['item', 'is_billable'])
 
 		if is_billable:
-			billable_order_qty = service_order.get('quantity', 1) - service_order.get('qty_invoiced', 0)
+			billable_order_qty = service_request.get('quantity', 1) - service_request.get('qty_invoiced', 0)
 
 			coverage_details = None
-			if service_order.insurance_coverage:
-				coverage_details = frappe.get_cached_value('Patient Insurance Coverage', service_order.insurance_coverage,
+			if service_request.insurance_coverage:
+				coverage_details = frappe.get_cached_value('Patient Insurance Coverage', service_request.insurance_coverage,
 					['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'qty_invoiced', 'policy_number', 'coverage_validity_end_date'], as_dict=True)
 
 			if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] and getdate() <= coverage_details.coverage_validity_end_date:
@@ -433,11 +433,11 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 				billable_coverage_qty = coverage_details.get('qty', 1) - coverage_details.get('qty_invoiced', 0)
 
 				orders_to_invoice.append({
-					'reference_type': 'Healthcare Service Order',
-					'reference_name': service_order.name,
+					'reference_type': 'Service Request',
+					'reference_name': service_request.name,
 					'patient_insurance_policy': coverage_details.policy_number,
-					'insurance_coverage': service_order.insurance_coverage,
-					'insurance_payor': service_order.insurance_payor,
+					'insurance_coverage': service_request.insurance_coverage,
+					'insurance_payor': service_request.insurance_payor,
 					'service': coverage_details.item_code,
 					'rate': coverage_details.price_list_rate,
 					'coverage_percentage': coverage_details.coverage,
@@ -455,8 +455,8 @@ def get_healthcare_service_orders_to_invoice(patient, company):
 					continue
 
 			orders_to_invoice.append({
-				'reference_type': 'Healthcare Service Order',
-				'reference_name': service_order.name,
+				'reference_type': 'Service Request',
+				'reference_name': service_request.name,
 				'service': item,
 				'qty': billable_order_qty
 			})
@@ -688,7 +688,7 @@ def set_invoiced(item, method, ref_invoice=None):
 	elif item.reference_dt == 'Procedure Prescription':
 		manage_prescriptions(invoiced, item.reference_dt, item.reference_dn, 'Clinical Procedure', 'procedure_created')
 
-	elif item.reference_dt == 'Healthcare Service Order':
+	elif item.reference_dt == 'Service Request':
 		# if order is invoiced, set both order and service transaction as invoiced
 		hso = frappe.get_doc(item.reference_dt, item.reference_dn)
 		if invoiced:
@@ -705,8 +705,8 @@ def set_invoiced(item, method, ref_invoice=None):
 		}
 		dt = template_map.get(hso.template_dt)
 
-		if dt and frappe.db.exists(dt, {'service_order': item.reference_dn}):
-			frappe.db.set_value(dt, {'service_order': item.reference_dn}, 'invoiced', invoiced)
+		if dt and frappe.db.exists(dt, {'service_request': item.reference_dn}):
+			frappe.db.set_value(dt, {'service_request': item.reference_dn}, 'invoiced', invoiced)
 
 
 def validate_invoiced_on_submit(item):
@@ -714,7 +714,7 @@ def validate_invoiced_on_submit(item):
 		frappe.db.get_single_value('Healthcare Settings', 'clinical_procedure_consumable_item') == item.item_code:
 			is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, 'consumption_invoiced')
 
-	elif item.reference_dt == 'Healthcare Service Order':
+	elif item.reference_dt == 'Service Request':
 		billing_status = frappe.db.get_value(item.reference_dt, item.reference_dn, 'billing_status')
 		is_invoiced = True if billing_status == 'Invoiced' else False
 

@@ -9,7 +9,7 @@ def get_data():
 		'non_standard_fieldnames': {
 			'Patient Medical Record': 'reference_name',
 			'Inpatient Medication Order': 'patient_encounter',
-			'Healthcare Service Order': 'order_group'
+			'Service Request': 'order_group'
 		},
 		'transactions': [
 			{
@@ -18,7 +18,7 @@ def get_data():
 			},
 			{
 				'label': _('Orders'),
-				'items': ['Inpatient Medication Order', 'Healthcare Service Order']
+				'items': ['Inpatient Medication Order', 'Service Request']
 			}
 		],
 		'disable_create_buttons': ['Inpatient Medication Order']
