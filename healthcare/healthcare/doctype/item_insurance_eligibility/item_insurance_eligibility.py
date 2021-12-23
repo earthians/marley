@@ -101,7 +101,7 @@ class ItemInsuranceEligibility(Document):
 
 		if overlap:
 			frappe.throw(
-				_("Coverage overlaps with {eligibility}").format(
+				_("Item Eligibility overlaps with {eligibility}").format(
 					eligibility=get_link_to_form(self.doctype, overlap[0].name)
 				),
 				CoverageOverlapError,

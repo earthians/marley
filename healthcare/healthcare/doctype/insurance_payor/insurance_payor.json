@@ -133,7 +133,7 @@
    "link_fieldname": "insurance_payor"
   },
   {
-   "link_doctype": "Payor Insurance Plan",
+   "link_doctype": "Insurance Payor Eligibility Plan",
    "link_fieldname": "insurance_payor"
   },
   {
@@ -141,7 +141,7 @@
    "link_fieldname": "insurance_payor"
   }
  ],
- "modified": "2021-12-18 18:43:50.831472",
+ "modified": "2021-12-23 06:15:11.421826",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor",

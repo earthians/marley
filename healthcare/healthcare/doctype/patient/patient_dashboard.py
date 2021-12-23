@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from frappe import _
 
 
@@ -15,14 +17,6 @@ def get_data():
 				"items": ["Patient Appointment", "Vital Signs", "Patient Encounter"],
 			},
 			{"label": _("Lab Tests and Vital Signs"), "items": ["Lab Test", "Sample Collection"]},
-			{
-				"label": _("Rehab and Physiotherapy"),
-				"items": ["Patient Assessment", "Therapy Session", "Therapy Plan"],
-			},
-			{
-				"label": _("Rehab and Physiotherapy"),
-				"items": ["Patient Assessment", "Therapy Session", "Therapy Plan"],
-			},
 			{
 				"label": _("Rehab and Physiotherapy"),
 				"items": ["Patient Assessment", "Therapy Session", "Therapy Plan"],

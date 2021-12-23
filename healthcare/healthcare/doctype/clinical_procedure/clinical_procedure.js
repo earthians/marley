@@ -436,7 +436,7 @@ let show_procedure_templates = function(frm, result){
 				<a data-name="%(name)s" data-procedure-template="%(procedure_template)s"\
 					data-encounter="%(encounter)s" data-practitioner="%(practitioner)s"\
 					data-invoiced="%(invoiced)s" data-source="%(source)s"\
-					data-insurance-company="%(insurance_payor)s" data-insurance-subscription="%(insurance_policy)s"\
+					data-insurance-payor="%(insurance_payor)s" data-insurance-policy="%(insurance_policy)s"\
 					href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 				</div>\
 			</div><hr>',
@@ -447,9 +447,9 @@ let show_procedure_templates = function(frm, result){
 			frm.doc.procedure_template = $(this).attr("data-procedure-template");
 			frm.doc.service_order = $(this).attr('data-name');
 			frm.doc.practitioner = $(this).attr("data-practitioner");
-			if($(this).attr("data-insurance-subscription")){
-				frm.doc.insurance_policy = $(this).attr("data-insurance-subscription");
-				frm.doc.insurance_payor = $(this).attr("data-insurance-company");
+			if($(this).attr("data-insurance-policy")){
+				frm.doc.insurance_policy = $(this).attr("data-insurance-policy");
+				frm.doc.insurance_payor = $(this).attr("data-insurance-payor");
 				frm.set_df_property("insurance_policy", "read_only", 1);
 			}
 			frm.doc.invoiced = 0;

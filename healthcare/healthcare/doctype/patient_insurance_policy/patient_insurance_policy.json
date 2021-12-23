@@ -148,7 +148,7 @@
    "in_standard_filter": 1,
    "label": "Insurance Plan",
    "no_copy": 1,
-   "options": "Payor Insurance Plan"
+   "options": "Insurance Payor Eligibility Plan"
   },
   {
    "allow_in_quick_entry": 1,
