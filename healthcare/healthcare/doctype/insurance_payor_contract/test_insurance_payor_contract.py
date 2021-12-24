@@ -6,13 +6,13 @@ from __future__ import unicode_literals
 import frappe
 import unittest
 from frappe.utils import today, add_years, getdate, add_days
-from healthcare.healthcare.doctype.healthcare_payor_contract.healthcare_payor_contract import OverlapError
+from healthcare.healthcare.doctype.insurance_payor_contract.insurance_payor_contract import OverlapError
 
 class TestInsurancePayorContract(unittest.TestCase):
-	def setup(self):
-		create_insurance_payor()
 
 	def test_overlap(self):
+		create_insurance_payor()
+		frappe.db.sql("""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'""")
 		start_date = today()
 		end_date = add_years(today(), 1)
 		contract = get_new_payor_contract_doc(start_date, end_date)
@@ -57,6 +57,7 @@ def get_new_payor_contract_doc(start_date, end_date):
 	payor_contract = frappe.new_doc('Insurance Payor Contract')
 	payor_contract.insurance_payor = '_Test Insurance Payor'
 	payor_contract.start_date = start_date
+	payor_contract.company = '_Test Company'
 	payor_contract.end_date = end_date
 	payor_contract.is_active = 1
 	return payor_contract
