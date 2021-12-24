@@ -623,7 +623,8 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 			'account': insurance_payor_details.get('receivable_account'),
 			'debit_in_account_currency': item.insurance_coverage_amount,
 			'party_type': 'Customer',
-			'party': insurance_payor_details.get('party')
+			'party': insurance_payor_details.get('party'),
+			'cost_center': item.cost_center
 		})
 
 		# Post Journal Entry
@@ -635,7 +636,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 			'reference_type': 'Sales Invoice',
 			'reference_name': sales_invoice.name,
 			'reference_detail_no': item.name,
-			'insurance_coverage': item.insurance_coverage
+			'cost_center': item.cost_center
 		})
 
 		if len(jv_accounts) > 0:

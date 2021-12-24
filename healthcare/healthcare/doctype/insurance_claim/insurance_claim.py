@@ -232,20 +232,19 @@ def update_insurance_coverage_status(coverage):
 	'''
 	update status of Patient Insurance Coverage
 	'''
-	coverage_status_map = {
-		'Submitted': 'Claim Submitted',
-		'Cancelled': 'Claim Error',
-		'Error': 'Claim Error',
-		'Approved': 'Claim Approved',
-		'Rejected': 'Claim Rejected',
-	}
+	coverage_doc = frappe.get_doc('Patient Insurance Coverage', coverage.insurance_coverage)
 
-	frappe.db.set_value('Patient Insurance Coverage', coverage.insurance_coverage, {
-		'status': coverage_status_map.get(coverage.status, coverage.status),
+	coverage_doc.db_set({
 		'approved_amount': coverage.approved_amount,
-		'paid_amount': coverage.paid_amount,
-		'insurance_claim_comments': f'Insurance Claim {coverage.parent} - {coverage.payment_error_reason}'
+		'paid_amount': coverage.paid_amount
 	})
+
+	coverage_doc.add_comment('Comment', f'''
+		Insurance Claim {get_link_to_form('Insurance Claim', coverage.parent)} {coverage.status}
+		{"<br>Reason: " + coverage.payment_error_reason if coverage.status in ['Rejected', 'Error'] else ''}
+	''')
+
+	coverage_doc.notify_update()
 
 
 def validate_payment_entry_and_set_claim_fields(pe):

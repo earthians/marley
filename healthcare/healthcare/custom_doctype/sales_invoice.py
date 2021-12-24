@@ -97,5 +97,7 @@ class HealthcareSalesInvoice(SalesInvoice):
 				total_coverage_amount += flt(item.insurance_coverage_amount)
 
 		self.total_insurance_coverage_amount = total_coverage_amount
-		if self.total_insurance_coverage_amount and self.outstanding_amount:
+		if self.total_insurance_coverage_amount:
 			self.patient_payable_amount = self.outstanding_amount - self.total_insurance_coverage_amount
+		else:
+			self.patient_payable_amount = self.outstanding_amount
