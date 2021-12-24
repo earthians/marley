@@ -831,6 +831,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 				"debit_in_account_currency": item.insurance_coverage_amount,
 				"party_type": "Customer",
 				"party": insurance_payor_details.get("party"),
+				"cost_center": item.cost_center,
 			}
 		)
 
@@ -844,7 +845,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 				"reference_type": "Sales Invoice",
 				"reference_name": sales_invoice.name,
 				"reference_detail_no": item.name,
-				"insurance_coverage": item.insurance_coverage,
+				"cost_center": item.cost_center,
 			}
 		)
 
