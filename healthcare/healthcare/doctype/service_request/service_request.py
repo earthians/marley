@@ -37,6 +37,10 @@ class ServiceRequest(Document):
 		if self.insurance_policy and not self.insurance_coverage:
 			self.make_insurance_coverage()
 
+	def on_update_after_submit(self):
+		if self.billing_status == 'Pending' and self.insurance_policy and not self.insurance_coverage:
+			self.make_insurance_coverage()
+
 	def make_insurance_coverage(self):
 		coverage = make_insurance_coverage(
 			patient=self.patient,
