@@ -413,10 +413,12 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "insurance_policy",
    "fieldtype": "Link",
    "label": "Insurance Policy",
    "options": "Patient Insurance Policy",
+   "read_only": 1,
    "search_index": 1
   },
   {
@@ -424,6 +426,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "insurance_policy.insurance_payor",
    "fieldname": "insurance_payor",
    "fieldtype": "Link",

@@ -9,6 +9,37 @@ frappe.ui.form.on('Service Request', {
 	},
 
 	refresh: function(frm) {
+		if (!frm.is_new() && !frm.doc.insurance_policy && frm.doc.billing_status == 'Pending') {
+			frm.add_custom_button(__("Create Insurance Coverage"), function() {
+				var d = new frappe.ui.Dialog({
+					title: __("Select Insurance Policy"),
+					fields: [
+						{
+							'fieldname': 'Patient Insurance Policy',
+							'fieldtype': 'Link',
+							'label': __('Patient Insurance Policy'),
+							'options': 'Patient Insurance Policy',
+							"get_query": function () {
+								return {
+									filters: {
+										'patient': frm.doc.patient,
+										'docstatus': 1
+									}
+								};
+							},
+							'reqd': 1
+						}
+					],
+				});
+				d.set_primary_action(__('Create'), function() {
+					d.hide();
+					var data = d.get_values();
+					frm.set_value('insurance_policy', data['Patient Insurance Policy'])
+					frm.save("Update")
+				});
+				d.show();
+			});
+		}
 		frm.set_query('order_group', function () {
 			return {
 				filters: {
