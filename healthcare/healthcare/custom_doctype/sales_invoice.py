@@ -6,8 +6,8 @@ from frappe.utils import flt
 
 class HealthcareSalesInvoice(SalesInvoice):
 	def validate(self):
-		self.calculate_patient_insurance_coverage()
 		super(HealthcareSalesInvoice, self).validate()
+		self.calculate_patient_insurance_coverage()
 
 	
 	@frappe.whitelist()
@@ -83,8 +83,9 @@ class HealthcareSalesInvoice(SalesInvoice):
 			if item_line.insurance_coverage:
 				item_line.insurance_coverage_amount = flt(item_line.amount) * 0.01 * flt(item_line.coverage_percentage)
 
+		super(SalesInvoice, self).calculate_taxes_and_totals()
+		super(HealthcareSalesInvoice, self).set_missing_values(for_validate=True)
 		self.calculate_patient_insurance_coverage()
-		self.set_missing_values(for_validate=True)
 
 	def calculate_patient_insurance_coverage(self):
 		total_coverage_amount = 0.0

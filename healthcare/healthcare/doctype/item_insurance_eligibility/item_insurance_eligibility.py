@@ -157,7 +157,4 @@ def get_insurance_eligibility(item_code, template_dt=None, template_dn=None, on_
 	'''.format(conditions=conditions),
 	as_dict=1)
 
-	if len(coverage) > 0:
-		return coverage[0]
-
-	return None
+	return coverage[0] if coverage else None

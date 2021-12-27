@@ -71,10 +71,10 @@ class PatientInsuranceCoverage(Document):
 
 		self.flags.silent = False
 
-	def update_invoice_details(self, qty=0, amount=0):
+	def update_invoice_details(self, qty, amount):
 		'''
 		updates qty_invoiced, coverage_amount_invoiced and sets status
-		NOTE: on invoice cancel, qty and amount ca be negative
+		NOTE: on invoice cancel, qty and amount can be negative
 		'''
 		qty_invoiced = self.qty_invoiced + qty
 		coverage_amount_invoiced = self.coverage_amount_invoiced + amount

@@ -27,6 +27,7 @@
   "column_break_13",
   "insurance_policy",
   "insurance_plan",
+  "policy_number",
   "fetch_coverages_section",
   "from_date",
   "to_date",
@@ -39,8 +40,8 @@
   "approved_amount",
   "rejected_amount",
   "column_break_18",
-  "paid_amount",
-  "outstanding_amount"
+  "outstanding_amount",
+  "paid_amount"
  ],
  "fields": [
   {
@@ -212,8 +213,8 @@
    "label": "Mode of Payment"
   },
   {
-    "fieldname": "column_break_133",
-    "fieldtype": "Column Break"
+   "fieldname": "column_break_133",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "due_date",
@@ -275,12 +276,19 @@
   {
    "fieldname": "column_break_24",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "insurance_policy.policy_number",
+   "fieldname": "policy_number",
+   "fieldtype": "Data",
+   "label": "Policy Number",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-17 14:54:39.549050",
+ "modified": "2021-12-27 13:38:06.065944",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",
