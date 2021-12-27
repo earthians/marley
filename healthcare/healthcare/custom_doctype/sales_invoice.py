@@ -6,8 +6,8 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 class HealthcareSalesInvoice(SalesInvoice):
 	def validate(self):
-		self.calculate_patient_insurance_coverage()
 		super(HealthcareSalesInvoice, self).validate()
+		self.calculate_patient_insurance_coverage()
 
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
@@ -86,8 +86,9 @@ class HealthcareSalesInvoice(SalesInvoice):
 					flt(item_line.amount) * 0.01 * flt(item_line.coverage_percentage)
 				)
 
+		super(SalesInvoice, self).calculate_taxes_and_totals()
+		super(HealthcareSalesInvoice, self).set_missing_values(for_validate=True)
 		self.calculate_patient_insurance_coverage()
-		self.set_missing_values(for_validate=True)
 
 	def calculate_patient_insurance_coverage(self):
 		total_coverage_amount = 0.0

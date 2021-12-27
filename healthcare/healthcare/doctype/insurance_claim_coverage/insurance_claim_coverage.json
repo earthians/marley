@@ -212,6 +212,7 @@
    "label": "Status",
    "no_copy": 1,
    "options": "Draft\nSubmitted\nApproved\nCompleted\nError\nRejected\nCancelled",
+   "read_only": 1,
    "search_index": 1
   },
   {
@@ -361,7 +362,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-12-21 19:36:35.915558",
+ "modified": "2021-12-27 13:35:19.717576",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim Coverage",

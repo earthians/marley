@@ -258,7 +258,7 @@ class InsuranceClaim(Document):
 			as_dict=1,
 		)
 
-		if not len(coverages):
+		if not coverages:
 			frappe.throw(
 				_("No matching Patient Insurance Coverages found, please check the filters"),
 				title=_("No Data"),
@@ -351,7 +351,7 @@ def update_claim_paid_amount(pe, method):
 				for pe_ref in pe.get("references")
 				if pe_ref.get("reference_name") == claim_coverage.journal_entry
 			]
-			if not len(pe_refs):
+			if not pe_refs:
 				continue
 
 			# set paid_amount
@@ -408,7 +408,7 @@ def create_payment_entry(doc):
 			# build remarks
 			coverage_names.append(coverage.get("insurance_coverage"))
 
-	if len(references):
+	if references:
 		pe.update({"references": references})
 	else:
 		frappe.throw("No Insurance Claim Coverages in Approved status to create Payment Entry")

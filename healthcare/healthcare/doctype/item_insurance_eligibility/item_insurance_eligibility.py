@@ -182,7 +182,4 @@ def get_insurance_eligibility(
 		as_dict=1,
 	)
 
-	if len(coverage) > 0:
-		return coverage[0]
-
-	return None
+	return coverage[0] if coverage else None

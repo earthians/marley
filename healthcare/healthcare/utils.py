@@ -798,7 +798,7 @@ def update_insurance_coverage(sales_invoice):
 def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 	"""
 	1 - Post Journal Entry to Transfer Patient balance for each coverage
-	2 - Update Insurance Coverage Detail
+	2 - Update Insurance Coverage
 	TODO: Posting Journal Entries based on Insurance Payor will reduce number of journal entries,
 	but won't be able allow coverage cancel after invoicing. Fix based on feedback
 	"""
@@ -849,27 +849,26 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 			}
 		)
 
-		if len(jv_accounts) > 0:
-			journal_entry = frappe.new_doc("Journal Entry")
-			jv_naming_series = frappe.db.get_single_value(
-				"Healthcare Settings", "naming_series_for_journal_entry"
-			)
-			if jv_naming_series:
-				journal_entry.naming_series = jv_naming_series
-			journal_entry.company = sales_invoice.company
-			journal_entry.posting_date = sales_invoice.posting_date
+		journal_entry = frappe.new_doc("Journal Entry")
 
-			for account in jv_accounts:
-				journal_entry.append("accounts", account)
+		jv_naming_series = frappe.db.get_single_value(
+			"Healthcare Settings", "naming_series_for_journal_entry"
+		)
+		if jv_naming_series:
+			journal_entry.naming_series = jv_naming_series
 
-			journal_entry.flags.ignore_permissions = True
-			# journal_entry.flags.ignore_mandatory = True
-			journal_entry.submit()
+		journal_entry.company = sales_invoice.company
+		journal_entry.posting_date = sales_invoice.posting_date
+
+		for account in jv_accounts:
+			journal_entry.append("accounts", account)
+
+		journal_entry.flags.ignore_permissions = True
+		journal_entry.submit()
 
 		# Update Insurance Coverage
-		if journal_entry:
-			coverage = frappe.get_doc("Patient Insurance Coverage", item.insurance_coverage)
-			coverage.update_invoice_details(item.qty, item.insurance_coverage_amount)
+		coverage = frappe.get_doc("Patient Insurance Coverage", item.insurance_coverage)
+		coverage.update_invoice_details(item.qty, item.insurance_coverage_amount)
 
 
 def set_invoiced(item, method, ref_invoice=None):
