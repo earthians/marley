@@ -117,11 +117,11 @@ def get_account(parent_field, insurance_payor, company):
 		)
 
 @frappe.whitelist()
-def has_active_contract(insurance_payor, company=None, on_date=None):
+def has_active_contract(insurance_payor, company, on_date=None):
 	if not frappe.db.get_value('Insurance Payor', insurance_payor, 'disabled'):
 		return frappe.db.exists('Insurance Payor Contract', {
 				'insurance_payor': insurance_payor,
-				'company': company or erpnext.get_default_company(),
+				'company': company,
 				'is_active': 1,
 				'docstatus': 1,
 				'start_date': ('<=', getdate(on_date) or getdate()),

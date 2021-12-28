@@ -51,7 +51,7 @@ class InsuranceClaim(Document):
 		for coverage in self.coverages:
 			# Submitted
 			if coverage.status == 'Submitted':
-				coverage.approved_amount = coverage.claim_amount
+				coverage.approved_amount = 0
 				coverage.rejected_amount = 0
 				coverage.payment_error_reason = ''
 				coverage.paid_amount = 0
@@ -104,8 +104,11 @@ class InsuranceClaim(Document):
 		self.outstanding_amount = self.approved_amount - self.paid_amount
 
 		# set 'Completed' status
-		if self.outstanding_amount == 0:
-			self.status = 'Completed'
+		if self.outstanding_amount == 0 and self.paid_amount == self.approved_amount:
+			if self.rejected_amount == self.insurance_claim_amount:
+				self.status = 'Error'
+			else:
+				self.status = 'Completed'
 		else:
 			self.status = 'Submitted'
 
@@ -161,7 +164,7 @@ class InsuranceClaim(Document):
 		if not self.insurance_payor or not self.company:
 			frappe.throw(_('Company and Insurance Provider are mandatory'), title=_('Missing Mandatory Fields'))
 
-		valid_statuses = ['Partly Invoiced', 'Invoiced', 'Error'] # allow user selection?
+		valid_statuses = ['Partly Invoiced', 'Invoiced'] # allow user selection?
 
 		coverages = frappe.db.sql('''
 			SELECT
@@ -204,12 +207,13 @@ class InsuranceClaim(Document):
 				(jea.docstatus=1 AND jea.reference_detail_no=sii.name )
 			WHERE
 				pic.docstatus=1 AND
-				pic.patient=%(patient)s AND
-				pic.insurance_policy=%(insurance_policy)s AND
 				pic.company=%(company)s AND
 				pic.insurance_payor=%(insurance_payor)s AND
+				pic.patient=%(patient)s AND
+				pic.insurance_policy=%(insurance_policy)s AND
 				({filter_date_based_on} BETWEEN %(from_date)s AND %(to_date)s) AND
-				pic.status IN %(statuses)s
+				pic.status IN %(statuses)s AND
+				pic.paid_amount < pic.coverage_amount_invoiced
 			ORDER BY patient ASC, {filter_date_based_on} DESC
 			'''.format(filter_date_based_on='si.posting_date' if self.posting_date_based_on == 'Sales Invoice' else 'pic.posting_date'),
 			{
