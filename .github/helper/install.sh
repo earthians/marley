@@ -4,11 +4,8 @@ set -ex
 
 cd ~ || exit
 
-sudo apt-get install redis-server
+sudo apt-get install redis-server libcups2-dev
 
-sudo apt install nodejs
-
-sudo apt install npm
 
 pip install frappe-bench
 
@@ -36,7 +33,6 @@ wget -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/w
 tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
 sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
 sudo chmod o+x /usr/local/bin/wkhtmltopdf
-sudo apt-get install libcups2-dev
 
 cd ~/frappe-bench || exit
 
@@ -46,7 +42,10 @@ sed -i 's/schedule:/# schedule:/g' Procfile
 sed -i 's/socketio:/# socketio:/g' Procfile
 sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
-bench get-app https://github.com/chillarAnand/erpnext --branch care
+bench get-app https://github.com/frappe/erpnext
+
+if [ "$TYPE" == "server" ]; then bench setup requirements --dev; fi
+
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes

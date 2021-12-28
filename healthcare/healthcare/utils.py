@@ -9,12 +9,12 @@ import math
 
 import frappe
 from frappe import _
-from frappe.utils import cstr, rounded, time_diff_in_hours, getdate
+from frappe.utils import cstr, rounded, time_diff_in_hours, getdate, flt, get_link_to_form
 from frappe.utils.formatters import format_value
-from frappe.utils import time_diff_in_hours, rounded, flt, get_link_to_form, getdate
-from six import string_types
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
+
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
+from healthcare.healthcare.setup import setup_healthcare
 
 
 @frappe.whitelist()
@@ -1033,6 +1033,27 @@ def update_address_links(address, method):
 			address.append('links', dict(link_doctype = 'Customer', link_name = customer))
 
 
+def update_patient_email_and_phone_numbers(contact, method):
+	'''
+	Hook validate Contact
+	Update linked Patients' primary mobile and phone numbers
+	'''
+	if 'Healthcare' not in frappe.get_active_domains() or contact.flags.skip_patient_update:
+		return
+
+	if contact.is_primary_contact and (contact.email_id or contact.mobile_no or contact.phone):
+		patient_links = list(filter(lambda link: link.get('link_doctype') == 'Patient', contact.links))
+
+		for link in patient_links:
+			contact_details = frappe.db.get_value('Patient', link.get('link_name'), ['email', 'mobile', 'phone'], as_dict=1)
+			if contact.email_id and contact.email_id != contact_details.get('email'):
+				frappe.db.set_value('Patient', link.get('link_name'), 'email', contact.email_id)
+			if contact.mobile_no and contact.mobile_no != contact_details.get('mobile'):
+				frappe.db.set_value('Patient', link.get('link_name'), 'mobile', contact.mobile_no)
+			if contact.phone and contact.phone != contact_details.get('phone'):
+				frappe.db.set_value('Patient', link.get('link_name'), 'phone', contact.phone)
+
+
 def before_tests():
 	# complete setup if missing
 	from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
@@ -1054,3 +1075,4 @@ def before_tests():
 			"chart_of_accounts" : "Standard",
 			"domains"           : ["Healthcare"],
 		})
+		setup_healthcare()
