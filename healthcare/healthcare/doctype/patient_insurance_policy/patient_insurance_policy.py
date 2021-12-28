@@ -9,8 +9,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate
 
-from healthcare.healthcare.doctype.insurance_payor.insurance_payor import has_active_contract
-
 
 class OverlapError(frappe.ValidationError):
 	pass
@@ -18,12 +16,6 @@ class OverlapError(frappe.ValidationError):
 
 class PatientInsurancePolicy(Document):
 	def validate(self):
-		# check if a contract exist for the Insurance Payor
-		if not has_active_contract(self.insurance_payor):
-			frappe.throw(
-				_("No active contracts found for Insurance Payor {0}").format(self.insurance_payor)
-			)
-
 		self.validate_expiry_date()
 		self.validate_policy_overlap()
 		self.validate_policy_number()
@@ -31,7 +23,7 @@ class PatientInsurancePolicy(Document):
 
 	def validate_expiry_date(self):
 		if getdate(self.policy_expiry_date) < getdate():
-			frappe.throw(_("Expiry Date for the Insruance Policy cannot be a past date"))
+			frappe.throw(_("Expiry Date for the Insurance Policy cannot be a past date"))
 
 	def validate_policy_overlap(self):
 		insurance_policy = frappe.db.exists(

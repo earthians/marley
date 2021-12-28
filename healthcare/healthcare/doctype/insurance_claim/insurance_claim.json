@@ -127,7 +127,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nSubmitted\nCompleted\nCancelled",
+   "options": "Draft\nSubmitted\nCompleted\nCancelled\nError",
    "read_only": 1,
    "reqd": 1
   },
@@ -288,7 +288,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-27 13:38:06.065944",
+ "modified": "2021-12-28 19:29:30.660655",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",

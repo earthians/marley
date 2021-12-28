@@ -11,6 +11,7 @@ from frappe.utils import flt, get_link_to_form, getdate
 
 from erpnext.stock.get_item_details import get_item_details
 
+from healthcare.healthcare.doctype.insurance_payor.insurance_payor import has_active_contract
 from healthcare.healthcare.doctype.item_insurance_eligibility.item_insurance_eligibility import (
 	get_insurance_eligibility,
 )
@@ -21,6 +22,10 @@ from healthcare.healthcare.doctype.patient_insurance_policy.patient_insurance_po
 
 
 class CoverageNotFoundError(frappe.ValidationError):
+	pass
+
+
+class NoActiveContractError(frappe.ValidationError):
 	pass
 
 
@@ -194,7 +199,7 @@ class PatientInsuranceCoverage(Document):
 			)
 
 			if self.mode_of_approval == "Automatic":
-				# mode_of_approval cannot be automatic if coverage not based on coverage
+				# NOTE: no exception if mode_of_approval is Manual as user will manually approve
 				raise CoverageNotFoundError
 		else:
 			self.item_eligibility = eligibility.get("name")
@@ -284,6 +289,22 @@ def make_insurance_coverage(
 	if not (template_dt and template_dn) and not item_code:
 		return None
 
+	# check if a valid contract exists for company with insurance payor
+	policy_details = frappe.db.get_value(
+		"Patient Insurance Policy",
+		policy,
+		["policy_expiry_date", "insurance_plan", "insurance_payor"],
+		as_dict=True,
+	)
+
+	if not has_active_contract(policy_details.insurance_payor, company=company):
+		frappe.throw(
+			_("No active Insurance Contract for Company {0} with Insurance Payor {1}").format(
+				company, policy_details.insurance_payor
+			),
+			exc=NoActiveContractError,
+		)
+
 	coverage = frappe.new_doc("Patient Insurance Coverage")
 	coverage.status = "Draft"
 	coverage.mode_of_approval = "Automatic"  # setting to Manual will create coverage in draft mode
@@ -299,15 +320,14 @@ def make_insurance_coverage(
 	coverage.qty = qty
 
 	coverage.insurance_policy = policy
-	policy_details = frappe.db.get_value(
-		"Patient Insurance Policy", policy, ["policy_expiry_date", "insurance_plan"], as_dict=True
-	)
+
 	coverage.coverage_validity_end_date = policy_details.get("policy_expiry_date")
 	coverage.insurance_plan = policy_details.get("insurance_plan")
 
 	try:
 		coverage.insert(ignore_permissions=True)
 	except CoverageNotFoundError:
+		# user alerted via set_insurance_coverage
 		return None
 
 	if coverage.status == "Approved" and coverage.mode_of_approval == "Automatic":
