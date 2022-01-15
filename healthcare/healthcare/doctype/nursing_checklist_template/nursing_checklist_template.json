@@ -7,9 +7,11 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "disabled",
+  "section_break_2",
   "title",
   "department",
-  "tasks_section",
+  "checklist_section",
   "tasks"
  ],
  "fields": [
@@ -22,24 +24,37 @@
   {
    "fieldname": "department",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Department",
    "options": "Medical Department"
-  },
-  {
-   "fieldname": "tasks_section",
-   "fieldtype": "Section Break",
-   "label": "Tasks"
   },
   {
    "fieldname": "tasks",
    "fieldtype": "Table",
    "label": "Tasks",
-   "options": "Nursing Checklist Template Task"
+   "options": "Nursing Checklist Template Task",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "checklist_section",
+   "fieldtype": "Section Break",
+   "label": "Checklist"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-11-30 07:48:30.524114",
+ "modified": "2021-12-25 12:57:50.886052",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template",
@@ -55,6 +70,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
    "share": 1,
    "write": 1
   }

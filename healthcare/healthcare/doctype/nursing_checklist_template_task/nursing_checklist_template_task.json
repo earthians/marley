@@ -7,11 +7,12 @@
  "engine": "InnoDB",
  "field_order": [
   "activity",
-  "description",
-  "starts_on",
-  "duration",
-  "type",
   "mandatory",
+  "type",
+  "time_offset",
+  "column_break_5",
+  "task_duration",
+  "description",
   "task_doctype",
   "role"
  ],
@@ -24,20 +25,13 @@
    "options": "Healthcare Activity"
   },
   {
+   "columns": 3,
+   "fetch_from": "activity.description",
+   "fetch_if_empty": 1,
    "fieldname": "description",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Description"
-  },
-  {
-   "fieldname": "starts_on",
-   "fieldtype": "Date",
-   "label": "Starts On"
-  },
-  {
-   "fieldname": "duration",
-   "fieldtype": "Int",
-   "label": "Duration"
   },
   {
    "fieldname": "type",
@@ -46,6 +40,8 @@
    "options": "\nPre-Op\nPost-Op"
   },
   {
+   "fetch_from": "activity.role",
+   "fetch_if_empty": 1,
    "fieldname": "role",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -60,17 +56,37 @@
    "label": "Mandatory"
   },
   {
+   "fetch_from": "activity.task_doctype",
+   "fetch_if_empty": 1,
    "fieldname": "task_doctype",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Task Doctype",
    "options": "DocType"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "activity.activity_duration",
+   "fetch_if_empty": 1,
+   "fieldname": "task_duration",
+   "fieldtype": "Duration",
+   "in_list_view": 1,
+   "label": "Task Duration"
+  },
+  {
+   "fieldname": "time_offset",
+   "fieldtype": "Duration",
+   "in_list_view": 1,
+   "label": "Time Offset"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "migration_hash": "bc7820f21e821210df5a4edeb732721e",
- "modified": "2021-11-01 06:13:49.475267",
+ "modified": "2021-12-25 19:47:55.670698",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template Task",

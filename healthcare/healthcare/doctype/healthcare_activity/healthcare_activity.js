@@ -2,7 +2,25 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Healthcare Activity', {
-	// refresh: function(frm) {
+	onload: function(frm) {
 
-	// }
+		frm.set_query('role', function() {
+			return {
+				filters: {
+					'disabled': false,
+					'desk_access': true
+				}
+			};
+		});
+
+		frm.set_query('task_doctype', function() {
+			return {
+				filters: {
+					'istable': false,
+					'issingle': false
+				}
+			};
+		});
+
+	}
 });

@@ -1,27 +1,71 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:activity",
  "creation": "2021-10-28 06:33:43.654812",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "activity"
+  "activity",
+  "description",
+  "column_break_4",
+  "activity_duration",
+  "role",
+  "task_doctype"
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "activity",
    "fieldtype": "Data",
-   "label": "Activity"
+   "in_list_view": 1,
+   "label": "Activity",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "label": "Task DocType",
+   "options": "DocType"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "activity_duration",
+   "fieldtype": "Duration",
+   "label": "Activity Duration",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "migration_hash": "9c742e1f281461f5c14b2d26247d908b",
- "modified": "2021-10-29 08:22:25.111282",
+ "modified": "2021-12-25 19:42:19.535303",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Activity",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -37,6 +81,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "track_changes": 1
