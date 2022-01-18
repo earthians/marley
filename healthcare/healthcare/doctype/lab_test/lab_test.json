@@ -207,7 +207,6 @@
   {
    "fieldname": "submitted_date",
    "fieldtype": "Datetime",
-   "hidden": 1,
    "label": "Submitted Date",
    "print_hide": 1,
    "report_hide": 1
@@ -565,8 +564,13 @@
   }
  ],
  "is_submittable": 1,
- "links": [],
- "modified": "2021-11-29 06:16:23.354524",
+ "links": [
+  {
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "reference_name"
+  }
+ ],
+ "modified": "2022-01-17 15:12:47.497403",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",

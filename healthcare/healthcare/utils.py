@@ -823,9 +823,14 @@ def validate_nursing_tasks(document):
 	if not healthcare_settings.validate_nursing_checklists:
 		return True
 
-	filters = {'reference_name': document.name, 'docstatus': 0}
+	filters = {
+		'reference_name': document.name,
+		'mandatory': 1,
+		'status': ['not in', ['Completed', 'Cancelled']],
+	}
 	tasks = frappe.get_all('Nursing Task', filters=filters)
 	if not tasks:
 		return True
 
-	frappe.throw('Please complete related nursing tasks before submission')
+	tasks = [task.get('name') for task in tasks]
+	frappe.throw(f"Please complete related Nursing Tasks before submission {', '.join(tasks)}")

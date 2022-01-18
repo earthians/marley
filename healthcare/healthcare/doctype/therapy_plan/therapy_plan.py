@@ -53,14 +53,6 @@ class TherapyPlan(Document):
 			})
 		return self
 
-	def after_insert(self):
-		if self.therapy_plan_template:
-			therapy_template = frappe.get_doc('Therapy Plan Template', self.therapy_plan_template)
-			template = therapy_template.nursing_checklist_template
-			if not template:
-				return
-			NursingTask.create_nursing_tasks_from_template(template, 'Therapy Plan', self.name)
-
 
 @frappe.whitelist()
 def make_therapy_session(therapy_plan, patient, therapy_type, company, appointment=None):

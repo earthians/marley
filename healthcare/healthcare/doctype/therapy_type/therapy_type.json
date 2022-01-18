@@ -11,6 +11,7 @@
   "therapy_type",
   "default_duration",
   "medical_department",
+  "nursing_checklist_template",
   "column_break_3",
   "is_billable",
   "rate",
@@ -183,13 +184,20 @@
    "fieldtype": "Link",
    "label": "Medical Code",
    "options": "Medical Code"
+  },
+  {
+   "fieldname": "nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
   }
  ],
  "links": [],
- "modified": "2020-06-29 14:18:50.669951",
+ "modified": "2022-01-17 14:45:27.792677",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

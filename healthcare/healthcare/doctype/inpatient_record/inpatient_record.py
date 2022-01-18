@@ -59,14 +59,23 @@ class InpatientRecord(Document):
 				+ """ <b><a href="/app/Form/Inpatient Record/{0}">{0}</a></b>""".format(ip_record[0].name))
 			frappe.throw(msg)
 
+	def create_nursing_tasks(self, template):
+
+		NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
+			'company': self.company,
+			'service_unit': frappe.db.get_value('Inpatient Occupancy', {'parent': self.name, 'left': 0}, 'service_unit'),
+			'medical_department': self.medical_department,
+			'reference_doctype': self.doctype,
+			'reference_name': self.name,
+			'start_time': now_datetime(),
+		}, post_event=True)
+
 	@frappe.whitelist()
 	def admit(self, service_unit, check_in, expected_discharge=None):
-		validate_nursing_tasks(self)
 		admit_patient(self, service_unit, check_in, expected_discharge)
 
 	@frappe.whitelist()
 	def discharge(self):
-		validate_nursing_tasks(self)
 		discharge_patient(self)
 
 	@frappe.whitelist()
@@ -100,7 +109,7 @@ def schedule_inpatient(args):
 	inpatient_record.phone = patient.phone
 	inpatient_record.scheduled_date = today()
 
-	# Set encounter detials
+	# Set encounter details
 	encounter = frappe.get_doc('Patient Encounter', admission_order['admission_encounter'])
 	if encounter and encounter.symptoms: # Symptoms
 		set_ip_child_records(inpatient_record, 'chief_complaint', encounter.symptoms)
@@ -123,30 +132,26 @@ def schedule_inpatient(args):
 
 	inpatient_record.status = 'Admission Scheduled'
 	inpatient_record.save(ignore_permissions = True)
-	template_name = inpatient_record.admission_nursing_checklist_template
-	if not template_name:
-		return
-
-	NursingTask.create_nursing_tasks_from_template(template_name, 'Inpatient Record', inpatient_record.name)
 
 
 @frappe.whitelist()
 def schedule_discharge(args):
 	discharge_order = json.loads(args)
 	inpatient_record_id = frappe.db.get_value('Patient', discharge_order['patient'], 'inpatient_record')
+
 	if inpatient_record_id:
+
 		inpatient_record = frappe.get_doc('Inpatient Record', inpatient_record_id)
 		check_out_inpatient(inpatient_record)
 		set_details_from_ip_order(inpatient_record, discharge_order)
 		inpatient_record.status = 'Discharge Scheduled'
 		inpatient_record.save(ignore_permissions = True)
+
 		frappe.db.set_value('Patient', discharge_order['patient'], 'inpatient_status', inpatient_record.status)
 		frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
 
-		template_name = inpatient_record.discharge_nursing_checklist_template
-		if not template_name:
-			return
-		NursingTask.create_nursing_tasks_from_template(template_name, 'Inpatient Record', inpatient_record.name)
+		if inpatient_record.discharge_nursing_checklist_template:
+			inpatient_record.create_nursing_tasks(inpatient_record.discharge_nursing_checklist_template)
 
 
 def set_details_from_ip_order(inpatient_record, ip_order):
@@ -171,7 +176,11 @@ def check_out_inpatient(inpatient_record):
 
 
 def discharge_patient(inpatient_record):
+
+	validate_nursing_tasks(inpatient_record)
+
 	validate_inpatient_invoicing(inpatient_record)
+
 	inpatient_record.discharge_datetime = now_datetime()
 	inpatient_record.status = "Discharged"
 
@@ -261,6 +270,9 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 
 	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_status', 'Admitted')
 	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_record', inpatient_record.name)
+
+	if inpatient_record.admission_nursing_checklist_template:
+		inpatient_record.create_nursing_tasks(inpatient_record.admission_nursing_checklist_template)
 
 
 def transfer_patient(inpatient_record, service_unit, check_in):

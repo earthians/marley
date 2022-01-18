@@ -16,14 +16,20 @@ frappe.ui.form.on('Nursing Task', {
 			};
 		};
 
-		frm.set_query('task_document_name', () => {
-			return {
-				filters: {
-					'patient': frm.doc.patient,
+		if (frm.doc.task_doctype) {
+			let filters = {};
+			frappe.model.with_doctype(frm.doc.task_doctype, function() {
+				if (frappe.meta.has_field(frm.doc.task_doctype, 'patient')) {
+					filters['patient'] = frm.doc.patient;
 				}
-			}
-		})
 
+				frm.set_query('task_document_name', () => {
+					return {
+						filters: filters
+					}
+				});
+			});
+		}
 	},
 
 	refresh: function(frm) {

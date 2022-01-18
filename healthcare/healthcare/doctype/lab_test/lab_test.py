@@ -43,11 +43,18 @@ class LabTest(Document):
 			self.load_test_from_template()
 			self.reload()
 
-			lab_template = frappe.get_doc('Lab Test Template', self.template)
-			template = lab_template.nursing_checklist_template
+			template = frappe.db.get_value('Lab Test Template', self.template, 'nursing_checklist_template')
 			if not template:
 				return
-			NursingTask.create_nursing_tasks_from_template(template, 'Lab Test', self.name)
+
+			NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
+				'company': self.company,
+				# 'service_unit': self.service_unit, # TODO: add service unit to lab test
+				'medical_department': self.department,
+				'reference_doctype': self.doctype,
+				'reference_name': self.name,
+				'start_time': frappe.utils.now_datetime(),
+			}, post_event=True)
 
 	def load_test_from_template(self):
 		lab_test = self
@@ -78,12 +85,12 @@ class LabTest(Document):
 
 	@frappe.whitelist()
 	def modify_nursing_tasks(self, nursing_tasks):
-		template_tasks = frappe.get_list(
+		template_tasks = frappe.get_all(
 			'Nursing Checklist Template Task',
 			filters=self.get_nursing_task_filters(self.template),
 			fields=['name', 'activity', 'mandatory', 'task_doctype'],
 		)
-		existing_tasks = frappe.get_list(
+		existing_tasks = frappe.get_all(
 			'Nursing Task',
 			filters={'reference_name': self.name, 'docstatus': 0},
 		)

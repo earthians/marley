@@ -49,7 +49,8 @@ class TherapySession(Document):
 
 	def on_submit(self):
 		self.update_sessions_count_in_therapy_plan()
-		validate_nursing_tasks(self)
+		# validate_nursing_tasks(self)
+		self.create_nursing_tasks()
 
 	def on_update(self):
 		if self.appointment:
@@ -61,13 +62,17 @@ class TherapySession(Document):
 
 		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 
-	def after_insert(self):
-		therapy_plan = frappe.get_doc('Therapy Plan', self.therapy_plan)
-		if therapy_plan.therapy_plan_template:
-			plan_template = frappe.get_doc('Therapy Plan Template', therapy_plan.therapy_plan_template)
-			template = plan_template.nursing_checklist_template
-			if template:
-				NursingTask.create_nursing_tasks_from_template(template, 'Therapy Session', self.name)
+	def create_nursing_tasks(self):
+		template = frappe.db.get_value('Therapy Type', self.therapy_type, 'nursing_checklist_template')
+		if template:
+			NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
+				'company': self.company,
+				# 'service_unit': self.service_unit,
+				'medical_department': self.department,
+				'reference_doctype': self.doctype,
+				'reference_name': self.name,
+				'start_time': frappe.utils.get_datetime(f'{self.start_date} {self.start_time}'),
+			})
 
 	def update_sessions_count_in_therapy_plan(self, on_cancel=False):
 		therapy_plan = frappe.get_doc('Therapy Plan', self.therapy_plan)

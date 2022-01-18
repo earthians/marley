@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, nowdate, nowtime
+from frappe.utils import flt, nowdate, nowtime, now_datetime
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
@@ -40,23 +40,45 @@ class ClinicalProcedure(Document):
 			frappe.db.set_value('Procedure Prescription', self.prescription, 'procedure_created', 1)
 		if self.appointment:
 			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Closed')
-		template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
-		if template.sample:
-			patient = frappe.get_doc('Patient', self.patient)
-			sample_collection = create_sample_doc(template, patient, None, self.company)
-			frappe.db.set_value('Clinical Procedure', self.name, 'sample', sample_collection.name)
-		self.reload()
 
 		if self.procedure_template:
-			cp_template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
-			templates = [cp_template.pre_op_nursing_checklist_template, cp_template.post_op_nursing_checklist_template]
-			for template in templates:
-				if not template:
-					continue
-				NursingTask.create_nursing_tasks_from_template(template, 'Clinical Procedure', self.name)
+
+			template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
+
+			if template.sample:
+				patient = frappe.get_doc('Patient', self.patient)
+				sample_collection = create_sample_doc(template, patient, None, self.company)
+				frappe.db.set_value('Clinical Procedure', self.name, 'sample', sample_collection.name)
+
+		self.reload()
 
 	def on_submit(self):
-		validate_nursing_tasks(self)
+		# pre op nursing tasks
+		self.create_nursing_tasks()
+
+	def create_nursing_tasks(self, post_event=False):
+
+		if post_event:
+			template = frappe.db.get_value('Clinical Procedure Template',
+				self.procedure_template, 'post_op_nursing_checklist_template'
+			)
+			start_time = now_datetime()
+
+		else:
+			template = frappe.db.get_value('Clinical Procedure Template',
+				self.procedure_template, 'pre_op_nursing_checklist_template'
+			)
+			# pre op tasks to be created on Clinical Procedure submit, use scheduled date
+			start_time = frappe.utils.get_datetime(f'{self.start_date} {self.start_time}')
+
+		NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
+			'company': self.company,
+			'service_unit': self.service_unit,
+			'medical_department': self.medical_department,
+			'reference_doctype': self.doctype,
+			'reference_name': self.name,
+			'start_time': start_time,
+		}, post_event=post_event)
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -110,15 +132,23 @@ class ClinicalProcedure(Document):
 
 		self.db_set('status', 'Completed')
 
+		# post op nursing tasks
+		if self.procedure_template:
+			self.create_nursing_tasks(post_event=True)
+
 		if self.consume_stock and self.items:
 			return stock_entry
 
 	@frappe.whitelist()
 	def start_procedure(self):
 		allow_start = self.set_actual_qty()
+
 		if allow_start:
+			validate_nursing_tasks(self)
+
 			self.db_set('status', 'In Progress')
 			return 'success'
+
 		return 'insufficient stock'
 
 	def set_actual_qty(self):

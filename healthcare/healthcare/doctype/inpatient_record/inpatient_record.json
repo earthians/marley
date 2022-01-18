@@ -425,8 +425,44 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2021-11-23 10:00:59.274356",
+ "links": [
+  {
+   "group": "Appointments",
+   "link_doctype": "Patient Appointment",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Clinical",
+   "link_doctype": "Patient Encounter",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Clinical",
+   "link_doctype": "Clinical Procedure",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Laboratory",
+   "link_doctype": "Sample Collection",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Laboratory",
+   "link_doctype": "Lab Test",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Nursing",
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "reference_name"
+  },
+  {
+   "group": "Nursing",
+   "link_doctype": "Vital Signs",
+   "link_fieldname": "inpatient_record"
+  }
+ ],
+ "modified": "2022-01-17 15:23:55.097737",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
