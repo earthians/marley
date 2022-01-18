@@ -107,8 +107,8 @@ class LabTest(Document):
 
 	@frappe.whitelist()
 	def get_nursing_task_filters(self, lab_test_template):
-		lab_test_template = frappe.get_doc('Lab Test Template', lab_test_template)
-		filters = {'parent': lab_test_template.nursing_checklist_template}
+		checklist_template = frappe.db.get_value('Lab Test Template', lab_test_template, 'nursing_checklist_template')
+		filters = {'parent': checklist_template}
 		return filters
 
 

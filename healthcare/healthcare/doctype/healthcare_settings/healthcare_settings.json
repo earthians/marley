@@ -326,7 +326,7 @@
   },
   {
    "default": "0",
-   "description": "All tasks in nursing checklist will be validated before submission of patient transactional data.",
+   "description": "Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event.",
    "fieldname": "validate_nursing_checklists",
    "fieldtype": "Check",
    "label": "Validate Nursing Checklists"
@@ -334,8 +334,7 @@
  ],
  "issingle": 1,
  "links": [],
- "migration_hash": "04a26c596a30f6211256f7de8effc2fb",
- "modified": "2021-11-02 05:46:49.553746",
+ "modified": "2022-01-18 11:35:17.261514",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

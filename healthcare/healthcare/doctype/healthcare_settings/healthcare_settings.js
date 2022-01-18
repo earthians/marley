@@ -59,7 +59,7 @@ frappe.tour['Healthcare Settings'] = [
 	{
 		fieldname: 'validate_nursing_checklists',
 		title: __('validate_nursing_checklists'),
-		description: __('Checking this will automatically create a Sales Invoice whenever an appointment is booked for a Patient.')
+		description: __('Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event. For example, if any of the tasks as part of the Discharge Checklist is not in status Completed, system alert the user while trying to Discharge the Patient from inpatient facility')
 	},
 	{
 		fieldname: 'inpatient_visit_charge_item',
@@ -75,6 +75,6 @@ frappe.tour['Healthcare Settings'] = [
 	{
 		fieldname: 'send_registration_msg',
 		title: __('Out Patient SMS alerts'),
-		description: __('If you want to send SMS alert on Patient Registration, you can enable this option. Similary, you can set up Out Patient SMS alerts for other functionalities in this section. Click ') + "<a href='https://docs.erpnext.com/docs/user/manual/en/healthcare/healthcare_settings#4-out-patient-sms-alerts' target='_blank'>here</a>" + __(' to know more')
+		description: __('If you want to send SMS alert on Patient Registration, you can enable this option. Similarly, you can set up Out Patient SMS alerts for other functionalities in this section. Click ') + "<a href='https://docs.erpnext.com/docs/user/manual/en/healthcare/healthcare_settings#4-out-patient-sms-alerts' target='_blank'>here</a>" + __(' to know more')
 	}
 ];

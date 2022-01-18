@@ -131,10 +131,6 @@ frappe.ui.form.on('Clinical Procedure', {
 				}).addClass("btn-primary");
 			}
 		}
-
-		frm.add_custom_button(__("Nursing Tasks"), function () {
-				frappe.set_route("List", "Nursing Task", {"reference_name": frm.doc.name});
-		});
 	},
 
 	onload: function(frm) {

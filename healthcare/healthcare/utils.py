@@ -833,4 +833,4 @@ def validate_nursing_tasks(document):
 		return True
 
 	tasks = [task.get('name') for task in tasks]
-	frappe.throw(f"Please complete related Nursing Tasks before submission {', '.join(tasks)}")
+	frappe.throw(f"Please complete linked Nursing Tasks before submission {', '.join(tasks)}")

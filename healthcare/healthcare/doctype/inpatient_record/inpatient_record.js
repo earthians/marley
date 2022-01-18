@@ -34,10 +34,6 @@ frappe.ui.form.on('Inpatient Record', {
 		} else {
 			frm.set_df_property('btn_transfer', 'hidden', 0);
 		}
-
-		frm.add_custom_button(__("Nursing Tasks"), function () {
-				frappe.set_route("List", "Nursing Task", {"reference_name": frm.doc.name});
-		});
 	},
 	btn_transfer: function(frm) {
 		transfer_patient_dialog(frm);

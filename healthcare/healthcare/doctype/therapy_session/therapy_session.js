@@ -60,11 +60,6 @@ frappe.ui.form.on('Therapy Session', {
 				}
 			});
 		}
-
-		frm.add_custom_button(__("Nursing Tasks"), function () {
-			frappe.set_route("List", "Nursing Task", {"reference_name": frm.doc.name});
-		});
-
 	},
 
 	therapy_plan: function(frm) {
