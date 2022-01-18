@@ -420,7 +420,7 @@
   {
    "fieldname": "admission_nursing_checklist_template",
    "fieldtype": "Link",
-   "label": "Nursing Checklist Template",
+   "label": "Admission Nursing Checklist Template",
    "options": "Nursing Checklist Template"
   }
  ],
