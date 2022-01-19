@@ -10,7 +10,7 @@ frappe.listview_settings['Nursing Task'] = {
 			return [__('Draft'), 'orange', 'status, =, Draft'];
 
 		} else if (doc.status === 'Requested') {
-			return [__('Requested'), 'blue', 'status, =, Requested'];
+			return [__('Requested'), 'orange', 'status, =, Requested'];
 
 		} else if (doc.status === 'Rejected') {
 			return [__('Rejected'), 'red', 'status, =, Rejected'];
@@ -27,8 +27,11 @@ frappe.listview_settings['Nursing Task'] = {
 		}  else if (doc.status === 'Failed') {
 			return [__('Failed'), 'red', 'status, =, Failed'];
 
-		} else { // Received, On Hold, Accepted, Ready, In Progress
-			return [__(doc.status), 'lightblue', `status, =, ${doc.status}`];
+		}  else if (doc.status === 'In Progress') {
+			return [__('In Progress'), 'blue', 'status, =, In Progress'];
+
+		} else { // Received, On Hold, Accepted, Ready
+			return [__(doc.status), 'light-blue', `status, =, ${doc.status}`];
 		}
 	}
 };
