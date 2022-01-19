@@ -59,17 +59,6 @@ class InpatientRecord(Document):
 				+ """ <b><a href="/app/Form/Inpatient Record/{0}">{0}</a></b>""".format(ip_record[0].name))
 			frappe.throw(msg)
 
-	def create_nursing_tasks(self, template):
-
-		NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
-			'company': self.company,
-			'service_unit': frappe.db.get_value('Inpatient Occupancy', {'parent': self.name, 'left': 0}, 'service_unit'),
-			'medical_department': self.medical_department,
-			'reference_doctype': self.doctype,
-			'reference_name': self.name,
-			'start_time': now_datetime(),
-		}, post_event=True)
-
 	@frappe.whitelist()
 	def admit(self, service_unit, check_in, expected_discharge=None):
 		admit_patient(self, service_unit, check_in, expected_discharge)
@@ -151,7 +140,11 @@ def schedule_discharge(args):
 		frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
 
 		if inpatient_record.discharge_nursing_checklist_template:
-			inpatient_record.create_nursing_tasks(inpatient_record.discharge_nursing_checklist_template)
+			NursingTask.create_nursing_tasks_from_template(
+				inpatient_record.discharge_nursing_checklist_template,
+				inpatient_record,
+				start_time=now_datetime()
+			)
 
 
 def set_details_from_ip_order(inpatient_record, ip_order):
@@ -272,7 +265,11 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_record', inpatient_record.name)
 
 	if inpatient_record.admission_nursing_checklist_template:
-		inpatient_record.create_nursing_tasks(inpatient_record.admission_nursing_checklist_template)
+		NursingTask.create_nursing_tasks_from_template(
+			inpatient_record.admission_nursing_checklist_template,
+			inpatient_record,
+			start_time=now_datetime()
+		)
 
 
 def transfer_patient(inpatient_record, service_unit, check_in):

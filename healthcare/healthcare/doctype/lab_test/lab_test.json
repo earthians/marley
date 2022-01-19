@@ -557,9 +557,9 @@
    "print_hide": 1
   },
   {
-   "fetch_from": "template.nursing_checklist_template",
    "fieldname": "modify_nursing_tasks",
    "fieldtype": "Button",
+   "hidden": 1,
    "label": "Modify Nursing Tasks "
   }
  ],

@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2021-10-20 12:08:56.155822",
+ "creation": "2022-01-18 15:18:15.657622",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -21,14 +21,6 @@
   "mandatory",
   "column_break_2",
   "description",
-  "task_schedule_section",
-  "requested_start_time",
-  "requested_end_time",
-  "duration",
-  "column_break_18",
-  "task_start_time",
-  "task_end_time",
-  "task_duration",
   "patient_details_section",
   "patient",
   "patient_name",
@@ -37,14 +29,22 @@
   "column_break_6",
   "inpatient_record",
   "inpatient_status",
-  "task_references",
+  "task_schedule_section",
+  "requested_start_time",
+  "requested_end_time",
+  "duration",
+  "column_break_18",
+  "task_start_time",
+  "task_end_time",
+  "task_duration",
+  "source_section",
+  "reference_doctype",
+  "amended_from",
+  "column_break_8",
+  "reference_name",
+  "section_break_28",
   "task_doctype",
   "task_document_name",
-  "column_break_8",
-  "reference_doctype",
-  "reference_name",
-  "amended_from",
-  "section_break_28",
   "notes"
  ],
  "fields": [
@@ -69,6 +69,7 @@
    "fieldname": "reference_doctype",
    "fieldtype": "Link",
    "label": "Reference Doctype",
+   "no_copy": 1,
    "options": "DocType",
    "read_only": 1
   },
@@ -76,6 +77,7 @@
    "fieldname": "reference_name",
    "fieldtype": "Dynamic Link",
    "label": "Reference Name",
+   "no_copy": 1,
    "options": "reference_doctype",
    "read_only": 1
   },
@@ -142,9 +144,11 @@
   },
   {
    "allow_on_submit": 1,
+   "description": "Create and link the document to complete this task",
    "fieldname": "task_document_name",
    "fieldtype": "Dynamic Link",
    "label": "Task Document Name",
+   "no_copy": 1,
    "options": "task_doctype",
    "read_only": 1,
    "read_only_depends_on": "eval:in_list([\"Completed\", \"Failed\", \"Cancelled\"], doc.status)"
@@ -222,13 +226,15 @@
   },
   {
    "fieldname": "section_break_28",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Task Resolution"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "notes",
    "fieldtype": "Text Editor",
    "label": "Notes",
+   "no_copy": 1,
    "read_only_depends_on": "eval:in_list([\"Completed\", \"Failed\", \"Cancelled\"], doc.status)"
   },
   {
@@ -241,11 +247,6 @@
    "options": "Patient",
    "read_only_depends_on": "eval:doc.reference_name",
    "reqd": 1
-  },
-  {
-   "fieldname": "task_references",
-   "fieldtype": "Section Break",
-   "label": "Task References"
   },
   {
    "fieldname": "title",
@@ -313,12 +314,17 @@
    "label": "Medical Department",
    "options": "Medical Department",
    "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-26 07:02:50.163693",
+ "modified": "2022-01-19 15:34:31.760433",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Task",
@@ -326,6 +332,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -335,12 +343,42 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
  "search_fields": "patient, activity, user",
  "sort_field": "requested_start_time",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1
 }

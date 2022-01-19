@@ -67,6 +67,10 @@ frappe.ui.form.on('Patient Encounter', {
 					});
 				}, 'Create');
 			}
+
+			frm.add_custom_button(__('Nursing Tasks'), function() {
+				create_nursing_tasks(frm);
+			},'Create');
 		}
 
 		frm.set_query('patient', function() {
@@ -370,6 +374,57 @@ let create_procedure = function(frm) {
 		'company': frm.doc.company
 	};
 	frappe.new_doc('Clinical Procedure');
+};
+
+let create_nursing_tasks = function(frm) {
+	const d = new frappe.ui.Dialog({
+
+		title: __('Create Nursing Tasks'),
+
+		fields: [
+			{
+				label: __('Nursing Checklist Template'),
+				fieldtype: 'Link',
+				options: 'Nursing Checklist Template',
+				fieldname: 'template',
+				reqd: 1,
+			},
+			{
+				label: __('Start Time'),
+				fieldtype: 'Datetime',
+				fieldname: 'start_time',
+				default: frappe.datetime.now_datetime(),
+				reqd: 1,
+			},
+		],
+
+		primary_action_label: __('Create Nursing Tasks'),
+
+		primary_action: () => {
+
+			let values = d.get_values();
+			frappe.call({
+				method: 'healthcare.healthcare.doctype.nursing_task.nursing_task.create_nursing_tasks_from_template',
+				args: {
+					'template': values.template,
+					'doc': frm.doc,
+					'start_time': values.start_time
+				},
+				callback: (r) => {
+					if (r && !r.exc) {
+						frappe.show_alert({
+							message: __('Nursing Tasks Created'),
+							indicator: 'success'
+						});
+					}
+				}
+			});
+
+			d.hide();
+		}
+	});
+
+	d.show();
 };
 
 frappe.ui.form.on('Drug Prescription', {

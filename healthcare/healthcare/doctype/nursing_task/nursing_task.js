@@ -17,6 +17,11 @@ frappe.ui.form.on('Nursing Task', {
 		};
 
 		if (frm.doc.task_doctype) {
+			// set description
+			frm.set_df_property('task_document_name', 'description',
+				`Create and link a new ${frm.doc.task_doctype} document to complete this task`);
+
+			// set filters
 			let filters = {};
 			frappe.model.with_doctype(frm.doc.task_doctype, function() {
 				if (frappe.meta.has_field(frm.doc.task_doctype, 'patient')) {
@@ -37,10 +42,13 @@ frappe.ui.form.on('Nursing Task', {
 		// TODO: handle routing back to nursing task form
 		// frm.trigger('show_form_route_button');
 
-		let status_list = ['Requested', 'Accepted', 'Received', 'Rejected',
-			'Ready', 'Failed', 'Entered in Error', 'On Hold'];
+		if (frm.is_new()) {
+			frm.set_value('status', 'Draft');
+		}
 
-		if (status_list.includes(frm.doc.status)) {
+		let status_list = ['Accepted', 'Received', 'Rejected',
+			'Ready', 'Failed', 'Entered in Error', 'On Hold'];
+		if (status_list.includes(frm.doc.status) || frm.doc.status == 'Requested') {
 
 			// set primary action to start
 			frm.page.set_primary_action(__('Start'), () => {
@@ -59,10 +67,14 @@ frappe.ui.form.on('Nursing Task', {
 
 		if (frm.doc.status == 'In Progress') {
 			frm.page.set_primary_action(__('Complete'), () => {
+				if (frm.doc.task_doctype){
+					frm.set_df_property('task_document_name', 'reqd', 1);
+				}
 				frm.events.update_status(frm, 'Completed');
 			});
 
 			frm.add_custom_button(__('Hold'), () => {
+				frm.set_df_property('task_document_name', 'reqd', 0);
 				frm.events.update_status(frm, 'On Hold');
 			});
 		}
@@ -72,6 +84,8 @@ frappe.ui.form.on('Nursing Task', {
 
 		frm.set_value('status', status);
 		frm.save('Update');
+		frm.reload_doc();
+
 	},
 
 	show_form_route_button: function(frm) {

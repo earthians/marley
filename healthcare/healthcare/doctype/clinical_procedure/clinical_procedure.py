@@ -53,11 +53,9 @@ class ClinicalProcedure(Document):
 		self.reload()
 
 	def on_submit(self):
-		# pre op nursing tasks
-		self.create_nursing_tasks()
+		self.create_nursing_tasks(post_event=False)
 
-	def create_nursing_tasks(self, post_event=False):
-
+	def create_nursing_tasks(self, post_event=True):
 		if post_event:
 			template = frappe.db.get_value('Clinical Procedure Template',
 				self.procedure_template, 'post_op_nursing_checklist_template'
@@ -71,14 +69,10 @@ class ClinicalProcedure(Document):
 			# pre op tasks to be created on Clinical Procedure submit, use scheduled date
 			start_time = frappe.utils.get_datetime(f'{self.start_date} {self.start_time}')
 
-		NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
-			'company': self.company,
-			'service_unit': self.service_unit,
-			'medical_department': self.medical_department,
-			'reference_doctype': self.doctype,
-			'reference_name': self.name,
-			'start_time': start_time,
-		}, post_event=post_event)
+		if template:
+			NursingTask.create_nursing_tasks_from_template(template, self,
+				start_time=start_time, post_event=post_event
+			)
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -134,7 +128,7 @@ class ClinicalProcedure(Document):
 
 		# post op nursing tasks
 		if self.procedure_template:
-			self.create_nursing_tasks(post_event=True)
+			self.create_nursing_tasks()
 
 		if self.consume_stock and self.items:
 			return stock_entry

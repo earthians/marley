@@ -2,13 +2,13 @@ from __future__ import unicode_literals
 
 from frappe import _
 
-
 def get_data():
 	return {
 		'fieldname': 'encounter',
 		'non_standard_fieldnames': {
 			'Patient Medical Record': 'reference_name',
-			'Inpatient Medication Order': 'patient_encounter'
+			'Inpatient Medication Order': 'patient_encounter',
+			'Nursing Task': 'reference_name'
 		},
 		'transactions': [
 			{
@@ -17,8 +17,8 @@ def get_data():
 			},
 			{
 				'label': _('Orders'),
-				'items': ['Inpatient Medication Order']
-			}
+				'items': ['Inpatient Medication Order', 'Nursing Task']
+			},
 		],
 		'disable_create_buttons': ['Inpatient Medication Order']
 	}

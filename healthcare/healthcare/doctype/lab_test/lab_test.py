@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_link_to_form, getdate
+from frappe.utils import get_link_to_form, getdate, now_datetime
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
@@ -17,11 +17,11 @@ class LabTest(Document):
 			self.set_secondary_uom_result()
 
 	def on_submit(self):
+		from healthcare.healthcare.utils import validate_nursing_tasks
+		validate_nursing_tasks(self)
 		self.validate_result_values()
 		self.db_set('submitted_date', getdate())
 		self.db_set('status', 'Completed')
-		from healthcare.healthcare.utils import validate_nursing_tasks
-		validate_nursing_tasks(self)
 
 	def on_cancel(self):
 		self.db_set('status', 'Cancelled')
@@ -43,18 +43,11 @@ class LabTest(Document):
 			self.load_test_from_template()
 			self.reload()
 
+			# create nursing tasks
 			template = frappe.db.get_value('Lab Test Template', self.template, 'nursing_checklist_template')
-			if not template:
-				return
-
-			NursingTask.create_nursing_tasks_from_template(template, self.patient, args={
-				'company': self.company,
-				# 'service_unit': self.service_unit, # TODO: add service unit to lab test
-				'medical_department': self.department,
-				'reference_doctype': self.doctype,
-				'reference_name': self.name,
-				'start_time': frappe.utils.now_datetime(),
-			}, post_event=True)
+			if template:
+				NursingTask.create_nursing_tasks_from_template(template, self,
+					start_time=now_datetime())
 
 	def load_test_from_template(self):
 		lab_test = self
@@ -88,22 +81,23 @@ class LabTest(Document):
 		template_tasks = frappe.get_all(
 			'Nursing Checklist Template Task',
 			filters=self.get_nursing_task_filters(self.template),
-			fields=['name', 'activity', 'mandatory', 'task_doctype'],
+			fields=['*'],
 		)
+
 		existing_tasks = frappe.get_all(
 			'Nursing Task',
 			filters={'reference_name': self.name, 'docstatus': 0},
 		)
 
 		if not existing_tasks:
-			NursingTask.create_nursing_tasks('Lab Test', self.name, template_tasks)
+			NursingTask.create_nursing_tasks(template_tasks, self, now_datetime())
 			return
 
 		for task in existing_tasks:
 			frappe.delete_doc('Nursing Task', task['name'])
 
 		selected_tasks = [task for task in template_tasks if task['name'] in nursing_tasks]
-		NursingTask.create_nursing_tasks('Lab Test', self.name, selected_tasks)
+		NursingTask.create_nursing_tasks(selected_tasks, self, now_datetime())
 
 	@frappe.whitelist()
 	def get_nursing_task_filters(self, lab_test_template):
