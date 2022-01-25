@@ -50,7 +50,7 @@ frappe.ui.form.on('Insurance Claim', {
 		}
 
 		if (frm.doc.docstatus == 1 && ['Submitted', 'Error'].includes(frm.doc.status)) {
-			frm.fields_dict["coverages"].grid.add_custom_button(__('Update Coverages'), () => {
+			frm.page.set_primary_action(__('Update Claim Status'), () => {
 				frm.events.update_status(frm);
 			});
 		}

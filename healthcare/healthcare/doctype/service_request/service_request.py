@@ -9,7 +9,6 @@ import json
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import getdate
-from six import string_types
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
 
 class ServiceRequest(Document):
@@ -126,7 +125,7 @@ def set_service_request_status(service_request, status):
 
 @frappe.whitelist()
 def make_clinical_procedure(service_request):
-	if isinstance(service_request, string_types):
+	if isinstance(service_request, str):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -154,7 +153,7 @@ def make_clinical_procedure(service_request):
 
 @frappe.whitelist()
 def make_lab_test(service_request):
-	if isinstance(service_request, string_types):
+	if isinstance(service_request, str):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -184,7 +183,7 @@ def make_lab_test(service_request):
 
 @frappe.whitelist()
 def make_therapy_session(service_request):
-	if isinstance(service_request, string_types):
+	if isinstance(service_request, str):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 

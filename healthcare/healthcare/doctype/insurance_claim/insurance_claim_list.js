@@ -2,7 +2,7 @@ frappe.listview_settings['Insurance Claim'] = {
 	add_fields: ['status'],
 	get_indicator: function(doc) {
 		return [__(doc.status), {
-			'Draft': 'lightblue',
+			'Draft': 'light-blue',
 			'Submitted': 'blue',
             'Completed': 'green',
 			'Cancelled': 'darkgrey',
