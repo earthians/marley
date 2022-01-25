@@ -357,9 +357,7 @@ def get_item_price_list_rate(item_code, price_list, qty, company):
 def create_insurance_eligibility(doc):
 	import json
 
-	from six import string_types
-
-	if isinstance(doc, string_types):
+	if isinstance(doc, str):
 		doc = json.loads(doc)
 		doc = frappe._dict(doc)
 

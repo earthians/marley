@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 import json
 
 import dateutil
-from six import string_types
 
 import frappe
 from frappe import _
@@ -45,7 +44,7 @@ class ServiceRequest(Document):
 			self.make_insurance_coverage()
 
 	def on_update_after_submit(self):
-		if self.billing_status == 'Pending' and self.insurance_policy and not self.insurance_coverage:
+		if self.billing_status == "Pending" and self.insurance_policy and not self.insurance_coverage:
 			self.make_insurance_coverage()
 
 	def make_insurance_coverage(self):
@@ -139,7 +138,7 @@ def set_service_request_status(service_request, status):
 
 @frappe.whitelist()
 def make_clinical_procedure(service_request):
-	if isinstance(service_request, string_types):
+	if isinstance(service_request, str):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -167,7 +166,7 @@ def make_clinical_procedure(service_request):
 
 @frappe.whitelist()
 def make_lab_test(service_request):
-	if isinstance(service_request, string_types):
+	if isinstance(service_request, str):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -198,7 +197,7 @@ def make_lab_test(service_request):
 
 @frappe.whitelist()
 def make_therapy_session(service_request):
-	if isinstance(service_request, string_types):
+	if isinstance(service_request, str):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 

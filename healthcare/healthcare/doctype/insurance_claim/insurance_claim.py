@@ -374,9 +374,7 @@ def create_payment_entry(doc):
 
 	import json
 
-	from six import string_types
-
-	if isinstance(doc, string_types):
+	if isinstance(doc, str):
 		doc = json.loads(doc)
 		doc = frappe._dict(doc)
 
