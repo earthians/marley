@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _, scrub
 from frappe.utils import add_days, add_to_date, flt, getdate
-from six import iteritems
 
 from erpnext.accounts.utils import get_fiscal_year
 
@@ -155,7 +154,7 @@ class Analytics(object):
 		self.data = []
 		self.get_periodic_data()
 
-		for entity, period_data in iteritems(self.appointment_periodic_data):
+		for entity, period_data in self.appointment_periodic_data.items():
 			if self.filters.tree_type == 'Healthcare Practitioner':
 				row = {'practitioner': entity}
 			elif self.filters.tree_type == 'Medical Department':
