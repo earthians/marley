@@ -5,9 +5,14 @@ import frappe
 @frappe.validate_and_sanitize_search_inputs
 def get_healthcare_service_units(doctype, txt, searchfield, start, page_len, filters):
 	table = frappe.qb.DocType("Healthcare Service Unit")
-	query = frappe.qb.from_(table).where(table.is_group == 0) \
-	.where(table.company == frappe.db.escape(filters.get('company'))) \
-    .where(table.name.like(frappe.db.escape('%{0}%'.format(txt)))).get_sql()
+	query = (
+		frappe.qb.from_(table)
+		.where(table.is_group == 0)
+		.where(table.company == filters.get("company"))
+		.where(table.name.like("%{0}%".format(txt)))
+		.select("name")
+		.get_sql()
+	)
 
 	if filters and filters.get('inpatient_record'):
 		from healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry import (
