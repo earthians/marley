@@ -15,7 +15,7 @@ from frappe.utils.formatters import format_value
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
-from healthcare.healthcare.setup import setup_healthcare
+from healthcare.setup import setup_healthcare
 
 
 @frappe.whitelist()

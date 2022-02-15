@@ -72,7 +72,7 @@ doctype_js = {
 # ------------
 
 # before_install = "healthcare.install.before_install"
-# after_install = "healthcare.install.after_install"
+after_install = "healthcare.setup.setup_healthcare"
 
 # Desk Notifications
 # ------------------
@@ -229,10 +229,6 @@ global_search_doctypes = {
 		{'doctype': 'Complaint', 'index': 23},
 		{'doctype': 'Medical Code', 'index': 24},
 	]
-}
-
-domains = {
-	'Healthcare': 'healthcare.healthcare.healthcare',
 }
 
 standard_portal_menu_items = [
