@@ -1,6 +1,6 @@
 {
  "actions": [],
- "allow_copy": 1,
+ "allow_copy": 0,
  "allow_import": 1,
  "autoname": "naming_series:",
  "beta": 1,
@@ -349,7 +349,7 @@
   }
  ],
  "links": [],
- "modified": "2021-08-30 09:00:41.329387",
+ "modified": "2022-02-14 09:00:41.329387",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
