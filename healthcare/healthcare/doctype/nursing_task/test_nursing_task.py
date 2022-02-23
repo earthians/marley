@@ -15,6 +15,7 @@ class TestNursingTask(ERPNextTestCase):
 			activity = frappe.get_doc({
 				'doctype': 'Healthcare Activity',
 				'activity': 'BP check',
+				'activity_duration': 900,
 			})
 			activity.insert()
 
