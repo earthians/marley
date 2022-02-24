@@ -1,0 +1,18 @@
+[
+  {
+    "doctype": "Nursing Checklist Template",
+    "name": "Discharge checklist",
+    "title": "Discharge checklist",
+    "tasks": [
+      {
+        "doctype": "Nursing Checklist Template Task",
+        "activity": "BP Check",
+        "mandatory": 1,
+        "task_duration": 600,
+        "parent": "Discharge checklist",
+        "parentfield": "tasks",
+        "parenttype": "Nursing Checklist Template"
+      }
+    ]
+  }
+]
