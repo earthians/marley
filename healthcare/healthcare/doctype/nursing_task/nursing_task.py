@@ -126,9 +126,9 @@ class NursingTask(Document):
 		for task in tasks:
 			frappe.get_doc('Nursing Task', task).cancel()
 
+
 @frappe.whitelist()
 def create_nursing_tasks_from_template(template, doc, start_time=now_datetime(), post_event=True):
-
 	if isinstance(doc, string_types):
 		doc = json.loads(doc)
 

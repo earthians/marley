@@ -122,6 +122,13 @@ def schedule_inpatient(args):
 	inpatient_record.status = 'Admission Scheduled'
 	inpatient_record.save(ignore_permissions = True)
 
+	if inpatient_record.admission_nursing_checklist_template:
+		NursingTask.create_nursing_tasks_from_template(
+			inpatient_record.admission_nursing_checklist_template,
+			inpatient_record,
+			start_time=now_datetime()
+		)
+
 
 @frappe.whitelist()
 def schedule_discharge(args):
@@ -169,7 +176,6 @@ def check_out_inpatient(inpatient_record):
 
 
 def discharge_patient(inpatient_record):
-
 	validate_nursing_tasks(inpatient_record)
 
 	validate_inpatient_invoicing(inpatient_record)
@@ -254,6 +260,8 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 
 
 def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=None):
+	validate_nursing_tasks(inpatient_record)
+
 	inpatient_record.admitted_datetime = check_in
 	inpatient_record.status = 'Admitted'
 	inpatient_record.expected_discharge = expected_discharge
@@ -263,13 +271,6 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 
 	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_status', 'Admitted')
 	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_record', inpatient_record.name)
-
-	if inpatient_record.admission_nursing_checklist_template:
-		NursingTask.create_nursing_tasks_from_template(
-			inpatient_record.admission_nursing_checklist_template,
-			inpatient_record,
-			start_time=now_datetime()
-		)
 
 
 def transfer_patient(inpatient_record, service_unit, check_in):
