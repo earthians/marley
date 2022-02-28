@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 
 import json
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import getdate, strip_html
@@ -12,7 +12,7 @@ from frappe.utils import getdate, strip_html
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
 
 
-class TestPatientHistorySettings(unittest.TestCase):
+class TestPatientHistorySettings(FrappeTestCase):
 	def setUp(self):
 		dt = create_custom_doctype()
 		settings = frappe.get_single("Patient History Settings")

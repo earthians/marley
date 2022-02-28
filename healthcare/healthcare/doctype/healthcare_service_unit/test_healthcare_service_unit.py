@@ -3,8 +3,7 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
-
-class TestHealthcareServiceUnit(unittest.TestCase):
+class TestHealthcareServiceUnit(FrappeTestCase):
 	pass

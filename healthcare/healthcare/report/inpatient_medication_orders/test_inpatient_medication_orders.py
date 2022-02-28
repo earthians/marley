@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 
 import datetime
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import getdate, now_datetime
@@ -29,7 +29,7 @@ from healthcare.healthcare.report.inpatient_medication_orders.inpatient_medicati
 )
 
 
-class TestInpatientMedicationOrders(unittest.TestCase):
+class TestInpatientMedicationOrders(FrappeTestCase):
 	@classmethod
 	def setUpClass(self):
 		frappe.db.sql("delete from `tabInpatient Medication Order` where company='_Test Company'")

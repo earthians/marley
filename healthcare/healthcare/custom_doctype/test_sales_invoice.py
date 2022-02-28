@@ -1,10 +1,10 @@
 import frappe
-from erpnext.tests.utils import ERPNextTestCase
+from frappe.tests.utils import FrappeTestCase
 
 test_records = frappe.get_test_records('Sales Invoice')
 
 
-class TestSalesInvoice(ERPNextTestCase):
+class TestSalesInvoice(FrappeTestCase):
 	def test_set_healthcare_services_should_preserve_state(self):
 		invoice = frappe.copy_doc(test_records[0])
 

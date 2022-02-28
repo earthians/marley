@@ -2,8 +2,8 @@
 # See license.txt
 
 # import frappe
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestTreatmentPlanTemplate(unittest.TestCase):
+class TestTreatmentPlanTemplate(FrappeTestCase):
 	pass

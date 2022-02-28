@@ -3,14 +3,14 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
 
 
-class TestPatient(unittest.TestCase):
+class TestPatient(FrappeTestCase):
 	def test_customer_created(self):
 		frappe.db.sql("""delete from `tabPatient`""")
 		frappe.db.set_value('Healthcare Settings', None, 'link_customer_to_patient', 1)

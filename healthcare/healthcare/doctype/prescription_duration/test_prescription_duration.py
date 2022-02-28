@@ -3,8 +3,8 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestPrescriptionDuration(unittest.TestCase):
+class TestPrescriptionDuration(FrappeTestCase):
 	pass

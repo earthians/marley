@@ -1,5 +1,5 @@
 import frappe
-from erpnext.tests.utils import ERPNextTestCase
+from frappe.tests.utils import FrappeTestCase
 from frappe import DuplicateEntryError
 from frappe.utils import add_months, getdate, add_days
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_practitioner
@@ -10,7 +10,7 @@ from healthcare.healthcare.test_utils import create_encounter
 months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 
-class TestDiagnosisTrends(ERPNextTestCase):
+class TestDiagnosisTrends(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		cls.create_diagnosis()
