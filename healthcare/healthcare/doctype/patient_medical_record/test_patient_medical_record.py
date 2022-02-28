@@ -3,7 +3,7 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import add_days, nowdate
@@ -17,7 +17,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 )
 
 
-class TestPatientMedicalRecord(unittest.TestCase):
+class TestPatientMedicalRecord(FrappeTestCase):
 	def setUp(self):
 		frappe.db.set_value('Healthcare Settings', None, 'enable_free_follow_ups', 0)
 		frappe.db.set_value('Healthcare Settings', None, 'automate_appointment_invoicing', 1)

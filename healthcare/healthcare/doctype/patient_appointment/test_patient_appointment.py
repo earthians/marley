@@ -3,7 +3,7 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import add_days, now_datetime, nowdate
@@ -17,7 +17,7 @@ from healthcare.healthcare.doctype.patient_appointment.patient_appointment impor
 )
 
 
-class TestPatientAppointment(unittest.TestCase):
+class TestPatientAppointment(FrappeTestCase):
 	def setUp(self):
 		frappe.db.sql("""delete from `tabPatient Appointment`""")
 		frappe.db.sql("""delete from `tabFee Validity`""")
