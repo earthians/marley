@@ -22,5 +22,4 @@ class TestHealthcareServiceUnit(FrappeTestCase):
 			'parent_healthcare_service_unit': None
 		}
 		root_service_unit = frappe.db.exists('Healthcare Service Unit', filters)
-		print(frappe.get_all('Healthcare Service Unit'))
 		self.assertTrue(root_service_unit)
