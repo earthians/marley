@@ -113,3 +113,7 @@ def add_multiple_service_units(parent, data):
 			failed_list.append(service_unit['healthcare_service_unit_name'])
 
 	return failed_list
+
+
+def on_doctype_update():
+	frappe.db.add_unique("Healthcare Service Unit", ["healthcare_service_unit_name", "company"], constraint_name="unique_service_unit_company")

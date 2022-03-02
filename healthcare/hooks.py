@@ -114,6 +114,9 @@ doc_events = {
 		"on_submit": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 		"on_cancel": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 	},
+	"Company": {
+		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root"
+	}
 }
 
 scheduler_events = {

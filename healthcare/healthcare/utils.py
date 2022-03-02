@@ -11,6 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import cstr, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
+from erpnext.setup.utils import insert_record
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
@@ -815,3 +816,15 @@ def before_tests():
 			"domains"           : ["Healthcare"],
 		})
 		setup_healthcare()
+
+
+def create_healthcare_service_unit_tree_root(doc, method=None):
+	record = [
+		{
+			"doctype": "Healthcare Service Unit",
+			"healthcare_service_unit_name": "All Healthcare Service Units",
+			"is_group": 1,
+			"company": doc.name,
+		}
+	]
+	insert_record(record)
