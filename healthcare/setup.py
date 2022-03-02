@@ -261,8 +261,6 @@ def create_dosage():
 
 def create_healthcare_item_groups():
 	records = [
-		{'doctype': 'Item Group', 'item_group_name': _('All Item Groups'),
-		 	'is_group': 0, 'parent_item_group': ''},
 		{'doctype': 'Item Group', 'item_group_name': _('Laboratory'),
 			'is_group': 0, 'parent_item_group': _('All Item Groups') },
 		{'doctype': 'Item Group', 'item_group_name': _('Drug'),
