@@ -4,28 +4,17 @@
 
 from __future__ import unicode_literals
 import frappe
-import dateutil
 import json
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
 from six import string_types
-from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
+from healthcare.controllers.service_request_controller import ServiceRequestController
 
-class ServiceRequest(Document):
-	def validate(self):
-		self.set_patient_age()
-		self.set_order_details()
-		self.set_title()
-
+class ServiceRequest(ServiceRequestController):
 	def set_title(self):
 		if frappe.flags.in_import and self.title:
 			return
 		self.title = f'{self.patient_name} - {self.template_dn}'
-
-	def before_submit(self):
-		if self.status not in ['Active', 'On Hold', 'Unknown']:
-			self.status = 'Active'
 
 	def before_insert(self):
 		self.status = 'Draft'
@@ -33,42 +22,6 @@ class ServiceRequest(Document):
 		if self.amended_from:
 			frappe.db.set_value('Service Request', self.amended_from, 'status', 'Replaced')
 
-	def on_submit(self):
-		if self.insurance_policy and not self.insurance_coverage:
-			self.make_insurance_coverage()
-
-	def make_insurance_coverage(self):
-		coverage = make_insurance_coverage(
-			patient=self.patient,
-			policy=self.insurance_policy,
-			company=self.company,
-			template_dt=self.template_dt,
-			template_dn=self.template_dn,
-			item_code=self.item_code,
-			qty=self.quantity
-		)
-
-		if coverage and coverage.get('coverage'):
-			self.db_set({'insurance_coverage': coverage.get('coverage'), 'coverage_status': coverage.get('coverage_status')})
-
-	def before_cancel(self):
-		not_allowed = ['Scheduled', 'In Progress', 'Completed', 'On Hold']
-		if self.status in not_allowed:
-			frappe.throw(_('You cannot Cancel Service Request in {} status').format(', '.join(not_allowed)),
-			title=_('Not Allowed'))
-
-	def on_cancel(self):
-		if self.insurance_coverage:
-			coverage = frappe.get_doc('Patient Insurance Coverage', self.insurance_coverage)
-			coverage.cancel()
-
-		if self.status == 'Active':
-			self.db_set('status', 'Cancelled')
-
-	def set_patient_age(self):
-		patient = frappe.get_doc('Patient', self.patient)
-		self.patient_age_data = patient.get_age()
-		self.patient_age = dateutil.relativedelta.relativedelta(getdate(), getdate(patient.dob))
 
 	def set_order_details(self):
 		if not self.template_dt and not self.template_dn:
@@ -96,6 +49,7 @@ class ServiceRequest(Document):
 		updates qty_invoiced and set  billing status
 		'''
 		qty_invoiced = self.qty_invoiced + qty
+		print(self.qty_invoiced, qty)
 
 		if qty_invoiced == 0:
 			status = 'Pending'
@@ -108,7 +62,6 @@ class ServiceRequest(Document):
 			'qty_invoiced': qty_invoiced,
 			'billing_status': status
 		})
-
 
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
 	# TODO: fix status updates from linked docs
@@ -140,10 +93,6 @@ def make_clinical_procedure(service_request):
 	doc.start_time = service_request.occurrence_time
 	doc.medical_department = service_request.medical_department
 	doc.medical_code = service_request.medical_code
-	doc.insurance_policy = service_request.insurance_policy
-	doc.insurance_payor = service_request.insurance_payor
-	doc.insurance_coverage = service_request.insurance_coverage
-	doc.coverage_status = service_request.coverage_status
 
 	return doc
 
@@ -171,10 +120,6 @@ def make_lab_test(service_request):
 	doc.time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
 	doc.medical_code = service_request.medical_code
-	doc.insurance_policy = service_request.insurance_policy
-	doc.insurance_payor = service_request.insurance_payor
-	doc.insurance_coverage = service_request.insurance_coverage
-	doc.coverage_status = service_request.coverage_status
 
 	return doc
 
@@ -198,9 +143,5 @@ def make_therapy_session(service_request):
 	doc.start_time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
 	doc.medical_code = service_request.medical_code
-	doc.insurance_policy = service_request.insurance_policy
-	doc.insurance_payor = service_request.insurance_payor
-	doc.insurance_coverage = service_request.insurance_coverage
-	doc.coverage_status = service_request.coverage_status
 
 	return doc
