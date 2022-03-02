@@ -231,6 +231,10 @@ global_search_doctypes = {
 	]
 }
 
+domains = {
+	'Healthcare': 'healthcare.setup',
+}
+
 standard_portal_menu_items = [
 	{"title": _("Personal Details"), "route": "/personal-details", "reference_doctype": "Patient", "role": "Patient"},
 	{"title": _("Timesheets"), "route": "/timesheets", "reference_doctype": "Timesheet", "role": "Customer"},
