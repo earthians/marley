@@ -3,7 +3,7 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import getdate, nowtime
@@ -19,7 +19,7 @@ from healthcare.healthcare.doctype.patient_medical_record.test_patient_medical_r
 )
 
 
-class TestLabTest(unittest.TestCase):
+class TestLabTest(FrappeTestCase):
 	def test_lab_test_item(self):
 		lab_template = create_lab_test_template()
 		self.assertTrue(frappe.db.exists('Item', lab_template.item))

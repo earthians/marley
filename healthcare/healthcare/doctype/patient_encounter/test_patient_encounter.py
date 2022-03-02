@@ -3,14 +3,13 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
+from frappe.tests.utils import FrappeTestCase
 
 from healthcare.healthcare.doctype.patient_encounter.patient_encounter import PatientEncounter
 
 
-class TestPatientEncounter(unittest.TestCase):
+class TestPatientEncounter(FrappeTestCase):
 	def setUp(self):
 		try:
 			gender_m = frappe.get_doc({

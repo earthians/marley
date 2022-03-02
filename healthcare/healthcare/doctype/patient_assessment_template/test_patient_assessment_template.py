@@ -4,8 +4,8 @@
 from __future__ import unicode_literals
 
 # import frappe
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestPatientAssessmentTemplate(unittest.TestCase):
+class TestPatientAssessmentTemplate(FrappeTestCase):
 	pass
