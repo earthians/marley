@@ -72,7 +72,7 @@ doctype_js = {
 # ------------
 
 # before_install = "healthcare.install.before_install"
-# after_install = "healthcare.install.after_install"
+after_install = "healthcare.setup.setup_healthcare"
 
 # Desk Notifications
 # ------------------
@@ -232,7 +232,7 @@ global_search_doctypes = {
 }
 
 domains = {
-	'Healthcare': 'healthcare.healthcare.healthcare',
+	'Healthcare': 'healthcare.setup',
 }
 
 standard_portal_menu_items = [

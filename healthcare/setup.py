@@ -1,13 +1,87 @@
-from __future__ import unicode_literals
 import frappe
-
 from frappe import _
 from erpnext.setup.utils import insert_record
+
+
+data = {
+	'desktop_icons': [
+		'Patient',
+		'Patient Appointment',
+		'Patient Encounter',
+		'Lab Test',
+		'Healthcare',
+		'Vital Signs',
+		'Clinical Procedure',
+		'Inpatient Record',
+		'Accounts',
+		'Buying',
+		'Stock',
+		'HR',
+		'ToDo'
+	],
+	'default_portal_role': 'Patient',
+	'restricted_roles': [
+		'Healthcare Administrator',
+		'LabTest Approver',
+		'Laboratory User',
+		'Nursing User',
+		'Physician',
+		'Patient'
+	],
+	'custom_fields': {
+		'Sales Invoice': [
+			{
+				'fieldname': 'patient', 'label': 'Patient', 'fieldtype': 'Link', 'options': 'Patient',
+				'insert_after': 'naming_series'
+			},
+			{
+				'fieldname': 'patient_name', 'label': 'Patient Name', 'fieldtype': 'Data', 'fetch_from': 'patient.patient_name',
+				'insert_after': 'patient', 'read_only': True
+			},
+			{
+				'fieldname': 'ref_practitioner', 'label': 'Referring Practitioner', 'fieldtype': 'Link', 'options': 'Healthcare Practitioner',
+				'insert_after': 'customer'
+			}
+		],
+		'Sales Invoice Item': [
+			{
+				'fieldname': 'reference_dt', 'label': 'Reference DocType', 'fieldtype': 'Link', 'options': 'DocType',
+				'insert_after': 'edit_references'
+			},
+			{
+				'fieldname': 'reference_dn', 'label': 'Reference Name', 'fieldtype': 'Dynamic Link', 'options': 'reference_dt',
+				'insert_after': 'reference_dt'
+			}
+		],
+		'Stock Entry': [
+			{
+				'fieldname': 'inpatient_medication_entry', 'label': 'Inpatient Medication Entry', 'fieldtype': 'Link', 'options': 'Inpatient Medication Entry',
+				'insert_after': 'credit_note', 'read_only': True
+			}
+		],
+		'Stock Entry Detail': [
+			{
+				'fieldname': 'patient', 'label': 'Patient', 'fieldtype': 'Link', 'options': 'Patient',
+				'insert_after': 'po_detail', 'read_only': True
+			},
+			{
+				'fieldname': 'inpatient_medication_entry_child', 'label': 'Inpatient Medication Entry Child', 'fieldtype': 'Data',
+				'insert_after': 'patient', 'read_only': True
+			}
+		]
+	},
+	'on_setup': 'healthcare.setup.setup_healthcare'
+}
+
 
 def setup_healthcare():
 	if frappe.db.exists('Medical Department', 'Cardiology'):
 		# already setup
 		return
+	create_custom_records()
+
+
+def create_custom_records():
 	create_medical_departments()
 	create_antibiotics()
 	create_lab_test_uom()
@@ -17,6 +91,22 @@ def setup_healthcare():
 	create_sensitivity()
 	add_healthcare_service_unit_tree_root()
 	setup_patient_history_settings()
+
+	has_domain = frappe.get_doc({
+		'doctype': 'Has Domain',
+		'parent': 'Domain Settings',
+		'parentfield': 'active_domains',
+		'parenttype': 'Domain Settings',
+		'domain': 'Healthcare',
+	})
+	has_domain.save()
+
+	domain = frappe.get_doc('Domain', 'Healthcare')
+	domain.setup_domain()
+
+	domain_settings = frappe.get_single('Domain Settings')
+	domain_settings.append('active_domains', dict(domain=domain))
+	frappe.clear_cache()
 
 def create_medical_departments():
 	departments = [
@@ -176,6 +266,8 @@ def create_dosage():
 
 def create_healthcare_item_groups():
 	records = [
+		{'doctype': 'Item Group', 'item_group_name': _('All Item Groups'),
+		 'is_group': 0, 'parent_item_group': ''},
 		{'doctype': 'Item Group', 'item_group_name': _('Laboratory'),
 			'is_group': 0, 'parent_item_group': _('All Item Groups') },
 		{'doctype': 'Item Group', 'item_group_name': _('Drug'),
@@ -194,13 +286,17 @@ def create_sensitivity():
 	]
 	insert_record(records)
 
+
 def add_healthcare_service_unit_tree_root():
+	company = get_company()
+	if not company:
+		return
 	record = [
 		{
 			"doctype": "Healthcare Service Unit",
 			"healthcare_service_unit_name": "All Healthcare Service Units",
 			"is_group": 1,
-			"company": get_company()
+			"company": company,
 		}
 	]
 	insert_record(record)
