@@ -98,7 +98,7 @@ var get_healthcare_items = function(frm, invoice_healthcare_services, $results, 
 		method: method,
 		args: args,
 		callback: function(data) {
-			if(data.message){
+			if (data.message.length>0) {
 				$results.append(make_list_row(columns, invoice_healthcare_services));
 				for(let i=0; i<data.message.length; i++){
 					$results.append(make_list_row(columns, invoice_healthcare_services, data.message[i]));
@@ -133,8 +133,7 @@ var make_list_row= function(columns, invoice_healthcare_services, result={}) {
 		</div>
 		${contents}
 	</div>`);
-
-	$row = list_row_data_items(head, $row, result, invoice_healthcare_services);
+	$row = list_row_data_items(head, $row, result);
 	return $row;
 };
 
@@ -146,7 +145,7 @@ var set_primary_action= function(frm, dialog, $results, invoice_healthcare_servi
 			if(invoice_healthcare_services) {
 				frm.set_value("patient", dialog.fields_dict.patient.input.value);
 			}
-			add_to_item_line(frm, checked_values, invoice_healthcare_services);
+			add_to_item_line(frm, checked_values);
 			dialog.hide();
 		}
 		else{
@@ -200,8 +199,8 @@ var get_drugs_to_invoice = function(frm) {
 	var me = this;
 	let selected_encounter = '';
 	var dialog = new frappe.ui.Dialog({
-		title: __("Get Items from Prescriptions"),
-		fields:[
+		title: __("Get Items from Medication Requests"),
+		fields: [
 			{ fieldtype: 'Link', options: 'Patient', label: 'Patient', fieldname: "patient", reqd: true },
 			{ fieldtype: 'Link', options: 'Patient Encounter', label: 'Patient Encounter', fieldname: "encounter", reqd: true,
 				description:'Quantity will be calculated only for items which has "Nos" as UoM. You may change as required for each invoice item.',
@@ -233,7 +232,7 @@ var get_drugs_to_invoice = function(frm) {
 			var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
 			var args = {encounter: encounter};
 			var columns = (["drug_code", "quantity", "description"]);
-			get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);
+			get_healthcare_items(frm, true, $results, $placeholder, method, args, columns);
 		}
 		else if(!encounter){
 			selected_encounter = '';
@@ -254,7 +253,7 @@ var get_drugs_to_invoice = function(frm) {
 		$results.find('.list-item-container .list-row-check')
 			.prop("checked", ($(e.target).is(':checked')));
 	});
-	set_primary_action(frm, dialog, $results, false);
+	set_primary_action(frm, dialog, $results, true);
 	dialog.show();
 };
 
@@ -262,7 +261,7 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 	if(invoice_healthcare_services){
 		head ? $row.addClass('list-item--head')
 			: $row = $(`<div class="list-item-container"
-				data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.service}"
+				data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.service || result.drug_code}"
 				data-rate = ${result.rate}
 				data-income-account = "${result.income_account}"
 				data-qty = ${result.qty}

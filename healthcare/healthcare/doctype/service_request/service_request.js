@@ -1,9 +1,7 @@
 // Copyright (c) 2020, earthians and contributors
 // For license information, please see license.txt
+{% include "healthcare/public/js/service_request.js" %}
 
-<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
-frappe.ui.form.on('Healthcare Service Order', {
-=======
 frappe.ui.form.on('Service Request', {
 	onload: function(frm) {
 		if (frm.doc.__islocal) {
@@ -11,7 +9,6 @@ frappe.ui.form.on('Service Request', {
 		}
 	},
 
->>>>>>> f17dbf5... rename doctypes:healthcare/healthcare/doctype/service_request/service_request.js
 	refresh: function(frm) {
 		frm.set_query('order_group', function () {
 			return {
@@ -99,19 +96,11 @@ frappe.ui.form.on('Service Request', {
 
 	set_status: function(frm, status) {
 		frappe.call({
-<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
-			method: 'healthcare.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_status',
-			async: false,
-			freeze: true,
-			args: {
-				docname: frm.doc.name,
-=======
 			method: 'healthcare.healthcare.doctype.service_request.service_request.set_service_request_status',
 			async: false,
 			freeze: true,
 			args: {
 				service_request: frm.doc.name,
->>>>>>> f17dbf5... rename doctypes:healthcare/healthcare/doctype/service_request/service_request.js
 				status: status
 			},
 			callback: function(r) {
@@ -119,6 +108,7 @@ frappe.ui.form.on('Service Request', {
 			}
 		});
 	},
+
 
 	setup_create_buttons: function(frm) {
 		if (frm.doc.docstatus !== 1 || frm.doc.status === 'Completed') return;
@@ -182,47 +172,4 @@ frappe.ui.form.on('Service Request', {
 			}
 		});
 	},
-
-	after_cancel: function(frm) {
-		frappe.prompt([
-			{
-				fieldname: 'reason_for_cancellation',
-				label: __('Reason for Cancellation'),
-				fieldtype: 'Select',
-				options: ['Revoked', 'Replaced', 'Entered in Error', 'Unknown'],
-				reqd: 1
-			}
-		],
-		function(data) {
-			frm.events.set_status(frm, data.reason_for_cancellation);
-		}, __('Reason for Cancellation'), __('Submit'));
-	},
-
-	patient: function(frm) {
-		if (!frm.doc.patient) {
-			frm.set_values ({
-				'patient_name': '',
-				'gender': '',
-				'patient_age': '',
-				'mobile': '',
-				'email': '',
-				'inpatient_record': '',
-				'inpatient_status': '',
-			});
-		}
-	},
-
-	birth_date: function(frm) {
-		let age_str = calculate_age(frm.doc.birth_date);
-		frm.set_value('patient_age', age_str);
-	}
 });
-
-
-let calculate_age = function(birth) {
-	let ageMS = Date.parse(Date()) - Date.parse(birth);
-	let age = new Date();
-	age.setTime(ageMS);
-	let years =  age.getFullYear() - 1970;
-	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
-};
