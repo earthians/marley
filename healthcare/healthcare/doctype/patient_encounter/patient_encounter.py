@@ -139,9 +139,10 @@ class PatientEncounter(Document):
 
 	def make_service_request(self):
 		if self.drug_prescription:
+			# make_medication_request
 			for drug in self.drug_prescription:
-				medication = frappe.get_doc('Medication', drug.drug_code)
-				order = self.get_order_details(medication, drug)
+				medication = frappe.get_doc('Medication', drug.medication)
+				order = self.get_order_details(medication, drug, True)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
 
 		if self.lab_test_prescription:
@@ -162,11 +163,9 @@ class PatientEncounter(Document):
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
 
-	def get_order_details(self, template_doc, line_item):
+	def get_order_details(self, template_doc, line_item, medication_request=False):
 		order = frappe.get_doc({
-			'doctype': 'Service Request',
-			'template_dt': template_doc.doctype,
-			'template_dn': template_doc.name,
+			'doctype' : 'Medication Request' if medication_request else 'Service Request',
 			'order_date': self.encounter_date,
 			'order_time': self.encounter_time,
 			'company': self.company,
@@ -196,8 +195,17 @@ class PatientEncounter(Document):
 		else:
 			description = template_doc.get('description')
 
+		if medication_request:
+			order.update({
+				'medication': template_doc.name,
+				'number_of_repeats_allowed':  line_item.get('number_of_repeats_allowed')
+				})
+		else:
+			order.update({'template_dt': template_doc.doctype, 'template_dn': template_doc.name})
+
 		order.update({'order_description': description})
 		return order
+
 
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):

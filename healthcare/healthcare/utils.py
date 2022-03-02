@@ -335,6 +335,8 @@ def get_service_requests_to_invoice(patient, company):
 	return service_order_to_invoice
 
 
+
+@frappe.whitelist()
 def get_service_item_and_practitioner_charge(doc):
 	if isinstance(doc, str):
 		doc = json.loads(doc)
@@ -499,7 +501,7 @@ def set_invoiced(item, method, ref_invoice=None):
 			invoiced, item.reference_dt, item.reference_dn, "Clinical Procedure", "procedure_created"
 		)
 
-	elif item.reference_dt == 'Service Request':
+	elif item.reference_dt in ['Service Request', 'Medication Request']:
 		# if order is invoiced, set both order and service transaction as invoiced
 		hso = frappe.get_doc(item.reference_dt, item.reference_dn)
 		if invoiced:
@@ -526,6 +528,11 @@ def validate_invoiced_on_submit(item):
 		== item.item_code
 	):
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, "consumption_invoiced")
+
+	elif item.reference_dt in ['Service Request', 'Medication Request']:
+		billing_status = frappe.db.get_value(item.reference_dt, item.reference_dn, 'billing_status')
+		is_invoiced = True if billing_status == 'Invoiced' else False
+
 	else:
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, "invoiced")
 	if is_invoiced:
@@ -596,23 +603,75 @@ def get_drugs_to_invoice(encounter):
 		patient = frappe.get_doc("Patient", encounter.patient)
 		if patient:
 			if patient.customer:
-				items_to_invoice = []
-				for drug_line in encounter.drug_prescription:
-					if drug_line.drug_code:
-						qty = 1
-						if frappe.db.get_value("Item", drug_line.drug_code, "stock_uom") == "Nos":
-							qty = drug_line.get_quantity()
+				orders_to_invoice = []
+				medication_requests = frappe.get_list(
+					'Medication Request',
+					fields=['*'],
+					filters={
+						'patient': patient.name,
+						'order_group': encounter.name,
+						'billing_status': ['in', ['Pending', 'Partly Invoiced']],
+						'docstatus': 1
+					}
+				)
+				for medication_request in medication_requests:
+					item, is_billable = frappe.get_cached_value('Medication', medication_request.medication,
+						['item', 'is_billable'])
 
-						description = ""
-						if drug_line.dosage and drug_line.period:
-							description = _("{0} for {1}").format(drug_line.dosage, drug_line.period)
+					description = ''
+					if medication_request.dosage and medication_request.period:
+						description = _('{0} for {1}').format(medication_request.dosage, medication_request.period)
 
-						items_to_invoice.append(
-							{"drug_code": drug_line.drug_code, "quantity": qty, "description": description}
-						)
-				return items_to_invoice
-			else:
-				validate_customer_created(patient)
+					if is_billable:
+						billable_order_qty = medication_request.get('quantity', 1) - medication_request.get('qty_invoiced', 0)
+						if medication_request.number_of_repeats_allowed:
+							if medication_request.total_dispensable_quantity >= medication_request.quantity + medication_request.qty_invoiced:
+								billable_order_qty = medication_request.get('quantity', 1)
+							else:
+								billable_order_qty = medication_request.total_dispensable_quantity - medication_request.get('qty_invoiced', 0)
+
+						coverage_details = None
+						if medication_request.insurance_coverage:
+							coverage_details = frappe.get_cached_value('Patient Insurance Coverage', medication_request.insurance_coverage,
+								['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'qty_invoiced', 'policy_number', 'coverage_validity_end_date'], as_dict=True)
+
+						if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] and getdate() <= coverage_details.coverage_validity_end_date:
+							if coverage_details.get('qty') > coverage_details.get('qty_invoiced'):
+								# billable qty from insurance coverage
+								billable_coverage_qty = coverage_details.get('qty', 1) - coverage_details.get('qty_invoiced', 0)
+
+								orders_to_invoice.append({
+									'reference_type': 'Medication Request',
+									'reference_name': medication_request.name,
+									'patient_insurance_policy': coverage_details.policy_number,
+									'insurance_coverage': medication_request.insurance_coverage,
+									'insurance_payor': medication_request.insurance_payor,
+									'drug_code': medication_request.item_code,
+									'rate': coverage_details.price_list_rate,
+									'coverage_percentage': coverage_details.coverage,
+									'discount_percentage':coverage_details.discount,
+									'quantity': min(billable_coverage_qty, billable_order_qty),
+									'coverage_rate': coverage_details.price_list_rate,
+									'coverage_qty': coverage_details.qty,
+									'description': description
+								})
+								# if order quantity is not fully billed, update billable_order_qty
+								# bill remianing qty as new line without insurance
+								if billable_order_qty > billable_coverage_qty:
+									billable_order_qty = billable_order_qty - billable_coverage_qty
+								else:
+									# order qty fully billed
+									continue
+
+						orders_to_invoice.append({
+							'reference_type': 'Medication Request',
+							'reference_name': medication_request.name,
+							'drug_code': item,
+							'quantity': billable_order_qty,
+							'description': description
+						})
+
+				return orders_to_invoice
 
 
 @frappe.whitelist()
