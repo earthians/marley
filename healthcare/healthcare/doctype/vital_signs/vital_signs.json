@@ -50,7 +50,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "inpatient_record.patient",
    "fieldname": "patient",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -82,7 +81,6 @@
    "fieldtype": "Link",
    "in_filter": 1,
    "label": "Patient Encounter",
-   "no_copy": 1,
    "options": "Patient Encounter",
    "print_hide": 1,
    "read_only": 1

@@ -3,21 +3,21 @@
  "allow_auto_repeat": 1,
  "autoname": "naming_series:",
  "beta": 1,
- "creation": "2022-01-26 15:57:18.825681",
+ "creation": "2020-09-09 15:30:33.141582",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "title",
   "naming_series",
-  "order_doctype",
-  "order_template",
+  "medication",
   "order_date",
+  "expected_date",
   "order_time",
   "column_break_4",
-  "status",
   "company",
-  "expected_date",
+  "status",
+  "color",
   "patient_detail_section",
   "patient",
   "patient_name",
@@ -36,42 +36,37 @@
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
+  "reason_reference_doctype",
+  "reason_reference",
   "order_group",
   "sequence",
-  "order_details",
+  "request_details_section",
   "staff_role",
   "item_code",
-  "patient_care_type",
   "column_break_14",
   "intent",
   "priority",
   "order_specs_section",
   "quantity",
   "dosage_form",
-  "as_needed",
   "dosage",
-  "period",
-  "occurrence_date",
-  "occurrence_time",
-  "healthcare_service_unit_type",
-  "invoiced",
+  "number_of_repeats_allowed",
   "column_break_91",
   "order_description",
-  "patient_instructions",
+  "period",
+  "occurrence_time",
+  "total_dispensable_quantity",
+  "billing_and_insurance_section",
+  "billing_status",
+  "qty_invoiced",
+  "column_break_26",
+  "insurance_policy",
+  "insurance_payor",
+  "insurance_coverage",
+  "coverage_status",
   "medical_code_section",
   "medical_code_standard",
   "medical_code",
-  "origin_section",
-  "order_reference_doctype",
-  "order_reference_name",
-  "column_break_9",
-  "source",
-  "referring_practitioner",
-  "color",
-  "order",
-  "reason_reference_doctype",
-  "reason_reference",
-  "order_group_doctype",
   "amended_from"
  ],
  "fields": [
@@ -79,7 +74,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HSR-",
+   "options": "HMR-",
    "reqd": 1
   },
   {
@@ -102,41 +97,11 @@
    "reqd": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "origin_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Order Group Reference",
-   "read_only": 1
-  },
-  {
    "fieldname": "order_group",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Order Group (Encounter)",
    "options": "Patient Encounter"
-  },
-  {
-   "fieldname": "order_doctype",
-   "fieldtype": "Link",
-   "label": "Order Type",
-   "options": "DocType",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_9",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "order_reference_doctype",
-   "fieldtype": "Link",
-   "label": "Order Reference DocType",
-   "options": "DocType"
-  },
-  {
-   "fieldname": "order_reference_name",
-   "fieldtype": "Dynamic Link",
-   "label": "Order Reference Name",
-   "options": "order_reference_doctype"
   },
   {
    "fieldname": "column_break_91",
@@ -148,39 +113,27 @@
    "label": "Expected By"
   },
   {
-   "description": "The role responsible for performing the service",
+   "description": "The role responsible for performing the medication request",
    "fetch_from": "order_template.staff_role",
    "fetch_if_empty": 1,
    "fieldname": "staff_role",
    "fieldtype": "Link",
    "label": "Staff Role",
-   "options": "Role"
-  },
-  {
-   "fieldname": "order",
-   "fieldtype": "Dynamic Link",
-   "label": "Order",
-   "options": "order_doctype",
-   "set_only_once": 1
-  },
-  {
-   "fetch_from": "order_template.patient_care_type",
-   "fetch_if_empty": 1,
-   "fieldname": "patient_care_type",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Patient Care Type",
-   "options": "Patient Care Type"
+   "options": "Role",
+   "search_index": 1
   },
   {
    "default": "Draft",
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Active\nOn Hold\nCompleted\nRevoked\nReplaced\nEntered in Error\nUnknown\nDraft\nSubmitted\nCancelled",
-   "reqd": 1
+   "no_copy": 1,
+   "options": "Draft\nActive\nScheduled\nIn Progress\nOn Hold\nCompleted\nCancelled\nReplaced\nEntered in Error\nUnknown",
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "intent",
@@ -221,19 +174,6 @@
    "label": "Quantity"
   },
   {
-   "default": "0",
-   "description": "Perform the service only if there is a need. For example \"pain\", \"on flare-up\", etc.",
-   "fieldname": "as_needed",
-   "fieldtype": "Check",
-   "label": "Occurrence As Needed"
-  },
-  {
-   "fieldname": "healthcare_service_unit_type",
-   "fieldtype": "Link",
-   "label": "Healthcare Service Unit Type",
-   "options": "Healthcare Service Unit Type"
-  },
-  {
    "fieldname": "reason_reference_doctype",
    "fieldtype": "Link",
    "label": "Reason Reference DocType",
@@ -262,7 +202,8 @@
    "in_standard_filter": 1,
    "label": "Patient",
    "options": "Patient",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "patient.patient_name",
@@ -283,35 +224,6 @@
    "reqd": 1
   },
   {
-   "default": "0",
-   "fieldname": "invoiced",
-   "fieldtype": "Check",
-   "label": "Invoiced",
-   "read_only": 1
-  },
-  {
-   "fieldname": "source",
-   "fieldtype": "Select",
-   "label": "Source",
-   "options": "Direct\nReferral\nExternal Referral",
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "referring_practitioner",
-   "fieldtype": "Link",
-   "label": "Referring Practitioner",
-   "options": "Healthcare Practitioner",
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Service Request",
-   "read_only": 1
-  },
-  {
    "fieldname": "practitioner",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -319,6 +231,7 @@
    "label": "Ordered by Practitioner",
    "options": "Healthcare Practitioner",
    "reqd": 1,
+   "search_index": 1,
    "set_only_once": 1
   },
   {
@@ -354,20 +267,19 @@
    "label": "Color"
   },
   {
-   "depends_on": "eval:doc.order_doctype===\"Medication\";",
    "fieldname": "dosage_form",
    "fieldtype": "Link",
    "label": "Dosage Form",
-   "mandatory_depends_on": "eval:doc.order_doctype===\"Medication\";",
-   "options": "Dosage Form"
+   "options": "Dosage Form",
+   "reqd": 1
   },
   {
-   "depends_on": "eval:!doc.as_needed && doc.order_doctype===\"Medication\";",
+   "depends_on": "eval:!doc.as_needed",
    "fieldname": "dosage",
    "fieldtype": "Link",
    "label": "Dosage",
-   "mandatory_depends_on": "eval:doc.order_doctype===\"Medication\";",
-   "options": "Prescription Dosage"
+   "options": "Prescription Dosage",
+   "reqd": 1
   },
   {
    "fieldname": "referred_to_practitioner",
@@ -389,7 +301,8 @@
    "fieldtype": "Link",
    "label": "Inpatient Record",
    "options": "Inpatient Record",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "patient.inpatient_status",
@@ -397,25 +310,6 @@
    "fieldtype": "Data",
    "label": "Inpatient Status",
    "read_only": 1
-  },
-  {
-   "fieldname": "patient_instructions",
-   "fieldtype": "Small Text",
-   "label": "Patient Instructions"
-  },
-  {
-   "fieldname": "order_template",
-   "fieldtype": "Dynamic Link",
-   "label": "Order Template",
-   "options": "order_doctype",
-   "reqd": 1
-  },
-  {
-   "default": "Patient Encounter",
-   "fieldname": "order_group_doctype",
-   "fieldtype": "Link",
-   "label": "Order Group Type",
-   "options": "DocType"
   },
   {
    "fieldname": "order_time",
@@ -432,12 +326,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "patient_age_data",
-   "fieldtype": "Data",
-   "label": "Patient Age",
-   "read_only": 1
-  },
-  {
    "fetch_from": "patient.blood_group",
    "fieldname": "patient_blood_group",
    "fieldtype": "Select",
@@ -451,7 +339,8 @@
    "fieldtype": "Data",
    "label": "Email",
    "options": "Email",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "patient.mobile",
@@ -459,7 +348,8 @@
    "fieldtype": "Data",
    "label": "Mobile",
    "options": "Phone",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "patient.dob",
@@ -468,11 +358,6 @@
    "hidden": 1,
    "label": "Birth Date",
    "read_only": 1
-  },
-  {
-   "fieldname": "order_details",
-   "fieldtype": "Section Break",
-   "label": "Order Details"
   },
   {
    "fieldname": "patient_detail_section",
@@ -493,17 +378,33 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:!doc.as_needed && doc.order_doctype===\"Medication\";",
+   "allow_on_submit": 1,
+   "fieldname": "insurance_policy",
+   "fieldtype": "Link",
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_26",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
+   "fieldtype": "Link",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.as_needed;",
    "fieldname": "period",
    "fieldtype": "Link",
    "label": "Period",
    "options": "Prescription Duration"
-  },
-  {
-   "depends_on": "eval:!doc.as_needed && doc.order_doctype!==\"Medication\";",
-   "fieldname": "occurrence_date",
-   "fieldtype": "Date",
-   "label": "Occurrence Date"
   },
   {
    "depends_on": "eval:!doc.as_needed && doc.order_doctype!==\"Medication\";",
@@ -512,31 +413,35 @@
    "label": "Occurrence Time"
   },
   {
-   "fieldname": "service_details_section",
-   "fieldtype": "Section Break",
-   "label": "Service Details"
-  },
-  {
-   "fieldname": "template_dt",
+   "allow_on_submit": 1,
+   "fieldname": "insurance_coverage",
    "fieldtype": "Link",
-   "label": "Order Template Type",
-   "options": "DocType",
-   "reqd": 1,
+   "label": "Insurance Coverage",
+   "no_copy": 1,
+   "options": "Patient Insurance Coverage",
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.docstatus!=0",
    "search_index": 1
   },
   {
-   "fieldname": "template_dn",
-   "fieldtype": "Dynamic Link",
-   "label": "Order Template",
-   "options": "template_dt",
-   "reqd": 1,
-   "search_index": 1
+   "allow_on_submit": 1,
+   "fetch_from": "insurance_coverage.status",
+   "fieldname": "coverage_status",
+   "fieldtype": "Data",
+   "label": "Claim Status",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "patient_age_data",
    "fieldtype": "Data",
    "label": "Patient Age",
    "read_only": 1
+  },
+  {
+   "fieldname": "billing_and_insurance_section",
+   "fieldtype": "Section Break",
+   "label": "Billing and Insurance"
   },
   {
    "default": "0",
@@ -552,36 +457,49 @@
    "label": "Billing Status",
    "options": "Pending\nPartly Invoiced\nInvoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Medication Request",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "medication",
+   "fieldtype": "Link",
+   "label": "Medication",
+   "options": "Medication",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "number_of_repeats_allowed",
+   "fieldtype": "Float",
+   "label": "Number Of Repeats Allowed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_dispensable_quantity",
+   "fieldtype": "Float",
+   "label": "Total Dispensable Quantity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_details_section",
+   "fieldtype": "Section Break",
+   "label": "Request Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [
-  {
-   "link_doctype": "Lab Test",
-   "link_fieldname": "healthcare_service_order"
-  },
-  {
-   "link_doctype": "Clinical Procedure",
-   "link_fieldname": "healthcare_service_order"
-  },
-  {
-   "link_doctype": "Therapy Session",
-   "link_fieldname": "healthcare_service_order"
-  },
-  {
-   "link_doctype": "Clinical Procedure",
-   "link_fieldname": "service_request"
-  },
-  {
-   "link_doctype": "Therapy Session",
-   "link_fieldname": "service_request"
-  }
- ],
- "modified": "2022-04-04 18:15:19.556058",
+ "links": [],
+ "modified": "2022-04-06 16:22:21.077072",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Service Request",
+ "name": "Medication Request",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
@@ -631,11 +549,12 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
- "search_fields": "order, patient, order_group",
+ "search_fields": "title,patient,order_group,inpatient_record,practitioner,patient_email,patient_mobile",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "title_field": "title",
  "track_changes": 1,
- "track_seen": 1
+ "track_seen": 1,
+ "track_views": 1
 }

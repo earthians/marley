@@ -20,6 +20,7 @@
   "interval",
   "interval_uom",
   "period",
+  "number_of_repeats_allowed",
   "section_break_13",
   "comment",
   "update_schedule"
@@ -148,11 +149,16 @@
   {
    "fieldname": "section_break_13",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "number_of_repeats_allowed",
+   "fieldtype": "Float",
+   "label": "Number Of Repeats Allowed"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2021-03-30 12:34:02.756780",
+ "modified": "2022-04-04 16:00:06.886200",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Drug Prescription",
@@ -160,5 +166,6 @@
  "permissions": [],
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }
