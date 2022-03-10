@@ -89,7 +89,6 @@ def create_custom_records():
 	create_dosage()
 	create_healthcare_item_groups()
 	create_sensitivity()
-	add_healthcare_service_unit_tree_root()
 	setup_patient_history_settings()
 
 	has_domain = frappe.get_doc({
@@ -286,30 +285,6 @@ def create_sensitivity():
 	]
 	insert_record(records)
 
-
-def add_healthcare_service_unit_tree_root():
-	company = get_company()
-	if not company:
-		return
-	record = [
-		{
-			"doctype": "Healthcare Service Unit",
-			"healthcare_service_unit_name": "All Healthcare Service Units",
-			"is_group": 1,
-			"company": company,
-		}
-	]
-	insert_record(record)
-
-def get_company():
-	company = frappe.defaults.get_defaults().company
-	if company:
-		return company
-	else:
-		company = frappe.get_list("Company", limit=1)
-		if company:
-			return company[0].name
-	return None
 
 def setup_patient_history_settings():
 	import json
