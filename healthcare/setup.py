@@ -264,9 +264,16 @@ def create_dosage():
 	insert_record(records)
 
 def create_healthcare_item_groups():
+	item_group = {
+		'doctype': 'Item Group',
+		'item_group_name': _('All Item Groups'),
+		'is_group': 0,
+		'parent_item_group': ''
+	}
+	if not frappe.db.exists(item_group['doctype'], item_group['item_group_name']):
+		insert_record([item_group])
+
 	records = [
-		{'doctype': 'Item Group', 'item_group_name': _('All Item Groups'),
-		 'is_group': 0, 'parent_item_group': ''},
 		{'doctype': 'Item Group', 'item_group_name': _('Laboratory'),
 			'is_group': 0, 'parent_item_group': _('All Item Groups') },
 		{'doctype': 'Item Group', 'item_group_name': _('Drug'),
