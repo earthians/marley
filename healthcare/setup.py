@@ -87,6 +87,7 @@ def create_custom_records():
 	create_lab_test_uom()
 	create_duration()
 	create_dosage()
+	create_dosage_form()
 	create_healthcare_item_groups()
 	create_sensitivity()
 	setup_patient_history_settings()
@@ -262,6 +263,33 @@ def create_dosage():
 		}
 	]
 	insert_record(records)
+
+
+def create_dosage_form():
+	records = [
+		{
+			"doctype": "Dosage Form",
+			"dosage_form": "Tablet",
+		},
+		{
+			"doctype": "Dosage Form",
+			"dosage_form": "Syrup",
+		},
+		{
+			"doctype": "Dosage Form",
+			"dosage_form": "Injection",
+		},
+		{
+			"doctype": "Dosage Form",
+			"dosage_form": "Capsule",
+		},
+		{
+			"doctype": "Dosage Form",
+			"dosage_form": "Cream",
+		},
+	]
+	insert_record(records)
+
 
 def create_healthcare_item_groups():
 	item_group = {
