@@ -58,3 +58,16 @@ frappe.ui.form.on('Healthcare Service Unit', {
 		}
 	}
 });
+
+
+frappe.ui.form.on('Healthcare Service Unit', 'parent_healthcare_service_unit', function(frm) {
+	if (!frm.doc.parent_healthcare_service_unit) {
+	    frm.set_intro(__('This is a root healthcare service unit and cannot be edited.'), true);
+	    frm.set_read_only();
+	    frm.disable_save();
+	} else {
+	    frm.set_intro('');
+	    frm.perm = frappe.perm.get_perm(frm.doc.doctype);
+	    frm.enable_save();
+	}
+});
