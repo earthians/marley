@@ -24,6 +24,8 @@
   "image",
   "column_break_14",
   "status",
+  "phr_address",
+  "abha_number",
   "uid",
   "inpatient_record",
   "inpatient_status",
@@ -476,17 +478,30 @@
    "fieldtype": "Link",
    "label": "Country",
    "options": "Country"
+  },
+  {
+   "fieldname": "phr_address",
+   "fieldtype": "Data",
+   "label": "PHR Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "abha_number",
+   "fieldtype": "Data",
+   "label": "ABHA Number",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2021-05-23 16:05:29.358732",
+ "modified": "2022-03-11 20:32:47.584833",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
  "name_case": "Title Case",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -544,6 +559,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "ASC",
+ "states": [],
  "title_field": "patient_name",
  "track_changes": 1
 }
