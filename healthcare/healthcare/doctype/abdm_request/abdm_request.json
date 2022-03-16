@@ -20,19 +20,25 @@
   {
    "fieldname": "request_name",
    "fieldtype": "Data",
-   "label": "Request Name"
+   "in_list_view": 1,
+   "label": "Request Name",
+   "read_only": 1
   },
   {
    "default": "Now",
    "fieldname": "request_date",
    "fieldtype": "Datetime",
-   "label": "Request Date"
+   "label": "Request Date",
+   "read_only": 1
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "\nRequested\nGranted\nRevoked\nExpired\nDenied"
+   "options": "Requested\nGranted\nRevoked\nExpired\nDenied",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_4",
@@ -41,7 +47,8 @@
   {
    "fieldname": "request",
    "fieldtype": "Code",
-   "label": "Request"
+   "label": "Request",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_6",
@@ -50,7 +57,8 @@
   {
    "fieldname": "response",
    "fieldtype": "Code",
-   "label": "Response"
+   "label": "Response",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_3",
@@ -62,9 +70,10 @@
    "label": "URL"
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-03-15 18:38:19.041574",
+ "modified": "2022-03-16 18:12:51.107624",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "ABDM Request",
