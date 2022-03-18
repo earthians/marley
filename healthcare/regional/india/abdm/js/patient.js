@@ -77,6 +77,7 @@ let create_abha = function (frm) {
 				label: 'Mobile',
 				fieldname: 'mobile',
 				fieldtype: 'Int',
+				default: frm.doc.mobile,
 				depends_on: "eval:doc.mode == 'Mobile'",
 				mandatory_depends_on: "eval:doc.mode == 'Mobile'"
 			},
@@ -122,12 +123,6 @@ let create_abha = function (frm) {
 									fieldname: 'verify_user_name',
 									fieldtype: 'Button'
 								}
-								// {
-								// 	label: 'Password',
-								// 	fieldname: 'password',
-								// 	fieldtype: 'Data',
-								// 	description: 'Must contain an uppercase, a lowercase, a number, a special character and at least 8 or more characters. It should not contain any sequences (like 123)'
-								// },
 								],
 								primary_action_label: 'Create ABHA ID',
 								primary_action(values) {
@@ -240,69 +235,68 @@ let create_abha = function (frm) {
 								primary_action_label: 'Create ABHA ID',
 								primary_action(values) {
 									frappe.call({
-										method: 'healthcare.regional.india.abdm.utils.auth_cert_and_rsa_encryption',
+										method: 'healthcare.regional.india.abdm.utils.abdm_request',
 										args: {
-											'message': dialog.get_value('otp')
+											'payload': {
+												'to_encrypt': dialog.get_value('otp'),
+												'txnId': txn_id
+											},
+											'url_key': 'verify_mobile_otp',
+											'req_type': 'Health ID',
+											'to_be_enc': 'otp'
 										},
-										callback: function (data) {
-											let otp_encrypted = data.message['encrypted_msg'];
-											frappe.call({
-												method: 'healthcare.regional.india.abdm.utils.abdm_request',
-												args: {
-													'payload': {
-														'otp': otp_encrypted,
-														'txnId': txn_id
+										freeze: true,
+										freeze_message: __('<br><br>Verifying OTP... <br><small>Please note, this may take a while</small>'),
+										callback: function (r) {
+											if (!r.message['token']) {
+												frappe.show_alert({
+													message:__('Incorrect OTP entered, Please Re-enter OTP'),
+													indicator:'red'
+												}, 10);
+											} else {
+												frappe.call({
+													method: 'healthcare.regional.india.abdm.utils.abdm_request',
+													args: {
+														'payload': {
+															"email": frm.doc.email || '',
+															"firstName": frm.doc.first_name || '',
+															"lastName": frm.doc.last_name || '',
+															"middleName": frm.doc.middle_name || '',
+															"mobile": frm.doc.mobile || '',
+															"txnId": txn_id,
+															"gender": (frm.doc.sex == 'Male') ? 'M' : (frm.doc.sex == 'Female') ? 'F' : (frm.doc.sex == 'Prefer not to say') ? 'U' : 'O',
+															"name": dialog.get_value('name'),
+															"yearOfBirth": dialog.get_value('yob')
+														},
+														'url_key': 'create_abha_w_mobile',
+														'req_type': 'Health ID',
+														'rec_headers': {
+															'T-Token': r.message['token']
+														}
 													},
-													'url_key': 'verify_mobile_otp',
-													'req_type': 'Health ID'
-												},
-												freeze: true,
-												freeze_message: __('<br><br><br>Creating Health ID <br><small>Please note, this may take a while</small>'),
-												callback: function (r) {
-													if (!r.message['token']) {
-														frappe.show_alert({
-															message:__('Incorrect OTP entered, Please Re-enter OTP'),
-															indicator:'red'
-														}, 10);
-													} else {
-														frappe.call({
-															method: 'healthcare.regional.india.abdm.utils.abdm_request',
-															args: {
-																'payload': {
-																	"email": frm.doc.email || '',
-																	"firstName": frm.doc.first_name || '',
-																	"lastName": frm.doc.last_name || '',
-																	"middleName": frm.doc.middle_name || '',
-																	"mobile": frm.doc.mobile || '',
-																	"txnId": txn_id,
-																	"gender": (frm.doc.sex == 'Male') ? 'M' : (frm.doc.sex == 'Female') ? 'F' : (frm.doc.sex == 'Prefer not to say') ? 'U' : 'O',
-																	"name": dialog.get_value('name'),
-																	"yearOfBirth": dialog.get_value('yob')
-																},
-																'url_key': 'create_abha_w_mobile',
-																'req_type': 'Health ID',
-																'rec_headers': {
-																	'T-Token': r.message['token']
-																}
-															},
-															callback: function (data) {
-																dialog.hide();
-																if (data.message['healthIdNumber']) {
-																	frm.set_value('phr_address', data.message['healthId'])
-																	frm.set_value('abha_number', data.message['healthIdNumber'])
-																	frappe.show_alert({ message: __('ABHA ID created successfully'), indicator: 'green' }, 5);
-																	frm.save()
-																} else {
-																	frappe.throw({ message: __("ABHA ID not Created"), title: __("Not Created") });
-																}
-															}
-														});
+													freeze: true,
+													freeze_message: __('Creating Health ID <br><small>Please note, this may take a while</small>'),
+													callback: function (data) {
+														dialog.hide();
+														if (data.message['healthIdNumber']) {
+															frm.set_value('abha_number', data.message['healthIdNumber'])
+															frm.save()
+															frappe.msgprint({
+																title: __('ABHA ID created successfully'),
+																indicator: 'green',
+																message: __('ABHA ID created, Your ABHA Number is ' + data.message['healthIdNumber'] +
+																	` To activate account link Aadhaar is mandatory, please login to https://healthid.ndhm.gov.in/login
+																	and Link Aadhaar.\n Thank you..`)
+															});
+														} else {
+															frappe.throw({ message: __("ABHA ID not Created"), title: __("Not Created") });
+														}
 													}
-												}
-											})
+												});
+											}
 										}
 									});
-									dialog.hide();
+									dialog.show();
 								}
 							});
 							dialog.fields_dict.resend_otp.input.onclick = function () {
