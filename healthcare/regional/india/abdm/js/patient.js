@@ -15,15 +15,31 @@ frappe.ui.form.on('Patient', {
 
 let verify_health_id = function (frm) {
 	let d = new frappe.ui.Dialog({
-		title: 'Enter PHR Address',
+		title: 'Verify PHR Address',
 		fields: [
 			{
 				label: 'PHR Address',
 				fieldname: 'healthid',
 				fieldtype: 'Data'
+			},
+			{
+				label: '',
+				fieldname: 'qr_data',
+				fieldtype: 'HTML'
+			},
+			{
+				label: 'Scan QR',
+				fieldname: 'scan_qr',
+				fieldtype: 'Button'
+			},
+			{
+				label: '',
+				fieldname: 'scanned_data',
+				fieldtype: 'Small Text',
+				hidden: 1
 			}
 		],
-		primary_action_label: 'Get',
+		primary_action_label: 'Verify',
 		primary_action(values) {
 			frappe.call({
 				method: 'healthcare.regional.india.abdm.utils.abdm_request',
@@ -48,9 +64,41 @@ let verify_health_id = function (frm) {
 				}
 			});
 			d.hide();
+		},
+		secondary_action_label: 'Save',
+		secondary_action(values) {
+			var scanned_data = JSON.parse(d.get_value('scanned_data'));
+			for (var k in scanned_data) {
+				if (k == 'hid'){frm.set_value('phr_address', scanned_data[k])}
+				if (k == 'hidn'){frm.set_value('abha_number', scanned_data[k])}
+				if (k == 'name'){frm.set_value('first_name', scanned_data[k])}
+				if (k == 'dob'){frm.set_value('dob', new Date(scanned_data[k]))}
+				if (k == 'email'){frm.set_value('email', scanned_data[k])}
+				if (k == 'mobile'){frm.set_value('mobile', scanned_data[k])}
+				if (k == 'gender'){
+					let gender = scanned_data[k] == 'M' ? 'Male' :
+					scanned_data[k] == 'F' ? 'Female' :
+					scanned_data[k] == 'U' ? 'Prefer not to say' : 'O'
+					frm.set_value('sex', gender)}
+			}
+			frm.save();
+			d.hide();
 		}
 	});
-
+	d.fields_dict.scan_qr.input.onclick = function () {
+		const scanner = new frappe.ui.Scanner({
+			dialog: true,
+			multiple: false,
+			on_scan(data) {
+				var scanned_data = JSON.parse(data.decodedText);
+				d.set_values({
+					'scanned_data': data.decodedText,
+					'healthid': (scanned_data['hid'] ? scanned_data['hid'] : '')
+				});
+				set_qr_scanned_data(d, scanned_data)
+			}
+		});
+	}
 	d.show();
 }
 
@@ -329,4 +377,19 @@ let create_abha = function (frm) {
 		}
 	});
 	d.show();
+}
+
+let set_qr_scanned_data  = function(d, scanned_data) {
+	let wrapper = $(d.fields_dict['qr_data'].wrapper).empty();
+	let qr_table = $(`<table class="table table-bordered" style="cursor:pointer; margin:0px;">
+		<tbody></tbody</table>`).appendTo(wrapper);
+	for (var k in scanned_data) {
+		const row =
+		$(`<tr>
+			<td>${k}</td>
+			<td>${scanned_data[k] || ""}</td>
+		</tr>`);
+		qr_table.find('tbody').append(row);
+	}
+
 }
