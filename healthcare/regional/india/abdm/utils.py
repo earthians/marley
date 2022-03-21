@@ -46,7 +46,7 @@ def get_authorization_token():
 
 @frappe.whitelist()
 def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
-	if isinstance(payload, str):
+	if payload and isinstance(payload, str):
 		payload = json.loads(payload)
 
 	if req_type == 'Health ID':
@@ -76,7 +76,9 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 	headers = {'Content-Type': 'application/json', 'Authorization': authorization,
 		'Accept': 'application/json'}
 	if rec_headers:
-		headers.update(json.loads(rec_headers))
+		if isinstance(rec_headers, str):
+			rec_headers = json.loads(rec_headers)
+		headers.update(rec_headers)
 	if access_token:
 		req = frappe.new_doc('ABDM Request')
 		req.status = 'Requested'
@@ -91,7 +93,6 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 				headers=headers,
 				data=json.dumps(payload)
 			)
-
 			response.raise_for_status()
 			req.response = json.dumps(response.json(), indent=4)
 			response = json.loads(json.dumps(response.json()))
@@ -163,3 +164,22 @@ def rsa_encryption (message, pub_key):
 	emsg = b64encode(ciphertext)
 	encrypted_msg = emsg.decode('UTF-8')
 	return encrypted_msg
+
+@frappe.whitelist()
+def get_health_data(otp, txnId, auth_method):
+	confirm_w_otp_payload = {
+		"to_encrypt": otp,
+		"txnId": txnId
+	}
+	if auth_method == 'AADHAAR_OTP':
+		url_key = 'confirm_w_aadhaar_otp'
+	elif auth_method == 'MOBILE_OTP':
+		url_key = 'confirm_w_mobile_otp'
+	# returns X-Token
+	response = abdm_request(confirm_w_otp_payload, url_key, 'Health ID', '', 'otp')
+	if response and response['token']:
+		header = {
+			"X-Token": 'Bearer ' + response['token']
+		}
+		response =  abdm_request('', 'get_acc_info', 'Health ID', header, '')
+		return response
