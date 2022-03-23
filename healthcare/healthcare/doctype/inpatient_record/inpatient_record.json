@@ -410,9 +410,10 @@
    "permlevel": 2
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-03-18 15:59:17.318988",
+ "modified": "2022-03-23 11:55:47.334773",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
