@@ -3,7 +3,7 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import now_datetime, today
@@ -18,7 +18,7 @@ from healthcare.healthcare.doctype.lab_test.test_lab_test import create_patient_
 from healthcare.healthcare.utils import get_encounters_to_invoice
 
 
-class TestInpatientRecord(unittest.TestCase):
+class TestInpatientRecord(FrappeTestCase):
 	def test_admit_and_discharge(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		patient = create_patient()
@@ -168,16 +168,16 @@ def get_healthcare_service_unit(unit_name=None):
 				"doctype": "Healthcare Service Unit",
 				"healthcare_service_unit_name": "_Test All Healthcare Service Units",
 				"is_group": 1
-				})
+		})
 		if not service_unit_parent_name:
 			parent_service_unit = frappe.new_doc("Healthcare Service Unit")
 			parent_service_unit.healthcare_service_unit_name = "_Test All Healthcare Service Units"
 			parent_service_unit.is_group = 1
-			parent_service_unit.save(ignore_permissions = True)
+			parent_service_unit.save(ignore_permissions=True)
 			service_unit.parent_healthcare_service_unit = parent_service_unit.name
 		else:
-			service_unit.parent_healthcare_service_unit = service_unit_parent_name[0][0]
-		service_unit.save(ignore_permissions = True)
+			service_unit.parent_healthcare_service_unit = service_unit_parent_name
+		service_unit.save(ignore_permissions=True)
 		return service_unit.name
 	return service_unit
 

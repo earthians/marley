@@ -3,12 +3,12 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 
 
-class TestHealthcareServiceUnitType(unittest.TestCase):
+class TestHealthcareServiceUnitType(FrappeTestCase):
 	def test_item_creation(self):
 		unit_type = get_unit_type()
 		self.assertTrue(frappe.db.exists('Item', unit_type.item))

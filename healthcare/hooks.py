@@ -72,7 +72,7 @@ doctype_js = {
 # ------------
 
 # before_install = "healthcare.install.before_install"
-# after_install = "healthcare.install.after_install"
+after_install = "healthcare.setup.setup_healthcare"
 
 # Desk Notifications
 # ------------------
@@ -119,6 +119,9 @@ doc_events = {
 		"on_submit": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.update_claim_paid_amount",
 		"on_cancel": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.update_claim_paid_amount",
 	},
+	"Company": {
+		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root"
+	}
 }
 
 scheduler_events = {
@@ -237,7 +240,7 @@ global_search_doctypes = {
 }
 
 domains = {
-	'Healthcare': 'healthcare.healthcare.healthcare',
+	'Healthcare': 'healthcare.setup',
 }
 
 standard_portal_menu_items = [
