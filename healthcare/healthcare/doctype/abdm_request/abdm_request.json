@@ -13,6 +13,7 @@
   "url",
   "section_break_4",
   "request",
+  "traceback",
   "column_break_6",
   "response"
  ],
@@ -68,12 +69,18 @@
    "fieldname": "url",
    "fieldtype": "Data",
    "label": "URL"
+  },
+  {
+   "fieldname": "traceback",
+   "fieldtype": "Code",
+   "label": "Traceback",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-03-16 18:12:51.107624",
+ "modified": "2022-03-24 11:11:01.555036",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "ABDM Request",
