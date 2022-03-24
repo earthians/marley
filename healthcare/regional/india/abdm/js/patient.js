@@ -23,6 +23,11 @@ let verify_health_id = function (frm) {
 				fieldtype: 'Data'
 			},
 			{
+				label: 'Scan QR Code',
+				fieldname: 'scan_qr',
+				fieldtype: 'Button'
+			},
+			{
 				label: 'Authentication Method',
 				fieldname: 'auth_method',
 				fieldtype: 'Select',
@@ -30,24 +35,23 @@ let verify_health_id = function (frm) {
 				default: 'AADHAAR_OTP'
 			},
 			{
-				label: '',
 				fieldname: 'qr_data',
 				fieldtype: 'HTML'
 			},
 			{
-				label: 'Scan QR',
-				fieldname: 'scan_qr',
-				fieldtype: 'Button'
-			},
-			{
-				label: '',
 				fieldname: 'scanned_data',
 				fieldtype: 'Small Text',
 				hidden: 1
+			},
+			{
+				fieldname: 'response_message',
+				fieldtype: 'HTML',
+				read_only: 1
 			}
 		],
-		primary_action_label: 'Verify',
+		primary_action_label: 'Send OTP',
 		primary_action(values) {
+			$(d.fields_dict['response_message'].wrapper).empty();
 			// authentication initialization
 			frappe.call({
 				method: 'healthcare.regional.india.abdm.utils.abdm_request',
@@ -74,7 +78,7 @@ let verify_health_id = function (frm) {
 									reqd: 1
 								}
 							],
-							primary_action_label: 'Send',
+							primary_action_label: 'Verify',
 							primary_action(values) {
 								// sending otp received to call 2 apis and receive health_data
 								frappe.call({
@@ -88,12 +92,15 @@ let verify_health_id = function (frm) {
 									freeze_message: __('<br><br>Verifying OTP... <br><small>Please note, this may take a while</small>'),
 									callback: function (r) {
 										if (r.message && r.message['healthIdNumber']) {
-											d.get_primary_btn().attr('disabled', true);
+											d.get_primary_btn().attr('hidden', true);
 											set_qr_scanned_data(d, r.message)
 											d.set_values({
 												'scanned_data': JSON.stringify(r.message)
 											});
 										} else {
+											if (r.message && r.message.details[0]['message']){
+												show_error_message(d, r.message)
+											}
 											frappe.show_alert({
 												message:__('Failed to fetch health Data, Please try again later'),
 												indicator:'red'
@@ -106,6 +113,9 @@ let verify_health_id = function (frm) {
 						});
 						dialog.show();
 					} else {
+						if (r.message && r.message.message){
+							show_error_message(d, r.message)
+						}
 						frappe.show_alert({
 							message:__('OTP Generation Failed, Please try again later'),
 							indicator:'red'
@@ -446,25 +456,39 @@ let set_qr_scanned_data  = function(d, scanned_data) {
 	let wrapper = $(d.fields_dict['qr_data'].wrapper).empty();
 	let qr_table = $(`<table class="table table-bordered" style="cursor:pointer; margin:0px;">
 		<tbody></tbody</table>`).appendTo(wrapper);
-	for (var k in scanned_data) {
-		if (scanned_data[k]) {
 			const row =
 			$(`<tr>
-				<td>${k}</td>
-				<td>${scanned_data[k] || ""}</td>
+				<td>Name</td>
+				<td>${scanned_data['name']}</td>
+			</tr>
+			<tr>
+				<td>Gender</td>
+				<td>${scanned_data['gender']}</td>
+			</tr>
+			<tr>
+				<td>DOB</td>
+				<td>${scanned_data['dayOfBirth'] || '-' }/${scanned_data['monthOfBirth'] || '-'}/${scanned_data['yearOfBirth']}</td>
+			</tr>
+			<tr>
+				<td>Health Id</td>
+				<td>${scanned_data['healthId']}</td>
+			</tr>
+			<tr>
+				<td>Health Id Number</td>
+				<td>${scanned_data['healthIdNumber']}</td>
 			</tr>`);
 			qr_table.find('tbody').append(row);
-		}
-	}
-
 }
 
 let set_data_to_form = function(frm, scanned_data){
+	var dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '01'}-
+				${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '01'}-
+				${scanned_data['yearOfBirth']}`
 	for (var k in scanned_data) {
 		if (k == 'hid' || k == 'healthId'){frm.set_value('phr_address', scanned_data[k])}
 		if (k == 'hidn' || k == 'healthIdNumber'){frm.set_value('abha_number', scanned_data[k])}
 		if (k == 'name'){frm.set_value('first_name', scanned_data[k])}
-		if (k == 'dob'){frm.set_value('dob', new Date(scanned_data[k]))}
+		if (dob){frm.set_value('dob', moment(dob, 'DD/MM/YYYY').format('YYYY-MM-DD'))}
 		if (k == 'email'){frm.set_value('email', scanned_data[k])}
 		if (k == 'mobile'){frm.set_value('mobile', scanned_data[k])}
 		if (k == 'gender'){
@@ -473,4 +497,10 @@ let set_data_to_form = function(frm, scanned_data){
 			scanned_data[k] == 'U' ? 'Prefer not to say' : 'Other'
 			frm.set_value('sex', gender)}
 	}
+}
+
+let show_error_message = function(d, message){
+	let wrapper = $(d.fields_dict['response_message'].wrapper).empty();
+	$(`<div style="color:red; background-color:#f4f5f6; border-radius:5px;
+	padding:5px 5px 5px 5px">${message.message}<br>Details: ${message.details[0]['message']}</div>`).appendTo(wrapper);
 }
