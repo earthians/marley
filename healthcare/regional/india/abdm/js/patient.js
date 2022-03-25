@@ -1,14 +1,19 @@
 frappe.ui.form.on('Patient', {
 	refresh: function (frm) {
-		if (!frm.doc.phr_address) {
-			frm.add_custom_button(__('Verify ABHA Number'), function () {
-				verify_health_id(frm)
-			});
-		}
-		if (!frm.doc.abha_number) {
-			frm.add_custom_button(__('Create ABHA'), function () {
-				create_abha(frm)
-			}).addClass("btn-primary");
+		if (frappe.boot.sysdefaults.country == 'India') {
+			unhide_field(['abha_number', 'phr_address']);
+			if (!frm.doc.phr_address) {
+				frm.add_custom_button(__('Verify ABHA Number'), function () {
+					verify_health_id(frm)
+				});
+			}
+			if (!frm.doc.abha_number) {
+				frm.add_custom_button(__('Create ABHA'), function () {
+					create_abha(frm)
+				}).addClass("btn-primary");
+			}
+		} else {
+			hide_field(['abha_number', 'phr_address']);
 		}
 	}
 });
@@ -21,11 +26,6 @@ let verify_health_id = function (frm) {
 				label: 'ABHA Number',
 				fieldname: 'healthid',
 				fieldtype: 'Data'
-			},
-			{
-				label: 'Scan QR Code',
-				fieldname: 'scan_qr',
-				fieldtype: 'Button'
 			},
 			{
 				label: 'Authentication Method',
@@ -89,7 +89,8 @@ let verify_health_id = function (frm) {
 										'auth_method': d.get_value('auth_method')
 									},
 									freeze: true,
-									freeze_message: __('<br><br>Verifying OTP... <br><small>Please note, this may take a while</small>'),
+									freeze_message: __(`<br><br>Verifying OTP... <br>
+										<small>Please note, this may take a while</small>`),
 									callback: function (r) {
 										if (r.message && r.message['healthIdNumber']) {
 											d.get_primary_btn().attr('hidden', true);
@@ -98,7 +99,7 @@ let verify_health_id = function (frm) {
 												'scanned_data': JSON.stringify(r.message)
 											});
 										} else {
-											if (r.message && r.message.details[0]['message']){
+											if (r.message && r.message.details[0]['message']) {
 												show_error_message(d, r.message)
 											}
 											frappe.show_alert({
@@ -113,7 +114,7 @@ let verify_health_id = function (frm) {
 						});
 						dialog.show();
 					} else {
-						if (r.message && r.message.message){
+						if (r.message && r.message.message) {
 							show_error_message(d, r.message)
 						}
 						frappe.show_alert({
@@ -133,21 +134,18 @@ let verify_health_id = function (frm) {
 			d.hide();
 		}
 	});
-	// QR scan
-	d.fields_dict.scan_qr.input.onclick = function () {
-		const scanner = new frappe.ui.Scanner({
-			dialog: true,
-			multiple: false,
-			on_scan(data) {
-				var scanned_data = JSON.parse(data.decodedText);
-				d.set_values({
-					'scanned_data': data.decodedText,
-					'healthid': (scanned_data['hidn'] ? scanned_data['hidn'] : '')
-				});
-				set_qr_scanned_data(d, scanned_data)
-			}
-		});
+
+	// QR scanner field
+	setup_qr_scanner(d)
+
+
+	d.get_secondary_btn().attr('disabled', true);
+	d.fields_dict['scanned_data'].df.onchange = () => {
+		if (d.get_value('scanned_data')) {
+			d.get_secondary_btn().attr('disabled', false);
+		}
 	}
+
 	d.show();
 }
 
@@ -173,7 +171,7 @@ let create_abha = function (frm) {
 			{
 				label: 'Mobile',
 				fieldname: 'mobile',
-				fieldtype: 'Int',
+				fieldtype: 'Data',
 				default: frm.doc.mobile,
 				depends_on: "eval:doc.mode == 'Mobile'",
 				mandatory_depends_on: "eval:doc.mode == 'Mobile'"
@@ -242,13 +240,16 @@ let create_abha = function (frm) {
 											'req_type': 'Health ID'
 										},
 										freeze: true,
-										freeze_message: __('<br><br><br>Creating Health ID <br><small>Please note, this may take a while</small>'),
+										freeze_message: __(`<br><br><br>Creating Health ID <br>
+											<small>Please note, this may take a while</small>`),
 										callback: function (data) {
 											dialog.hide();
 											if (data.message['healthIdNumber']) {
 												frm.set_value('phr_address', data.message['healthId'])
 												frm.set_value('abha_number', data.message['healthIdNumber'])
-												frappe.show_alert({ message: __('ABHA ID created successfully'), indicator: 'green' }, 5);
+												frappe.show_alert({
+													message: __('ABHA ID created successfully'),
+													indicator: 'green' }, 5);
 												if (data.message['new'] == false) {
 													frappe.show_alert({ message: __('Fetched existing ABHA of aadhaar provided'), indicator: 'green' }, 5);
 												}
@@ -365,8 +366,9 @@ let create_abha = function (frm) {
 											'to_be_enc': 'otp'
 										},
 										freeze: true,
-										freeze_message: __('<br><br>Verifying OTP... <br><small>Please note, this may take a while</small>'),
-										callback: function (r) {
+										freeze_message: __(`<br><br>Verifying OTP... <br>
+											<small>Please note, this may take a while</small>`),
+											callback: function (r) {
 											if (!r.message['token']) {
 												frappe.show_alert({
 													message:__('Incorrect OTP entered, Please Re-enter OTP'),
@@ -383,7 +385,9 @@ let create_abha = function (frm) {
 															"middleName": frm.doc.middle_name || '',
 															"mobile": frm.doc.mobile || '',
 															"txnId": txn_id,
-															"gender": (dialog.get_value('gender') == 'Male') ? 'M' : (dialog.get_value('gender') == 'Female') ? 'F' : (dialog.get_value('gender') == 'Prefer not to say') ? 'U' : 'O',
+															"gender": (dialog.get_value('gender') == 'Male') ? 'M' :
+																(dialog.get_value('gender') == 'Female') ? 'F' :
+																(dialog.get_value('gender') == 'Prefer not to say') ? 'U' : 'O',
 															"name": dialog.get_value('first_name'),
 															"yearOfBirth": dialog.get_value('yob')
 														},
@@ -406,7 +410,8 @@ let create_abha = function (frm) {
 																title: __('ABHA ID created successfully'),
 																indicator: 'green',
 																message: __('ABHA ID created, Your ABHA Number is ' + data.message['healthIdNumber'] +
-																	` To activate account link Aadhaar is mandatory, please login to https://healthid.ndhm.gov.in/login
+																	` To activate account link Aadhaar is mandatory ,
+																	please login to https://healthid.ndhm.gov.in/login
 																	and Link Aadhaar.\n Thank you..`)
 															});
 														} else {
@@ -452,35 +457,37 @@ let create_abha = function (frm) {
 }
 
 // to create html table
-let set_qr_scanned_data  = function(d, scanned_data) {
+let set_qr_scanned_data = function(d, scanned_data) {
 	let wrapper = $(d.fields_dict['qr_data'].wrapper).empty();
 	let qr_table = $(`<table class="table table-bordered" style="cursor:pointer; margin:0px;">
 		<tbody></tbody</table>`).appendTo(wrapper);
-			const row =
+		const row =
 			$(`<tr>
 				<td>Name</td>
 				<td>${scanned_data['name']}</td>
 			</tr>
 			<tr>
 				<td>Gender</td>
-				<td>${scanned_data['gender']}</td>
+				<td>${scanned_data['gender'] || '-'}</td>
+			</tr>
+			<tr>
+				<td>Mobile</td>
+				<td>${scanned_data['mobile'] ||  '-'}</td>
 			</tr>
 			<tr>
 				<td>DOB</td>
-				<td>${scanned_data['dayOfBirth'] || '-' }/${scanned_data['monthOfBirth'] || '-'}/${scanned_data['yearOfBirth']}</td>
+				<td>${scanned_data['dayOfBirth'] || '-'}/
+					${scanned_data['monthOfBirth'] || '-'}/
+					${scanned_data['yearOfBirth'] || '-'}</td>
 			</tr>
 			<tr>
 				<td>Health Id</td>
-				<td>${scanned_data['healthId']}</td>
-			</tr>
-			<tr>
-				<td>Health Id Number</td>
-				<td>${scanned_data['healthIdNumber']}</td>
+				<td>${scanned_data['healthId'] || scanned_data['hid'] || '-'}</td>
 			</tr>`);
 			qr_table.find('tbody').append(row);
 }
 
-let set_data_to_form = function(frm, scanned_data){
+let set_data_to_form = function(frm, scanned_data) {
 	var dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '01'}-
 				${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '01'}-
 				${scanned_data['yearOfBirth']}`
@@ -499,8 +506,38 @@ let set_data_to_form = function(frm, scanned_data){
 	}
 }
 
-let show_error_message = function(d, message){
+let show_error_message = function(d, message) {
 	let wrapper = $(d.fields_dict['response_message'].wrapper).empty();
 	$(`<div style="color:red; background-color:#f4f5f6; border-radius:5px;
-	padding:5px 5px 5px 5px">${message.message}<br>Details: ${message.details[0]['message']}</div>`).appendTo(wrapper);
+		padding:5px 5px 5px 5px">${message.message}<br>
+		Details: ${message.details[0]['message']}</div>`).appendTo(wrapper);
+}
+
+let setup_qr_scanner = function(dialog) {
+	dialog.fields_dict.healthid.$wrapper.find('.control-input').append(
+		`<span class="link-btn" style="display:inline">
+			<a class="btn-open no-decoration" title="${__("Scan")}">
+				${frappe.utils.icon('scan', 'sm')}
+			</a>
+		</span>`
+	);
+	let scan_btn = dialog.$body.find('.link-btn');
+	scan_btn.toggle(true);
+
+	scan_btn.on('click', 'a', () => {
+		new frappe.ui.Scanner({
+			dialog: true,
+			multiple: false,
+			on_scan(data) {
+				if (data && data.result && data.result.text) {
+					var scanned_data = JSON.parse(data.decodedText);
+					dialog.set_values({
+						'scanned_data': data.decodedText,
+						'healthid': (scanned_data['hidn'] ? scanned_data['hidn'] : '')
+					});
+					set_qr_scanned_data(dialog, scanned_data)
+				}
+			}
+		});
+	});
 }
