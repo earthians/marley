@@ -1,4 +1,3 @@
-
 config = {
     "authorization": {
         'method': 'POST',
