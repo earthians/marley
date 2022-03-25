@@ -49,7 +49,7 @@ erpnext.ExerciseEditor = class ExerciseEditor {
 				<div class="exercise-col col-sm-4" id="%(col_id)s">
 					<div class="card h-100 exercise-card" id="%(card_id)s">
 						<div class="card-body exercise-card-body">
-							<img src=%(image_src)s class="card-img-top" alt="...">
+							<img src="%(image_src)s" class="card-img-top" alt="...">
 							<h4 class="card-title">%(title)s</h4>
 							<p class="card-text text-truncate">%(description)s</p>
 						</div>
