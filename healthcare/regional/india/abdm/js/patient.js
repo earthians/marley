@@ -100,7 +100,7 @@ let verify_health_id = function (frm) {
 											});
 										} else {
 											if (r.message && r.message.details[0]['message']) {
-												show_error_message(d, r.message)
+												show_message(d, r.message.message, 'red', r.message.details[0]['message'])
 											}
 											frappe.show_alert({
 												message:__('Failed to fetch health Data, Please try again later'),
@@ -114,8 +114,8 @@ let verify_health_id = function (frm) {
 						});
 						dialog.show();
 					} else {
-						if (r.message && r.message.message) {
-							show_error_message(d, r.message)
+						if (r.message.message && r.message.details[0]['message']) {
+							show_message(d, r.message.message, 'red', r.message.details[0]['message'])
 						}
 						frappe.show_alert({
 							message:__('OTP Generation Failed, Please try again later'),
@@ -204,7 +204,6 @@ let create_abha = function (frm) {
 									reqd: 1
 								},
 								{
-									label: '',
 									fieldname: 'sb1',
 									fieldtype: 'Section Break',
 									hide_border: 1
@@ -215,9 +214,9 @@ let create_abha = function (frm) {
 									fieldtype: 'Data'
 								},
 								{
-									label: 'Verify User Name',
-									fieldname: 'verify_user_name',
-									fieldtype: 'Button'
+									fieldname: 'response_message',
+									fieldtype: 'HTML',
+									read_only: 1
 								}
 								],
 								primary_action_label: 'Create ABHA ID',
@@ -245,8 +244,7 @@ let create_abha = function (frm) {
 										callback: function (data) {
 											dialog.hide();
 											if (data.message['healthIdNumber']) {
-												frm.set_value('phr_address', data.message['healthId'])
-												frm.set_value('abha_number', data.message['healthIdNumber'])
+												set_data_to_form(frm, data.message)
 												frappe.show_alert({
 													message: __('ABHA ID created successfully'),
 													indicator: 'green' }, 5);
@@ -262,27 +260,22 @@ let create_abha = function (frm) {
 									dialog.hide();
 								}
 							});
-							dialog.fields_dict.verify_user_name.input.onclick = function () {
-								frappe.call({
-									method: 'healthcare.regional.india.abdm.utils.abdm_request',
-									args: {
-										'payload': {
-											"healthId": dialog.get_value('username')
-										},
-										'url_key': 'exists_by_health_id',
-										'req_type': 'Health ID'
-									},
-									callback: function (data) {
-										if (data.message['status'] == false) {
-											frappe.show_alert({ message: __('ABHA ID is unique'), indicator: 'green' }, 5);
-										} else if (data.message['status'] == true) {
-											frappe.show_alert({ message: __('ABHA ID already existing'), indicator: 'red' }, 5);
-										}
-
-									}
-								});
+							setup_search_btn(dialog)
+							// clear response_message
+							dialog.fields_dict['username'].df.onchange = () => {
+								$(dialog.fields_dict['response_message'].wrapper).empty();
+								dialog.get_primary_btn().attr('disabled', true);
 							}
 							dialog.show();
+						}
+						else {
+							if (r.message) {
+								if (r.message.details[0]['message']) {
+									frappe.show_alert({ message: __(r.message.details[0]['message']), indicator: 'red' }, 5);
+								} else if (r.message.message) {
+									frappe.show_alert({ message: __(r.message.message), indicator: 'red' }, 5);
+								}
+							}
 						}
 					}
 				});
@@ -506,13 +499,6 @@ let set_data_to_form = function(frm, scanned_data) {
 	}
 }
 
-let show_error_message = function(d, message) {
-	let wrapper = $(d.fields_dict['response_message'].wrapper).empty();
-	$(`<div style="color:red; background-color:#f4f5f6; border-radius:5px;
-		padding:5px 5px 5px 5px">${message.message}<br>
-		Details: ${message.details[0]['message']}</div>`).appendTo(wrapper);
-}
-
 let setup_qr_scanner = function(dialog) {
 	dialog.fields_dict.healthid.$wrapper.find('.control-input').append(
 		`<span class="link-btn" style="display:inline">
@@ -539,5 +525,51 @@ let setup_qr_scanner = function(dialog) {
 				}
 			}
 		});
+	});
+}
+
+let show_message = function(dialog, message, color, details) {
+	let wrapper = $(dialog.fields_dict['response_message'].wrapper).empty();
+	$(`<div style="color:${color}; background-color:#f4f5f6; border-radius:5px;
+		padding:5px 5px 5px 5px">${message}<br>
+		${details ? 'Details: '+details+'</div>': '</div>'}`).appendTo(wrapper);
+}
+
+let setup_search_btn = function(dialog) {
+	dialog.fields_dict.username.$wrapper.find('.control-input').append(
+		`<span class="link-btn" style="display:inline">
+		<a class="search-icons" title="${__("Search")}">
+			${frappe.utils.icon("search", "sm")}
+			</a>
+		</span>`
+	);
+	let search_btn = dialog.$body.find('.link-btn');
+	search_btn.toggle(true);
+
+	search_btn.on('click', 'a', () => {
+		if (dialog.get_value('username')) {
+			show_message(dialog, 'Verifying...', 'black', '')
+			frappe.call({
+				method: 'healthcare.regional.india.abdm.utils.abdm_request',
+				args: {
+					'payload': {
+						"healthId": dialog.get_value('username')
+					},
+					'url_key': 'exists_by_health_id',
+					'req_type': 'Health ID'
+				},
+				freeze: true,
+				freeze_message: __('<br><br>Verifying...'),
+				callback: function (data) {
+					if (data.message['status'] == false) {
+						show_message(dialog, 'ABHA ID is unique', 'green', '')
+						dialog.get_primary_btn().attr('disabled', false);
+					} else if (data.message['status'] == true) {
+						show_message(dialog, 'ABHA ID is already existing', 'red', '')
+						dialog.get_primary_btn().attr('disabled', true);
+					}
+				}
+			});
+		}
 	});
 }
