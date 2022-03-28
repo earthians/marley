@@ -138,7 +138,6 @@ let verify_health_id = function (frm) {
 	// QR scanner field
 	setup_qr_scanner(d)
 
-
 	d.get_secondary_btn().attr('disabled', true);
 	d.fields_dict['scanned_data'].df.onchange = () => {
 		if (d.get_value('scanned_data')) {
@@ -152,7 +151,7 @@ let verify_health_id = function (frm) {
 
 let create_abha = function (frm) {
 	let d = new frappe.ui.Dialog({
-		title: 'Enter Aadhaar',
+		title: 'Create ABHA',
 		fields: [
 			{
 				label: 'Mode',
@@ -431,7 +430,7 @@ let create_abha = function (frm) {
 									callback: function (r) {
 										if (r.message == true) {
 											frappe.show_alert({
-												message:__('OTP resend successfull'),
+												message:__('Successfully Resent OTP'),
 												indicator:'green'
 											}, 5);
 										}
@@ -562,10 +561,10 @@ let setup_search_btn = function(dialog) {
 				freeze_message: __('<br><br>Verifying...'),
 				callback: function (data) {
 					if (data.message['status'] == false) {
-						show_message(dialog, 'ABHA ID is unique', 'green', '')
+						show_message(dialog, 'PHR Address is unique', 'green', '')
 						dialog.get_primary_btn().attr('disabled', false);
 					} else if (data.message['status'] == true) {
-						show_message(dialog, 'ABHA ID is already existing', 'red', '')
+						show_message(dialog, 'PHR Address is already existing', 'red', '')
 						dialog.get_primary_btn().attr('disabled', true);
 					}
 				}
