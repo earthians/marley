@@ -154,27 +154,10 @@ let create_abha = function (frm) {
 		title: 'Create ABHA',
 		fields: [
 			{
-				label: 'Mode',
-				fieldname: 'mode',
-				fieldtype: 'Select',
-				options: ['Aadhaar'],
-				default: 'Aadhaar',
-				read_only: 1
-			},
-			{
-				label: 'Aadhaar',
+				label: 'Enter Aadhaar',
 				fieldname: 'aadhaar',
 				fieldtype: 'Data',
-				depends_on: "eval:doc.mode == 'Aadhaar'",
-				mandatory_depends_on: "eval:doc.mode == 'Aadhaar'"
-			},
-			{
-				label: 'Mobile',
-				fieldname: 'mobile',
-				fieldtype: 'Data',
-				default: frm.doc.mobile,
-				depends_on: "eval:doc.mode == 'Mobile'",
-				mandatory_depends_on: "eval:doc.mode == 'Mobile'"
+				mandatory: 1
 			},
 			{
 				label: 'Received Consent',
@@ -194,13 +177,7 @@ let create_abha = function (frm) {
 					title: __("Consent Required")
 				});
 			} else {
-				// create ABHA with aadhaar
-				if (d.get_value('mode') == 'Aadhaar') {
-					create_abha_with_aadhaar(frm, d)
-				// create ABHA with mobile_no (not preferred)
-				} else if (d.get_value('mode') == 'Mobile') {
-					create_abha_with_mobile(frm, d)
-				}
+				create_abha_with_aadhaar(frm, d)
 				d.hide();
 			}
 		}
@@ -496,169 +473,6 @@ let create_abha_with_aadhaar = function(frm, d) {
 
 }
 
-let create_abha_with_mobile = function(frm, d) {
-	frappe.call({
-		method: 'healthcare.regional.india.abdm.utils.abdm_request',
-		args: {
-			'payload': {
-				'mobile': d.get_value('mobile')
-			},
-			'url_key': 'generate_mobile_otp',
-			'req_type': 'Health ID'
-		},
-		freeze: true,
-		freeze_message: __('Sending OTP...'),
-		callback: function (r) {
-			let txn_id = r.message['txnId'];
-			if (txn_id) {
-				let dialog = new frappe.ui.Dialog({
-					title: 'OTP',
-					fields: [
-						{
-							label: 'Aadhaar OTP',
-							fieldname: 'otp',
-							fieldtype: 'Data',
-							reqd: 1
-						},
-						{
-							label: 'Resend OTP',
-							fieldname: 'resend_otp',
-							fieldtype: 'Button'
-						},
-						{
-							label: 'Name',
-							fieldname: 'first_name',
-							fieldtype: 'Data',
-							default: frm.doc.patient_name,
-							reqd: 1
-						},
-						{
-							label: '',
-							fieldname: 'sb_2',
-							fieldtype: 'Section Break',
-							reqd: 1
-						},
-						{
-							label: 'Gender',
-							fieldname: 'gender',
-							fieldtype: 'Link',
-							options: 'Gender',
-							default: frm.doc.sex,
-							reqd: 1
-						},
-						{
-							label: '',
-							fieldname: 'cb_2',
-							fieldtype: 'Column Break',
-							reqd: 1
-						},
-						{
-							label: 'Year of Birth',
-							fieldname: 'yob',
-							fieldtype: 'Int',
-							default: new Date(frm.doc.dob).getFullYear(),
-							reqd: 1
-						},
-
-					],
-					primary_action_label: 'Create ABHA ID',
-					primary_action(values) {
-						frappe.call({
-							method: 'healthcare.regional.india.abdm.utils.abdm_request',
-							args: {
-								'payload': {
-									'to_encrypt': dialog.get_value('otp'),
-									'txnId': txn_id
-								},
-								'url_key': 'verify_mobile_otp',
-								'req_type': 'Health ID',
-								'to_be_enc': 'otp'
-							},
-							freeze: true,
-							freeze_message: __(`<br><br>Verifying OTP... <br>
-								<small>Please note, this may take a while</small>`),
-								callback: function (r) {
-								if (!r.message['token']) {
-									frappe.show_alert({
-										message:__('Incorrect OTP entered, Please Re-enter OTP'),
-										indicator:'red'
-									}, 10);
-								} else {
-									frappe.call({
-										method: 'healthcare.regional.india.abdm.utils.abdm_request',
-										args: {
-											'payload': {
-												"email": frm.doc.email || '',
-												"firstName": frm.doc.first_name || '',
-												"lastName": frm.doc.last_name || '',
-												"middleName": frm.doc.middle_name || '',
-												"mobile": frm.doc.mobile || '',
-												"txnId": txn_id,
-												"gender": (dialog.get_value('gender') == 'Male') ? 'M' :
-													(dialog.get_value('gender') == 'Female') ? 'F' :
-													(dialog.get_value('gender') == 'Prefer not to say') ? 'U' : 'O',
-												"name": dialog.get_value('first_name'),
-												"yearOfBirth": dialog.get_value('yob')
-											},
-											'url_key': 'create_abha_w_mobile',
-											'req_type': 'Health ID',
-											'rec_headers': {
-												'T-Token': r.message['token']
-											}
-										},
-										freeze: true,
-										freeze_message: __('Creating Health ID <br><small>Please note, this may take a while</small>'),
-										callback: function (data) {
-											dialog.hide();
-											if (data.message['healthIdNumber']) {
-												frm.set_value('abha_number', data.message['healthIdNumber'])
-												frm.set_value('first_name', dialog.get_value('first_name'))
-												frm.set_value('sex', dialog.get_value('gender'))
-												frm.save()
-												frappe.msgprint({
-													title: __('ABHA ID created successfully'),
-													indicator: 'green',
-													message: __('ABHA ID created, Your ABHA Number is ' + data.message['healthIdNumber'] +
-														` To activate account link Aadhaar is mandatory ,
-														please login to https://healthid.ndhm.gov.in/login
-														and Link Aadhaar.\n Thank you..`)
-												});
-											} else {
-												frappe.throw({ message: __("ABHA ID not Created"), title: __("Not Created") });
-											}
-										}
-									});
-								}
-							}
-						});
-					}
-				});
-				dialog.fields_dict.resend_otp.input.onclick = function () {
-					frappe.call({
-						method: 'healthcare.regional.india.abdm.utils.abdm_request',
-						args: {
-							'payload': {
-								'authMethod': 'MOBILE_OTP',
-								'txnId': txn_id
-							},
-							'url_key': 'resend_mobile_otp',
-							'req_type': 'Health ID'
-						},
-						callback: function (r) {
-							if (r.message == true) {
-								frappe.show_alert({
-									message:__('Successfully Resent OTP'),
-									indicator:'green'
-								}, 5);
-							}
-						}
-					})
-				}
-				dialog.show();
-			}
-		}
-	});
-}
 
 let setup_resend_otp_btn = function(dialog, txn_id) {
 	dialog.fields_dict.otp.$wrapper.find('.control-input').append(
