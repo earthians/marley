@@ -73,7 +73,27 @@ config = {
         'method': 'GET',
         'url': '/v2/account/profile',
         'encrypted': False
-    }
+    },
+    "resend_aadhaar_otp": {
+        'method': 'POST',
+        'url': '/v1/registration/aadhaar/resendAadhaarOtp',
+        'encrypted': False
+    },
+    "generate_aadhaar_mobile_otp": {
+        'method': 'POST',
+        'url': '/v1/registration/aadhaar/generateMobileOTP',
+        'encrypted': False
+    },
+    "verify_aadhaar_mobile_otp": {
+        'method': 'POST',
+        'url': '/v1/registration/aadhaar/verifyMobileOTP',
+        'encrypted': False
+    },
+    "verify_aadhaar_otp": {
+        'method': 'POST',
+        'url': '/v1/registration/aadhaar/verifyOTP',
+        'encrypted': False
+    },
 }
 
 
