@@ -2,12 +2,17 @@ frappe.ui.form.on('Patient', {
 	refresh: function (frm) {
 		if (frappe.boot.sysdefaults.country == 'India') {
 			unhide_field(['abha_number', 'phr_address']);
-			if (!frm.doc.phr_address) {
+			if (!frm.doc.phr_address && !frm.doc.abha_number) {
+				frm.add_custom_button(__('Search By PHR Adress'), function () {
+					search_by_phr_address(frm)
+				});
+			}
+			if (frm.doc.abha_number) {
 				frm.add_custom_button(__('Verify ABHA Number'), function () {
 					verify_health_id(frm)
 				});
 			}
-			if (!frm.doc.abha_number) {
+			if (!(frm.doc.phr_address || frm.doc.abha_number)) {
 				frm.add_custom_button(__('Create ABHA'), function () {
 					create_abha(frm)
 				}).addClass("btn-primary");
@@ -18,7 +23,92 @@ frappe.ui.form.on('Patient', {
 	}
 });
 
-let verify_health_id = function (frm) {
+// search by PHR address, if ABHA number know can be verified
+let search_by_phr_address = function (frm) {
+	let dialog = new frappe.ui.Dialog({
+		title: 'Enter PHR Address',
+		fields: [
+			{
+				label: 'PHR Address',
+				fieldname: 'phr_address',
+				fieldtype: 'Data',
+			},
+			{
+				label: 'ABHA Number',
+				fieldname: 'abha_number',
+				fieldtype: 'Data',
+			},
+			{
+				fieldname: 'response_message',
+				fieldtype: 'HTML',
+				read_only: 1
+			}
+		],
+		primary_action_label: 'Search',
+		primary_action(values) {
+			if (!dialog.get_value('phr_address')) {
+				frappe.throw({
+					message: __(`PHR Address is required to search`),
+					title: __("ConsPHR Addressent Required")
+				});
+			} else {
+				show_message(dialog, 'Searching...', 'black', '')
+				frappe.call({
+					method: 'healthcare.regional.india.abdm.utils.abdm_request',
+					args: {
+						'payload': {
+							"healthId": dialog.get_value('phr_address')
+						},
+						'url_key': 'verify_health_id',
+						'req_type': 'Health ID'
+					},
+					freeze: true,
+					freeze_message: __('<br><br>Searching...'),
+					callback: function (data) {
+						if (data.message['healthIdNumber']) {
+							show_message(dialog, 'Status:' + data.message['status'], 'black', '')
+							dialog.set_values ({
+								'abha_number': data.message['healthIdNumber']
+							})
+						} else {
+							show_message(dialog, data.message.message, 'red',
+											data.message.details[0]['message'])
+							}
+					}
+				});
+				// dialog.hide();
+			}
+		},
+		secondary_action_label: 'Verify',
+		secondary_action(values) {
+			dialog.hide();
+			if (dialog.get_value('abha_number')) {
+				verify_health_id(frm, dialog.get_value('abha_number'))
+			}
+		}
+	});
+	dialog.get_secondary_btn().attr('disabled', true);
+	dialog.fields_dict['abha_number'].df.onchange = () => {
+		if (dialog.get_value('abha_number')) {
+			dialog.get_secondary_btn().attr('disabled', false);
+		} else {
+			dialog.get_secondary_btn().attr('disabled', true);
+		}
+	}
+
+	dialog.get_primary_btn().attr('disabled', true);
+	dialog.fields_dict['phr_address'].df.onchange = () => {
+		if (dialog.get_value('phr_address')) {
+			dialog.get_primary_btn().attr('disabled', false);
+		} else {
+			dialog.get_primary_btn().attr('disabled', true);
+		}
+	}
+	dialog.show();
+}
+
+
+let verify_health_id = function (frm, recieved_abha_number = '') {
 	let d = new frappe.ui.Dialog({
 		title: 'Verify ABHA',
 		fields: [
@@ -33,6 +123,21 @@ let verify_health_id = function (frm) {
 				fieldtype: 'Select',
 				options: ['AADHAAR_OTP', 'MOBILE_OTP'],
 				default: 'AADHAAR_OTP'
+			},
+			{
+				label: 'Mobile Number To Link',
+				fieldname: 'sb1',
+				fieldtype: 'Section Break',
+				collapsible: 1
+			},
+			{
+				label: 'Mobile',
+				fieldname: 'mobile',
+				fieldtype: 'Data',
+			},
+			{
+				fieldname: 'sb2',
+				fieldtype: 'Section Break'
 			},
 			{
 				fieldname: 'qr_data',
@@ -51,85 +156,56 @@ let verify_health_id = function (frm) {
 		],
 		primary_action_label: 'Send OTP',
 		primary_action(values) {
+			d.get_primary_btn().attr('disabled', true);
 			$(d.fields_dict['response_message'].wrapper).empty();
-			// authentication initialization
-			frappe.call({
-				method: 'healthcare.regional.india.abdm.utils.abdm_request',
-				args: {
-					'payload': {
-						"authMethod": d.get_value('auth_method'),
-						"healthid": d.get_value('healthid')
-					},
-					'url_key': 'auth_init',
-					'req_type': 'Health ID'
-				},
-				freeze: true,
-				freeze_message: __('Generating OTP...'),
-				callback: function (r) {
-					let txn_id = r.message['txnId'];
-					if (txn_id) {
-						let dialog = new frappe.ui.Dialog({
-							title: 'OTP',
-							fields: [
-								{
-									label: 'OTP',
-									fieldname: 'otp',
-									fieldtype: 'Data',
-									reqd: 1
-								}
-							],
-							primary_action_label: 'Verify',
-							primary_action(values) {
-								// sending otp received to call 2 apis and receive health_data
-								frappe.call({
-									method: 'healthcare.regional.india.abdm.utils.get_health_data',
-									args: {
-										'otp': dialog.get_value('otp'),
-										'txnId': r.message['txnId'],
-										'auth_method': d.get_value('auth_method')
-									},
-									freeze: true,
-									freeze_message: __(`<br><br>Verifying OTP... <br>
-										<small>Please note, this may take a while</small>`),
-									callback: function (r) {
-										if (r.message && r.message['healthIdNumber']) {
-											d.get_primary_btn().attr('hidden', true);
-											set_qr_scanned_data(d, r.message)
-											d.set_values({
-												'scanned_data': JSON.stringify(r.message)
-											});
-										} else {
-											if (r.message && r.message.details[0]['message']) {
-												show_message(d, r.message.message, 'red', r.message.details[0]['message'])
-											}
-											frappe.show_alert({
-												message:__('Failed to fetch health Data, Please try again later'),
-												indicator:'red'
-											}, 10);
-										}
-									}
-								});
-								dialog.hide();
-							}
-						});
-						dialog.show();
-					} else {
-						if (r.message.message && r.message.details[0]['message']) {
-							show_message(d, r.message.message, 'red', r.message.details[0]['message'])
+			frappe.run_serially([
+				() =>frappe.db.get_value('Patient', {abha_number: d.get_value('healthid'), name: ['!=', frm.doc.name]	}, 'name')
+					.then(r =>{
+						if (r.message.name) {
+							frappe.throw({
+								message: __(`Patient with ABHA number <b>${d.get_value('healthid')}</b> already exists {0}`,
+								['<a href="/app/patient/'+r.message.name+'">' + r.message.name + '</a>']),
+								title: __("Patient already exist")
+							});
 						}
-						frappe.show_alert({
-							message:__('OTP Generation Failed, Please try again later'),
-							indicator:'red'
-						}, 10);
-					}
+					}),
+				() => {show_message(d, 'Sending Auth OTP...', 'black', '')
+					frappe.call({
+						method: 'healthcare.regional.india.abdm.utils.abdm_request',
+						args: {
+							'payload': {
+								"authMethod": d.get_value('auth_method'),
+								"healthid": d.get_value('healthid')
+							},
+							'url_key': 'auth_init',
+							'req_type': 'Health ID'
+						},
+						freeze: true,
+						freeze_message: __('Generating OTP...'),
+						callback: function (r) {
+							let txn_id = r.message['txnId'];
+							if (txn_id) {
+								show_message(d, 'Successfully Sent OTP', 'green', '')
+								verify_auth_otp(r, d)
+							} else {
+								if (r.message.message && r.message.details[0]['message']) {
+									show_message(d, r.message.message, 'red', r.message.details[0]['message'])
+								}
+								frappe.show_alert({
+									message:__('OTP Generation Failed, Please try again later'),
+									indicator:'red'
+								}, 10);
+							}
+						}
+					});
 				}
-			});
+		])
 		},
 		secondary_action_label: 'Save',
 		secondary_action(values) {
 			// save data from qr_scan/api fetch, save to form
 			var scanned_data = JSON.parse(d.get_value('scanned_data'));
-			set_data_to_form(frm, scanned_data)
+			set_data_to_form(frm, scanned_data, d.get_value('mobile'))
 			frm.save();
 			d.hide();
 		}
@@ -137,7 +213,12 @@ let verify_health_id = function (frm) {
 
 	// QR scanner field
 	setup_qr_scanner(d)
-
+	setup_send_otp_btn(d)
+	if (recieved_abha_number) {
+		d.set_values({
+			'healthid': recieved_abha_number
+		});
+	}
 	d.get_secondary_btn().attr('disabled', true);
 	d.fields_dict['scanned_data'].df.onchange = () => {
 		if (d.get_value('scanned_data')) {
@@ -146,6 +227,55 @@ let verify_health_id = function (frm) {
 	}
 
 	d.show();
+}
+
+// authorization otp verification
+let verify_auth_otp = function(r, d) {
+	let dialog = new frappe.ui.Dialog({
+		title: 'Authentication OTP',
+		fields: [
+			{
+				label: 'OTP',
+				fieldname: 'otp',
+				fieldtype: 'Data',
+				reqd: 1
+			}
+		],
+		primary_action_label: 'Verify',
+		primary_action(values) {
+			// sending otp received to call 2 apis and receive health_data
+			frappe.call({
+				method: 'healthcare.regional.india.abdm.utils.get_health_data',
+				args: {
+					'otp': dialog.get_value('otp'),
+					'txnId': r.message['txnId'],
+					'auth_method': d.get_value('auth_method')
+				},
+				freeze: true,
+				freeze_message: __(`<br><br>Verifying OTP... <br>
+					<small>Please note, this may take a while</small>`),
+				callback: function (data) {
+					if (data.message && data.message['healthIdNumber']) {
+						d.get_primary_btn().attr('hidden', true);
+						set_qr_scanned_data(d, data.message)
+						d.set_values({
+							'scanned_data': JSON.stringify(data.message)
+						});
+					} else {
+						if (data.message && data.message.details[0]['message']) {
+							show_message(d, data.message.message, 'red', data.message.details[0]['message'])
+						}
+						frappe.show_alert({
+							message:__('Failed to fetch health Data, Please try again later'),
+							indicator:'red'
+						}, 10);
+					}
+				}
+			});
+			dialog.hide();
+		}
+	});
+	dialog.show();
 }
 
 
@@ -185,6 +315,7 @@ let create_abha = function (frm) {
 	d.show();
 }
 
+
 // to create html table
 let set_qr_scanned_data = function(d, scanned_data) {
 	let wrapper = $(d.fields_dict['qr_data'].wrapper).empty();
@@ -216,24 +347,38 @@ let set_qr_scanned_data = function(d, scanned_data) {
 			qr_table.find('tbody').append(row);
 }
 
-let set_data_to_form = function(frm, scanned_data) {
-	var dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '01'}-
-				${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '01'}-
-				${scanned_data['yearOfBirth']}`
-	for (var k in scanned_data) {
-		if (k == 'hid' || k == 'healthId'){frm.set_value('phr_address', scanned_data[k])}
-		if (k == 'hidn' || k == 'healthIdNumber'){frm.set_value('abha_number', scanned_data[k])}
-		if (k == 'name'){frm.set_value('first_name', scanned_data[k])}
-		if (dob){frm.set_value('dob', moment(dob, 'DD/MM/YYYY').format('YYYY-MM-DD'))}
-		if (k == 'email'){frm.set_value('email', scanned_data[k])}
-		if (k == 'mobile'){frm.set_value('mobile', scanned_data[k])}
-		if (k == 'gender'){
-			let gender = scanned_data[k] == 'M' ? 'Male' :
-			scanned_data[k] == 'F' ? 'Female' :
-			scanned_data[k] == 'U' ? 'Prefer not to say' : 'Other'
-			frm.set_value('sex', gender)}
+
+let set_data_to_form = function(frm, scanned_data, mobile) {
+	if (scanned_data) {
+		var dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '01'}-
+					${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '01'}-
+					${scanned_data['yearOfBirth']}`
+		for (var k in scanned_data) {
+			if (k == 'hid' || k == 'healthId'){frm.set_value('phr_address', scanned_data[k])}
+			if (k == 'hidn' || k == 'healthIdNumber'){frm.set_value('abha_number', scanned_data[k])}
+			if (!frm.doc.first_name) {
+				if (k == 'name'){frm.set_value('first_name', scanned_data[k])}
+			}
+			if (!frm.doc.dob) {
+				if (dob){frm.set_value('dob', moment(dob, 'DD/MM/YYYY').format('YYYY-MM-DD'))}
+			}
+			if (!frm.doc.email) {
+				if (k == 'email'){frm.set_value('email', scanned_data[k])}
+			}
+			if (mobile) {
+				frm.set_value('mobile', mobile)
+			} else if (k == 'mobile'){
+				frm.set_value('mobile', scanned_data[k])
+			}
+			if (k == 'gender'){
+				let gender = scanned_data[k] == 'M' ? 'Male' :
+				scanned_data[k] == 'F' ? 'Female' :
+				scanned_data[k] == 'U' ? 'Prefer not to say' : 'Other'
+				frm.set_value('sex', gender)}
+		}
 	}
 }
+
 
 let setup_qr_scanner = function(dialog) {
 	dialog.fields_dict.healthid.$wrapper.find('.control-input').append(
@@ -264,12 +409,14 @@ let setup_qr_scanner = function(dialog) {
 	});
 }
 
+
 let show_message = function(dialog, message, color, details) {
 	let wrapper = $(dialog.fields_dict['response_message'].wrapper).empty();
 	$(`<div style="color:${color}; background-color:#f4f5f6; border-radius:5px;
 		padding:5px 5px 5px 5px">${message}<br>
 		${details ? 'Details: '+details+'</div>': '</div>'}`).appendTo(wrapper);
 }
+
 
 let setup_search_btn = function(dialog) {
 	dialog.fields_dict.username.$wrapper.find('.control-input').append(
@@ -310,9 +457,9 @@ let setup_search_btn = function(dialog) {
 	});
 }
 
+
 let create_abha_with_aadhaar = function(frm, d) {
 	let txn_id = ''
-	let k = false
 	let error_msg = ''
 	frappe.run_serially([
 		() => frappe.call({
@@ -329,14 +476,13 @@ let create_abha_with_aadhaar = function(frm, d) {
 				callback: function (r) {
 					if (r.message['txnId']) {
 						txn_id = r.message['txnId'];
-						k = true
 					} else {
 						error_msg = r.message
 					}
 				}
 			}),
 		() => {
-			if (k && txn_id) {
+			if (txn_id) {
 				let dialog = new frappe.ui.Dialog({
 					title: 'Create',
 					fields: [
@@ -414,21 +560,35 @@ let create_abha_with_aadhaar = function(frm, d) {
 								<small>Please note, this may take a while</small>`),
 							callback: function (data) {
 								if (data.message['healthIdNumber']) {
-									if (dialog.get_value('mobile')) {
-										frm.set_value('mobile', dialog.get_value('mobile'))
-									}
-									set_data_to_form(frm, data.message)
-									if (data.message['new'] == false) {
-										frappe.show_alert({
-											message: __('Fetched existing ABHA of aadhaar provided'),
-											indicator: 'green' }, 5);
-									} else {
-										frappe.show_alert({
-											message: __('ABHA ID created successfully'),
-											indicator: 'green' }, 5);
-									}
-									frm.save()
-									dialog.hide();
+									dialog.hide()
+									frappe.run_serially([
+										() =>frappe.db.get_value('Patient', {abha_number: data.message['healthIdNumber'],
+												name: ['!=', frm.doc.name]	}, 'name')
+											.then(r =>{
+												if (r.message.name) {
+													frappe.throw({
+														message: __(`Patient with ABHA number
+															<b>${data.message['healthIdNumber']}</b> already exists {0}`,
+															['<a href="/app/patient/'+r.message.name+'">' + r.message.name + '</a>']),
+														title: __("Patient already exist")
+													});
+												}
+											}),
+										() => {
+											set_data_to_form(frm, data.message, dialog.get_value('mobile'))
+											if (data.message['new'] == false) {
+												frappe.show_alert({
+													message: __('Fetched existing ABHA of aadhaar provided'),
+													indicator: 'green' }, 5);
+											} else {
+												frappe.show_alert({
+													message: __('ABHA ID created successfully'),
+													indicator: 'green' }, 5);
+											}
+											frm.save()
+											dialog.hide();
+										}
+									])
 								} else {
 									dialog.get_primary_btn().attr('disabled', false);
 									if (data.message && data.message.details[0]['message']) {
@@ -454,8 +614,7 @@ let create_abha_with_aadhaar = function(frm, d) {
 					dialog.get_primary_btn().attr('disabled', true);
 				}
 				dialog.show();
-			}
-			else {
+			} else {
 				if (error_msg) {
 					if (error_msg.details[0]['message']) {
 						frappe.show_alert({
@@ -516,11 +675,12 @@ let setup_resend_otp_btn = function(dialog, txn_id) {
 	});
 }
 
-let setup_send_otp_btn = function(dialog, txn_id) {
+
+let setup_send_otp_btn = function(dialog, txn_id = '') {
 	dialog.fields_dict.mobile.$wrapper.find('.control-input').append(
 		`<span class="link-btn send-a-m-otp" style="display:inline">
 		<a class="icons" title="${__("Search")}">
-			Send OTP
+			Verify
 			</a>
 		</span>`
 	);
@@ -528,48 +688,63 @@ let setup_send_otp_btn = function(dialog, txn_id) {
 	search_btn.toggle(true);
 
 	search_btn.on('click', 'a', () => {
-		if (txn_id) {
-			if (dialog.get_value('mobile')) {
-				show_message(dialog, 'Sending Mobile OTP...', 'black', '')
-				frappe.call({
-					method: 'healthcare.regional.india.abdm.utils.abdm_request',
-					args: {
-						'payload': {
-							"mobile": dialog.get_value('mobile'),
-							"txnId": txn_id
-						},
-						'url_key': 'generate_aadhaar_mobile_otp',
-						'req_type': 'Health ID'
+		if (dialog.get_value('mobile')) {
+			let args = {};
+			let url_key = '';
+			if (txn_id) {
+				args =  {
+					'payload': {
+						"mobile": dialog.get_value('mobile'),
+						"txnId": txn_id
 					},
-					freeze: true,
-					freeze_message: __('<br><br>Verifying...'),
-					callback: function (data) {
-						if (data.message['txnId']) {
-							// setup_verify_otp_btn(dialog, data.message['txnId'])
-							verify_mobile_otp_dialog(dialog, txn_id)
-							show_message(dialog, 'Successfully Sent OTP', 'green', '')
+					'url_key': 'generate_aadhaar_mobile_otp',
+					'req_type': 'Health ID'
+				}
+				url_key = 'verify_aadhaar_mobile_otp'
+			} else {
+				args =  {
+					'payload': {
+						"mobile": dialog.get_value('mobile')
+					},
+					'url_key': 'generate_mobile_otp_for_linking',
+					'req_type': 'Health ID'
+				}
+				url_key = 'verify_mobile_otp_for_linking'
+			}
+			dialog.fields_dict.mobile.$wrapper.find("span").remove();
+			show_message(dialog, 'Sending Mobile OTP...', 'black', '')
+			frappe.call({
+				method: 'healthcare.regional.india.abdm.utils.abdm_request',
+				args: args,
+				freeze: true,
+				freeze_message: __('<br><br>Verifying...'),
+				callback: function (data) {
+					if (data.message['txnId']) {
+						// setup_verify_otp_btn(dialog, data.message['txnId'])
+						verify_mobile_otp_dialog(dialog, data.message['txnId'], url_key)
+						show_message(dialog, 'Successfully Sent OTP', 'green', '')
+					} else {
+						// recreate send otp btn if otp sending fails
+						setup_send_otp_btn(dialog, txn_id)
+						if (data.message && data.message.details[0]['message']) {
+							show_message(dialog, data.message.message, 'red',
+								data.message.details[0]['message'])
 						} else {
-							if (data.message && data.message.details[0]['message']) {
-								show_message(dialog, data.message.message, 'red',
-									data.message.details[0]['message'])
-							}
-							else {
-								show_message(dialog, 'Sending OTP Failed', 'red', '')
-							}
+							show_message(dialog, 'Sending OTP Failed', 'red', '')
 						}
 					}
-				});
-			} else {
-				show_message(dialog, 'Please Enter Mobile Number', 'red', '')
-			}
+				}
+			});
+		} else {
+			show_message(dialog, 'Please Enter Mobile Number', 'red', '')
 		}
 	});
 }
 
 
-let verify_mobile_otp_dialog = function(dialog, txn_id) {
+let verify_mobile_otp_dialog = function(dialog, txn_id, url_key) {
 	let otp_dialog = new frappe.ui.Dialog({
-		title: 'OTP',
+		title: 'Mobile Verification',
 		fields: [
 			{
 				label: 'OTP',
@@ -581,21 +756,35 @@ let verify_mobile_otp_dialog = function(dialog, txn_id) {
 		primary_action_label: 'Verify',
 		primary_action(values) {
 			show_message(dialog, 'Verifying OTP...', 'black', '')
-			frappe.call({
-				method: 'healthcare.regional.india.abdm.utils.abdm_request',
-				args: {
+			let args = {};
+			if (url_key == 'verify_aadhaar_mobile_otp') {
+				args =  {
 					'payload': {
 						"otp": otp_dialog.get_value('otp'),
 						"txnId": txn_id
 					},
-					'url_key': 'verify_aadhaar_mobile_otp',
+					'url_key': url_key,
 					'req_type': 'Health ID'
-				},
+				}
+			} else if (url_key == 'verify_mobile_otp_for_linking'){
+				args =  {
+					'payload': {
+						"to_encrypt": otp_dialog.get_value('otp'),
+						"txnId": txn_id
+					},
+					'url_key': url_key,
+					'req_type': 'Health ID',
+					'to_be_enc': 'otp'
+				}
+			}
+			frappe.call({
+				method: 'healthcare.regional.india.abdm.utils.abdm_request',
+				args: args,
 				freeze: true,
 				freeze_message: __('<br><br>Verifying...'),
 				callback: function (data) {
 					$(dialog.fields_dict['response_message'].wrapper).empty();
-					if (data.message['txnId']) {
+					if (data.message['txnId'] || data.message['token']) {
 						dialog.fields_dict.mobile.$wrapper.find("span").remove();
 						dialog.fields_dict.mobile.$wrapper.find('.control-input').append(
 							`<span class="link-btn" style="display:inline">
@@ -607,12 +796,23 @@ let verify_mobile_otp_dialog = function(dialog, txn_id) {
 					} else {
 						dialog.fields_dict.mobile.$wrapper.find("span").remove();
 						dialog.fields_dict.mobile.$wrapper.find('.control-input').append(
-							`<span class="link-btn" style="display:inline">
+							`<span class="link-btn p-x-btn" style="display:inline">
 								<a class="icons" title="${__("Verification Failed")}">
 									<i class="fa fa-times" aria-hidden="true"></i>
 								</a>
 							</span>`
 						);
+						let x_btn = dialog.$body.find('.p-x-btn');
+						x_btn.toggle(true);
+
+						x_btn.on('click', 'a', () => {
+							dialog.fields_dict.mobile.$wrapper.find("span").remove();
+							if (url_key == 'verify_aadhaar_mobile_otp') {
+								setup_send_otp_btn(dialog, txn_id)
+							} else if (url_key == 'verify_mobile_otp_for_linking'){
+								setup_send_otp_btn(dialog)
+							}
+						});
 					}
 				}
 			});
