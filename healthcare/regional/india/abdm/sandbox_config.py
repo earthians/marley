@@ -94,6 +94,16 @@ config = {
         'url': '/v1/registration/aadhaar/verifyOTP',
         'encrypted': False
     },
+    "generate_mobile_otp_for_linking": {
+        'method': 'POST',
+        'url': '/v2/document/generate/mobile/otp',
+        'encrypted': False
+    },
+    "verify_mobile_otp_for_linking": {
+        'method': 'POST',
+        'url': '/v2/document/verify/mobile/otp',
+        'encrypted': True
+    },
 }
 
 
