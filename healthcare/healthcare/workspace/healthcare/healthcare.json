@@ -285,6 +285,17 @@
    "type": "Link"
   },
   {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient History Settings",
+   "link_count": 0,
+   "link_to": "Patient History Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
    "hidden": 0,
    "is_query_report": 0,
    "label": "Laboratory Setup",
@@ -590,7 +601,7 @@
    "type": "Link"
   }
  ],
- "modified": "2021-11-21 09:51:02.586305",
+ "modified": "2022-03-31 09:51:02.586305",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare",
