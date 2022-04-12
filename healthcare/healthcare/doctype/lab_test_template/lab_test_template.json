@@ -21,6 +21,8 @@
   "lab_test_rate",
   "section_break_description",
   "lab_test_description",
+  "section_break_descriptive_result",
+  "descriptive_result",
   "section_break_normal",
   "lab_test_uom",
   "secondary_uom",
@@ -108,7 +110,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Result Format",
-   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nNo Result"
+   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nImaging\nNo Result"
   },
   {
    "default": "1",
@@ -212,6 +214,7 @@
    "label": "Description "
   },
   {
+   "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
    "fieldname": "lab_test_description",
    "fieldtype": "Text Editor",
    "ignore_xss_filter": 1,
@@ -316,13 +319,25 @@
   {
    "fieldname": "column_break_33",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "descriptive_result",
+   "fieldtype": "Text Editor",
+   "label": "Descriptive Result"
+  },
+  {
+   "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
+   "fieldname": "section_break_descriptive_result",
+   "fieldtype": "Section Break",
+   "label": "Descriptive Result"
   }
  ],
  "links": [],
- "modified": "2020-07-30 14:32:40.449818",
+ "modified": "2022-04-12 02:58:57.369498",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -351,6 +366,7 @@
  "search_fields": "lab_test_code,lab_test_name,lab_test_template_type",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "lab_test_name",
  "track_changes": 1
 }
