@@ -162,6 +162,7 @@ let verify_health_id = function (frm, recieved_abha_number = '') {
 				() =>frappe.db.get_value('Patient', {abha_number: d.get_value('healthid'), name: ['!=', frm.doc.name]	}, 'name')
 					.then(r =>{
 						if (r.message.name) {
+							frappe.set_route("Form", "Patient", r.message.name);
 							frappe.throw({
 								message: __(`Patient with ABHA number <b>${d.get_value('healthid')}</b> already exists {0}`,
 								['<a href="/app/patient/'+r.message.name+'">' + r.message.name + '</a>']),
@@ -195,6 +196,7 @@ let verify_health_id = function (frm, recieved_abha_number = '') {
 									message:__('OTP Generation Failed, Please try again later'),
 									indicator:'red'
 								}, 10);
+								d.get_primary_btn().attr('disabled', false);
 							}
 						}
 					});
@@ -224,6 +226,9 @@ let verify_health_id = function (frm, recieved_abha_number = '') {
 		if (d.get_value('scanned_data')) {
 			d.get_secondary_btn().attr('disabled', false);
 		}
+	}
+	d.fields_dict['healthid'].df.onchange = () => {
+		d.get_primary_btn().attr('disabled', false);
 	}
 
 	d.show();
@@ -566,6 +571,7 @@ let create_abha_with_aadhaar = function(frm, d) {
 												name: ['!=', frm.doc.name]	}, 'name')
 											.then(r =>{
 												if (r.message.name) {
+													frappe.set_route("Form", "Patient", r.message.name);
 													frappe.throw({
 														message: __(`Patient with ABHA number
 															<b>${data.message['healthIdNumber']}</b> already exists {0}`,

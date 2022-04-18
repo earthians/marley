@@ -2,14 +2,17 @@ import json
 
 import frappe
 import requests
-from healthcare.regional.india.abdm.sandbox_config import get_url
+from healthcare.regional.india.abdm.abdm_config import get_url
 
 
 @frappe.whitelist()
 def get_authorization_token():
 	client_id, client_secret, base_url = frappe.db.get_value(
 		'ABDM Integration',
-		{'company': frappe.defaults.get_user_default("Company"), 'default': 1},
+		{
+			'company': frappe.defaults.get_user_default("Company"),
+			'default': 1
+		},
 		['client_id', 'client_secret', 'auth_base_url']
 	)
 
@@ -38,8 +41,8 @@ def get_authorization_token():
 			data=json.dumps(payload)
 		)
 		response.raise_for_status()
-		req.response = json.dumps(response.json(), indent=4)
-		response = json.loads(json.dumps(response.json()))
+		response = response.json()
+		req.response = json.dumps(response, indent=4)
 		req.status = 'Granted'
 		req.insert(ignore_permissions=True)
 		return response.get('accessToken'), response.get('tokenType')
@@ -63,18 +66,23 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 
 	base_url = frappe.db.get_value(
 		'ABDM Integration',
-		{'company': frappe.defaults.get_user_default("Company"), 'default': 1},
+		{
+			'company': frappe.defaults.get_user_default("Company"),
+			'default': 1
+		},
 		[url_type]
 	)
 	if not base_url:
-		frappe.throw(title='Not Configured',
-					msg='Base URL not configured in ABDM Integration!')
+		frappe.throw(
+			title='Not Configured',
+			msg='Base URL not configured in ABDM Integration!'
+		)
 
 	config = get_url(url_key)
-	base_url = base_url.rstrip('/') if base_url.endswith('/') else base_url
+	base_url = base_url.rstrip('/')
 	url = base_url + config.get('url')
 
-	# Check the sandbox_config, if the data need to be encypted, encrypts message
+	# Check the abdm_config, if the data need to be encypted, encrypts message
 	# Build payload with encrypted message
 	if config.get('encrypted'):
 		message = payload.get('to_encrypt')
@@ -134,7 +142,10 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 def get_encrypted_message(message):
 	base_url = frappe.db.get_value(
 		'ABDM Integration',
-		{'company': frappe.defaults.get_user_default("Company"), 'default': 1},
+		{
+			'company': frappe.defaults.get_user_default("Company"),
+			'default': 1
+		},
 		['health_id_base_url']
 	)
 
