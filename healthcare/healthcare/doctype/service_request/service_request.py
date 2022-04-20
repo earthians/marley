@@ -116,7 +116,7 @@ class ServiceRequest(Document):
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
 	# TODO: fix status updates from linked docs
 	set_service_request_status(service_request, 'Scheduled')
-	
+
 
 @frappe.whitelist()
 def set_service_request_status(service_request, status):

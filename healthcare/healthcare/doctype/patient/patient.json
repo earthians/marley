@@ -69,7 +69,9 @@
   "surrounding_factors",
   "other_risk_factors",
   "more_info",
-  "patient_details"
+  "patient_details",
+  "consent_for_aadhaar_use",
+  "abha_card"
  ],
  "fields": [
   {
@@ -490,13 +492,23 @@
    "fieldtype": "Data",
    "label": "ABHA Number",
    "read_only": 1
+  },
+  {
+   "fieldname": "consent_for_aadhaar_use",
+   "fieldtype": "Attach",
+   "label": "Consent For Aadhaar Use"
+  },
+  {
+   "fieldname": "abha_card",
+   "fieldtype": "Attach",
+   "label": "Abha Card"
   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2022-03-11 20:32:47.584833",
+ "modified": "2022-04-20 11:07:26.691574",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",

@@ -121,6 +121,9 @@ doc_events = {
 	},
 	"Company": {
 		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root"
+	},
+	"Patient": {
+		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
 	}
 }
 

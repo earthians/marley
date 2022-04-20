@@ -9,7 +9,7 @@ class HealthcareSalesInvoice(SalesInvoice):
 		super(HealthcareSalesInvoice, self).validate()
 		self.calculate_patient_insurance_coverage()
 
-	
+
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
 

@@ -605,7 +605,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 	'''
 	1 - Post Journal Entry to Transfer Patient balance for each coverage
 	2 - Update Insurance Coverage
-	TODO: Posting Journal Entries based on Insurance Payor will reduce number of journal entries, 
+	TODO: Posting Journal Entries based on Insurance Payor will reduce number of journal entries,
 	but won't be able allow coverage cancel after invoicing. Fix based on feedback
 	'''
 	for item in sales_invoice.items:

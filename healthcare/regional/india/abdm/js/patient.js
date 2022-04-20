@@ -207,7 +207,7 @@ let verify_health_id = function (frm, recieved_abha_number = '') {
 		secondary_action(values) {
 			// save data from qr_scan/api fetch, save to form
 			var scanned_data = JSON.parse(d.get_value('scanned_data'));
-			set_data_to_form(frm, scanned_data, d.get_value('mobile'))
+			set_data_to_form(frm, scanned_data, d, '')
 			frm.save();
 			d.hide();
 		}
@@ -295,18 +295,50 @@ let create_abha = function (frm) {
 				mandatory: 1
 			},
 			{
+				label:'Patient Consent',
+				fieldname: 'patient_consent',
+				fieldtype: 'Section Break'
+			},
+			{
+				fieldname: 'patient_consent',
+				fieldtype: 'Link',
+				options: 'Terms and Conditions',
+				read_only: 0
+			},
+			{
+				fieldname: 'patient_consent_attach',
+				fieldtype: 'Attach',
+				description: `Please attach patient's signed consent for using
+						their Aadhar for ABHA creation`
+			},
+			{
+				fieldname: 'cb1',
+				fieldtype: 'Column Break',
+			},
+			{
+				label: '<br>🖨',
+				fieldname: 'print_consent',
+				fieldtype: 'Button'
+			},
+			{
+				label: 'OR',
+				fieldname: 'or',
+				fieldtype: 'Heading',
+				hidden: 1
+			},
+			{
 				label: 'Received Consent',
 				fieldname: 'received_consent',
 				fieldtype: 'Check',
 				default: 0,
-				description: `Received patient consent to
-					use Aadhaar for ABHA registration`
-
+				description: `Check this to confirm that patient has
+					provided consent to use Aadhaar for ABHA Registration`,
+				hidden: 1
 			},
 		],
 		primary_action_label: 'Send OTP',
 		primary_action(values) {
-			if (!d.get_value('received_consent')) {
+			if (!d.get_value('received_consent') && !d.get_value('patient_consent_attach')) {
 				frappe.throw({
 					message: __(`Patient Consent is required for ABHA creation`),
 					title: __("Consent Required")
@@ -317,6 +349,21 @@ let create_abha = function (frm) {
 			}
 		}
 	});
+	frappe.db.get_value('ABDM Integration', {company: frappe.defaults.get_user_default("Company"), default: 1}, 'patient_aadhaar_consent')
+    .then(r => {
+		if (r.message.patient_aadhaar_consent) {
+			d.set_values({
+				'patient_consent': r.message.patient_aadhaar_consent
+			});
+		}
+    })
+	d.fields_dict.print_consent.input.onclick = function () {
+		frappe.db.get_value('Terms and Conditions', d.get_value('patient_consent'), 'terms')
+		.then(r => {
+			let result = frappe.render_template(r.message.terms, {"doc" : {}})
+			frappe.render_pdf(result, {orientation:"Portrait"});
+		})
+	}
 	d.show();
 }
 
@@ -324,6 +371,14 @@ let create_abha = function (frm) {
 // to create html table
 let set_qr_scanned_data = function(d, scanned_data) {
 	let wrapper = $(d.fields_dict['qr_data'].wrapper).empty();
+	let dob = '';
+	if (scanned_data['dob']) {
+		dob = scanned_data['dob']
+	} else {
+		dob = scanned_data['dayOfBirth'] || '-' +'/' + scanned_data['monthOfBirth'] || '-'+'/'+
+		scanned_data['yearOfBirth'] || '-'
+	}
+
 	let qr_table = $(`<table class="table table-bordered" style="cursor:pointer; margin:0px;">
 		<tbody></tbody</table>`).appendTo(wrapper);
 		const row =
@@ -341,23 +396,26 @@ let set_qr_scanned_data = function(d, scanned_data) {
 			</tr>
 			<tr>
 				<td>DOB</td>
-				<td>${scanned_data['dayOfBirth'] || '-'}/
-					${scanned_data['monthOfBirth'] || '-'}/
-					${scanned_data['yearOfBirth'] || '-'}</td>
+				<td>${dob}</td>
 			</tr>
 			<tr>
-				<td>PHR ID</td>
+				<td>PHR Address</td>
 				<td>${scanned_data['healthId'] || scanned_data['hid'] || '-'}</td>
 			</tr>`);
 			qr_table.find('tbody').append(row);
 }
 
 
-let set_data_to_form = function(frm, scanned_data, mobile) {
+let set_data_to_form = function(frm, scanned_data, dialog, d) {
 	if (scanned_data) {
-		var dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '01'}-
-					${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '01'}-
-					${scanned_data['yearOfBirth']}`
+		let dob = '';
+		if (scanned_data['dob']) {
+			dob = scanned_data['dob'];
+		} else {
+			dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '01'}-
+			${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '01'}-
+			${scanned_data['yearOfBirth']}`;
+		}
 		for (var k in scanned_data) {
 			if (k == 'hid' || k == 'healthId'){frm.set_value('phr_address', scanned_data[k])}
 			if (k == 'hidn' || k == 'healthIdNumber'){frm.set_value('abha_number', scanned_data[k])}
@@ -370,8 +428,8 @@ let set_data_to_form = function(frm, scanned_data, mobile) {
 			if (!frm.doc.email) {
 				if (k == 'email'){frm.set_value('email', scanned_data[k])}
 			}
-			if (mobile) {
-				frm.set_value('mobile', mobile)
+			if (dialog.get_value('mobile')) {
+				frm.set_value('mobile', dialog.get_value('mobile'))
 			} else if (k == 'mobile'){
 				frm.set_value('mobile', scanned_data[k])
 			}
@@ -379,7 +437,11 @@ let set_data_to_form = function(frm, scanned_data, mobile) {
 				let gender = scanned_data[k] == 'M' ? 'Male' :
 				scanned_data[k] == 'F' ? 'Female' :
 				scanned_data[k] == 'U' ? 'Prefer not to say' : 'Other'
-				frm.set_value('sex', gender)}
+				frm.set_value('sex', gender)
+			}
+			if (d && d.get_value('patient_consent_attach')) {
+				frm.set_value('consent_for_aadhaar_use', d.get_value('patient_consent_attach'))
+			}
 		}
 	}
 }
@@ -581,7 +643,10 @@ let create_abha_with_aadhaar = function(frm, d) {
 												}
 											}),
 										() => {
-											set_data_to_form(frm, data.message, dialog.get_value('mobile'))
+											set_data_to_form(frm, data.message, dialog, d)
+											if (data.message['token']) {
+												show_id_card_dialog(frm, data.message['token'])
+											}
 											if (data.message['new'] == false) {
 												frappe.show_alert({
 													message: __('Fetched existing ABHA of aadhaar provided'),
@@ -591,9 +656,9 @@ let create_abha_with_aadhaar = function(frm, d) {
 													message: __('ABHA ID created successfully'),
 													indicator: 'green' }, 5);
 											}
-											frm.save()
+											// frm.save()
 											dialog.hide();
-										}
+										},
 									])
 								} else {
 									dialog.get_primary_btn().attr('disabled', false);
@@ -826,4 +891,47 @@ let verify_mobile_otp_dialog = function(dialog, txn_id, url_key) {
 		}
 	});
 	otp_dialog.show();
+}
+
+let show_id_card_dialog = function(frm, token) {
+	frappe.run_serially([
+		() =>frm.save(),
+		() =>{frappe.call({
+		method: 'healthcare.regional.india.abdm.utils.abdm_request',
+		args: {
+			'payload': {
+			},
+			'url_key': 'get_card',
+			'req_type': 'Health ID',
+			'rec_headers': {
+				'X-Token': 'Bearer '+ token
+			},
+			'patient_name': frm.doc.name
+		},
+		freeze: true,
+		freeze_message: __(`<br><br><br>Getting Health ID`),
+		callback: function (data) {
+			if (data.message['file_url']) {
+				// frm.set_value('abha_card', data.message['file_url'])
+				let abha_id_dialog = new frappe.ui.Dialog({
+					title: 'Abha Card',
+					fields: [
+						{
+							fieldname: 'abha_card_html',
+							fieldtype: 'HTML',
+						}
+					],
+				primary_action_label: 'Print',
+				primary_action(values) {
+					let result = "<img src='"+ data.message['file_url'] + "'>"
+					frappe.render_pdf(result, {orientation:"Landscape"});
+				},
+				})
+				$(abha_id_dialog.fields_dict.abha_card_html.$wrapper).html("<img src='"+ data.message['file_url'] + "'>")
+				abha_id_dialog.show();
+			}
+		}
+	})
+	}
+])
 }
