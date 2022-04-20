@@ -149,6 +149,11 @@ let verify_health_id = function (frm, recieved_abha_number = '') {
 				hidden: 1
 			},
 			{
+				fieldname: 'abha_card',
+				fieldtype: 'Attach',
+				hidden: 1
+			},
+			{
 				fieldname: 'response_message',
 				fieldtype: 'HTML',
 				read_only: 1
@@ -159,15 +164,23 @@ let verify_health_id = function (frm, recieved_abha_number = '') {
 			d.get_primary_btn().attr('disabled', true);
 			$(d.fields_dict['response_message'].wrapper).empty();
 			frappe.run_serially([
-				() =>frappe.db.get_value('Patient', {abha_number: d.get_value('healthid'), name: ['!=', frm.doc.name]	}, 'name')
+				() =>frappe.db.get_value('Patient', {abha_number: d.get_value('healthid'), name: ['!=', frm.doc.name]	}, ['name', 'abha_card'])
 					.then(r =>{
 						if (r.message.name) {
 							frappe.set_route("Form", "Patient", r.message.name);
-							frappe.throw({
-								message: __(`Patient with ABHA number <b>${d.get_value('healthid')}</b> already exists {0}`,
-								['<a href="/app/patient/'+r.message.name+'">' + r.message.name + '</a>']),
-								title: __("Patient already exist")
-							});
+							if (r.message.abha_card) {
+								frappe.throw({
+									message: __(`{0}`,
+									["<img src='"+ r.message.abha_card + "'>"]),
+									title: __("Patient already exist")
+								});
+							} else {
+								frappe.throw({
+									message: __(`{0}`,
+									['<a href="/app/patient/'+r.message.name+'">' + r.message.name + '</a>']),
+									title: __("Patient already exist")
+								});
+							}
 						}
 					}),
 				() => {show_message(d, 'Sending Auth OTP...', 'black', '')
@@ -260,20 +273,30 @@ let verify_auth_otp = function(r, d) {
 				freeze_message: __(`<br><br>Verifying OTP... <br>
 					<small>Please note, this may take a while</small>`),
 				callback: function (data) {
-					if (data.message && data.message['healthIdNumber']) {
-						d.get_primary_btn().attr('hidden', true);
-						set_qr_scanned_data(d, data.message)
-						d.set_values({
-							'scanned_data': JSON.stringify(data.message)
-						});
-					} else {
-						if (data.message && data.message.details[0]['message']) {
-							show_message(d, data.message.message, 'red', data.message.details[0]['message'])
+					if (data.message) {
+						if (data.message[0] && data.message[0]['healthIdNumber']) {
+							d.get_primary_btn().attr('hidden', true);
+							if (!data.message[1] && !data.message[1]['file_url']) {
+								set_qr_scanned_data(d, data.message[0])
+							}
+							d.set_values({
+								'scanned_data': JSON.stringify(data.message[0])
+							});
+						} else {
+							if (data.message[0].details[0]['message']) {
+								show_message(d, data.message[0].message, 'red', data.message[0].details[0]['message'])
+							}
+							frappe.show_alert({
+								message:__('Failed to fetch health Data, Please try again later'),
+								indicator:'red'
+							}, 10);
 						}
-						frappe.show_alert({
-							message:__('Failed to fetch health Data, Please try again later'),
-							indicator:'red'
-						}, 10);
+						if (data.message[1]) {
+							$(d.fields_dict.qr_data.$wrapper).html("<img src='"+ data.message[1] + "'>")
+							d.set_values({
+								'abha_card': data.message[1]
+							});
+						}
 					}
 				}
 			});
@@ -375,8 +398,9 @@ let set_qr_scanned_data = function(d, scanned_data) {
 	if (scanned_data['dob']) {
 		dob = scanned_data['dob']
 	} else {
-		dob = scanned_data['dayOfBirth'] || '-' +'/' + scanned_data['monthOfBirth'] || '-'+'/'+
-		scanned_data['yearOfBirth'] || '-'
+		dob = `${scanned_data['dayOfBirth'] ? scanned_data['dayOfBirth'] : '-'} -
+		${scanned_data['monthOfBirth'] ? scanned_data['monthOfBirth'] : '-'} -
+		${scanned_data['yearOfBirth']}`;
 	}
 
 	let qr_table = $(`<table class="table table-bordered" style="cursor:pointer; margin:0px;">
@@ -442,6 +466,9 @@ let set_data_to_form = function(frm, scanned_data, dialog, d) {
 			if (d && d.get_value('patient_consent_attach')) {
 				frm.set_value('consent_for_aadhaar_use', d.get_value('patient_consent_attach'))
 			}
+		}
+		if (dialog.get_value('abha_card')) {
+			frm.set_value('abha_card', dialog.get_value('abha_card'))
 		}
 	}
 }
@@ -630,16 +657,23 @@ let create_abha_with_aadhaar = function(frm, d) {
 									dialog.hide()
 									frappe.run_serially([
 										() =>frappe.db.get_value('Patient', {abha_number: data.message['healthIdNumber'],
-												name: ['!=', frm.doc.name]	}, 'name')
+												name: ['!=', frm.doc.name]	}, ['name', 'abha_card'])
 											.then(r =>{
 												if (r.message.name) {
 													frappe.set_route("Form", "Patient", r.message.name);
-													frappe.throw({
-														message: __(`Patient with ABHA number
-															<b>${data.message['healthIdNumber']}</b> already exists {0}`,
+													if (r.message.abha_card) {
+														frappe.throw({
+															message: __(`{0}`,
+															["<img src='"+ r.message.abha_card + "'>"]),
+															title: __("Patient already exist")
+														});
+													} else {
+														frappe.throw({
+															message: __(`{0}`,
 															['<a href="/app/patient/'+r.message.name+'">' + r.message.name + '</a>']),
-														title: __("Patient already exist")
-													});
+															title: __("Patient already exist")
+														});
+													}
 												}
 											}),
 										() => {
