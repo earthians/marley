@@ -914,7 +914,7 @@ let show_id_card_dialog = function(frm, token) {
 			if (data.message['file_url']) {
 				// frm.set_value('abha_card', data.message['file_url'])
 				let abha_id_dialog = new frappe.ui.Dialog({
-					title: 'Abha Card',
+					title: 'ABHA Card',
 					fields: [
 						{
 							fieldname: 'abha_card_html',

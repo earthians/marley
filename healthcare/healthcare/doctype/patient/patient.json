@@ -501,14 +501,14 @@
   {
    "fieldname": "abha_card",
    "fieldtype": "Attach",
-   "label": "Abha Card"
+   "label": "ABHA Card"
   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2022-04-20 11:07:26.691574",
+ "modified": "2022-04-20 11:08:26.691574",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
