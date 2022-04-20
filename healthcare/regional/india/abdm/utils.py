@@ -7,7 +7,7 @@ from healthcare.regional.india.abdm.abdm_config import get_url
 
 @frappe.whitelist()
 def get_authorization_token():
-	client_id, client_secret, base_url = frappe.db.get_value(
+	client_id, client_secret, auth_base_url = frappe.db.get_value(
 		'ABDM Integration',
 		{
 			'company': frappe.defaults.get_user_default("Company"),
@@ -17,13 +17,13 @@ def get_authorization_token():
 	)
 
 	config = get_url('authorization')
-	base_url = base_url.rstrip('/')
-	url = base_url + config.get('url')
+	auth_base_url = auth_base_url.rstrip('/')
+	url = auth_base_url + config.get('url')
 	payload = {
 		"clientId": client_id,
 		"clientSecret": client_secret
 	}
-	if not base_url:
+	if not auth_base_url:
 		frappe.throw(
 			title='Not Configured',
 			msg='Base URL not configured in ABDM Integration!',
@@ -48,12 +48,16 @@ def get_authorization_token():
 		return response.get('accessToken'), response.get('tokenType')
 
 	except Exception as e:
-		req.response = json.dumps(response.json(), indent=4)
+		try:
+			req.response = json.dumps(response.json(), indent=4)
+		except json.decoder.JSONDecodeError:
+			req.response = response.text
 		req.traceback = e
 		req.status = 'Revoked'
 		req.insert(ignore_permissions=True)
 		traceback = f"Remote URL {url}\nPayload: {payload}\nTraceback: {e}"
 		frappe.log_error(message=traceback, title='Cant create session')
+		return auth_base_url, None, None
 
 
 @frappe.whitelist()
