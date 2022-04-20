@@ -182,7 +182,7 @@ def get_encrypted_message(message):
 		pub_key = pub_key.replace('\n', '').replace(
 			'-----BEGIN PUBLIC KEY-----', '').replace('-----END PUBLIC KEY-----', '')
 		if pub_key:
-			encrypted_msg = rsa_encryption(message, pub_key)
+			encrypted_msg = get_rsa_encrypted_message(message, pub_key)
 			req.response = encrypted_msg
 			req.status = 'Granted'
 		req.insert(ignore_permissions=True)
@@ -202,7 +202,7 @@ def get_encrypted_message(message):
 		return None
 
 
-def rsa_encryption(message, pub_key):
+def get_rsa_encrypted_message(message, pub_key):
 	# TODO:- Use cryptography
 	from Crypto.Cipher import PKCS1_v1_5
 	from Crypto.PublicKey import RSA
@@ -230,21 +230,51 @@ def get_health_data(otp, txnId, auth_method):
 		url_key = 'confirm_w_mobile_otp'
 	# returns X-Token
 	response = abdm_request(confirm_w_otp_payload, url_key, 'Health ID', '', 'otp')
+	abha_url = ''
 	if response and response.get('token'):
+		abha_url = get_abha_card(response['token'])
 		header = {
 			"X-Token": 'Bearer ' + response['token']
 		}
 		response = abdm_request('', 'get_acc_info', 'Health ID', header, '')
-	return response
+	return response, abha_url
 
 
+# patient after_insert
 def set_consent_attachment_details(doc, method=None):
-	if doc.consent_for_aadhaar_use:
-		file_name = frappe.db.get_value('File', {
-			'file_url': doc.consent_for_aadhaar_use
-		}, 'name')
-		frappe.db.set_value('File', file_name, {
-			'attached_to_doctype': 'Patient',
-			'attached_to_name': doc.name,
-			'attached_to_field': doc.consent_for_aadhaar_use
-		})
+	if frappe.db.exists(
+		"ABDM Integration",
+		{"company": frappe.defaults.get_user_default("Company"), "default": 1},
+	):
+		if doc.consent_for_aadhaar_use:
+			file_name = frappe.db.get_value(
+				"File", {"file_url": doc.consent_for_aadhaar_use}, "name"
+			)
+			if file_name:
+				frappe.db.set_value("File", file_name,
+					{
+						"attached_to_doctype": "Patient",
+						"attached_to_name": doc.name,
+						"attached_to_field": doc.consent_for_aadhaar_use,
+					},
+				)
+		if doc.abha_card:
+			abha_file_name = frappe.db.get_value(
+				"File", {"file_url": doc.abha_card, "attached_to_name": None}, "name"
+			)
+			if abha_file_name:
+				frappe.db.set_value("File", abha_file_name,
+					{
+						"attached_to_doctype": "Patient",
+						"attached_to_name": doc.name,
+						"attached_to_field": doc.abha_card,
+					},
+				)
+
+
+def get_abha_card(token):
+	header = {
+			"X-Token": 'Bearer ' + token
+		}
+	response = abdm_request('', 'get_card', 'Health ID', header, '')
+	return response.get('file_url')
