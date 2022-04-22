@@ -329,19 +329,24 @@ let create_abha = function (frm) {
 				read_only: 0
 			},
 			{
-				fieldname: 'patient_consent_attach',
-				fieldtype: 'Attach',
-				description: `Please attach patient's signed consent for using
-						their Aadhar for ABHA creation`
-			},
-			{
 				fieldname: 'cb1',
 				fieldtype: 'Column Break',
 			},
 			{
-				label: '<br>🖨',
-				fieldname: 'print_consent',
-				fieldtype: 'Button'
+				label: 'Button',
+				fieldname: 'print_btn',
+				fieldtype: 'HTML'
+			},
+			{
+				fieldname: 'sb2',
+				fieldtype: 'Section Break',
+				hide_border: 1
+			},
+			{
+				fieldname: 'patient_consent_attach',
+				fieldtype: 'Attach',
+				description: `Please attach patient's signed consent for using
+						their Aadhar for ABHA creation`
 			},
 			{
 				label: 'OR',
@@ -372,7 +377,28 @@ let create_abha = function (frm) {
 			}
 		}
 	});
-	frappe.db.get_value('ABDM Integration', {company: frappe.defaults.get_user_default("Company"), default: 1}, 'patient_aadhaar_consent')
+
+	let print_button = d.fields_dict.print_btn.$wrapper;
+
+	print_button.html(
+		`<br><button class="btn btn-sm" style="float:left;" title="Print">
+		<svg class="icon  icon-sm" style="">
+		<use class="" href="#icon-printer"></use></svg>
+		</button>`
+	);
+
+	print_button.on('click', 'button', function() {
+		frappe.db.get_value('Terms and Conditions', d.get_value('patient_consent'), 'terms')
+		.then(r => {
+			let result = frappe.render_template(r.message.terms, {"doc" : {}})
+			frappe.render_pdf(result, {orientation:"Portrait"});
+		})
+	})
+
+	frappe.db.get_value('ABDM Integration', {
+		company: frappe.defaults.get_user_default("Company"),
+		default: 1
+	}, 'patient_aadhaar_consent')
     .then(r => {
 		if (r.message.patient_aadhaar_consent) {
 			d.set_values({
@@ -380,13 +406,6 @@ let create_abha = function (frm) {
 			});
 		}
     })
-	d.fields_dict.print_consent.input.onclick = function () {
-		frappe.db.get_value('Terms and Conditions', d.get_value('patient_consent'), 'terms')
-		.then(r => {
-			let result = frappe.render_template(r.message.terms, {"doc" : {}})
-			frappe.render_pdf(result, {orientation:"Portrait"});
-		})
-	}
 	d.show();
 }
 
