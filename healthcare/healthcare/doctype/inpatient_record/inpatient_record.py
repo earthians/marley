@@ -25,7 +25,7 @@ class InpatientRecord(Document):
 	def validate(self):
 		self.validate_dates()
 		self.validate_already_scheduled_or_admitted()
-		if self.status == "Discharged":
+		if self.status in ["Discharged", "Cancelled"]:
 			frappe.db.set_value("Patient", self.patient, {
 				"inpatient_status": None,
 				"inpatient_record": None
@@ -309,3 +309,18 @@ def is_service_unit_billable(service_unit):
 		.where(service_unit_doc.name==service_unit)
 	).run(as_dict=1)
 	return result[0].get('is_billable', 0)
+
+
+@frappe.whitelist()
+def set_ip_order_cancelled(inpatient_record, reason, encounter=None):
+	inpatient_record = frappe.get_doc('Inpatient Record', inpatient_record)
+	if inpatient_record.status == 'Admission Scheduled':
+		inpatient_record.status = 'Cancelled'
+		inpatient_record.reason_for_cancellation = reason
+		inpatient_record.save(ignore_permissions=True)
+		encounter_name = encounter if encounter else inpatient_record.admission_encounter
+		if encounter_name:
+			frappe.db.set_value('Patient Encounter', encounter_name, {
+					'inpatient_status': None,
+					'inpatient_record': None
+				})

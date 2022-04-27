@@ -29,10 +29,14 @@ frappe.ui.form.on('Inpatient Record', {
 		});
 		if (!frm.doc.__islocal) {
 			if (!frm.doc.admission_encounter) {
-				if (frm.doc.status == 'Admission Scheduled' || frm.doc.status == 'Admitted') {
+				if (frm.doc.status == 'Admitted') {
 					frm.add_custom_button(__('Schedule Discharge'), function() {
 						schedule_discharge(frm);
 					});
+				} else if (frm.doc.status == 'Admission Scheduled') {
+					frm.add_custom_button(__('Cancel Admission'), function() {
+						cancel_ip_order(frm)
+					})
 				}
 			}
 
@@ -274,3 +278,28 @@ var schedule_discharge = function(frm) {
 	dialog.show();
 	dialog.$wrapper.find('.modal-dialog').css('width', '800px');
 };
+
+let cancel_ip_order = function(frm) {
+	frappe.prompt([
+		{
+			fieldname: 'reason_for_cancellation',
+			label: __('Reason for Cancellation'),
+			fieldtype: 'Small Text',
+			reqd: 1
+		}
+	],
+	function(data) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.set_ip_order_cancelled',
+			async: false,
+			freeze: true,
+			args: {
+				inpatient_record: frm.doc.name,
+				reason: data.reason_for_cancellation
+			},
+			callback: function(r) {
+				if (!r.exc) frm.reload_doc();
+			}
+		});
+	}, __('Reason for Cancellation'), __('Submit'));
+}
