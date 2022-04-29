@@ -11,28 +11,39 @@ frappe.ui.form.on('Inpatient Record', {
 		];
 	},
 	refresh: function(frm) {
-		if (!frm.doc.__islocal && (frm.doc.status == 'Admission Scheduled' || frm.doc.status == 'Admitted')) {
-			frm.enable_save();
-		} else {
-			frm.disable_save();
-		}
+		frm.set_query('admission_service_unit_type', function() {
+			return {
+				filters: {
+					'inpatient_occupancy': 1,
+					'allow_appointments': 0
+				}
+			};
+		});
 
-		if (!frm.doc.__islocal && frm.doc.status == 'Admission Scheduled') {
-			frm.add_custom_button(__('Admit'), function() {
-				admit_patient_dialog(frm);
-			} );
-		}
-
-		if (!frm.doc.__islocal && frm.doc.status == 'Discharge Scheduled') {
-			frm.add_custom_button(__('Discharge'), function() {
-				discharge_patient(frm);
-			} );
-		}
-		if (!frm.doc.__islocal && frm.doc.status != 'Admitted') {
-			frm.disable_save();
-			frm.set_df_property('btn_transfer', 'hidden', 1);
-		} else {
-			frm.set_df_property('btn_transfer', 'hidden', 0);
+		frm.set_query('primary_practitioner', function() {
+			return {
+				filters: {
+					'department': frm.doc.medical_department
+				}
+			};
+		});
+		if (!frm.doc.__islocal) {
+			if (frm.doc.status == 'Admitted') {
+				frm.add_custom_button(__('Schedule Discharge'), function() {
+					schedule_discharge(frm);
+				});
+			} else if (frm.doc.status == 'Admission Scheduled') {
+				frm.add_custom_button(__('Cancel Admission'), function() {
+					cancel_ip_order(frm)
+				})
+				frm.add_custom_button(__('Admit'), function() {
+					admit_patient_dialog(frm);
+				} );
+			} else if (frm.doc.status == 'Discharge Scheduled') {
+				frm.add_custom_button(__('Discharge'), function() {
+					discharge_patient(frm);
+				} );
+			}
 		}
 	},
 	btn_transfer: function(frm) {
@@ -212,3 +223,97 @@ let transfer_patient_dialog = function(frm) {
 		'leave_from': not_left_service_unit
 	});
 };
+
+var schedule_discharge = function(frm) {
+	var dialog = new frappe.ui.Dialog ({
+		title: 'Inpatient Discharge',
+		fields: [
+			{
+				fieldtype: 'Link',
+				label: 'Discharge Practitioner',
+				fieldname: 'discharge_practitioner',
+				options: 'Healthcare Practitioner'
+			},
+			{
+				fieldtype: 'Datetime',
+				label: 'Discharge Ordered DateTime',
+				fieldname: 'discharge_ordered_datetime',
+				default: frappe.datetime.now_datetime()
+			},
+			{
+				fieldtype: 'Date',
+				label: 'Followup Date',
+				fieldname: 'followup_date'
+			},
+			{
+				fieldtype: 'Column Break'
+			},
+			{
+				fieldtype: 'Small Text',
+				label: 'Discharge Instructions',
+				fieldname: 'discharge_instructions'
+			},
+			{
+				fieldtype: 'Section Break',
+				label:'Discharge Summary'
+			},
+			{
+				fieldtype: 'Long Text',
+				label: 'Discharge Note',
+				fieldname: 'discharge_note'
+			}
+		],
+		primary_action_label: __('Order Discharge'),
+		primary_action : function() {
+			var args = {
+				patient: frm.doc.patient,
+				discharge_practitioner: dialog.get_value('discharge_practitioner'),
+				discharge_ordered_datetime: dialog.get_value('discharge_ordered_datetime'),
+				followup_date: dialog.get_value('followup_date'),
+				discharge_instructions: dialog.get_value('discharge_instructions'),
+				discharge_note: dialog.get_value('discharge_note')
+			}
+			frappe.call ({
+				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge',
+				args: {args},
+				callback: function(data) {
+					if(!data.exc){
+						frm.reload_doc();
+					}
+				},
+				freeze: true,
+				freeze_message: 'Scheduling Inpatient Discharge'
+			});
+			frm.refresh_fields();
+			dialog.hide();
+		}
+	});
+
+	dialog.show();
+	dialog.$wrapper.find('.modal-dialog').css('width', '800px');
+};
+
+let cancel_ip_order = function(frm) {
+	frappe.prompt([
+		{
+			fieldname: 'reason_for_cancellation',
+			label: __('Reason for Cancellation'),
+			fieldtype: 'Small Text',
+			reqd: 1
+		}
+	],
+	function(data) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.set_ip_order_cancelled',
+			async: false,
+			freeze: true,
+			args: {
+				inpatient_record: frm.doc.name,
+				reason: data.reason_for_cancellation
+			},
+			callback: function(r) {
+				if (!r.exc) frm.reload_doc();
+			}
+		});
+	}, __('Reason for Cancellation'), __('Submit'));
+}

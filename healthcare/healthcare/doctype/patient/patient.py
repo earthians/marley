@@ -272,6 +272,7 @@ def get_patient_detail(patient):
 
 	details = patient_dict[0]
 	if vital_sign:
+		vital_sign[0].pop("inpatient_record")
 		details.update(vital_sign[0])
 	return details
 

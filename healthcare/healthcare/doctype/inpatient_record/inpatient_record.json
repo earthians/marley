@@ -27,8 +27,8 @@
   "admission_practitioner",
   "medical_department",
   "admission_ordered_for",
-  "expected_length_of_stay",
   "admission_service_unit_type",
+  "expected_length_of_stay",
   "cb_admission",
   "primary_practitioner",
   "secondary_practitioner",
@@ -58,7 +58,9 @@
   "discharge_instructions",
   "followup_date",
   "sb_discharge_note",
-  "discharge_note"
+  "discharge_note",
+  "cancellation_details_section",
+  "reason_for_cancellation"
  ],
  "fields": [
   {
@@ -137,6 +139,7 @@
    "fieldname": "medical_department",
    "fieldtype": "Link",
    "label": "Medical Department",
+   "mandatory_depends_on": "eval:!doc.admission_encounter;",
    "options": "Medical Department",
    "set_only_once": 1
   },
@@ -144,6 +147,7 @@
    "fieldname": "primary_practitioner",
    "fieldtype": "Link",
    "label": "Healthcare Practitioner (Primary)",
+   "mandatory_depends_on": "eval:!doc.admission_encounter;",
    "options": "Healthcare Practitioner"
   },
   {
@@ -162,7 +166,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Admission Scheduled\nAdmitted\nDischarge Scheduled\nDischarged",
+   "options": "Admission Scheduled\nAdmitted\nDischarge Scheduled\nDischarged\nCancelled",
    "read_only": 1
   },
   {
@@ -188,10 +192,10 @@
    "permlevel": 2
   },
   {
-   "depends_on": "eval:(doc.expected_length_of_stay > 0)",
    "fieldname": "expected_length_of_stay",
    "fieldtype": "Int",
    "label": "Expected Length of Stay",
+   "mandatory_depends_on": "eval:!doc.admission_encounter;",
    "set_only_once": 1
   },
   {
@@ -235,7 +239,7 @@
   {
    "fieldname": "admission_instruction",
    "fieldtype": "Small Text",
-   "label": "Admission Instruction",
+   "label": "Admission Instructions",
    "set_only_once": 1
   },
   {
@@ -258,6 +262,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal;",
    "fieldname": "medication_section",
    "fieldtype": "Section Break",
    "label": "Medications",
@@ -271,6 +276,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal;",
    "fieldname": "investigations_section",
    "fieldtype": "Section Break",
    "label": "Investigations",
@@ -284,6 +290,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal;",
    "fieldname": "procedures_section",
    "fieldtype": "Section Break",
    "label": "Procedures",
@@ -305,8 +312,9 @@
    "fieldname": "admission_service_unit_type",
    "fieldtype": "Link",
    "label": "Admission Service Unit Type",
+   "mandatory_depends_on": "eval:!doc.admission_encounter;",
    "options": "Healthcare Service Unit Type",
-   "read_only": 1
+   "set_only_once": 1
   },
   {
    "fieldname": "inpatient_occupancies",
@@ -315,6 +323,7 @@
    "permlevel": 2
   },
   {
+   "depends_on": "eval:doc.status == 'Admitted';",
    "fieldname": "btn_transfer",
    "fieldtype": "Button",
    "label": "Transfer"
@@ -341,6 +350,7 @@
   {
    "collapsible": 1,
    "collapsible_depends_on": "eval:(doc.status == \"Admitted\")",
+   "depends_on": "eval:!doc.__islocal",
    "fieldname": "encounter_details_section",
    "fieldtype": "Section Break",
    "label": "Encounter Impression",
@@ -367,7 +377,7 @@
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_details",
    "fieldtype": "Section Break",
-   "label": "Discharge Detials"
+   "label": "Discharge Details"
   },
   {
    "fieldname": "discharge_instructions",
@@ -383,6 +393,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval:!doc.__islocal;",
    "fieldname": "rehabilitation_section",
    "fieldtype": "Section Break",
    "label": "Rehabilitation",
@@ -408,15 +419,27 @@
    "fieldtype": "Datetime",
    "label": "Discharge Date",
    "permlevel": 2
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "cancellation_details_section",
+   "fieldtype": "Section Break",
+   "label": "Cancellation Details"
+  },
+  {
+   "fieldname": "reason_for_cancellation",
+   "fieldtype": "Small Text",
+   "label": "Reason for Cancellation",
+   "read_only": 1
   }
  ],
- "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-03-23 11:55:47.334773",
+ "modified": "2022-04-28 17:26:28.973945",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -503,6 +526,7 @@
  "search_fields": "patient",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "patient",
  "track_changes": 1
 }
