@@ -28,34 +28,21 @@ frappe.ui.form.on('Inpatient Record', {
 			};
 		});
 		if (!frm.doc.__islocal) {
-			if (!frm.doc.admission_encounter) {
-				if (frm.doc.status == 'Admitted') {
-					frm.add_custom_button(__('Schedule Discharge'), function() {
-						schedule_discharge(frm);
-					});
-				} else if (frm.doc.status == 'Admission Scheduled') {
-					frm.add_custom_button(__('Cancel Admission'), function() {
-						cancel_ip_order(frm)
-					})
-				}
-			}
-
-			if (frm.doc.status == 'Admission Scheduled') {
+			if (frm.doc.status == 'Admitted') {
+				frm.add_custom_button(__('Schedule Discharge'), function() {
+					schedule_discharge(frm);
+				});
+			} else if (frm.doc.status == 'Admission Scheduled') {
+				frm.add_custom_button(__('Cancel Admission'), function() {
+					cancel_ip_order(frm)
+				})
 				frm.add_custom_button(__('Admit'), function() {
 					admit_patient_dialog(frm);
 				} );
-			}
-
-			if (frm.doc.status == 'Discharge Scheduled') {
+			} else if (frm.doc.status == 'Discharge Scheduled') {
 				frm.add_custom_button(__('Discharge'), function() {
 					discharge_patient(frm);
 				} );
-			}
-
-			if (frm.doc.status != 'Admitted') {
-				frm.set_df_property('btn_transfer', 'hidden', 1);
-			} else {
-				frm.set_df_property('btn_transfer', 'hidden', 0);
 			}
 		}
 	},
@@ -241,19 +228,46 @@ var schedule_discharge = function(frm) {
 	var dialog = new frappe.ui.Dialog ({
 		title: 'Inpatient Discharge',
 		fields: [
-			{fieldtype: 'Datetime', label: 'Discharge Ordered DateTime', fieldname: 'discharge_ordered_datetime', default: frappe.datetime.now_datetime()},
-			{fieldtype: 'Date', label: 'Followup Date', fieldname: 'followup_date'},
-			{fieldtype: 'Column Break'},
-			{fieldtype: 'Small Text', label: 'Discharge Instructions', fieldname: 'discharge_instructions'},
-			{fieldtype: 'Section Break', label:'Discharge Summary'},
-			{fieldtype: 'Long Text', label: 'Discharge Note', fieldname: 'discharge_note'}
+			{
+				fieldtype: 'Link',
+				label: 'Discharge Practitioner',
+				fieldname: 'discharge_practitioner',
+				options: 'Healthcare Practitioner'
+			},
+			{
+				fieldtype: 'Datetime',
+				label: 'Discharge Ordered DateTime',
+				fieldname: 'discharge_ordered_datetime',
+				default: frappe.datetime.now_datetime()
+			},
+			{
+				fieldtype: 'Date',
+				label: 'Followup Date',
+				fieldname: 'followup_date'
+			},
+			{
+				fieldtype: 'Column Break'
+			},
+			{
+				fieldtype: 'Small Text',
+				label: 'Discharge Instructions',
+				fieldname: 'discharge_instructions'
+			},
+			{
+				fieldtype: 'Section Break',
+				label:'Discharge Summary'
+			},
+			{
+				fieldtype: 'Long Text',
+				label: 'Discharge Note',
+				fieldname: 'discharge_note'
+			}
 		],
 		primary_action_label: __('Order Discharge'),
 		primary_action : function() {
 			var args = {
 				patient: frm.doc.patient,
-				discharge_encounter: frm.doc.admission_encounter,
-				discharge_practitioner: frm.doc.practitioner,
+				discharge_practitioner: dialog.get_value('discharge_practitioner'),
 				discharge_ordered_datetime: dialog.get_value('discharge_ordered_datetime'),
 				followup_date: dialog.get_value('followup_date'),
 				discharge_instructions: dialog.get_value('discharge_instructions'),

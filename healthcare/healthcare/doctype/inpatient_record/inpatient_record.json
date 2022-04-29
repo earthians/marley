@@ -323,6 +323,7 @@
    "permlevel": 2
   },
   {
+   "depends_on": "eval:doc.status == 'Admitted';",
    "fieldname": "btn_transfer",
    "fieldtype": "Button",
    "label": "Transfer"
@@ -434,7 +435,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-04-27 13:32:16.940874",
+ "modified": "2022-04-28 17:26:28.973945",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

@@ -135,7 +135,8 @@ def schedule_discharge(args):
 		inpatient_record.status = 'Discharge Scheduled'
 		inpatient_record.save(ignore_permissions = True)
 		frappe.db.set_value('Patient', discharge_order['patient'], 'inpatient_status', inpatient_record.status)
-		frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
+		if inpatient_record.discharge_encounter:
+			frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
 
 
 def set_details_from_ip_order(inpatient_record, ip_order):
