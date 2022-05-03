@@ -104,6 +104,11 @@ config = {
         'url': '/v2/document/verify/mobile/otp',
         'encrypted': True
     },
+    "get_card": {
+        'method': 'GET',
+        'url': '/v1/account/getPngCard',
+        'encrypted': False
+    },
 }
 
 

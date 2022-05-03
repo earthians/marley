@@ -27,6 +27,20 @@ def get_custom_fields():
 				insert_after='phr_address',
 				read_only=1,
 			)
+			dict(
+				fieldname='abha_card',
+				label='ABHA Card',
+				fieldtype='Attach',
+				insert_after='patient_details',
+				hidden=1,
+			)
+			dict(
+				fieldname='consent_for_aadhaar_use',
+				label='Consent For Aadhaar Use',
+				fieldtype='Attach',
+				insert_after='abha_card',
+				hidden=1,
+			)
 		]
 	}
 	return custom_fields

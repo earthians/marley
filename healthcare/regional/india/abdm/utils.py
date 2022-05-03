@@ -57,7 +57,7 @@ def get_authorization_token():
 
 
 @frappe.whitelist()
-def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
+def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, patient_name=None):
 	if payload and isinstance(payload, str):
 		payload = json.loads(payload)
 
@@ -81,7 +81,6 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 	config = get_url(url_key)
 	base_url = base_url.rstrip('/')
 	url = base_url + config.get('url')
-
 	# Check the abdm_config, if the data need to be encypted, encrypts message
 	# Build payload with encrypted message
 	if config.get('encrypted'):
@@ -109,7 +108,6 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 		if isinstance(rec_headers, str):
 			rec_headers = json.loads(rec_headers)
 		headers.update(rec_headers)
-
 	req = frappe.new_doc('ABDM Request')
 	req.status = 'Requested'
 	# TODO: skip saving or encrypt the data saved
@@ -124,6 +122,19 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None):
 			data=json.dumps(payload)
 		)
 		response.raise_for_status()
+		if url_key == 'get_card':
+			pdf = response.content
+			_file = frappe.get_doc({
+				"doctype": "File",
+				"file_name": 'abha_card{}.png'.format(patient_name),
+				"attached_to_doctype": 'Patient',
+				"attached_to_name": patient_name,
+				"attached_to_field": "abha_card",
+				"is_private": 0,
+				"content": pdf})
+			_file.save()
+			frappe.db.commit()
+			return _file
 		req.response = json.dumps(response.json(), indent=4)
 		req.status = 'Granted'
 		req.insert(ignore_permissions=True)
@@ -221,3 +232,15 @@ def get_health_data(otp, txnId, auth_method):
 		}
 		response = abdm_request('', 'get_acc_info', 'Health ID', header, '')
 	return response
+
+
+def set_consent_attachment_details(doc, method=None):
+	if doc.consent_for_aadhaar_use:
+		file_name = frappe.db.get_value('File', {
+			'file_url': doc.consent_for_aadhaar_use
+		}, 'name')
+		frappe.db.set_value('File', file_name, {
+			'attached_to_doctype': 'Patient',
+			'attached_to_name': doc.name,
+			'attached_to_field': doc.consent_for_aadhaar_use
+		})
