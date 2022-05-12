@@ -46,6 +46,8 @@
   "sb_normal",
   "lab_test_html",
   "normal_test_items",
+  "sb_descriptive_result",
+  "descriptive_result",
   "sb_descriptive",
   "descriptive_test_items",
   "organisms_section",
@@ -66,6 +68,7 @@
   "sms_sent",
   "printed",
   "normal_toggle",
+  "imaging_toggle",
   "descriptive_toggle",
   "sensitivity_toggle",
   "amended_from",
@@ -555,14 +558,30 @@
    "label": "Organism Test Result",
    "options": "Organism Test Result",
    "print_hide": 1
+  },
+  {
+   "fieldname": "descriptive_result",
+   "fieldtype": "Text Editor",
+   "label": "Descriptive Result"
+  },
+  {
+   "fieldname": "sb_descriptive_result",
+   "fieldtype": "Section Break",
+   "label": "Descriptive Result"
+  },
+  {
+   "default": "0",
+   "fieldname": "imaging_toggle",
+   "fieldtype": "Check"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2020-11-30 11:04:17.195848",
+ "modified": "2022-04-12 07:23:13.890135",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -604,6 +623,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "patient",
  "track_changes": 1,
  "track_seen": 1

@@ -6,6 +6,7 @@ cur_frm.cscript.custom_refresh = function (doc) {
 	cur_frm.toggle_display('organisms_section', doc.descriptive_toggle);
 	cur_frm.toggle_display('sb_descriptive', doc.descriptive_toggle);
 	cur_frm.toggle_display('sb_normal', doc.normal_toggle);
+	cur_frm.toggle_display('sb_descriptive_result', doc.imaging_toggle);
 };
 
 frappe.ui.form.on('Lab Test', {
