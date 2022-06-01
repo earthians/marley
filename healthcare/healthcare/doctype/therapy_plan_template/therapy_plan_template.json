@@ -1,19 +1,20 @@
 {
  "actions": [],
  "autoname": "field:plan_name",
- "creation": "2020-09-22 17:51:38.861055",
+ "creation": "2022-01-21 19:58:31.906990",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "plan_name",
   "linked_item_details_section",
+  "link_existing_item",
+  "linked_item",
   "item_code",
   "item_name",
   "item_group",
   "column_break_6",
   "description",
-  "linked_item",
   "therapy_types_section",
   "therapy_types",
   "section_break_11",
@@ -43,11 +44,13 @@
    "reqd": 1
   },
   {
+   "depends_on": "eval: !doc.__islocal || doc.link_existing_item",
    "fieldname": "linked_item",
    "fieldtype": "Link",
-   "label": "Linked Item",
+   "label": "Item",
+   "mandatory_depends_on": "eval:doc.link_existing_item",
    "options": "Item",
-   "read_only": 1
+   "read_only_depends_on": "eval: !doc.__islocal"
   },
   {
    "fieldname": "linked_item_details_section",
@@ -55,16 +58,19 @@
    "label": "Linked Item Details"
   },
   {
+   "depends_on": "eval:!doc.link_existing_item || !doc.__islocal",
    "fieldname": "item_code",
    "fieldtype": "Data",
    "label": "Item Code",
-   "reqd": 1,
+   "mandatory_depends_on": "eval:!doc.link_existing_item",
+   "read_only_depends_on": "eval: !doc.__islocal",
    "set_only_once": 1
   },
   {
    "fieldname": "item_name",
    "fieldtype": "Data",
    "label": "Item Name",
+   "read_only_depends_on": "eval:doc.link_existing_item",
    "reqd": 1
   },
   {
@@ -72,6 +78,7 @@
    "fieldtype": "Link",
    "label": "Item Group",
    "options": "Item Group",
+   "read_only_depends_on": "eval:doc.link_existing_item",
    "reqd": 1
   },
   {
@@ -81,7 +88,8 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Item Description"
+   "label": "Item Description",
+   "read_only_depends_on": "eval:doc.link_existing_item"
   },
   {
    "fieldname": "total_amount",
@@ -102,14 +110,22 @@
   {
    "fieldname": "column_break_13",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.__islocal",
+   "fieldname": "link_existing_item",
+   "fieldtype": "Check",
+   "label": "Link existing Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2020-10-08 00:56:58.062105",
+ "modified": "2022-05-31 16:37:04.658515",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Plan Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -128,5 +144,6 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

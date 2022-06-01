@@ -10,16 +10,22 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
-from frappe.utils import flt
+from frappe.utils import flt, today
 
 
 class LabTestTemplate(Document):
+	def before_insert(self):
+		if self.link_existing_item and self.item:
+			price_list = frappe.db.get_all('Item Price', {"item_code": self.item}, ["price_list_rate"], order_by="valid_from desc")
+			if price_list:
+				self.lab_test_rate = price_list[0].get('price_list_rate')
+
 	def after_insert(self):
-		if not self.item:
+		if not self.item and not self.link_existing_item:
 			create_item_from_template(self)
 
 	def validate(self):
-		if self.is_billable and (not self.lab_test_rate or self.lab_test_rate <= 0.0):
+		if self.is_billable and not self.link_existing_item and (not self.lab_test_rate or self.lab_test_rate <= 0.0):
 			frappe.throw(_('Standard Selling Rate should be greater than zero.'))
 
 		if self.sample and flt(self.sample_qty) <= 0:
@@ -78,9 +84,12 @@ class LabTestTemplate(Document):
 			item.save(ignore_permissions=True)
 
 	def item_price_exists(self):
-		item_price = frappe.db.exists({'doctype': 'Item Price', 'item_code': self.lab_test_code})
+		item_price = frappe.db.exists(
+						'Item Price',
+						{'item_code': self.item, 'valid_from': today()}
+		)
 		if item_price:
-			return item_price[0][0]
+			return item_price
 		return False
 
 	def validate_conversion_factor(self):
@@ -143,8 +152,10 @@ def change_test_code_from_template(lab_test_code, doc):
 	if frappe.db.exists({'doctype': 'Item', 'item_code': lab_test_code}):
 		frappe.throw(_('Lab Test Item {0} already exist').format(lab_test_code))
 	else:
-		rename_doc('Item', doc.name, lab_test_code, ignore_permissions=True)
-		frappe.db.set_value('Lab Test Template', doc.name, 'lab_test_code', lab_test_code)
-		frappe.db.set_value('Lab Test Template', doc.name, 'lab_test_name', lab_test_code)
+		rename_doc('Item', doc.item, lab_test_code, ignore_permissions=True)
+		frappe.db.set_value(
+			'Lab Test Template', doc.name, 
+				{'lab_test_code': lab_test_code, 'lab_test_name': lab_test_code}
+		)
 		rename_doc('Lab Test Template', doc.name, lab_test_code, ignore_permissions=True)
 	return lab_test_code
