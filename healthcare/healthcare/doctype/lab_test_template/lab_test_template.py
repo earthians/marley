@@ -11,6 +11,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
 from frappe.utils import flt, today
+from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template import (
+	make_item_price,
+	update_item_and_item_price
+)
 
 
 class LabTestTemplate(Document):
@@ -36,22 +40,8 @@ class LabTestTemplate(Document):
 
 	def on_update(self):
 		# If change_in_item update Item and Price List
-		if self.change_in_item and self.is_billable and self.item:
-			self.update_item()
-			item_price = self.item_price_exists()
-			if not item_price:
-				if self.lab_test_rate and self.lab_test_rate > 0.0:
-					price_list_name = frappe.db.get_value('Selling Settings', None, 'selling_price_list') or frappe.db.get_value('Price List', {'selling': 1})
-					make_item_price(self.lab_test_code, price_list_name, self.lab_test_rate)
-			else:
-				frappe.db.set_value('Item Price', item_price, 'price_list_rate', self.lab_test_rate)
-
-			self.db_set('change_in_item', 0)
-
-		elif not self.is_billable and self.item:
-			frappe.db.set_value('Item', self.item, 'disabled', 1)
-
-		self.reload()
+		if self.change_in_item:
+			update_item_and_item_price(self)
 
 	def on_trash(self):
 		# Remove template reference from item and disable item
@@ -129,21 +119,14 @@ def create_item_from_template(doc):
 	if doc.is_billable and doc.lab_test_rate != 0.0:
 		price_list_name = frappe.db.get_value('Selling Settings', None, 'selling_price_list') or frappe.db.get_value('Price List', {'selling': 1})
 		if doc.lab_test_rate:
-			make_item_price(item.name, price_list_name, doc.lab_test_rate)
+			make_item_price(item.name, doc.lab_test_rate)
 		else:
-			make_item_price(item.name, price_list_name, 0.0)
+			make_item_price(item.name, 0.0)
 	# Set item in the template
 	frappe.db.set_value('Lab Test Template', doc.name, 'item', item.name)
 
 	doc.reload()
 
-def make_item_price(item, price_list_name, item_price):
-	frappe.get_doc({
-		'doctype': 'Item Price',
-		'price_list': price_list_name,
-		'item_code': item,
-		'price_list_rate': item_price
-	}).insert(ignore_permissions=True, ignore_mandatory=True)
 
 @frappe.whitelist()
 def change_test_code_from_template(lab_test_code, doc):
