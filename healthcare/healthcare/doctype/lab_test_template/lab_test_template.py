@@ -131,14 +131,17 @@ def create_item_from_template(doc):
 @frappe.whitelist()
 def change_test_code_from_template(lab_test_code, doc):
 	doc = frappe._dict(json.loads(doc))
-
 	if frappe.db.exists({'doctype': 'Item', 'item_code': lab_test_code}):
 		frappe.throw(_('Lab Test Item {0} already exist').format(lab_test_code))
 	else:
 		rename_doc('Item', doc.item, lab_test_code, ignore_permissions=True)
 		frappe.db.set_value(
-			'Lab Test Template', doc.name, 
-				{'lab_test_code': lab_test_code, 'lab_test_name': lab_test_code}
+			'Lab Test Template',
+			doc.name,
+			{
+				'lab_test_code': lab_test_code,
+				'lab_test_name': lab_test_code
+			}
 		)
 		rename_doc('Lab Test Template', doc.name, lab_test_code, ignore_permissions=True)
 	return lab_test_code
