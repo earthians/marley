@@ -103,7 +103,7 @@ class DiagnosisTrends(object):
 			encounters = frappe.get_all('Patient Encounter', filters={'medical_department': department}, pluck='name')
 			if encounters:
 				_operator = OPERATOR_MAP['in']
-				query = query.where(_operator('parent', encounters))
+				query = query.where(_operator(pe_diagnosis.parent, encounters))
 
 		self.entries = query.run(as_dict=True)
 		self.get_rows()
