@@ -43,9 +43,6 @@
   "sample_qty",
   "column_break_33",
   "sample_details",
-  "consumables_section",
-  "consume_stock",
-  "items",
   "medical_coding_section",
   "medical_code",
   "medical_code_standard",
@@ -344,28 +341,10 @@
    "fieldname": "link_existing_item",
    "fieldtype": "Check",
    "label": "Link existing Item"
-  },
-  {
-   "fieldname": "consumables_section",
-   "fieldtype": "Section Break",
-   "label": "Consumables"
-  },
-  {
-   "default": "0",
-   "fieldname": "consume_stock",
-   "fieldtype": "Check",
-   "label": "Allow Stock Consumption",
-   "search_index": 1
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Items",
-   "options": "Clinical Procedure Item"
   }
  ],
  "links": [],
- "modified": "2022-06-06 13:33:20.293854",
+ "modified": "2022-06-10 12:57:31.787436",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
