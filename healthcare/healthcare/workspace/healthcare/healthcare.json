@@ -152,6 +152,16 @@
    "onboard": 0,
    "type": "Link"
   },
+   {
+     "dependencies": "",
+    "hidden": 0,
+    "is_query_report": 0,
+    "label": "Treatment Plan Template",
+    "link_to": "Treatment Plan Template",
+    "link_type": "DocType",
+    "onboard": 0,
+    "type": "Link"
+    },
   {
    "hidden": 0,
    "is_query_report": 0,
@@ -282,6 +292,17 @@
    "link_to": "Healthcare Settings",
    "link_type": "DocType",
    "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient History Settings",
+   "link_count": 0,
+   "link_to": "Patient History Settings",
+   "link_type": "DocType",
+   "onboard": 0,
    "type": "Link"
   },
   {
@@ -445,6 +466,17 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Therapy Plan Template",
+   "link_count": 0,
+   "link_to": "Therapy Plan Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Therapy Plan",
    "link_count": 0,
    "link_to": "Therapy Plan",
@@ -579,7 +611,7 @@
    "type": "Link"
   }
  ],
- "modified": "2021-11-13 09:51:02.586305",
+ "modified": "2022-03-31 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare",

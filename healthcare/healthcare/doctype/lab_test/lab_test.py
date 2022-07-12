@@ -228,6 +228,14 @@ def create_normals(template, lab_test):
 	normal.allow_blank = 0
 	normal.template = template.name
 
+
+def create_imaging(template, lab_test):
+	lab_test.imaging_toggle = 1
+	lab_test.template = template.name
+	lab_test.lab_test_name = template.lab_test_name
+	lab_test.descriptive_result = template.descriptive_result
+
+
 def create_compounds(template, lab_test, is_group):
 	lab_test.normal_toggle = 1
 	for normal_test_template in template.normal_test_templates:
@@ -307,6 +315,7 @@ def create_sample_collection(lab_test, template, patient, invoice):
 				title=_('Sample Collection'), indicator='green')
 	return lab_test
 
+
 def load_result_format(lab_test, template, prescription, invoice):
 	if template.lab_test_template_type == 'Single':
 		create_normals(template, lab_test)
@@ -316,6 +325,9 @@ def load_result_format(lab_test, template, prescription, invoice):
 
 	elif template.lab_test_template_type == 'Descriptive':
 		create_descriptives(template, lab_test)
+
+	elif template.lab_test_template_type == 'Imaging':
+		create_imaging(template, lab_test)
 
 	elif template.lab_test_template_type == 'Grouped':
 		# Iterate for each template in the group and create one result for all.

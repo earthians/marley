@@ -5,7 +5,6 @@ import frappe
 from frappe import _, scrub
 from frappe.database.query import OPERATOR_MAP
 from frappe.utils import add_days, add_to_date, flt, getdate
-from six import iteritems
 
 from erpnext.accounts.utils import get_fiscal_year
 
@@ -104,7 +103,7 @@ class DiagnosisTrends(object):
 			encounters = frappe.get_all('Patient Encounter', filters={'medical_department': department}, pluck='name')
 			if encounters:
 				_operator = OPERATOR_MAP['in']
-				query = query.where(_operator('parent', encounters))
+				query = query.where(_operator(pe_diagnosis.parent, encounters))
 
 		self.entries = query.run(as_dict=True)
 		self.get_rows()
@@ -128,7 +127,7 @@ class DiagnosisTrends(object):
 	def get_rows(self):
 		self.get_periodic_data()
 
-		for entity, period_data in iteritems(self.appointment_periodic_data):
+		for entity, period_data in self.appointment_periodic_data.items():
 			row = {'diagnosis': entity}
 
 			total = 0

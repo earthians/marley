@@ -11,7 +11,7 @@ app_color = "grey"
 app_email = "contact@frappe.io"
 app_license = "MIT"
 
-required_apps = ["erpnext"]
+# required_apps = ["erpnext"]
 
 # Includes in <head>
 # ------------------
@@ -72,7 +72,7 @@ doctype_js = {
 # ------------
 
 # before_install = "healthcare.install.before_install"
-# after_install = "healthcare.install.after_install"
+after_install = "healthcare.setup.setup_healthcare"
 
 # Desk Notifications
 # ------------------
@@ -114,6 +114,9 @@ doc_events = {
 		"on_submit": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 		"on_cancel": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 	},
+	"Company": {
+		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root"
+	}
 }
 
 scheduler_events = {
@@ -232,7 +235,7 @@ global_search_doctypes = {
 }
 
 domains = {
-	'Healthcare': 'healthcare.healthcare.healthcare',
+	'Healthcare': 'healthcare.setup',
 }
 
 standard_portal_menu_items = [

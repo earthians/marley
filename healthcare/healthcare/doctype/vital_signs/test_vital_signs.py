@@ -3,9 +3,9 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 # test_records = frappe.get_test_records('Vital Signs')
 
-class TestVitalSigns(unittest.TestCase):
+class TestVitalSigns(FrappeTestCase):
 	pass

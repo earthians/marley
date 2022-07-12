@@ -3,14 +3,15 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
+import os
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_patient
 
 
-class TestPatient(unittest.TestCase):
+class TestPatient(FrappeTestCase):
 	def test_customer_created(self):
 		frappe.db.sql("""delete from `tabPatient`""")
 		frappe.db.set_value('Healthcare Settings', None, 'link_customer_to_patient', 1)
@@ -80,7 +81,7 @@ class TestPatient(unittest.TestCase):
 
 		patient_name = create_patient()
 		patient = frappe.get_doc('Patient', patient_name)
-		patient.image = '/files/bar.png'
+		patient.image = os.path.abspath("assets/frappe/images/default-avatar.png")
 		patient.save()
 
 		customer = frappe.get_doc('Customer', patient.customer)

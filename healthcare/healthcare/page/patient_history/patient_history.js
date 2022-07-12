@@ -267,17 +267,17 @@ class PatientHistory {
 
 				if (data.occupation) details += `<br><br><b> ${__('Occupation')} : </b> ${data.occupation}`;
 				if (data.blood_group) details += `<br><b> ${__('Blood Group')} : </b> ${data.blood_group}`;
-				if (data.allergies) details +=  `<br><br><b> ${__('Allerigies')} : </b> ${data.allergies.replace("\n", ", ")}`;
-				if (data.medication) details +=  `<br><b> ${__('Medication')} : </b> ${data.medication.replace("\n", ", ")}`;
+				if (data.allergies) details +=  `<br><br><b> ${__('Allerigies')} : </b> ${data.allergies.replace(/\n/g, ", ")}`;
+				if (data.medication) details +=  `<br><b> ${__('Medication')} : </b> ${data.medication.replace(/\n/g, ", ")}`;
 				if (data.alcohol_current_use) details +=  `<br><br><b> ${__('Alcohol use')} : </b> ${data.alcohol_current_use}`;
 				if (data.alcohol_past_use) details +=  `<br><b> ${__('Alcohol past use')} : </b> ${data.alcohol_past_use}`;
 				if (data.tobacco_current_use) details +=  `<br><b> ${__('Tobacco use')} : </b> ${data.tobacco_current_use}`;
 				if (data.tobacco_past_use) details +=  `<br><b> ${__('Tobacco past use')} : </b> ${data.tobacco_past_use}`;
-				if (data.medical_history) details +=  `<br><br><b> ${__('Medical history')} : </b> ${data.medical_history.replace("\n", ", ")}`;
-				if (data.surgical_history) details +=  `<br><b> ${__('Surgical history')} : </b> ${data.surgical_history.replace("\n", ", ")}`;
-				if (data.surrounding_factors) details +=  `<br><br><b> ${__('Occupational hazards')} : </b> ${data.surrounding_factors.replace("\n", ", ")}`;
-				if (data.other_risk_factors) details += `<br><b> ${__('Other risk factors')} : </b> ${data.other_risk_factors.replace("\n", ", ")}`;
-				if (data.patient_details) details += `<br><br><b> ${__('More info')} : </b> ${data.patient_details.replace("\n", ", ")}`;
+				if (data.medical_history) details +=  `<br><br><b> ${__('Medical history')} : </b> ${data.medical_history.replace(/\n/g, ", ")}`;
+				if (data.surgical_history) details +=  `<br><b> ${__('Surgical history')} : </b> ${data.surgical_history.replace(/\n/g, ", ")}`;
+				if (data.surrounding_factors) details +=  `<br><br><b> ${__('Occupational hazards')} : </b> ${data.surrounding_factors.replace(/\n/g, ", ")}`;
+				if (data.other_risk_factors) details += `<br><b> ${__('Other risk factors')} : </b> ${data.other_risk_factors.replace(/\n/g, ", ")}`;
+				if (data.patient_details) details += `<br><br><b> ${__('More info')} : </b> ${data.patient_details.replace(/\n/g, ", ")}`;
 
 				if (details) {
 					details = `<div style='font-size:13px;' align='left'>` + details + `</div>`;

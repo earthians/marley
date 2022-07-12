@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
-import unittest
+from __future__ import unicode_literals
+
+from frappe.tests.utils import FrappeTestCase
 
 import frappe
 from frappe.utils import nowdate
 
 
-class TestTherapySession(unittest.TestCase):
+class TestTherapySession(FrappeTestCase):
 	pass
 
 

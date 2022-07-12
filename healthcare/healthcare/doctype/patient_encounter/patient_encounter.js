@@ -2,6 +2,28 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Patient Encounter', {
+	onload: function(frm) {
+		if (!frm.doc.__islocal && frm.doc.docstatus === 1 &&
+			frm.doc.inpatient_status == 'Admission Scheduled') {
+				frappe.db.get_value('Inpatient Record', frm.doc.inpatient_record,
+					['admission_encounter', 'status']).then(r => {
+						if (r.message) {
+							if (r.message.admission_encounter == frm.doc.name &&
+								r.message.status == 'Admission Scheduled') {
+									frm.add_custom_button(__('Cancel Admission'), function() {
+										cancel_ip_order(frm);
+									});
+								}
+							if (r.message.status == 'Admitted') {
+								frm.add_custom_button(__('Schedule Discharge'), function() {
+									schedule_discharge(frm);
+								});
+							}
+						}
+				})
+		}
+	},
+
 	setup: function(frm) {
 		frm.get_field('therapies').grid.editable_fields = [
 			{fieldname: 'therapy_type', columns: 8},
@@ -27,11 +49,7 @@ frappe.ui.form.on('Patient Encounter', {
 
 		if (!frm.doc.__islocal) {
 			if (frm.doc.docstatus === 1) {
-				if (frm.doc.inpatient_status == 'Admission Scheduled' || frm.doc.inpatient_status == 'Admitted') {
-					frm.add_custom_button(__('Schedule Discharge'), function() {
-						schedule_discharge(frm);
-					});
-				} else if (frm.doc.inpatient_status != 'Discharge Scheduled') {
+				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted'].includes(frm.doc.inpatient_status)) {
 					frm.add_custom_button(__('Schedule Admission'), function() {
 						schedule_inpatient(frm);
 					});
@@ -455,3 +473,31 @@ let calculate_age = function(birth) {
 	let years =  age.getFullYear() - 1970;
 	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
 };
+
+let cancel_ip_order = function(frm) {
+	frappe.prompt([
+		{
+			fieldname: 'reason_for_cancellation',
+			label: __('Reason for Cancellation'),
+			fieldtype: 'Small Text',
+			reqd: 1
+		}
+	],
+	function(data) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.set_ip_order_cancelled',
+			async: false,
+			freeze: true,
+			args: {
+				inpatient_record: frm.doc.inpatient_record,
+				reason: data.reason_for_cancellation,
+				encounter: frm.doc.name
+			},
+			callback: function(r) {
+				if (!r.exc) {
+					frm.reload_doc();
+				}
+			}
+		});
+	}, __('Reason for Cancellation'), __('Submit'));
+}

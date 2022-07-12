@@ -3,13 +3,14 @@
  "allow_copy": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "field:lab_test_code",
+ "autoname": "field:lab_test_name",
  "beta": 1,
  "creation": "2016-03-29 17:35:36.761223",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "lab_test_name",
+  "link_existing_item",
   "item",
   "lab_test_code",
   "lab_test_group",
@@ -22,6 +23,8 @@
   "lab_test_rate",
   "section_break_description",
   "lab_test_description",
+  "section_break_descriptive_result",
+  "descriptive_result",
   "section_break_normal",
   "lab_test_uom",
   "secondary_uom",
@@ -60,15 +63,17 @@
    "label": "Test Name",
    "no_copy": 1,
    "reqd": 1,
-   "search_index": 1
+   "unique": 1
   },
   {
+   "depends_on": "eval: !doc.__islocal || doc.link_existing_item",
    "fieldname": "item",
    "fieldtype": "Link",
    "label": "Item",
+   "mandatory_depends_on": "eval:doc.link_existing_item",
    "no_copy": 1,
    "options": "Item",
-   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.__islocal",
    "search_index": 1
   },
   {
@@ -76,9 +81,9 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Item Code",
+   "mandatory_depends_on": "eval:!doc.link_existing_item",
    "no_copy": 1,
-   "reqd": 1,
-   "unique": 1
+   "read_only_depends_on": "eval:!doc.__islocal"
   },
   {
    "fieldname": "lab_test_group",
@@ -87,6 +92,7 @@
    "in_standard_filter": 1,
    "label": "Item Group",
    "options": "Item Group",
+   "read_only_depends_on": "eval:doc.link_existing_item",
    "reqd": 1,
    "search_index": 1
   },
@@ -109,11 +115,11 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Result Format",
-   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nNo Result"
+   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nImaging\nNo Result"
   },
   {
    "default": "1",
-   "depends_on": "eval:doc.lab_test_template_type != 'Grouped'",
+   "depends_on": "eval:doc.lab_test_template_type != 'Grouped' && (!doc.link_existing_item || !doc.__islocal);",
    "description": "If unchecked, the item will not be available in Sales Invoices for billing but can be used in group test creation. ",
    "fieldname": "is_billable",
    "fieldtype": "Check",
@@ -121,13 +127,13 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval:doc.is_billable == 1",
+   "depends_on": "eval:doc.is_billable && (!doc.link_existing_item || !doc.__islocal)",
    "description": "This value is updated in the Default Sales Price List.",
    "fieldname": "lab_test_rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Rate",
-   "mandatory_depends_on": "eval:doc.is_billable == 1"
+   "mandatory_depends_on": "eval:doc.is_billable && !doc.link_existing_item"
   },
   {
    "collapsible": 1,
@@ -213,6 +219,7 @@
    "label": "Description "
   },
   {
+   "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
    "fieldname": "lab_test_description",
    "fieldtype": "Text Editor",
    "ignore_xss_filter": 1,
@@ -323,11 +330,29 @@
    "fieldtype": "Link",
    "label": "Nursing Checklist Template",
    "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "descriptive_result",
+   "fieldtype": "Text Editor",
+   "label": "Descriptive Result"
+  },
+  {
+   "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
+   "fieldname": "section_break_descriptive_result",
+   "fieldtype": "Section Break",
+   "label": "Descriptive Result"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.__islocal",
+   "fieldname": "link_existing_item",
+   "fieldtype": "Check",
+   "label": "Link existing Item"
   }
  ],
  "links": [],
  "migration_hash": "04ea062dcd8e59976e0c33bb708f4d77",
- "modified": "2021-10-29 07:03:29.808489",
+ "modified": "2022-06-10 12:57:31.787436",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
@@ -360,6 +385,7 @@
  "search_fields": "lab_test_code,lab_test_name,lab_test_template_type",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "lab_test_name",
  "track_changes": 1
 }

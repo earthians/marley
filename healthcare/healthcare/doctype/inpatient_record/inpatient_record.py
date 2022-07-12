@@ -27,9 +27,12 @@ class InpatientRecord(Document):
 	def validate(self):
 		self.validate_dates()
 		self.validate_already_scheduled_or_admitted()
-		if self.status == "Discharged":
-			frappe.db.set_value("Patient", self.patient, "inpatient_status", None)
-			frappe.db.set_value("Patient", self.patient, "inpatient_record", None)
+		if self.status in ["Discharged", "Cancelled"]:
+			frappe.db.set_value("Patient", self.patient, {
+				"inpatient_status": None,
+				"inpatient_record": None
+			})
+
 
 	def validate_dates(self):
 		if (getdate(self.expected_discharge) < getdate(self.scheduled_date)) or \
@@ -144,7 +147,8 @@ def schedule_discharge(args):
 		inpatient_record.save(ignore_permissions = True)
 
 		frappe.db.set_value('Patient', discharge_order['patient'], 'inpatient_status', inpatient_record.status)
-		frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
+		if inpatient_record.discharge_encounter:
+			frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
 
 		if inpatient_record.discharge_nursing_checklist_template:
 			NursingTask.create_nursing_tasks_from_template(
@@ -222,10 +226,11 @@ def get_pending_invoices(inpatient_record):
 		service_unit_names = False
 		for inpatient_occupancy in inpatient_record.inpatient_occupancies:
 			if not inpatient_occupancy.invoiced:
-				if service_unit_names:
-					service_unit_names += ", " + inpatient_occupancy.service_unit
-				else:
-					service_unit_names = inpatient_occupancy.service_unit
+				if is_service_unit_billable(inpatient_occupancy.service_unit):
+					if service_unit_names:
+						service_unit_names += ", " + inpatient_occupancy.service_unit
+					else:
+						service_unit_names = inpatient_occupancy.service_unit
 		if service_unit_names:
 			pending_invoices["Inpatient Occupancy"] = service_unit_names
 
@@ -269,8 +274,11 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 	inpatient_record.set('inpatient_occupancies', [])
 	transfer_patient(inpatient_record, service_unit, check_in)
 
-	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_status', 'Admitted')
-	frappe.db.set_value('Patient', inpatient_record.patient, 'inpatient_record', inpatient_record.name)
+	frappe.db.set_value("Patient", inpatient_record.patient, {
+		"inpatient_status":"Admitted",
+		"inpatient_record": inpatient_record.name
+	})
+
 
 
 def transfer_patient(inpatient_record, service_unit, check_in):
@@ -313,3 +321,31 @@ def get_leave_from(doctype, txt, searchfield, start, page_len, filters):
 		'start': start,
 		'page_len': page_len
 	})
+
+
+def is_service_unit_billable(service_unit):
+	service_unit_doc = frappe.qb.DocType('Healthcare Service Unit')
+	service_unit_type = frappe.qb.DocType('Healthcare Service Unit Type')
+	result = (
+		frappe.qb.from_(service_unit_doc)
+		.left_join(service_unit_type)
+		.on(service_unit_doc.service_unit_type == service_unit_type.name)
+		.select(service_unit_type.is_billable)
+		.where(service_unit_doc.name==service_unit)
+	).run(as_dict=1)
+	return result[0].get('is_billable', 0)
+
+
+@frappe.whitelist()
+def set_ip_order_cancelled(inpatient_record, reason, encounter=None):
+	inpatient_record = frappe.get_doc('Inpatient Record', inpatient_record)
+	if inpatient_record.status == 'Admission Scheduled':
+		inpatient_record.status = 'Cancelled'
+		inpatient_record.reason_for_cancellation = reason
+		inpatient_record.save(ignore_permissions=True)
+		encounter_name = encounter if encounter else inpatient_record.admission_encounter
+		if encounter_name:
+			frappe.db.set_value('Patient Encounter', encounter_name, {
+					'inpatient_status': None,
+					'inpatient_record': None
+				})

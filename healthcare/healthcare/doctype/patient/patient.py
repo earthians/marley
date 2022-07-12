@@ -145,7 +145,7 @@ class Patient(Document):
 		age = self.age
 		if not age:
 			return
-		age_str = f'{str(age.years)} {_("Years(s)")} {str(age.months)} {_("Month(s)")} {str(age.days)} {_("Day(s)")}'
+		age_str = f'{str(age.years)} {_("Year(s)")} {str(age.months)} {_("Month(s)")} {str(age.days)} {_("Day(s)")}'
 		return age_str
 
 	@frappe.whitelist()
@@ -272,6 +272,7 @@ def get_patient_detail(patient):
 
 	details = patient_dict[0]
 	if vital_sign:
+		vital_sign[0].pop("inpatient_record")
 		details.update(vital_sign[0])
 	return details
 
