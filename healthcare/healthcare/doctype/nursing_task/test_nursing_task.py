@@ -3,7 +3,7 @@
 
 import frappe
 
-from erpnext.tests.utils import ERPNextTestCase
+from apps.frappe.frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
 from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import create_procedure
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient, discharge_patient
@@ -18,7 +18,7 @@ from healthcare.healthcare.doctype.therapy_session.test_therapy_session import c
 from healthcare.healthcare.doctype.therapy_type.test_therapy_type import create_therapy_type
 
 
-class TestNursingTask(ERPNextTestCase):
+class TestNursingTask(FrappeTestCase):
 	def setUp(self) -> None:
 		nursing_checklist_templates = frappe.get_test_records('Nursing Checklist Template')
 		self.nc_template = frappe.get_doc(nursing_checklist_templates[0]).insert(ignore_if_duplicate=True)
