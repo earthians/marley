@@ -306,7 +306,7 @@ let check_and_set_availability = function(frm) {
 				{ fieldtype: 'Column Break' },
 				{ fieldtype: 'Link', options: 'Healthcare Practitioner', reqd: 1, fieldname: 'practitioner', label: 'Healthcare Practitioner' },
 				{ fieldtype: 'Column Break' },
-				{ fieldtype: 'Date', reqd: 1, fieldname: 'appointment_date', label: 'Date' },
+				{ fieldtype: 'Date', reqd: 1, fieldname: 'appointment_date', label: 'Date', min_date: new Date(frappe.datetime.get_today()) },
 				{ fieldtype: 'Section Break' },
 				{ fieldtype: 'HTML', fieldname: 'available_slots' }
 
