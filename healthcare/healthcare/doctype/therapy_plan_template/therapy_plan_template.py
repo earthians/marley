@@ -13,7 +13,10 @@ from healthcare.healthcare.doctype.therapy_type.therapy_type import make_item_pr
 
 class TherapyPlanTemplate(Document):
 	def after_insert(self):
-		self.create_item_from_template()
+		if not self.link_existing_item:
+			self.create_item_from_template()
+		elif self.linked_item and self.total_amount:
+			make_item_price(self.linked_item, self.total_amount)
 
 	def validate(self):
 		self.set_totals()

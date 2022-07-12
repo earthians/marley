@@ -10,18 +10,26 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
+from frappe.utils import today
 
 
 class ClinicalProcedureTemplate(Document):
+	def before_insert(self):
+		if self.link_existing_item and self.item:
+			price_list = frappe.db.get_all('Item Price', {"item_code": self.item}, ["price_list_rate"], order_by="valid_from desc")
+			if price_list:
+				self.rate = price_list[0].get('price_list_rate')
+
 	def validate(self):
 		self.enable_disable_item()
 
 	def after_insert(self):
-		create_item_from_template(self)
+		if not self.link_existing_item:
+			create_item_from_template(self)
 
 	def on_update(self):
 		if self.change_in_item:
-			self.update_item_and_item_price()
+			update_item_and_item_price(self)
 
 	def enable_disable_item(self):
 		if self.is_billable:
@@ -29,26 +37,6 @@ class ClinicalProcedureTemplate(Document):
 				frappe.db.set_value('Item', self.item, 'disabled', 1)
 			else:
 				frappe.db.set_value('Item', self.item, 'disabled', 0)
-
-	def update_item_and_item_price(self):
-		if self.is_billable and self.item:
-			item_doc = frappe.get_doc('Item', {'item_code': self.item})
-			item_doc.item_name = self.template
-			item_doc.item_group = self.item_group
-			item_doc.description = self.description
-			item_doc.disabled = 0
-			item_doc.save(ignore_permissions=True)
-
-			if self.rate:
-				item_price = frappe.get_doc('Item Price', {'item_code': self.item})
-				item_price.item_name = self.template
-				item_price.price_list_rate = self.rate
-				item_price.save()
-
-		elif not self.is_billable and self.item:
-			frappe.db.set_value('Item', self.item, 'disabled', 1)
-
-		self.db_set('change_in_item', 0)
 
 
 @frappe.whitelist()
@@ -104,12 +92,13 @@ def create_item_from_template(doc):
 	doc.db_set('item', item.name)
 
 def make_item_price(item, item_price):
-	price_list_name = frappe.db.get_value('Price List', {'selling': 1})
+	price_list_name = frappe.db.get_value('Selling Settings', None, 'selling_price_list') or frappe.db.get_value('Price List', {'selling': 1})
 	frappe.get_doc({
 		'doctype': 'Item Price',
 		'price_list': price_list_name,
 		'item_code': item,
-		'price_list_rate': item_price
+		'price_list_rate': item_price,
+		'valid_from': today(),
 	}).insert(ignore_permissions=True, ignore_mandatory=True)
 
 @frappe.whitelist()
@@ -122,3 +111,34 @@ def change_item_code_from_template(item_code, doc):
 		rename_doc('Item', doc.item_code, item_code, ignore_permissions=True)
 		frappe.db.set_value('Clinical Procedure Template', doc.name, 'item_code', item_code)
 	return
+
+
+def update_item_and_item_price(doc):
+	if doc.is_billable and doc.item:
+		item_name = doc.lab_test_name if doc.get('doctype') == 'Lab Test Template' else doc.template
+		rate = doc.lab_test_rate if doc.get('doctype') == 'Lab Test Template' else doc.rate
+		item_group = doc.lab_test_group if doc.get('doctype') == 'Lab Test Template' else doc.item_group
+
+		item_doc = frappe.get_doc('Item', {'item_code': doc.item})
+		item_doc.item_name = item_name
+		item_doc.item_group = item_group
+		item_doc.description = doc.description if doc.get('doctype') == 'Clinical Procedure Template' else ''
+		item_doc.disabled = 0
+		item_doc.save(ignore_permissions=True)
+		if rate:
+			if not frappe.db.exists('Item Price', {
+				'item_code': doc.item,
+				'valid_from': today()
+			}):
+				make_item_price(doc.item, rate)
+			else:
+				item_price = frappe.get_doc('Item Price', {'item_code': doc.item})
+				item_price.item_name = item_name
+				item_price.valid_from = today()
+				item_price.price_list_rate = rate
+				item_price.save()
+
+	elif not doc.is_billable and doc.item and not doc.link_existing_item:
+		frappe.db.set_value('Item', doc.item, 'disabled', 1)
+
+	doc.db_set('change_in_item', 0)
