@@ -3,7 +3,7 @@
 
 import frappe
 
-from apps.frappe.frappe.tests.utils import FrappeTestCase
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
 from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import create_procedure
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient, discharge_patient
