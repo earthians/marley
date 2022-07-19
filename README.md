@@ -36,7 +36,7 @@ $ bench --site demo.com install-app health
 
 ### Documentation
 
-Complete documentation for Frappe Health is available at https://docs.erpnext.com/docs/user/manual/en/healthcare
+Complete documentation for Frappe Health is available at https://docs.frappehealth.com
 
 
 ### License
