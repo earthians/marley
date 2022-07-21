@@ -27,18 +27,13 @@ from healthcare.healthcare.utils import (
 	get_service_item_and_practitioner_charge,
 	manage_fee_validity,
 )
-from erpnext.hr.doctype.employee.employee import is_holiday
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
-	get_receivable_account,
-	get_income_account
-)
-from healthcare.healthcare.utils import (
-	check_fee_validity,
-	get_service_item_and_practitioner_charge,
-	manage_fee_validity
-)
-from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
+# todo: clean up imports
+try:
+	from erpnext.hr.doctype.employee.employee import is_holiday
+except ImportError:
+	from erpnext.setup.doctype.employee.employee import is_holiday
 
+from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
 
 class MaximumCapacityError(frappe.ValidationError):
 	pass
