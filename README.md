@@ -24,13 +24,13 @@ Using bench, [install ERPNext](https://github.com/frappe/bench#installation) as 
 Once ERPNext is installed, add health app to your bench by running
 
 ```sh
-$ bench get-app health
+$ bench get-app healthcare
 ```
 
 After that, you can install health app on required site by running
 
 ```sh
-$ bench --site demo.com install-app health
+$ bench --site demo.com install-app healthcare
 ```
 
 
