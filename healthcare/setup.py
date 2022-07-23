@@ -78,6 +78,11 @@ def setup_healthcare():
 	if frappe.db.exists('Medical Department', 'Cardiology'):
 		# already setup
 		return
+
+	from healthcare.regional.india.abdm.setup import setup as abdm_setup
+
+	abdm_setup()
+
 	create_custom_records()
 	create_default_root_service_units()
 
