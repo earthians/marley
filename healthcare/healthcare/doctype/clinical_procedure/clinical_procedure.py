@@ -40,9 +40,7 @@ class ClinicalProcedure(Document):
 			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Closed')
 
 		if self.procedure_template:
-
 			template = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
-
 			if template.sample:
 				patient = frappe.get_doc('Patient', self.patient)
 				sample_collection = create_sample_doc(template, patient, None, self.company)
