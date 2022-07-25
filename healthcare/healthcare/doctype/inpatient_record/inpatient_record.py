@@ -11,6 +11,8 @@ from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
 from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class InpatientRecord(Document):
@@ -99,7 +101,7 @@ def schedule_inpatient(args):
 	inpatient_record.phone = patient.phone
 	inpatient_record.scheduled_date = today()
 
-	# Set encounter detials
+	# Set encounter details
 	encounter = frappe.get_doc('Patient Encounter', admission_order['admission_encounter'])
 	if encounter and encounter.symptoms: # Symptoms
 		set_ip_child_records(inpatient_record, 'chief_complaint', encounter.symptoms)
@@ -123,20 +125,37 @@ def schedule_inpatient(args):
 	inpatient_record.status = 'Admission Scheduled'
 	inpatient_record.save(ignore_permissions = True)
 
+	if inpatient_record.admission_nursing_checklist_template:
+		NursingTask.create_nursing_tasks_from_template(
+			inpatient_record.admission_nursing_checklist_template,
+			inpatient_record,
+			start_time=now_datetime()
+		)
+
 
 @frappe.whitelist()
 def schedule_discharge(args):
 	discharge_order = json.loads(args)
 	inpatient_record_id = frappe.db.get_value('Patient', discharge_order['patient'], 'inpatient_record')
+
 	if inpatient_record_id:
+
 		inpatient_record = frappe.get_doc('Inpatient Record', inpatient_record_id)
 		check_out_inpatient(inpatient_record)
 		set_details_from_ip_order(inpatient_record, discharge_order)
 		inpatient_record.status = 'Discharge Scheduled'
 		inpatient_record.save(ignore_permissions = True)
+
 		frappe.db.set_value('Patient', discharge_order['patient'], 'inpatient_status', inpatient_record.status)
 		if inpatient_record.discharge_encounter:
 			frappe.db.set_value('Patient Encounter', inpatient_record.discharge_encounter, 'inpatient_status', inpatient_record.status)
+
+		if inpatient_record.discharge_nursing_checklist_template:
+			NursingTask.create_nursing_tasks_from_template(
+				inpatient_record.discharge_nursing_checklist_template,
+				inpatient_record,
+				start_time=now_datetime()
+			)
 
 
 def set_details_from_ip_order(inpatient_record, ip_order):
@@ -161,7 +180,10 @@ def check_out_inpatient(inpatient_record):
 
 
 def discharge_patient(inpatient_record):
+	validate_nursing_tasks(inpatient_record)
+
 	validate_inpatient_invoicing(inpatient_record)
+
 	inpatient_record.discharge_datetime = now_datetime()
 	inpatient_record.status = "Discharged"
 
@@ -243,6 +265,8 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 
 
 def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=None):
+	validate_nursing_tasks(inpatient_record)
+
 	inpatient_record.admitted_datetime = check_in
 	inpatient_record.status = 'Admitted'
 	inpatient_record.expected_discharge = expected_discharge

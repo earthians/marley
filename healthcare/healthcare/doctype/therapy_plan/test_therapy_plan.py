@@ -65,8 +65,9 @@ class TestTherapyPlan(FrappeTestCase):
 		self.assertEqual(si.items[0].amount, therapy_plan_template_amt)
 
 
-def create_therapy_plan(template=None):
-	patient = create_patient()
+def create_therapy_plan(template=None, patient=None):
+	if not patient:
+		patient = create_patient()
 	therapy_type = create_therapy_type()
 	plan = frappe.new_doc('Therapy Plan')
 	plan.patient = patient

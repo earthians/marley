@@ -1,0 +1,384 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2022-01-18 15:18:15.657622",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "title",
+  "date",
+  "user",
+  "column_break_5",
+  "company",
+  "service_unit",
+  "medical_department",
+  "status",
+  "task_details",
+  "activity",
+  "mandatory",
+  "column_break_2",
+  "description",
+  "patient_details_section",
+  "patient",
+  "patient_name",
+  "age",
+  "gender",
+  "column_break_6",
+  "inpatient_record",
+  "inpatient_status",
+  "task_schedule_section",
+  "requested_start_time",
+  "requested_end_time",
+  "duration",
+  "column_break_18",
+  "task_start_time",
+  "task_end_time",
+  "task_duration",
+  "source_section",
+  "reference_doctype",
+  "amended_from",
+  "column_break_8",
+  "reference_name",
+  "section_break_28",
+  "task_doctype",
+  "task_document_name",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "activity",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Activity",
+   "options": "Healthcare Activity",
+   "read_only_depends_on": "eval:doc.reference_name",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "activity.description",
+   "fetch_if_empty": 1,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "no_copy": 1,
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Name",
+   "no_copy": 1,
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nRequested\nReceived\nAccepted\nRejected\nReady\nIn Progress\nOn Hold\nCompleted\nFailed\nCancelled\nEntered in Error",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Nursing Task",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "task_details",
+   "fieldtype": "Section Break",
+   "label": "Task Details"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "HLC-NUR-.YYYY.-"
+  },
+  {
+   "default": "0",
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "label": "Mandatory",
+   "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "fetch_from": "activity.task_doctype",
+   "fetch_if_empty": 1,
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "label": "Task Doctype",
+   "options": "DocType"
+  },
+  {
+   "allow_on_submit": 1,
+   "description": "Create and link the document to complete this task",
+   "fieldname": "task_document_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Task Document Name",
+   "no_copy": 1,
+   "options": "task_doctype",
+   "read_only": 1,
+   "read_only_depends_on": "eval:in_list([\"Completed\", \"Failed\", \"Cancelled\"], doc.status)"
+  },
+  {
+   "fieldname": "patient_details_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_status",
+   "fieldname": "inpatient_status",
+   "fieldtype": "Data",
+   "label": "Inpatient Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only_depends_on": "eval:doc.reference_name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit",
+   "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_28",
+   "fieldtype": "Section Break",
+   "label": "Task Resolution"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes",
+   "no_copy": 1,
+   "read_only_depends_on": "eval:in_list([\"Completed\", \"Failed\", \"Cancelled\"], doc.status)"
+  },
+  {
+   "bold": 1,
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "read_only_depends_on": "eval:doc.reference_name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requested_start_time",
+   "fieldtype": "Datetime",
+   "label": "Requested Start Time",
+   "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "fieldname": "requested_end_time",
+   "fieldtype": "Datetime",
+   "label": "Requested End Time",
+   "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "fetch_from": "activity.activity_duration",
+   "fetch_if_empty": 1,
+   "fieldname": "duration",
+   "fieldtype": "Duration",
+   "label": "Duration",
+   "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "fieldname": "task_schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Task Schedule"
+  },
+  {
+   "fieldname": "column_break_18",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "task_start_time",
+   "fieldtype": "Datetime",
+   "label": "Task Start Time",
+   "read_only_depends_on": "eval:in_list([\"Completed\", \"Failed\", \"Cancelled\"], doc.status)"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "task_end_time",
+   "fieldtype": "Datetime",
+   "label": "Task End Time",
+   "read_only_depends_on": "eval:in_list([\"Completed\", \"Failed\", \"Cancelled\"], doc.status)"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "task_duration",
+   "fieldtype": "Duration",
+   "label": "Task Duration",
+   "read_only": 1
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only_depends_on": "eval:doc.reference_name"
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2022-01-19 15:34:31.760433",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Nursing Task",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "patient, activity, user",
+ "sort_field": "requested_start_time",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}

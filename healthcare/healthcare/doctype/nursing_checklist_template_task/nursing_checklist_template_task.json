@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2021-10-28 06:34:02.606386",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "activity",
+  "mandatory",
+  "type",
+  "time_offset",
+  "description",
+  "column_break_5",
+  "task_duration",
+  "task_doctype",
+  "role"
+ ],
+ "fields": [
+  {
+   "fieldname": "activity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Activity",
+   "options": "Healthcare Activity"
+  },
+  {
+   "columns": 3,
+   "fetch_from": "activity.description",
+   "fetch_if_empty": 1,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "columns": 1,
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nPre-Op\nPost-Op"
+  },
+  {
+   "fetch_from": "activity.role",
+   "fetch_if_empty": 1,
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Role",
+   "options": "Role"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Mandatory"
+  },
+  {
+   "description": "System will validate if a document of this type is created and linked before completing the Nursing Task - for example, Vital Signs if the task is supposed to capture the vitals of the Patient",
+   "fetch_from": "activity.task_doctype",
+   "fetch_if_empty": 1,
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Task Doctype",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Default duration which the task can take to complete",
+   "fetch_from": "activity.activity_duration",
+   "fetch_if_empty": 1,
+   "fieldname": "task_duration",
+   "fieldtype": "Duration",
+   "in_list_view": 1,
+   "label": "Task Duration"
+  },
+  {
+   "description": "The time duration before or after the event on which the Nursing Task is to be performed. The Nursing Task start time will be set based on this.",
+   "fieldname": "time_offset",
+   "fieldtype": "Duration",
+   "in_list_view": 1,
+   "label": "Time Offset"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2022-07-25 19:33:44.109535",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Nursing Checklist Template Task",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

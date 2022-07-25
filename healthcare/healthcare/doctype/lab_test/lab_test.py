@@ -7,7 +7,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_link_to_form, getdate
+from frappe.utils import get_link_to_form, getdate, now_datetime
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 
 class LabTest(Document):
@@ -16,6 +17,8 @@ class LabTest(Document):
 			self.set_secondary_uom_result()
 
 	def on_submit(self):
+		from healthcare.healthcare.utils import validate_nursing_tasks
+		validate_nursing_tasks(self)
 		self.validate_result_values()
 		self.db_set('submitted_date', getdate())
 		self.db_set('status', 'Completed')
@@ -39,6 +42,12 @@ class LabTest(Document):
 		if self.template:
 			self.load_test_from_template()
 			self.reload()
+
+			# create nursing tasks
+			template = frappe.db.get_value('Lab Test Template', self.template, 'nursing_checklist_template')
+			if template:
+				NursingTask.create_nursing_tasks_from_template(template, self,
+					start_time=now_datetime())
 
 	def load_test_from_template(self):
 		lab_test = self

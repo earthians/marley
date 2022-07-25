@@ -85,6 +85,10 @@ frappe.ui.form.on('Patient Encounter', {
 					});
 				}, 'Create');
 			}
+
+			frm.add_custom_button(__('Nursing Tasks'), function() {
+				create_nursing_tasks(frm);
+			},'Create');
 		}
 
 		frm.set_query('patient', function() {
@@ -249,6 +253,7 @@ var schedule_inpatient = function(frm) {
 			{fieldtype: 'Link', label: 'Medical Department', fieldname: 'medical_department', options: 'Medical Department', reqd: 1},
 			{fieldtype: 'Link', label: 'Healthcare Practitioner (Primary)', fieldname: 'primary_practitioner', options: 'Healthcare Practitioner', reqd: 1},
 			{fieldtype: 'Link', label: 'Healthcare Practitioner (Secondary)', fieldname: 'secondary_practitioner', options: 'Healthcare Practitioner'},
+			{fieldtype: 'Link', label: 'Nursing Checklist Template', fieldname: 'admission_nursing_checklist_template', options: 'Nursing Checklist Template'},
 			{fieldtype: 'Column Break'},
 			{fieldtype: 'Date', label: 'Admission Ordered For', fieldname: 'admission_ordered_for', default: 'Today'},
 			{fieldtype: 'Link', label: 'Service Unit Type', fieldname: 'service_unit_type', options: 'Healthcare Service Unit Type'},
@@ -269,7 +274,8 @@ var schedule_inpatient = function(frm) {
 				admission_ordered_for: dialog.get_value('admission_ordered_for'),
 				admission_service_unit_type: dialog.get_value('service_unit_type'),
 				expected_length_of_stay: dialog.get_value('expected_length_of_stay'),
-				admission_instruction: dialog.get_value('admission_instruction')
+				admission_instruction: dialog.get_value('admission_instruction'),
+				admission_nursing_checklist_template: dialog.get_value('admission_nursing_checklist_template')
 			}
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_inpatient',
@@ -313,6 +319,7 @@ var schedule_discharge = function(frm) {
 		fields: [
 			{fieldtype: 'Date', label: 'Discharge Ordered Date', fieldname: 'discharge_ordered_date', default: 'Today', read_only: 1},
 			{fieldtype: 'Date', label: 'Followup Date', fieldname: 'followup_date'},
+			{fieldtype: 'Link', label: 'Nursing Checklist Template', options: 'Nursing Checklist Template', fieldname: 'discharge_nursing_checklist_template'},
 			{fieldtype: 'Column Break'},
 			{fieldtype: 'Small Text', label: 'Discharge Instructions', fieldname: 'discharge_instructions'},
 			{fieldtype: 'Section Break', label:'Discharge Summary'},
@@ -327,7 +334,8 @@ var schedule_discharge = function(frm) {
 				discharge_ordered_date: dialog.get_value('discharge_ordered_date'),
 				followup_date: dialog.get_value('followup_date'),
 				discharge_instructions: dialog.get_value('discharge_instructions'),
-				discharge_note: dialog.get_value('discharge_note')
+				discharge_note: dialog.get_value('discharge_note'),
+				discharge_nursing_checklist_template: dialog.get_value('discharge_nursing_checklist_template')
 			}
 			frappe.call ({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge',
@@ -384,6 +392,57 @@ let create_procedure = function(frm) {
 		'company': frm.doc.company
 	};
 	frappe.new_doc('Clinical Procedure');
+};
+
+let create_nursing_tasks = function(frm) {
+	const d = new frappe.ui.Dialog({
+
+		title: __('Create Nursing Tasks'),
+
+		fields: [
+			{
+				label: __('Nursing Checklist Template'),
+				fieldtype: 'Link',
+				options: 'Nursing Checklist Template',
+				fieldname: 'template',
+				reqd: 1,
+			},
+			{
+				label: __('Start Time'),
+				fieldtype: 'Datetime',
+				fieldname: 'start_time',
+				default: frappe.datetime.now_datetime(),
+				reqd: 1,
+			},
+		],
+
+		primary_action_label: __('Create Nursing Tasks'),
+
+		primary_action: () => {
+
+			let values = d.get_values();
+			frappe.call({
+				method: 'healthcare.healthcare.doctype.nursing_task.nursing_task.create_nursing_tasks_from_template',
+				args: {
+					'template': values.template,
+					'doc': frm.doc,
+					'start_time': values.start_time
+				},
+				callback: (r) => {
+					if (r && !r.exc) {
+						frappe.show_alert({
+							message: __('Nursing Tasks Created'),
+							indicator: 'success'
+						});
+					}
+				}
+			});
+
+			d.hide();
+		}
+	});
+
+	d.show();
 };
 
 frappe.ui.form.on('Drug Prescription', {

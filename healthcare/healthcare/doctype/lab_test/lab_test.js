@@ -57,9 +57,9 @@ frappe.ui.form.on('Lab Test', {
 				});
 			});
 		}
-
-	}
+	},
 });
+
 
 frappe.ui.form.on('Lab Test', 'patient', function (frm) {
 	if (frm.doc.patient) {

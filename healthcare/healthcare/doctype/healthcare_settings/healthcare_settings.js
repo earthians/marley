@@ -57,6 +57,11 @@ frappe.tour['Healthcare Settings'] = [
 		description: __('Checking this will automatically create a Sales Invoice whenever an appointment is booked for a Patient.')
 	},
 	{
+		fieldname: 'validate_nursing_checklists',
+		title: __('validate_nursing_checklists'),
+		description: __('Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event. For example, if any of the tasks as part of the Discharge Checklist is not in status Completed, system will alert the user while trying to Discharge the Patient from inpatient facility')
+	},
+	{
 		fieldname: 'inpatient_visit_charge_item',
 		title: __('Healthcare Service Items'),
 		description: __('You can create a service item for Inpatient Visit Charge and set it here. Similarly, you can set up other Healthcare Service Items for billing in this section. Click ') + "<a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/healthcare_settings#2-default-healthcare-service-items' target='_blank'>here</a>" + __(' to know more')

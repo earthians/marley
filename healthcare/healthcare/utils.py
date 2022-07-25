@@ -9,7 +9,7 @@ import math
 
 import frappe
 from frappe import _
-from frappe.utils import cstr, rounded, time_diff_in_hours
+from frappe.utils import cstr, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
 from erpnext.setup.utils import insert_record
 
@@ -815,6 +815,7 @@ def before_tests():
 			"chart_of_accounts" : "Standard",
 			"domains"           : ["Healthcare"],
 		})
+
 		setup_healthcare()
 
 
@@ -828,3 +829,20 @@ def create_healthcare_service_unit_tree_root(doc, method=None):
 		}
 	]
 	insert_record(record)
+
+
+def validate_nursing_tasks(document):
+	if not frappe.db.get_single_value("Healthcare Settings", "validate_nursing_checklists"):
+		return True
+
+	filters = {
+		'reference_name': document.name,
+		'mandatory': 1,
+		'status': ['not in', ['Completed', 'Cancelled']],
+	}
+	tasks = frappe.get_all('Nursing Task', filters=filters)
+	if not tasks:
+		return True
+
+	frappe.throw(_("Please complete linked Nursing Tasks before submission: {}").format(
+		", ".join(get_link_to_form("Nursing Task", task.name) for task in tasks)))

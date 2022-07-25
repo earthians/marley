@@ -28,6 +28,8 @@
   "medical_department",
   "admission_ordered_for",
   "admission_service_unit_type",
+  "admission_nursing_checklist_template",
+  "discharge_nursing_checklist_template",
   "expected_length_of_stay",
   "cb_admission",
   "primary_practitioner",
@@ -419,6 +421,56 @@
    "fieldtype": "Datetime",
    "label": "Discharge Date",
    "permlevel": 2
+  },
+  {
+   "fieldname": "discharge_nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Discharge Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "admission_nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Admission Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "Appointments",
+   "link_doctype": "Patient Appointment",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Clinical",
+   "link_doctype": "Patient Encounter",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Clinical",
+   "link_doctype": "Clinical Procedure",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Laboratory",
+   "link_doctype": "Sample Collection",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Laboratory",
+   "link_doctype": "Lab Test",
+   "link_fieldname": "inpatient_record"
+  },
+  {
+   "group": "Nursing",
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "reference_name"
+  },
+  {
+   "group": "Nursing",
+   "link_doctype": "Vital Signs",
+   "link_fieldname": "inpatient_record"
   },
   {
    "collapsible": 1,

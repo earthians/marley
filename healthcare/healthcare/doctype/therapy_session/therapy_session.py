@@ -16,6 +16,8 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class TherapySession(Document):
@@ -46,6 +48,7 @@ class TherapySession(Document):
 			frappe.throw(overlapping_details, title=_('Therapy Sessions Overlapping'))
 
 	def on_submit(self):
+		validate_nursing_tasks(self)
 		self.update_sessions_count_in_therapy_plan()
 
 	def on_update(self):
@@ -57,6 +60,17 @@ class TherapySession(Document):
 			frappe.db.set_value('Patient Appointment', self.appointment, 'status', 'Open')
 
 		self.update_sessions_count_in_therapy_plan(on_cancel=True)
+
+	def after_insert(self):
+		self.create_nursing_tasks(post_event=False)
+
+	def create_nursing_tasks(self, post_event=True):
+		template = frappe.db.get_value('Therapy Type', self.therapy_type, 'nursing_checklist_template')
+		if template:
+			NursingTask.create_nursing_tasks_from_template(template, self,
+				start_time=frappe.utils.get_datetime(f'{self.start_date} {self.start_time}'),
+				post_event=post_event
+			)
 
 	def update_sessions_count_in_therapy_plan(self, on_cancel=False):
 		therapy_plan = frappe.get_doc('Therapy Plan', self.therapy_plan)
