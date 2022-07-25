@@ -81,11 +81,9 @@ frappe.ui.form.on('Nursing Task', {
 	},
 
 	update_status(frm, status) {
-
 		frm.set_value('status', status);
 		frm.save('Update');
 		frm.reload_doc();
-
 	},
 
 	show_form_route_button: function(frm) {

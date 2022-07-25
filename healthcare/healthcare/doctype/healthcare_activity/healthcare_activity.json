@@ -55,13 +55,12 @@
    "allow_in_quick_entry": 1,
    "fieldname": "activity_duration",
    "fieldtype": "Duration",
-   "label": "Activity Duration",
-   "reqd": 1
+   "label": "Activity Duration"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-12-25 19:42:19.535303",
+ "modified": "2022-07-25 19:29:15.860690",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Activity",
@@ -84,5 +83,6 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

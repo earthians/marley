@@ -66,7 +66,6 @@ class NursingTask(Document):
 
 	@classmethod
 	def create_nursing_tasks_from_template(cls, template, doc, start_time=now_datetime(), post_event=True):
-
 		tasks = frappe.get_all(
 			'Nursing Checklist Template Task',
 			filters={'parent': template},

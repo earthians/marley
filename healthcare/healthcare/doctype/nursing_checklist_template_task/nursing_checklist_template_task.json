@@ -30,12 +30,13 @@
    "fetch_if_empty": 1,
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "in_list_view": 1,
    "label": "Description"
   },
   {
+   "columns": 1,
    "fieldname": "type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type",
    "options": "\nPre-Op\nPost-Op"
   },
@@ -49,6 +50,7 @@
    "options": "Role"
   },
   {
+   "columns": 1,
    "default": "0",
    "fieldname": "mandatory",
    "fieldtype": "Check",
@@ -89,7 +91,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-01-18 11:37:08.648447",
+ "modified": "2022-07-25 19:33:44.109535",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template Task",
@@ -97,5 +99,6 @@
  "permissions": [],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

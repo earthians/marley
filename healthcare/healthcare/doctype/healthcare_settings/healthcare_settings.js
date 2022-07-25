@@ -59,7 +59,7 @@ frappe.tour['Healthcare Settings'] = [
 	{
 		fieldname: 'validate_nursing_checklists',
 		title: __('validate_nursing_checklists'),
-		description: __('Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event. For example, if any of the tasks as part of the Discharge Checklist is not in status Completed, system alert the user while trying to Discharge the Patient from inpatient facility')
+		description: __('Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event. For example, if any of the tasks as part of the Discharge Checklist is not in status Completed, system will alert the user while trying to Discharge the Patient from inpatient facility')
 	},
 	{
 		fieldname: 'inpatient_visit_charge_item',

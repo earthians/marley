@@ -19,6 +19,7 @@
    "fieldname": "title",
    "fieldtype": "Data",
    "label": "Title",
+   "reqd": 1,
    "unique": 1
   },
   {
@@ -54,7 +55,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-12-25 12:57:50.886052",
+ "modified": "2022-07-25 19:27:22.028262",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Checklist Template",
@@ -88,5 +89,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }
