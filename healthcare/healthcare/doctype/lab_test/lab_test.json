@@ -15,7 +15,6 @@
   "lab_test_group",
   "medical_code",
   "department",
-  "modify_nursing_tasks",
   "column_break_26",
   "company",
   "status",
@@ -560,12 +559,6 @@
    "print_hide": 1
   },
   {
-   "fieldname": "modify_nursing_tasks",
-   "fieldtype": "Button",
-   "hidden": 1,
-   "label": "Modify Nursing Tasks "
-  },
-  {
    "fieldname": "descriptive_result",
    "fieldtype": "Text Editor",
    "label": "Descriptive Result"
@@ -588,7 +581,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2022-04-12 07:23:13.890135",
+ "modified": "2022-07-25 20:19:19.083347",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",

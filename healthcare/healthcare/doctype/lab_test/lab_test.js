@@ -58,42 +58,6 @@ frappe.ui.form.on('Lab Test', {
 			});
 		}
 	},
-
-	modify_nursing_tasks: function(frm) {
-		frappe.call({
-			method: 'get_nursing_task_filters',
-			doc: frm.doc,
-			args: {'lab_test_template': frm.doc.template},
-			freeze: true,
-			freeze_message: __('Fetching Nursing Tasks'),
-			callback: function(response) {
-				if (frm.__islocal) {
-					frappe.throw(__('Please save the document'));
-				}
-				new frappe.ui.form.MultiSelectDialog({
-					doctype: "Nursing Checklist Template Task",
-					setters: {
-						activity: null,
-					},
-					get_query() {
-						return {
-							filters: response.message
-						}
-					},
-					target: this.cur_frm,
-					primary_action_label: "Create Nursing Tasks",
-					action(nursing_tasks) {
-						frappe.call({
-							method: 'modify_nursing_tasks',
-							doc: frm.doc,
-							args: nursing_tasks,
-						});
-						cur_dialog.hide();
-					}
-				});
-			}
-		});
-	},
 });
 
 
