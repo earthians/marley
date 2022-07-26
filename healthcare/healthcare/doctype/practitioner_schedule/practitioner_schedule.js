@@ -82,7 +82,7 @@ frappe.ui.form.on('Practitioner Schedule', {
 							let cur_time = moment(values.from_time, 'HH:mm:ss');
 							let end_time = moment(values.to_time, 'HH:mm:ss');
 							if (check_overlap_or_add_slot(week_day, cur_time, end_time, false)) {
-								frappe.confirm(__('Schedules for {0} overlaps, do you want to proceed after skiping overlaped slots ?',	[week_day]),
+								frappe.confirm(__('Schedules for {0} overlaps, do you want to proceed after skipping overlapped slots ?',	[week_day]),
 									function() {
 										// if Yes
 										check_overlap_or_add_slot(week_day, cur_time, end_time, true);
