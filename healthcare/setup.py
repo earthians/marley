@@ -79,6 +79,15 @@ def setup_healthcare():
 		# already setup
 		return
 	create_custom_records()
+	create_default_root_service_units()
+
+
+def create_default_root_service_units():
+	from healthcare.healthcare.utils import create_healthcare_service_unit_tree_root
+
+	companies = frappe.get_all('Company')
+	for company in companies:
+		create_healthcare_service_unit_tree_root(company)
 
 
 def create_custom_records():
