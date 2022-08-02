@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import frappe
-from healthcare.setup import setup_service_request_masters, create_customer_groups
+from healthcare.healthcare.setup import setup_service_request_masters, create_customer_groups
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from healthcare.healthcare.healthcare import data
 
