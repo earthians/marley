@@ -4,5 +4,5 @@
 # import frappe
 import unittest
 
-class TestABDMIntegration(unittest.TestCase):
+class TestABDMSettings(unittest.TestCase):
 	pass

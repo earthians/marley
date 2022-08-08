@@ -8,7 +8,7 @@ from healthcare.regional.india.abdm.abdm_config import get_url
 @frappe.whitelist()
 def get_authorization_token():
 	client_id, client_secret, auth_base_url = frappe.db.get_value(
-		'ABDM Integration',
+		'ABDM Settings',
 		{
 			'company': frappe.defaults.get_user_default("Company"),
 			'default': 1
@@ -26,7 +26,7 @@ def get_authorization_token():
 	if not auth_base_url:
 		frappe.throw(
 			title='Not Configured',
-			msg='Base URL not configured in ABDM Integration!',
+			msg='Base URL not configured in ABDM Settings!',
 		)
 
 	req = frappe.new_doc('ABDM Request')
@@ -69,7 +69,7 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, p
 		url_type = 'health_id_base_url'
 
 	base_url = frappe.db.get_value(
-		'ABDM Integration',
+		'ABDM Settings',
 		{
 			'company': frappe.defaults.get_user_default("Company"),
 			'default': 1
@@ -79,7 +79,7 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, p
 	if not base_url:
 		frappe.throw(
 			title='Not Configured',
-			msg='Base URL not configured in ABDM Integration!'
+			msg='Base URL not configured in ABDM Settings!'
 		)
 
 	config = get_url(url_key)
@@ -156,7 +156,7 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, p
 
 def get_encrypted_message(message):
 	base_url = frappe.db.get_value(
-		'ABDM Integration',
+		'ABDM Settings',
 		{
 			'company': frappe.defaults.get_user_default("Company"),
 			'default': 1
@@ -243,7 +243,7 @@ def get_health_data(otp, txnId, auth_method):
 # patient after_insert
 def set_consent_attachment_details(doc, method=None):
 	if frappe.db.exists(
-		"ABDM Integration",
+		"ABDM Settings",
 		{"company": frappe.defaults.get_user_default("Company"), "default": 1},
 	):
 		if doc.consent_for_aadhaar_use:

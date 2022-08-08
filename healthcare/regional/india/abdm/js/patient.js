@@ -346,7 +346,7 @@ let create_abha = function (frm) {
 				fieldname: 'patient_consent_attach',
 				fieldtype: 'Attach',
 				description: `Please attach patient's signed consent for using
-						their Aadhar for ABHA creation`
+						their Aadhaar for ABHA creation`
 			},
 			{
 				label: 'OR',
@@ -395,7 +395,7 @@ let create_abha = function (frm) {
 		})
 	})
 
-	frappe.db.get_value('ABDM Integration', {
+	frappe.db.get_value('ABDM Settings', {
 		company: frappe.defaults.get_user_default("Company"),
 		default: 1
 	}, 'patient_aadhaar_consent')

@@ -108,7 +108,7 @@
  "modified": "2022-04-18 14:59:24.279125",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "ABDM Integration",
+ "name": "ABDM Settings",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [

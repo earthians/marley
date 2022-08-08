@@ -11,7 +11,7 @@ class TestPatient(FrappeTestCase):
         super().setUpClass()
 
         doc = frappe.get_doc({
-            'doctype': 'ABDM Integration',
+            'doctype': 'ABDM Settings',
             'default': 1,
             'auth_base_url': 'https://dev.abdm.gov.in/gateway/',
             'health_id_base_url': 'https://healthidsbx.abdm.gov.in/api/',
