@@ -1,4 +1,17 @@
 // Healthcare
+frappe.ui.form.on('Sales Invoice', {
+	refresh(frm) {
+		if (frm.doc.docstatus === 0 && !frm.doc.is_return) {
+			frm.add_custom_button(__('Healthcare Services'), function() {
+				get_healthcare_services_to_invoice(frm);
+			},__('Get Items From'));
+			frm.add_custom_button(__('Prescriptions'), function() {
+				get_drugs_to_invoice(frm);
+			},__('Get Items From'));
+		}
+	}
+});
+
 var get_healthcare_services_to_invoice = function(frm) {
 	var me = this;
 	let selected_patient = '';
