@@ -45,7 +45,5 @@ bench setup requirements --dev
 bench start &
 bench --site test_site reinstall --yes
 
-bench --verbose --site test_site install-app erpnext
-
 bench get-app healthcare "${GITHUB_WORKSPACE}"
 bench --verbose --site test_site install-app healthcare

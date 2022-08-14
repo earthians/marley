@@ -10,8 +10,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "contact@frappe.io"
 app_license = "MIT"
-
-# required_apps = ["erpnext"]
+required_apps = ["erpnext"]
 
 # Includes in <head>
 # ------------------
