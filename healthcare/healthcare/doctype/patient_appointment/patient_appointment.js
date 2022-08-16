@@ -286,6 +286,7 @@ let check_and_set_availability = function(frm) {
 	let selected_slot = null;
 	let service_unit = null;
 	let duration = null;
+	let add_video_conferencing = null;
 
 	show_availability();
 
@@ -313,16 +314,22 @@ let check_and_set_availability = function(frm) {
 			],
 			primary_action_label: __('Book'),
 			primary_action: function() {
+
 				frm.set_value('appointment_time', selected_slot);
+				frm.set_value('add_video_conferencing', add_video_conferencing);
+
 				if (!frm.doc.duration) {
 					frm.set_value('duration', duration);
 				}
+
 				frm.set_value('practitioner', d.get_value('practitioner'));
 				frm.set_value('department', d.get_value('department'));
 				frm.set_value('appointment_date', d.get_value('appointment_date'));
+
 				if (service_unit) {
 					frm.set_value('service_unit', service_unit);
 				}
+
 				d.hide();
 				frm.enable_save();
 				frm.save();
@@ -399,6 +406,7 @@ let check_and_set_availability = function(frm) {
 							$wrapper.find('button').removeClass('btn-outline-primary');
 							$btn.addClass('btn-outline-primary');
 							selected_slot = $btn.attr('data-name');
+							add_video_conferencing = $btn.attr('data-tele-conf');
 							service_unit = $btn.attr('data-service-unit');
 							duration = $btn.attr('data-duration');
 							// enable primary action 'Book'
@@ -426,8 +434,11 @@ let check_and_set_availability = function(frm) {
 
 		slot_details.forEach((slot_info) => {
 			slot_html += `<div class="slot-info">
-				<span> <b> ${__('Practitioner Schedule:')} </b> ${slot_info.slot_name} </span><br>
-				<span> <b> ${__('Service Unit:')} </b> ${slot_info.service_unit} </span>`;
+				<span><b>
+				${__('Practitioner Schedule: ')} </b> ${slot_info.slot_name}
+					${slot_info.tele_conf ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
+				</span><br>
+				<span><b> ${__('Service Unit: ')} </b> ${slot_info.service_unit}</span>`;
 
 			if (slot_info.service_unit_capacity) {
 				slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
@@ -486,6 +497,7 @@ let check_and_set_availability = function(frm) {
 					<button class="btn btn-secondary" data-name=${start_str}
 						data-duration=${interval}
 						data-service-unit="${slot_info.service_unit || ''}"
+						data-tele-conf="${slot_info.tele_conf || 0}"
 						style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
 						data-toggle="tooltip" title="${tool_tip || ''}">
 						${start_str.substring(0, start_str.length - 3)}

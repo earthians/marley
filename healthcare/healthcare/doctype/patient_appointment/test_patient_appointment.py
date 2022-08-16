@@ -356,6 +356,11 @@ class TestPatientAppointment(FrappeTestCase):
 		)
 		self.assertRaises(MaximumCapacityError, appointment.save)
 
+	def test_teleconsultation(self):
+		patient, practitioner = create_healthcare_docs()
+		appointment = create_appointment(patient, practitioner, nowdate())
+		self.assertTrue(appointment.event)
+
 
 def create_healthcare_docs(id=0):
 	patient = create_patient(id)

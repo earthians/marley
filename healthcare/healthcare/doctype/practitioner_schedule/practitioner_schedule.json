@@ -10,6 +10,8 @@
  "engine": "InnoDB",
  "field_order": [
   "disabled",
+  "column_break_2",
+  "allow_video_conferencing",
   "schedule_details_section",
   "schedule_name",
   "time_slots"
@@ -41,13 +43,24 @@
    "fieldname": "schedule_details_section",
    "fieldtype": "Section Break",
    "label": "Schedule Details"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_video_conferencing",
+   "fieldtype": "Check",
+   "label": "Allow Video Conferencing"
   }
  ],
  "links": [],
- "modified": "2020-09-18 17:26:09.703215",
+ "modified": "2022-06-15 07:46:41.154742",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Practitioner Schedule",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -67,5 +80,6 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

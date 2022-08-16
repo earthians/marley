@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_copy": 0,
  "allow_import": 1,
  "autoname": "naming_series:",
  "beta": 0,
@@ -36,6 +35,9 @@
   "appointment_date",
   "appointment_time",
   "appointment_datetime",
+  "event",
+  "add_video_conferencing",
+  "google_meet_link",
   "section_break_16",
   "mode_of_payment",
   "billing_item",
@@ -346,13 +348,33 @@
    "fieldtype": "Data",
    "label": "Practitioner Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "google_meet_link",
+   "fieldtype": "Data",
+   "label": "Google Meet Link",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "add_video_conferencing",
+   "fieldtype": "Check",
+   "label": "Add Video Conferencing"
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Link",
+   "label": "Event",
+   "options": "Event",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2022-02-14 09:00:41.329387",
+ "modified": "2022-08-16 19:10:10.528001",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -397,6 +419,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1

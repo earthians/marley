@@ -31,6 +31,7 @@
   "hospital",
   "appointments",
   "practitioner_schedules",
+  "google_calendar",
   "charges",
   "op_consulting_charge_item",
   "op_consulting_charge",
@@ -279,11 +280,17 @@
    "fieldname": "address_and_contacts_section",
    "fieldtype": "Section Break",
    "label": "Address and Contacts"
+  },
+  {
+   "fieldname": "google_calendar",
+   "fieldtype": "Link",
+   "label": "Google Calendar",
+   "options": "Google Calendar"
   }
  ],
  "image_field": "image",
  "links": [],
- "modified": "2021-10-20 08:30:46.786977",
+ "modified": "2022-06-15 08:01:05.614211",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",
@@ -334,6 +341,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "practitioner_name",
  "track_changes": 1
 }

@@ -3,6 +3,13 @@
 
 frappe.ui.form.on('Healthcare Settings', {
 	setup: function(frm) {
+		frm.set_query('default_google_calendar', function(doc) {
+			return {
+				filters: {
+					'enable': true
+				}
+			};
+		});
 		frm.set_query('account', 'receivable_account', function(doc, cdt, cdn) {
 			var d  = locals[cdt][cdn];
 			return {
@@ -45,6 +52,11 @@ frappe.tour['Healthcare Settings'] = [
 		fieldname: 'link_customer_to_patient',
 		title: __('Link Customer to Patient'),
 		description: __('If checked, a customer will be created for every Patient. Patient Invoices will be created against this Customer. You can also select existing Customer while creating a Patient. This field is checked by default.')
+	},
+	{
+		fieldname: 'default_google_calendar',
+		title: __('Default Google Calendar'),
+		description: __('While booking tele-consultation appointments via Google Meet, this Google Calendar will be used. You can also configure separate Google Calender for each Practitioner if required')
 	},
 	{
 		fieldname: 'collect_registration_fee',
