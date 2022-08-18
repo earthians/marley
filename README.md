@@ -36,7 +36,7 @@ $ bench --site demo.com install-app healthcare
 
 ### Documentation
 
-Complete documentation for Frappe Health is available at https://docs.frappehealth.com
+Complete documentation for Frappe Health is available at https://frappehealth.com/docs
 
 
 ### License
