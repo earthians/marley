@@ -314,8 +314,8 @@ let check_and_set_availability = function(frm) {
 			],
 			primary_action_label: __('Book'),
 			primary_action: function() {
-
 				frm.set_value('appointment_time', selected_slot);
+				add_video_conferencing = add_video_conferencing && !d.$wrapper.find(".opt-out-check").is(":checked")
 				frm.set_value('add_video_conferencing', add_video_conferencing);
 
 				if (!frm.doc.duration) {
@@ -375,6 +375,7 @@ let check_and_set_availability = function(frm) {
 				show_slots(d, fd);
 			}
 		};
+
 		d.show();
 	}
 
@@ -406,9 +407,28 @@ let check_and_set_availability = function(frm) {
 							$wrapper.find('button').removeClass('btn-outline-primary');
 							$btn.addClass('btn-outline-primary');
 							selected_slot = $btn.attr('data-name');
-							add_video_conferencing = $btn.attr('data-tele-conf');
 							service_unit = $btn.attr('data-service-unit');
 							duration = $btn.attr('data-duration');
+							add_video_conferencing = $btn.attr('data-tele-conf');
+
+							// show option to opt out of tele conferencing
+							if ($btn.attr('data-tele-conf') == 1) {
+								if (d.$wrapper.find(".opt-out-conf-div").length) {
+									d.$wrapper.find(".opt-out-conf-div").show();
+								} else {
+									d.footer.prepend(`<div class="opt-out-conf-div ellipsis" style="vertical-align:text-bottom;">
+										<label>
+											<input type="checkbox" class="opt-out-check"/>
+											<span class="label-area">
+											${__("Do not add Video Conferencing")}
+											</span>
+										</label>
+									</div>`);
+								}
+							} else {
+								d.$wrapper.find(".opt-out-conf-div").hide();
+							}
+
 							// enable primary action 'Book'
 							d.get_primary_btn().attr('disabled', null);
 						});

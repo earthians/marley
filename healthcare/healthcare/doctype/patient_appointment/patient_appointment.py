@@ -248,7 +248,7 @@ class PatientAppointment(Document):
 		event.insert(ignore_permissions=True)
 
 		event.reload()
-		if not event.google_meet_link:
+		if self.add_video_conferencing and not event.google_meet_link:
 			frappe.msgprint(
 				_('Could not add conferencing to this Appointment, please contact System Manager'
 				),
@@ -258,6 +258,7 @@ class PatientAppointment(Document):
 			'event': event.name,
 			'google_meet_link': event.google_meet_link
 		})
+		self.notify_update()
 
 	@frappe.whitelist()
 	def get_therapy_types(self):
