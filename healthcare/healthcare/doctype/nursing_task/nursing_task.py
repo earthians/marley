@@ -15,7 +15,7 @@ class NursingTask(Document):
 		# set requested start / end
 		self.set_task_schedule()
 
-		self.title = _(f'{self.patient} - {self.activity}')
+		self.title = "{} - {}".format(_(self.patient), _(self.activity))
 
 		self.age = frappe.get_doc('Patient', self.patient).get_age()
 
@@ -71,15 +71,11 @@ class NursingTask(Document):
 			filters={'parent': template},
 			fields=['*'],
 		)
-
 		NursingTask.create_nursing_tasks(tasks, doc, start_time, post_event)
-
 
 	@classmethod
 	def create_nursing_tasks(cls, tasks, doc, start_time, post_event=True):
-
 		for task in tasks:
-
 			medical_department = doc.get('department') if doc.get('department') else doc.get('medical_department')
 			if doc.get('doctype') == 'Inpatient Record':
 				service_unit = frappe.db.get_value('Inpatient Occupancy', {'parent': doc.name, 'left': 0}, 'service_unit'),
