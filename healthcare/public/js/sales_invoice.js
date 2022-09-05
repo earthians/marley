@@ -9,6 +9,29 @@ frappe.ui.form.on('Sales Invoice', {
 				get_drugs_to_invoice(frm);
 			},__('Get Items From'));
 		}
+	},
+
+	patient(frm) {
+		if (frm.doc.patient) {
+			frappe.db.get_value("Patient", frm.doc.patient, "customer")
+				.then(r => {
+					if (!r.exc && r.message.customer) {
+						frm.set_value("customer", r.message.customer);
+					} else {
+						frappe.show_alert({
+							indicator: "warning",
+							message: __("Patient <b>{0}</b> is not linked to a Customer",
+								[`<a class='bold' href='/app/patient/${frm.doc.patient}'>${frm.doc.patient}</a>`]
+							),
+						});
+						frm.set_value("customer", "");
+					}
+					frm.set_df_property("customer", "read_only", frm.doc.customer ? 1 : 0);
+				})
+		} else {
+			frm.set_value("customer", "");
+			frm.set_df_property("customer", "read_only", 0);
+		}
 	}
 });
 
