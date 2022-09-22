@@ -86,7 +86,7 @@ frappe.ui.form.on('Patient Encounter', {
 				},__('Create'));
 			}
 
-			frm.add_custom_button(__('__('Create')'), function() {
+			frm.add_custom_button(__('Nursing Tasks'), function() {
 				create_nursing_tasks(frm);
 			},__('Create'));
 		}
