@@ -24,6 +24,12 @@ class InpatientRecord(Document):
 			frappe.db.set_value('Patient Encounter', self.admission_encounter, 'inpatient_record', self.name)
 			frappe.db.set_value('Patient Encounter', self.admission_encounter, 'inpatient_status', self.status)
 
+		if self.admission_nursing_checklist_template:
+			NursingTask.create_nursing_tasks_from_template(
+				template=self.admission_nursing_checklist_template,
+				doc=self,
+			)
+
 	def validate(self):
 		self.validate_dates()
 		self.validate_already_scheduled_or_admitted()
@@ -124,13 +130,6 @@ def schedule_inpatient(args):
 
 	inpatient_record.status = 'Admission Scheduled'
 	inpatient_record.save(ignore_permissions = True)
-
-	if inpatient_record.admission_nursing_checklist_template:
-		NursingTask.create_nursing_tasks_from_template(
-			inpatient_record.admission_nursing_checklist_template,
-			inpatient_record,
-			start_time=now_datetime()
-		)
 
 
 @frappe.whitelist()
