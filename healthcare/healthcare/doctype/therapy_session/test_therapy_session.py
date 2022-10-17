@@ -16,7 +16,7 @@ class TestTherapySession(FrappeTestCase):
 def create_therapy_session(patient, therapy_type, therapy_plan, duration=0, start_date=None):
 	if not start_date:
 		start_date = nowdate()
-	therapy_session = frappe.new_doc('Therapy Session')
+	therapy_session = frappe.new_doc("Therapy Session")
 	therapy_session.patient = patient
 	therapy_session.therapy_type = therapy_type
 	therapy_session.therapy_plan = therapy_plan

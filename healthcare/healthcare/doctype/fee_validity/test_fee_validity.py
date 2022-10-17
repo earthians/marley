@@ -17,6 +17,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 
 test_dependencies = ["Company"]
 
+
 class TestFeeValidity(FrappeTestCase):
 	def setUp(self):
 		frappe.db.sql("""delete from `tabPatient Appointment`""")

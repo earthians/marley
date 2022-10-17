@@ -7,5 +7,6 @@ from frappe.tests.utils import FrappeTestCase
 
 # test_records = frappe.get_test_records('Sensitivity')
 
+
 class TestSensitivity(FrappeTestCase):
 	pass
