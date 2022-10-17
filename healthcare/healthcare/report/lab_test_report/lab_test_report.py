@@ -1,7 +1,7 @@
 # Copyright (c) 2016, ESS
 # License: See license.txt
 
-from __future__ import unicode_literals
+
 
 import frappe
 from frappe import _, msgprint
