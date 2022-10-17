@@ -5,25 +5,41 @@ import frappe
 
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
-from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import create_procedure
-from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient, discharge_patient
-from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient, \
-	get_healthcare_service_unit
-from healthcare.healthcare.doctype.lab_test.test_lab_test import create_lab_test_template, create_lab_test
+from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import (
+	create_procedure,
+)
+from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
+	admit_patient,
+	discharge_patient,
+)
+from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
+	create_inpatient,
+	get_healthcare_service_unit,
+)
+from healthcare.healthcare.doctype.lab_test.test_lab_test import (
+	create_lab_test_template,
+	create_lab_test,
+)
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import \
-	create_clinical_procedure_template, create_healthcare_docs
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_clinical_procedure_template,
+	create_healthcare_docs,
+)
 from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
-from healthcare.healthcare.doctype.therapy_session.test_therapy_session import create_therapy_session
+from healthcare.healthcare.doctype.therapy_session.test_therapy_session import (
+	create_therapy_session,
+)
 from healthcare.healthcare.doctype.therapy_type.test_therapy_type import create_therapy_type
 
 
 class TestNursingTask(FrappeTestCase):
 	def setUp(self) -> None:
-		nursing_checklist_templates = frappe.get_test_records('Nursing Checklist Template')
-		self.nc_template = frappe.get_doc(nursing_checklist_templates[0]).insert(ignore_if_duplicate=True)
+		nursing_checklist_templates = frappe.get_test_records("Nursing Checklist Template")
+		self.nc_template = frappe.get_doc(nursing_checklist_templates[0]).insert(
+			ignore_if_duplicate=True
+		)
 
-		self.settings = frappe.get_single('Healthcare Settings')
+		self.settings = frappe.get_single("Healthcare Settings")
 		self.settings.validate_nursing_checklists = 1
 		self.settings.save()
 
@@ -66,16 +82,14 @@ class TestNursingTask(FrappeTestCase):
 		ip_record.expected_length_of_stay = 0
 		ip_record.save(ignore_permissions=True)
 		NursingTask.create_nursing_tasks_from_template(
-			ip_record.admission_nursing_checklist_template,
-			ip_record,
-			start_time=now_datetime()
+			ip_record.admission_nursing_checklist_template, ip_record, start_time=now_datetime()
 		)
 
 		service_unit = get_healthcare_service_unit()
 		kwargs = {
-			'inpatient_record': ip_record,
-			'service_unit': service_unit,
-			'check_in': now_datetime(),
+			"inpatient_record": ip_record,
+			"service_unit": service_unit,
+			"check_in": now_datetime(),
 		}
 		self.assertRaises(frappe.ValidationError, admit_patient, **kwargs)
 
@@ -85,9 +99,7 @@ class TestNursingTask(FrappeTestCase):
 		ip_record.discharge_nursing_checklist_template = self.nc_template.name
 		ip_record.save()
 		NursingTask.create_nursing_tasks_from_template(
-			ip_record.admission_nursing_checklist_template,
-			ip_record,
-			start_time=now_datetime()
+			ip_record.admission_nursing_checklist_template, ip_record, start_time=now_datetime()
 		)
 
 		self.assertRaises(frappe.ValidationError, discharge_patient, inpatient_record=ip_record)
@@ -111,12 +123,12 @@ class TestNursingTask(FrappeTestCase):
 
 def complete_nusing_tasks(document):
 	filters = {
-		'reference_name': document.name,
-		'mandatory': 1,
-		'status': ['not in', ['Completed', 'Cancelled']],
+		"reference_name": document.name,
+		"mandatory": 1,
+		"status": ["not in", ["Completed", "Cancelled"]],
 	}
-	tasks = frappe.get_all('Nursing Task', filters=filters)
+	tasks = frappe.get_all("Nursing Task", filters=filters)
 	for task_name in tasks:
-		task = frappe.get_doc('Nursing Task', task_name)
-		task.status = 'Completed'
+		task = frappe.get_doc("Nursing Task", task_name)
+		task.status = "Completed"
 		task.save()
