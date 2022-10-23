@@ -4,7 +4,7 @@
  "allow_import": 1, 
  "allow_rename": 1, 
  "autoname": "field:complaints", 
- "beta": 1, 
+ "beta": 0,
  "creation": "2017-02-15 12:25:28.045267", 
  "custom": 0, 
  "docstatus": 0, 

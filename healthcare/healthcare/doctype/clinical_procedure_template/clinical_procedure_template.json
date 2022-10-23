@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:template",
- "beta": 1,
+ "beta": 0,
  "creation": "2017-10-05 14:59:55.438359",
  "description": "Procedure Template",
  "doctype": "DocType",

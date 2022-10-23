@@ -4,7 +4,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:lab_test_name",
- "beta": 1,
+ "beta": 0,
  "creation": "2016-03-29 17:35:36.761223",
  "doctype": "DocType",
  "engine": "InnoDB",

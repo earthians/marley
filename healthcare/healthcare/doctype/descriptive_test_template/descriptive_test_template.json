@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_copy": 1,
- "beta": 1,
+ "beta": 0,
  "creation": "2016-02-22 16:12:12.394200",
  "doctype": "DocType",
  "document_type": "Setup",

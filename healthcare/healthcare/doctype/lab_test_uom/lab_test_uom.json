@@ -4,7 +4,7 @@
  "allow_import": 1, 
  "allow_rename": 1, 
  "autoname": "field:lab_test_uom", 
- "beta": 1, 
+ "beta": 0,
  "creation": "2016-03-29 17:28:08.630148", 
  "custom": 0, 
  "docstatus": 0, 
