@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:schedule_name",
- "beta": 1,
+ "beta": 0,
  "creation": "2017-05-03 17:28:03.926787",
  "doctype": "DocType",
  "editable_grid": 1,
