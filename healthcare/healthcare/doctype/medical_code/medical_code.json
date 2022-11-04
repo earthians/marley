@@ -3,7 +3,7 @@
  "allow_copy": 1,
  "allow_import": 1,
  "allow_rename": 1,
- "beta": 1,
+ "beta": 0,
  "creation": "2017-06-21 13:02:56.122897",
  "doctype": "DocType",
  "editable_grid": 1,

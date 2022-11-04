@@ -4,7 +4,7 @@
  "allow_import": 1, 
  "allow_rename": 1, 
  "autoname": "field:department", 
- "beta": 1, 
+ "beta": 0,
  "creation": "2017-02-27 13:38:30.806362", 
  "custom": 0, 
  "docstatus": 0, 

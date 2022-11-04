@@ -3,7 +3,7 @@
  "allow_copy": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 1,
+ "beta": 0,
  "creation": "2016-06-09 11:30:44.972056",
  "doctype": "DocType",
  "document_type": "Setup",

@@ -63,19 +63,19 @@ frappe.ui.form.on('Patient Encounter', {
 				} else {
 					frappe.msgprint(__('Please select Patient'));
 				}
-			},'View');
+			},__('View'));
 
 			frm.add_custom_button(__('Vital Signs'), function() {
 				create_vital_signs(frm);
-			},'Create');
+			},__('Create'));
 
 			frm.add_custom_button(__('Medical Record'), function() {
 				create_medical_record(frm);
-			},'Create');
+			},__('Create'));
 
 			frm.add_custom_button(__('Clinical Procedure'), function() {
 				create_procedure(frm);
-			},'Create');
+			},__('Create'));
 
 			if (frm.doc.drug_prescription && frm.doc.inpatient_record && frm.doc.inpatient_status === "Admitted") {
 				frm.add_custom_button(__('Inpatient Medication Order'), function() {
@@ -83,12 +83,12 @@ frappe.ui.form.on('Patient Encounter', {
 						method: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.make_ip_medication_order',
 						frm: frm
 					});
-				}, 'Create');
+				},__('Create'));
 			}
 
 			frm.add_custom_button(__('Nursing Tasks'), function() {
 				create_nursing_tasks(frm);
-			},'Create');
+			},__('Create'));
 		}
 
 		frm.set_query('patient', function() {

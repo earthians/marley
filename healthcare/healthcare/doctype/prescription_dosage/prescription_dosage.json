@@ -4,7 +4,7 @@
  "allow_import": 1, 
  "allow_rename": 1, 
  "autoname": "field:dosage", 
- "beta": 1, 
+ "beta": 0,
  "creation": "2016-09-16 15:49:25.327610", 
  "custom": 0, 
  "docstatus": 0, 

@@ -34,13 +34,13 @@ let calculate_bmi = function(frm){
 	let bmi_note = null;
 
 	if (bmi<18.5) {
-		bmi_note = 'Underweight';
+		bmi_note = __('Underweight');
 	} else if (bmi>=18.5 && bmi<25) {
-		bmi_note = 'Normal';
+		bmi_note = __('Normal');
 	} else if (bmi>=25 && bmi<30) {
-		bmi_note = 'Overweight';
+		bmi_note = __('Overweight');
 	} else if (bmi>=30) {
-		bmi_note = 'Obese';
+		bmi_note = __('Obese');
 	}
 	frappe.model.set_value(frm.doctype,frm.docname, 'bmi', bmi);
 	frappe.model.set_value(frm.doctype,frm.docname, 'nutrition_note', bmi_note);

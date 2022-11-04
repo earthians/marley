@@ -4,7 +4,7 @@
  "allow_import": 1, 
  "allow_rename": 1, 
  "autoname": "field:sensitivity", 
- "beta": 1, 
+ "beta": 0,
  "creation": "2016-02-23 11:12:54.623249", 
  "custom": 0, 
  "docstatus": 0, 

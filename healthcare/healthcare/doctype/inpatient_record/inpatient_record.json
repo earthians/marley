@@ -574,6 +574,12 @@
    "share": 1
   }
  ],
+ "links": [
+  {
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "reference_name"
+  }
+ ],
  "restrict_to_domain": "Healthcare",
  "search_fields": "patient",
  "sort_field": "modified",

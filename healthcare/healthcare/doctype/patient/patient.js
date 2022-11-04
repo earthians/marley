@@ -45,7 +45,7 @@ frappe.ui.form.on('Patient', {
 			if ((frappe.user.has_role('Nursing User') || frappe.user.has_role('Physician'))) {
 				frm.add_custom_button(__('Medical Record'), function () {
 					create_medical_record(frm);
-				}, 'Create');
+				}, __('Create'));
 				frm.toggle_enable(['customer'], 0);
 			}
 			frappe.contacts.render_address_and_contact(frm);
