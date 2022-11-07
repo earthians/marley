@@ -121,7 +121,7 @@ doc_events = {
 	},
 	"Patient": {
 		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
-	}
+	},
 }
 
 scheduler_events = {
