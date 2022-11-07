@@ -1,5 +1,6 @@
 // Copyright (c) 2016, ESS LLP and contributors
 // For license information, please see license.txt
+{% include 'healthcare/regional/india/abdm/js/patient.js' %}
 
 frappe.ui.form.on('Patient', {
 	refresh: function (frm) {
