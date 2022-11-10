@@ -111,11 +111,6 @@ doc_events = {
 		"on_submit": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 		"on_cancel": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 	},
-	"Payment Entry": {
-		"on_submit": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.validate_payment_entry_and_set_claim_fields",
-		"on_submit": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.update_claim_paid_amount",
-		"on_cancel": "healthcare.healthcare.doctype.insurance_claim.insurance_claim.update_claim_paid_amount",
-	},
 	"Company": {
 		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root"
 	},
