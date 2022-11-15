@@ -4,3 +4,4 @@
 *.swp
 tags
 healthcare/docs/current
+__pycache__/
