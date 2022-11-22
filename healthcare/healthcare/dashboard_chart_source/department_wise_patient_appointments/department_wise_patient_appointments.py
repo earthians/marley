@@ -3,6 +3,7 @@
 
 
 import frappe
+from frappe import _
 from frappe.utils.dashboard import cache_source
 
 
@@ -61,10 +62,10 @@ def get(
 	return {
 		"labels": labels,
 		"datasets": [
-			{"name": "Open", "values": open_appointments},
-			{"name": "Scheduled", "values": scheduled},
-			{"name": "Closed", "values": closed},
-			{"name": "Cancelled", "values": cancelled},
+			{"name": _("Open"), "values": open_appointments},
+			{"name": _("Scheduled"), "values": scheduled},
+			{"name": _("Closed"), "values": closed},
+			{"name": _("Cancelled"), "values": cancelled},
 		],
 		"type": "bar",
 	}
