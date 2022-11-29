@@ -87,8 +87,8 @@ class TherapySession(Document):
 		validate_nursing_tasks(self)
 		self.update_sessions_count_in_therapy_plan()
 
-		if self.healthcare_service_order:
-			frappe.db.set_value('Healthcare Service Order', self.healthcare_service_order, 'status', 'Completed')
+		if self.service_request:
+			frappe.db.set_value('Service Request', self.service_request, 'status', 'Completed')
 
 	def on_update(self):
 		if self.appointment:

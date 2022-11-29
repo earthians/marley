@@ -16,13 +16,6 @@ class ServiceRequestController(Document):
 		if self.status not in ['Active', 'On Hold', 'Unknown']:
 			self.status = 'Active'
 
-	def on_submit(self):
-		if self.insurance_policy and not self.insurance_coverage:
-			self.make_insurance_coverage()
-
-	def on_update_after_submit(self):
-		if self.billing_status == 'Pending' and self.insurance_policy and not self.insurance_coverage:
-			self.make_insurance_coverage()
 
 	def before_cancel(self):
 		not_allowed = ['Scheduled', 'In Progress', 'Completed', 'On Hold']
@@ -31,10 +24,6 @@ class ServiceRequestController(Document):
 			title=_('Not Allowed'))
 
 	def on_cancel(self):
-		if self.insurance_coverage:
-			coverage = frappe.get_doc('Patient Insurance Coverage', self.insurance_coverage)
-			coverage.cancel()
-
 		if self.status == 'Active':
 			self.db_set('status', 'Cancelled')
 
