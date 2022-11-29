@@ -309,7 +309,7 @@ def get_therapy_sessions_to_invoice(patient, company):
 	return therapy_sessions_to_invoice
 
 def get_service_requests_to_invoice(patient, company):
-	service_order_to_invoice = []
+	orders_to_invoice = []
 	service_requests = frappe.get_list(
 		'Service Request',
 		fields=['*'],
@@ -324,13 +324,13 @@ def get_service_requests_to_invoice(patient, company):
 		item, is_billable = frappe.get_cached_value(service_request.template_dt, service_request.template_dn,
 			['item', 'is_billable'])
 		if is_billable:
-			service_order_to_invoice.append({
+			orders_to_invoice.append({
 				'reference_type': 'Service Request',
 				'reference_name': service_request.name,
 				'service': item,
-				'qty': service_requests.quantity if service_requests.quantity else 1
+				'qty': service_request.quantity if service_request.quantity else 1
 			})
-	return service_order_to_invoice
+	return orders_to_invoice
 
 
 @frappe.whitelist()
@@ -612,39 +612,6 @@ def get_drugs_to_invoice(encounter):
 								billable_order_qty = medication_request.get('quantity', 1)
 							else:
 								billable_order_qty = medication_request.total_dispensable_quantity - medication_request.get('qty_invoiced', 0)
-
-						coverage_details = None
-						if medication_request.insurance_coverage:
-							coverage_details = frappe.get_cached_value('Patient Insurance Coverage', medication_request.insurance_coverage,
-								['status', 'coverage', 'discount', 'price_list_rate', 'item_code', 'qty', 'qty_invoiced', 'policy_number', 'coverage_validity_end_date'], as_dict=True)
-
-						if coverage_details and coverage_details.status in ['Approved', 'Partly Invoiced'] and getdate() <= coverage_details.coverage_validity_end_date:
-							if coverage_details.get('qty') > coverage_details.get('qty_invoiced'):
-								# billable qty from insurance coverage
-								billable_coverage_qty = coverage_details.get('qty', 1) - coverage_details.get('qty_invoiced', 0)
-
-								orders_to_invoice.append({
-									'reference_type': 'Medication Request',
-									'reference_name': medication_request.name,
-									'patient_insurance_policy': coverage_details.policy_number,
-									'insurance_coverage': medication_request.insurance_coverage,
-									'insurance_payor': medication_request.insurance_payor,
-									'drug_code': medication_request.item_code,
-									'rate': coverage_details.price_list_rate,
-									'coverage_percentage': coverage_details.coverage,
-									'discount_percentage':coverage_details.discount,
-									'quantity': min(billable_coverage_qty, billable_order_qty),
-									'coverage_rate': coverage_details.price_list_rate,
-									'coverage_qty': coverage_details.qty,
-									'description': description
-								})
-								# if order quantity is not fully billed, update billable_order_qty
-								# bill remianing qty as new line without insurance
-								if billable_order_qty > billable_coverage_qty:
-									billable_order_qty = billable_order_qty - billable_coverage_qty
-								else:
-									# order qty fully billed
-									continue
 
 						orders_to_invoice.append({
 							'reference_type': 'Medication Request',

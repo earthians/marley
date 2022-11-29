@@ -208,26 +208,20 @@ var show_lab_tests = function (frm, lab_test_list) {
 				<a data-name="%(name)s" data-lab-test="%(lab_test)s"\
 				data-encounter="%(encounter)s" data-practitioner="%(practitioner)s" \
 				data-invoiced="%(invoiced)s" data-source="%(source)s"\
-				data-insurance-company="%(insurance_company)s" data-insurance-subscription="%(insurance_subscription)s"\
 				data-referring-practitioner="%(referring_practitioner)s" href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 			</div>\
 		</div><hr>',
 		{ lab_test: y[0], encounter: y[1], invoiced: y[2], practitioner: y[3], date: y[4],
-			name: y[5], insurance_subscription:(y[6]?y[6]:''), insurance_company:y[7]})
+			name: y[5]})
 		).appendTo(html_field);
-
-
 		row.find("a").click(function () {
 			frm.doc.template = $(this).attr('data-lab-test');
 			frm.doc.service_request = $(this).attr('data-name');
+			console.log($(this).attr('data-name'))
 			frm.doc.practitioner = $(this).attr('data-practitioner');
 			frm.set_df_property('template', 'read_only', 1);
 			frm.set_df_property('patient', 'read_only', 1);
 			frm.set_df_property('practitioner', 'read_only', 1);
-			if ($(this).attr("data-insurance-subscription")) {
-				frm.doc.insurance_subscription = $(this).attr("data-insurance-subscription");
-				frm.doc.insurance_company = $(this).attr("data-insurance-company");
-			}
 			frm.doc.invoiced = 0;
 			if ($(this).attr('data-invoiced') === 1) {
 				frm.doc.invoiced = 1;

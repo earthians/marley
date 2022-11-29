@@ -9,7 +9,6 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "service_request",
   "template",
   "lab_test_name",
   "lab_test_group",
@@ -67,7 +66,7 @@
   "legend_print_position",
   "result_legend",
   "more_information_section",
-  "healthcare_service_order",
+  "service_request",
   "invoiced",
   "section_break_50",
   "email_sent",
