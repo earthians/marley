@@ -4,7 +4,6 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
 class MedicationRequest(ServiceRequestController):
@@ -21,20 +20,6 @@ class MedicationRequest(ServiceRequestController):
 
 		if self.amended_from:
 			frappe.db.set_value('Medication Request', self.amended_from, 'status', 'Replaced')
-
-	def make_insurance_coverage(self):
-		coverage = make_insurance_coverage(
-			patient=self.patient,
-			policy=self.insurance_policy,
-			company=self.company,
-			template_dt='Medication',
-			template_dn=self.medication,
-			item_code=self.item_code,
-			qty=self.quantity
-		)
-
-		if coverage and coverage.get('coverage'):
-			self.db_set({'insurance_coverage': coverage.get('coverage'), 'coverage_status': coverage.get('coverage_status')})
 
 	def set_order_details(self):
 		if not self.medication:

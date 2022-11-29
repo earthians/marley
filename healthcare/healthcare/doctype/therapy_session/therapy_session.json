@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "service_request",
   "appointment",
   "therapy_plan",
   "patient",
@@ -36,7 +35,7 @@
   "medical_coding_section",
   "codification_table",
   "more_information_section",
-  "healthcare_service_order",
+  "service_request",
   "invoiced",
   "amended_from"
  ],

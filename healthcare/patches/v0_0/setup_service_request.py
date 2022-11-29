@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import frappe
-from healthcare.healthcare.setup import setup_service_request_masters
+from healthcare.setup import setup_service_request_masters
 
 def execute():
 	frappe.reload_doc('healthcare', 'doctype', 'Patient Care Type')
