@@ -10,8 +10,6 @@
  "field_order": [
   "title",
   "naming_series",
-  "order_doctype",
-  "order_template",
   "order_date",
   "order_time",
   "column_break_4",
@@ -68,11 +66,15 @@
   "source",
   "referring_practitioner",
   "color",
-  "order",
   "reason_reference_doctype",
   "reason_reference",
   "order_group_doctype",
-  "amended_from"
+  "amended_from",
+  "service_details_section",
+  "template_dt",
+  "template_dn",
+  "qty_invoiced",
+  "billing_status"
  ],
  "fields": [
   {
@@ -116,13 +118,6 @@
    "options": "Patient Encounter"
   },
   {
-   "fieldname": "order_doctype",
-   "fieldtype": "Link",
-   "label": "Order Type",
-   "options": "DocType",
-   "reqd": 1
-  },
-  {
    "fieldname": "column_break_9",
    "fieldtype": "Column Break"
   },
@@ -155,13 +150,6 @@
    "fieldtype": "Link",
    "label": "Staff Role",
    "options": "Role"
-  },
-  {
-   "fieldname": "order",
-   "fieldtype": "Dynamic Link",
-   "label": "Order",
-   "options": "order_doctype",
-   "set_only_once": 1
   },
   {
    "fetch_from": "order_template.patient_care_type",
@@ -404,13 +392,6 @@
    "label": "Patient Instructions"
   },
   {
-   "fieldname": "order_template",
-   "fieldtype": "Dynamic Link",
-   "label": "Order Template",
-   "options": "order_doctype",
-   "reqd": 1
-  },
-  {
    "default": "Patient Encounter",
    "fieldname": "order_group_doctype",
    "fieldtype": "Link",
@@ -429,12 +410,6 @@
    "fieldtype": "Link",
    "label": "Gender",
    "options": "Gender",
-   "read_only": 1
-  },
-  {
-   "fieldname": "patient_age_data",
-   "fieldtype": "Data",
-   "label": "Patient Age",
    "read_only": 1
   },
   {
@@ -559,15 +534,7 @@
  "links": [
   {
    "link_doctype": "Lab Test",
-   "link_fieldname": "healthcare_service_order"
-  },
-  {
-   "link_doctype": "Clinical Procedure",
-   "link_fieldname": "healthcare_service_order"
-  },
-  {
-   "link_doctype": "Therapy Session",
-   "link_fieldname": "healthcare_service_order"
+   "link_fieldname": "service_request"
   },
   {
    "link_doctype": "Clinical Procedure",
@@ -578,7 +545,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2022-04-04 18:15:19.556058",
+ "modified": "2022-09-30 17:10:21.221929",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
@@ -631,7 +598,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
- "search_fields": "order, patient, order_group",
+ "search_fields": "patient, order_group",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
