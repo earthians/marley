@@ -65,7 +65,7 @@ class InsurancePayor(Document):
 			{
 				"doctype": "Customer",
 				"customer_name": self.insurance_payor_name,
-				"customer_group": customer_group
+				"customer_group": customer_group.name
 				or frappe.db.get_single_value("Selling Settings", "customer_group"),
 				"territory": frappe.db.get_single_value("Selling Settings", "territory"),
 				"customer_type": "Company",
