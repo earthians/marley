@@ -53,19 +53,21 @@ class InsurancePayor(Document):
 			"Customer Group", {"customer_group_name": _("Insurance Payor")}
 		)
 		if not customer_group:
-			customer_group = frappe.get_doc(
+			customer_group_doc = frappe.get_doc(
 				{
 					"customer_group_name": "Insurance Payor",
 					"parent_customer_group": "All Customer Groups",
 					"doctype": "Customer Group",
 				}
 			).insert(ignore_permissions=True, ignore_mandatory=True)
+			if customer_group_doc:
+				customer_group = customer_group_doc.name
 
 		customer = frappe.get_doc(
 			{
 				"doctype": "Customer",
 				"customer_name": self.insurance_payor_name,
-				"customer_group": customer_group.name
+				"customer_group": customer_group
 				or frappe.db.get_single_value("Selling Settings", "customer_group"),
 				"territory": frappe.db.get_single_value("Selling Settings", "territory"),
 				"customer_type": "Company",
