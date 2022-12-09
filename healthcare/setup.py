@@ -630,7 +630,7 @@ def create_healthcare_item_groups():
 	item_group = {
 		"doctype": "Item Group",
 		"item_group_name": _("All Item Groups"),
-		"is_group": 0,
+		"is_group": 1,
 		"parent_item_group": "",
 	}
 	if not frappe.db.exists(item_group["doctype"], item_group["item_group_name"]):
