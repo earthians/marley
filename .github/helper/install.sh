@@ -46,4 +46,5 @@ bench start &
 bench --site test_site reinstall --yes
 
 bench get-app healthcare "${GITHUB_WORKSPACE}"
+bench --verbose --site test_site install-app payments
 bench --verbose --site test_site install-app healthcare
