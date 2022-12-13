@@ -334,6 +334,7 @@
    "label": "Get Applicable Treatment Plans"
   },
   {
+   "fetch_from": "appointment.google_meet_link",
    "fieldname": "google_meet_link",
    "fieldtype": "Data",
    "label": "Google Meet Link",
