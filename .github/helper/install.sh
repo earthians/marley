@@ -38,7 +38,7 @@ sed -i 's/socketio:/# socketio:/g' Procfile
 sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
 bench get-app erpnext --branch develop --resolve-deps
-bench get-app payments
+bench get-app payments --branch develop --resolve-deps
 
 bench setup requirements --dev
 
@@ -46,5 +46,4 @@ bench start &
 bench --site test_site reinstall --yes
 
 bench get-app healthcare "${GITHUB_WORKSPACE}"
-bench --verbose --site test_site install-app payments
 bench --verbose --site test_site install-app healthcare
