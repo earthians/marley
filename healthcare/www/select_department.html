@@ -1,0 +1,38 @@
+{% extends "frappe/templates/web.html" %}
+{% block content %}
+{{ include_style('healthcare-web.bundle.css') }}
+<div style='text-align:center;'>
+</div>
+<br>
+<section class="section-bg container">
+	<head>
+		<title>Book Appointment</title>
+	</head>
+	<body>
+		<div class="col-sm-12">
+		<div class="select_btn" id="Page1">
+			<button class="dep" type="dep" style="background-color: rgb(249,250,251);" onclick="location.href='/select_department'">Department</button>
+			<button class="pra" type="pra" style="background-color: #FFFFFF;" onclick="location.href='/select_practitioner'">Practitioner</button>
+		</div><br>
+		<div class="frappe-card depart-section">
+			<div class="department" id="department">
+				<div class='card-deck flex-container' style="text-align:center;">
+					{% for dep in medical_departments %}
+					<div class="page-card cards" id="dep_card" onclick="location.href='/select_practitioner?selected_department={{dep.department}}'"
+						 style="cursor:pointer; float:left; height: 140px; width: 140px; border: 1px solid rgb(228, 223, 223); margin: 7px; border-radius: 12px;">
+						<div class='card-body'>
+							<p class="text-secondary card-text">{{ dep.department }} </p>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+			</div>
+		</div><br>
+	</div>
+	</div>
+</div>
+		</body>
+</section>
+<script>
+</script>
+{% endblock %}

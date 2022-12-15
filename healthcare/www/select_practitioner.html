@@ -1,0 +1,43 @@
+{% extends "frappe/templates/web.html" %}
+{% block content %}
+{{ include_style('healthcare-web.bundle.css') }}
+
+<div style='text-align:center;'>
+</div>
+<br>
+<section class="section-bg container">
+	<head>
+		<title>Book Appointment</title>
+	</head>
+	<body>
+		<div class="col-sm-12">
+		<div class="select_btn" id="Page1">
+			<button class="dep" type="dep" style="background-color: #FFFFFF;" onclick="location.href='/select_department'">Department</button>
+			<button class="pra" type="pra" style="background-color: rgb(249,250,251);" onclick="location.href='/select_practitioner'">Practitioner</button>
+		</div><br>
+		<div class="frappe-card pract-section">
+			<div class="practitioner" id="practitioner">
+				<div class='card-deck flex-container' style="text-align:center;">
+					{% if practitioner %}
+					{% for pract in practitioner %}
+					<div class="page-card cards" id="card" onclick="location.href='/select_date?practitioner={{ pract.name }}'">
+						<div class='card-body'><br>
+							<img src={{ pract.image }} onerror="this.src='assets/frappe/images/default-avatar.png'"
+					class="dt-logo" height="80" width="80"><br>
+							<p class="text-secondary"><b>{{ pract.practitioner_name }}</b></p>
+							<p class="text-secondary">ID:{{ pract.name }}<br>Department:{{ pract.department }}</p></p>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+				{% else %}
+				No Practiioner active{% if department %}  for {{department}} {% endif %}!
+				{% endif %}
+			</div>
+		</div>
+	</div>
+	  </body>
+</section>
+<script>
+</script>
+{% endblock %}

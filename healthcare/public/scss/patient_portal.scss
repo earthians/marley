@@ -1,0 +1,55 @@
+.navgation {
+    display: flex;
+    padding-left: 80%;
+    /* background-color: #e9feff; */
+}
+.select_btn {
+    display: inline;
+    padding-left: 80%;
+}
+.dep {
+    border-radius:.5rem 0rem 0rem .5rem;
+}
+.pra {
+    border-radius:0rem .5rem .5rem 0;
+}
+.dep, .pra {
+    cursor:pointer;
+    border: 0;
+    box-sizing: border-box;
+    color: #111827;
+    font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+    font-size: .800vw;
+    font-weight: 600;
+    line-height: 1.25rem;
+    padding: .75rem 1rem;
+    text-align: center;
+    text-decoration: none #D1D5DB solid;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    height: 6vh;
+    width: 6vw;
+}
+.dep:hover, .pra:hover {
+    background-color: rgb(249,250,251);
+}
+.card-text {
+    overflow-wrap: break-word;
+    overflow: hidden;
+}
+.depart-section{
+    min-height: 76vh;
+    display: flex;
+    padding-left: 1.5vw;
+    /* justify-content: center; */
+    /* align-items: center; */
+    flex-direction: column;
+}
+.cards{
+    cursor:pointer;
+    float:left;
+    height: 300px;
+    width: 200px;
+    border: 1px solid rgb(228, 223, 223);
+    margin: 7px;
+    border-radius: 12px;
+}
