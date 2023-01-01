@@ -44,11 +44,16 @@ function setup_timezone_selector() {
 }
 
 async function get_time_slots(date, timezone) {
+	let local_timezone = moment.tz.guess()
+	if (local_timezone == timezone) {
+		timezone = ''
+	}
 	let slots = (await frappe.call({
 		method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data',
 		args: {
 			practitioner: selected_practitioner,
-			date: date
+			date: date,
+			display_tz: timezone
 		}
 	})).message;
 	return slots;
@@ -108,6 +113,7 @@ function get_slots(slot_details) {
 		slot_html += '</div><br>';
 
 		slot_html += slot_info.avail_slot.map(slot => {
+			display_time_slot = slot.display_time_slot
 			appointment_count = 0;
 			disabled = false;
 			count_class = tool_tip = '';
@@ -155,12 +161,12 @@ function get_slots(slot_details) {
 				tool_tip =`${available_slots} ${__('slots available for booking')}`;
 			}
 			return `
-				<button class="btn btn-secondary" data-name=${start_str}
+				<button class="btn btn-secondary" data-name='${start_str}'
 					data-duration=${interval}
 					data-service-unit="${slot_info.service_unit || ''}"
 					style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
 					data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click('${start_str}')">
-					${start_str.substring(0, start_str.length - 3)}
+					${display_time_slot.substring(0, display_time_slot.length - 3)}
 					${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
 				</button>`;
 
@@ -189,6 +195,8 @@ function book_appointment(){
 			time: window.selected_slot
 		},
 		callback: (r) => {
+			setTimeout(window.location.href = "/", 5000);
+			frappe.msgprint(__("Appointment Booked"));
 		}
 	})
 }

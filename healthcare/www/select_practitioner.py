@@ -1,7 +1,13 @@
 import frappe
+import json
+
+no_cache = 1
 
 def get_context(context):
+	context.no_cache = 1
 	selected_department = frappe.local.request.args.get('selected_department')
+	if selected_department:
+		selected_department = selected_department.replace('"', '')
 	query = """
 		select
 			h_pract.name,

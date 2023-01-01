@@ -5,69 +5,25 @@
 {% endblock %} -->
 
 {% block content %}
+{{ include_style('healthcare-web.bundle.css') }}
 <div style='text-align:center;'>
 	<!-- <p class="mt-0 small text-muted">Select Department</p> -->
 </div>
 <section class="section-bg container">
-	<style>
-		.navgation {
-		display: flex;
-		padding-left: 80%;
-		/* background-color: #e9feff; */
-		}
-		.select_btn {
-		/* display: inline-block; */
-		padding-left: 90%;
-		}
-		.back {
-			background-color: #FFFFFF;
-			border-radius:.5rem .5rem .5rem .5rem;
-			cursor:pointer;
-			border: 0;
-			box-sizing: border-box;
-			color: #111827;
-			font-family: "Inter var",ui-sans-serif,system-ui,-apple-system,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
-			font-size: .875rem;
-			font-weight: 600;
-			line-height: 1.25rem;
-			padding: .75rem 1rem;
-			text-align: center;
-			text-decoration: none #D1D5DB solid;
-			box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-		}
-		.back:hover {
-			background-color: rgb(249,250,251);
-		}
-		.app-date {
-			padding-left: 45%;
-			padding-top: 10%;
-			display: block;
-			width: 100%;
-			height: calc(1.5em + 0.75rem + 2px);
-			padding: 0.375rem 0.75rem;
-			font-size: 1rem;
-			font-weight: 400;
-			line-height: 1.5;
-			color: #227dd2;
-			background-color: #f4f5f6;
-			background-clip: padding-box;
-			border: 1px solid #f4f5f6;
-			border-radius: 0.375rem;
-			transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-			/* padding: 20%; */
-		}
-	</style>
 	<head>
 		<title>Book Appointment</title>
 	</head>
 	<body>
 		<br>
-		<div class="select_btn" id="Page1">
-			<button class="back" type="back" onclick="location.href='/select_practitioner'">Back</button>
-		</div><br>
+		<div class="col-sm-12">
+			<ul class="breadcrumb">
+				<li><a href="/">Home</a> > </li>
+				<li><a href="/select_department">Department</a> > </li>
+				<li><a href="/select_practitioner">Practitioner</a></li>
+			  </ul>
+		</div>
 		<div class="text-center mt-5">
-            <h3>Book patient appointment</h3>
-            <p class="lead text-muted" id="lead-text">Select the date and your timezone</p>
+	            <p class="lead text-muted" id="lead-text">Select the date and your timezone</p>
         </div>
 		<div class="row justify-content-center mt-3">
             <div class="col-md-6 align-self-center ">
@@ -95,130 +51,6 @@
 <br>
 <script>
 	var selected_practitioner = "{{ selected_practitioner }}";
-	// function date_on_change(e){
-	// 	if (e.target.value && selected_practitioner) {
-	// 		frappe.call({
-	// 			method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data',
-	// 			args: {
-	// 				practitioner: selected_practitioner,
-	// 				date: e.target.value
-	// 			},
-	// 			callback: (r) => {
-	// 				let data = r.message;
-	// 				let slot_html = get_slots(data.slot_details);
-	// 				if (slot_html) {
-	// 					var container = document.getElementById('slot_container');
-	// 					container.innerHTML += slot_html
-						
-	// 				}
-	// 				console.log('\n\n\n\nhhhhh\n\n\n', slot_html)
-	// 				// slot_details.forEach((slot_info) => {
-	// 				// console.log(r)
-	// 				// var button = document.createElement('button');
-	// 				// 	button.type = 'button';
-	// 				// 	button.innerHTML = 'Press me';
-	// 				// 	button.className = 'btn-styled';
-					
-	// 				// 	button.onclick = function() {
-	// 				// 		// …
-	// 				// 	};
-					
-	// 				// 	var container = document.getElementById('slot_container');
-	// 				// 	container.appendChild(button);
-	// 				// });
-	// 			}
-	// 		})
-	// 	}
-	// }
-	// function get_slots(slot_details) {
-	// 	let slot_html = '';
-	// 	let appointment_count = 0;
-	// 	let disabled = false;
-	// 	let start_str, slot_start_time, slot_end_time, interval, count, count_class, tool_tip, available_slots;
-
-	// 	slot_details.forEach((slot_info) => {
-	// 		slot_html += `<div class="slot-info">
-	// 			<span> <b> ${__('Practitioner Schedule:')} </b> ${slot_info.slot_name} </span><br>
-	// 			<span> <b> ${__('Service Unit:')} </b> ${slot_info.service_unit} </span>`;
-
-	// 		if (slot_info.service_unit_capacity) {
-	// 			slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
-	// 		}
-
-	// 		slot_html += '</div><br>';
-
-	// 		slot_html += slot_info.avail_slot.map(slot => {
-	// 			appointment_count = 0;
-	// 			disabled = false;
-	// 			count_class = tool_tip = '';
-	// 			start_str = slot.from_time;
-	// 			slot_start_time = moment(slot.from_time, 'HH:mm:ss');
-	// 			slot_end_time = moment(slot.to_time, 'HH:mm:ss');
-	// 			interval = (slot_end_time - slot_start_time) / 60000 | 0;
-
-	// 			// iterate in all booked appointments, update the start time and duration
-	// 			slot_info.appointments.forEach((booked) => {
-	// 				let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
-	// 				let end_time = booked_moment.clone().add(booked.duration, 'minutes');
-
-	// 				// Deal with 0 duration appointments
-	// 				if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
-	// 					if (booked.duration == 0) {
-	// 						disabled = true;
-	// 						return false;
-	// 					}
-	// 				}
-
-	// 				// Check for overlaps considering appointment duration
-	// 				if (slot_info.allow_overlap != 1) {
-	// 					if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-	// 						// There is an overlap
-	// 						disabled = true;
-	// 						return false;
-	// 					}
-	// 				} else {
-	// 					if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-	// 						appointment_count++;
-	// 					}
-	// 					if (appointment_count >= slot_info.service_unit_capacity) {
-	// 						// There is an overlap
-	// 						disabled = true;
-	// 						return false;
-	// 					}
-	// 				}
-	// 			});
-
-	// 			if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
-	// 				available_slots = slot_info.service_unit_capacity - appointment_count;
-	// 				count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
-	// 				count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
-	// 				tool_tip =`${available_slots} ${__('slots available for booking')}`;
-	// 			}
-	// 			return `
-	// 				<button class="btn btn-secondary" data-name=${start_str}
-	// 					data-duration=${interval}
-	// 					data-service-unit="${slot_info.service_unit || ''}"
-	// 					style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
-	// 					data-toggle="tooltip" title="${tool_tip || ''}" onclick="functionToExecute(${start_str})">
-	// 					${start_str.substring(0, start_str.length - 3)}
-	// 					${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
-	// 				</button>`;
-
-	// 		}).join("");
-
-	// 		if (slot_info.service_unit_capacity) {
-	// 			slot_html += `<br/><small>${__('Each slot indicates the capacity currently available for booking')}</small>`;
-	// 		}
-	// 		slot_html += `<br/><br/>`;
-	// 	});
-
-	// 	return slot_html;
-	// }
-	// function functionToExecute(e){
-	// 	console.log('88888888888888', e)
-	// }
-	
-
 </script>
 
 {% endblock %}

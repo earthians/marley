@@ -1,9 +1,6 @@
 {% extends "frappe/templates/web.html" %}
 {% block content %}
 {{ include_style('healthcare-web.bundle.css') }}
-
-<div style='text-align:center;'>
-</div>
 <br>
 <section class="section-bg container">
 	<head>
@@ -11,11 +8,18 @@
 	</head>
 	<body>
 		<div class="col-sm-12">
+			<ul class="breadcrumb">
+				<li><a href="/">Home</a>></li>
+				<li><a href="/select_department">Department</a></li>
+			  </ul>
 		<div class="select_btn" id="Page1">
 			<button class="dep" type="dep" style="background-color: #FFFFFF;" onclick="location.href='/select_department'">Department</button>
 			<button class="pra" type="pra" style="background-color: rgb(249,250,251);" onclick="location.href='/select_practitioner'">Practitioner</button>
-		</div><br>
-		<div class="frappe-card pract-section">
+		</div><br><br>
+		{% if department %}
+			<p class="text-muted">{{department}}</p>
+		{% endif %}
+		<div class="frappe-card depart-section">
 			<div class="practitioner" id="practitioner">
 				<div class='card-deck flex-container' style="text-align:center;">
 					{% if practitioner %}
@@ -23,9 +27,11 @@
 					<div class="page-card cards" id="card" onclick="location.href='/select_date?practitioner={{ pract.name }}'">
 						<div class='card-body'><br>
 							<img src={{ pract.image }} onerror="this.src='assets/frappe/images/default-avatar.png'"
-					class="dt-logo" height="80" width="80"><br>
+							class="dt-logo" height="100%" width="100%"><br>
 							<p class="text-secondary"><b>{{ pract.practitioner_name }}</b></p>
-							<p class="text-secondary">ID:{{ pract.name }}<br>Department:{{ pract.department }}</p></p>
+							{% if not department %}
+								<p class="text-secondary">{{ pract.department }}</p></p>
+							{% endif %}
 						</div>
 					</div>
 					{% endfor %}
@@ -34,7 +40,7 @@
 				No Practiioner active{% if department %}  for {{department}} {% endif %}!
 				{% endif %}
 			</div>
-		</div>
+		</div><br>
 	</div>
 	  </body>
 </section>

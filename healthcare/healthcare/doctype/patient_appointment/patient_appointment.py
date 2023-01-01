@@ -12,7 +12,7 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, format_date, get_link_to_form, get_time, getdate
+from frappe.utils import flt, format_date, get_link_to_form, get_time, getdate, get_datetime, convert_utc_to_timezone
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
@@ -438,7 +438,7 @@ def check_sales_invoice_exists(appointment):
 
 
 @frappe.whitelist()
-def get_availability_data(date, practitioner, appointment):
+def get_availability_data(date, practitioner, appointment, display_tz=None):
 	"""
 	Get availability data of 'practitioner' on 'date'
 	:param date: Date to check in schedule
@@ -454,7 +454,7 @@ def get_availability_data(date, practitioner, appointment):
 	check_employee_wise_availability(date, practitioner_doc)
 
 	if practitioner_doc.practitioner_schedules:
-		slot_details = get_available_slots(practitioner_doc, date)
+		slot_details = get_available_slots(practitioner_doc, date, display_tz)
 	else:
 		frappe.throw(
 			_(
@@ -518,7 +518,7 @@ def check_employee_wise_availability(date, practitioner_doc):
 					)
 
 
-def get_available_slots(practitioner_doc, date):
+def get_available_slots(practitioner_doc, date, display_tz=None):
 	available_slots = slot_details = []
 	weekday = date.strftime("%A")
 	practitioner = practitioner_doc.name
@@ -530,7 +530,18 @@ def get_available_slots(practitioner_doc, date):
 		if practitioner_schedule and not practitioner_schedule.disabled:
 			available_slots = []
 			for time_slot in practitioner_schedule.time_slots:
+				time_slot = frappe._dict({
+					"day": time_slot.day,
+					"from_time": time_slot.from_time,
+					"to_time": time_slot.to_time,
+				})
+				# time_slot = frappe._dict(json.loads(time_slot.as_json()))
+				# print('time_slot',time_slot)
 				if weekday == time_slot.day:
+					if display_tz:
+						time_slot['display_time_slot'] = get_time(convert_utc_to_timezone(get_datetime(str(date) +" "+ str(time_slot.from_time)), display_tz))
+					else:
+						time_slot['display_time_slot'] = time_slot.from_time
 					available_slots.append(time_slot)
 
 			if available_slots:
