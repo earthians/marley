@@ -34,8 +34,8 @@ class PatientEncounter(Document):
 			self.patient_name or self.patient, self.practitioner_name or self.practitioner
 		)[:100]
 
-	@frappe.whitelist()
 	@staticmethod
+	@frappe.whitelist()
 	def get_applicable_treatment_plans(encounter):
 		patient = frappe.get_doc("Patient", encounter["patient"])
 
