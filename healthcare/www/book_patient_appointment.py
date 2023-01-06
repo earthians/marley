@@ -5,7 +5,9 @@ no_cache = 1
 
 def get_context(context):
 	context.no_cache = 1
-	context.selected_practitioner = frappe.local.request.args.get('practitioner')
+	if frappe.session.user=='Guest':
+		frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
+	context.practitioner = frappe.local.request.args.get('practitioner')
 
 @frappe.whitelist()
 def book_appointment(practitioner, date, time):

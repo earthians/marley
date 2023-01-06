@@ -35,6 +35,7 @@
     min-height: 76vh;
     display: flex;
     padding-left: 1.5vw;
+	background-color: rgba(250, 250, 250, 0.992);
     /* justify-content: center; */
     /* align-items: center; */
     flex-direction: column;
@@ -42,8 +43,9 @@
 .cards{
     cursor:pointer;
     float:left;
-    height: 300px;
-    width: 200px;
+    height: 325px;
+    width: 224px;
+	background-color: rgb(255, 255, 255);
     border: 1px solid rgb(228, 223, 223);
     margin: 7px;
     border-radius: 12px;

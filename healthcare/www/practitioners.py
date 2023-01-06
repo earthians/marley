@@ -5,15 +5,16 @@ no_cache = 1
 
 def get_context(context):
 	context.no_cache = 1
-	selected_department = frappe.local.request.args.get('selected_department')
-	if selected_department:
-		selected_department = selected_department.replace('"', '')
+	if frappe.session.user=='Guest':
+		frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
+	selected_department = frappe.local.request.args.get('department')
 	query = """
 		select
 			h_pract.name,
 			h_pract.image,
 			h_pract.practitioner_name,
-			h_pract.department
+			h_pract.department,
+			h_pract.designation
 		from
 			`tabHealthcare Practitioner` as h_pract left join
 			`tabPractitioner Service Unit Schedule` as sch on h_pract.name = sch.parent

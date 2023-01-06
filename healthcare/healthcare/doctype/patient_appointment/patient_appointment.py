@@ -12,7 +12,7 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, format_date, get_link_to_form, get_time, getdate, get_datetime, convert_utc_to_timezone
+from frappe.utils import flt, get_link_to_form, get_time, getdate, get_datetime, time_diff_in_hours, add_to_date flt, format_date, get_link_to_form, get_time, getdate, get_datetime, convert_utc_to_timezone
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
@@ -23,7 +23,23 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.utils import get_service_item_and_practitioner_charge
+from healthcare.healthcare.utils import (
+	check_fee_validity,
+	get_service_item_and_practitioner_charge,
+	manage_fee_validity,
+)
+
+from erpnext.www.book_appointment.index import (
+	convert_to_system_timezone,
+	convert_to_guest_timezone,
+	_deltatime_to_datetime,
+)
+
+# todo: clean up imports
+try:
+	from erpnext.hr.doctype.employee.employee import is_holiday
+except ImportError:
+	from erpnext.setup.doctype.employee.employee import is_holiday
 
 
 class MaximumCapacityError(frappe.ValidationError):
@@ -438,7 +454,7 @@ def check_sales_invoice_exists(appointment):
 
 
 @frappe.whitelist()
-def get_availability_data(date, practitioner, appointment, display_tz=None):
+def get_availability_data(date, practitioner, appointment, to_tz=None):
 	"""
 	Get availability data of 'practitioner' on 'date'
 	:param date: Date to check in schedule
@@ -454,7 +470,7 @@ def get_availability_data(date, practitioner, appointment, display_tz=None):
 	check_employee_wise_availability(date, practitioner_doc)
 
 	if practitioner_doc.practitioner_schedules:
-		slot_details = get_available_slots(practitioner_doc, date, display_tz)
+		slot_details = get_available_slots(practitioner_doc, date, to_tz)
 	else:
 		frappe.throw(
 			_(
@@ -518,10 +534,11 @@ def check_employee_wise_availability(date, practitioner_doc):
 					)
 
 
-def get_available_slots(practitioner_doc, date, display_tz=None):
-	available_slots = slot_details = []
-	weekday = date.strftime("%A")
+def get_available_slots(practitioner_doc, date, tz=None):
+	date_in_patient_tz = date
 	practitioner = practitioner_doc.name
+	format_string = "%Y-%m-%d %H:%M:%S"
+	available_slots = slot_details = []
 
 	for schedule_entry in practitioner_doc.practitioner_schedules:
 		validate_practitioner_schedules(schedule_entry, practitioner)
@@ -529,20 +546,36 @@ def get_available_slots(practitioner_doc, date, display_tz=None):
 
 		if practitioner_schedule and not practitioner_schedule.disabled:
 			available_slots = []
-			for time_slot in practitioner_schedule.time_slots:
-				time_slot = frappe._dict({
-					"day": time_slot.day,
-					"from_time": time_slot.from_time,
-					"to_time": time_slot.to_time,
-				})
-				# time_slot = frappe._dict(json.loads(time_slot.as_json()))
-				# print('time_slot',time_slot)
-				if weekday == time_slot.day:
-					if display_tz:
-						time_slot['display_time_slot'] = get_time(convert_utc_to_timezone(get_datetime(str(date) +" "+ str(time_slot.from_time)), display_tz))
-					else:
-						time_slot['display_time_slot'] = time_slot.from_time
-					available_slots.append(time_slot)
+
+			from_time_in_patient_tz = datetime.datetime.strptime(str(date) + " 00:00:00", format_string)
+			to_time_in_patient_tz = datetime.datetime.strptime(str(date) + " 23:59:59", format_string)
+
+			from_time_in_system_tz =  convert_to_system_timezone(tz, from_time_in_patient_tz)
+			to_time_in_system_tz = convert_to_system_timezone(tz, to_time_in_patient_tz)
+
+			sm_from_weekday = getdate(from_time_in_system_tz).strftime("%A")
+			sm_to_weekday = getdate(to_time_in_system_tz).strftime("%A")
+
+			weekdays = []
+			if sm_from_weekday == sm_to_weekday:
+				weekdays = [{'day':sm_from_weekday, 'date': getdate(from_time_in_system_tz)}]
+			else:
+				weekdays = [{'day':sm_from_weekday, 'date': getdate(from_time_in_system_tz)}, {'day':sm_to_weekday, 'date': getdate(to_time_in_system_tz)}]
+			if weekdays:
+				for week in weekdays:
+					for time_slot in practitioner_schedule.time_slots:
+						if week.get("day") and week.get("day") == time_slot.get("day"):
+							system_date_time = datetime.datetime.strptime(str(week.get("date")) + " " + str(time_slot.from_time), format_string)
+							patient_date_time = convert_to_guest_timezone(tz, system_date_time)
+							if date_in_patient_tz == getdate(patient_date_time):
+								time_slot = frappe._dict({
+									"day": time_slot.day,
+									"from_time": time_slot.from_time,
+									"to_time": time_slot.to_time,
+									"system_date": week.get("date"),
+									"display_time_slot": patient_date_time.time(),
+								})
+								available_slots.append(time_slot)
 
 			if available_slots:
 				appointments = []
