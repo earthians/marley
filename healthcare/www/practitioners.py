@@ -19,7 +19,7 @@ def get_context(context):
 			`tabHealthcare Practitioner` as h_pract left join
 			`tabPractitioner Service Unit Schedule` as sch on h_pract.name = sch.parent
 		where
-			sch.schedule!='' and h_pract.status='Active'
+			sch.schedule!='' and h_pract.status='Active' and sch.service_unit!=''
 	"""
 	if selected_department:
 		context.department = selected_department

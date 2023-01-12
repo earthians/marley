@@ -8,6 +8,9 @@ def get_context(context):
 	if frappe.session.user=='Guest':
 		frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
 	context.practitioner = frappe.local.request.args.get('practitioner')
+	context.pract_details = frappe.db.get_value(
+		"Healthcare Practitioner", context.practitioner,
+		["image", "practitioner_name"], as_dict=1)
 
 @frappe.whitelist()
 def book_appointment(practitioner, date, time):

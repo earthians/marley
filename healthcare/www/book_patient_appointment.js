@@ -103,9 +103,14 @@ function get_slots(slot_details) {
 	let start_str, slot_start_time, slot_end_time, interval, count, count_class, tool_tip, available_slots;
 
 	slot_details.forEach((slot_info) => {
-		slot_html += `<div class="slot-info">
-			<span> <b> ${__('Practitioner Schedule:')} </b> ${slot_info.slot_name} </span><br>
-			<span> <b> ${__('Service Unit:')} </b> ${slot_info.service_unit} </span>`;
+		slot_html += `<div class="slot-info">`
+		console.log(pract_image)
+			if (pract_image) {
+				slot_html += `<img src=${pract_image} width="100" height="100"><br>`
+			}
+			slot_html += `<span>  <b>${pract_name}</b> </span><br>
+			<span> ${__('Practitioner Schedule:')} <b> ${slot_info.slot_name}</b> </span><br>
+			<span> ${__('Service Unit:')} <b> ${slot_info.service_unit} </b> </span>`;
 
 		if (slot_info.service_unit_capacity) {
 			slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
@@ -119,7 +124,6 @@ function get_slots(slot_details) {
 			appointment_count = 0;
 			disabled = false;
 			count_class = tool_tip = '';
-			console.log(slot.system_date)
 			appointment_date = slot.system_date;
 			start_str = slot.from_time;
 			slot_start_time = moment(slot.from_time, 'HH:mm:ss');

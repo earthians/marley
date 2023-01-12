@@ -28,7 +28,9 @@
 							<img src={{ dep.image }} onerror="this.src='assets/frappe/images/fallback-thumbnail.jpg'"
 							class="dt-logo" height="100%" width="100%"><br>
 							<p class="text-secondary card-text"><b>{{ dep.department }}</b></p>
-							<p class="text-secondary">{{ dep.description or "" }}</p>
+							{% if dep.description %}
+								<div class="" style="font-size: 12px;">{{ dep.description[:160] or "" }}</div>
+							{% endif %}
 						</div>
 					</div>
 					{% endfor %}
