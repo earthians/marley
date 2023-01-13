@@ -3,9 +3,6 @@
 {{ include_style('healthcare-web.bundle.css') }}
 <br>
 <section class="section-bg container">
-	<style>
-
-	</style>
 	<head>
 		<title>Book Appointment</title>
 	</head>
@@ -14,23 +11,24 @@
 			<ul class="breadcrumb">
 				<li><a href="/" style="color:black;">Home</a> > </li>
 				<li style="color:rgb(175, 173, 173);">&nbsp;Departments</a></li>
-			  </ul>
-		<div class="select_btn" id="Page1">
-			<button class="dep" type="dep" style="background-color: rgb(249,250,251);" onclick="location.href='/departments'">Department</button>
-			<button class="pra" type="pra" style="background-color: #FFFFFF;" onclick="location.href='/practitioners'">Practitioner</button>
+			</ul>
+		<div class="col-sm-12 select_btn">
+			<div style="float:right;"><button class="dep" type="dep" style="background-color: rgb(249, 250, 251);" onclick="location.href='/departments'">Department</button>
+			<button class="pra" type="pra" style="background-color: #FFFFFF;" onclick="location.href='/practitioners'">Practitioner</button></div>
 		</div><br><br>
-		<div class="frappe-card depart-section">
+		<div class="col-sm-12 frappe-card depart-section">
 			<div class="department" id="department">
 				<div class='card-deck flex-container' style="text-align:center;">
 					{% for dep in medical_departments %}
 					<div class="page-card cards" id="card" onclick="location.href='/practitioners?department={{ dep.department }}'">
-						<div class='card-body'><br>
+						<div class='card-body'>
 							<img src={{ dep.image }} onerror="this.src='assets/frappe/images/fallback-thumbnail.jpg'"
-							class="dt-logo" height="100%" width="100%"><br>
-							<p class="text-secondary card-text"><b>{{ dep.department }}</b></p>
+							class="dt-logo" height="90%" width="90%">
+							<div class = "text-container"><p class="text-secondary card-text"><b>{{ dep.department }}</b></p>
 							{% if dep.description %}
-								<div class="" style="font-size: 12px;">{{ dep.description[:160] or "" }}</div>
+								<p class="dep-description" style="font-size: 10px;">{{ dep.description[:160] or "" }}</p>
 							{% endif %}
+						</div>
 						</div>
 					</div>
 					{% endfor %}

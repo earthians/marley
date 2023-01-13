@@ -24,7 +24,7 @@
 			  </ul>
 		</div>
 		<div class="text-center mt-5">
-	            <p class="lead text-muted" id="lead-text">Select the date and your timezone</p>
+	            <p class="lead text-muted" id="head">Select the date and your timezone</p>
         </div>
 		<div class="row justify-content-center mt-3">
             <div class="col-md-6 align-self-center ">
@@ -32,8 +32,8 @@
 					<select name="appointment-timezone" oninput="on_date_or_timezone_select()" id="appointment-timezone"
                         class="form-control m-3 col-md">
                     </select>
-                    <input type="date" oninput="on_date_or_timezone_select()" name="appointment-date"
-                        id="appointment-date" class="form-control mt-3 col-md m-3">
+                    <input type="date" oninput="on_date_or_timezone_select()" name="appointment-date" min={{min_day}}
+                        max = {{max_day}} id="appointment-date" class="form-control mt-3 col-md m-3">
                 </div>
             </div>
         </div>
@@ -54,6 +54,7 @@
 	var selected_practitioner = "{{ practitioner }}";
 	var pract_image = "{{pract_details['image']}}"
 	var pract_name = "{{pract_details['practitioner_name']}}"
+	var max_days = "{{max_days}}"
 </script>
 
 {% endblock %}

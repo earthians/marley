@@ -3,10 +3,6 @@
     padding-left: 80%;
     /* background-color: #e9feff; */
 }
-.select_btn {
-    display: inline;
-    padding-left: 80%;
-}
 .dep {
     border-radius:.5rem 0rem 0rem .5rem;
 }
@@ -21,7 +17,7 @@
     font-weight: 600;
     text-align: center;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    height: 4vh;
+    height: 3vh;
     width: 6vw;
 }
 .dep:hover, .pra:hover {

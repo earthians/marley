@@ -22,11 +22,11 @@ function on_date_or_timezone_select() {
 		hide_book_btn();
 		frappe.throw(__('Please select a date'));
 	}
-	// window.selected_date = date_picker.value;
+	window.selected_date = date_picker.value;
 	window.selected_timezone = timezone.value;
 	update_time_slots(date_picker.value, timezone.value);
-	let lead_text = document.getElementById('lead-text');
-	lead_text.innerHTML = "Select Time"
+	let head_text = document.getElementById('head');
+	head_text.innerHTML = "Select Time"
 }
 
 function setup_timezone_selector() {
@@ -104,7 +104,6 @@ function get_slots(slot_details) {
 
 	slot_details.forEach((slot_info) => {
 		slot_html += `<div class="slot-info">`
-		console.log(pract_image)
 			if (pract_image) {
 				slot_html += `<img src=${pract_image} width="100" height="100"><br>`
 			}
@@ -134,6 +133,7 @@ function get_slots(slot_details) {
 			slot_info.appointments.forEach((booked) => {
 				let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
 				let end_time = booked_moment.clone().add(booked.duration, 'minutes');
+				// console.log('\n\n', end_time)
 
 				// Deal with 0 duration appointments
 				if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
@@ -160,7 +160,15 @@ function get_slots(slot_details) {
 						return false;
 					}
 				}
+
 			});
+
+			let slot_time = moment(display_time_slot, 'HH:mm:ss');
+			let now_time = moment(frappe.datetime.now_time(), 'HH:mm:ss');
+
+			if (window.selected_date==frappe.datetime.now_date() && slot_time.isBefore(now_time)) {
+				disabled = true;
+			}
 
 			if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
 				available_slots = slot_info.service_unit_capacity - appointment_count;
@@ -173,7 +181,7 @@ function get_slots(slot_details) {
 					data-duration=${interval}
 					data-service-unit="${slot_info.service_unit || ''}"
 					style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
-					data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click('${start_str}', '${appointment_date}')">
+					data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click('${start_str}', '${appointment_date}', '${slot_info.service_unit || ''}')">
 					${display_time_slot.substring(0, display_time_slot.length - 3)}
 					${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
 				</button>`;
@@ -189,8 +197,9 @@ function get_slots(slot_details) {
 	return slot_html;
 }
 
-function slot_btn_on_click(selected_slot, selected_date){
+function slot_btn_on_click(selected_slot, selected_date, service_unit){
 	window.selected_date = selected_date
+	window.service_unit = service_unit
 	show_book_btn(selected_slot)
 }
 
@@ -201,12 +210,16 @@ function book_appointment(){
 		args: {
 			practitioner: selected_practitioner,
 			date: window.selected_date,
-			time: window.selected_slot
+			time: window.selected_slot,
+			service_unit : window.service_unit,
 		},
 		callback: (r) => {
-			if(!r.exc && r.message.appointment) {
+			if(!r.exc && r.message) {
+				frappe.show_alert({
+					message:__('Appointment Booked'),
+					indicator:'green'
+				}, 5);
 				setTimeout(window.location.href = "/", 5000);
-				frappe.msgprint(__("Appointment Booked"));
 			}
 		}
 	})

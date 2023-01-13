@@ -12,6 +12,8 @@
   "default_medical_code_standard",
   "validate_nursing_checklists",
   "default_google_calendar",
+  "enable_appointment_booking_through_portal",
+  "number_of_days_appointments_can_be_booked_in_advance",
   "column_break_9",
   "collect_registration_fee",
   "registration_fee",
@@ -356,6 +358,18 @@
    "fieldtype": "Link",
    "label": "Default Google Calendar",
    "options": "Google Calendar"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_appointment_booking_through_portal",
+   "fieldtype": "Check",
+   "label": "Enable Appointment Booking Through Portal"
+  },
+  {
+   "depends_on": "enable_appointment_booking_through_portal",
+   "fieldname": "number_of_days_appointments_can_be_booked_in_advance",
+   "fieldtype": "Int",
+   "label": "Number of days appointments can be booked in advance"
   }
  ],
  "issingle": 1,

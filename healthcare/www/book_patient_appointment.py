@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.utils import today, add_days
 
 no_cache = 1
 
@@ -12,8 +13,20 @@ def get_context(context):
 		"Healthcare Practitioner", context.practitioner,
 		["image", "practitioner_name"], as_dict=1)
 
+	context.min_day = today()
+	hcare_max_days = frappe.get_cached_value(
+		"Healthcare Settings", "None",
+		"number_of_days_appointments_can_be_booked_in_advance"
+	)
+
+	if not hcare_max_days:
+		hcare_max_days = 30
+
+	context.max_day = add_days(today(), hcare_max_days)
+
+
 @frappe.whitelist()
-def book_appointment(practitioner, date, time):
+def book_appointment(practitioner, date, time, service_unit):
 	patient = frappe.db.get_value("Patient", {"user_id":frappe.session.user}, "name")
 	if patient:
 		appointment = frappe.get_doc({
@@ -21,8 +34,10 @@ def book_appointment(practitioner, date, time):
 			'patient': patient,
 			'practitioner': practitioner,
 			'appointment_date': date,
-			'appointment_time': time
+			'appointment_time': time,
+			'service_unit': service_unit,
 		}).insert(ignore_permissions=True)
-		return appointment
+		if appointment:
+			return appointment.name
 	else:
 		frappe.msgprint(_("No patient found for {0}").format(frappe.session.user))
