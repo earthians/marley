@@ -1,55 +1,58 @@
 {% extends "frappe/templates/web.html" %}
 {% block content %}
 {{ include_style('healthcare-web.bundle.css') }}
-<br>
-<section class="section-bg container">
-	<head>
-		<title>Book Appointment</title>
-	</head>
+<section class="">
 	<body>
-		<div class="col-sm-12">
-			<ul class="breadcrumb">
-				<li><a href="/" style="color:black;" >Home</a> > </li>
-				<li><a href="/departments" style="color:black;">&nbsp;Departments</a> > </li>
-				<li style="color:rgb(175, 173, 173);">&nbsp;Practitioners</a></li>
-			  </ul>
-		<div class="col-sm-12 select_btn">
-			<div style="float:right;"><button class="dep" type="dep" style="background-color: #FFFFFF;" onclick="location.href='/departments'">Department</button>
-			<button class="pra" type="pra" style="background-color: rgb(249,250,251);" onclick="location.href='/practitioners'">Practitioner</button></div>
-		</div><br><br>
-		{% if department %}
-			<p class="text-muted">{{department}}</p>
-		{% endif %}
-		<div class="frappe-card depart-section">
-			<div class="practitioner" id="practitioner">
-				<div class='card-deck flex-container' style="text-align:center;">
+		<div class="col-sm-12 full-section">
+			<div class="c-section">
+				<ul class="breadcrumb">
+					<li><a href="/" style="color:black;" >Home</a> > </li>
+					<li><a href="/departments" style="color:black;">&nbsp;Departments</a> > </li>
+					<li style="color:rgb(175, 173, 173);">&nbsp;Practitioners</a></li>
+				</ul>
+			<p class="text-muted">Whom you want to consult
+			{% if department %} in {{department}} {% endif %}?
+			</p>
+			<div class="col-sm-12 select_btn">
+				<div style="float:right;">
+					<button class="dep" type="dep" style="background-color: #FFFFFF;" onclick="location.href='/departments'">Department</button>
+					<button class="pra" type="pra" style="background-color: rgb(249,250,251);" onclick="location.href='/practitioners'">Practitioner</button></div>
+			</div><br><br>
+			<div class="col-sm-12 depart-section">
+				<div class="practitioner" id="practitioner">
+					<div class='' style="text-align:center;">
 					{% if practitioner %}
-					{% for pract in practitioner %}
-					<div class="page-card cards" id="card" onclick="location.href='/book_patient_appointment?practitioner={{ pract.name }}'">
-						<div class='card-body'><br>
-							<img src={{ pract.image }} onerror="this.src='assets/frappe/images/default-avatar.png'"
-							class="dt-logo" height="100%" width="100%"><br>
-							<p class="text-secondary"><b>{{ pract.practitioner_name }}</b>
-							{% if not department %}
-								{% if pract.department %}
-									<br>{{ pract.department }}
+						{% for pract in practitioner %}
+						<div class="page-card cards" id="card" onclick="location.href='/book_patient_appointment?practitioner={{ pract.name }}'">
+							<div class='card-img-container'>
+								{% if pract.image %}
+									<img class="card-img-top" src="{{ pract.image }}" onerror="this.src='assets/frappe/images/default-avatar.png'; this.style.opacity=.3;">
+								{% else %}
+									<div class="portal-placeholder-div">
+										<span class="placeholder abbr-name">
+											{{ frappe.utils.get_abbr(pract.practitioner_name) }}
+										</span>
+									</div>
 								{% endif %}
-							{% endif %}
-							<br>{{ pract.designation or "" }}</p>
+								</div>
+								<p class="text-secondary"><b>{{ pract.practitioner_name }}</b>
+								{% if not department %}
+									{% if pract.department %}
+										<br>{{ pract.department }}
+									{% endif %}
+								{% endif %}
+								<br>{{ pract.designation or "" }}</p>
 						</div>
-					</div>
-					{% endfor %}
+						{% endfor %}
+					{% else %}
+						<div style="text-align: center; vertical-align: middle;">
+						<p>No Practiioner active{% if department %}  for {{department}} {% endif %}!</p>
+						</div>
+					{% endif %}
 				</div>
-				{% else %}
-				<div style="text-align: center; vertical-align: middle;">
-					<p>No Practiioner active{% if department %}  for {{department}} {% endif %}!</p>
-				</div>
-				{% endif %}
+			</div><br>
 			</div>
-		</div><br>
-	</div>
-	  </body>
+		</div>
+	</body>
 </section>
-<script>
-</script>
 {% endblock %}

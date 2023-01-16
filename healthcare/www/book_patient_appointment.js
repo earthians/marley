@@ -26,7 +26,7 @@ function on_date_or_timezone_select() {
 	window.selected_timezone = timezone.value;
 	update_time_slots(date_picker.value, timezone.value);
 	let head_text = document.getElementById('head');
-	head_text.innerHTML = "Select Time"
+	head_text.innerHTML = "Choose Slot"
 }
 
 function setup_timezone_selector() {
@@ -103,13 +103,9 @@ function get_slots(slot_details) {
 	let start_str, slot_start_time, slot_end_time, interval, count, count_class, tool_tip, available_slots;
 
 	slot_details.forEach((slot_info) => {
-		slot_html += `<div class="slot-info">`
-			if (pract_image) {
-				slot_html += `<img src=${pract_image} width="100" height="100"><br>`
-			}
-			slot_html += `<span>  <b>${pract_name}</b> </span><br>
-			<span> ${__('Practitioner Schedule:')} <b> ${slot_info.slot_name}</b> </span><br>
-			<span> ${__('Service Unit:')} <b> ${slot_info.service_unit} </b> </span>`;
+		slot_html += `<style></style><div class="slot-info">`
+			slot_html += `
+			<span><b>${slot_info.service_unit}</b></span>`;
 
 		if (slot_info.service_unit_capacity) {
 			slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
@@ -177,14 +173,14 @@ function get_slots(slot_details) {
 				tool_tip =`${available_slots} ${__('slots available for booking')}`;
 			}
 			return `
-				<button class="btn btn-secondary" data-name='${start_str}'
-					data-duration=${interval}
-					data-service-unit="${slot_info.service_unit || ''}"
-					style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
-					data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click('${start_str}', '${appointment_date}', '${slot_info.service_unit || ''}')">
-					${display_time_slot.substring(0, display_time_slot.length - 3)}
-					${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
-				</button>`;
+			<button class="btn btn-secondary btn-appointment" data-name='${start_str}'
+				data-duration=${interval}
+				data-service-unit="${slot_info.service_unit || ''}"
+				${disabled ? 'disabled="disabled"' : ""}
+				data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click('${start_str}', '${appointment_date}', '${slot_info.service_unit || ''}')">
+				${display_time_slot.substring(0, display_time_slot.length - 3)}
+				${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
+			</button>`;
 		}
 		}).join("");
 

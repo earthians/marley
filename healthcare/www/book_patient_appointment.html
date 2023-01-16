@@ -1,20 +1,10 @@
 {% extends "frappe/templates/web.html" %}
 
-{% block script %}
-<script src="book_patient_appointment.js"></script>
-{% endblock %}
-
 {% block content %}
 {{ include_style('healthcare-web.bundle.css') }}
-<div style='text-align:center;'>
-	<!-- <p class="mt-0 small text-muted">Select Department</p> -->
-</div>
-<section class="section-bg container">
-	<head>
-		<title>Book Appointment</title>
-	</head>
+<section class="">
 	<body>
-		<br>
+		<div class="col-sm-12 full-section c-section">
 		<div class="col-sm-12">
 			<ul class="breadcrumb">
 				<li><a href="/" style="color:black;" >Home</a> > </li>
@@ -24,7 +14,15 @@
 			  </ul>
 		</div>
 		<div class="text-center mt-5">
-	            <p class="lead text-muted" id="head">Select the date and your timezone</p>
+				<p class="lead text-muted" id="head">Choose date and timezone to book your slot</p>
+					{% if pract_details['image'] %}
+						<img class="patient-app-img" src="{{ pract_details['image'] }}" onerror="this.style.display='none';">
+					{% endif %}
+					{% if pract_details['practitioner_name'] %}
+						<div class="" id="head"><b>{{pract_details['practitioner_name']}}</b>
+							<p class="appointment-dep" >{{pract_details['department']}}</p>
+						</div>
+					{% endif %}
         </div>
 		<div class="row justify-content-center mt-3">
             <div class="col-md-6 align-self-center ">
@@ -37,9 +35,6 @@
                 </div>
             </div>
         </div>
-				
-				<!-- <input class= "date_field" type="date" id="app_date" name="app_date" onchange="date_on_change(event);"> -->
-	</div>
 	<br><br>
 	<div class="col-sm-12" id="slot_container" style="text-align: center;"></div>
 	<div class="row justify-content-center mt-3">
@@ -47,13 +42,11 @@
 			<button class="btn btn-primary form-control" id="book-button">Book</button>
 		</div>
 	</div>
+</div>
 	  </body>
 </section>
-<br>
 <script>
 	var selected_practitioner = "{{ practitioner }}";
-	var pract_image = "{{pract_details['image']}}"
-	var pract_name = "{{pract_details['practitioner_name']}}"
 	var max_days = "{{max_days}}"
 </script>
 

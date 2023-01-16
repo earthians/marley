@@ -1,45 +1,49 @@
 {% extends "frappe/templates/web.html" %}
 {% block content %}
 {{ include_style('healthcare-web.bundle.css') }}
-<br>
-<section class="section-bg container">
-	<head>
-		<title>Book Appointment</title>
-	</head>
+<section class="">
 	<body>
-		<div class="col-sm-12">
-			<ul class="breadcrumb">
-				<li><a href="/" style="color:black;">Home</a> > </li>
-				<li style="color:rgb(175, 173, 173);">&nbsp;Departments</a></li>
-			</ul>
-		<div class="col-sm-12 select_btn">
-			<div style="float:right;"><button class="dep" type="dep" style="background-color: rgb(249, 250, 251);" onclick="location.href='/departments'">Department</button>
-			<button class="pra" type="pra" style="background-color: #FFFFFF;" onclick="location.href='/practitioners'">Practitioner</button></div>
-		</div><br><br>
-		<div class="col-sm-12 frappe-card depart-section">
-			<div class="department" id="department">
-				<div class='card-deck flex-container' style="text-align:center;">
-					{% for dep in medical_departments %}
-					<div class="page-card cards" id="card" onclick="location.href='/practitioners?department={{ dep.department }}'">
-						<div class='card-body'>
-							<img src={{ dep.image }} onerror="this.src='assets/frappe/images/fallback-thumbnail.jpg'"
-							class="dt-logo" height="90%" width="90%">
-							<div class = "text-container"><p class="text-secondary card-text"><b>{{ dep.department }}</b></p>
-							{% if dep.description %}
-								<p class="dep-description" style="font-size: 10px;">{{ dep.description[:160] or "" }}</p>
-							{% endif %}
-						</div>
+		<div class="col-12 full-section">
+			<div class="c-section">
+				<ul class="breadcrumb">
+					<li><a href="/" style="color:black;">Home</a> > </li>
+					<li style="color:rgb(175, 173, 173);">&nbsp;Departments</a></li>
+				</ul>
+				<p class="text-muted">Choose Speciality</p>
+				<div class="col-sm-12 select_btn">
+					<div style="float:right;">
+						<button class="dep" type="dep" style="background-color: rgb(249, 250, 251);" onclick="location.href='/departments'">Department</button>
+						<button class="pra" type="pra" style="background-color: #FFFFFF;" onclick="location.href='/practitioners'">Practitioner</button>
+					</div>
+				</div><br><br>
+				<div class="col-sm-12 depart-section">
+					<div class="department" id="department">
+						<div class='' style="text-align:center;">
+							{% for dep in medical_departments %}
+								<div class="page-card cards" id="card" onclick="location.href='/practitioners?department={{ dep.department }}'">
+									<div class='card-img-container'>
+										{% if dep.image %}
+											<img class="card-img-top" src="{{ dep.image }}" onerror="this.src='assets/frappe/images/default-avatar.png'">
+										{% else %}
+											<div class="portal-placeholder-div">
+												<span class="placeholder abbr-name">
+													{{ frappe.utils.get_abbr(dep.department) }}
+												</span>
+											</div>
+										{% endif %}
+									</div>
+									<div class = "text-container"><div class="text-secondary card-text"><b>{{ dep.department }}</b></div>
+										{% if dep.description %}
+											<div class="dep-description">{{ dep.description[:160] or "" }}</div>
+										{% endif %}
+									</div>
+								</div>
+							{% endfor %}
 						</div>
 					</div>
-					{% endfor %}
-				</div>
+				</div><br>
 			</div>
-		</div><br>
-	</div>
-	</div>
-</div>
-</body>
+		</div>
+	</body>
 </section>
-<script>
-</script>
 {% endblock %}

@@ -11,7 +11,7 @@ def get_context(context):
 	context.practitioner = frappe.local.request.args.get('practitioner')
 	context.pract_details = frappe.db.get_value(
 		"Healthcare Practitioner", context.practitioner,
-		["image", "practitioner_name"], as_dict=1)
+		["image", "practitioner_name", "department"], as_dict=1)
 
 	context.min_day = today()
 	hcare_max_days = frappe.get_cached_value(

@@ -30,7 +30,7 @@ def get_context(context):
 			`tabMedical Department` as md on h_pract.department = md.name left join
 			`tabPractitioner Service Unit Schedule` as sch on h_pract.name = sch.parent
 		where
-			md.show_in_website=1 and h_pract.status='Active' and sch.schedule!='' and  sch.service_unit!=''
+			md.show_in_website=1 and h_pract.status='Active' and sch.schedule!='' and sch.service_unit!=''
 		group by 
 			md.name
 	"""

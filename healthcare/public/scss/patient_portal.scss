@@ -17,7 +17,7 @@
     font-weight: 600;
     text-align: center;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    height: 3vh;
+    height: 4vh;
     width: 6vw;
 }
 .dep:hover, .pra:hover {
@@ -28,12 +28,8 @@
     overflow: hidden;
 }
 .depart-section{
-    min-height: 76vh;
     display: flex;
-    padding-left: 1.5vw;
-	background-color: rgba(250, 250, 250, 0.992);
-    /* justify-content: center; */
-    /* align-items: center; */
+    background-color: rgba(250, 250, 250, 0.992);
     flex-direction: column;
 }
 .cards{
@@ -41,8 +37,73 @@
     float:left;
     height: 325px;
     width: 224px;
-	background-color: rgb(255, 255, 255);
+    background-color: rgb(255, 255, 255);
     border: 1px solid rgb(228, 223, 223);
     margin: 7px;
     border-radius: 12px;
+}
+.cards:hover {
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.15);
+}
+.full-section {
+    background-color: rgba(250, 250, 250, 0.992);
+}
+.c-section {
+    padding-left: 14rem;
+    padding-right: 10rem;
+}
+@media(max-width: 720px) {
+    .c-section {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+@media(max-width: 1048px) {
+    .c-section {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+.abbr-name {
+	font-size: 2rem;
+	color:#a6b1b9;
+	height: 220px;
+}
+.portal-placeholder-div {
+	height: 220px;
+	padding: 85px;
+	text-align: center;
+	background-color: #f9fafa;
+	border-top-left-radius: calc(0.75rem - 1px);
+	border-top-right-radius: calc(0.75rem - 1px);
+}
+.dep-description{
+    font-size: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 7px;
+}
+.patient-app-img {
+    height:5%;
+    width:5%;
+    border-radius:50%;
+}
+.btn-appointment {
+    background-color:rgb(255, 255, 255) !important;
+    margin: 0 10px 10px 0;
+    width: auto;
+}
+.btn-appointment:hover:not([disabled]) {
+    color: #ffffff;
+    background-color:rgb(168, 165, 165) !important;
+}
+.btn-appointment:hover:disabled {
+    color: #c0bcbc;
+}
+.btn-appointment:disabled,
+.btn-appointment[disabled]{
+  color: #c0bcbc;
+}
+.appointment-dep {
+    font-size:13px;
 }
