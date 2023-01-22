@@ -64,7 +64,7 @@ class Patient(Document):
 
 		self.set_contact()  # add or update contact
 
-		if self.flags.is_new_doc and self.get('address_line1'):
+		if self.flags.is_new_doc and self.get("address_line1"):
 			make_address(self)
 
 		if not self.user_id and self.email and self.invite_user:
