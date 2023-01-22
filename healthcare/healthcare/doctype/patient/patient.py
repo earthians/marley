@@ -15,6 +15,8 @@ from frappe.utils.nestedset import get_root_of
 
 from erpnext import get_default_currency
 from erpnext.accounts.party import get_dashboard_info
+from erpnext.selling.doctype.customer.customer import make_address
+
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
@@ -30,6 +32,7 @@ class Patient(Document):
 
 	def validate(self):
 		self.set_full_name()
+		self.flags.is_new_doc = self.is_new()
 
 	def before_insert(self):
 		self.set_missing_customer_details()
@@ -60,6 +63,9 @@ class Patient(Document):
 				create_customer(self)
 
 		self.set_contact()  # add or update contact
+
+		if self.flags.is_new_doc and self.get('address_line1'):
+			make_address(self)
 
 		if not self.user_id and self.email and self.invite_user:
 			self.create_website_user()
