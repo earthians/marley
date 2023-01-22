@@ -4,7 +4,6 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "beta": 0,
  "creation": "2017-01-23 14:03:49.084370",
  "description": "Patient",
  "doctype": "DocType",
@@ -33,10 +32,6 @@
   "email",
   "invite_user",
   "user_id",
-  "address_contacts",
-  "address_html",
-  "column_break_22",
-  "contact_html",
   "customer_details_section",
   "customer",
   "customer_group",
@@ -45,12 +40,21 @@
   "default_currency",
   "default_price_list",
   "language",
+  "more_info",
+  "patient_details",
+  "dashboard_tab",
+  "address_and_contact_tab",
+  "address_contacts",
+  "address_html",
+  "column_break_22",
+  "contact_html",
+  "sb_relation",
+  "patient_relation",
+  "medical_history_tab",
   "personal_and_social_history",
   "occupation",
   "column_break_25",
   "marital_status",
-  "sb_relation",
-  "patient_relation",
   "allergy_medical_and_surgical_history",
   "allergies",
   "medication",
@@ -64,9 +68,7 @@
   "alcohol_current_use",
   "column_break_32",
   "surrounding_factors",
-  "other_risk_factors",
-  "more_info",
-  "patient_details"
+  "other_risk_factors"
  ],
  "fields": [
   {
@@ -218,7 +220,6 @@
    "options": "Phone"
   },
   {
-   "collapsible": 1,
    "fieldname": "sb_relation",
    "fieldtype": "Section Break",
    "label": "Patient Relation"
@@ -230,7 +231,6 @@
    "options": "Patient Relation"
   },
   {
-   "collapsible": 1,
    "fieldname": "allergy_medical_and_surgical_history",
    "fieldtype": "Section Break",
    "label": "Allergies, Medical and Surgical History"
@@ -268,7 +268,6 @@
    "no_copy": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "personal_and_social_history",
    "fieldtype": "Section Break",
    "label": "Personal and Social History"
@@ -292,7 +291,6 @@
    "options": "\nSingle\nMarried\nDivorced\nWidow"
   },
   {
-   "collapsible": 1,
    "fieldname": "risk_factors",
    "fieldtype": "Section Break",
    "label": "Risk Factors"
@@ -344,7 +342,6 @@
    "no_copy": 1
   },
   {
-   "collapsible": 1,
    "collapsible_depends_on": "patient_details",
    "fieldname": "more_info",
    "fieldtype": "Section Break",
@@ -469,17 +466,33 @@
    "in_standard_filter": 1,
    "label": "Identification Number (UID)",
    "unique": 1
+  },
+  {
+   "fieldname": "dashboard_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard",
+   "show_dashboard": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "address_and_contact_tab",
+   "fieldtype": "Tab Break",
+   "label": "Address & Contact"
+  },
+  {
+   "fieldname": "medical_history_tab",
+   "fieldtype": "Tab Break",
+   "label": "Medical History"
   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2021-03-14 13:21:09.759906",
+ "modified": "2023-01-13 17:48:59.069268",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
- "name_case": "Title Case",
  "owner": "Administrator",
  "permissions": [
   {
@@ -537,6 +550,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "ASC",
+ "states": [],
  "title_field": "patient_name",
  "track_changes": 1
 }

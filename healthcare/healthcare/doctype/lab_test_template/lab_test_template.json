@@ -4,25 +4,32 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:lab_test_name",
- "beta": 0,
  "creation": "2016-03-29 17:35:36.761223",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "lab_test_name",
+  "department",
+  "column_break_3",
+  "disabled",
+  "nursing_checklist_template",
+  "billing_section",
+  "column_break_hih3",
   "link_existing_item",
   "item",
   "lab_test_code",
   "lab_test_group",
-  "department",
-  "nursing_checklist_template",
-  "column_break_3",
-  "disabled",
-  "lab_test_template_type",
+  "column_break_buub",
   "is_billable",
   "lab_test_rate",
   "section_break_description",
   "lab_test_description",
+  "medical_coding_section",
+  "medical_code",
+  "medical_code_standard",
+  "result_format_tab",
+  "result_format_section",
+  "lab_test_template_type",
   "section_break_descriptive_result",
   "descriptive_result",
   "section_break_normal",
@@ -38,15 +45,14 @@
   "descriptive_test_templates",
   "section_break_group",
   "lab_test_groups",
+  "sample_collection_tab",
   "sb_sample_collection",
   "sample",
   "sample_uom",
   "sample_qty",
   "column_break_33",
   "sample_details",
-  "medical_coding_section",
-  "medical_code",
-  "medical_code_standard",
+  "worksheet_legend_tab",
   "worksheet_section",
   "worksheet_instructions",
   "result_legend_section",
@@ -311,7 +317,6 @@
    "label": "Worksheet Instructions"
   },
   {
-   "collapsible": 1,
    "fieldname": "worksheet_section",
    "fieldtype": "Section Break",
    "label": "Worksheet Print"
@@ -348,11 +353,44 @@
    "fieldname": "link_existing_item",
    "fieldtype": "Check",
    "label": "Link existing Item"
+  },
+  {
+   "fieldname": "worksheet_legend_tab",
+   "fieldtype": "Tab Break",
+   "label": "Worksheet & Legend"
+  },
+  {
+   "fieldname": "result_format_section",
+   "fieldtype": "Section Break",
+   "label": "Result Format"
+  },
+  {
+   "fieldname": "result_format_tab",
+   "fieldtype": "Tab Break",
+   "label": "Result Format"
+  },
+  {
+   "depends_on": "eval:doc.lab_test_template_type != 'Imaging'",
+   "fieldname": "sample_collection_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sample Collection"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "column_break_hih3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_buub",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "migration_hash": "04ea062dcd8e59976e0c33bb708f4d77",
- "modified": "2022-06-10 12:57:31.787436",
+ "modified": "2023-01-13 18:52:55.890380",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
