@@ -16,12 +16,13 @@
   "column_break_7",
   "client_id",
   "client_secret",
-  "consent_section_section",
-  "patient_aadhaar_consent",
   "health_id_service_section",
   "health_id_base_url",
   "consent_management_section",
-  "consent_base_url"
+  "consent_base_url",
+  "patient_consent_template_tab",
+  "consent_section_section",
+  "patient_aadhaar_consent"
  ],
  "fields": [
   {
@@ -90,22 +91,26 @@
    "label": "Base URL"
   },
   {
-   "collapsible": 1,
    "fieldname": "consent_section_section",
    "fieldtype": "Section Break",
-   "label": "Consent Section"
+   "label": "Patient Consent Template"
   },
   {
    "description": "Patient Consent To Use Aadhaar For ABHA Creation",
    "fieldname": "patient_aadhaar_consent",
    "fieldtype": "Link",
-   "label": "Patient Aadhaar Consent",
+   "label": "Aadhaar Consent Template",
    "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "patient_consent_template_tab",
+   "fieldtype": "Tab Break",
+   "label": "Patient Consent Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-04-18 14:59:24.279125",
+ "modified": "2023-01-14 19:03:21.188365",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "ABDM Settings",

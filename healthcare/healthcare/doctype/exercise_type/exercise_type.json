@@ -11,6 +11,7 @@
   "difficulty_level",
   "section_break_5",
   "description",
+  "instructions_tab",
   "section_break_7",
   "exercise_steps",
   "column_break_9",
@@ -50,7 +51,8 @@
   },
   {
    "fieldname": "section_break_7",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Exercise Instructions"
   },
   {
    "fieldname": "exercise_steps",
@@ -93,10 +95,15 @@
    "fieldtype": "Table MultiSelect",
    "label": "Body Parts",
    "options": "Body Part Link"
+  },
+  {
+   "fieldname": "instructions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Instructions"
   }
  ],
  "links": [],
- "modified": "2020-04-21 13:05:36.555060",
+ "modified": "2023-01-13 19:40:58.647870",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Exercise Type",
@@ -140,5 +147,6 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

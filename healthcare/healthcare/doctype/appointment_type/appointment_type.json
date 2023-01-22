@@ -3,16 +3,17 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:appointment_type",
- "beta": 0,
  "creation": "2016-07-22 11:52:34.953019",
  "doctype": "DocType",
  "document_type": "Setup",
  "engine": "InnoDB",
  "field_order": [
   "appointment_type",
-  "ip",
   "default_duration",
+  "column_break_jdo1",
   "color",
+  "ip",
+  "billing_tab",
   "billing_section",
   "price_list",
   "items"
@@ -72,13 +73,23 @@
    "fieldtype": "Table",
    "label": "Appointment Type Service Items",
    "options": "Appointment Type Service Item"
+  },
+  {
+   "fieldname": "billing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "column_break_jdo1",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "modified": "2021-01-22 09:41:05.010524",
+ "modified": "2023-01-13 20:02:20.353136",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Appointment Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -110,5 +121,6 @@
  "restrict_to_domain": "Healthcare",
  "search_fields": "appointment_type",
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }

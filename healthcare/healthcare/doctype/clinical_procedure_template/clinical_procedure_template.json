@@ -3,7 +3,6 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:template",
- "beta": 0,
  "creation": "2017-10-05 14:59:55.438359",
  "description": "Procedure Template",
  "doctype": "DocType",
@@ -12,24 +11,29 @@
  "engine": "InnoDB",
  "field_order": [
   "template",
+  "medical_department",
+  "description",
+  "column_break_5",
+  "disabled",
+  "pre_op_nursing_checklist_template",
+  "post_op_nursing_checklist_template",
+  "billing_section",
+  "column_break_ea5h",
   "link_existing_item",
   "item",
   "item_code",
   "item_group",
-  "description",
-  "column_break_5",
-  "disabled",
+  "column_break_lhbf",
   "is_billable",
   "rate",
-  "medical_department",
-  "pre_op_nursing_checklist_template",
-  "post_op_nursing_checklist_template",
   "medical_coding_section",
   "medical_code_standard",
   "medical_code",
+  "consumption_tab",
   "consumables",
   "consume_stock",
   "items",
+  "sample_collection_tab",
   "sample_collection",
   "sample",
   "sample_uom",
@@ -122,7 +126,6 @@
    "options": "Clinical Procedure Item"
   },
   {
-   "collapsible": 1,
    "fieldname": "sample_collection",
    "fieldtype": "Section Break",
    "label": "Sample Collection"
@@ -221,10 +224,33 @@
    "fieldname": "link_existing_item",
    "fieldtype": "Check",
    "label": "Link existing Item"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "fieldname": "column_break_ea5h",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_lhbf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "consumption_tab",
+   "fieldtype": "Tab Break",
+   "label": "Stock Consumption"
+  },
+  {
+   "fieldname": "sample_collection_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sample Collection"
   }
  ],
  "links": [],
- "modified": "2022-06-22 06:42:56.910453",
+ "modified": "2023-01-13 19:03:55.793669",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

@@ -3,7 +3,6 @@
  "allow_copy": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 0,
  "creation": "2016-03-29 17:34:47.509094",
  "doctype": "DocType",
  "document_type": "Document",
@@ -571,7 +570,11 @@
   {
    "default": "0",
    "fieldname": "imaging_toggle",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "hidden": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "report_hide": 1
   }
  ],
  "is_submittable": 1,
@@ -581,7 +584,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2022-10-17 05:26:49.198517",
+ "modified": "2023-01-14 19:14:39.351018",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",

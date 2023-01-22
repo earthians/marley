@@ -8,13 +8,13 @@
  "field_order": [
   "naming_series",
   "appointment",
+  "therapy_plan",
   "patient",
   "patient_name",
   "patient_age",
   "gender",
   "column_break_5",
   "company",
-  "therapy_plan",
   "therapy_type",
   "practitioner",
   "department",
@@ -154,12 +154,14 @@
    "options": "Healthcare Service Unit"
   },
   {
+   "default": "Today",
    "fieldname": "start_date",
    "fieldtype": "Date",
    "label": "Start Date",
    "reqd": 1
   },
   {
+   "default": "Now",
    "fieldname": "start_time",
    "fieldtype": "Time",
    "label": "Start Time"
@@ -228,7 +230,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2022-01-17 15:11:07.822895",
+ "modified": "2023-01-14 19:10:50.484221",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",
@@ -265,6 +267,7 @@
  "search_fields": "patient,appointment,therapy_plan,therapy_type",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "patient",
  "track_changes": 1
 }
