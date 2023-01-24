@@ -22,7 +22,26 @@ frappe.ui.form.on('Healthcare Practitioner', {
 				}
 			};
 		});
+
+		frm.set_query('practitioner_primary_contact', function(doc) {
+			return {
+				filters: {
+					'link_doctype': 'Healthcare Practitioner',
+					'link_name': doc.name
+				}
+			}
+		})
+
+		frm.set_query('practitioner_primary_address', function(doc) {
+			return {
+				filters: {
+					'link_doctype': 'Healthcare Practitioner',
+					'link_name': doc.name
+				}
+			}
+		})
 	},
+
 	refresh: function(frm) {
 		frappe.dynamic_link = {doc: frm.doc, fieldname: 'name', doctype: 'Healthcare Practitioner'};
 
@@ -43,7 +62,25 @@ frappe.ui.form.on('Healthcare Practitioner', {
 
 		set_query_service_item(frm, 'inpatient_visit_charge_item');
 		set_query_service_item(frm, 'op_consulting_charge_item');
-	}
+	},
+
+	practitioner_primary_address: function(frm) {
+		if (frm.doc.practitioner_primary_address) {
+			frappe.call({
+				method: 'frappe.contacts.doctype.address.address.get_address_display',
+				args: {
+					'address_dict': frm.doc.practitioner_primary_address
+				},
+				callback: function(r) {
+					frm.set_value('primary_address', r.message);
+				}
+			});
+		}
+
+		if (!frm.doc.practitioner_primary_address) {
+			frm.set_value('primary_address', '');
+		}
+	},
 });
 
 let set_query_service_item = function(frm, service_item_field) {
