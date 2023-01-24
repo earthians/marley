@@ -46,6 +46,7 @@ class PatientAppointment(Document):
 		self.validate_customer_created()
 		self.set_status()
 		self.set_title()
+		self.update_event()
 
 	def after_insert(self):
 		self.update_prescription_details()
@@ -269,6 +270,18 @@ class PatientAppointment(Document):
 			therapy_types.append(entry.therapy_type)
 
 		return therapy_types
+
+	def update_event(self):
+		if self.event and self.appointment_datetime:
+			event_doc = frappe.get_doc("Event", self.event)
+			starts_on = datetime.datetime.combine(
+				getdate(self.appointment_date), get_time(self.appointment_time)
+			)
+			ends_on = starts_on + datetime.timedelta(minutes=flt(self.duration))
+			if starts_on != event_doc.starts_on:
+				event_doc.starts_on = starts_on
+				event_doc.ends_on = ends_on
+				event_doc.save()
 
 
 @frappe.whitelist()
