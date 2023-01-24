@@ -396,6 +396,11 @@ def cancel_appointment(appointment_id):
 		if fee_validity:
 			msg += _("Fee Validity {0} updated.").format(fee_validity.name)
 
+	if appointment.event:
+		event_doc = frappe.get_doc("Event", appointment.event)
+		event_doc.event_type = "Cancelled"
+		event_doc.save()
+
 	frappe.msgprint(msg)
 
 
