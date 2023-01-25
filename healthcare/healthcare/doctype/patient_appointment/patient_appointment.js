@@ -409,8 +409,7 @@ let check_and_set_availability = function(frm) {
 							selected_slot = $btn.attr('data-name');
 							service_unit = $btn.attr('data-service-unit');
 							duration = $btn.attr('data-duration');
-							add_video_conferencing = $btn.attr('data-tele-conf');
-
+							add_video_conferencing = parseInt($btn.attr('data-tele-conf'));
 							// show option to opt out of tele conferencing
 							if ($btn.attr('data-tele-conf') == 1) {
 								if (d.$wrapper.find(".opt-out-conf-div").length) {
