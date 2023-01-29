@@ -577,16 +577,22 @@ def create_service_unit(id=0, service_unit_type=None, service_unit_capacity=0):
 
 	return service_unit.name
 
+
 def test_appointment_reschedule(self, appointment):
 	appointment_datetime = datetime.datetime.combine(
 		getdate(appointment.appointment_date), get_time(appointment.appointment_time)
 	)
-	new_appointment_datetime = appointment_datetime + datetime.timedelta(minutes=flt(appointment.duration))
+	new_appointment_datetime = appointment_datetime + datetime.timedelta(
+		minutes=flt(appointment.duration)
+	)
 	appointment.appointment_time = new_appointment_datetime.time()
 	appointment.appointment_date = new_appointment_datetime.date()
 	appointment.save()
-	self.assertTrue(frappe.db.exists("Event", {"name": appointment.event, "starts_on":new_appointment_datetime}))
+	self.assertTrue(
+		frappe.db.exists("Event", {"name": appointment.event, "starts_on": new_appointment_datetime})
+	)
+
 
 def test_appointment_cancel(self, appointment):
 	update_status(appointment.name, "Cancelled")
-	self.assertTrue(frappe.db.exists("Event", {"name": appointment.event, "event_type":"Cancelled"}))
+	self.assertTrue(frappe.db.exists("Event", {"name": appointment.event, "event_type": "Cancelled"}))
