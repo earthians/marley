@@ -287,6 +287,7 @@ let check_and_set_availability = function(frm) {
 	let service_unit = null;
 	let duration = null;
 	let add_video_conferencing = null;
+	let overlap_appointments = null;
 
 	show_availability();
 
@@ -316,6 +317,8 @@ let check_and_set_availability = function(frm) {
 			primary_action: function() {
 				frm.set_value('appointment_time', selected_slot);
 				add_video_conferencing = add_video_conferencing && !d.$wrapper.find(".opt-out-check").is(":checked")
+					&& !overlap_appointments
+
 				frm.set_value('add_video_conferencing', add_video_conferencing);
 
 				if (!frm.doc.duration) {
@@ -410,19 +413,33 @@ let check_and_set_availability = function(frm) {
 							service_unit = $btn.attr('data-service-unit');
 							duration = $btn.attr('data-duration');
 							add_video_conferencing = parseInt($btn.attr('data-tele-conf'));
+							overlap_appointments = parseInt($btn.attr('data-overlap-appointments'));
 							// show option to opt out of tele conferencing
 							if ($btn.attr('data-tele-conf') == 1) {
 								if (d.$wrapper.find(".opt-out-conf-div").length) {
 									d.$wrapper.find(".opt-out-conf-div").show();
 								} else {
-									d.footer.prepend(`<div class="opt-out-conf-div ellipsis" style="vertical-align:text-bottom;">
-										<label>
-											<input type="checkbox" class="opt-out-check"/>
-											<span class="label-area">
-											${__("Do not add Video Conferencing")}
-											</span>
-										</label>
-									</div>`);
+									overlap_appointments ?
+										d.footer.prepend(
+											`<div class="opt-out-conf-div ellipsis text-muted" style="vertical-align:text-bottom;">
+												<label>
+													<span class="label-area">
+													${__("Video Conferencing disabled for group consultations")}
+													</span>
+												</label>
+											</div>`
+										)
+									:
+										d.footer.prepend(
+											`<div class="opt-out-conf-div ellipsis" style="vertical-align:text-bottom;">
+											<label>
+												<input type="checkbox" class="opt-out-check"/>
+												<span class="label-area">
+												${__("Do not add Video Conferencing")}
+												</span>
+											</label>
+										</div>`
+										);
 								}
 							} else {
 								d.$wrapper.find(".opt-out-conf-div").hide();
@@ -455,7 +472,7 @@ let check_and_set_availability = function(frm) {
 			slot_html += `<div class="slot-info">
 				<span><b>
 				${__('Practitioner Schedule: ')} </b> ${slot_info.slot_name}
-					${slot_info.tele_conf ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
+					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
 				</span><br>
 				<span><b> ${__('Service Unit: ')} </b> ${slot_info.service_unit}</span>`;
 
@@ -517,6 +534,7 @@ let check_and_set_availability = function(frm) {
 						data-duration=${interval}
 						data-service-unit="${slot_info.service_unit || ''}"
 						data-tele-conf="${slot_info.tele_conf || 0}"
+						data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
 						style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
 						data-toggle="tooltip" title="${tool_tip || ''}">
 						${start_str.substring(0, start_str.length - 3)}
