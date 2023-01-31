@@ -272,16 +272,22 @@ class PatientAppointment(Document):
 		return therapy_types
 
 	def update_event(self):
-		if self.event and self.appointment_datetime:
+		if self.event:
 			event_doc = frappe.get_doc("Event", self.event)
 			starts_on = datetime.datetime.combine(
 				getdate(self.appointment_date), get_time(self.appointment_time)
 			)
 			ends_on = starts_on + datetime.timedelta(minutes=flt(self.duration))
-			if starts_on != event_doc.starts_on:
+			if (
+				starts_on != event_doc.starts_on
+				or self.add_video_conferencing != event_doc.add_video_conferencing
+			):
 				event_doc.starts_on = starts_on
 				event_doc.ends_on = ends_on
+				event_doc.add_video_conferencing = self.add_video_conferencing
 				event_doc.save()
+				event_doc.reload()
+				self.google_meet_link = event_doc.google_meet_link
 
 
 @frappe.whitelist()
