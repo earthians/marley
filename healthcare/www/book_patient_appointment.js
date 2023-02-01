@@ -17,10 +17,24 @@ async function get_global_variables() {
 function on_date_or_timezone_select() {
 	let date_picker = document.getElementById('appointment-date');
 	let timezone = document.getElementById('appointment-timezone');
+	let patient_id = document.getElementById('patient-list');
 	if (date_picker.value === '') {
 		clear_slots();
 		hide_book_btn();
-		frappe.throw(__('Please select a date'));
+		frappe.show_alert({
+			message: __("Please select a date"),
+			indicator: "info"
+		  });
+		  return
+	}
+	if (date_picker.value && patient_id.value === '') {
+		clear_slots();
+		hide_book_btn();
+		frappe.show_alert({
+			message: __("Please select a patient"),
+			indicator: "info"
+		  });
+		  return
 	}
 	window.selected_date = date_picker.value;
 	window.selected_timezone = timezone.value;
@@ -44,11 +58,6 @@ function setup_timezone_selector() {
 }
 
 async function get_time_slots(date, timezone) {
-	// let local_timezone = moment.tz.guess()
-	// if (local_timezone == timezone) {
-	// 	timezone = ''
-	// }
-	
 	let slots = (await frappe.call({
 		method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data',
 		args: {
@@ -129,7 +138,6 @@ function get_slots(slot_details) {
 			slot_info.appointments.forEach((booked) => {
 				let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
 				let end_time = booked_moment.clone().add(booked.duration, 'minutes');
-				// console.log('\n\n', end_time)
 
 				// Deal with 0 duration appointments
 				if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
@@ -201,10 +209,12 @@ function slot_btn_on_click(selected_slot, selected_date, service_unit){
 
 
 function book_appointment(){
+	let patient_id = document.getElementById('patient-list');
 	frappe.call({
 		method: 'healthcare.www.book_patient_appointment.book_appointment',
 		args: {
 			practitioner: selected_practitioner,
+			patient: patient_id.value,
 			date: window.selected_date,
 			time: window.selected_slot,
 			service_unit : window.service_unit,

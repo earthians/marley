@@ -13,7 +13,7 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.model.document import Document
 from frappe.model.naming import set_name_by_naming_series
-from frappe.utils import cint, cstr, getdate
+from frappe.utils import cint, cstr, getdate, has_common
 from frappe.utils.nestedset import get_root_of
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -343,3 +343,27 @@ def get_timeline_data(doctype, name):
 		patient_timeline_data.update(customer_timeline_data)
 
 	return patient_timeline_data
+
+
+def get_patients_from_user(user):
+	patients = []
+	if "Patient" in frappe.get_roles(user):
+
+		contact = frappe.qb.DocType("Contact")
+		dlink = frappe.qb.DocType("Dynamic Link")
+		patient = frappe.qb.DocType("Patient")
+
+		query = (
+			frappe.qb.from_(contact)
+			.from_(dlink)
+			.from_(patient)
+			.select(
+				contact.email_id,
+				dlink.link_doctype,
+				dlink.link_name,
+				patient.patient_name,
+			)
+			.where((contact.name == dlink.parent) & (contact.email_id == user) & (patient.name == dlink.link_name))
+		)
+		patients = [{"patient":c.link_name, "full_name": c.patient_name} for c in contacts if c.link_doctype == "Patient"]
+	return patients

@@ -1,13 +1,18 @@
 import frappe
 from frappe import _
 from frappe.utils import today, add_days
+from healthcare.healthcare.doctype.patient.patient import get_patients_from_user
 
 no_cache = 1
 
 def get_context(context):
+	patients = []
 	context.no_cache = 1
 	if frappe.session.user=='Guest':
 		frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
+	else:
+		patients = get_patients_from_user(frappe.session.user)
+	context.patients = patients
 	context.practitioner = frappe.local.request.args.get('practitioner')
 	context.pract_details = frappe.db.get_value(
 		"Healthcare Practitioner", context.practitioner,
@@ -26,8 +31,7 @@ def get_context(context):
 
 
 @frappe.whitelist()
-def book_appointment(practitioner, date, time, service_unit):
-	patient = frappe.db.get_value("Patient", {"user_id":frappe.session.user}, "name")
+def book_appointment(practitioner, patient, date, time, service_unit):
 	if patient:
 		appointment = frappe.get_doc({
 			'doctype': 'Patient Appointment',
