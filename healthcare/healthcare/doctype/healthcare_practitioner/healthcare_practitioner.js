@@ -13,6 +13,15 @@ frappe.ui.form.on('Healthcare Practitioner', {
 				}
 			};
 		});
+
+		frm.set_query('google_calendar', function(){
+			return {
+				filters: {
+					'enable': true,
+					'owner': frm.doc.user_id,
+				}
+			};
+		});
 	},
 	refresh: function(frm) {
 		frappe.dynamic_link = {doc: frm.doc, fieldname: 'name', doctype: 'Healthcare Practitioner'};
@@ -121,9 +130,14 @@ frappe.tour['Healthcare Practitioner'] = [
 		description: __('Set the Practitioner Schedule you just created. This will be used while booking appointments.')
 	},
 	{
+		fieldname: 'google_calendar',
+		title: __('Google Calendar'),
+		description: __('Link the Google Calendar created and Authorized by the practitioner, all tele consultation appointments will be scheduled using this calendar')
+	},
+	{
 		fieldname: 'op_consulting_charge_item',
 		title: __('Out Patient Consulting Charge Item'),
-		description: __('Create a service item for Out Patient Consulting.')
+		description: __('Create and link a service item to be billed for Out Patient Consulting.')
 	},
 	{
 		fieldname: 'inpatient_visit_charge_item',

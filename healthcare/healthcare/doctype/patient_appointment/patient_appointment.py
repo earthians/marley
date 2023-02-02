@@ -46,6 +46,7 @@ class PatientAppointment(Document):
 		self.validate_customer_created()
 		self.set_status()
 		self.set_title()
+		self.update_event()
 
 	def after_insert(self):
 		self.update_prescription_details()
@@ -53,6 +54,7 @@ class PatientAppointment(Document):
 		invoice_appointment(self)
 		self.update_fee_validity()
 		send_confirmation_msg(self)
+		self.insert_calendar_event()
 
 	def set_title(self):
 		self.title = _("{0} with {1}").format(
@@ -202,6 +204,61 @@ class PatientAppointment(Document):
 				)
 			)
 
+	def insert_calendar_event(self):
+		starts_on = datetime.datetime.combine(
+			getdate(self.appointment_date), get_time(self.appointment_time)
+		)
+		ends_on = starts_on + datetime.timedelta(minutes=flt(self.duration))
+		google_calendar = frappe.db.get_value(
+			"Healthcare Practitioner", self.practitioner, "google_calendar"
+		)
+		if not google_calendar:
+			google_calendar = frappe.db.get_single_value("Healthcare Settings", "default_google_calendar")
+
+		if self.appointment_type:
+			color = frappe.db.get_value("Appointment Type", self.appointment_type, "color")
+		else:
+			color = ""
+
+		event = frappe.get_doc(
+			{
+				"doctype": "Event",
+				"subject": f"{self.title} - {self.company}",
+				"event_type": "Private",
+				"color": color,
+				"send_reminder": 1,
+				"starts_on": starts_on,
+				"ends_on": ends_on,
+				"status": "Open",
+				"all_day": 0,
+				"sync_with_google_calendar": 1 if self.add_video_conferencing and google_calendar else 0,
+				"add_video_conferencing": 1 if self.add_video_conferencing and google_calendar else 0,
+				"google_calendar": google_calendar,
+				"description": f"{self.title} - {self.company}",
+				"pulled_from_google_calendar": 0,
+			}
+		)
+		participants = []
+		participants.append(
+			{"reference_doctype": "Healthcare Practitioner", "reference_docname": self.practitioner}
+		)
+		participants.append({"reference_doctype": "Patient", "reference_docname": self.patient})
+
+		event.update({"event_participants": participants})
+
+		event.insert(ignore_permissions=True)
+
+		event.reload()
+		if self.add_video_conferencing and not event.google_meet_link:
+			frappe.msgprint(
+				_("Could not add conferencing to this Appointment, please contact System Manager"),
+				indicator="error",
+				alert=True,
+			)
+
+		self.db_set({"event": event.name, "google_meet_link": event.google_meet_link})
+		self.notify_update()
+
 	@frappe.whitelist()
 	def get_therapy_types(self):
 		if not self.therapy_plan:
@@ -213,6 +270,24 @@ class PatientAppointment(Document):
 			therapy_types.append(entry.therapy_type)
 
 		return therapy_types
+
+	def update_event(self):
+		if self.event:
+			event_doc = frappe.get_doc("Event", self.event)
+			starts_on = datetime.datetime.combine(
+				getdate(self.appointment_date), get_time(self.appointment_time)
+			)
+			ends_on = starts_on + datetime.timedelta(minutes=flt(self.duration))
+			if (
+				starts_on != event_doc.starts_on
+				or self.add_video_conferencing != event_doc.add_video_conferencing
+			):
+				event_doc.starts_on = starts_on
+				event_doc.ends_on = ends_on
+				event_doc.add_video_conferencing = self.add_video_conferencing
+				event_doc.save()
+				event_doc.reload()
+				self.google_meet_link = event_doc.google_meet_link
 
 
 @frappe.whitelist()
@@ -326,6 +401,11 @@ def cancel_appointment(appointment_id):
 		msg = _("Appointment Cancelled.")
 		if fee_validity:
 			msg += _("Fee Validity {0} updated.").format(fee_validity.name)
+
+	if appointment.event:
+		event_doc = frappe.get_doc("Event", appointment.event)
+		event_doc.event_type = "Cancelled"
+		event_doc.save()
 
 	frappe.msgprint(msg)
 
@@ -475,6 +555,7 @@ def get_available_slots(practitioner_doc, date):
 						"appointments": appointments,
 						"allow_overlap": allow_overlap,
 						"service_unit_capacity": service_unit_capacity,
+						"tele_conf": practitioner_schedule.allow_video_conferencing,
 					}
 				)
 

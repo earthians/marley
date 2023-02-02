@@ -123,6 +123,14 @@ frappe.ui.form.on('Patient Encounter', {
 		});
 
 		frm.set_df_property('patient', 'read_only', frm.doc.appointment ? 1 : 0);
+
+		if (frm.doc.google_meet_link && frappe.datetime.now_date() <= frm.doc.encounter_date) {
+			frm.dashboard.set_headline(
+				__("Join video conference with {0}", [
+					`<a target='_blank' href='${frm.doc.google_meet_link}'>Google Meet</a>`,
+				])
+			);
+		}
 	},
 
 	appointment: function(frm) {

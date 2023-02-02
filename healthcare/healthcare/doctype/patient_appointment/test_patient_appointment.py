@@ -6,7 +6,8 @@
 from frappe.tests.utils import FrappeTestCase
 
 import frappe
-from frappe.utils import add_days, now_datetime, nowdate
+from frappe.utils import add_days, now_datetime, nowdate, getdate, get_time, flt
+import datetime
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
@@ -356,6 +357,13 @@ class TestPatientAppointment(FrappeTestCase):
 		)
 		self.assertRaises(MaximumCapacityError, appointment.save)
 
+	def test_teleconsultation(self):
+		patient, practitioner = create_healthcare_docs()
+		appointment = create_appointment(patient, practitioner, nowdate())
+		self.assertTrue(appointment.event)
+		test_appointment_reschedule(self, appointment)
+		test_appointment_cancel(self, appointment)
+
 
 def create_healthcare_docs(id=0):
 	patient = create_patient(id)
@@ -568,3 +576,23 @@ def create_service_unit(id=0, service_unit_type=None, service_unit_capacity=0):
 	service_unit.save(ignore_permissions=True)
 
 	return service_unit.name
+
+
+def test_appointment_reschedule(self, appointment):
+	appointment_datetime = datetime.datetime.combine(
+		getdate(appointment.appointment_date), get_time(appointment.appointment_time)
+	)
+	new_appointment_datetime = appointment_datetime + datetime.timedelta(
+		minutes=flt(appointment.duration)
+	)
+	appointment.appointment_time = new_appointment_datetime.time()
+	appointment.appointment_date = new_appointment_datetime.date()
+	appointment.save()
+	self.assertTrue(
+		frappe.db.exists("Event", {"name": appointment.event, "starts_on": new_appointment_datetime})
+	)
+
+
+def test_appointment_cancel(self, appointment):
+	update_status(appointment.name, "Cancelled")
+	self.assertTrue(frappe.db.exists("Event", {"name": appointment.event, "event_type": "Cancelled"}))

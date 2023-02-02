@@ -26,6 +26,7 @@
   "practitioner",
   "practitioner_name",
   "medical_department",
+  "google_meet_link",
   "invoiced",
   "sb_symptoms",
   "symptoms",
@@ -331,6 +332,13 @@
    "fieldname": "get_applicable_treatment_plans",
    "fieldtype": "Button",
    "label": "Get Applicable Treatment Plans"
+  },
+  {
+   "fetch_from": "appointment.google_meet_link",
+   "fieldname": "google_meet_link",
+   "fieldtype": "Data",
+   "label": "Google Meet Link",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,

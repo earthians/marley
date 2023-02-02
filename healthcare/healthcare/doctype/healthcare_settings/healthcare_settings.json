@@ -11,6 +11,7 @@
   "link_customer_to_patient",
   "default_medical_code_standard",
   "validate_nursing_checklists",
+  "default_google_calendar",
   "column_break_9",
   "collect_registration_fee",
   "registration_fee",
@@ -348,6 +349,13 @@
    "fieldname": "alerts_tab",
    "fieldtype": "Tab Break",
    "label": "Alerts"
+  },
+  {
+  "description": "For use while scheduling tele-consultations via Google Meet",
+   "fieldname": "default_google_calendar",
+   "fieldtype": "Link",
+   "label": "Default Google Calendar",
+   "options": "Google Calendar"
   }
  ],
  "issingle": 1,
