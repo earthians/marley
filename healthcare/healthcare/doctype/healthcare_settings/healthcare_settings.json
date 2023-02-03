@@ -12,8 +12,6 @@
   "default_medical_code_standard",
   "validate_nursing_checklists",
   "default_google_calendar",
-  "enable_appointment_booking_through_portal",
-  "number_of_days_appointments_can_be_booked_in_advance",
   "column_break_9",
   "collect_registration_fee",
   "registration_fee",
@@ -55,7 +53,15 @@
   "laboratory_sms_alerts",
   "sms_printed",
   "column_break_28",
-  "sms_emailed"
+  "sms_emailed",
+  "portal_tab",
+  "enable_appointment_booking_through_portal",
+  "number_of_days_appointments_can_be_booked_in_advance",
+  "success_section",
+  "success_title",
+  "success_url",
+  "column_break_1mkay",
+  "success_message"
  ],
  "fields": [
   {
@@ -353,7 +359,7 @@
    "label": "Alerts"
   },
   {
-  "description": "For use while scheduling tele-consultations via Google Meet",
+   "description": "For use while scheduling tele-consultations via Google Meet",
    "fieldname": "default_google_calendar",
    "fieldtype": "Link",
    "label": "Default Google Calendar",
@@ -370,11 +376,44 @@
    "fieldname": "number_of_days_appointments_can_be_booked_in_advance",
    "fieldtype": "Int",
    "label": "Number of days appointments can be booked in advance"
+  },
+  {
+   "fieldname": "portal_tab",
+   "fieldtype": "Tab Break",
+   "label": "Portal"
+  },
+  {
+   "description": "Go to this URL after completing the form",
+   "fieldname": "success_url",
+   "fieldtype": "Data",
+   "label": "Success Url"
+  },
+  {
+   "description": "Message to be displayed on successful completion",
+   "fieldname": "success_message",
+   "fieldtype": "Small Text",
+   "label": "Success Message"
+  },
+  {
+   "fieldname": "success_title",
+   "fieldtype": "Data",
+   "label": "Success Title"
+  },
+  {
+   "fieldname": "column_break_1mkay",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "enable_appointment_booking_through_portal",
+   "fieldname": "success_section",
+   "fieldtype": "Section Break",
+   "label": "Success"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-01-13 17:51:25.440851",
+ "modified": "2023-02-03 20:20:11.259805",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

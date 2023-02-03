@@ -1,29 +1,42 @@
 {% extends "frappe/templates/web.html" %}
 {% block content %}
 {{ include_style('healthcare-web.bundle.css') }}
-<section class="">
+<section class="portal-main-section">
 	<body>
-		<div class="col-12 full-section">
+		<div class="col-12 portal-full-section">
 			<div class="c-section">
 				<ul class="breadcrumb">
-					<li><a href="/" style="color:black;">Home</a> > </li>
-					<li style="color:rgb(175, 173, 173);">&nbsp;Departments</a></li>
+					<li><a href="/" style="color:black;">{{ _('Home') }}</a> > </li>
+					<li style="color:rgb(175, 173, 173);">&nbsp;{{ _('Departments') }}</a></li>
 				</ul>
-				<p class="text-muted">Choose Speciality</p>
-				<div class="col-sm-12 select_btn">
-					<div style="float:right;">
-						<button class="dep" type="dep" style="background-color: rgb(249, 250, 251);" onclick="location.href='/departments'">Department</button>
-						<button class="pra" type="pra" style="background-color: #FFFFFF;" onclick="location.href='/practitioners'">Practitioner</button>
-					</div>
-				</div><br><br>
+				<p class="text-muted">{{ _('Start by Choosing a Speciality') }}</p>
 				<div class="col-sm-12 depart-section">
+					<div class="fh-portal-btn">
+						<ul class="nav fh-btn-grp">
+							<li class="nav-item btn-grp">
+								<a class="nav-link department-btn fh-active-btn"
+								onclick="location.href='/departments'"
+									data-toggle="tab">
+									{{ _('Department') }}
+								</a>
+							</li>
+							<li class="nav-item btn-grp">
+								<a class="nav-link practitioner-btn fh-disabled-btn"
+								onclick="location.href='/practitioners'"
+									data-toggle="tab">
+									{{ _('Practitioner') }}
+								</a>
+							</li>
+						</ul>
+					</div>
 					<div class="department" id="department">
 						<div class='' style="text-align:center;">
+							{% if medical_departments|length>0 %}
 							{% for dep in medical_departments %}
 								<div class="page-card cards" id="card" onclick="location.href='/practitioners?department={{ dep.department }}'">
-									<div class='card-img-container'>
+									<div class='fh-card-img-container'>
 										{% if dep.image %}
-											<img class="card-img-top" src="{{ dep.image }}" onerror="this.src='assets/frappe/images/default-avatar.png'">
+											<img class="card-img-top fh-card-img" src="{{ dep.image }}" onerror="this.src='assets/frappe/images/default-avatar.png'">
 										{% else %}
 											<div class="portal-placeholder-div">
 												<span class="placeholder abbr-name">
@@ -32,16 +45,21 @@
 											</div>
 										{% endif %}
 									</div>
-									<div class = "text-container"><div class="text-secondary card-text"><b>{{ dep.department }}</b></div>
+									<div class = "text-container fh-card-text"><div class="text-secondary card-text"><b>{{ dep.department }}</b></div>
 										{% if dep.description %}
 											<div class="dep-description">{{ dep.description[:160] or "" }}</div>
 										{% endif %}
 									</div>
 								</div>
 							{% endfor %}
+							{% else %}
+							<div class="text-muted">
+								{{ _('No Department found!') }}
+							</div>
+							{% endif %}
 						</div>
 					</div>
-				</div><br>
+				</div>
 			</div>
 		</div>
 	</body>

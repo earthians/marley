@@ -365,5 +365,8 @@ def get_patients_from_user(user):
 			)
 			.where((contact.name == dlink.parent) & (contact.email_id == user) & (patient.name == dlink.link_name))
 		)
+
+		contacts = query.run(as_dict=True)
+
 		patients = [{"patient":c.link_name, "full_name": c.patient_name} for c in contacts if c.link_doctype == "Patient"]
 	return patients

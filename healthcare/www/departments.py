@@ -8,6 +8,7 @@ class EmployeeUserDisabledError(frappe.ValidationError):
 
 def get_context(context):
 	context.no_cache = 1
+	departments = []
 	booking_allowed = frappe.get_cached_value(
 		"Healthcare Settings", "None",
 		"enable_appointment_booking_through_portal"
@@ -17,21 +18,25 @@ def get_context(context):
 
 	if frappe.session.user=='Guest':
 		frappe.throw(_("You need to be logged in to access this page"), frappe.PermissionError)
-	# department = frappe.local.request.args.get('department')
-	# context.medical_departments = frappe.get_all("Healthcare Practitioner",
-	# 	fields = ["department"], filters={"department": ["!=", ""]}, group_by="department")
-	query = """
-		select
-			md.name as department,
-			md.image,
-			md.description
-		from
-			`tabHealthcare Practitioner` as h_pract left join
-			`tabMedical Department` as md on h_pract.department = md.name left join
-			`tabPractitioner Service Unit Schedule` as sch on h_pract.name = sch.parent
-		where
-			md.show_in_website=1 and h_pract.status='Active' and sch.schedule!='' and sch.service_unit!=''
-		group by 
-			md.name
-	"""
-	context.medical_departments = frappe.db.sql(query, as_dict=True)
+
+	practitioner = frappe.qb.DocType("Healthcare Practitioner")
+	department = frappe.qb.DocType("Medical Department")
+	schedule = frappe.qb.DocType("Practitioner Service Unit Schedule")
+
+	departments = (
+		frappe.qb.select(
+			department.name.as_("department"),
+			department.image,
+			department.description,
+		)
+		.from_(practitioner)
+		.left_join(department)
+		.on(practitioner.department == department.name)
+		.left_join(schedule)
+		.on(practitioner.name == schedule.parent)
+		.where((department.show_in_website==1) & (practitioner.status=='Active')
+			& (schedule.schedule!='') & (schedule.service_unit!=''))
+		.groupby(department.name)
+	).run(as_dict=True)
+
+	context.medical_departments = departments

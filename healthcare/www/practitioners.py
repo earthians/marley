@@ -1,5 +1,6 @@
 import frappe
 import json
+from frappe import _
 
 no_cache = 1
 

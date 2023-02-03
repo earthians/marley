@@ -614,7 +614,6 @@ def get_available_slots(practitioner_doc, date, tz=None):
 					filters=filters,
 					fields=["name", "appointment_time", "duration", "status"],
 				)
-				print('\n\n\nddddd', filters)
 
 				slot_details.append(
 					{

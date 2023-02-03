@@ -1,32 +1,55 @@
 {% extends "frappe/templates/web.html" %}
 {% block content %}
 {{ include_style('healthcare-web.bundle.css') }}
-<section class="">
+<section class="portal-main-section">
 	<body>
-		<div class="col-sm-12 full-section">
+		<div class="col-sm-12 portal-full-section">
 			<div class="c-section">
 				<ul class="breadcrumb">
-					<li><a href="/" style="color:black;" >Home</a> > </li>
-					<li><a href="/departments" style="color:black;">&nbsp;Departments</a> > </li>
-					<li style="color:rgb(175, 173, 173);">&nbsp;Practitioners</a></li>
+					<li><a href="/" style="color:black;" >{{ _('Home') }}</a> > </li>
+					{% if department %}
+						<li><a href="/departments" style="color:black;">&nbsp;{{ _('Departments') }}</a> > </li>
+					{% else %}
+						<li style="color:rgb(175, 173, 173);">&nbsp;{{ _('Practitioners') }}</a></li>
+					{% endif %}
+					{% if department %}
+						<li style="color:rgb(175, 173, 173);">&nbsp;{{department}}</a></li>
+					{% endif %}
 				</ul>
-			<p class="text-muted">Whom you want to consult
-			{% if department %} in {{department}} {% endif %}?
+			<p class="text-muted">{{ _('Whom do you want to consult') }}
+			{% if department %} {{ _('in') }} {{department}} {% endif %}?
 			</p>
-			<div class="col-sm-12 select_btn">
-				<div style="float:right;">
-					<button class="dep" type="dep" style="background-color: #FFFFFF;" onclick="location.href='/departments'">Department</button>
-					<button class="pra" type="pra" style="background-color: rgb(249,250,251);" onclick="location.href='/practitioners'">Practitioner</button></div>
-			</div><br><br>
 			<div class="col-sm-12 depart-section">
+				<div class="fh-portal-btn">
+					<ul class="nav fh-btn-grp">
+						<li class="nav-item btn-grp">
+							<a class="nav-link department-btn fh-disabled-btn"
+								onclick="location.href='/departments'"
+								data-toggle="tab">
+								{{ _('Department') }}
+							</a>
+						</li>
+						<li class="nav-item btn-grp">
+							<a class="nav-link practitioner-btn fh-active-btn"
+							onclick="location.href='/practitioners'"
+								data-toggle="tab">
+								{{ _('Practitioner') }}
+							</a>
+						</li>
+					</ul>
+				</div>
 				<div class="practitioner" id="practitioner">
 					<div class='' style="text-align:center;">
 					{% if practitioner %}
+						{% set dep = "" %}
 						{% for pract in practitioner %}
-						<div class="page-card cards" id="card" onclick="location.href='/book_patient_appointment?practitioner={{ pract.name }}'">
+							{% if department %}
+								{% set dep = department %}
+							{% endif %}
+						<div class="page-card cards" id="card" onclick="location.href='/book_patient_appointment?practitioner={{ pract.name }}&department={{ dep }}'">
 							<div class='card-img-container'>
 								{% if pract.image %}
-									<img class="card-img-top" src="{{ pract.image }}" onerror="this.src='assets/frappe/images/default-avatar.png'; this.style.opacity=.3;">
+									<img class="card-img-top fh-card-img" src="{{ pract.image }}" onerror="this.src='assets/frappe/images/default-avatar.png'; this.style.opacity=.3;">
 								{% else %}
 									<div class="portal-placeholder-div">
 										<span class="placeholder abbr-name">
@@ -38,15 +61,15 @@
 								<p class="text-secondary"><b>{{ pract.practitioner_name }}</b>
 								{% if not department %}
 									{% if pract.department %}
-										<br>{{ pract.department }}
+									<span class="practitioner-text">{{ pract.department }}</span>
 									{% endif %}
 								{% endif %}
-								<br>{{ pract.designation or "" }}</p>
+								<span class="practitioner-text">{{ pract.designation or "" }}</span></p>
 						</div>
 						{% endfor %}
 					{% else %}
 						<div style="text-align: center; vertical-align: middle;">
-						<p>No Practiioner active{% if department %}  for {{department}} {% endif %}!</p>
+						<p>{{ _('No Practiioner active') }}{% if department %}  {{ _('for') }} {{department}} {% endif %}!</p>
 						</div>
 					{% endif %}
 				</div>

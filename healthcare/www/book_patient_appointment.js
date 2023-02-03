@@ -221,11 +221,20 @@ function book_appointment(){
 		},
 		callback: (r) => {
 			if(!r.exc && r.message) {
-				frappe.show_alert({
-					message:__('Appointment Booked'),
-					indicator:'green'
-				}, 5);
-				setTimeout(window.location.href = "/", 5000);
+				$('#book-appointment-sec').hide();
+				$('#appointment-success-sec').show();
+				document.getElementById(
+					"success-practitioner"
+				).innerHTML = `
+					with <b>${r.message[1] ? r.message[1] : selected_practitioner}</b>
+					<br>on <b>${window.selected_date}</b>
+					 at <b>${window.selected_slot}</b>`;
+				if (success_url) {
+					frappe.utils.setup_timer(5, 0, $(".time"));
+					setTimeout(() => {
+						window.location.href = success_url;
+					}, 5000);
+				}
 			}
 		}
 	})
