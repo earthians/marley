@@ -77,13 +77,20 @@ function hide_book_btn() {
 
 function show_book_btn(selected_slot) {
 	window.selected_slot = selected_slot
-    let book_button = document.getElementById('book-button');
+	let book_button = document.getElementById('book-button');
     book_button.disabled = false;
+	if (window.tele_conf)  {
+		if (parseInt(window.tele_conf)) {
+			$(".opt-out-conf-div").removeClass("hide-sec");
+		} else {
+			$(".opt-out-conf-div").addClass("hide-sec");
+		}
+	}
     book_button.onclick = book_appointment;
 }
 
 async function update_time_slots(selected_date, selected_timezone) {
-	let timeslot_container = document.getElementById('slot_container');
+	let timeslot_container = document.getElementById('fh-slot-container');
 	window.slots = await get_time_slots(selected_date, selected_timezone);
 	clear_slots();
 	if (window.slots.length <= 0) {
@@ -99,7 +106,7 @@ async function update_time_slots(selected_date, selected_timezone) {
 }
 
 function clear_slots() {
-	let timeslot_container = document.getElementById('slot_container');
+	let timeslot_container = document.getElementById('fh-slot-container');
 	while (timeslot_container.firstChild) {
 		timeslot_container.removeChild(timeslot_container.firstChild);
 	}
@@ -184,8 +191,11 @@ function get_slots(slot_details) {
 			<button class="btn btn-secondary btn-appointment" data-name='${start_str}'
 				data-duration=${interval}
 				data-service-unit="${slot_info.service_unit || ''}"
+				data-tele-conf="${slot_info.tele_conf || 0}"
 				${disabled ? 'disabled="disabled"' : ""}
-				data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click('${start_str}', '${appointment_date}', '${slot_info.service_unit || ''}')">
+				data-toggle="tooltip" title="${tool_tip || ''}" onclick="slot_btn_on_click(
+					'${start_str}', '${appointment_date}', '${slot_info.service_unit || ''}',
+					'${interval}', '${slot_info.tele_conf || 0}')">
 				${display_time_slot.substring(0, display_time_slot.length - 3)}
 				${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
 			</button>`;
@@ -201,15 +211,26 @@ function get_slots(slot_details) {
 	return slot_html;
 }
 
-function slot_btn_on_click(selected_slot, selected_date, service_unit){
+function slot_btn_on_click(selected_slot, selected_date, service_unit, duration, tele_conf){
 	window.selected_date = selected_date
 	window.service_unit = service_unit
+	window.duration = duration
+	window.tele_conf = tele_conf
 	show_book_btn(selected_slot)
 }
 
 
 function book_appointment(){
+	$(".portal-full-section").addClass("freeze-div");
+	frappe.show_alert({
+		message: __("Booking Appointment..."),
+		indicator: "info"
+	  });
 	let patient_id = document.getElementById('patient-list');
+	let opt_out_vconf = 1
+	if (parseInt(window.tele_conf)==1 && !$(".opt-out-check").is(":checked")) {
+		opt_out_vconf = 0
+	}
 	frappe.call({
 		method: 'healthcare.www.book_patient_appointment.book_appointment',
 		args: {
@@ -217,7 +238,9 @@ function book_appointment(){
 			patient: patient_id.value,
 			date: window.selected_date,
 			time: window.selected_slot,
+			duration: window.duration,
 			service_unit : window.service_unit,
+			opt_out_vconf: opt_out_vconf,
 		},
 		callback: (r) => {
 			if(!r.exc && r.message) {
@@ -226,16 +249,20 @@ function book_appointment(){
 				document.getElementById(
 					"success-practitioner"
 				).innerHTML = `
-					with <b>${r.message[1] ? r.message[1] : selected_practitioner}</b>
-					<br>on <b>${window.selected_date}</b>
-					 at <b>${window.selected_slot}</b>`;
-				if (success_url) {
+					Date : <b>${window.selected_date}</b><br>
+					Time : <b>${window.selected_slot}</b><br>
+					Practitioner : <b>${r.message[1] ? r.message[1] : selected_practitioner}</b>
+					`;
+					let url = success_url;
+					if (success_url == "None") {
+						url = "/";
+					}
 					frappe.utils.setup_timer(5, 0, $(".time"));
 					setTimeout(() => {
-						window.location.href = success_url;
+						window.location.href = url;
 					}, 5000);
-				}
 			}
+			$(".portal-full-section").removeClass("freeze-div");
 		}
 	})
 }

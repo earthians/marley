@@ -7,15 +7,15 @@
 		<div class="col-sm-12 c-section portal-full-section" id="book-appointment-sec">
 			<div class="col-sm-12">
 				<ul class="breadcrumb">
-					<li><a href="/" style="color:black;" >{{ _('Home') }}</a> > </li>
+					<li><a href="/" class="normal-bc-link">{{ _('Home') }}</a> > </li>
 					{% if department %}
-						<li><a href="/departments" style="color:black;">&nbsp;{{ _('Departments') }}</a> > </li>
-						<li><a href="/practitioners?department={{ department }}" style="color:black;"> &nbsp;{{department}}</a></li>
+						<li><a href="/departments" class="normal-bc-link">&nbsp;{{ _('Departments') }}</a> > </li>
+						<li><a href="/practitioners?department={{ department }}" class="normal-bc-link"> &nbsp;{{department}}</a></li>
 							&nbsp;<li>></li>
 					{% else %}
-						<li><a href="/practitioners" style="color:black;">&nbsp;{{ _('Practitioners') }}</a> > </li>
+						<li><a href="/practitioners" class="normal-bc-link">&nbsp;{{ _('Practitioners') }}</a> > </li>
 					{% endif %}
-					<li style="color:rgb(175, 173, 173);">&nbsp;{{ _('Book Appointment') }}</a></li>
+					<li class="selected-bc-link">&nbsp;{{ _('Book Appointment') }}</a></li>
 				  </ul>
 			</div>
 		<div class="text-center mt-5">
@@ -40,7 +40,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="row justify-content-center mt-3" style="padding-bottom: 20px;">
+		<div class="row justify-content-center mt-3 select-patient-sec">
 			<div class="col-md-3 align-self-center ">
 				<div class="appointment-dep text-muted" >{{ _('Booking For') }}</div>
 				<select name="patient-list" id="patient-list"
@@ -58,15 +58,31 @@
 				</select>
 			</div>
 		</div>
-	<div class="col-sm-12" id="slot_container" style="text-align: center;"></div>
+	<div class="col-sm-12 fh-slot-container" id="fh-slot-container"></div>
 	<div class="row justify-content-center mt-3">
+		<div class="col-sm-12 fh-slot-container-inner">
+			<div class="col-md-4 mb-3 opt-out-conf-div hide-sec" id = "opt-out-conf-div">
+					<label>
+						<span class="label-area text-muted opt-out-title">
+							{{ _("Selected slot has video conferencing by default.")}}
+						</span>
+						<input type="checkbox" class="opt-out-check"/>
+						<span class="label-area text-muted">
+						{{ _("Do not add Video Conferencing")}}
+						</span>
+						<span class="label-area text-muted opt-out-description">
+							{{ _("By enabling this user can opt out")}}
+						</span>
+					</label>
+				</div>
+		</div>
 		<div class="col-md-4 mb-3">
 			<button class="btn btn-primary form-control" id="book-button">{{ _('Book') }}</button>
 		</div>
 	</div>
 </div>
 
-<section class="page_content" style="padding: 5rem 30rem 5rem 30rem; display:none;"
+<section class="page_content appointment-success-div"
 	id="appointment-success-sec">
 	<div class="success-page">
 		<div class="success-header">

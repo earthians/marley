@@ -537,7 +537,7 @@ let check_and_set_availability = function(frm) {
 			slot_html += `
 				<span><b>
 				${__('Practitioner Schedule: ')} </b> ${slot_info.slot_name}
-					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
+					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x"></i>' : ''}
 				</span><br>
 				<span><b> ${__('Service Unit: ')} </b> ${slot_info.service_unit}</span>`;
 

@@ -34,11 +34,11 @@ def get_context(context):
 	if not hcare_max_days:
 		hcare_max_days = 30
 	context.healthcare_settings = healthcare_settings
-	context.max_day = add_days(today(), hcare_max_days)
+	context.max_day = add_days(today(), int(hcare_max_days))
 
 
 @frappe.whitelist()
-def book_appointment(practitioner, patient, date, time, service_unit):
+def book_appointment(practitioner, patient, date, time, duration, service_unit, opt_out_vconf):
 	if patient:
 		appointment = frappe.get_doc({
 			'doctype': 'Patient Appointment',
@@ -46,8 +46,12 @@ def book_appointment(practitioner, patient, date, time, service_unit):
 			'practitioner': practitioner,
 			'appointment_date': date,
 			'appointment_time': time,
+			'duration': duration,
 			'service_unit': service_unit,
-		}).insert(ignore_permissions=True)
+			'add_video_conferencing': 0 if int(opt_out_vconf)==1 else 1,
+		})
+		appointment.flags.silent = True
+		appointment.insert(ignore_permissions=True)
 		if appointment:
 			return appointment.name, appointment.practitioner_name
 	else:

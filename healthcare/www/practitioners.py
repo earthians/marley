@@ -21,6 +21,7 @@ def get_context(context):
 			`tabPractitioner Service Unit Schedule` as sch on h_pract.name = sch.parent
 		where
 			sch.schedule!='' and h_pract.status='Active' and sch.service_unit!=''
+			and h_pract.show_in_website=1
 	"""
 	if selected_department:
 		context.department = selected_department

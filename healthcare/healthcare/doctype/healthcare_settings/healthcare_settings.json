@@ -57,7 +57,7 @@
   "portal_tab",
   "enable_appointment_booking_through_portal",
   "number_of_days_appointments_can_be_booked_in_advance",
-  "success_section",
+  "after_submission_section",
   "success_title",
   "success_url",
   "column_break_1mkay",
@@ -406,14 +406,14 @@
   {
    "collapsible": 1,
    "depends_on": "enable_appointment_booking_through_portal",
-   "fieldname": "success_section",
+   "fieldname": "after_submission_section",
    "fieldtype": "Section Break",
-   "label": "Success"
+   "label": "After Submission"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-02-03 20:20:11.259805",
+ "modified": "2023-03-16 11:45:33.362627",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

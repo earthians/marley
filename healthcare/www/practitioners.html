@@ -6,14 +6,14 @@
 		<div class="col-sm-12 portal-full-section">
 			<div class="c-section">
 				<ul class="breadcrumb">
-					<li><a href="/" style="color:black;" >{{ _('Home') }}</a> > </li>
+					<li><a href="/" class="normal-bc-link">{{ _('Home') }}</a> > </li>
 					{% if department %}
-						<li><a href="/departments" style="color:black;">&nbsp;{{ _('Departments') }}</a> > </li>
+						<li><a href="/departments" class="normal-bc-link">&nbsp;{{ _('Departments') }}</a> > </li>
 					{% else %}
-						<li style="color:rgb(175, 173, 173);">&nbsp;{{ _('Practitioners') }}</a></li>
+						<li class="selected-bc-link">&nbsp;{{ _('Practitioners') }}</a></li>
 					{% endif %}
 					{% if department %}
-						<li style="color:rgb(175, 173, 173);">&nbsp;{{department}}</a></li>
+						<li class="selected-bc-link">&nbsp;{{department}}</a></li>
 					{% endif %}
 				</ul>
 			<p class="text-muted">{{ _('Whom do you want to consult') }}
@@ -39,7 +39,7 @@
 					</ul>
 				</div>
 				<div class="practitioner" id="practitioner">
-					<div class='' style="text-align:center;">
+					<div class="pract-div">
 					{% if practitioner %}
 						{% set dep = "" %}
 						{% for pract in practitioner %}
@@ -68,7 +68,7 @@
 						</div>
 						{% endfor %}
 					{% else %}
-						<div style="text-align: center; vertical-align: middle;">
+						<div class="fh-no-cards">
 						<p>{{ _('No Practiioner active') }}{% if department %}  {{ _('for') }} {{department}} {% endif %}!</p>
 						</div>
 					{% endif %}

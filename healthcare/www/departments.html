@@ -6,8 +6,8 @@
 		<div class="col-12 portal-full-section">
 			<div class="c-section">
 				<ul class="breadcrumb">
-					<li><a href="/" style="color:black;">{{ _('Home') }}</a> > </li>
-					<li style="color:rgb(175, 173, 173);">&nbsp;{{ _('Departments') }}</a></li>
+					<li><a href="/" class="normal-bc-link">{{ _('Home') }}</a> > </li>
+					<li class="selected-bc-link">&nbsp;{{ _('Departments') }}</a></li>
 				</ul>
 				<p class="text-muted">{{ _('Start by Choosing a Speciality') }}</p>
 				<div class="col-sm-12 depart-section">
@@ -30,7 +30,7 @@
 						</ul>
 					</div>
 					<div class="department" id="department">
-						<div class='' style="text-align:center;">
+						<div class="depart-div">
 							{% if medical_departments|length>0 %}
 							{% for dep in medical_departments %}
 								<div class="page-card cards" id="card" onclick="location.href='/practitioners?department={{ dep.department }}'">

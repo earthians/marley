@@ -33,7 +33,7 @@
 }
 .portal-full-section {
     background-color: rgba(250, 250, 250, 0.992);
-    min-height: 35rem;
+    min-height: 42rem;
 }
 .c-section {
     padding-left: 14rem;
@@ -185,4 +185,38 @@
 }
 .practitioner-text {
     display: block;
+}
+.hide-sec {
+    display: none;
+}
+.freeze-div {
+    filter: blur(.6px);
+    pointer-events: none;
+}
+.normal-bc-link {
+    color:black;
+}
+.selected-bc-link {
+    color:rgb(175, 173, 173);
+}
+.select-patient-sec {
+    padding-bottom: 20px;
+}
+.fh-slot-container, .fh-slot-container-inner, .depart-div, .pract-div {
+    text-align: center;
+}
+.opt-out-conf-div {
+    margin: 0px auto;
+}
+.opt-out-title {
+    display: block; padding-bottom: 10px;
+}
+.opt-out-description {
+    display: block; font-size: 12px;
+}
+.appointment-success-div {
+    padding: 5rem 30rem 5rem 30rem; display:none;
+}
+.fh-no-cards {
+    text-align: center; vertical-align: middle;
 }
