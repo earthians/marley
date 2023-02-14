@@ -529,7 +529,22 @@ let check_and_set_availability = function(frm) {
 					count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
 					tool_tip =`${available_slots} ${__('slots available for booking')}`;
 				}
-				return `
+				if(slot_start_time.isBefore(moment())){
+					return `
+					<button class="btn btn-secondary" data-name=${start_str}
+						data-duration=${interval}
+						data-service-unit="${slot_info.service_unit || ''}"
+						data-tele-conf="${slot_info.tele_conf || 0}"
+						disabled="disabled"
+						data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
+						style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
+						data-toggle="tooltip" title="${tool_tip || ''}">
+						${start_str.substring(0, start_str.length - 3)}
+						${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
+					</button>`;
+				}
+				else{
+					return `
 					<button class="btn btn-secondary" data-name=${start_str}
 						data-duration=${interval}
 						data-service-unit="${slot_info.service_unit || ''}"
@@ -540,6 +555,7 @@ let check_and_set_availability = function(frm) {
 						${start_str.substring(0, start_str.length - 3)}
 						${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
 					</button>`;
+				}
 
 			}).join("");
 
