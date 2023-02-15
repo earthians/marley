@@ -397,7 +397,7 @@ let check_and_set_availability = function(frm) {
 						let $wrapper = d.fields_dict.available_slots.$wrapper;
 
 						// make buttons for each slot
-						let slot_html = get_slots(data.slot_details);
+						let slot_html = get_slots(data.slot_details, d.get_value('appointment_date'));
 
 						$wrapper
 							.css('margin-bottom', 0)
@@ -462,7 +462,7 @@ let check_and_set_availability = function(frm) {
 		}
 	}
 
-	function get_slots(slot_details) {
+	function get_slots(slot_details, current_date) {
 		let slot_html = '';
 		let appointment_count = 0;
 		let disabled = false;
@@ -529,7 +529,24 @@ let check_and_set_availability = function(frm) {
 					count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
 					tool_tip =`${available_slots} ${__('slots available for booking')}`;
 				}
-				return `
+				// restrict past slots based on the current time.
+				let now = moment();
+				if(slot_start_time.isBefore(now) && (now.format("YYYY-MM-DD") == current_date)){
+					return `
+					<button class="btn btn-secondary" data-name=${start_str}
+						data-duration=${interval}
+						data-service-unit="${slot_info.service_unit || ''}"
+						data-tele-conf="${slot_info.tele_conf || 0}"
+						disabled="disabled"
+						data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
+						style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
+						data-toggle="tooltip" title="${tool_tip || ''}">
+						${start_str.substring(0, start_str.length - 3)}
+						${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
+					</button>`;
+				}
+				else{
+					return `
 					<button class="btn btn-secondary" data-name=${start_str}
 						data-duration=${interval}
 						data-service-unit="${slot_info.service_unit || ''}"
@@ -540,6 +557,7 @@ let check_and_set_availability = function(frm) {
 						${start_str.substring(0, start_str.length - 3)}
 						${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
 					</button>`;
+				}
 
 			}).join("");
 
