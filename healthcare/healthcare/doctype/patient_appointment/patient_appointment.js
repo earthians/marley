@@ -397,7 +397,7 @@ let check_and_set_availability = function(frm) {
 						let $wrapper = d.fields_dict.available_slots.$wrapper;
 
 						// make buttons for each slot
-						let slot_html = get_slots(data.slot_details);
+						let slot_html = get_slots(data.slot_details, d.get_value('appointment_date'));
 
 						$wrapper
 							.css('margin-bottom', 0)
@@ -462,7 +462,7 @@ let check_and_set_availability = function(frm) {
 		}
 	}
 
-	function get_slots(slot_details) {
+	function get_slots(slot_details, appointment_date) {
 		let slot_html = '';
 		let appointment_count = 0;
 		let disabled = false;
@@ -491,37 +491,43 @@ let check_and_set_availability = function(frm) {
 				slot_end_time = moment(slot.to_time, 'HH:mm:ss');
 				interval = (slot_end_time - slot_start_time) / 60000 | 0;
 
-				// iterate in all booked appointments, update the start time and duration
-				slot_info.appointments.forEach((booked) => {
-					let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
-					let end_time = booked_moment.clone().add(booked.duration, 'minutes');
+				// restrict past slots based on the current time.
+				let now = moment();
+				if((now.format("YYYY-MM-DD") == appointment_date) && slot_start_time.isBefore(now)){
+					disabled = true;
+				} else {
+					// iterate in all booked appointments, update the start time and duration
+					slot_info.appointments.forEach((booked) => {
+						let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
+						let end_time = booked_moment.clone().add(booked.duration, 'minutes');
 
-					// Deal with 0 duration appointments
-					if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
-						if (booked.duration == 0) {
-							disabled = true;
-							return false;
+						// Deal with 0 duration appointments
+						if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
+							if (booked.duration == 0) {
+								disabled = true;
+								return false;
+							}
 						}
-					}
 
-					// Check for overlaps considering appointment duration
-					if (slot_info.allow_overlap != 1) {
-						if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-							// There is an overlap
-							disabled = true;
-							return false;
+						// Check for overlaps considering appointment duration
+						if (slot_info.allow_overlap != 1) {
+							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+								// There is an overlap
+								disabled = true;
+								return false;
+							}
+						} else {
+							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+								appointment_count++;
+							}
+							if (appointment_count >= slot_info.service_unit_capacity) {
+								// There is an overlap
+								disabled = true;
+								return false;
+							}
 						}
-					} else {
-						if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-							appointment_count++;
-						}
-						if (appointment_count >= slot_info.service_unit_capacity) {
-							// There is an overlap
-							disabled = true;
-							return false;
-						}
-					}
-				});
+					});
+				}
 
 				if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
 					available_slots = slot_info.service_unit_capacity - appointment_count;
@@ -529,6 +535,7 @@ let check_and_set_availability = function(frm) {
 					count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
 					tool_tip =`${available_slots} ${__('slots available for booking')}`;
 				}
+
 				return `
 					<button class="btn btn-secondary" data-name=${start_str}
 						data-duration=${interval}
