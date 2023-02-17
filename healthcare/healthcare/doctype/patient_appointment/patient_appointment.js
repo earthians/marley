@@ -532,7 +532,7 @@ let check_and_set_availability = function(frm) {
 
 				// restrict past slots based on the current time.
 				let now = moment();
-				if(slot_start_time.isBefore(now) && (now.format("YYYY-MM-DD") == appointment_date)){
+				if((now.format("YYYY-MM-DD") == appointment_date) && slot_start_time.isBefore(now)){
 					disabled = true;
 				}
 
