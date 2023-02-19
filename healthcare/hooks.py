@@ -132,6 +132,7 @@ scheduler_events = {
 	],
 	"daily": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",
+		"healthcare.healthcare.doctype.health_card.health_card.set_expired_status"
 	],
 }
 

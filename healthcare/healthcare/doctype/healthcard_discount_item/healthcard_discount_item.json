@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-02-19 15:12:21.165064",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "discount_type",
+  "for_item_group",
+  "based_on",
+  "discount_percentage",
+  "discount_amount",
+  "pricing_rule"
+ ],
+ "fields": [
+  {
+   "fieldname": "discount_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Discount Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "for_item_group",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "For Item/ Group",
+   "options": "discount_type"
+  },
+  {
+   "fieldname": "based_on",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Based On",
+   "options": "\nDiscount Amount\nDiscount Percentage",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.based_on == 'Percentage'",
+   "fieldname": "discount_percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Discount Percentage",
+   "mandatory_depends_on": "eval:doc.based_on == 'Percentage'"
+  },
+  {
+   "depends_on": "eval:doc.based_on == 'Amount'",
+   "fieldname": "discount_amount",
+   "fieldtype": "Currency",
+   "label": "Discount Amount",
+   "mandatory_depends_on": "eval:doc.based_on == 'Amount'"
+  },
+  {
+   "fieldname": "pricing_rule",
+   "fieldtype": "Link",
+   "label": "Pricing Rule",
+   "options": "Pricing Rule",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-02-19 15:12:21.165064",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Healthcard Discount Item",
+ "name_case": "Title Case",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

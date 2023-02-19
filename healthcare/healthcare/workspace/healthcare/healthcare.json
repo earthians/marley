@@ -5,7 +5,7 @@
    "label": "Patient Appointments"
   }
  ],
- "content": "[{\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Healthcare\",\"col\":12}},{\"type\":\"chart\",\"data\":{\"chart_name\":\"Patient Appointments\",\"col\":12}},{\"type\":\"spacer\",\"data\":{\"col\":12}},{\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Service Unit\",\"col\":4}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Practitioner\",\"col\":4}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":4}},{\"type\":\"spacer\",\"data\":{\"col\":12}},{\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Masters</span>\",\"col\":12}},{\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Consultation Setup\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Consultation\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Facility Management\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Inpatient\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Laboratory Setup\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Laboratory\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Rehabilitation and Physiotherapy\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Nursing\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Records and History\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"MP-NslchzG\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Healthcare\",\"col\":12}},{\"id\":\"zZ3klLScWd\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Patient Appointments\",\"col\":12}},{\"id\":\"pVOB7MiQzc\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sUcKPZEK9S\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"Cw2zHsWMZU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"YzEsmen3pb\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"Y5sN9JkgVH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Service Unit\",\"col\":4}},{\"id\":\"hoeM1SJEBK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Practitioner\",\"col\":4}},{\"id\":\"yP1q6v59bA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}},{\"id\":\"reNLdO0vuz\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":4}},{\"id\":\"ifjwkE1P-S\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"69LM1qrRdL\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Masters</span>\",\"col\":12}},{\"id\":\"iHNr05oKH3\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"XtD88x1GpA\",\"type\":\"card\",\"data\":{\"card_name\":\"Consultation Setup\",\"col\":4}},{\"id\":\"JA3M_f6FN7\",\"type\":\"card\",\"data\":{\"card_name\":\"Consultation\",\"col\":4}},{\"id\":\"wrFvc7em1t\",\"type\":\"card\",\"data\":{\"card_name\":\"Facility Management\",\"col\":4}},{\"id\":\"SmucIaMhdd\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"7owbOa48O_\",\"type\":\"card\",\"data\":{\"card_name\":\"Inpatient\",\"col\":4}},{\"id\":\"zhemHcwWd9\",\"type\":\"card\",\"data\":{\"card_name\":\"Laboratory Setup\",\"col\":4}},{\"id\":\"v4RK4lg0Vl\",\"type\":\"card\",\"data\":{\"card_name\":\"Laboratory\",\"col\":4}},{\"id\":\"IJyqwwGfZK\",\"type\":\"card\",\"data\":{\"card_name\":\"Rehabilitation and Physiotherapy\",\"col\":4}},{\"id\":\"Wfh9uxmirO\",\"type\":\"card\",\"data\":{\"card_name\":\"Nursing\",\"col\":4}},{\"id\":\"HR7gCFkAVJ\",\"type\":\"card\",\"data\":{\"card_name\":\"Records and History\",\"col\":4}},{\"id\":\"8h8RN3eaDO\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"o0MN_BaCCY\",\"type\":\"card\",\"data\":{\"card_name\":\"Health Card\",\"col\":4}}]",
  "creation": "2020-03-02 17:23:17.919682",
  "docstatus": 0,
  "doctype": "Workspace",
@@ -13,6 +13,7 @@
  "hide_custom": 0,
  "icon": "healthcare",
  "idx": 0,
+ "is_hidden": 0,
  "label": "Healthcare",
  "links": [
   {
@@ -656,10 +657,38 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Health Card",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Health Card",
+   "link_count": 0,
+   "link_to": "Health Card",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Health Card Type",
+   "link_count": 0,
+   "link_to": "Health Card Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2022-07-25 20:32:22.664308",
- "modified_by": "rucha@frappe.io",
+ "modified": "2023-02-19 20:30:58.535671",
+ "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare",
  "owner": "Administrator",
