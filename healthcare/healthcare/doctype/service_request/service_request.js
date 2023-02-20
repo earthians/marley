@@ -1,25 +1,9 @@
 // Copyright (c) 2020, earthians and contributors
 // For license information, please see license.txt
-{% include "healthcare/public/js/service_request.js" %}
+// {% include "healthcare/public/js/service_request.js" %}
 
 frappe.ui.form.on('Service Request', {
-	onload: function(frm) {
-		if (frm.doc.__islocal) {
-			frm.set_value('order_time', frappe.datetime.now_time())
-		}
-	},
-
 	refresh: function(frm) {
-		frm.set_query('order_group', function () {
-			return {
-				filters: {
-					'docstatus': 1,
-					'patient': frm.doc.patient,
-					'practitioner': frm.doc.ordered_by
-				}
-			};
-		});
-
 		frm.set_query('template_dt', function() {
 			let order_template_doctypes = ['Therapy Type', 'Lab Test Template',
 				'Clinical Procedure Template'];
@@ -30,23 +14,6 @@ frappe.ui.form.on('Service Request', {
 			};
 		});
 
-		frm.set_query('patient', function () {
-			return {
-				filters: {
-					'status': 'Active'
-				}
-			};
-		});
-
-		frm.set_query('staff_role', function () {
-			return {
-				filters: {
-					'restrict_to_domain': 'Healthcare'
-				}
-			};
-		});
-
-		frm.trigger('setup_status_buttons');
 		frm.trigger('setup_create_buttons');
 	},
 
@@ -57,22 +24,59 @@ frappe.ui.form.on('Service Request', {
 		if (frm.doc.template_dt === 'Clinical Procedure Template') {
 
 			frm.add_custom_button(__('Clinical Procedure'), function() {
-				frm.trigger('make_clinical_procedure');
+				frappe.db.get_value("Clinical Procedure", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
+				.then(r => {
+					if (Object.keys(r.message).length == 0) {
+						frm.trigger('make_clinical_procedure');
+					} else {
+						if (r.message && r.message.name) {
+							frappe.set_route("Form", "Clinical Procedure", r.message.name);
+							frappe.show_alert({
+								message: __(`Clinical Procedure is already created`),
+								indicator: "info",
+							});
+						}
+					}
+				})
 			}, __('Create'));
 
 
 		} else if (frm.doc.template_dt === 'Lab Test Template') {
-
 			frm.add_custom_button(__('Lab Test'), function() {
-				frm.trigger('make_lab_test');
+				frappe.db.get_value("Lab Test", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
+				.then(r => {
+					if (Object.keys(r.message).length == 0) {
+						frm.trigger('make_lab_test');
+					} else {
+						if (r.message && r.message.name) {
+							frappe.set_route("Form", "Lab Test", r.message.name);
+							frappe.show_alert({
+								message: __(`Lab Test is already created`),
+								indicator: "info",
+							});
+						}
+					}
+				})
 			}, __('Create'));
+
 
 		} else if (frm.doc.template_dt === 'Therapy Type') {
-
-			frm.add_custom_button(__('Therapy Session'), function() {
-				frm.trigger('make_therapy_session');
+			frm.add_custom_button(__("Therapy Session"), function() {
+				frappe.db.get_value("Therapy Session", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
+				.then(r => {
+					if (Object.keys(r.message).length == 0) {
+						frm.trigger('make_therapy_session');
+					} else {
+						if (r.message && r.message.name) {
+							frappe.set_route("Form", "Therapy Session", r.message.name);
+							frappe.show_alert({
+								message: __(`Therapy Session is already created`),
+								indicator: "info",
+							});
+						}
+					}
+				})
 			}, __('Create'));
-
 		}
 
 		frm.page.set_inner_btn_group_as_primary(__('Create'));

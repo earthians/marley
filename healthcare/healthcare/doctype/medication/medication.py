@@ -29,7 +29,7 @@ class Medication(Document):
 
 	def update_item_and_item_price(self):
 		if self.is_billable:
-			item_doc = frappe.get_doc('Item', {'item_code': self.item})
+			item_doc = frappe.get_doc('Item', {'name': self.item})
 			item_doc.item_name = self.medication_name
 			item_doc.item_group = self.item_group
 			item_doc.description = self.description
@@ -38,10 +38,15 @@ class Medication(Document):
 			item_doc.save(ignore_permissions=True)
 
 			if self.rate:
-				item_price = frappe.get_doc('Item Price', {'item_code': self.item})
-				item_price.item_name = self.medication_name
-				item_price.price_list_rate = self.rate
-				item_price.save()
+				if not frappe.db.exists('Item Price', {'item_code': self.item}):
+					if self.item:
+						make_item_price(self.item, self.rate)
+				else:
+					item_price = frappe.get_doc('Item Price', {'item_code': self.item})
+					item_price.item_name = self.medication_name
+					item_price.price_list_rate = self.rate
+					item_price.save()
+
 		else:
 			frappe.db.set_value('Item', self.item, 'disabled', 1)
 

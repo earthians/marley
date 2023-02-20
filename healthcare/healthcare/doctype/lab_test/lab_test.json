@@ -573,15 +573,6 @@
    "report_hide": 1
   },
   {
-   "fieldname": "healthcare_service_order",
-   "fieldtype": "Link",
-   "label": "Healthcare Service Order",
-   "no_copy": 1,
-   "options": "Healthcare Service Order",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
    "allow_in_quick_entry": 1,
    "fieldname": "date",
    "fieldtype": "Date",
