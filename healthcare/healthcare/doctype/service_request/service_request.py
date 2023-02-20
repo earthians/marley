@@ -49,7 +49,6 @@ class ServiceRequest(ServiceRequestController):
 		updates qty_invoiced and set  billing status
 		'''
 		qty_invoiced = self.qty_invoiced + qty
-		print(self.qty_invoiced, qty)
 
 		if qty_invoiced == 0:
 			status = 'Pending'

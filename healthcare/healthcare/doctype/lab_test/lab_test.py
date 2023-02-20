@@ -32,6 +32,8 @@ class LabTest(Document):
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
+		if self.service_request:
+			frappe.db.set_value('Service Request', self.service_request, 'status', 'Active')
 		self.reload()
 
 	def on_update(self):
@@ -92,6 +94,23 @@ class LabTest(Document):
 						),
 						title=_("Mandatory Results"),
 					)
+
+def before_insert(self):
+	if self.service_request:
+		lab_test = frappe.db.exists(
+			"Lab Test",
+			{"service_request": self.service_request, "docstatus": ["!=", 2]},
+		)
+		if lab_test:
+			frappe.throw(
+				_("Lab Test {0} already created from service request {1}").format(
+					frappe.bold(get_link_to_form("Lab Test", lab_test)),
+					frappe.bold(
+						get_link_to_form("Service Request", self.service_request)
+					),
+				),
+				title=_("Already Exist"),
+			)
 
 
 def create_test_from_template(lab_test):
@@ -169,9 +188,14 @@ def create_lab_test_from_invoice(sales_invoice):
 		patient = frappe.get_doc("Patient", invoice.patient)
 		for item in invoice.items:
 			lab_test_created = 0
-			if item.reference_dt == "Lab Prescription":
-				lab_test_created = frappe.db.get_value(
-					"Lab Prescription", item.reference_dn, "lab_test_created"
+			if item.reference_dt == "Service Request":
+
+				lab_test_created = (
+					1
+					if frappe.db.exists(
+						"Lab Test", {"service_request": item.reference_dn}
+					)
+					else 0
 				)
 			elif item.reference_dt == "Lab Test":
 				lab_test_created = 1
@@ -181,12 +205,15 @@ def create_lab_test_from_invoice(sales_invoice):
 					lab_test = create_lab_test_doc(
 						invoice.ref_practitioner, patient, template, invoice.company, True, item.service_unit
 					)
-					if item.reference_dt == "Lab Prescription":
-						lab_test.prescription = item.reference_dn
+					if item.reference_dt == "Service Request":
+						lab_test.service_request = item.reference_dn
 					lab_test.save(ignore_permissions=True)
-					if item.reference_dt != "Lab Prescription":
-						frappe.db.set_value("Sales Invoice Item", item.name, "reference_dt", "Lab Test")
-						frappe.db.set_value("Sales Invoice Item", item.name, "reference_dn", lab_test.name)
+					if item.reference_dt != "Service Request":
+						frappe.db.set_value(
+							"Sales Invoice Item",
+							item.name,
+							{"reference_dt": "Lab Test", "reference_dn": lab_test.name},
+						)
 					if not lab_tests_created:
 						lab_tests_created = lab_test.name
 					else:

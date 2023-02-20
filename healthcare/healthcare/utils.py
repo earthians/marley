@@ -34,7 +34,6 @@ def get_healthcare_services_to_invoice(patient, company):
 		items_to_invoice += get_therapy_plans_to_invoice(patient, company)
 		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
 		items_to_invoice += get_service_requests_to_invoice(patient, company)
-
 		return items_to_invoice
 
 
@@ -323,6 +322,17 @@ def get_service_requests_to_invoice(patient, company):
 	for service_request in service_requests:
 		item, is_billable = frappe.get_cached_value(service_request.template_dt, service_request.template_dn,
 			['item', 'is_billable'])
+		price_list, price_list_currency = frappe.db.get_values(
+				"Price List", {"selling": 1}, ["name", "currency"]
+			)[0]
+		args = {
+				"doctype": "Sales Invoice",
+				"item_code": item,
+				"company": service_request.get("company"),
+				"customer": frappe.db.get_value("Patient", service_request.get("patient"), "customer"),
+				"plc_conversion_rate": 1.0,
+				"conversion_rate": 1.0,
+			}
 		if is_billable:
 			orders_to_invoice.append({
 				'reference_type': 'Service Request',
@@ -468,6 +478,7 @@ def manage_invoice_submit_cancel(doc, method):
 	if doc.items:
 		for item in doc.items:
 			if item.get("reference_dt") and item.get("reference_dn"):
+				# TODO check
 				if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 					set_invoiced(item, method, doc.name)
 
@@ -501,8 +512,8 @@ def set_invoiced(item, method, ref_invoice=None):
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "consumption_invoiced", invoiced)
 		else:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
-	else:
-		frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
+	# else:
+	# 	frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 
 	if item.reference_dt == "Patient Appointment":
 		if frappe.db.get_value("Patient Appointment", item.reference_dn, "procedure_template"):
@@ -530,16 +541,18 @@ def set_invoiced(item, method, ref_invoice=None):
 			hso.update_invoice_details(item.qty * -1)
 
 		# service transaction linking to HSO
-		template_map = {
-			'Clinical Procedure Template': 'Clinical Procedure',
-			'Therapy Type': 'Therapy Session',
-			'Lab Test Template': 'Lab Test'
-			# 'Healthcare Service Unit': 'Inpatient Occupancy'
-		}
-		dt = template_map.get(hso.template_dt)
+		if item.reference_dt == 'Service Request':
+			template_map = {
+				'Clinical Procedure Template': 'Clinical Procedure',
+				'Therapy Type': 'Therapy Session',
+				'Lab Test Template': 'Lab Test'
+				# 'Healthcare Service Unit': 'Inpatient Occupancy'
+			}
 
-		if dt and frappe.db.exists(dt, {'service_request': item.reference_dn}):
-			frappe.db.set_value(dt, {'service_request': item.reference_dn}, 'invoiced', invoiced)
+			dt = template_map.get(hso.template_dt)
+
+			if dt and frappe.db.exists(dt, {'service_request': item.reference_dn}):
+				frappe.db.set_value(dt, {'service_request': item.reference_dn}, 'invoiced', invoiced)
 
 def validate_invoiced_on_submit(item):
 	if (
@@ -618,9 +631,8 @@ def get_drugs_to_invoice(encounter):
 							'reference_name': medication_request.name,
 							'drug_code': item,
 							'quantity': billable_order_qty,
-							'description': description
+							'description': description,
 						})
-
 				return orders_to_invoice
 
 
@@ -999,72 +1011,3 @@ def company_on_trash(doc, method):
 		service_unit_doc = frappe.get_doc("Healthcare Service Unit", su.get("name"))
 		service_unit_doc.flags.on_trash_company = True
 		service_unit_doc.delete()
-
-@frappe.whitelist()
-def make_healthcare_service_order(args):
-	healthcare_service_order = frappe.new_doc('Healthcare Service Order')
-	for key in args:
-		if key == 'order_date':
-			healthcare_service_order.set(key, getdate(args[key]))
-		elif key == 'expected_date':
-			healthcare_service_order.set(key, getdate(args[key]))
-		else:
-			healthcare_service_order.set(key, args[key] if args[key] else '')
-	healthcare_service_order.save(ignore_permissions=True)
-
-def make_healthcare_service_order(encounter):
-	if encounter.drug_prescription:
-		for drug in encounter.drug_prescription:
-			medication = frappe.get_doc('Medication', drug.drug_code)
-			order = get_order_details(encounter, medication, drug)
-
-	if encounter.lab_test_prescription:
-		for lab_test in encounter.lab_test_prescription:
-			lab_template = frappe.get_doc('Lab Test Template', lab_test.lab_test_code)
-			order = get_order_details(encounter, lab_template, lab_test)
-
-	if encounter.procedure_prescription:
-		for procedure in encounter.procedure_prescription:
-			procedure_template = frappe.get_doc('Clinical Procedure Template', procedure.procedure)
-			order = get_order_details(encounter, procedure_template, procedure)
-
-	if encounter.therapies:
-		for therapy in encounter.therapies:
-			therapy_type = frappe.get_doc('Therapy Type', therapy.therapy_type)
-			order = get_order_details(encounter, therapy_type, therapy)
-
-	order.save(ignore_permissions=True)
-
-
-def get_order_details(encounter, doc, line_item):
-	order = frappe.get_doc({
-		'doctype': 'Healthcare Service Order',
-		'healthcare_service_order_category': doc.get('healthcare_service_order_category'),
-		'patient_care_type': doc.get('patient_care_type'),
-		'order_date': encounter.encounter_date,
-		'ordered_by': encounter.practitioner,
-		'order_group': encounter.name,
-		'replaces': line_item.get('replaces'),
-		'patient': encounter.get('patient'),
-		'order_doctype': doc.doctype,
-		'order': doc.name,
-		'intent': line_item.get('intent'),
-		'priority': line_item.get('priority'),
-		'quantity': line_item.get_quantity() if line_item.doctype == 'Drug Prescription' else 1,
-		'sequence': line_item.get('sequence'),
-		'expected_date': line_item.get('expected_date'),
-		'as_needed': line_item.get('as_needed'),
-		'occurrence': line_item.get('occurrence'),
-		'staff_role': doc.get('staff_role'),
-		'note': line_item.get('note'),
-		'patient_instruction': line_item.get('patient_instruction'),
-		'company': encounter.company
-	})
-
-	if doc.doctype == 'Lab Test Template':
-		description = doc.get('lab_test_description')
-	else:
-		description = doc.get('description')
-
-	order.update({'order_description': description})
-	return order
