@@ -42,6 +42,34 @@ frappe.ui.form.on('Healthcare Practitioner', {
 		})
 	},
 
+	practitioner_type: function (frm) {
+		if (frm.doc.practitioner_type == 'Internal') {
+			frm.set_value({'supplier': '', 'user_id': ''});
+		} else {
+			frm.set_value({'employee': '', 'user_id': ''});
+		}
+	},
+
+	supplier: function (frm) {
+		if (frm.doc.supplier) {
+			frappe.call({
+				method: 'healthcare.healthcare.doctype.healthcare_practitioner.healthcare_practitioner.get_supplier_and_user',
+				args: {
+					'supplier': frm.doc.supplier
+				},
+				callback: function(r) {
+					if (r.message) {
+						if (!frm.doc.user_id || frm.doc.user_id != r.message['user']) {
+							frm.set_value('user_id', r.message['user']);
+						}
+					} else {
+						frm.set_value('user_id', '');
+					}
+				}
+			});
+		}
+	},
+
 	refresh: function(frm) {
 		frappe.dynamic_link = {doc: frm.doc, fieldname: 'name', doctype: 'Healthcare Practitioner'};
 
@@ -95,7 +123,7 @@ let set_query_service_item = function(frm, service_item_field) {
 };
 
 frappe.ui.form.on('Healthcare Practitioner', 'user_id',function(frm) {
-	if (frm.doc.user_id) {
+	if (frm.doc.user_id && frm.doc.practitioner_type == 'Internal') {
 		frappe.call({
 			'method': 'frappe.client.get',
 			args: {
@@ -123,6 +151,22 @@ frappe.ui.form.on('Healthcare Practitioner', 'user_id',function(frm) {
 					frappe.model.set_value(frm.doctype,frm.docname, 'last_name', data.message.last_name);
 				if (!frm.doc.mobile_phone || frm.doc.mobile_phone != data.message.mobile_no)
 					frappe.model.set_value(frm.doctype,frm.docname, 'mobile_phone', data.message.mobile_no);
+			}
+		});
+	} else if (frm.doc.user_id && frm.doc.practitioner_type == 'External') {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.healthcare_practitioner.healthcare_practitioner.get_supplier_and_user',
+			args: {
+				'user_id': frm.doc.user_id
+			},
+			callback: function(r) {
+				if (r.message) {
+					if (!frm.doc.supplier || frm.doc.supplier != r.message['supplier']) {
+						frm.set_value('supplier', r.message['supplier']);
+					}
+				} else {
+					frm.set_value('supplier', '');
+				}
 			}
 		});
 	}

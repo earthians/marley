@@ -22,7 +22,9 @@
   "residence_phone",
   "office_phone",
   "employee_and_user_details_section",
+  "practitioner_type",
   "employee",
+  "supplier",
   "department",
   "designation",
   "column_break_17",
@@ -81,9 +83,11 @@
    "print_hide": 1
   },
   {
+   "depends_on": "eval: doc.practitioner_type == \"Internal\"",
    "fieldname": "employee",
    "fieldtype": "Link",
    "label": "Employee",
+   "mandatory_depends_on": "eval: doc.practitioner_type == \"Internal\"",
    "options": "Employee"
   },
   {
@@ -336,11 +340,26 @@
    "fieldtype": "Text",
    "label": "Primary Address",
    "read_only": 1
+  },
+  {
+   "default": "Internal",
+   "fieldname": "practitioner_type",
+   "fieldtype": "Select",
+   "label": "Practitioner Type",
+   "options": "Internal\nExternal"
+  },
+  {
+   "depends_on": "eval: doc.practitioner_type == \"External\"",
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "mandatory_depends_on": "eval: doc.practitioner_type == \"External\"",
+   "options": "Supplier"
   }
  ],
  "image_field": "image",
  "links": [],
- "modified": "2023-01-24 13:24:19.191984",
+ "modified": "2023-02-20 16:32:01.074647",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",
