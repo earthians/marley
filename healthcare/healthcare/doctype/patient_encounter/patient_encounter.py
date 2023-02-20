@@ -28,6 +28,7 @@ class PatientEncounter(Document):
 			create_therapy_plan(self)
 
 		self.make_service_request()
+		self.make_medication_request()
 
 	def before_cancel(self):
 		orders = frappe.get_all('Service Request', {'order_group': self.name})
@@ -139,13 +140,6 @@ class PatientEncounter(Document):
 
 
 	def make_service_request(self):
-		if self.drug_prescription:
-			# make_medication_request
-			for drug in self.drug_prescription:
-				medication = frappe.get_doc('Medication', drug.medication)
-				order = self.get_order_details(medication, drug, True)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
-
 		if self.lab_test_prescription:
 			for lab_test in self.lab_test_prescription:
 				lab_template = frappe.get_doc('Lab Test Template', lab_test.lab_test_code)
@@ -163,6 +157,15 @@ class PatientEncounter(Document):
 				therapy_type = frappe.get_doc('Therapy Type', therapy.therapy_type)
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+	def make_medication_request(self):
+		if self.drug_prescription:
+			# make_medication_request
+			for drug in self.drug_prescription:
+				if drug.medication:
+					medication = frappe.get_doc('Medication', drug.medication)
+					order = self.get_order_details(medication, drug, True)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
 
 	def get_order_details(self, template_doc, line_item, medication_request=False):
 		order = frappe.get_doc({
