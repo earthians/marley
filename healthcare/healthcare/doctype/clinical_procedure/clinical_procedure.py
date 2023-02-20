@@ -8,7 +8,7 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, now_datetime, nowdate, nowtime
+from frappe.utils import flt, nowdate, nowtime, now_datetime, get_link_to_form
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
@@ -34,6 +34,26 @@ class ClinicalProcedure(Document):
 	def before_insert(self):
 		if self.consume_stock:
 			self.set_actual_qty()
+
+		if self.service_request:
+			therapy_session = frappe.db.exists(
+				"Clinical Procedure",
+				{"service_request": self.service_request, "docstatus": ["!=", 2]},
+			)
+			if therapy_session:
+				frappe.throw(
+					_("Clinical Procedure {0} already created from service request {1}").format(
+						frappe.bold(get_link_to_form("Clinical Procedure", therapy_session)),
+						frappe.bold(
+							get_link_to_form("Service Request", self.service_request)
+						),
+					),
+					title=_("Already Exist"),
+				)
+
+	def on_cancel(self):
+		if self.service_request:
+			frappe.db.set_value('Service Request', self.service_request, 'status', 'Active')
 
 	def after_insert(self):
 		if self.service_request:
