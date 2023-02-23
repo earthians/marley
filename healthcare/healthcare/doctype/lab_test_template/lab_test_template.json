@@ -24,9 +24,6 @@
   "lab_test_rate",
   "section_break_description",
   "lab_test_description",
-  "medical_coding_section",
-  "medical_code",
-  "medical_code_standard",
   "result_format_tab",
   "result_format_section",
   "lab_test_template_type",
@@ -52,6 +49,8 @@
   "sample_qty",
   "column_break_33",
   "sample_details",
+  "codification",
+  "codification_table",
   "worksheet_legend_tab",
   "worksheet_section",
   "worksheet_instructions",
@@ -140,25 +139,6 @@
    "in_list_view": 1,
    "label": "Rate",
    "mandatory_depends_on": "eval:doc.is_billable && !doc.link_existing_item"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "medical_coding_section",
-   "fieldtype": "Section Break",
-   "label": "Medical Coding"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
   },
   {
    "depends_on": "eval:doc.lab_test_template_type == 'Single'",
@@ -331,6 +311,18 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "codification",
+   "fieldtype": "Tab Break",
+   "label": "Medical Coding"
+  },
+  {
    "fieldname": "nursing_checklist_template",
    "fieldtype": "Link",
    "label": "Nursing Checklist Template",
@@ -390,7 +382,7 @@
   }
  ],
  "links": [],
- "modified": "2023-01-13 18:52:55.890380",
+ "modified": "2023-02-23 12:14:27.297802",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",

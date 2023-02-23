@@ -35,6 +35,17 @@ frappe.ui.form.on('Therapy Session', {
 			frm.trigger('filter_therapy_types');
 		}
 
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.medical_code_standard) {
+				return {
+					filters: {
+						medical_code_standard: row.medical_code_standard
+					}
+				};
+			}
+		});
+
 		if (!frm.doc.__islocal) {
 			frm.dashboard.add_indicator(__('Counts Targeted: {0}', [frm.doc.total_counts_targeted]), 'blue');
 			frm.dashboard.add_indicator(__('Counts Completed: {0}', [frm.doc.total_counts_completed]),
@@ -163,9 +174,24 @@ frappe.ui.form.on('Therapy Session', {
 						exercise.counts_target = e.counts_target;
 						exercise.assistance_level = e.assistance_level;
 					});
+					frm.clear_table("codification_table")
+					$.each(data.message.codification_table, function(k, val) {
+						if (val.medical_code) {
+							let mcode = frm.add_child("codification_table");
+							mcode.medical_code = val.medical_code
+							mcode.medical_code_standard = val.medical_code_standard
+							mcode.code = val.code
+							mcode.description = val.description
+							mcode.system = val.system
+						}
+					});
+					refresh_field("codification_table");
 					refresh_field('exercises');
 				}
 			});
+		} else {
+			frm.clear_table("codification_table")
+			frm.refresh_field("codification_table");
 		}
 	}
 });

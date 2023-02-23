@@ -23,6 +23,7 @@ frappe.ui.form.on('Lab Test', {
 			{ fieldname: 'result_value', columns: 7 }
 		];
 	},
+
 	refresh: function (frm) {
 		refresh_field('normal_test_items');
 		refresh_field('descriptive_test_items');
@@ -31,6 +32,18 @@ frappe.ui.form.on('Lab Test', {
 				get_lab_test_prescribed(frm);
 			});
 		}
+
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.medical_code_standard) {
+				return {
+					filters: {
+						medical_code_standard: row.medical_code_standard
+					}
+				};
+			}
+		});
+
 		if (frappe.defaults.get_default('lab_test_approval_required') && frappe.user.has_role('LabTest Approver')) {
 			if (frm.doc.docstatus === 1 && frm.doc.status !== 'Approved' && frm.doc.status !== 'Rejected') {
 				frm.add_custom_button(__('Approve'), function () {
@@ -58,6 +71,40 @@ frappe.ui.form.on('Lab Test', {
 			});
 		}
 	},
+
+	template: function(frm) {
+		if (frm.doc.template) {
+			frappe.call({
+				"method": "healthcare.healthcare.utils.get_medical_codes",
+				args: {
+					template_dt: "Lab Test Template",
+					template_dn: frm.doc.template,
+				},
+				callback: function(r) {
+					if (!r.exc && r.message) {
+						frm.doc.codification_table = []
+						$.each(r.message, function(k, val) {
+							if (val.medical_code) {
+								var child = cur_frm.add_child("codification_table");
+								child.medical_code = val.medical_code
+								child.medical_code_standard = val.medical_code_standard
+								child.code = val.code
+								child.description = val.description
+								child.system = val.system
+							}
+						});
+						frm.refresh_field("codification_table");
+					} else {
+						frm.clear_table("codification_table")
+						frm.refresh_field("codification_table");
+					}
+				}
+			})
+		} else {
+			frm.clear_table("codification_table")
+			frm.refresh_field("codification_table");
+		}
+	}
 });
 
 

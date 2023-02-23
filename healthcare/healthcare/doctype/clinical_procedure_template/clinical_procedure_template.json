@@ -26,9 +26,6 @@
   "column_break_lhbf",
   "is_billable",
   "rate",
-  "medical_coding_section",
-  "medical_code_standard",
-  "medical_code",
   "consumption_tab",
   "consumables",
   "consume_stock",
@@ -40,7 +37,9 @@
   "sample_qty",
   "column_break_21",
   "sample_details",
-  "change_in_item"
+  "change_in_item",
+  "codification",
+  "codification_table"
  ],
  "fields": [
   {
@@ -188,23 +187,16 @@
    "read_only_depends_on": "eval: !doc.__islocal"
   },
   {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  },
+  {
    "collapsible": 1,
-   "fieldname": "medical_coding_section",
-   "fieldtype": "Section Break",
+   "fieldname": "codification",
+   "fieldtype": "Tab Break",
    "label": "Medical Coding"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
   },
   {
    "fieldname": "pre_op_nursing_checklist_template",
@@ -250,7 +242,7 @@
   }
  ],
  "links": [],
- "modified": "2023-01-13 19:03:55.793669",
+ "modified": "2023-02-23 12:33:00.011666",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

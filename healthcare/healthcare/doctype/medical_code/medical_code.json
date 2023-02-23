@@ -11,6 +11,7 @@
  "field_order": [
   "medical_code_standard",
   "code",
+  "uri",
   "description"
  ],
  "fields": [
@@ -38,10 +39,17 @@
    "ignore_xss_filter": 1,
    "in_list_view": 1,
    "label": "Description"
+  },
+  {
+   "fetch_from": "medical_code_standard.uri",
+   "fieldname": "uri",
+   "fieldtype": "Data",
+   "label": "URI",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2020-06-29 14:02:30.980032",
+ "modified": "2022-01-25 17:31:24.713454",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medical Code",
@@ -65,5 +73,6 @@
  "search_fields": "code, description",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

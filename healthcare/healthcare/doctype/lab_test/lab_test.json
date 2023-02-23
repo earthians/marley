@@ -12,7 +12,6 @@
   "template",
   "lab_test_name",
   "lab_test_group",
-  "medical_code",
   "department",
   "column_break_26",
   "company",
@@ -57,6 +56,8 @@
   "lab_test_comment",
   "sb_customresult",
   "custom_result",
+  "medical_coding_section",
+  "codification_table",
   "worksheet_section",
   "worksheet_instructions",
   "result_legend_section",
@@ -101,7 +102,6 @@
    "search_index": 1
   },
   {
-   "fetch_from": "inpatient_record.patient",
    "fieldname": "patient",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -345,14 +345,6 @@
    "report_hide": 1
   },
   {
-   "fetch_from": "template.medical_code",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code",
-   "read_only": 1
-  },
-  {
    "fieldname": "sb_normal",
    "fieldtype": "Section Break",
    "label": "Compound Test Result"
@@ -575,6 +567,18 @@
    "print_hide": 1,
    "read_only": 1,
    "report_hide": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
   }
  ],
  "is_submittable": 1,
@@ -584,7 +588,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-01-14 19:14:39.351018",
+ "modified": "2023-02-23 18:56:38.766501",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",

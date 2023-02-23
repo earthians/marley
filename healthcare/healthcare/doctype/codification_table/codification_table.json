@@ -1,14 +1,17 @@
 {
  "actions": [],
  "allow_copy": 1,
- "beta": 0,
  "creation": "2017-06-22 13:09:23.159579",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "medical_code",
+  "medical_code_standard",
+  "column_break_3",
+  "system",
   "code",
+  "section_break_5",
   "description"
  ],
  "fields": [
@@ -38,11 +41,36 @@
    "in_list_view": 1,
    "label": "Description",
    "read_only": 1
+  },
+  {
+   "fetch_from": "medical_code.medical_code_standard",
+   "fieldname": "medical_code_standard",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Medical Code Standard",
+   "options": "Medical Code Standard",
+   "read_only_depends_on": "medical_code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "medical_code_standard.uri",
+   "fieldname": "system",
+   "fieldtype": "Data",
+   "label": "System",
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2020-02-26 13:17:49.016293",
+ "modified": "2023-02-23 11:17:39.669181",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Codification Table",
@@ -52,5 +80,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

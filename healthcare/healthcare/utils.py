@@ -958,3 +958,24 @@ def validate_nursing_tasks(document):
 			", ".join(get_link_to_form("Nursing Task", task.name) for task in tasks)
 		)
 	)
+
+
+@frappe.whitelist()
+def get_medical_codes(template_dt, template_dn, code_standard=None):
+	"""returns codification table from templates"""
+	filters = {"parent": template_dn, "parenttype": template_dt}
+
+	if code_standard:
+		filters["medical_code_standard"] = code_standard
+
+	return frappe.db.get_all(
+		"Codification Table",
+		filters=filters,
+		fields=[
+			"medical_code",
+			"code",
+			"system",
+			"description",
+			"medical_code_standard",
+		],
+	)
