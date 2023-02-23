@@ -1,7 +1,6 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "beta": 0,
  "creation": "2017-04-07 12:52:43.542429",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,7 +10,6 @@
   "title",
   "appointment",
   "procedure_template",
-  "medical_code",
   "column_break_30",
   "company",
   "invoiced",
@@ -41,6 +39,8 @@
   "consumable_total_amount",
   "column_break_27",
   "consumption_details",
+  "medical_coding_section",
+  "codification_table",
   "sb_refs",
   "column_break_34",
   "prescription",
@@ -293,12 +293,16 @@
    "read_only": 1
   },
   {
-   "fetch_from": "procedure_template.medical_code",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code",
-   "read_only": 1
+   "collapsible": 1,
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
   }
  ],
  "is_submittable": 1,
@@ -308,7 +312,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2022-01-17 15:13:55.565922",
+ "modified": "2023-02-23 18:57:21.878185",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
@@ -346,6 +350,7 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1
 }

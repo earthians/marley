@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "field:therapy_type",
- "creation": "2020-03-29 20:48:31.715063",
+ "creation": "2022-01-26 12:22:05.283047",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -23,16 +23,15 @@
   "column_break_12",
   "is_billable",
   "rate",
-  "medical_coding_section",
-  "medical_code_standard",
-  "medical_code",
   "exercises_tab",
   "section_break_6",
   "therapy_for",
   "add_exercises",
   "section_break_18",
   "exercises",
-  "change_in_item"
+  "change_in_item",
+  "codification",
+  "codification_table"
  ],
  "fields": [
   {
@@ -167,24 +166,16 @@
    "fieldtype": "Section Break"
   },
   {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  },
+  {
    "collapsible": 1,
-   "fieldname": "medical_coding_section",
-   "fieldtype": "Section Break",
-   "label": "Medical Coding",
-   "options": "Medical Coding"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
+   "fieldname": "codification",
+   "fieldtype": "Tab Break",
+   "label": "Medical Coding"
   },
   {
    "fieldname": "nursing_checklist_template",
@@ -199,7 +190,7 @@
   }
  ],
  "links": [],
- "modified": "2023-01-13 19:47:15.319372",
+ "modified": "2023-02-23 12:37:26.832923",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Type",

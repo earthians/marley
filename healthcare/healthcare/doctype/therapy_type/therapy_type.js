@@ -17,6 +17,17 @@ frappe.ui.form.on('Therapy Type', {
 				change_template_code(frm.doc);
 			});
 		}
+
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.medical_code_standard) {
+				return {
+					filters: {
+						medical_code_standard: row.medical_code_standard
+					}
+				};
+			}
+		});
 	},
 
 	therapy_type: function(frm) {
@@ -47,15 +58,6 @@ frappe.ui.form.on('Therapy Type', {
 		mark_change_in_item(frm);
 	},
 
-	medical_code: function(frm) {
-		frm.set_query("medical_code", function() {
-			return {
-				filters: {
-					medical_code_standard: frm.doc.medical_code_standard
-				}
-			};
-		});
-	}
 });
 
 let mark_change_in_item = function(frm) {

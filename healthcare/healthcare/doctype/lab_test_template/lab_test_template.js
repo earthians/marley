@@ -24,16 +24,18 @@ frappe.ui.form.on('Lab Test Template', {
 					'disabled': false,
 					'is_stock_item': false
 				}
-			};
+			}
 		});
-	},
-	medical_code: function(frm) {
-		frm.set_query('medical_code', function() {
-			return {
-				filters: {
-					medical_code_standard: frm.doc.medical_code_standard
-				}
-			};
+
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.medical_code_standard) {
+				return {
+					filters: {
+						medical_code_standard: row.medical_code_standard
+					}
+				};
+			}
 		});
 	},
 

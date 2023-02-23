@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2020-03-11 08:57:40.669857",
+ "creation": "2022-01-25 14:05:27.763033",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -19,7 +19,6 @@
   "practitioner",
   "department",
   "details_section",
-  "medical_code",
   "duration",
   "rate",
   "location",
@@ -34,6 +33,8 @@
   "total_counts_targeted",
   "column_break_25",
   "total_counts_completed",
+  "medical_coding_section",
+  "codification_table",
   "amended_from"
  ],
  "fields": [
@@ -215,12 +216,16 @@
    "read_only": 1
   },
   {
-   "fetch_from": "therapy_type.medical_code",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code",
-   "read_only": 1
+   "collapsible": 1,
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
   }
  ],
  "is_submittable": 1,
@@ -230,7 +235,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-01-14 19:10:50.484221",
+ "modified": "2023-02-23 18:57:02.131012",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",

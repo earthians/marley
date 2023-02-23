@@ -8,11 +8,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_days, getdate
+from healthcare.healthcare.utils import get_medical_codes
 
 
 class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
+		validate_codification_table(self)
 
 	def on_update(self):
 		if self.appointment:
@@ -184,3 +186,22 @@ def delete_ip_medication_order(encounter):
 	record = frappe.db.exists("Inpatient Medication Order", {"patient_encounter": encounter.name})
 	if record:
 		frappe.delete_doc("Inpatient Medication Order", record, force=1)
+
+
+def validate_codification_table(doc):
+	if doc.diagnosis:
+		doc.codification_table = []
+		for diag in doc.diagnosis:
+			medical_code_details = get_medical_codes("Diagnosis", diag.diagnosis)
+			if medical_code_details and len(medical_code_details) > 0:
+				for m_code in medical_code_details:
+					doc.append(
+						"codification_table",
+						{
+							"medical_code": m_code.get("medical_code"),
+							"medical_code_standard": m_code.get("medical_code_standard"),
+							"code": m_code.get("code"),
+							"description": m_code.get("description"),
+							"system": m_code.get("system"),
+						},
+					)

@@ -58,6 +58,17 @@ frappe.ui.form.on('Clinical Procedure Template', {
 				}
 			};
 		});
+
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.medical_code_standard) {
+				return {
+					filters: {
+						medical_code_standard: row.medical_code_standard
+					}
+				};
+			}
+		});
 	},
 
 	link_existing_item: function (frm) {
