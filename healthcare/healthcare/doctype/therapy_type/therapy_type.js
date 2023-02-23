@@ -18,23 +18,15 @@ frappe.ui.form.on('Therapy Type', {
 			});
 		}
 
-		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.code_system) {
+			if (row.medical_code_standard) {
 				return {
 					filters: {
-						code_system: row.code_system
+						medical_code_standard: row.medical_code_standard
 					}
 				};
 			}
-		})
-
-		frm.set_query('staff_role', function () {
-			return {
-				filters: {
-					'restrict_to_domain': 'Healthcare'
-				}
-			};
 		});
 	},
 

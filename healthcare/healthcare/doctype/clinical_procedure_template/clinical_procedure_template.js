@@ -30,6 +30,15 @@ frappe.ui.form.on('Clinical Procedure Template', {
 		mark_change_in_item(frm);
 	},
 
+	medical_code: function (frm) {
+		frm.set_query("medical_code", function () {
+			return {
+				filters: {
+					medical_code_standard: frm.doc.medical_code_standard
+				}
+			};
+		});
+	},
 
 	refresh: function (frm) {
 		frm.fields_dict['items'].grid.set_column_disp('barcode', false);
@@ -50,23 +59,15 @@ frappe.ui.form.on('Clinical Procedure Template', {
 			};
 		});
 
-		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.code_system) {
+			if (row.medical_code_standard) {
 				return {
 					filters: {
-						code_system: row.code_system
+						medical_code_standard: row.medical_code_standard
 					}
 				};
 			}
-		})
-
-		frm.set_query('staff_role', function () {
-			return {
-				filters: {
-					'restrict_to_domain': 'Healthcare'
-				}
-			};
 		});
 	},
 
@@ -220,6 +221,7 @@ frappe.tour['Clinical Procedure Template'] = [
 		fieldname: 'consume_stock',
 		title: __('Allow Stock Consumption'),
 		description: __('Check this if the Clinical Procedure utilises consumables. Click ') + "<a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/clinical_procedure_template#22-manage-procedure-consumables' target='_blank'>here</a>" + __(' to know more')
+
 	},
 	{
 		fieldname: 'medical_department',
