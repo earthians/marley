@@ -132,3 +132,28 @@ def get_practitioner_list(doctype, txt, searchfield, start, page_len, filters=No
 		order_by="name, practitioner_name",
 		as_list=1,
 	)
+
+
+@frappe.whitelist()
+def get_supplier_and_user(user_id=None, supplier=None):
+	"""
+	if user_id or supplier is passed, return both supplier and user_id
+	"""
+
+	if not user_id and not supplier:
+		return None
+
+	con = frappe.qb.DocType("Contact")
+	dlink = frappe.qb.DocType("Dynamic Link")
+
+	supplier_and_user = (
+		frappe.qb.from_(con)
+		.join(dlink)
+		.on(con.name == dlink.parent)
+		.select((con.user).as_("user"), (dlink.link_name).as_("supplier"))
+		.where(dlink.link_doctype == "Supplier")
+		.where((dlink.link_name == supplier) | (con.user == user_id))
+		.run(as_dict=True)
+	)
+
+	return supplier_and_user[0] if supplier_and_user else None
