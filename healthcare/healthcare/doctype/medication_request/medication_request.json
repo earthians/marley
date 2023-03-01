@@ -402,6 +402,7 @@
    "label": "Billing"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "qty_invoiced",
    "fieldtype": "Float",
@@ -409,6 +410,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "Pending",
    "fieldname": "billing_status",
    "fieldtype": "Select",
@@ -454,7 +456,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-04-06 16:22:21.077072",
+ "modified": "2023-03-01 18:17:28.568611",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",

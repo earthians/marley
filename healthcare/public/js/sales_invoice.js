@@ -272,12 +272,12 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 			: $row = $(`<div class="list-item-container"
 				data-item= "${result.drug_code}"
 				data-qty = ${result.quantity}
+				data-dn= "${result.reference_name}"
+				data-dt= "${result.reference_type}"
+				data-rate = ${result.rate}
 				data-description = "${result.description}">
 				</div>`).append($row);
 	}
-	// add to above
-	// data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.service}"
-	// data-rate = ${result.rate}
 	return $row
 };
 
@@ -300,8 +300,8 @@ var add_to_item_line = function(frm, checked_values, invoice_healthcare_services
 			var si_item = frappe.model.add_child(frm.doc, 'Sales Invoice Item', 'items');
 			frappe.model.set_value(si_item.doctype, si_item.name, 'item_code', checked_values[i]['item']);
 			frappe.model.set_value(si_item.doctype, si_item.name, 'qty', 1);
-			// frappe.model.set_value(si_item.doctype, si_item.name, 'reference_dn', checked_values[i]['dn']);
-			// frappe.model.set_value(si_item.doctype, si_item.name, 'reference_dt', checked_values[i]['dt']);
+			frappe.model.set_value(si_item.doctype, si_item.name, 'reference_dn', checked_values[i]['dn']);
+			frappe.model.set_value(si_item.doctype, si_item.name, 'reference_dt', checked_values[i]['dt']);
 			if(checked_values[i]['qty'] > 1){
 				frappe.model.set_value(si_item.doctype, si_item.name, 'qty', parseFloat(checked_values[i]['qty']));
 			}
