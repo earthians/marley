@@ -39,7 +39,8 @@ class TestServiceRequest(unittest.TestCase):
 
 			# create sales invoice with service request and check service request and lab test is marked as invoiced
 			create_sales_invoice(patient, service_request_doc, insulin_resistance_template, "lab_test_prescription")
-			self.assertTrue(frappe.db.get_value("Service Request", service_request_doc.name, "invoiced"))
+			# self.assertTrue(frappe.db.get_value("Service Request", service_request_doc.name, "invoiced"))
+			self.assertEqual(frappe.db.get_value("Service Request", service_request_doc.name, "billing_status"), "Invoiced")
 			self.assertTrue(frappe.db.get_value("Lab Test", lab_test.name, "invoiced"))
 
 

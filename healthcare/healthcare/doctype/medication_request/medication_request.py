@@ -7,8 +7,8 @@ from frappe import _
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
 class MedicationRequest(ServiceRequestController):
-	def after_insert(self):
-		self.calculate_total_dispensable_quantity()
+	def on_update_after_submit(self):
+		self.validate_invoiced_qty()
 
 	def set_title(self):
 		if frappe.flags.in_import and self.title:
@@ -16,6 +16,7 @@ class MedicationRequest(ServiceRequestController):
 		self.title = f'{self.patient_name} - {self.medication}'
 
 	def before_insert(self):
+		self.calculate_total_dispensable_quantity()
 		self.status = 'Draft'
 
 		if self.amended_from:
@@ -64,10 +65,18 @@ class MedicationRequest(ServiceRequestController):
 			else:
 				status = 'Invoiced'
 
-		self.db_set({
-			'qty_invoiced': qty_invoiced,
-			'billing_status': status
-		})
+		medication_request_doc = frappe.get_doc("Medication Request", self.name)
+		medication_request_doc.qty_invoiced = qty_invoiced
+		medication_request_doc.billing_status = status
+		medication_request_doc.save(ignore_permissions = True)
+
+	def validate_invoiced_qty(self):
+		if self.qty_invoiced > self.total_dispensable_quantity:
+			frappe.throw(
+				_("Maximum billable quantity exceeded by {0}").format(
+					frappe.bold(self.qty_invoiced - self.total_dispensable_quantity)
+				),
+			title=_('Maximum Quantity Exceeded'))
 
 
 @frappe.whitelist()
