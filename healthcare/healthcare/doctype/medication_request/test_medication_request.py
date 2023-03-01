@@ -33,6 +33,16 @@ class TestMedicationRequest(unittest.TestCase):
 
 def create_medcation():
 	if not frappe.db.exists("Medication", "_Test Medication"):
+		if not frappe.db.exists("Medication Class", "Tablet"):
+			try:
+				medication = frappe.get_doc(
+					{
+						"doctype": "Medication Class",
+						"medication_class": "Tablet",
+					}
+				).insert(ignore_permissions=True)
+			except frappe.DuplicateEntryError:
+				pass
 		try:
 			medication = frappe.get_doc(
 				{
