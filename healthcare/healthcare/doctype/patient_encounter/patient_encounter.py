@@ -306,3 +306,33 @@ def validate_codification_table(doc):
 						},
 					)
 		frappe.delete_doc('Inpatient Medication Order', record, force=1)
+
+
+@frappe.whitelist()
+def create_service_request(encounter):
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	if not frappe.db.exists("Service Request", {"order_group": encounter}):
+		encounter_doc.make_service_request()
+
+		for lab_presc in encounter_doc.lab_test_prescription:
+			if lab_presc.invoiced:
+				frappe.db.set_value(
+					"Service Request",
+					{"order_group": encounter, "template_dn": lab_presc.lab_test_code},
+					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+				)
+
+		for proc_presc in encounter_doc.procedure_prescription:
+			if proc_presc.invoiced:
+				frappe.db.set_value(
+				"Service Request",
+				{"order_group": encounter, "template_dn": proc_presc.procedure},
+				{"docstatus": 1, "invoiced": 1, "status": "Active"},
+				)
+
+
+@frappe.whitelist()
+def create_medication_request(encounter):
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	if not frappe.db.exists("Medication Request", {"order_group": encounter}):
+            encounter_doc.make_medication_request()
