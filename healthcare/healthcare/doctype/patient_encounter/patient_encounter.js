@@ -70,6 +70,22 @@ frappe.ui.form.on('Patient Encounter', {
 				}
 			},__('View'));
 
+			if (frm.doc.docstatus == 1 && frm.doc.drug_prescription && frm.doc.drug_prescription.length>0) {
+				frm.add_custom_button(__('Medication Request'), function() {
+					create_medication_request(frm);
+				},__('Create'));
+			}
+
+			if (frm.doc.docstatus == 1 && (
+				(frm.doc.lab_test_prescription && frm.doc.lab_test_prescription.length>0) ||
+				(frm.doc.procedure_prescription && frm.doc.procedure_prescription.length>0) ||
+				(frm.doc.therapies && frm.doc.therapies.length>0)
+				)) {
+				frm.add_custom_button(__('Service Request'), function() {
+					create_service_request(frm);
+				},__('Create'));
+			}
+
 			frm.add_custom_button(__('Vital Signs'), function() {
 				create_vital_signs(frm);
 			},__('Create'));
@@ -523,3 +539,41 @@ let cancel_ip_order = function(frm) {
 		});
 	}, __('Reason for Cancellation'), __('Submit'));
 }
+
+let create_service_request = function(frm) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request",
+		freeze: true,
+		args: {
+			encounter: frm.doc.name
+		},
+		callback: function(r) {
+			if (r && !r.exc) {
+				frm.reload_doc();
+				frappe.show_alert({
+					message: __('Service Request(s) Created'),
+					indicator: 'success'
+				});
+			}
+		}
+	});
+};
+
+let create_medication_request = function(frm) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_medication_request",
+		freeze: true,
+		args: {
+			encounter: frm.doc.name
+		},
+		callback: function(r) {
+			if (r && !r.exc) {
+				frm.reload_doc();
+				frappe.show_alert({
+					message: __('Medicaiton Request(s) Created'),
+					indicator: 'success'
+				});
+			}
+		}
+	});
+};
