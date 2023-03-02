@@ -23,11 +23,7 @@ from healthcare.healthcare.utils import (
 	manage_fee_validity,
 )
 
-# todo: clean up imports
-try:
-	from erpnext.hr.doctype.employee.employee import is_holiday
-except ImportError:
-	from erpnext.setup.doctype.employee.employee import is_holiday
+from erpnext.setup.doctype.employee.employee import is_holiday
 
 
 class MaximumCapacityError(frappe.ValidationError):
@@ -479,23 +475,24 @@ def check_employee_wise_availability(date, practitioner_doc):
 			frappe.throw(_("{0} is a holiday".format(date)), title=_("Not Available"))
 
 		# check leave status
-		leave_record = frappe.db.sql(
-			"""select half_day from `tabLeave Application`
-			where employee = %s and %s between from_date and to_date
-			and docstatus = 1""",
-			(employee, date),
-			as_dict=True,
-		)
-		if leave_record:
-			if leave_record[0].half_day:
-				frappe.throw(
-					_("{0} is on a Half day Leave on {1}").format(practitioner_doc.name, date),
-					title=_("Not Available"),
-				)
-			else:
-				frappe.throw(
-					_("{0} is on Leave on {1}").format(practitioner_doc.name, date), title=_("Not Available")
-				)
+		if "hrms" in frappe.get_installed_apps():
+			leave_record = frappe.db.sql(
+				"""select half_day from `tabLeave Application`
+				where employee = %s and %s between from_date and to_date
+				and docstatus = 1""",
+				(employee, date),
+				as_dict=True,
+			)
+			if leave_record:
+				if leave_record[0].half_day:
+					frappe.throw(
+						_("{0} is on a Half day Leave on {1}").format(practitioner_doc.name, date),
+						title=_("Not Available"),
+					)
+				else:
+					frappe.throw(
+						_("{0} is on Leave on {1}").format(practitioner_doc.name, date), title=_("Not Available")
+					)
 
 
 def get_available_slots(practitioner_doc, date):
