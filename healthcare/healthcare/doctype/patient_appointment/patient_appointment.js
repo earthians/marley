@@ -346,16 +346,20 @@ let check_and_set_availability = function(frm) {
 			'appointment_date': frm.doc.appointment_date
 		});
 
+		let selected_department = frm.doc.department;
+
 		d.fields_dict['department'].df.onchange = () => {
-			d.set_values({
-				'practitioner': ''
-			});
-			let department = d.get_value('department');
-			if (department) {
+			if (selected_department != d.get_value('department')) {
+				d.set_values({
+					'practitioner': ''
+				});
+				selected_department = d.get_value('department');
+			}
+			if (d.get_value('department')) {
 				d.fields_dict.practitioner.get_query = function() {
 					return {
 						filters: {
-							'department': department
+							'department': selected_department
 						}
 					};
 				};
