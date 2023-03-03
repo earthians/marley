@@ -6,6 +6,8 @@
 import datetime
 
 import frappe
+from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, flt, get_time, getdate, now_datetime, nowdate
 
 from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
