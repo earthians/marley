@@ -29,6 +29,12 @@ class HealthcareServiceUnit(NestedSet):
 		super(HealthcareServiceUnit, self).on_update()
 		self.validate_one_root()
 
+	def on_trash(self):
+		if self.flags.on_trash_company:
+			NestedSet.on_trash(self, allow_root_deletion=True)
+		else:
+			NestedSet.on_trash(self)
+
 	def set_service_unit_properties(self):
 		if cint(self.is_group):
 			self.allow_appointments = False

@@ -112,7 +112,8 @@ doc_events = {
 		"on_cancel": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
 	},
 	"Company": {
-		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root"
+		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root",
+		"on_trash": "healthcare.healthcare.utils.company_on_trash",
 	},
 	"Patient": {
 		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
