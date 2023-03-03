@@ -13,3 +13,6 @@
 
 # bulk format python code with black
 16a95709fc495d35aa1ac4a88553c0ce1d41e240
+
+# sort and cleanup imports with isort and fix flake8 issues
+5e8091742bc330a7403cf0b0cc20398f66ac50b9
