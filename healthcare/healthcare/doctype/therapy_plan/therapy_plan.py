@@ -6,7 +6,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import flt, today
-from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+
 from healthcare.healthcare.utils import validate_nursing_tasks
 
 

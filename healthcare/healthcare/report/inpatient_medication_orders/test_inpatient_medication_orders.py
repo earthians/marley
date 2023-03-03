@@ -3,9 +3,9 @@
 
 
 import datetime
-from frappe.tests.utils import FrappeTestCase
 
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, now_datetime
 
 from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (

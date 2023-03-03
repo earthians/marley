@@ -1,11 +1,11 @@
 import frappe
-from frappe.tests.utils import FrappeTestCase
 from frappe import DuplicateEntryError
-from frappe.utils import add_months, getdate, add_days
+from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, add_months, getdate
+
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_practitioner,
 )
-
 from healthcare.healthcare.report.diagnosis_trends.diagnosis_trends import execute
 from healthcare.healthcare.test_utils import create_encounter
 

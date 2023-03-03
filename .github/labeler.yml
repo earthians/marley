@@ -1,0 +1,4 @@
+# Any python files modifed but no test files modified
+needs-tests:
+- any: ['healthcare/**/*.py']
+  all: ['!healthcare/**/test*.py']

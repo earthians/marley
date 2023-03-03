@@ -5,4 +5,5 @@
 tags
 healthcare/docs/current
 __pycache__/
-dist
+dist/
+node_modules/

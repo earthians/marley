@@ -4,12 +4,12 @@
 
 
 import frappe
+from erpnext.stock.utils import get_latest_stock_qty
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_link_to_form
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
-from erpnext.stock.utils import get_latest_stock_qty
 
 
 class InpatientMedicationEntry(Document):

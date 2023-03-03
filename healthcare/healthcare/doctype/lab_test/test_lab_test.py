@@ -3,9 +3,8 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
-
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, nowtime
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (

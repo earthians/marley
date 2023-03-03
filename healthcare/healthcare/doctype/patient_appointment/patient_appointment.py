@@ -7,6 +7,7 @@ import datetime
 import json
 
 import frappe
+from erpnext.setup.doctype.employee.employee import is_holiday
 from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
@@ -22,8 +23,6 @@ from healthcare.healthcare.utils import (
 	get_service_item_and_practitioner_charge,
 	manage_fee_validity,
 )
-
-from erpnext.setup.doctype.employee.employee import is_holiday
 
 
 class MaximumCapacityError(frappe.ValidationError):

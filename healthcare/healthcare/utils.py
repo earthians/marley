@@ -7,10 +7,10 @@ import json
 import math
 
 import frappe
+from erpnext.setup.utils import insert_record
 from frappe import _
 from frappe.utils import cstr, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
-from erpnext.setup.utils import insert_record
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -699,11 +699,11 @@ def render_docs_as_html(docs):
 
 
 @frappe.whitelist()
-def render_doc_as_html(doctype, docname, exclude_fields=[]):
+def render_doc_as_html(doctype, docname, exclude_fields=None):
 	"""
 	Render document as HTML
 	"""
-
+	exclude_fields = exclude_fields or []
 	doc = frappe.get_doc(doctype, docname)
 	meta = frappe.get_meta(doctype)
 	doc_html = section_html = section_label = html = ""

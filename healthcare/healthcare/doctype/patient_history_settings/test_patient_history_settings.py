@@ -4,9 +4,9 @@
 
 
 import json
-from frappe.tests.utils import FrappeTestCase
 
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, strip_html
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
