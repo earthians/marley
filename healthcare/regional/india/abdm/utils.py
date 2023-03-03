@@ -2,6 +2,7 @@ import json
 
 import frappe
 import requests
+
 from healthcare.regional.india.abdm.abdm_config import get_url
 
 
@@ -187,9 +188,10 @@ def get_encrypted_message(message):
 
 def get_rsa_encrypted_message(message, pub_key):
 	# TODO:- Use cryptography
+	from base64 import b64decode, b64encode
+
 	from Crypto.Cipher import PKCS1_v1_5
 	from Crypto.PublicKey import RSA
-	from base64 import b64decode, b64encode
 
 	message = bytes(message, "utf-8")
 	pubkey = b64decode(pub_key)

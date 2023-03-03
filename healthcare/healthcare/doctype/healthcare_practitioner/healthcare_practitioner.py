@@ -4,6 +4,7 @@
 
 
 import frappe
+from erpnext.accounts.party import validate_party_accounts
 from frappe import _
 from frappe.contacts.address_and_contact import (
 	delete_contact_and_address,
@@ -12,8 +13,6 @@ from frappe.contacts.address_and_contact import (
 from frappe.model.document import Document
 from frappe.model.naming import append_number_if_name_exists
 from frappe.utils import get_link_to_form
-
-from erpnext.accounts.party import validate_party_accounts
 
 
 class HealthcarePractitioner(Document):

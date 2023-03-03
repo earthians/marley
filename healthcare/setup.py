@@ -1,7 +1,6 @@
 import frappe
-from frappe import _
 from erpnext.setup.utils import insert_record
-
+from frappe import _
 
 data = {
 	"desktop_icons": [

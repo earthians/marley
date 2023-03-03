@@ -3,9 +3,8 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
-
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime, today
 from frappe.utils.make_random import get_random
 

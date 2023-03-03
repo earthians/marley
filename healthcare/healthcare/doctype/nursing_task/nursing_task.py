@@ -1,13 +1,13 @@
 # Copyright (c) 2021, healthcare and contributors
 # For license information, please see license.txt
 import json
-from six import string_types
 
 import frappe
-from frappe.model.document import Document
-from frappe import _
-from frappe.utils import now_datetime, add_to_date, getdate, time_diff_in_seconds, get_datetime
 from erpnext import get_default_company
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import add_to_date, get_datetime, getdate, now_datetime, time_diff_in_seconds
+from six import string_types
 
 
 class NursingTask(Document):
@@ -67,14 +67,14 @@ class NursingTask(Document):
 		self.date = getdate(self.requested_start_time)
 
 	@classmethod
-	def create_nursing_tasks_from_template(
-		cls, template, doc, start_time=now_datetime(), post_event=True
-	):
+	def create_nursing_tasks_from_template(cls, template, doc, start_time=None, post_event=True):
 		tasks = frappe.get_all(
 			"Nursing Checklist Template Task",
 			filters={"parent": template},
 			fields=["*"],
 		)
+
+		start_time = start_time or now_datetime()
 		NursingTask.create_nursing_tasks(tasks, doc, start_time, post_event)
 
 	@classmethod
@@ -134,8 +134,9 @@ class NursingTask(Document):
 
 
 @frappe.whitelist()
-def create_nursing_tasks_from_template(template, doc, start_time=now_datetime(), post_event=True):
+def create_nursing_tasks_from_template(template, doc, start_time, post_event=True):
 	if isinstance(doc, string_types):
 		doc = json.loads(doc)
 
+	start_time = start_time or now_datetime()
 	NursingTask.create_nursing_tasks_from_template(template, doc, start_time, post_event)

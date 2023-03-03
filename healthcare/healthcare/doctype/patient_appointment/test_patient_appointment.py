@@ -3,13 +3,11 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
-
-import frappe
-from frappe.utils import add_days, now_datetime, nowdate, getdate, get_time, flt
 import datetime
 
-from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
+import frappe
+from frappe.utils import add_days, flt, get_time, getdate, now_datetime, nowdate
+
 from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
 	check_is_new_patient,
 	check_payment_fields_reqd,

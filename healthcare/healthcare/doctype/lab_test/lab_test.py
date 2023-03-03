@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate, now_datetime
+
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 
 

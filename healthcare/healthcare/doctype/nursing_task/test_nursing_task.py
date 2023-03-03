@@ -2,9 +2,9 @@
 # See license.txt
 
 import frappe
-
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
+
 from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import (
 	create_procedure,
 )
@@ -17,8 +17,8 @@ from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import
 	get_healthcare_service_unit,
 )
 from healthcare.healthcare.doctype.lab_test.test_lab_test import (
-	create_lab_test_template,
 	create_lab_test,
+	create_lab_test_template,
 )
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (

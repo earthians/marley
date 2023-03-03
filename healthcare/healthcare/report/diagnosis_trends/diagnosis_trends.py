@@ -2,11 +2,10 @@
 # For license information, please see license.txt
 
 import frappe
+from erpnext.accounts.utils import get_fiscal_year
 from frappe import _, scrub
 from frappe.database.query import OPERATOR_MAP
 from frappe.utils import add_days, add_to_date, flt, getdate
-
-from erpnext.accounts.utils import get_fiscal_year
 
 
 def execute(filters=None):
@@ -61,7 +60,7 @@ class DiagnosisTrends(object):
 		else:
 			from_date = from_date + relativedelta(from_date, weekday=MO(-1))
 
-		for _ in range(1, 53):
+		for _ in range(1, 53):  # noqa
 			if self.filters.range == "Weekly":
 				period_end_date = add_days(from_date, 6)
 			else:

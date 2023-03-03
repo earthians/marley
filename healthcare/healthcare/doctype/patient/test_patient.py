@@ -3,10 +3,10 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
+import os
 
 import frappe
-import os
+from frappe.tests.utils import FrappeTestCase
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_patient,

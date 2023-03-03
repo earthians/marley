@@ -54,11 +54,6 @@ config = {
 		"encrypted": True,
 	},
 	"get_acc_info": {"method": "GET", "url": "/v2/account/profile", "encrypted": False},
-	"resend_aadhaar_otp": {
-		"method": "POST",
-		"url": "/v1/registration/aadhaar/resendAadhaarOtp",
-		"encrypted": False,
-	},
 	"generate_aadhaar_mobile_otp": {
 		"method": "POST",
 		"url": "/v1/registration/aadhaar/generateMobileOTP",
