@@ -979,3 +979,10 @@ def get_medical_codes(template_dt, template_dn, code_standard=None):
 			"medical_code_standard",
 		],
 	)
+
+
+def company_on_trash(doc, method):
+	for su in frappe.get_all("Healthcare Service Unit", {"company": doc.name}):
+		service_unit_doc = frappe.get_doc("Healthcare Service Unit", su.get("name"))
+		service_unit_doc.flags.on_trash_company = True
+		service_unit_doc.delete()
