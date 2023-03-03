@@ -19,7 +19,6 @@ class HealthcareServiceUnit(NestedSet):
 		"""Load address and contacts in `__onload`"""
 		load_address_and_contact(self)
 
-
 	def validate(self):
 		self.set_service_unit_properties()
 

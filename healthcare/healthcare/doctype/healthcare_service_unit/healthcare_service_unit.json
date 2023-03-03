@@ -21,15 +21,17 @@
   "column_break_9",
   "company",
   "warehouse",
-  "address_and_contact_section",
-  "address_html",
-  "column_break_10",
-  "contact_html",
   "tree_details_section",
   "parent_healthcare_service_unit",
   "lft",
   "rgt",
-  "old_parent"
+  "old_parent",
+  "contact_and_address_tab",
+  "address_and_contact_section",
+  "address_html",
+  "column_break_10",
+  "contact_html",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -226,11 +228,22 @@
   {
    "fieldname": "column_break_10",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_and_address_tab",
+   "fieldtype": "Tab Break",
+   "label": "Contact & Address"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "is_tree": 1,
  "links": [],
- "modified": "2023-02-24 16:41:53.854251",
+ "modified": "2023-03-03 19:01:12.459553",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",
