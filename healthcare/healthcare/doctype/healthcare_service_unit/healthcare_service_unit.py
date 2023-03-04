@@ -7,12 +7,17 @@ import json
 
 import frappe
 from frappe import _
+from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.utils import cint, cstr
 from frappe.utils.nestedset import NestedSet
 
 
 class HealthcareServiceUnit(NestedSet):
 	nsm_parent_field = "parent_healthcare_service_unit"
+
+	def onload(self):
+		"""Load address and contacts in `__onload`"""
+		load_address_and_contact(self)
 
 	def validate(self):
 		self.set_service_unit_properties()

@@ -2,8 +2,8 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
- "beta": 0,
  "creation": "2016-09-21 13:48:14.731437",
+ "default_view": "Tree",
  "description": "Healthcare Service Unit",
  "doctype": "DocType",
  "document_type": "Setup",
@@ -25,7 +25,13 @@
   "parent_healthcare_service_unit",
   "lft",
   "rgt",
-  "old_parent"
+  "old_parent",
+  "contact_and_address_tab",
+  "address_and_contact_section",
+  "address_html",
+  "column_break_10",
+  "contact_html",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -202,11 +208,42 @@
    "label": "Service Unit Capacity",
    "mandatory_depends_on": "eval:doc.overlap_appointments == 1",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "address_and_contact_section",
+   "fieldtype": "Section Break",
+   "label": "Address and Contact"
+  },
+  {
+   "fieldname": "address_html",
+   "fieldtype": "HTML",
+   "label": "Address HTML"
+  },
+  {
+   "fieldname": "contact_html",
+   "fieldtype": "HTML",
+   "label": "Contact HTML"
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_and_address_tab",
+   "fieldtype": "Tab Break",
+   "label": "Contact & Address"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "is_tree": 1,
  "links": [],
- "modified": "2022-07-26 02:18:38.363485",
+ "modified": "2023-03-03 19:01:12.459553",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",
