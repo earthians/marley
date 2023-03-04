@@ -245,18 +245,13 @@ domains = {
 	"Healthcare": "healthcare.setup",
 }
 
+# nosemgrep
 standard_portal_menu_items = [
 	{
 		"title": _("Personal Details"),
 		"route": "/personal-details",
 		"reference_doctype": "Patient",
 		"role": "Patient",
-	},
-	{
-		"title": _("Timesheets"),
-		"route": "/timesheets",
-		"reference_doctype": "Timesheet",
-		"role": "Customer",
 	},
 	{
 		"title": _("Lab Test"),
@@ -279,8 +274,6 @@ standard_portal_menu_items = [
 ]
 
 has_website_permission = {
-	"Issue": "erpnext.support.doctype.issue.issue.has_website_permission",
-	"Timesheet": "erpnext.controllers.website_list_for_contact.has_website_permission",
 	"Lab Test": "healthcare.healthcare.web_form.lab_test.lab_test.has_website_permission",
 	"Patient Encounter": "healthcare.healthcare.web_form.prescription.prescription.has_website_permission",
 	"Patient Appointment": "healthcare.healthcare.web_form.patient_appointments.patient_appointments.has_website_permission",
