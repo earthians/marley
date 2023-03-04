@@ -87,7 +87,6 @@
    "fieldname": "employee",
    "fieldtype": "Link",
    "label": "Employee",
-   "mandatory_depends_on": "eval: doc.practitioner_type == \"Internal\"",
    "options": "Employee"
   },
   {
@@ -353,13 +352,12 @@
    "fieldname": "supplier",
    "fieldtype": "Link",
    "label": "Supplier",
-   "mandatory_depends_on": "eval: doc.practitioner_type == \"External\"",
    "options": "Supplier"
   }
  ],
  "image_field": "image",
  "links": [],
- "modified": "2023-02-20 16:32:01.074647",
+ "modified": "2023-03-04 18:33:25.753648",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",
