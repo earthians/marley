@@ -112,6 +112,47 @@ def setup_healthcare():
 	create_custom_records()
 	create_default_root_service_units()
 
+	setup_domain()
+
+	frappe.clear_cache()
+
+
+def setup_domain():
+	"""
+	Setup custom fields, properties, roles etc.
+	Add Healthcare to active domains in Domain Settings
+	"""
+	domain = frappe.get_doc("Domain", "Healthcare")
+	domain.setup_domain()
+
+	# update active domains
+	if "Healthcare" not in frappe.get_active_domains():
+		has_domain = frappe.get_doc(
+			{
+				"doctype": "Has Domain",
+				"parent": "Domain Settings",
+				"parentfield": "active_domains",
+				"parenttype": "Domain Settings",
+				"domain": "Healthcare",
+			}
+		)
+		has_domain.save()
+
+
+def before_uninstall():
+	"""
+	Remove Custom Fields, portal menu items, domain
+	"""
+	delete_custom_records()
+	remove_portal_settings_menu_items()
+
+	domain = frappe.get_doc("Domain", "Healthcare")
+	domain.remove_domain()
+
+	remove_from_active_domains()
+
+	frappe.clear_cache()
+
 
 def create_default_root_service_units():
 	from healthcare.healthcare.utils import create_healthcare_service_unit_tree_root
@@ -131,24 +172,6 @@ def create_custom_records():
 	create_healthcare_item_groups()
 	create_sensitivity()
 	setup_patient_history_settings()
-
-	has_domain = frappe.get_doc(
-		{
-			"doctype": "Has Domain",
-			"parent": "Domain Settings",
-			"parentfield": "active_domains",
-			"parenttype": "Domain Settings",
-			"domain": "Healthcare",
-		}
-	)
-	has_domain.save()
-
-	domain = frappe.get_doc("Domain", "Healthcare")
-	domain.setup_domain()
-
-	domain_settings = frappe.get_single("Domain Settings")
-	domain_settings.append("active_domains", dict(domain=domain))
-	frappe.clear_cache()
 
 
 def create_medical_departments():
@@ -635,21 +658,27 @@ def create_healthcare_item_groups():
 	if not frappe.db.exists(item_group["doctype"], item_group["item_group_name"]):
 		insert_record([item_group])
 
-	records = [
+	records = get_item_group_records()
+	insert_record(records)
+
+
+def get_item_group_records():
+	return [
 		{
 			"doctype": "Item Group",
 			"item_group_name": _("Laboratory"),
+			"name": _("Laboratory"),
 			"is_group": 0,
 			"parent_item_group": _("All Item Groups"),
 		},
 		{
 			"doctype": "Item Group",
 			"item_group_name": _("Drug"),
+			"name": _("Drug"),
 			"is_group": 0,
 			"parent_item_group": _("All Item Groups"),
 		},
 	]
-	insert_record(records)
 
 
 def create_sensitivity():
@@ -768,3 +797,24 @@ def get_patient_history_config():
 			],
 		),
 	}
+
+
+def delete_custom_records():
+	"""Delete custom records inserted by Health app"""
+	records = get_item_group_records()
+	for record in records:
+		frappe.db.delete(record.get("doctype"), record.get("name"))
+
+	frappe.db.set_single_value("Portal Settings", "default_role", "")
+
+
+def remove_from_active_domains():
+	"""Remove Healthcare from active domains in Domain Settings"""
+	frappe.db.delete("Has Domain", {"domain": "Healthcare"})
+
+
+def remove_portal_settings_menu_items():
+	"""Remove menu items added in Portal Settings"""
+	menu_items = frappe.get_hooks("standard_portal_menu_items", app_name="healthcare")
+	for item in menu_items:
+		frappe.db.delete("Portal Menu Item", item)
