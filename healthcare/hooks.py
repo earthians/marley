@@ -71,6 +71,12 @@ doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
 # before_install = "healthcare.install.before_install"
 after_install = "healthcare.setup.setup_healthcare"
 
+# Uninstallation
+# ------------
+
+before_uninstall = "healthcare.uninstall.before_uninstall"
+# after_uninstall = "healthcare.uninstall.after_uninstall"
+
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
