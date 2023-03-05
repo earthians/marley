@@ -1,4 +1,5 @@
 import click
+import frappe
 
 from healthcare.setup import before_uninstall as remove_customizations
 
@@ -19,3 +20,8 @@ def before_uninstall():
 		raise e
 
 	click.secho("Frappe Health app customizations have been removed successfully...", fg="green")
+
+
+def after_uninstall():
+	print("Reset Portal Settings...")
+	frappe.get_doc("Portal Settings", "Portal Settings").reset()
