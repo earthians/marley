@@ -2,17 +2,36 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [develop, version-14-hotfix, version-14]
+    paths-ignore:
+      - "**.css"
+      - "**.js"
+      - "**.md"
+      - "**.html"
+      - "**.csv"
+
   pull_request:
-    branches:
-      - develop
+    paths-ignore:
+      - "**.css"
+      - "**.js"
+      - "**.md"
+      - "**.html"
+      - "**.csv"
+  schedule:
+    # Run everday at midnight UTC / 5:30 IST
+    - cron: "0 0 * * *"
+env:
+    FH_BRANCH: ${{ github.base_ref || github.ref_name }}
+
+concurrency:
+  group: develop-${{ github.event.number }}
+  cancel-in-progress: true
 
 jobs:
   linters:
+    name: Linters
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout Code Repository
         uses: actions/checkout@v3
 
@@ -25,7 +44,7 @@ jobs:
         uses: pre-commit/action@v2.0.0
 
   tests:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     strategy:
@@ -54,7 +73,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 16
           check-latest: true
 
       - name: Add to Hosts
@@ -68,6 +87,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
+
       - name: Cache node modules
         uses: actions/cache@v2
         env:
@@ -98,7 +118,7 @@ jobs:
           cd ~/frappe-bench/ && source env/bin/activate
           cd apps/healthcare && pip install -r dev-requirements.txt
         env:
-          TYPE: server
+          BRANCH_TO_CLONE: ${{ env.FH_BRANCH }}
 
       - name: Run Tests
         run: cd ~/frappe-bench/ && bench --site test_site run-tests --app healthcare
