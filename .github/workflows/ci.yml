@@ -73,7 +73,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 16
           check-latest: true
 
       - name: Add to Hosts
@@ -124,10 +124,3 @@ jobs:
         run: cd ~/frappe-bench/ && bench --site test_site run-tests --app healthcare
         env:
           TYPE: server
-
-      - name: Upload coverage data
-        uses: codecov/codecov-action@v2
-        with:
-          fail_ci_if_error: true
-          files: /home/runner/frappe-bench/sites/coverage.xml
-          verbose: true
