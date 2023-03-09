@@ -61,8 +61,7 @@
   "qty_invoiced",
   "column_break_26",
   "medical_code_section",
-  "medical_code_standard",
-  "medical_code",
+  "codification_table",
   "amended_from"
  ],
  "fields": [
@@ -149,19 +148,6 @@
    "fieldname": "medical_code_section",
    "fieldtype": "Section Break",
    "label": "Medical Code"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
   },
   {
    "default": "1",
@@ -449,12 +435,18 @@
    "fieldname": "request_details_section",
    "fieldtype": "Section Break",
    "label": "Request Details"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-04-06 16:22:21.077072",
+ "modified": "2023-03-09 17:04:52.602268",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
