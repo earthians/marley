@@ -165,29 +165,71 @@ var get_checked_values= function($results) {
 			checked_values['dn'] = $(this).attr('data-dn');
 			checked_values['dt'] = $(this).attr('data-dt');
 			checked_values['item'] = $(this).attr('data-item');
-			if($(this).attr('data-rate') != 'undefined'){
+			if ($(this).attr('data-rate') != 'undefined') {
 				checked_values['rate'] = $(this).attr('data-rate');
 			}
-			else{
+			else {
 				checked_values['rate'] = false;
 			}
-			if($(this).attr('data-income-account') != 'undefined'){
+			if ($(this).attr('data-income-account') != 'undefined') {
 				checked_values['income_account'] = $(this).attr('data-income-account');
 			}
-			else{
+			else {
 				checked_values['income_account'] = false;
 			}
-			if($(this).attr('data-qty') != 'undefined'){
+			if ($(this).attr('data-qty') != 'undefined') {
 				checked_values['qty'] = $(this).attr('data-qty');
 			}
-			else{
+			else {
 				checked_values['qty'] = false;
 			}
-			if($(this).attr('data-description') != 'undefined'){
+			if ($(this).attr('data-description') != 'undefined') {
 				checked_values['description'] = $(this).attr('data-description');
 			}
-			else{
+			else {
 				checked_values['description'] = false;
+			}
+			if ($(this).attr('data-discount-percentage') != 'undefined') {
+				checked_values['discount_percentage'] = $(this).attr('data-discount-percentage');
+			}
+			else {
+				checked_values['discount_percentage'] = false;
+			}
+			if ($(this).attr('data-insurance-coverage-qty') != 'undefined') {
+				checked_values['coverage_rate'] = $(this).attr('data-insurance-coverage-rate');
+			}
+			else {
+				checked_values['coverage_rate'] = false;
+			}
+			if ($(this).attr('data-insurance-coverage-qty') != 'undefined') {
+				checked_values['coverage_qty'] = $(this).attr('data-insurance-coverage-qty');
+			}
+			else {
+				checked_values['coverage_qty'] = false;
+			}
+			if ($(this).attr('data-insurance-coverage-company') != 'undefined') {
+				checked_values['insurance_payor'] = $(this).attr('data-insurance-coverage-company');
+			}
+			else {
+				checked_values['insurance_payor'] = false;
+			}
+			if ($(this).attr('data-insurance-coverage-policy-number') != 'undefined') {
+				checked_values['patient_insurance_policy'] = $(this).attr('data-insurance-coverage-policy-number');
+			}
+			else {
+				checked_values['patient_insurance_policy'] = false;
+			}
+			if ($(this).attr('data-coverage-percentage') != 'undefined') {
+				checked_values['coverage_percentage'] = $(this).attr('data-coverage-percentage');
+			}
+			else {
+				checked_values['coverage_percentage'] = false;
+			}
+			if ($(this).attr('data-insurance-coverage') != 'undefined') {
+				checked_values['insurance_coverage'] = $(this).attr('data-insurance-coverage');
+			}
+			else {
+				checked_values['insurance_coverage'] = false;
 			}
 			return checked_values;
 		}
@@ -257,17 +299,24 @@ var get_drugs_to_invoice = function(frm) {
 };
 
 var list_row_data_items = function(head, $row, result, invoice_healthcare_services) {
-	if(invoice_healthcare_services){
+	if (invoice_healthcare_services) {
 		head ? $row.addClass('list-item--head')
 			: $row = $(`<div class="list-item-container"
 				data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.service}"
 				data-rate = ${result.rate}
 				data-income-account = "${result.income_account}"
 				data-qty = ${result.qty}
-				data-description = "${result.description}">
+				data-description = "${result.description}"
+				data-discount-percentage = ${result.discount_percentage}
+				data-insurance-coverage-rate = ${result.coverage_rate}
+				data-insurance-coverage-qty = ${result.coverage_qty}
+				data-insurance-coverage-company = "${result.insurance_payor}"
+				data-insurance-coverage-policy-number = "${result.patient_insurance_policy}"
+				data-coverage-percentage = ${result.coverage_percentage}
+				data-insurance-coverage = ${result.insurance_coverage}>
 				</div>`).append($row);
 	}
-	else{
+	else {
 		head ? $row.addClass('list-item--head')
 			: $row = $(`<div class="list-item-container"
 				data-item= "${result.drug_code}"
@@ -275,9 +324,6 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 				data-description = "${result.description}">
 				</div>`).append($row);
 	}
-	// add to above
-	// data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.service}"
-	// data-rate = ${result.rate}
 	return $row
 };
 
@@ -309,3 +355,21 @@ var add_to_item_line = function(frm, checked_values, invoice_healthcare_services
 		frm.refresh_fields();
 	}
 };
+
+frappe.ui.form.on('Sales Invoice Item', {
+	// disable qty / rate change for items covered by insurance
+	qty: function(frm, cdt, cdn) {
+		var d = locals[cdt][cdn];
+		if (d.insurance_coverage && (d.qty > d.coverage_qty)) {
+			frappe.throw(__('Row #{0} Item under Insurance Coverage {1}, quantity cannot be more than approved quantity <b>{2}</b>',
+				[d.idx, d.insurance_coverage, d.coverage_qty]));
+		}
+	},
+	rate: function(frm, cdt, cdn) {
+		var d = locals[cdt][cdn];
+		if (d.insurance_coverage && (d.rate != d.coverage_rate)) {
+			frappe.throw(__('Row #{0} Item under Insurance Coverage {1}, rate should be equal to approved rate<b>{2}</b>',
+				[d.idx, d.insurance_coverage, d.coverage_rate]));
+		}
+	}
+});

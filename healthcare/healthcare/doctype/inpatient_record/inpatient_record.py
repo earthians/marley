@@ -9,10 +9,23 @@ import frappe
 from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
-from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today
+import math
+from frappe.utils import (
+	today,
+	now_datetime,
+	getdate,
+	get_datetime,
+	get_link_to_form,
+	flt,
+	time_diff_in_hours,
+	rounded
+)
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
+
+from healthcare.healthcare.utils import get_service_item_and_practitioner_charge
+from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
 
 
 class InpatientRecord(Document):
@@ -90,6 +103,48 @@ class InpatientRecord(Document):
 		if service_unit:
 			transfer_patient(self, service_unit, check_in)
 
+	@frappe.whitelist()
+	def create_insurance_coverage(self):
+		if self.insurance_policy and self.inpatient_occupancies:
+			if any(not data_row.insurance_coverage for data_row in self.inpatient_occupancies):
+				for inpatient_occupancy in self.inpatient_occupancies:
+					if inpatient_occupancy.left and not inpatient_occupancy.insurance_coverage:
+						service_unit_type = frappe.db.get_value('Healthcare Service Unit', inpatient_occupancy.service_unit, 'service_unit_type')
+						service_unit_type = frappe.get_doc('Healthcare Service Unit Type', service_unit_type)
+						hours_occupied = flt(time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2)
+						qty = 0.5
+						if hours_occupied > 0 and service_unit_type.no_of_hours:
+							actual_qty = hours_occupied / service_unit_type.no_of_hours
+							floor = math.floor(actual_qty)
+							decimal_part = actual_qty - floor
+							if decimal_part > 0.5:
+								qty = rounded(floor + 1, 1)
+							elif decimal_part < 0.5 and decimal_part > 0:
+								qty = rounded(floor + 0.5, 1)
+							if qty <= 0:
+								qty = 0.5
+						coverage = self.make_insurance_coverage(service_unit_type.name, qty)
+						if coverage and coverage.get('coverage'):
+							frappe.db.set_value('Inpatient Occupancy', inpatient_occupancy.name, {
+								'insurance_coverage': coverage.get('coverage'),
+								'coverage_status': coverage.get('coverage_status')
+							})
+			else:
+				frappe.throw(_('Claim already created for all Inpatient Occupancies'))
+
+	def make_insurance_coverage(self, service_unit_type, qty):
+		billing_detail = get_service_item_and_practitioner_charge(self)
+		return make_insurance_coverage(
+			patient=self.patient,
+			policy=self.insurance_policy,
+			company=self.company,
+			template_dt='Healthcare Service Unit Type',
+			template_dn=service_unit_type,
+			item_code=billing_detail.get('service_item'),
+			qty=qty
+		)
+
+
 
 @frappe.whitelist()
 def schedule_inpatient(args):
@@ -141,6 +196,8 @@ def schedule_inpatient(args):
 		inpatient_record.therapy_plan = encounter.therapy_plan
 		set_ip_child_records(inpatient_record, "therapies", encounter.therapies)
 
+
+	inpatient_record.insurance_policy = encounter.insurance_policy
 	inpatient_record.status = "Admission Scheduled"
 	inpatient_record.save(ignore_permissions=True)
 

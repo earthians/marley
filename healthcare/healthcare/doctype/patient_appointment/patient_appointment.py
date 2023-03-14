@@ -24,6 +24,8 @@ from healthcare.healthcare.utils import (
 	manage_fee_validity,
 )
 
+from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import make_insurance_coverage
+
 
 class MaximumCapacityError(frappe.ValidationError):
 	pass
@@ -50,6 +52,29 @@ class PatientAppointment(Document):
 		self.update_fee_validity()
 		send_confirmation_msg(self)
 		self.insert_calendar_event()
+
+		if self.insurance_policy and self.appointment_type and not check_fee_validity(self):
+				if frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing'):
+					#TODO: apply insurance coverage
+					frappe.msgprint(_('Insurance Coverage not created!<br>Not supported as <b>Automate Appointment Invoicing</b> enabled'),
+						alert=True, indicator='warning')
+				else:
+					self.make_insurance_coverage()
+
+	def make_insurance_coverage(self):
+		billing_detail = get_service_item_and_practitioner_charge(self)
+		coverage = make_insurance_coverage(
+			patient=self.patient,
+			policy=self.insurance_policy,
+			company=self.company,
+			template_dt='Appointment Type',
+			template_dn=self.appointment_type,
+			item_code=billing_detail.get('service_item'),
+			qty=1
+		)
+
+		if coverage and coverage.get('coverage'):
+			self.db_set({'insurance_coverage': coverage.get('coverage'), 'coverage_status': coverage.get('coverage_status')})
 
 	def set_title(self):
 		self.title = _("{0} with {1}").format(
@@ -381,6 +406,10 @@ def get_appointment_item(appointment_doc, item):
 
 def cancel_appointment(appointment_id):
 	appointment = frappe.get_doc("Patient Appointment", appointment_id)
+	# if appointment.insurance_claim:
+	# 	claim = frappe.get_doc('Healthcare Insurance Claim', appointment.insurance_claim)
+	# 	claim.cancel()
+
 	if appointment.invoiced:
 		sales_invoice = check_sales_invoice_exists(appointment)
 		if sales_invoice and cancel_sales_invoice(sales_invoice):
@@ -623,6 +652,10 @@ def make_encounter(source_name, target_doc=None):
 					["patient_sex", "patient_sex"],
 					["invoiced", "invoiced"],
 					["company", "company"],
+					['appointment_type', 'appointment_type'],
+					['insurance_subscription', 'insurance_subscription'],
+					['insurance_claim', 'insurance_claim'],
+
 				],
 			}
 		},

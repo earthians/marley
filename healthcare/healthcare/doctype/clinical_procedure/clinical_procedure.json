@@ -28,6 +28,12 @@
   "start_date",
   "start_time",
   "sample",
+  "insurance_section",
+  "insurance_policy",
+  "insurance_coverage",
+  "column_break_v86na",
+  "insurance_payor",
+  "coverage_status",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -44,7 +50,8 @@
   "service_request",
   "invoiced",
   "prescription",
-  "amended_from"
+  "amended_from",
+  "medical_code"
  ],
  "fields": [
   {
@@ -317,6 +324,44 @@
    "options": "Service Request",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "insurance_section",
+   "fieldtype": "Section Break",
+   "label": "Insurance"
+  },
+  {
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
+   "fieldtype": "Link",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "insurance_policy",
+   "fieldtype": "Link",
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "insurance_coverage",
+   "fieldtype": "Link",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_v86na",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "coverage_status",
+   "fieldtype": "Data",
+   "label": "Claim Status",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
@@ -326,7 +371,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:57:21.878185",
+ "modified": "2023-03-14 12:30:13.888531",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

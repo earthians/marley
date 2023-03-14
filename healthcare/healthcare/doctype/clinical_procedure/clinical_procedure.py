@@ -351,7 +351,8 @@ def get_procedure_prescribed(patient, encounter=False):
 	return  (
 		frappe.qb.from_(hso)
 			.select(hso.template_dn, hso.order_group, hso.invoiced,\
-				hso.practitioner, hso.order_date, hso.name)
+				hso.practitioner, hso.order_date, hso.name,\
+				hso.insurance_policy, hso.insurance_payor)
 			.where(hso.patient == patient)
 			.where(hso.status != 'Completed')
 			.where(hso.template_dt == 'Clinical Procedure Template')

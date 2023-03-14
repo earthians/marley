@@ -9,7 +9,10 @@
   "check_in",
   "left",
   "check_out",
-  "invoiced"
+  "invoiced",
+  "column_break_axb33",
+  "insurance_coverage",
+  "coverage_status"
  ],
  "fields": [
   {
@@ -45,12 +48,30 @@
    "fieldtype": "Check",
    "label": "Invoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_axb33",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "insurance_coverage",
+   "fieldtype": "Link",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "coverage_status",
+   "fieldtype": "Select",
+   "label": "Claim Status",
+   "options": "\nPending\nApproved\nRejected\nInvoiced",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-03-18 15:08:54.634132",
+ "modified": "2023-03-14 12:40:00.967296",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Occupancy",
@@ -60,5 +81,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

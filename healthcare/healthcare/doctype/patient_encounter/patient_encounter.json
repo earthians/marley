@@ -35,6 +35,12 @@
   "physical_examination",
   "diagnosis",
   "diagnosis_in_print",
+  "insurance_section",
+  "insurance_policy",
+  "insurance_coverage",
+  "column_break_t78vq",
+  "insurance_payor",
+  "coverage_status",
   "codification",
   "codification_table",
   "sb_drug_prescription",
@@ -339,11 +345,49 @@
    "fieldtype": "Data",
    "label": "Google Meet Link",
    "read_only": 1
+  },
+  {
+   "depends_on": "appointment_type",
+   "fieldname": "insurance_section",
+   "fieldtype": "Section Break",
+   "label": "Insurance"
+  },
+  {
+   "depends_on": "appointment_type",
+   "fieldname": "insurance_policy",
+   "fieldtype": "Link",
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "insurance_coverage",
+   "fieldtype": "Link",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_t78vq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
+   "fieldtype": "Link",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor"
+  },
+  {
+   "fetch_from": "insurance_coverage.status",
+   "fieldname": "coverage_status",
+   "fieldtype": "Data",
+   "label": "Claim Status"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-01-14 19:09:28.299085",
+ "modified": "2023-03-14 12:54:56.263474",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
