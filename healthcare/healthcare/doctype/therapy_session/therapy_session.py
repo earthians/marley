@@ -21,6 +21,7 @@ from healthcare.healthcare.utils import validate_nursing_tasks
 
 class TherapySession(Document):
 	def validate(self):
+		self.set_exercises_from_therapy_type()
 		self.validate_duplicate()
 		self.set_total_counts()
 
@@ -109,6 +110,16 @@ class TherapySession(Document):
 
 		self.db_set("total_counts_targeted", target_total)
 		self.db_set("total_counts_completed", counts_completed)
+
+	def set_exercises_from_therapy_type(self):
+		if self.therapy_type and not self.exercises:
+			therapy_type_doc = frappe.get_cached_doc("Therapy Type", self.therapy_type)
+			if therapy_type_doc.exercises:
+				for exercise in therapy_type_doc.exercises:
+					self.append(
+						"exercises",
+						(frappe.copy_doc(exercise)).as_dict(),
+					)
 
 
 @frappe.whitelist()
