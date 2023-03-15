@@ -64,7 +64,12 @@ def make_therapy_session(therapy_plan, patient, therapy_type, company, appointme
 	therapy_session.therapy_type = therapy_type.name
 	therapy_session.duration = therapy_type.default_duration
 	therapy_session.rate = therapy_type.rate
-	therapy_session.exercises = therapy_type.exercises
+	if not therapy_session.exercises and therapy_type.exercises:
+		for exercise in therapy_type.exercises:
+			therapy_session.append(
+				"exercises",
+				(frappe.copy_doc(exercise)).as_dict(),
+			)
 	therapy_session.appointment = appointment
 
 	if frappe.flags.in_test:
