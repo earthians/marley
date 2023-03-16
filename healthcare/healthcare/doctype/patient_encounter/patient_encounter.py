@@ -61,7 +61,7 @@ class PatientEncounter(Document):
 				["diagnosis", "in", diagnosis],
 				["parenttype", "=", "Treatment Plan Template"],
 			]
-			diagnosis = frappe.get_list("Patient Encounter Diagnosis", filters=filters, fields="*")
+			diagnosis = frappe.db.get_all("Patient Encounter Diagnosis", filters=filters, fields="*")
 			plan_names = [_diagnosis["parent"] for _diagnosis in diagnosis]
 			plan_filters["name"][1].extend(plan_names)
 
@@ -72,7 +72,7 @@ class PatientEncounter(Document):
 				["complaint", "in", symptoms],
 				["parenttype", "=", "Treatment Plan Template"],
 			]
-			symptoms = frappe.get_list("Patient Encounter Symptom", filters=filters, fields="*")
+			symptoms = frappe.db.get_all("Patient Encounter Symptom", filters=filters, fields="*")
 			plan_names = [symptom["parent"] for symptom in symptoms]
 			plan_filters["name"][1].extend(plan_names)
 
@@ -89,15 +89,13 @@ class PatientEncounter(Document):
 			self.set_treatment_plan(treatment_plan)
 
 	def set_treatment_plan(self, plan):
-		plan_items = frappe.get_list(
-			"Treatment Plan Template Item", filters={"parent": plan}, fields="*"
-		)
-		for plan_item in plan_items:
+		plan_doc = frappe.get_doc("Treatment Plan Template", plan)
+
+		for plan_item in plan_doc.items:
 			self.set_treatment_plan_item(plan_item)
 
-		drugs = frappe.get_list("Drug Prescription", filters={"parent": plan}, fields="*")
-		for drug in drugs:
-			self.append("drug_prescription", drug)
+		for drug in plan_doc.drugs:
+			self.append("drug_prescription", (frappe.copy_doc(drug)).as_dict())
 
 		self.save()
 
