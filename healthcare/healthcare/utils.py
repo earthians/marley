@@ -651,23 +651,25 @@ def get_children(doctype, parent=None, company=None, is_root=False):
 
 	service_units = frappe.get_list(doctype, fields=fields, filters=filters)
 	for each in service_units:
-		if each["expandable"] == 1:  # group node
-			available_count = frappe.db.count(
-				"Healthcare Service Unit",
-				filters={"parent_healthcare_service_unit": each["value"], "inpatient_occupancy": 1},
-			)
+		if each["expandable"] != 1 or each["value"].startswith("All Healthcare Service Units"):
+			continue
 
-			if available_count > 0:
-				occupied_count = frappe.db.count(
-					"Healthcare Service Unit",
-					{
-						"parent_healthcare_service_unit": each["value"],
-						"inpatient_occupancy": 1,
-						"occupancy_status": "Occupied",
-					},
-				)
-				# set occupancy status of group node
-				each["occupied_of_available"] = str(occupied_count) + " Occupied of " + str(available_count)
+		available_count = frappe.db.count(
+			"Healthcare Service Unit",
+			filters={"parent_healthcare_service_unit": each["value"], "inpatient_occupancy": 1},
+		)
+
+		if available_count > 0:
+			occupied_count = frappe.db.count(
+				"Healthcare Service Unit",
+				filters={
+					"parent_healthcare_service_unit": each["value"],
+					"inpatient_occupancy": 1,
+					"occupancy_status": "Occupied",
+				},
+			)
+			# set occupancy status of group node
+			each["occupied_of_available"] = f"{str(occupied_count)} Occupied of {str(available_count)}"
 
 	return service_units
 

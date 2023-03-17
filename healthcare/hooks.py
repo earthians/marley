@@ -283,3 +283,7 @@ has_website_permission = {
 standard_queries = {
 	"Healthcare Practitioner": "healthcare.healthcare.doctype.healthcare_practitioner.healthcare_practitioner.get_practitioner_list"
 }
+
+treeviews = [
+	"Healthcare Service Unit",
+]
