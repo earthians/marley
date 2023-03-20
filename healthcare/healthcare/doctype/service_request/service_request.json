@@ -52,7 +52,6 @@
   "occurrence_date",
   "occurrence_time",
   "healthcare_service_unit_type",
-  "invoiced",
   "column_break_91",
   "order_description",
   "patient_instructions",
@@ -269,13 +268,6 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "invoiced",
-   "fieldtype": "Check",
-   "label": "Invoiced",
-   "read_only": 1
   },
   {
    "fieldname": "source",
@@ -545,7 +537,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2022-09-30 17:10:21.221929",
+ "modified": "2023-03-20 12:52:18.649393",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
