@@ -249,10 +249,8 @@ frappe.ui.form.on('Patient Encounter', {
 							doc: frm.doc,
 							args: selections,
 						}).then(() => {
-							frm.refresh_field('drug_prescription');
-							frm.refresh_field('procedure_prescription');
-							frm.refresh_field('lab_test_prescription');
-							frm.refresh_field('therapies');
+							frm.refresh_fields();
+							frm.dirty();
 						});
 						cur_dialog.hide();
 					}
