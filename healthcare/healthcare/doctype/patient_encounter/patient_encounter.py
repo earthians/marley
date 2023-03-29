@@ -97,8 +97,6 @@ class PatientEncounter(Document):
 		for drug in plan_doc.drugs:
 			self.append("drug_prescription", (frappe.copy_doc(drug)).as_dict())
 
-		self.save()
-
 	def set_treatment_plan_item(self, plan_item):
 		if plan_item.type == "Clinical Procedure Template":
 			self.append("procedure_prescription", {"procedure": plan_item.template})
@@ -107,7 +105,10 @@ class PatientEncounter(Document):
 			self.append("lab_test_prescription", {"lab_test_code": plan_item.template})
 
 		if plan_item.type == "Therapy Type":
-			self.append("therapies", {"therapy_type": plan_item.template})
+			self.append(
+				"therapies",
+				{"therapy_type": plan_item.template, "no_of_sessions": plan_item.qty},
+			)
 
 
 @frappe.whitelist()
