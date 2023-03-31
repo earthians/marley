@@ -737,12 +737,12 @@ def setup_patient_history_settings():
 		)
 	settings.save()
 
+
 def setup_service_request_masters():
 	records = [
 		{"doctype": "Patient Care Type", "patient_care_type": _("Preventive")},
 		{"doctype": "Patient Care Type", "patient_care_type": _("Intervention")},
 		{"doctype": "Patient Care Type", "patient_care_type": _("Diagnostic")},
-
 		{"doctype": "Service Request Intent", "intent": _("Order")},
 		{"doctype": "Service Request Intent", "intent": _("Proposal")},
 		{"doctype": "Service Request Intent", "intent": _("Plan")},
@@ -752,11 +752,10 @@ def setup_service_request_masters():
 		{"doctype": "Service Request Intent", "intent": _("Filler Order")},
 		{"doctype": "Service Request Intent", "intent": _("Instance Order")},
 		{"doctype": "Service Request Intent", "intent": _("Option")},
-
 		{"doctype": "Service Request Priority", "priority": _("Routine"), "color": "#29CD42"},
 		{"doctype": "Service Request Priority", "priority": _("Urgent"), "color": "#FFFF00"},
 		{"doctype": "Service Request Priority", "priority": _("ASAP"), "color": "#FFA500"},
-		{"doctype": "Service Request Priority", "priority": _("STAT"), "color": "#CB2929"}
+		{"doctype": "Service Request Priority", "priority": _("STAT"), "color": "#CB2929"},
 	]
 	insert_record(records)
 

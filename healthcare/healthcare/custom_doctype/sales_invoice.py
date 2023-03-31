@@ -2,6 +2,7 @@ import frappe
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from frappe.utils import flt
 
+
 class HealthcareSalesInvoice(SalesInvoice):
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
