@@ -8,7 +8,6 @@ import json
 
 import frappe
 from frappe import _
-from frappe.model.document import Document
 from six import string_types
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
