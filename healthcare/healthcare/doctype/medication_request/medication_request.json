@@ -456,7 +456,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-01 18:17:28.568611",
+ "modified": "2023-03-22 17:19:06.842548",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
@@ -514,7 +514,5 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "title",
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

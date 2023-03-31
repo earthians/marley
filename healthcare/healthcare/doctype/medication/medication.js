@@ -2,46 +2,41 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Medication', {
-	medication_name: function(frm) {
-		if (!frm.doc.item_code)
-			frm.set_value('item_code', frm.doc.medication_name);
-		if (!frm.doc.description)
-			frm.set_value('description', frm.doc.medication_name);
-		mark_change_in_item(frm);
-	},
-
-	rate: function(frm) {
-		mark_change_in_item(frm);
-	},
-
-	is_billable: function(frm) {
-		mark_change_in_item(frm);
-	},
-
-	item_group: function(frm) {
-		mark_change_in_item(frm);
-	},
-
-	description: function(frm) {
-		mark_change_in_item(frm);
+	generic_name: function(frm) {
+		frm.set_value("abbr", frappe.get_abbr(frm.doc.generic_name))
 	},
 	refresh: function(frm) {
-		if (!frm.doc.__islocal) {
-			frm.add_custom_button(__('Change Item Code'), function() {
-				change_medication_code(frm.doc);
-			});
-			frm.set_df_property('item_code', 'hidden', true);
-			frm.set_df_property('stock_uom', 'read_only', true);
-			if (frm.doc.is_billable && frm.doc.rate > 0) {
-				frm.set_df_property('rate', 'read_only', true);
-			}
-		}
+		frm.set_query("medication", "combinations", function() {
+			return {
+				filters: {
+					is_combination: false
+				}
+			};
+		});
 	}
 });
 
-let mark_change_in_item = function(frm) {
+frappe.ui.form.on('Medication Linked Item', {
+	rate: function(frm, cdt, cdn) {
+		mark_change_in_item(frm, cdt, cdn);
+	},
+
+	is_billable: function(frm, cdt, cdn) {
+		mark_change_in_item(frm, cdt, cdn);
+	},
+
+	item_group: function(frm, cdt, cdn) {
+		mark_change_in_item(frm, cdt, cdn);
+	},
+
+	description: function(frm, cdt, cdn) {
+		mark_change_in_item(frm, cdt, cdn);
+	},
+})
+
+let mark_change_in_item = function(frm, cdt, cdn) {
 	if (!frm.doc.__islocal) {
-		frm.doc.change_in_item = 1;
+		frappe.model.set_value(cdt, cdn, 'change_in_item', 1);
 	}
 };
 

@@ -11,6 +11,7 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "medication_class",
    "fieldtype": "Data",
    "label": "Medication Class",
@@ -18,10 +19,11 @@
   }
  ],
  "links": [],
- "modified": "2020-07-10 21:35:15.393226",
+ "modified": "2023-03-24 21:12:01.434571",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Class",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -40,5 +42,6 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

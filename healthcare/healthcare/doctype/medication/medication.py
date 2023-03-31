@@ -13,77 +13,90 @@ from frappe.model.rename_doc import rename_doc
 
 
 class Medication(Document):
-	def validate(self):
-		self.enable_disable_item()
+	# def validate(self):
+	# 	self.enable_disable_item()
 
 	def after_insert(self):
 		create_item_from_medication(self)
 
 	def on_update(self):
-		if self.item and self.change_in_item:
+		if self.linked_items:
 			self.update_item_and_item_price()
 
-	def enable_disable_item(self):
-		if self.is_billable:
-			if self.disabled:
-				frappe.db.set_value("Item", self.item, "disabled", 1)
-			else:
-				frappe.db.set_value("Item", self.item, "disabled", 0)
+	# def enable_disable_item(self):
+	# 	if self.is_billable:
+	# 		if self.disabled:
+	# 			frappe.db.set_value("Item", self.item, "disabled", 1)
+	# 		else:
+	# 			frappe.db.set_value("Item", self.item, "disabled", 0)
 
 	def update_item_and_item_price(self):
-		if self.is_billable:
-			item_doc = frappe.get_doc("Item", {"name": self.item})
-			item_doc.item_name = self.medication_name
-			item_doc.item_group = self.item_group
-			item_doc.description = self.description
-			item_doc.stock_uom = self.stock_uom
-			item_doc.disabled = 0
-			item_doc.save(ignore_permissions=True)
+		for item in self.linked_items:
+			if not item.item:
+				insert_item(self, item)
+			else:
+				if item.is_billable:
+					if item.change_in_item:
+						item_doc = frappe.get_doc("Item", {"name": item.item_code})
+						item_doc.item_name = item.item_code
+						item_doc.item_group = item.item_group
+						item_doc.description = item.description
+						item_doc.stock_uom = item.stock_uom
+						item_doc.manufacturer = item.manufacturer
+						item_doc.brand = item.brand
+						item_doc.disabled = 0
+						item_doc.save(ignore_permissions=True)
+						if item.rate:
+							if not frappe.db.exists("Item Price", {"item_code": item.item_code}):
+								if item.item_code:
+									make_item_price(item.item_code, item.rate)
+							else:
+								item_price = frappe.get_doc("Item Price", {"item_code": item.item_code})
+								item_price.item_name = item.item_code
+								item_price.price_list_rate = item.rate
+								item_price.save()
 
-			if self.rate:
-				if not frappe.db.exists("Item Price", {"item_code": self.item}):
-					if self.item:
-						make_item_price(self.item, self.rate)
 				else:
-					item_price = frappe.get_doc("Item Price", {"item_code": self.item})
-					item_price.item_name = self.medication_name
-					item_price.price_list_rate = self.rate
-					item_price.save()
+					frappe.db.set_value("Item", item.item_code, "disabled", 1)
 
-		else:
-			frappe.db.set_value("Item", self.item, "disabled", 1)
-
-		self.db_set("change_in_item", 0)
+				frappe.db.set_value("Medication Linked Item", item.name, "change_in_item", 0)
+		self.reload()
 
 
 def create_item_from_medication(doc):
-	if not frappe.db.exists("Item", doc.item_code):
-		item = frappe.get_doc(
+	for item in doc.linked_items:
+		insert_item(doc, item)
+	doc.reload()
+
+
+def insert_item(doc, item):
+	if not frappe.db.exists("Item", item.item_code):
+		item_doc = frappe.get_doc(
 			{
 				"doctype": "Item",
-				"item_code": doc.item_code,
-				"item_name": doc.medication_name,
-				"item_group": doc.item_group,
-				"description": doc.description,
+				"item_code": item.item_code,
+				"item_name": item.item_code,
+				"item_group": item.item_group,
+				"description": item.item_code,
 				"is_sales_item": 1,
 				"is_stock_item": 1,
-				"disabled": 0 if doc.is_billable and not doc.disabled else 1,
-				"stock_uom": doc.stock_uom or frappe.db.get_single_value("Stock Settings", "stock_uom"),
+				"disabled": 0 if item.is_billable and not doc.disabled else 1,
+				"stock_uom": item.stock_uom or frappe.db.get_single_value("Stock Settings", "stock_uom"),
 			}
 		).insert(ignore_permissions=True, ignore_mandatory=True)
 	else:
-		item = frappe.get_doc("Item", doc.item_code)
-		if item.stock_uom != doc.stock_uom:
+		item_doc = frappe.get_doc("Item", item.item_code)
+		if item_doc.stock_uom != item.stock_uom:
 			frappe.throw(
 				_("Cannot link existing Item Code {}, UOM {} does not match with Item Stock UOM").format(
-					doc.item_code, doc.stock_uom, item.stock_uom
+					item.item_code, item.stock_uom, item_doc.stock_uom
 				)
 			)
-		item.item_name = doc.medication_name  # also update the name and description of existing item
-		item.description = doc.description
+		item_doc.item_name = item.item_code  # also update the name and description of existing item
+		item_doc.description = item.description
 
-	make_item_price(item.name, doc.rate)
-	doc.db_set("item", doc.item_code)
+	make_item_price(item_doc.name, item.rate)
+	frappe.db.set_value("Medication Linked Item", item.name, "item", item.item_code)
 
 
 def make_item_price(item, item_price):
