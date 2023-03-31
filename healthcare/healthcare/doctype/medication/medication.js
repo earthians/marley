@@ -64,7 +64,7 @@ let change_medication_code = function(doc) {
 					'method': 'healthcare.healthcare.doctype.medication.medication.change_item_code_from_medication',
 					'args': {item_code: values.item_code, doc: doc},
 					callback: function () {
-						cur_frm.reload_doc();
+						frm.reload_doc();
 						frappe.show_alert({
 							message: 'Item Code renamed successfully',
 							indicator: 'green'

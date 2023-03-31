@@ -6,7 +6,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cstr, get_link_to_form, getdate, now_datetime
+from frappe.utils import get_link_to_form, getdate, now_datetime
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.service_request.service_request import (
@@ -48,7 +48,8 @@ class LabTest(Document):
 			update_service_request_status(self.service_request, self.doctype, self.name)
 			billing_status = frappe.db.get_value("Service Request", self.service_request, "billing_status")
 			if billing_status == "Invoiced":
-				self.invoiced = True
+				self.db_set("invoiced", True)
+
 		if self.template:
 			self.load_test_from_template()
 			self.reload()
