@@ -341,3 +341,44 @@ def create_medication_request(encounter):
 	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
 	if not frappe.db.exists("Medication Request", {"order_group": encounter}):
 		encounter_doc.make_medication_request()
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
+	medication_name = filters.get("name")
+	medication_child = frappe.qb.DocType("Medication Linked Item")
+	medication = frappe.qb.DocType("Medication")
+	item = frappe.qb.DocType("Item")
+	data = (
+		frappe.qb.select(medication_child.brand, medication_child.manufacturer, medication_child.item)
+		.from_(medication_child)
+		.left_join(medication)
+		.on(medication.name == medication_child.parent)
+		.left_join(item)
+		.on(item.name == medication_child.item)
+		.where((medication.name == medication_name) & (item.disabled == 0))
+	).run(as_dict=True)
+	data_list = []
+	for d in data:
+		display_list = []
+		if d.get("item"):
+			display_list.append(d.get("item"))
+		if d.get("brand"):
+			display_list.append(d.get("brand"))
+		if d.get("manufacturer"):
+			display_list.append(d.get("manufacturer"))
+		default_warehouse = frappe.get_cached_value("Stock Settings", None, "default_warehouse")
+		if default_warehouse:
+			actual_qty = frappe.db.get_value(
+				"Bin", {"warehouse": default_warehouse, "item_code": d.get("name")}, "actual_qty"
+			)
+			display_list.append("Qty:" + str(actual_qty) if actual_qty else "0")
+		data_list.append(display_list)
+	res = tuple(tuple(sub) for sub in data_list)
+	return res
+
+
+@frappe.whitelist()
+def get_medications(medication):
+	return frappe.get_all("Medication Linked Item", {"parent": medication}, ["item"])

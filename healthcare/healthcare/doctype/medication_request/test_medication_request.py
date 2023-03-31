@@ -55,7 +55,7 @@ def create_medcation():
 			medication = frappe.get_doc(
 				{
 					"doctype": "Medication",
-					"medication_name": "_Test Medication",
+					"generic_name": "_Test Medication",
 					"medication_class": "Tablet",
 					"abbr": "Test",
 					"strength": 500,
