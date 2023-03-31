@@ -86,7 +86,7 @@ frappe.ui.form.on(cur_frm.doctype, {
 			async: false,
 			freeze: true,
 			args: {
-				doctype: cur_frm.doctype,
+				doctype: frm.doctype,
 				request: frm.doc.name,
 				status: status
 			},

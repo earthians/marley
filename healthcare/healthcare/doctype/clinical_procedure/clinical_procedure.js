@@ -449,7 +449,7 @@ let get_procedure_prescribed = function(frm){
 		});
 	}
 	else{
-		frappe.msgprint("Please select Patient to get prescribed procedure");
+		frappe.msgprint(__("Please select Patient to get prescribed procedure"));
 	}
 };
 
