@@ -3,32 +3,35 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import frappe
 import unittest
+
+import frappe
 from frappe.utils import getdate, nowtime
-
-from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
-	create_healthcare_docs,
-)
-
-from healthcare.healthcare.doctype.lab_test.test_lab_test import (
-	create_lab_test_template, create_lab_test
-)
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
 )
+from healthcare.healthcare.doctype.lab_test.test_lab_test import (
+	create_lab_test,
+	create_lab_test_template,
+)
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_healthcare_docs,
+)
+
 
 class TestServiceRequest(unittest.TestCase):
 	def test_creation_on_encounter_submission(self):
 		patient, practitioner = create_healthcare_docs()
 		insulin_resistance_template = create_lab_test_template()
-		encounter = create_encounter(patient, practitioner, "lab_test_prescription", insulin_resistance_template)
+		encounter = create_encounter(
+			patient, practitioner, "lab_test_prescription", insulin_resistance_template
+		)
 		self.assertTrue(frappe.db.exists("Service Request", {"order_group": encounter.name}))
-		service_request = frappe.db.get_value('Service Request', {'order_group':encounter.name}, 'name')
+		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name}, "name")
 		if service_request:
-			service_request_doc = frappe.get_doc('Service Request', service_request)
+			service_request_doc = frappe.get_doc("Service Request", service_request)
 			service_request_doc.submit()
 			lab_test = create_lab_test(insulin_resistance_template)
 			lab_test.service_request = service_request
@@ -38,27 +41,28 @@ class TestServiceRequest(unittest.TestCase):
 			lab_test.submit()
 
 			# create sales invoice with service request and check service request and lab test is marked as invoiced
-			create_sales_invoice(patient, service_request_doc, insulin_resistance_template, "lab_test_prescription")
+			create_sales_invoice(
+				patient, service_request_doc, insulin_resistance_template, "lab_test_prescription"
+			)
 			# self.assertTrue(frappe.db.get_value("Service Request", service_request_doc.name, "invoiced"))
-			self.assertEqual(frappe.db.get_value("Service Request", service_request_doc.name, "billing_status"), "Invoiced")
+			self.assertEqual(
+				frappe.db.get_value("Service Request", service_request_doc.name, "billing_status"), "Invoiced"
+			)
 			self.assertTrue(frappe.db.get_value("Lab Test", lab_test.name, "invoiced"))
 
 
 def create_encounter(patient, practitioner, type, template):
-	patient_encounter = frappe.new_doc('Patient Encounter')
+	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
 	patient_encounter.practitioner = practitioner
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
 	if type == "lab_test_prescription":
-		patient_encounter.append(type, {
-			'lab_test_code': template.item,
-			'lab_test_name': template.lab_test_name
-		})
+		patient_encounter.append(
+			type, {"lab_test_code": template.item, "lab_test_name": template.lab_test_name}
+		)
 	elif type == "drug_prescription":
-		patient_encounter.append(type, {
-			'medication': template.name
-		})
+		patient_encounter.append(type, {"medication": template.name})
 
 	patient_encounter.submit()
 	return patient_encounter
@@ -83,7 +87,7 @@ def create_sales_invoice(patient, service_request, template, type):
 				"rate": template.lab_test_rate,
 				"amount": template.lab_test_rate,
 				"reference_dt": service_request.doctype,
-				"reference_dn" : service_request.name,
+				"reference_dn": service_request.name,
 				"item_code": template.item,
 				"item_name": template.lab_test_name,
 				"description": template.lab_test_description,
@@ -100,7 +104,7 @@ def create_sales_invoice(patient, service_request, template, type):
 				"rate": template.rate,
 				"amount": template.rate,
 				"reference_dt": service_request.doctype,
-				"reference_dn" : service_request.name,
+				"reference_dn": service_request.name,
 				"item_code": template.item,
 				"item_name": template.name,
 				"description": template.description,
