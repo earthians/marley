@@ -1,15 +1,16 @@
 # Copyright (c) 2022, healthcare and Contributors
 # See license.txt
 
-import frappe
 import unittest
 
-from healthcare.healthcare.doctype.service_request.test_service_request import (
-    create_encounter,
-    create_sales_invoice,
-)
+import frappe
+
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_healthcare_docs,
+)
+from healthcare.healthcare.doctype.service_request.test_service_request import (
+	create_encounter,
+	create_sales_invoice,
 )
 
 
@@ -22,13 +23,20 @@ class TestMedicationRequest(unittest.TestCase):
 		medication = create_medcation()
 		encounter = create_encounter(patient, practitioner, "drug_prescription", medication)
 		self.assertTrue(frappe.db.exists("Medication Request", {"order_group": encounter.name}))
-		medication_request = frappe.db.get_value('Medication Request', {'order_group':encounter.name}, 'name')
+		medication_request = frappe.db.get_value(
+			"Medication Request", {"order_group": encounter.name}, "name"
+		)
 		if medication_request:
-			medication_request_doc = frappe.get_doc('Medication Request', medication_request)
+			medication_request_doc = frappe.get_doc("Medication Request", medication_request)
 			medication_request_doc.submit()
 			create_sales_invoice(patient, medication_request_doc, medication, "drug_prescription")
-			self.assertEqual(frappe.db.get_value("Medication Request", medication_request_doc.name, "qty_invoiced"), 1)
-			self.assertEqual(frappe.db.get_value("Medication Request", medication_request_doc.name, "billing_status"), "Invoiced")
+			self.assertEqual(
+				frappe.db.get_value("Medication Request", medication_request_doc.name, "qty_invoiced"), 1
+			)
+			self.assertEqual(
+				frappe.db.get_value("Medication Request", medication_request_doc.name, "billing_status"),
+				"Invoiced",
+			)
 
 
 def create_medcation():
@@ -58,11 +66,11 @@ def create_medcation():
 					"default_prescription_dosage": "0-1-0",
 					"default_prescription_duration": "1 Hour",
 					"is_billable": 1,
-					"rate": 800
+					"rate": 800,
 				}
 			).insert(ignore_permissions=True, ignore_mandatory=True)
 			return medication
 		except frappe.DuplicateEntryError:
 			pass
-	else :
-		return frappe.get_doc('Medication', '_Test Medication')
+	else:
+		return frappe.get_doc("Medication", "_Test Medication")
