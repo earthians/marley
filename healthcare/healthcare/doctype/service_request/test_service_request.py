@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import unittest
 
+import erpnext
 import frappe
 from frappe.utils import getdate, nowtime
 
@@ -39,12 +40,10 @@ class TestServiceRequest(unittest.TestCase):
 			lab_test.descriptive_test_items[1].result_value = 2
 			lab_test.descriptive_test_items[2].result_value = 3
 			lab_test.submit()
-
 			# create sales invoice with service request and check service request and lab test is marked as invoiced
 			create_sales_invoice(
 				patient, service_request_doc, insulin_resistance_template, "lab_test_prescription"
 			)
-			# self.assertTrue(frappe.db.get_value("Service Request", service_request_doc.name, "invoiced"))
 			self.assertEqual(
 				frappe.db.get_value("Service Request", service_request_doc.name, "billing_status"), "Invoiced"
 			)
@@ -88,6 +87,7 @@ def create_sales_invoice(patient, service_request, template, type):
 				"amount": template.lab_test_rate,
 				"reference_dt": service_request.doctype,
 				"reference_dn": service_request.name,
+				"cost_center": erpnext.get_default_cost_center("_Test Company"),
 				"item_code": template.item,
 				"item_name": template.lab_test_name,
 				"description": template.lab_test_description,
@@ -105,9 +105,10 @@ def create_sales_invoice(patient, service_request, template, type):
 				"amount": template.rate,
 				"reference_dt": service_request.doctype,
 				"reference_dn": service_request.name,
+				"cost_center": erpnext.get_default_cost_center("_Test Company"),
 				"item_code": template.item,
 				"item_name": template.name,
-				"description": template.description,
+				"description": template.name,
 			},
 		)
 	sales_invoice.set_missing_values()

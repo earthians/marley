@@ -1,34 +1,29 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:medication_name",
+ "autoname": "field:generic_name",
  "creation": "2020-03-24 15:56:36.583587",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "medication_name",
+  "generic_name",
   "medication_class",
   "abbr",
   "national_drug_code",
-  "generic_name",
+  "is_combination",
   "column_break_4",
+  "disabled",
   "strength",
   "strength_uom",
-  "dosage_form",
-  "disabled",
+  "combinations_section",
+  "combinations",
   "item_details",
-  "item",
-  "item_code",
-  "item_group",
-  "stock_uom",
-  "description",
-  "column_break_14",
-  "is_billable",
-  "rate",
+  "linked_items",
   "defaults_section",
   "default_prescription_dosage",
   "default_prescription_duration",
+  "dosage_form",
   "column_break_16",
   "default_interval",
   "default_interval_uom",
@@ -37,7 +32,8 @@
   "change_in_item",
   "service_request_defaults_section",
   "patient_care_type",
-  "staff_role"
+  "staff_role",
+  "drug_code"
  ],
  "fields": [
   {
@@ -47,18 +43,11 @@
    "no_copy": 1
   },
   {
-   "fieldname": "medication_name",
-   "fieldtype": "Data",
-   "label": "Medication Name",
-   "no_copy": 1,
-   "reqd": 1,
-   "unique": 1
-  },
-  {
    "fieldname": "generic_name",
    "fieldtype": "Data",
    "label": "Generic Name",
-   "no_copy": 1
+   "no_copy": 1,
+   "unique": 1
   },
   {
    "fieldname": "medication_class",
@@ -87,17 +76,9 @@
    "reqd": 1
   },
   {
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "label": "Item",
-   "no_copy": 1,
-   "options": "Item",
-   "read_only": 1
-  },
-  {
    "fieldname": "defaults_section",
    "fieldtype": "Section Break",
-   "label": "Default Dosage"
+   "label": "Defaults"
   },
   {
    "fieldname": "default_prescription_dosage",
@@ -134,34 +115,6 @@
    "label": "Reference URL"
   },
   {
-   "fieldname": "item_code",
-   "fieldtype": "Data",
-   "label": "Item Code",
-   "no_copy": 1,
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "item_group",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Item Group",
-   "no_copy": 1,
-   "options": "Item Group",
-   "reqd": 1
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "Description",
-   "no_copy": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_14",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "0",
    "fieldname": "disabled",
    "fieldtype": "Check",
@@ -184,14 +137,6 @@
    "hidden": 1
   },
   {
-   "fieldname": "stock_uom",
-   "fieldtype": "Link",
-   "label": "Stock UOM",
-   "no_copy": 1,
-   "options": "UOM",
-   "reqd": 1
-  },
-  {
    "fieldname": "abbr",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -203,8 +148,7 @@
    "fieldname": "dosage_form",
    "fieldtype": "Link",
    "label": "Dosage Form",
-   "options": "Dosage Form",
-   "reqd": 1
+   "options": "Dosage Form"
   },
   {
    "fieldname": "column_break_16",
@@ -217,21 +161,6 @@
    "fieldname": "item_details",
    "fieldtype": "Section Break",
    "label": "Linked Item"
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "default": "0",
-   "fieldname": "is_billable",
-   "fieldtype": "Check",
-   "label": "Is Billable"
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "depends_on": "is_billable",
-   "fieldname": "rate",
-   "fieldtype": "Float",
-   "label": "Rate",
-   "mandatory_depends_on": "is_billable"
   },
   {
    "collapsible": 1,
@@ -258,13 +187,40 @@
    "in_standard_filter": 1,
    "label": "Drug Code",
    "no_copy": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "is_combination",
+   "fieldname": "combinations_section",
+   "fieldtype": "Section Break",
+   "label": "Combinations"
+  },
+  {
+   "depends_on": "is_combination",
+   "fieldname": "combinations",
+   "fieldtype": "Table",
+   "label": "Combinations",
+   "options": "Medication Ingredient"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_combination",
+   "fieldtype": "Check",
+   "label": "Is Combination"
+  },
+  {
+   "fieldname": "linked_items",
+   "fieldtype": "Table",
+   "label": "Linked Items",
+   "options": "Medication Linked Item"
   }
  ],
  "links": [],
- "modified": "2021-12-23 07:15:11.763152",
+ "modified": "2023-03-27 13:35:44.269907",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -295,5 +251,6 @@
  "search_fields": "abbr, national_drug_code, generic_name",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

@@ -537,7 +537,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-03-20 12:52:18.649393",
+ "modified": "2023-03-23 11:06:58.253841",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
@@ -595,6 +595,5 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "title",
- "track_changes": 1,
- "track_seen": 1
+ "track_changes": 1
 }
