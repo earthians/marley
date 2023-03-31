@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import add_days, cstr, getdate
+from frappe.utils import add_days, getdate
 
 from healthcare.healthcare.utils import get_medical_codes
 
@@ -310,7 +310,6 @@ def validate_codification_table(doc):
 							"system": m_code.get("system"),
 						},
 					)
-		frappe.delete_doc("Inpatient Medication Order", record, force=1)
 
 
 @frappe.whitelist()

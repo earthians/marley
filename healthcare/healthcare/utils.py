@@ -9,7 +9,7 @@ import math
 import frappe
 from erpnext.setup.utils import insert_record
 from frappe import _
-from frappe.utils import cstr, flt, get_link_to_form, getdate, rounded, time_diff_in_hours
+from frappe.utils import cstr, flt, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
@@ -910,22 +910,6 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 		)
 
 	return {"html": doc_html}
-
-
-def update_address_links(address, method):
-	"""
-	Hook validate Address
-	If Patient is linked in Address, also link the associated Customer
-	"""
-	if "Healthcare" not in frappe.get_active_domains():
-		return
-
-	patient_links = list(filter(lambda link: link.get("link_doctype") == "Patient", address.links))
-
-	for link in patient_links:
-		customer = frappe.db.get_value("Patient", link.get("link_name"), "customer")
-		if customer and not address.has_link("Customer", customer):
-			address.append("links", dict(link_doctype="Customer", link_name=customer))
 
 
 def update_address_links(address, method):
