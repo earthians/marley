@@ -6,12 +6,12 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_link_to_form, getdate, now_datetime
+from frappe.utils import cstr, get_link_to_form, getdate, now_datetime
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-
-from frappe.utils import getdate, cstr, get_link_to_form
-from healthcare.healthcare.doctype.service_request.service_request import update_service_request_status
+from healthcare.healthcare.doctype.service_request.service_request import (
+	update_service_request_status,
+)
 
 
 class LabTest(Document):
@@ -28,12 +28,12 @@ class LabTest(Document):
 		self.db_set("status", "Completed")
 
 		if self.service_request:
-			frappe.db.set_value('Service Request', self.service_request, 'status', 'Completed')
+			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
 		if self.service_request:
-			frappe.db.set_value('Service Request', self.service_request, 'status', 'Active')
+			frappe.db.set_value("Service Request", self.service_request, "status", "Active")
 		self.reload()
 
 	def on_update(self):
@@ -46,8 +46,8 @@ class LabTest(Document):
 	def after_insert(self):
 		if self.service_request:
 			update_service_request_status(self.service_request, self.doctype, self.name)
-			billing_status = frappe.db.get_value('Service Request', self.service_request, 'billing_status')
-			if billing_status == 'Invoiced':
+			billing_status = frappe.db.get_value("Service Request", self.service_request, "billing_status")
+			if billing_status == "Invoiced":
 				self.invoiced = True
 		if self.template:
 			self.load_test_from_template()
@@ -95,6 +95,7 @@ class LabTest(Document):
 						title=_("Mandatory Results"),
 					)
 
+
 def before_insert(self):
 	if self.service_request:
 		lab_test = frappe.db.exists(
@@ -105,9 +106,7 @@ def before_insert(self):
 			frappe.throw(
 				_("Lab Test {0} already created from service request {1}").format(
 					frappe.bold(get_link_to_form("Lab Test", lab_test)),
-					frappe.bold(
-						get_link_to_form("Service Request", self.service_request)
-					),
+					frappe.bold(get_link_to_form("Service Request", self.service_request)),
 				),
 				title=_("Already Exist"),
 			)
@@ -162,18 +161,27 @@ def create_lab_test_from_encounter(encounter):
 	encounter = frappe.get_doc("Patient Encounter", encounter)
 
 	if encounter:
-		patient = frappe.get_doc('Patient', encounter.patient)
-		service_requests = frappe.db.get_list('Service Request', filters={ 'order_group': encounter.name, 'status': ['!=', 'Completed'], 'template_dt': 'Lab Test Template'},
-		fields=['name'])
+		patient = frappe.get_doc("Patient", encounter.patient)
+		service_requests = frappe.db.get_list(
+			"Service Request",
+			filters={
+				"order_group": encounter.name,
+				"status": ["!=", "Completed"],
+				"template_dt": "Lab Test Template",
+			},
+			fields=["name"],
+		)
 		if service_requests:
 			for service_request in service_requests:
-				service_request_doc = frappe.get_doc('Service Request', service_request)
+				service_request_doc = frappe.get_doc("Service Request", service_request)
 				template = get_lab_test_template(service_request_doc.template_dn)
 				if template:
-					lab_test = create_lab_test_doc(service_request_doc.invoiced, encounter.practitioner, patient, template, encounter.company)
+					lab_test = create_lab_test_doc(
+						service_request_doc.invoiced, encounter.practitioner, patient, template, encounter.company
+					)
 					lab_test.service_request = service_request_doc.name
-					lab_test.save(ignore_permissions = True)
-					frappe.db.set_value('Service Request', service_request_doc.name, 'status', 'Scheduled')
+					lab_test.save(ignore_permissions=True)
+					frappe.db.set_value("Service Request", service_request_doc.name, "status", "Scheduled")
 					if not lab_test_created:
 						lab_test_created = lab_test.name
 					else:
@@ -191,11 +199,7 @@ def create_lab_test_from_invoice(sales_invoice):
 			if item.reference_dt == "Service Request":
 
 				lab_test_created = (
-					1
-					if frappe.db.exists(
-						"Lab Test", {"service_request": item.reference_dn}
-					)
-					else 0
+					1 if frappe.db.exists("Lab Test", {"service_request": item.reference_dn}) else 0
 				)
 			elif item.reference_dt == "Lab Test":
 				lab_test_created = 1
@@ -420,8 +424,8 @@ def load_result_format(lab_test, template, prescription, invoice):
 		if prescription:
 			lab_test.prescription = prescription
 			if invoice:
-				frappe.db.set_value('Service Request', lab_test.service_request, 'status', 'Completed')
-		lab_test.save(ignore_permissions=True) # Insert the result
+				frappe.db.set_value("Service Request", lab_test.service_request, "status", "Completed")
+		lab_test.save(ignore_permissions=True)  # Insert the result
 		return lab_test
 
 
@@ -435,13 +439,14 @@ def get_employee_by_user_id(user_id):
 
 @frappe.whitelist()
 def get_lab_test_prescribed(patient):
-	hso = frappe.qb.DocType('Service Request')
+	hso = frappe.qb.DocType("Service Request")
 	return (
 		frappe.qb.from_(hso)
-			.select(hso.template_dn, hso.order_group, hso.invoiced,\
-				hso.practitioner, hso.order_date, hso.name)
-			.where(hso.patient == patient)
-			.where(hso.status != 'Completed')
-			.where(hso.template_dt == 'Lab Test Template')
-			.orderby(hso.creation, order=frappe.qb.desc)
+		.select(
+			hso.template_dn, hso.order_group, hso.invoiced, hso.practitioner, hso.order_date, hso.name
+		)
+		.where(hso.patient == patient)
+		.where(hso.status != "Completed")
+		.where(hso.template_dt == "Lab Test Template")
+		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()

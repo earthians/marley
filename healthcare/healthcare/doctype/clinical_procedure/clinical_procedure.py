@@ -8,14 +8,15 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, nowdate, nowtime, now_datetime, get_link_to_form
+from frappe.utils import flt, get_link_to_form, now_datetime, nowdate, nowtime
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.doctype.service_request.service_request import (
+	update_service_request_status,
+)
 from healthcare.healthcare.utils import validate_nursing_tasks
-
-from healthcare.healthcare.doctype.service_request.service_request import update_service_request_status
 
 
 class ClinicalProcedure(Document):
@@ -44,16 +45,14 @@ class ClinicalProcedure(Document):
 				frappe.throw(
 					_("Clinical Procedure {0} already created from service request {1}").format(
 						frappe.bold(get_link_to_form("Clinical Procedure", therapy_session)),
-						frappe.bold(
-							get_link_to_form("Service Request", self.service_request)
-						),
+						frappe.bold(get_link_to_form("Service Request", self.service_request)),
 					),
 					title=_("Already Exist"),
 				)
 
 	def on_cancel(self):
 		if self.service_request:
-			frappe.db.set_value('Service Request', self.service_request, 'status', 'Active')
+			frappe.db.set_value("Service Request", self.service_request, "status", "Active")
 
 	def after_insert(self):
 		if self.service_request:
@@ -67,7 +66,7 @@ class ClinicalProcedure(Document):
 			if template.sample:
 				patient = frappe.get_doc("Patient", self.patient)
 				sample_collection = create_sample_doc(template, patient, None, self.company)
-				self.db_set('sample', sample_collection.name)
+				self.db_set("sample", sample_collection.name)
 
 		self.reload()
 
@@ -93,11 +92,11 @@ class ClinicalProcedure(Document):
 				template, self, start_time=start_time, post_event=post_event
 			)
 
-		template_doc = frappe.get_doc('Clinical Procedure Template', self.procedure_template)
+		template_doc = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
 		if template_doc.sample:
-			patient = frappe.get_doc('Patient', self.patient)
+			patient = frappe.get_doc("Patient", self.patient)
 			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
-			self.db_set('sample', sample_collection.name)
+			self.db_set("sample", sample_collection.name)
 			self.reload()
 
 	def set_status(self):
@@ -163,10 +162,10 @@ class ClinicalProcedure(Document):
 					title=_("Customer Not Found"),
 				)
 
-		self.db_set('status', 'Completed')
+		self.db_set("status", "Completed")
 
 		if self.service_request:
-			frappe.db.set_value('Service Request', self.service_request, 'status', 'Completed')
+			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
 
 		# post op nursing tasks
 		if self.procedure_template:
@@ -345,16 +344,17 @@ def make_procedure(source_name, target_doc=None):
 
 	return doc
 
+
 @frappe.whitelist()
 def get_procedure_prescribed(patient, encounter=False):
-	hso = frappe.qb.DocType('Service Request')
-	return  (
+	hso = frappe.qb.DocType("Service Request")
+	return (
 		frappe.qb.from_(hso)
-			.select(hso.template_dn, hso.order_group, hso.invoiced,\
-				hso.practitioner, hso.order_date, hso.name)
-			.where(hso.patient == patient)
-			.where(hso.status != 'Completed')
-			.where(hso.template_dt == 'Clinical Procedure Template')
-			.orderby(hso.creation, order=frappe.qb.desc)
+		.select(
+			hso.template_dn, hso.order_group, hso.invoiced, hso.practitioner, hso.order_date, hso.name
+		)
+		.where(hso.patient == patient)
+		.where(hso.status != "Completed")
+		.where(hso.template_dt == "Clinical Procedure Template")
+		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
-
