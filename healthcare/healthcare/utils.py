@@ -906,6 +906,8 @@ def before_tests():
 	# complete setup if missing
 	from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 
+	current_year = frappe.utils.now_datetime().year
+
 	if not frappe.get_list("Company"):
 		setup_complete(
 			{
@@ -916,8 +918,8 @@ def before_tests():
 				"company_abbr": "WP",
 				"industry": "Healthcare",
 				"country": "United States",
-				"fy_start_date": "2022-04-01",
-				"fy_end_date": "2023-03-31",
+				"fy_start_date": f"{current_year}-01-01",
+				"fy_end_date": f"{current_year}-12-31",
 				"language": "english",
 				"company_tagline": "Testing",
 				"email": "test@erpnext.com",
