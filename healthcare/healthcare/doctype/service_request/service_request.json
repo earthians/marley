@@ -56,8 +56,7 @@
   "order_description",
   "patient_instructions",
   "medical_code_section",
-  "medical_code_standard",
-  "medical_code",
+  "codification_table",
   "origin_section",
   "order_reference_doctype",
   "order_reference_name",
@@ -186,20 +185,7 @@
    "collapsible": 1,
    "fieldname": "medical_code_section",
    "fieldtype": "Section Break",
-   "label": "Medical Code"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
+   "label": "Medical Coding"
   },
   {
    "default": "1",
@@ -519,6 +505,12 @@
    "label": "Billing Status",
    "options": "Pending\nPartly Invoiced\nInvoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -537,7 +529,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-03-23 11:06:58.253841",
+ "modified": "2023-04-04 15:41:42.422714",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
