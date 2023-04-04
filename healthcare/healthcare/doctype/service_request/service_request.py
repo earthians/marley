@@ -14,6 +14,12 @@ from healthcare.controllers.service_request_controller import ServiceRequestCont
 
 
 class ServiceRequest(ServiceRequestController):
+	def validate(self):
+		if self.template_dt and self.template_dn and not self.codification_table:
+			template_doc = frappe.get_doc(self.template_dt, self.template_dn)
+			for mcode in template_doc.codification_table:
+				self.append("codification_table", (frappe.copy_doc(mcode)).as_dict())
+
 	def set_title(self):
 		if frappe.flags.in_import and self.title:
 			return
