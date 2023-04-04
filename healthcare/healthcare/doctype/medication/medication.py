@@ -13,22 +13,12 @@ from frappe.model.rename_doc import rename_doc
 
 
 class Medication(Document):
-	# def validate(self):
-	# 	self.enable_disable_item()
-
 	def after_insert(self):
 		create_item_from_medication(self)
 
 	def on_update(self):
 		if self.linked_items:
 			self.update_item_and_item_price()
-
-	# def enable_disable_item(self):
-	# 	if self.is_billable:
-	# 		if self.disabled:
-	# 			frappe.db.set_value("Item", self.item, "disabled", 1)
-	# 		else:
-	# 			frappe.db.set_value("Item", self.item, "disabled", 0)
 
 	def update_item_and_item_price(self):
 		for item in self.linked_items:
