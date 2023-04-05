@@ -45,6 +45,12 @@ frappe.ui.form.on('Inpatient Record', {
 					discharge_patient(frm);
 				} );
 			}
+
+			if (!["Discharge Scheduled", "Cancelled", "Discharged"].includes(frm.doc.status)) {
+				frm.add_custom_button(__('Treatment Plan Consent'), function() {
+					create_tratment_plan_consent(frm);
+				}, "Create");
+			}
 		}
 
 		frm.add_custom_button(__("Clinical Note"), function() {
@@ -325,4 +331,92 @@ let cancel_ip_order = function(frm) {
 			}
 		});
 	}, __('Reason for Cancellation'), __('Submit'));
+}
+
+var create_tratment_plan_consent = function(frm) {
+	var dialog = new frappe.ui.Dialog({
+		title: "Patient Admission",
+		fields: [
+			{fieldtype: "Link", label: "Treatment Plan Template", fieldname: "treatment_plan_template", options: "Treatment Plan Template"},
+		],
+		primary_action_label: __("Order Admission"),
+		primary_action : function() {
+			var args = {
+				patient: frm.doc.patient,
+				inpatient_record: frm.doc.name,
+				admission_encounter: frm.doc.admission_encounter,
+				referring_practitioner: frm.doc.practitioner,
+				company: frm.doc.company,
+				medical_department: frm.doc.medical_department,
+				primary_practitioner: frm.doc.primary_practitioner,
+				secondary_practitioner: frm.doc.secondary_practitioner,
+				admission_ordered_for: frm.doc.admission_ordered_for,
+				admission_service_unit_type: frm.doc.service_unit_type,
+				treatment_plan_template: dialog.get_value("treatment_plan_template"),
+				expected_length_of_stay: frm.doc.expected_length_of_stay,
+				admission_instruction: frm.doc.admission_instruction,
+				admission_nursing_checklist_template: frm.doc.admission_nursing_checklist_template,
+			}
+			frappe.db.get_value("Treatment Plan Consent", {
+				"status": "Active",
+				"admission_encounter": frm.doc.admission_encounter,
+				"docstatus": 1,
+				"name": ["!=", frm.doc.name],
+				}, "name")
+				.then(r => {
+					let values = r.message;
+					console.log(values.name)
+					if (values.name) {
+						frappe.confirm(`Treatment Plan Consent already exist<br>
+						Proceed to Cancel?`,
+							() => {
+								frappe.call({
+								method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.cancel_amend_treatment_plan_consent",
+									args: {
+										args: args,
+										treatment_plan_consent: values.name
+									},
+									callback: function(data) {
+										if (!data.exc) {
+											frm.reload_doc();
+										}
+									}
+								})
+							})
+					} else {
+						create_treatment_plan_consent(frm, args)
+					}
+			})
+			frm.refresh_fields();
+			dialog.hide();
+		}
+	});
+
+
+	dialog.fields_dict["treatment_plan_template"].get_query = function() {
+		return {
+			filters: {
+				"treatment_plan_consent_required_for_ip": 1,
+			}
+		};
+	};
+
+	dialog.show();
+	dialog.$wrapper.find(".modal-dialog").css("width", "800px");
+};
+
+var create_treatment_plan_consent = function(frm, args) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.create_treatment_plan_consent",
+		args: {
+			args: args
+		},
+		freeze: true,
+		freeze_message: __("Creating Treatment Plan Consent"),
+		callback: function(data) {
+			if (!data.exc) {
+				frm.reload_doc();
+			}
+		},
+	});
 }

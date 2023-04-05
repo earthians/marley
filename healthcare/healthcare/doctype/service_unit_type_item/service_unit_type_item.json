@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-04-04 21:59:00.309576",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "is_stock_item",
+  "billing_type",
+  "charge"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.billing_type==\"Fixed\" || doc.is_stock_item==0;",
+   "fieldname": "charge",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Charge"
+  },
+  {
+   "default": "0",
+   "fetch_from": "item_code.is_stock_item",
+   "fieldname": "is_stock_item",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Stock Item"
+  },
+  {
+   "depends_on": "eval:doc.is_stock_item==1;",
+   "fieldname": "billing_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Billing Type",
+   "options": "\nBased on Consumption\nFixed"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-04-05 11:23:35.415553",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Service Unit Type Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
