@@ -50,7 +50,7 @@ frappe.ui.form.on('Patient Encounter', {
 
 		if (!frm.doc.__islocal) {
 			if (frm.doc.docstatus === 1) {
-				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted'].includes(frm.doc.inpatient_status)) {
+				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted', 'Treatment Plan Consent Created'].includes(frm.doc.inpatient_status)) {
 					frm.add_custom_button(__('Schedule Admission'), function() {
 						schedule_inpatient(frm);
 					});
@@ -338,6 +338,7 @@ var schedule_inpatient = function(frm) {
 			{fieldtype: 'Date', label: 'Admission Ordered For', fieldname: 'admission_ordered_for', default: 'Today'},
 			{fieldtype: 'Link', label: 'Service Unit Type', fieldname: 'service_unit_type', options: 'Healthcare Service Unit Type'},
 			{fieldtype: 'Int', label: 'Expected Length of Stay', fieldname: 'expected_length_of_stay'},
+			{fieldtype: 'Link', label: 'Treatment Plan Template', fieldname: 'treatment_plan_template', options: 'Treatment Plan Template'},
 			{fieldtype: 'Section Break'},
 			{fieldtype: 'Long Text', label: 'Admission Instructions', fieldname: 'admission_instruction'}
 		],
@@ -353,9 +354,10 @@ var schedule_inpatient = function(frm) {
 				secondary_practitioner: dialog.get_value('secondary_practitioner'),
 				admission_ordered_for: dialog.get_value('admission_ordered_for'),
 				admission_service_unit_type: dialog.get_value('service_unit_type'),
+				treatment_plan_template: dialog.get_value('treatment_plan_template'),
 				expected_length_of_stay: dialog.get_value('expected_length_of_stay'),
 				admission_instruction: dialog.get_value('admission_instruction'),
-				admission_nursing_checklist_template: dialog.get_value('admission_nursing_checklist_template')
+				admission_nursing_checklist_template: dialog.get_value('admission_nursing_checklist_template'),
 			}
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_inpatient',

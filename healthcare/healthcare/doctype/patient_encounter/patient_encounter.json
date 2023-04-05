@@ -394,6 +394,10 @@
   {
    "link_doctype": "Clinical Note",
    "link_fieldname": "reference_name"
+  },
+  {
+   "link_doctype": "Treatment Plan Consent",
+   "link_fieldname": "admission_encounter"
   }
  ],
  "modified": "2023-11-07 18:03:12.793649",

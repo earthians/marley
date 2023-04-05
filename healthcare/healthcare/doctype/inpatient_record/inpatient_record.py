@@ -110,7 +110,21 @@ class InpatientRecord(Document):
 
 @frappe.whitelist()
 def schedule_inpatient(args):
-	admission_order = json.loads(args)  # admission order via Encounter
+    admission_order = json.loads(args)  # admission order via Encounter
+    if admission_order.get("treatment_plan_template") and frappe.db.get_value(
+        "Treatment Plan Template",
+        admission_order.get("treatment_plan_template"),
+        "treatment_plan_consent_required_for_ip",
+    ):
+        create_treatment_plan_consent(admission_order)
+    else:
+        create_inpatient_record(admission_order)
+
+
+def create_inpatient_record(admission_order):
+	if isinstance(admission_order, str):
+		admission_order = json.loads(admission_order)
+
 	if (
 		not admission_order
 		or not admission_order["patient"]
@@ -160,6 +174,7 @@ def schedule_inpatient(args):
 
 	inpatient_record.status = "Admission Scheduled"
 	inpatient_record.save(ignore_permissions=True)
+	return inpatient_record.name
 
 
 @frappe.whitelist()
@@ -449,3 +464,25 @@ def validate_incompleted_service_requests(inpatient_record):
 		message = _("There are Orders yet to be carried out<br> {0}")
 
 		frappe.throw(message.format(", ".join(service_requests)))
+
+
+@frappe.whitelist()
+def cancel_amend_treatment_plan_consent(args, treatment_plan_consent):
+	if isinstance(args, str):
+		args = json.loads(args)
+	tpc_doc = frappe.get_doc("Treatment Plan Consent", treatment_plan_consent)
+	tpc_doc.flags.ignore_validate = True
+	tpc_doc.cancel()
+	args["amended_from"] = treatment_plan_consent
+	create_treatment_plan_consent(args)
+
+
+@frappe.whitelist()
+def create_treatment_plan_consent(args):
+	if isinstance(args, str):
+		args = json.loads(args)
+	financial_counselling = frappe.new_doc("Treatment Plan Consent")
+	set_details_from_ip_order(financial_counselling, args)
+	financial_counselling.encounter_status = "Admission Scheduled"
+	financial_counselling.status = "Active"
+	financial_counselling.save(ignore_permissions=True)
