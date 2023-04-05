@@ -217,7 +217,6 @@ var show_lab_tests = function (frm, lab_test_list) {
 		row.find("a").click(function () {
 			frm.doc.template = $(this).attr('data-lab-test');
 			frm.doc.service_request = $(this).attr('data-name');
-			console.log($(this).attr('data-name'))
 			frm.doc.practitioner = $(this).attr('data-practitioner');
 			frm.set_df_property('template', 'read_only', 1);
 			frm.set_df_property('patient', 'read_only', 1);

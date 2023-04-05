@@ -342,8 +342,13 @@
   }
  ],
  "is_submittable": 1,
- "links": [],
- "modified": "2023-01-14 19:09:28.299085",
+ "links": [
+  {
+   "link_doctype": "Treatment Plan Consent",
+   "link_fieldname": "admission_encounter"
+  }
+ ],
+ "modified": "2023-04-10 11:21:07.173681",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

@@ -22,6 +22,7 @@
   "inpatient_settings_section",
   "allow_discharge_despite_unbilled_services",
   "do_not_bill_inpatient_encounters",
+  "column_break_cikp",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -351,16 +352,20 @@
    "label": "Alerts"
   },
   {
-  "description": "For use while scheduling tele-consultations via Google Meet",
+   "description": "For use while scheduling tele-consultations via Google Meet",
    "fieldname": "default_google_calendar",
    "fieldtype": "Link",
    "label": "Default Google Calendar",
    "options": "Google Calendar"
+  },
+  {
+   "fieldname": "column_break_cikp",
+   "fieldtype": "Column Break"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-01-13 17:51:25.440851",
+ "modified": "2023-04-09 16:36:01.329459",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

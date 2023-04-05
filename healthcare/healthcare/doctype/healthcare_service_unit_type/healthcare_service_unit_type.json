@@ -15,6 +15,8 @@
   "inpatient_occupancy",
   "is_billable",
   "item_details",
+  "items",
+  "section_break_va83",
   "item",
   "item_code",
   "item_group",
@@ -81,6 +83,7 @@
    "depends_on": "is_billable",
    "fieldname": "item_details",
    "fieldtype": "Section Break",
+   "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Item Details"
@@ -167,13 +170,26 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Change in Item"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Service Unit Type Item"
+  },
+  {
+   "depends_on": "is_billable",
+   "fieldname": "section_break_va83",
+   "fieldtype": "Section Break",
+   "hide_border": 1
   }
  ],
  "links": [],
- "modified": "2021-08-19 17:52:30.266667",
+ "modified": "2023-04-04 22:01:54.215641",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -192,5 +208,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "service_unit_type"
 }
