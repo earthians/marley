@@ -230,14 +230,6 @@
    "options": "Codification Table"
   },
   {
-   "fetch_from": "therapy_type.medical_code",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code",
-   "read_only": 1
-  },
-  {
    "fieldname": "service_request",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -261,7 +253,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:57:02.131012",
+ "modified": "2023-04-06 04:11:55.237021",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",
