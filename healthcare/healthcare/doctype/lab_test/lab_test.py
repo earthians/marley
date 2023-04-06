@@ -178,7 +178,11 @@ def create_lab_test_from_encounter(encounter):
 				template = get_lab_test_template(service_request_doc.template_dn)
 				if template:
 					lab_test = create_lab_test_doc(
-						service_request_doc.invoiced, encounter.practitioner, patient, template, encounter.company
+						1 if service_request_doc.billing_status == "Invoiced" else 0,
+						encounter.practitioner,
+						patient,
+						template,
+						encounter.company,
 					)
 					lab_test.service_request = service_request_doc.name
 					lab_test.save(ignore_permissions=True)
