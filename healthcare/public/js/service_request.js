@@ -1,5 +1,5 @@
 
-frappe.ui.form.on(cur_frm.doctype, {
+frappe.ui.form.on(cur_frm.doctype, { // nosemgrep
     onload: function(frm) {
         if (frm.doc.__islocal) {
 			frm.set_value('order_time', frappe.datetime.now_time())

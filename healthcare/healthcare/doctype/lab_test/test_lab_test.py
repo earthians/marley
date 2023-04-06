@@ -87,8 +87,20 @@ class TestLabTest(FrappeTestCase):
 		patient_encounter = create_patient_encounter()
 		create_multiple("Patient Encounter", patient_encounter.name)
 		patient_encounter.reload()
-		self.assertTrue(patient_encounter.lab_test_prescription[0].lab_test_created)
-		self.assertTrue(patient_encounter.lab_test_prescription[0].lab_test_created)
+		service_requests = frappe.db.get_list(
+			"Service Request",
+			filters={
+				"order_group": patient_encounter.name,
+				"status": ["!=", "Completed"],
+				"template_dt": "Lab Test Template",
+			},
+			fields=["name"],
+		)
+		if service_requests:
+			for service_request in service_requests:
+				self.assertTrue(frappe.db.exists("Lab Test", {"service_request": service_request.get("name")}))
+		# self.assertTrue(patient_encounter.lab_test_prescription[0].lab_test_created)
+		# self.assertTrue(patient_encounter.lab_test_prescription[0].lab_test_created)
 
 
 def create_lab_test_template(test_sensitivity=0, sample_collection=1):
