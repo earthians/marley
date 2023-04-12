@@ -5,8 +5,11 @@
 frappe.ui.form.on('Service Request', {
 	refresh: function(frm) {
 		frm.set_query('template_dt', function() {
-			let order_template_doctypes = ['Therapy Type', 'Lab Test Template',
-				'Clinical Procedure Template'];
+			let order_template_doctypes = [
+				"Therapy Type",
+				"Lab Test Template",
+				"Clinical Procedure Template",
+				"Appointment Type"];
 			return {
 				filters: {
 					name: ['in', order_template_doctypes]
@@ -77,6 +80,16 @@ frappe.ui.form.on('Service Request', {
 					}
 				})
 			}, __('Create'));
+
+		} else if (frm.doc.template_dt === "Appointment Type") {
+			frm.add_custom_button(__("Appointment"), function() {
+				frappe.route_options = {
+					"patient": frm.doc.patient,
+					"practitioner": frm.doc.referred_to_practitioner,
+					"appointment_type": frm.doc.template_dn,
+				}
+				frappe.new_doc("Patient Appointment");
+			}, __("Create"));
 		}
 
 		frm.page.set_inner_btn_group_as_primary(__('Create'));

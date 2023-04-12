@@ -383,3 +383,26 @@ def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
 @frappe.whitelist()
 def get_medications(medication):
 	return frappe.get_all("Medication Linked Item", {"parent": medication}, ["item"])
+
+
+@frappe.whitelist()
+def create_patient_referral(encounter, refer_to, referral_note, appointment_type):
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	order = frappe.get_doc(
+			{
+				"doctype": "Service Request",
+				"order_date": encounter_doc.encounter_date,
+				"order_time": encounter_doc.encounter_time,
+				"company": encounter_doc.company,
+				"status": "Draft",
+				"patient": encounter_doc.get("patient"),
+				"practitioner": encounter_doc.practitioner,
+				"order_group": encounter,
+				"template_dt": "Appointment Type",
+				"template_dn": appointment_type,
+				"quantity": 1,
+				"order_descritption": referral_note,
+				"referred_to_practitioner": refer_to
+			}
+		)
+	order.insert(ignore_permissions=True, ignore_mandatory=True)

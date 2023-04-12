@@ -351,6 +351,7 @@ var create_tratment_plan_consent = function(frm) {
 			frappe.db.get_value("Treatment Plan Consent", {
 				"status": "Active",
 				"admission_encounter": frm.doc.admission_encounter,
+				"inpatient_record": frm.doc.name,
 				"docstatus": 1,
 				"name": ["!=", frm.doc.name],
 				}, "name")

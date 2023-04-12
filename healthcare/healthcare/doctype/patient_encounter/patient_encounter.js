@@ -59,6 +59,9 @@ frappe.ui.form.on('Patient Encounter', {
 						schedule_inpatient(frm);
 					});
 				}
+				frm.add_custom_button(__('Patient Referral'), function() {
+					create_patient_referral(frm);
+				},__('Create'));
 			}
 
 			frm.add_custom_button(__('Patient History'), function() {
@@ -97,6 +100,7 @@ frappe.ui.form.on('Patient Encounter', {
 			frm.add_custom_button(__('Clinical Procedure'), function() {
 				create_procedure(frm);
 			},__('Create'));
+
 
 			if (frm.doc.drug_prescription && frm.doc.inpatient_record && frm.doc.inpatient_status === "Admitted") {
 				frm.add_custom_button(__('Inpatient Medication Order'), function() {
@@ -631,3 +635,40 @@ frappe.ui.form.on('Drug Prescription', {
 		});
 	}
 });
+
+let create_patient_referral = function(frm) {
+	var dialog = new frappe.ui.Dialog ({
+		title: "Patient Referral",
+		fields: [
+			{fieldtype: "Link", label: "Refer To", options: "Healthcare Practitioner", fieldname: "refer_to", reqd: 1},
+			{fieldtype: "Link", label: "Appointment Type", options: "Appointment Type", fieldname: "appointment_type", reqd: 1},
+			{fieldtype: "Long Text", label: "Referral Note", fieldname: "referral_note", reqd: 1}
+		],
+		primary_action_label: __("Refer"),
+		primary_action : function() {
+			frappe.call({
+				method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_patient_referral",
+				freeze: true,
+				args: {
+					encounter: frm.doc.name,
+					refer_to: dialog.get_value("refer_to"),
+					referral_note: dialog.get_value("referral_note"),
+					appointment_type: dialog.get_value("appointment_type")
+				},
+				callback: function(r) {
+					if (r && !r.exc) {
+						frm.reload_doc();
+						frappe.show_alert({
+							message: __("Patient Referral Created"),
+							indicator: "success"
+						});
+					}
+				}
+			});
+			frm.refresh_fields();
+			dialog.hide();
+		}
+	});
+
+	dialog.show();
+};
