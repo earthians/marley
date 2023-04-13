@@ -11,6 +11,10 @@ from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
 from frappe.utils import cint
 
+from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template import (
+	make_item_price,
+)
+
 
 class TherapyType(Document):
 	def validate(self):
@@ -41,11 +45,14 @@ class TherapyType(Document):
 			item_doc.save(ignore_permissions=True)
 
 			if self.rate:
-				item_price = frappe.get_doc("Item Price", {"item_code": self.item})
-				item_price.item_name = self.item_name
-				item_price.price_list_rate = self.rate
-				item_price.ignore_mandatory = True
-				item_price.save()
+				if frappe.db.exists("Item Price", {"item_code": self.item}):
+					item_price = frappe.get_doc("Item Price", {"item_code": self.item})
+					item_price.item_name = self.item_name
+					item_price.price_list_rate = self.rate
+					item_price.ignore_mandatory = True
+					item_price.save()
+				else:
+					make_item_price(self.item, self.rate)
 
 		elif not self.is_billable and self.item:
 			frappe.db.set_value("Item", self.item, "disabled", 1)
@@ -112,18 +119,6 @@ def create_item_from_therapy(doc):
 
 	make_item_price(item.name, doc.rate)
 	doc.db_set("item", item.name)
-
-
-def make_item_price(item, item_price):
-	price_list_name = frappe.db.get_value("Price List", {"selling": 1})
-	frappe.get_doc(
-		{
-			"doctype": "Item Price",
-			"price_list": price_list_name,
-			"item_code": item,
-			"price_list_rate": item_price,
-		}
-	).insert(ignore_permissions=True, ignore_mandatory=True)
 
 
 @frappe.whitelist()
