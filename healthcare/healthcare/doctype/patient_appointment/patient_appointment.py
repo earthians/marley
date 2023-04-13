@@ -750,8 +750,10 @@ def get_prescribed_therapies(patient):
 def update_appointment_status():
 	# update the status of appointments daily
 	appointments = frappe.get_all(
-		"Patient Appointment", {"status": ("not in", ["Closed", "Cancelled"])}, as_dict=1
+		"Patient Appointment", {"status": ("not in", ["Closed", "Cancelled"])}
 	)
 
 	for appointment in appointments:
-		frappe.get_doc("Patient Appointment", appointment.name).set_status()
+		appointment_doc = frappe.get_doc("Patient Appointment", appointment.name)
+		appointment_doc.set_status()
+		appointment_doc.save()
