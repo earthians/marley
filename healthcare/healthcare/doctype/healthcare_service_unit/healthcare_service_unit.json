@@ -23,6 +23,9 @@
   "column_break_9",
   "company",
   "warehouse",
+  "ot_details_section",
+  "from_time",
+  "to_time",
   "tree_details_section",
   "parent_healthcare_service_unit",
   "lft",
@@ -255,11 +258,27 @@
    "fieldname": "is_ot",
    "fieldtype": "Check",
    "label": "Is OT"
+  },
+  {
+   "depends_on": "is_ot",
+   "fieldname": "ot_details_section",
+   "fieldtype": "Section Break",
+   "label": "OT Details"
+  },
+  {
+   "fieldname": "from_time",
+   "fieldtype": "Time",
+   "label": "From Time"
+  },
+  {
+   "fieldname": "to_time",
+   "fieldtype": "Time",
+   "label": "To Time"
   }
  ],
  "is_tree": 1,
  "links": [],
- "modified": "2023-04-18 13:27:21.323924",
+ "modified": "2023-04-18 15:55:16.415035",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",
