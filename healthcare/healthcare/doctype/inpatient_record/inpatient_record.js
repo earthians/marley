@@ -7,7 +7,8 @@ frappe.ui.form.on('Inpatient Record', {
 			{fieldname: 'drug_code', columns: 2},
 			{fieldname: 'drug_name', columns: 2},
 			{fieldname: 'dosage', columns: 2},
-			{fieldname: 'period', columns: 2}
+			{fieldname: 'period', columns: 2},
+			{fieldname: 'dosage_form', columns: 2}
 		];
 	},
 	refresh: function(frm) {
