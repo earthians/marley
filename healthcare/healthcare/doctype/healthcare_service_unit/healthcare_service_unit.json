@@ -13,10 +13,12 @@
   "healthcare_service_unit_name",
   "is_group",
   "service_unit_type",
+  "medical_department",
   "allow_appointments",
   "overlap_appointments",
   "service_unit_capacity",
   "inpatient_occupancy",
+  "is_ot",
   "occupancy_status",
   "column_break_9",
   "company",
@@ -239,11 +241,25 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fetch_from": "service_unit_type.medical_department",
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "default": "0",
+   "fetch_from": "service_unit_type.is_ot",
+   "fieldname": "is_ot",
+   "fieldtype": "Check",
+   "label": "Is OT"
   }
  ],
  "is_tree": 1,
  "links": [],
- "modified": "2023-03-03 19:01:12.459553",
+ "modified": "2023-04-18 13:27:21.323924",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",

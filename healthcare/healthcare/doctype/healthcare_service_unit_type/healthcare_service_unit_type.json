@@ -10,10 +10,12 @@
  "field_order": [
   "disabled",
   "service_unit_type",
+  "medical_department",
   "allow_appointments",
   "overlap_appointments",
   "inpatient_occupancy",
   "is_billable",
+  "is_ot",
   "item_details",
   "items",
   "section_break_va83",
@@ -182,10 +184,22 @@
    "fieldname": "section_break_va83",
    "fieldtype": "Section Break",
    "hide_border": 1
+  },
+  {  
+   "default": "0",
+   "fieldname": "is_ot",
+   "fieldtype": "Check",
+   "label": "Is OT"
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department"
   }
  ],
  "links": [],
- "modified": "2023-04-04 22:01:54.215641",
+ "modified": "2023-04-18 13:10:57.183237",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
