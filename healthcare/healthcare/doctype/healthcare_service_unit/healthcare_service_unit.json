@@ -72,6 +72,7 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Service Unit Type",
+   "reqd": 1,
    "options": "Healthcare Service Unit Type"
   },
   {
