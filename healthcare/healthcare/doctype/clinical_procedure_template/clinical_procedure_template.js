@@ -98,6 +98,14 @@ frappe.ui.form.on('Clinical Procedure Template', {
 				});
 			})
 		}
+	},
+
+	disinfection_and_sterilization: function(frm) {
+		calculate_total_duration(frm);
+	},
+
+	actual_duration: function(frm) {
+		calculate_total_duration(frm);
 	}
 });
 
@@ -236,3 +244,9 @@ frappe.tour['Clinical Procedure Template'] = [
 		description: __('You can also set the Medical Department for the template. After saving the document, an Item will automatically be created for billing this Clinical Procedure. You can then use this template while creating Clinical Procedures for Patients. Templates save you from filling up redundant data every single time. You can also create templates for other operations like Lab Tests, Therapy Sessions, etc.')
 	}
 ];
+
+let calculate_total_duration = function (frm) {
+	if (frm.doc.disinfection_and_sterilization || frm.doc.actual_duration) {
+		frm.set_value("total_duration", (frm.doc.disinfection_and_sterilization + frm.doc.actual_duration))
+	}
+};

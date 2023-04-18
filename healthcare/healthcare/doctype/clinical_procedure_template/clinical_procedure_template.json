@@ -13,10 +13,17 @@
   "template",
   "medical_department",
   "description",
+  "is_ot_procedure",
   "column_break_5",
   "disabled",
   "pre_op_nursing_checklist_template",
   "post_op_nursing_checklist_template",
+  "section_break_txof",
+  "appointment_type",
+  "column_break_yqen",
+  "disinfection_and_sterilization",
+  "actual_duration",
+  "total_duration",
   "billing_section",
   "column_break_ea5h",
   "link_existing_item",
@@ -39,7 +46,6 @@
   "sample_details",
   "service_order_defaults_section",
   "patient_care_type",
-  "column_break_28",
   "staff_role",
   "change_in_item",
   "codification",
@@ -245,6 +251,22 @@
    "label": "Sample Collection"
   },
   {
+   "depends_on": "is_ot_procedure",
+   "fieldname": "section_break_txof",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "appointment_type",
+   "fieldtype": "Link",
+   "label": "Appointment Type",
+   "options": "Appointment Type"
+  },
+  {
+   "fieldname": "disinfection_and_sterilization",
+   "fieldtype": "Float",
+   "label": "Disinfection and Sterilization (in Hours)"
+  },
+  {
    "fieldname": "service_order_defaults_section",
    "fieldtype": "Section Break",
    "label": "Service Request Defaults"
@@ -260,10 +282,31 @@
    "fieldtype": "Link",
    "label": "Staff Role",
    "options": "Role"
+  },
+  {
+   "fieldname": "column_break_yqen",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_duration",
+   "fieldtype": "Float",
+   "label": "Actual Duration (in Hours)"
+  },
+  {
+   "fieldname": "total_duration",
+   "fieldtype": "Float",
+   "label": "Total Duration (in Hours)",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_ot_procedure",
+   "fieldtype": "Check",
+   "label": "Is OT Procedure"
   }
  ],
  "links": [],
- "modified": "2021-12-23 07:45:12.398227",
+ "modified": "2023-04-18 15:39:24.620171",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
