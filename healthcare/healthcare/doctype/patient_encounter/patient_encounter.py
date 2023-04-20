@@ -202,6 +202,14 @@ class PatientEncounter(Document):
 		else:
 			description = template_doc.get("description")
 
+		if template_doc.doctype == "Clinical Procedure Template":
+			order.update(
+				{
+				"referred_to_practitioner": line_item.get("practitioner"),
+				"ordered_for": line_item.get("date"),
+				}
+			)
+
 		if medication_request:
 			order.update(
 				{

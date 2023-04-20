@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-04-18 15:59:05.327313",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "schedule_date",
+  "medical_department",
+  "column_break_hcjq",
+  "company",
+  "status",
+  "section_break_pnpf",
+  "healthcare_service_unit",
+  "from_time",
+  "to_time",
+  "procedure_schedule_section",
+  "procedure_schedules",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "schedule_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Schedule Date"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "OT Schedule",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "fieldname": "column_break_hcjq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "\nDraft\nScheduled\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "procedure_schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Procedure Schedule"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "procedure_schedules",
+   "fieldtype": "Table",
+   "label": "Procedure Schedules",
+   "options": "Procedure Schedules"
+  },
+  {
+   "fieldname": "section_break_pnpf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "healthcare_service_unit",
+   "fieldtype": "Link",
+   "label": "Healthcare Service Unit",
+   "options": "Healthcare Service Unit",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "healthcare_service_unit.from_time",
+   "fieldname": "from_time",
+   "fieldtype": "Time",
+   "label": "From TIme",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "healthcare_service_unit.to_time",
+   "fieldname": "to_time",
+   "fieldtype": "Time",
+   "label": "To Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HLC-OTS-.YYYY.-"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-04-19 14:34:02.632351",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "OT Schedule",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

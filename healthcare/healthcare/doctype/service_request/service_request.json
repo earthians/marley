@@ -12,6 +12,7 @@
   "naming_series",
   "order_date",
   "order_time",
+  "ordered_for",
   "column_break_4",
   "status",
   "company",
@@ -166,7 +167,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Active\nOn Hold\nCompleted\nRevoked\nReplaced\nEntered in Error\nUnknown\nDraft\nSubmitted\nCancelled",
+   "options": "Active\nOn Hold\nCompleted\nRevoked\nReplaced\nEntered in Error\nUnknown\nDraft\nSubmitted\nCancelled\nOT Scheduled",
    "reqd": 1
   },
   {
@@ -519,6 +520,12 @@
    "label": "Billing Status",
    "options": "Pending\nPartly Invoiced\nInvoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "ordered_for",
+   "fieldtype": "Date",
+   "label": "Ordered For",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -537,7 +544,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-03-23 11:06:58.253841",
+ "modified": "2023-04-20 15:11:57.739390",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

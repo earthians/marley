@@ -11,7 +11,8 @@ frappe.listview_settings['Service Request'] = {
 			'Revoked': 'grey',
 			'Replaced': 'grey',
 			'Unknown': 'grey',
-			'Entered in Error': 'red'
+			'Entered in Error': 'red',
+			'OT Scheduled': 'orange'
 		}[doc.status], 'status,=,' + doc.status];
 	}
 };

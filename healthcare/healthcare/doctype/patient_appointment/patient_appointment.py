@@ -125,7 +125,7 @@ class PatientAppointment(Document):
 						if appointment not in service_unit_appointments
 					]
 
-		if overlapping_appointments:
+		if overlapping_appointments and not self.flags.ignore_validate:
 			frappe.throw(
 				_("Not allowed, cannot overlap appointment {}").format(
 					frappe.bold(", ".join([appointment["name"] for appointment in overlapping_appointments]))
