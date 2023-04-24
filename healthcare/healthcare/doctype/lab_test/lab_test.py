@@ -273,7 +273,7 @@ def create_sample_doc(template, patient, invoice, company=None):
 
 		if sample_exists:
 			# update sample collection by adding quantity
-			sample_collection = frappe.get_doc("Sample Collection", sample_exists[0][0])
+			sample_collection = frappe.get_doc("Sample Collection", sample_exists)
 			quantity = int(sample_collection.sample_qty) + int(template.sample_qty)
 			if template.sample_details:
 				sample_details = sample_collection.sample_details + "\n-\n" + _("Test :")
