@@ -353,6 +353,7 @@ def create_sales_invoice(appointment_doc):
 		appointment_doc.name,
 		{"invoiced": 1, "ref_sales_invoice": sales_invoice.name},
 	)
+	appointment_doc.reload()
 
 
 def check_is_new_patient(patient, name=None):
