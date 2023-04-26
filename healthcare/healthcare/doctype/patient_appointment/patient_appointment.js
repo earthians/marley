@@ -310,8 +310,11 @@ let check_and_set_availability = function(frm) {
 				{ fieldtype: 'Column Break' },
 				{ fieldtype: 'Date', reqd: 1, fieldname: 'appointment_date', label: 'Date', min_date: new Date(frappe.datetime.get_today()) },
 				{ fieldtype: 'Section Break' },
-				{ fieldtype: 'HTML', fieldname: 'available_slots' }
-
+				{ fieldtype: 'HTML', fieldname: 'available_slots' },
+				{ fieldtype: 'Section Break', fieldname: 'payment_section', label: 'Payment Details', hidden: 1 },
+				{ fieldtype: 'Link', options: 'Mode of Payment', fieldname: 'mode_of_payment', label: 'Mode of Payment' },
+				{ fieldtype: 'Column Break' },
+				{ fieldtype: 'Currency', fieldname: 'consultation_charge', label: 'Consultation Charge', read_only: 1 },
 			],
 			primary_action_label: __('Book'),
 			primary_action: function() {
@@ -328,6 +331,9 @@ let check_and_set_availability = function(frm) {
 				frm.set_value('practitioner', d.get_value('practitioner'));
 				frm.set_value('department', d.get_value('department'));
 				frm.set_value('appointment_date', d.get_value('appointment_date'));
+				if (d.get_value('mode_of_payment') != frm.doc.mode_of_payment) {
+					frm.set_value('mode_of_payment', d.get_value('mode_of_payment'));
+				};
 
 				if (service_unit) {
 					frm.set_value('service_unit', service_unit);
@@ -343,7 +349,8 @@ let check_and_set_availability = function(frm) {
 		d.set_values({
 			'department': frm.doc.department,
 			'practitioner': frm.doc.practitioner,
-			'appointment_date': frm.doc.appointment_date
+			'appointment_date': frm.doc.appointment_date,
+			'mode_of_payment': frm.doc.mode_of_payment,
 		});
 
 		let selected_department = frm.doc.department;
@@ -375,15 +382,55 @@ let check_and_set_availability = function(frm) {
 
 		d.fields_dict['appointment_date'].df.onchange = () => {
 			show_slots(d, fd);
+			validate_fee_validity(frm, d);
 		};
 		d.fields_dict['practitioner'].df.onchange = () => {
 			if (d.get_value('practitioner') && d.get_value('practitioner') != selected_practitioner) {
 				selected_practitioner = d.get_value('practitioner');
 				show_slots(d, fd);
+				validate_fee_validity(frm, d);
 			}
 		};
 
 		d.show();
+	}
+
+	function validate_fee_validity(frm, d) {
+		var section_field = d.get_field("payment_section");
+		var payment_field = d.get_field("mode_of_payment");
+		section_field.df.hidden = 1;
+		payment_field.df.reqd = 0;
+
+		if (d.get_value('appointment_date') && !frm.doc.invoiced) {
+			frappe.db.get_single_value('Healthcare Settings', 'enable_free_follow_ups').then(async function (val) {
+				if (val) {
+					fee_validity = (await frappe.call(
+						'healthcare.healthcare.doctype.fee_validity.fee_validity.check_fee_validity',
+						{
+							appointment: frm.doc,
+							date: d.get_value('appointment_date'),
+							practitioner: d.get_value('practitioner')
+						}
+					)).message || null;
+					if (!fee_validity) {
+						payment_field.df.reqd = 1;
+						section_field.df.hidden = 0;
+
+						let payment_details = (await frappe.call(
+							'healthcare.healthcare.utils.get_service_item_and_practitioner_charge',
+							{
+								doc: frm.doc
+							}
+						)).message;
+						d.set_value('consultation_charge', payment_details.practitioner_charge);
+						payment_field.refresh();
+						section_field.refresh();
+					}
+				}
+			});
+		}
+		payment_field.refresh();
+		section_field.refresh();
 	}
 
 	function show_slots(d, fd) {
@@ -393,7 +440,8 @@ let check_and_set_availability = function(frm) {
 				method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data',
 				args: {
 					practitioner: d.get_value('practitioner'),
-					date: d.get_value('appointment_date')
+					date: d.get_value('appointment_date'),
+					appointment: frm.doc
 				},
 				callback: (r) => {
 					let data = r.message;
@@ -401,7 +449,7 @@ let check_and_set_availability = function(frm) {
 						let $wrapper = d.fields_dict.available_slots.$wrapper;
 
 						// make buttons for each slot
-						let slot_html = get_slots(data.slot_details, d.get_value('appointment_date'));
+						let slot_html = get_slots(data.slot_details, data.fee_validity, d.get_value('appointment_date'));
 
 						$wrapper
 							.css('margin-bottom', 0)
@@ -466,14 +514,27 @@ let check_and_set_availability = function(frm) {
 		}
 	}
 
-	function get_slots(slot_details, appointment_date) {
+	function get_slots(slot_details, fee_validity, appointment_date) {
 		let slot_html = '';
 		let appointment_count = 0;
 		let disabled = false;
 		let start_str, slot_start_time, slot_end_time, interval, count, count_class, tool_tip, available_slots;
 
 		slot_details.forEach((slot_info) => {
-			slot_html += `<div class="slot-info">
+			slot_html += `<div class="slot-info">`;
+			if (fee_validity && fee_validity != 'Disabled') {
+				slot_html += `
+					<span style="color:green">
+					${__('Patient has fee validity till')} <b>${moment(fee_validity.valid_till).format('DD-MM-YYYY')}</b>
+					</span><br>`;
+			} else if (fee_validity != 'Disabled') {
+				slot_html += `
+					<span style="color:red">
+					${__('Patient has no fee validity, need to be invoiced')} <b></b>
+					</span><br>`;
+			}
+
+			slot_html += `
 				<span><b>
 				${__('Practitioner Schedule: ')} </b> ${slot_info.slot_name}
 					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}

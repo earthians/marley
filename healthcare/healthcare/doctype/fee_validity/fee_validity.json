@@ -2,7 +2,6 @@
  "actions": [],
  "allow_copy": 1,
  "allow_import": 1,
- "beta": 0,
  "creation": "2017-01-05 10:56:29.564806",
  "doctype": "DocType",
  "document_type": "Setup",
@@ -11,9 +10,11 @@
  "field_order": [
   "practitioner",
   "patient",
+  "medical_department",
   "column_break_3",
   "status",
-  "section_break_5",
+  "patient_appointment",
+  "sales_invoice_ref",
   "section_break_3",
   "max_visits",
   "visited",
@@ -81,7 +82,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Completed\nPending",
+   "options": "Active\nExpired\nCompleted\nCancelled",
    "read_only": 1
   },
   {
@@ -99,14 +100,30 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "section_break_5",
-   "fieldtype": "Section Break"
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_invoice_ref",
+   "fieldtype": "Link",
+   "label": "Sales Invoice Reference",
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_appointment",
+   "fieldtype": "Link",
+   "label": "Patient Appointment",
+   "options": "Patient Appointment",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "links": [],
- "modified": "2021-08-26 10:51:05.609349",
+ "modified": "2023-04-09 10:40:36.311443",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Fee Validity",
@@ -130,5 +147,6 @@
  "search_fields": "practitioner, patient",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "practitioner"
 }
