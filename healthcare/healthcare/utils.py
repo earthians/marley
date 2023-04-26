@@ -12,7 +12,6 @@ from frappe import _
 from frappe.utils import cstr, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
 
-from healthcare.healthcare.doctype.fee_validity.fee_validity import create_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 )
@@ -494,10 +493,20 @@ def manage_invoice_submit_cancel(doc, method):
 				if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 					set_invoiced(item, method, doc.name)
 
-	if method == "on_submit" and frappe.db.get_single_value(
-		"Healthcare Settings", "create_lab_test_on_si_submit"
-	):
-		create_multiple("Sales Invoice", doc.name)
+	if method == "on_submit":
+		if frappe.db.get_single_value("Healthcare Settings", "create_lab_test_on_si_submit"):
+			create_multiple("Sales Invoice", doc.name)
+
+		if (
+			not frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing")
+			and frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+			and doc.items
+		):
+			for item in doc.items:
+				if item.reference_dt == "Patient Appointment":
+					fee_validity = frappe.db.exists("Fee Validity", {"patient_appointment": item.reference_dn})
+					if fee_validity:
+						frappe.db.set_value("Fee Validity", fee_validity, "sales_invoice_ref", doc.name)
 
 
 def set_invoiced(item, method, ref_invoice=None):
@@ -558,43 +567,6 @@ def manage_prescriptions(invoiced, ref_dt, ref_dn, dt, created_check_field):
 		# Fetch the doc created for the prescription
 		doc_created = frappe.db.get_value(dt, {"prescription": ref_dn})
 		frappe.db.set_value(dt, doc_created, "invoiced", invoiced)
-
-
-def check_fee_validity(appointment):
-	if not frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups"):
-		return
-
-	validity = frappe.db.exists(
-		"Fee Validity",
-		{
-			"practitioner": appointment.practitioner,
-			"patient": appointment.patient,
-			"valid_till": (">=", appointment.appointment_date),
-		},
-	)
-	if not validity:
-		return
-
-	validity = frappe.get_doc("Fee Validity", validity)
-	return validity
-
-
-def manage_fee_validity(appointment):
-	fee_validity = check_fee_validity(appointment)
-
-	if fee_validity:
-		if appointment.status == "Cancelled" and fee_validity.visited > 0:
-			fee_validity.visited -= 1
-			frappe.db.delete("Fee Validity Reference", {"appointment": appointment.name})
-		elif fee_validity.status == "Completed":
-			return
-		else:
-			fee_validity.visited += 1
-			fee_validity.append("ref_appointments", {"appointment": appointment.name})
-		fee_validity.save(ignore_permissions=True)
-	else:
-		fee_validity = create_fee_validity(appointment)
-	return fee_validity
 
 
 def manage_doc_for_appointment(dt_from_appointment, appointment, invoiced):
