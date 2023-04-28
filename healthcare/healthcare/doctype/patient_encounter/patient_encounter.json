@@ -344,7 +344,7 @@
  "is_submittable": 1,
  "links": [
   {
-   "link_doctype": "Treatment Plan Consent",
+   "link_doctype": "Treatment Counselling",
    "link_fieldname": "admission_encounter"
   }
  ],

@@ -264,6 +264,17 @@ def get_inpatient_services_to_invoice(patient, company):
 					"qty": qty,
 				}
 			)
+		inpatient_record_doc = frappe.get_doc("Inpatient Record", inpatient_occupancy.parent)
+		for item in inpatient_record_doc.items:
+			if item.stock_entry and not item.invoiced:
+				services_to_invoice.append(
+				{
+					"reference_type": "Inpatient Record Item",
+					"reference_name": item.name,
+					"service": item.item_code,
+					"qty": item.quantity,
+				}
+			)
 
 	return services_to_invoice
 
@@ -487,8 +498,8 @@ def manage_invoice_submit_cancel(doc, method):
 		for item in doc.items:
 			if item.get("reference_dt") and item.get("reference_dn"):
 				# TODO check
-				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
-				set_invoiced(item, method, doc.name)
+				if frappe.get_meta(item.reference_dt).has_field("invoiced"):
+					set_invoiced(item, method, doc.name)
 
 	if method == "on_submit" and frappe.db.get_single_value(
 		"Healthcare Settings", "create_lab_test_on_si_submit"
@@ -510,8 +521,8 @@ def set_invoiced(item, method, ref_invoice=None):
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "consumption_invoiced", invoiced)
 		else:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
-	# else:
-	# 	frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
+	else:
+		frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 
 	if item.reference_dt == "Patient Appointment":
 		if frappe.db.get_value("Patient Appointment", item.reference_dn, "procedure_template"):

@@ -12,7 +12,6 @@ frappe.ui.form.on("OT Schedule", {
 				get_service_requests(frm);
 			});
 		}
-	
 	},
 
 	healthcare_service_unit: function (frm) {
@@ -105,14 +104,11 @@ var get_service_requests = function(frm) {
 								}
 							})
 						}
-						  set_time_to_child(frm);
+						set_time_to_child(frm);
 						cur_dialog.hide();
 					})
-					
 				}
 			});
-
-
 		}
 	});
 }

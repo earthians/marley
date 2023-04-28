@@ -1,8 +1,8 @@
 // Copyright (c) 2023, healthcare and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on("Treatment Plan Consent", {
-	refresh(frm) {
+frappe.ui.form.on("Treatment Counselling", {
+    refresh(frm) {
 		if (!frm.doc.__islocal) {
 			if (frm.doc.docstatus === 1) {
 				if (frm.doc.encounter_status == "Admission Scheduled" && frm.doc.status == "Active") {
@@ -13,15 +13,31 @@ frappe.ui.form.on("Treatment Plan Consent", {
 							});
 						});
 					}
-					frm.add_custom_button(__('Payment Entry'), function() {
-						frappe.route_options = {
-							"party_type": "Customer",
-							"party": frm.doc.customer,
-							"paid_amount": 100,
-							"treatment_plan_consent": frm.doc.name
-						}
-						frappe.new_doc("Payment Entry");
-					}, 'Create')
+					if (frm.doc.outstanding_amount > 0) {
+						frm.add_custom_button(__('Payment Entry'), function() {
+							frappe.call({
+								method: "healthcare.healthcare.doctype.treatment_counselling.treatment_counselling.create_payment_entry",
+								args: {
+									treatment_counselling: frm.doc.name
+								},
+								callback: function (r) {
+									if (r && r.message) {
+										frappe.set_route("Form", "Payment Entry", r.message);
+									}
+									console.log(r.message)
+								}
+							});
+						}, 'Create')
+					}
+				}
+				if (frm.doc.status == "Completed") {
+					frm.add_custom_button(__("Admission Encounter"), function() {
+						frappe.set_route("Form", "Patient Encounter", frm.doc.admission_encounter);
+					}, "View")
+
+					frm.add_custom_button(__("Inpatient Record"), function() {
+						frappe.set_route("Form", "Inpatient Record", frm.doc.inpatient_record);
+					}, "View")
 				}
 			}
 			if(frm.doc.status == "Active") {
@@ -73,10 +89,10 @@ var schedule_inpatient = function(frm) {
 		admission_nursing_checklist_template: frm.doc.admission_nursing_checklist_template,
 	}
 	frappe.call({
-		method: "healthcare.healthcare.doctype.treatment_plan_consent.treatment_plan_consent.create_ip_from_treatment_plan_consent",
+		method: "healthcare.healthcare.doctype.treatment_counselling.treatment_counselling.create_ip_from_treatment_counselling",
 		args: {
 			admission_order: args,
-			treatment_plan_consent: frm.doc.name,
+			treatment_counselling: frm.doc.name,
 		},
 		callback: function(data) {
 			if (!data.exc) {
@@ -85,3 +101,4 @@ var schedule_inpatient = function(frm) {
 		},
 	})
 }
+

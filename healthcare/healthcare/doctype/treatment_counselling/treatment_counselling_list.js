@@ -1,4 +1,4 @@
-frappe.listview_settings["Treatment Plan Consent"] = {
+frappe.listview_settings["Treatment Counselling"] = {
 	filters: [["status", "=", "Active"]],
 	get_indicator: function(doc) {
 		var colors = {
