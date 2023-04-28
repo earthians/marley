@@ -45,12 +45,13 @@ frappe.ui.form.on('Patient Encounter', {
 	},
 
 	refresh: function(frm) {
+
 		refresh_field('drug_prescription');
 		refresh_field('lab_test_prescription');
 
 		if (!frm.doc.__islocal) {
 			if (frm.doc.docstatus === 1) {
-				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted', 'Treatment Plan Consent Created'].includes(frm.doc.inpatient_status)) {
+				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted', 'Treatment Counselling Created'].includes(frm.doc.inpatient_status)) {
 					frm.add_custom_button(__('Schedule Admission'), function() {
 						schedule_inpatient(frm);
 					});
@@ -122,14 +123,6 @@ frappe.ui.form.on('Patient Encounter', {
 		frm.set_query('patient', function() {
 			return {
 				filters: {'status': 'Active'}
-			};
-		});
-
-		frm.set_query('drug_code', 'drug_prescription', function() {
-			return {
-				filters: {
-					is_stock_item: 1
-				}
 			};
 		});
 

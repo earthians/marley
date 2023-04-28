@@ -28,10 +28,25 @@ frappe.ui.form.on('Inpatient Record', {
 				}
 			};
 		});
+
+		frm.set_query('warehouse', function() {
+			return {
+				filters: {
+					'company': frm.doc.company
+				}
+			};
+		});
+
 		if (!frm.doc.__islocal) {
 			if (frm.doc.status == 'Admitted') {
 				frm.add_custom_button(__('Schedule Discharge'), function() {
 					schedule_discharge(frm);
+				});
+				frm.add_custom_button(__("Tranfer"), function() {
+					transfer_patient_dialog(frm);
+				});
+				frm.add_custom_button(__("Transfer For Procedure"), function() {
+					transfer_patient_dialog(frm);
 				});
 			} else if (frm.doc.status == 'Admission Scheduled') {
 				frm.add_custom_button(__('Cancel Admission'), function() {
@@ -47,8 +62,8 @@ frappe.ui.form.on('Inpatient Record', {
 			}
 
 			if (!["Discharge Scheduled", "Cancelled", "Discharged"].includes(frm.doc.status)) {
-				frm.add_custom_button(__('Treatment Plan Consent'), function() {
-					create_tratment_plan_consent(frm);
+				frm.add_custom_button(__("Treatment Counselling"), function() {
+					create_cancel_treatment_counselling(frm);
 				}, "Create");
 			}
 		}
@@ -61,6 +76,11 @@ frappe.ui.form.on('Inpatient Record', {
 					frappe.new_doc("Clinical Note");
 		},__('Create'));
 	},
+
+	onload: function(frm) {
+		frm.get_field("inpatient_occupancies").grid.cannot_add_rows = true;
+	},
+
 	btn_transfer: function(frm) {
 		transfer_patient_dialog(frm);
 	}
@@ -333,13 +353,13 @@ let cancel_ip_order = function(frm) {
 	}, __('Reason for Cancellation'), __('Submit'));
 }
 
-var create_tratment_plan_consent = function(frm) {
+var create_cancel_treatment_counselling = function(frm) {
 	var dialog = new frappe.ui.Dialog({
 		title: "Patient Admission",
 		fields: [
 			{fieldtype: "Link", label: "Treatment Plan Template", fieldname: "treatment_plan_template", options: "Treatment Plan Template"},
 		],
-		primary_action_label: __("Order Admission"),
+		primary_action_label: __("Create Treatment Counselling"),
 		primary_action : function() {
 			var args = {
 				patient: frm.doc.patient,
@@ -357,7 +377,7 @@ var create_tratment_plan_consent = function(frm) {
 				admission_instruction: frm.doc.admission_instruction,
 				admission_nursing_checklist_template: frm.doc.admission_nursing_checklist_template,
 			}
-			frappe.db.get_value("Treatment Plan Consent", {
+			frappe.db.get_value("Treatment Counselling", {
 				"status": "Active",
 				"admission_encounter": frm.doc.admission_encounter,
 				"docstatus": 1,
@@ -367,14 +387,14 @@ var create_tratment_plan_consent = function(frm) {
 					let values = r.message;
 					console.log(values.name)
 					if (values.name) {
-						frappe.confirm(`Treatment Plan Consent already exist<br>
+						frappe.confirm(`Treatment Counselling already exist<br>
 						Proceed to Cancel?`,
 							() => {
 								frappe.call({
-								method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.cancel_amend_treatment_plan_consent",
+								method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.cancel_amend_treatment_counselling",
 									args: {
 										args: args,
-										treatment_plan_consent: values.name
+										treatment_counselling: values.name
 									},
 									callback: function(data) {
 										if (!data.exc) {
@@ -384,7 +404,7 @@ var create_tratment_plan_consent = function(frm) {
 								})
 							})
 					} else {
-						create_treatment_plan_consent(frm, args)
+						create_treatment_counselling(frm, args)
 					}
 			})
 			frm.refresh_fields();
@@ -396,7 +416,7 @@ var create_tratment_plan_consent = function(frm) {
 	dialog.fields_dict["treatment_plan_template"].get_query = function() {
 		return {
 			filters: {
-				"treatment_plan_consent_required_for_ip": 1,
+				"treatment_counselling_required_for_ip": 1,
 			}
 		};
 	};
@@ -405,14 +425,14 @@ var create_tratment_plan_consent = function(frm) {
 	dialog.$wrapper.find(".modal-dialog").css("width", "800px");
 };
 
-var create_treatment_plan_consent = function(frm, args) {
+var create_treatment_counselling = function(frm, args) {
 	frappe.call({
-		method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.create_treatment_plan_consent",
+		method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.create_treatment_counselling",
 		args: {
 			args: args
 		},
 		freeze: true,
-		freeze_message: __("Creating Treatment Plan Consent"),
+		freeze_message: __("Creating Treatment Counselling"),
 		callback: function(data) {
 			if (!data.exc) {
 				frm.reload_doc();

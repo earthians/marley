@@ -301,6 +301,17 @@ def get_inpatient_services_to_invoice(patient, company):
 					"qty": qty,
 				}
 			)
+		inpatient_record_doc = frappe.get_doc("Inpatient Record", inpatient_occupancy.parent)
+		for item in inpatient_record_doc.items:
+			if item.stock_entry and not item.invoiced:
+				services_to_invoice.append(
+				{
+					"reference_type": "Inpatient Record Item",
+					"reference_name": item.name,
+					"service": item.item_code,
+					"qty": item.quantity,
+				}
+			)
 
 	return services_to_invoice
 
@@ -544,6 +555,7 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
+
 		if method == "on_submit" and frappe.db.get_single_value(
 			"Healthcare Settings", "create_observation_on_si_submit"
 		):
