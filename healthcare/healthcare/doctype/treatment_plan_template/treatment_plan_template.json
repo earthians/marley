@@ -29,7 +29,7 @@
   "items",
   "ip",
   "is_inpatient",
-  "treatment_plan_consent_required_for_ip",
+  "treatment_counselling_required_for_ip",
   "healthcare_service_unit_type",
   "column_break_no4w",
   "expected_length_of_stay"
@@ -185,9 +185,9 @@
   {
    "default": "0",
    "depends_on": "is_inpatient",
-   "fieldname": "treatment_plan_consent_required_for_ip",
+   "fieldname": "treatment_counselling_required_for_ip",
    "fieldtype": "Check",
-   "label": "Treatment Plan Consent Required for IP"
+   "label": "Treatment Counselling Required for IP"
   }
  ],
  "index_web_pages_for_search": 1,

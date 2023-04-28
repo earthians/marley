@@ -396,7 +396,7 @@
    "link_fieldname": "reference_name"
   },
   {
-   "link_doctype": "Treatment Plan Consent",
+   "link_doctype": "Treatment Counselling",
    "link_fieldname": "admission_encounter"
   }
  ],

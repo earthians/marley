@@ -39,6 +39,9 @@
   "chief_complaint",
   "column_break_29",
   "diagnosis",
+  "consumables_section",
+  "warehouse",
+  "items",
   "medication_section",
   "drug_prescription",
   "investigations_section",
@@ -431,6 +434,25 @@
    "fieldtype": "Link",
    "label": "Admission Nursing Checklist Template",
    "options": "Nursing Checklist Template"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "consumables_section",
+   "fieldtype": "Section Break",
+   "label": "Consumables"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Consumables",
+   "options": "Inpatient Record Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -440,11 +462,11 @@
    "link_fieldname": "reference_name"
   },
   {
-   "link_doctype": "Treatment Plan Consent",
+   "link_doctype": "Treatment Counselling",
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-04-10 14:56:02.912271",
+ "modified": "2023-04-25 18:27:28.867976",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

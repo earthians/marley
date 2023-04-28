@@ -135,7 +135,7 @@
    "options": "Item"
   },
   {
-   "depends_on": "eval:doc.parenttype== \"Treatment Plan Consent\";",
+   "depends_on": "eval:doc.parenttype== \"Treatment Counselling\";",
    "fieldname": "amount",
    "fieldtype": "Currency",
    "label": "Amount",

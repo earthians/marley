@@ -13,6 +13,7 @@ from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, 
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 
 
 class InpatientRecord(Document):
@@ -114,9 +115,9 @@ def schedule_inpatient(args):
     if admission_order.get("treatment_plan_template") and frappe.db.get_value(
         "Treatment Plan Template",
         admission_order.get("treatment_plan_template"),
-        "treatment_plan_consent_required_for_ip",
+        "treatment_counselling_required_for_ip",
     ):
-        create_treatment_plan_consent(admission_order)
+        create_treatment_counselling(admission_order)
     else:
         create_inpatient_record(admission_order)
 
@@ -467,22 +468,45 @@ def validate_incompleted_service_requests(inpatient_record):
 
 
 @frappe.whitelist()
-def cancel_amend_treatment_plan_consent(args, treatment_plan_consent):
+def cancel_amend_treatment_counselling(args, treatment_counselling):
 	if isinstance(args, str):
 		args = json.loads(args)
-	tpc_doc = frappe.get_doc("Treatment Plan Consent", treatment_plan_consent)
+	tpc_doc = frappe.get_doc("Treatment Counselling", treatment_counselling)
 	tpc_doc.flags.ignore_validate = True
 	tpc_doc.cancel()
-	args["amended_from"] = treatment_plan_consent
-	create_treatment_plan_consent(args)
+	args["amended_from"] = treatment_counselling
+	create_treatment_counselling(args)
 
 
 @frappe.whitelist()
-def create_treatment_plan_consent(args):
+def create_treatment_counselling(args):
 	if isinstance(args, str):
 		args = json.loads(args)
-	financial_counselling = frappe.new_doc("Treatment Plan Consent")
+	financial_counselling = frappe.new_doc("Treatment Counselling")
 	set_details_from_ip_order(financial_counselling, args)
 	financial_counselling.encounter_status = "Admission Scheduled"
 	financial_counselling.status = "Active"
 	financial_counselling.save(ignore_permissions=True)
+
+@frappe.whitelist()
+def create_stock_entry(items, inpatient_record):
+	items = json.loads(items)
+	ip_record_doc = frappe.get_doc("Inpatient Record", inpatient_record)
+	stock_entry = frappe.new_doc("Stock Entry")
+
+	stock_entry.stock_entry_type = "Material Issue"
+	stock_entry.to_warehouse = ip_record_doc.warehouse
+	stock_entry.company = ip_record_doc.company
+	expense_account = get_account(None, "expense_account", "Healthcare Settings", ip_record_doc.company)
+	for item in items:
+		se_child = stock_entry.append("items")
+		se_child.item_code = item.get("item_code")
+		se_child.uom = item.get("uom")
+		se_child.qty = item.get("quantity")
+		se_child.s_warehouse = ip_record_doc.warehouse
+		cost_center = frappe.get_cached_value("Company", ip_record_doc.company, "cost_center")
+		se_child.cost_center = cost_center
+		se_child.expense_account = expense_account
+	stock_entry.save().submit()
+
+	return stock_entry.name
