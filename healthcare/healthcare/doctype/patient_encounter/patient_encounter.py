@@ -431,3 +431,32 @@ def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
 @frappe.whitelist()
 def get_medications(medication):
 	return frappe.get_all("Medication Linked Item", {"parent": medication}, ["item"])
+
+
+@frappe.whitelist()
+def get_encounter_details(patient):
+	medication_requests = []
+	service_requests = []
+	medication_requests = frappe.get_all("Medication Request", {"patient": patient, "docstatus": ["in", [1, 2]]}, ["*"])
+	service_requests = frappe.get_all("Service Request", {"patient": patient, "docstatus": ["in", [1, 2]]}, ["*"])
+	for service_request in service_requests:
+		if service_request.template_dt == "Lab Test Template":
+			lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
+			if lab_test:
+				subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
+				if subject:
+					service_request["lab_details"] = subject
+	return medication_requests, service_requests
+
+
+@frappe.whitelist()
+def set_service_request_status(doctype, request, status):
+	if request and status:
+		frappe.db.set_value(doctype, request, "status", status)
+		return True
+
+
+@frappe.whitelist()
+def cancel_request(doctype, request):
+	request_doc = frappe.get_doc(doctype, request)
+	request_doc.cancel()
