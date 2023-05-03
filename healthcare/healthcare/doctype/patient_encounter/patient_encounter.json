@@ -49,7 +49,9 @@
   "section_break_33",
   "encounter_comment",
   "sb_refs",
-  "amended_from"
+  "amended_from",
+  "encounter_details_tab",
+  "encounter_details"
  ],
  "fields": [
   {
@@ -339,6 +341,16 @@
    "fieldtype": "Data",
    "label": "Google Meet Link",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.docstatus==0;",
+   "fieldname": "encounter_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Encounter Details"
+  },
+  {
+   "fieldname": "encounter_details",
+   "fieldtype": "HTML"
   }
  ],
  "is_submittable": 1,
@@ -348,7 +360,7 @@
    "link_fieldname": "admission_encounter"
   }
  ],
- "modified": "2023-04-10 11:21:07.173681",
+ "modified": "2023-05-08 12:24:44.350252",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
