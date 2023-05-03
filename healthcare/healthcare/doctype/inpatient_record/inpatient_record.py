@@ -102,11 +102,11 @@ class InpatientRecord(Document):
 		discharge_patient(self)
 
 	@frappe.whitelist()
-	def transfer(self, service_unit, check_in, leave_from):
+	def transfer(self, service_unit, check_in, leave_from=None, txred=0):
 		if leave_from:
 			patient_leave_service_unit(self, check_in, leave_from)
 		if service_unit:
-			transfer_patient(self, service_unit, check_in)
+			transfer_patient(self, service_unit, check_in, txred)
 
 
 @frappe.whitelist()
@@ -382,10 +382,21 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 	)
 
 
-def transfer_patient(inpatient_record, service_unit, check_in):
+def transfer_patient(inpatient_record, service_unit, check_in, txred=0):
+	print(inpatient_record.inpatient_occupancies)
+	if any((inpat_occup.service_unit == service_unit and inpat_occup.left==0) for inpat_occup in inpatient_record.inpatient_occupancies):
+		return
+
 	item_line = inpatient_record.append("inpatient_occupancies", {})
 	item_line.service_unit = service_unit
 	item_line.check_in = check_in
+
+	if txred:
+		item_line.transferred_for_procedure = 1
+	else:
+		for inpat_occup in inpatient_record.inpatient_occupancies:
+			if inpat_occup.transferred_for_procedure == 0 and inpat_occup.left == 0:
+				inpat_occup.left = 1
 
 	inpatient_record.save(ignore_permissions=True)
 
