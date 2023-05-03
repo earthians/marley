@@ -177,6 +177,7 @@ frappe.ui.form.on('Patient Encounter', {
 		var table_list =  ["drug_prescription", "lab_test_prescription", "procedure_prescription", "therapies"]
 		apply_code_sm_filter_to_child(frm, "priority", table_list, "Priority")
 		apply_code_sm_filter_to_child(frm, "intent", table_list, "Intent")
+		set_encounter_details(frm)
 	},
 
 	appointment: function(frm) {
@@ -185,6 +186,8 @@ frappe.ui.form.on('Patient Encounter', {
 
 	patient: function(frm) {
 		frm.events.set_patient_info(frm);
+
+		set_encounter_details(frm)
 	},
 
 	practitioner: function(frm) {
@@ -640,4 +643,236 @@ var apply_code_sm_filter_to_child = function(frm, field, table_list, code_system
 			};
 		});
 	});
+};
+
+var set_encounter_details = function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		frappe.call({
+			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_encounter_details",
+			freeze: true,
+			args: {
+				patient: frm.doc.patient
+			},
+			callback: function(r) {
+				if (r && !r.exc) {
+					if (r.message[0].length || r.message[1].length) {
+						var encounter_details = `
+							<div class="encounter_details">
+							<style>
+								.encounter_details {
+										background-color:#f4f5f6;
+									float:left;
+									padding-left: 5px;
+									padding-right: 5px;
+									border: 1px solid rgb(228, 223, 223);
+									min-height: 200px;
+								}
+								@media (min-width: 1200px) {
+									.encounter_details {
+											min-width: 900px;
+										}
+									}
+								.encounter-cards {
+									background-color: rgb(255, 255, 255);
+									cursor:pointer;
+									border: 1px solid rgb(228, 223, 223);
+									box-shadow: 0px 1px 2px rgba(25, 39, 52, 0.05), 0px 0px 4px rgba(25, 39, 52, 0.1);
+									margin: 7px;
+									min-height: 115px;
+									height: fit-content;
+									border-radius: 5px;
+								}
+								.card-body {
+									font-size:11px;
+								}
+								.card-head {
+									padding-left:20px;
+									padding-top:5px;
+									width: 80%;
+									font-size:15px;
+									float:left;
+									height: fit-content;
+								}
+								.enc-cell {
+									padding-left:15px;
+								}
+								.lab-result {
+									font-size:10px;
+									padding-left:60px;
+									padding-right:60px;
+								}
+								</style>
+								`
+							if (r.message[0] && r.message[0].length > 0) {
+								encounter_details += `
+									<span style="color:#646566;">Medication Requests</span>`
+										r.message[0].forEach(function(element) {
+											encounter_details += `
+												<div class="page-card encounter-cards" id="card">
+													<div class="colo-sm-12">
+														<div class="card-head colo-sm-10"><b>${element.medication}</b>
+														</div>
+														<div class="colo-sm-2" style="float:right; padding-right:10px; padding-top:10px;">
+														<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary">
+															${element.status}
+															</button>
+															<ul class="dropdown-menu dropdown-menu-right" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);" x-placement="bottom-end">`
+																	if (element.status == "Active") {
+																			encounter_details += `<li><a class="dropdown-item" data-action="on-hold" onclick="medication_status_change('On Hold', '${element.name}', 'Medication Request')">On Hold</a></li>`
+																	} else if (element.status == "On Hold") {
+																			encounter_details += `<li><a class="dropdown-item" data-action="active" onclick="medication_status_change('Active', '${element.name}', 'Medication Request')">Active</a></li>`
+																	}
+																	if (element.docstatus == 1) {
+																			encounter_details += `<li><a class="dropdown-item" data-action="active" onclick="medication_status_change('Cancel', '${element.name}', 'Medication Request')">Cancel</a></li>`
+																	} else if (element.docstatus == 2) {
+																			encounter_details += `<li><a class="dropdown-item" data-action="revoke" onclick="medication_status_change('Revoked', '${element.name}', 'Medication Request')">Revoked</a></li>`
+																			encounter_details += `<li><a class="dropdown-item" data-action="replace" onclick="medication_status_change('Replaced', '${element.name}', 'Medication Request')">Replaced</a></li>`
+																			encounter_details += `<li><a class="dropdown-item" data-action="entered_in_error" onclick="medication_status_change('Entered in Error', '${element.name}', 'Medication Request')">Entered in Error</a></li>`
+																			encounter_details += `<li><a class="dropdown-item" data-action="unknown" onclick="medication_status_change('Unknown', '${element.name}', 'Medication Request')">Unknown</a></li>`
+																	}
+															encounter_details += `</ul>
+														</div>
+														<div class="card-body colo-sm-12">
+															<div class="card-body colo-sm-12" style="float:left">
+																<table>
+																	<tr>
+																		<td>Status:</td>
+																		<td><b>${element.status?element.status:""}</b></td>
+																		<td class="enc-cell">Order Date:</td>
+																		<td><b>${element.order_date?frappe.format(element.order_date, { fieldtype: 'Date' }):""}</b></td>
+																		<td class="enc-cell">Ordered By:</td>
+																		<td><b>${element.practitioner_name?element.practitioner_name:""}</b></td>
+																		<td class="enc-cell">Billing Status:</td>
+																		<td><b>${element.billing_status?element.billing_status:""}</b></td>
+																	</tr>
+																	<tr>
+																		<td>Quantity:</td>
+																		<td class="enc-cell"><b>${element.quantity?element.quantity:""}</b></td>
+																		<td class="enc-cell">Order Time:</td>
+																		<td><b>${element.order_time?element.order_time:""}</b></td>
+																		<td class="enc-cell">Period:</td>
+																		<td><b>${element.period?element.period:""}</b></td>
+																		<td class="enc-cell">Dosage Form:</td>
+																		<td><b>${element.dosage_form?element.dosage_form:""}</b></td>
+																	</tr>
+																</table>
+															</div>
+														</div>
+													</div>
+												</div>`
+										})
+							}
+
+							if (r.message[1] && r.message[1].length > 0) {
+								encounter_details += `
+									<span style="color:#646566;">Service Requests</span>`
+									r.message[1].forEach(function(element) {
+										encounter_details += `
+											<div class="page-card encounter-cards" id="card">
+												<div class="colo-sm-12">
+													<div class="card-head colo-sm-10"><b>${element.template_dn}</b><span style="color:#dedfe0;"><span>
+													</div>
+													<div class="colo-sm-2" style="float:right; padding-right:10px; padding-top:10px;">
+														<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary">
+																${element.status}
+														</button>
+														<ul class="dropdown-menu dropdown-menu-right" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);" x-placement="bottom-end">`
+																if (element.status == "Active") {
+																		encounter_details += `<li><a class="dropdown-item" data-action="on-hold" onclick="medication_status_change('On Hold', '${element.name}', 'Service Request')">On Hold</a></li>`
+																} else if (element.status == "On Hold") {
+																		encounter_details += `<li><a class="dropdown-item" data-action="active" onclick="medication_status_change('Active', '${element.name}', 'Service Request')">Active</a></li>`
+																}
+																if (element.docstatus == 1) {
+																		encounter_details += `<li><a class="dropdown-item" data-action="active" onclick="medication_status_change('Cancel', '${element.name}', 'Service Request')">Cancel</a></li>`
+																} else if (element.docstatus == 2) {
+																		encounter_details += `<li><a class="dropdown-item" data-action="revoke" onclick="medication_status_change('Revoked', '${element.name}', 'Service Request')">Revoked</a></li>`
+																		encounter_details += `<li><a class="dropdown-item" data-action="replace" onclick="medication_status_change('Replaced', '${element.name}', 'Service Request')">Replaced</a></li>`
+																		encounter_details += `<li><a class="dropdown-item" data-action="entered_in_error" onclick="medication_status_change('Entered in Error', '${element.name}', 'Service Request')">Entered in Error</a></li>`
+																		encounter_details += `<li><a class="dropdown-item" data-action="unknown" onclick="medication_status_change('Unknown', '${element.name}', 'Service Request')">Unknown</a></li>`
+																}
+																	encounter_details += `
+														</ul>
+													</div>
+													<div class="card-body colo-sm-12">
+														<div class="card-body colo-sm-12">
+															<table>
+																<tr>
+																	<td>Status:</td>
+																	<td><b>${element.status?element.status:""}</b></td>
+																	<td class="enc-cell">Order Date:</td>
+																	<td><b>${element.order_date?frappe.format(element.order_date, { fieldtype: 'Date' }):""}</b></td>
+																	<td class="enc-cell">Ordered By:</td>
+																	<td><b>${element.practitioner_name?element.practitioner_name:""}</b></td>
+																	<td class="enc-cell">Billing Status:</td>
+																	<td><b>${element.billing_status?element.billing_status:""}</b></td>
+																</tr>
+																<tr>
+																	<td>Quantity:</td>
+																	<td class="enc-cell"><b>${element.quantity?element.quantity:""}</b></td>
+																	<td class="enc-cell">Order Time:</td>
+																	<td><b>${element.order_time?element.order_time:""}</b></td>
+																	<td class="enc-cell">Order Type:</td>
+																	<td><b>${element.template_dt?element.template_dt:""}</b></td>
+																	`
+																	if (element.referred_to_practitioner) {
+																		encounter_details += `
+																			</tr><tr>
+																				<td>Referred To:</td>
+																				<td><b>${element.referred_to_practitioner?element.referred_to_practitioner:""}</b></td>
+																				</tr>
+																			`
+																	} else {
+																		encounter_details += `</tr>`
+																	}
+																		encounter_details += `
+															</table>
+														</div>`
+													if (element.lab_details) {
+														encounter_details += `
+															<div class="colo-sm-12 lab-result">
+																${element.lab_details}
+															</div>`
+													}
+												encounter_details += `
+											</div>
+										</div>
+										</div>`
+									})
+							}
+							encounter_details += `<script>
+								function medication_status_change(status, request, doctype) {
+									if (status == 'Cancel') {
+										frappe.call({
+											method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.cancel_request",
+												freeze: true,
+												args: {
+													doctype: doctype,
+													request: request
+												},
+										})
+									} else {
+										frappe.call({
+											method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.set_service_request_status",
+											freeze: true,
+											args: {
+													doctype: doctype,
+													request: request,
+													status: status,
+													encounter: "${frm.doc.name}",
+											},
+											callback: function(r) {
+													if (r && !r.exc) {
+															}
+											}
+										})
+									}
+								}
+							</script>
+						</div>`
+						frm.fields_dict.encounter_details.html(encounter_details);
+					}
+				}
+			}
+		})
+	}
 }
