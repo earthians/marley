@@ -7,6 +7,7 @@
  "field_order": [
   "service_unit",
   "check_in",
+  "transferred_for_procedure",
   "left",
   "check_out",
   "invoiced"
@@ -45,12 +46,19 @@
    "fieldtype": "Check",
    "label": "Invoiced",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "transferred_for_procedure",
+   "fieldtype": "Check",
+   "label": "Transferred For Procedure",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-03-18 15:08:54.634132",
+ "modified": "2023-05-04 14:47:48.538574",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Occupancy",
@@ -60,5 +68,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }
