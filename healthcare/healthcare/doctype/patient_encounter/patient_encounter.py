@@ -146,18 +146,21 @@ class PatientEncounter(Document):
 				lab_template = frappe.get_doc("Lab Test Template", lab_test.lab_test_code)
 				order = self.get_order_details(lab_template, lab_test)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
 		if self.procedure_prescription:
 			for procedure in self.procedure_prescription:
 				procedure_template = frappe.get_doc("Clinical Procedure Template", procedure.procedure)
 				order = self.get_order_details(procedure_template, procedure)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
 		if self.therapies:
 			for therapy in self.therapies:
 				therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
 
 	def make_medication_request(self):
 		if self.drug_prescription:
@@ -167,6 +170,7 @@ class PatientEncounter(Document):
 					medication = frappe.get_doc("Medication", drug.medication)
 					order = self.get_order_details(medication, drug, True)
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
 
 	def get_order_details(self, template_doc, line_item, medication_request=False):
 		order = frappe.get_doc(

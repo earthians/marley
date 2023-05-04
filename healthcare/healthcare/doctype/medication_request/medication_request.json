@@ -33,6 +33,7 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_name",
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
@@ -451,12 +452,19 @@
    "fieldname": "request_details_section",
    "fieldtype": "Section Break",
    "label": "Request Details"
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-22 17:19:06.842548",
+ "modified": "2023-05-08 12:29:29.990504",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",

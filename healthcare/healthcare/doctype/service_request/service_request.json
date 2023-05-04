@@ -32,6 +32,7 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_name",
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
@@ -526,6 +527,13 @@
    "fieldtype": "Date",
    "label": "Ordered For",
    "read_only": 1
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -544,7 +552,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-04-20 15:11:57.739390",
+ "modified": "2023-05-08 11:00:26.572288",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
