@@ -23,6 +23,7 @@
   "allow_discharge_despite_unbilled_services",
   "do_not_bill_inpatient_encounters",
   "column_break_cikp",
+  "automatically_generate_billable",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -361,11 +362,18 @@
   {
    "fieldname": "column_break_cikp",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Nightly generate billable from Inpatient Occupancy",
+   "fieldname": "automatically_generate_billable",
+   "fieldtype": "Check",
+   "label": "Automatically Generate Billable"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-04-09 16:36:01.329459",
+ "modified": "2023-05-10 16:22:45.747007",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
