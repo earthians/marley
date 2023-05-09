@@ -557,25 +557,28 @@ var create_treatment_counselling = function(frm, args) {
 }
 
 let consume_items = function(frm) {
-	if (!frm.doc.warehouse) {
-		frappe.throw({message:__("Warehouse is required for consuming Items"), title: __("Mandatory")});
-	}
 	var dialog = new frappe.ui.Dialog({
 		title: "Consume Items",
 		fields: [
 			{
-				label: 'Items',
-				fieldname: 'items',
-				fieldtype: 'Table',
+				label: "Warehouse",
+				fieldname: "warehouse",
+				fieldtype: "Link",
+				options: "Warehouse"
+			},
+			{
+				label: "Items",
+				fieldname: "items",
+				fieldtype: "Table",
 				cannot_add_rows: false,
 				is_editable_grid: true,
 				data: [],
 				in_place_edit: true,
 				fields: [
 					{
-						label: 'Item',
-						fieldname: 'item_code',
-						fieldtype: 'Link',
+						label: "Item",
+						fieldname: "item_code",
+						fieldtype: "Link",
 						options: "Item",
 						in_list_view: true,
 						reqd: true,
@@ -586,18 +589,27 @@ let consume_items = function(frm) {
 								},
 							};
 						},
+						onchange: () => {
+							dialog.fields_dict.items.df.data.some(item => {
+								frappe.db.get_value("Item", item.item_code, "stock_uom")
+								.then(r => {
+									item.uom = r.message.stock_uom;
+									dialog.fields_dict.items.grid.refresh();
+								})
+						   });
+					   }
 					},
 					{
-						label: 'Quantity',
-						fieldname: 'quantity',
-						fieldtype: 'Float',
+						label: "Quantity",
+						fieldname: "quantity",
+						fieldtype: "Float",
 						in_list_view: true,
 						reqd: true,
 					},
 					{
-						label: 'UOM',
-						fieldname: 'uom',
-						fieldtype: 'Link',
+						label: "UOM",
+						fieldname: "uom",
+						fieldtype: "Link",
 						options: "UOM",
 						in_list_view: true,
 						reqd: true,
@@ -611,7 +623,8 @@ let consume_items = function(frm) {
 				method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.create_stock_entry",
 				args: {
 					items: values.items,
-					inpatient_record: frm.doc.name,
+					warehouse: dialog.get_value("warehouse"),
+					company: frm.doc.company,
 				},
 				freeze: true,
 				freeze_message: __("Creating Stock Entry"),
@@ -638,5 +651,20 @@ let consume_items = function(frm) {
 			dialog.hide();
 		}
 	})
+
+	var current_occupancy = frm.doc.inpatient_occupancies.find((su) =>
+		(su.left == 0 && su.transferred_for_procedure == 0));
+		frappe.db.get_value("Healthcare Service Unit", current_occupancy.service_unit, "warehouse")
+		.then(r => {
+			if (!r.message.warehouse) {
+				frappe.throw({
+					message: __(`Warehouse is not set in Healthcare Service Unit <b>{0}</b>`,
+								[current_occupancy.service_unit]),
+								title: __("Mandatory")
+							});
+			}
+			dialog.set_value("warehouse", r.message.warehouse);
+		})
+
 	dialog.show();
 }

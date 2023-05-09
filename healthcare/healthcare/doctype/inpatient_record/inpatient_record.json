@@ -39,9 +39,7 @@
   "chief_complaint",
   "column_break_29",
   "diagnosis",
-  "consumables_section",
-  "warehouse",
-  "items",
+  "prescriptions_tab",
   "medication_section",
   "drug_prescription",
   "investigations_section",
@@ -51,6 +49,8 @@
   "rehabilitation_section",
   "therapy_plan",
   "therapies",
+  "inpatient_record_billables_tab",
+  "items",
   "sb_inpatient_occupancy",
   "inpatient_occupancies",
   "btn_transfer",
@@ -211,7 +211,7 @@
   {
    "collapsible": 1,
    "fieldname": "references",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Admission Order Details"
   },
   {
@@ -308,7 +308,7 @@
   {
    "depends_on": "eval:(doc.status != \"Admission Scheduled\")",
    "fieldname": "sb_inpatient_occupancy",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Inpatient Occupancy"
   },
   {
@@ -355,7 +355,7 @@
    "collapsible_depends_on": "eval:(doc.status == \"Admitted\")",
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "encounter_details_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Encounter Impression",
    "permlevel": 1
   },
@@ -379,7 +379,7 @@
    "collapsible": 1,
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_details",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Discharge Details"
   },
   {
@@ -436,12 +436,6 @@
    "options": "Nursing Checklist Template"
   },
   {
-   "collapsible": 1,
-   "fieldname": "consumables_section",
-   "fieldtype": "Section Break",
-   "label": "Consumables"
-  },
-  {
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Consumables",
@@ -449,10 +443,15 @@
    "read_only": 1
   },
   {
-   "fieldname": "warehouse",
-   "fieldtype": "Link",
-   "label": "Warehouse",
-   "options": "Warehouse"
+   "fieldname": "prescriptions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Prescriptions"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "inpatient_record_billables_tab",
+   "fieldtype": "Tab Break",
+   "label": "Inpatient Record Billables"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -466,7 +465,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-05-03 15:16:01.414479",
+ "modified": "2023-05-09 08:32:13.051089",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

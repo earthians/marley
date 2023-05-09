@@ -430,22 +430,20 @@ def create_treatment_counselling(args):
 	financial_counselling.save(ignore_permissions=True)
 
 @frappe.whitelist()
-def create_stock_entry(items, inpatient_record):
+def create_stock_entry(items, warehouse, company):
 	items = json.loads(items)
-	ip_record_doc = frappe.get_doc("Inpatient Record", inpatient_record)
 	stock_entry = frappe.new_doc("Stock Entry")
-
 	stock_entry.stock_entry_type = "Material Issue"
-	stock_entry.to_warehouse = ip_record_doc.warehouse
-	stock_entry.company = ip_record_doc.company
-	expense_account = get_account(None, "expense_account", "Healthcare Settings", ip_record_doc.company)
+	stock_entry.to_warehouse = warehouse
+	stock_entry.company = company
+	expense_account = get_account(None, "expense_account", "Healthcare Settings", company)
 	for item in items:
 		se_child = stock_entry.append("items")
 		se_child.item_code = item.get("item_code")
 		se_child.uom = item.get("uom")
 		se_child.qty = item.get("quantity")
-		se_child.s_warehouse = ip_record_doc.warehouse
-		cost_center = frappe.get_cached_value("Company", ip_record_doc.company, "cost_center")
+		se_child.s_warehouse = warehouse
+		cost_center = frappe.get_cached_value("Company", company, "cost_center")
 		se_child.cost_center = cost_center
 		se_child.expense_account = expense_account
 	stock_entry.save().submit()
