@@ -40,7 +40,6 @@
   "column_break_29",
   "diagnosis",
   "consumables_section",
-  "warehouse",
   "items",
   "medication_section",
   "drug_prescription",
@@ -51,6 +50,12 @@
   "rehabilitation_section",
   "therapy_plan",
   "therapies",
+  "inpatient_billables_tab",
+  "currency",
+  "column_break_xdfm",
+  "price_list",
+  "section_break_dy9z",
+  "items",
   "sb_inpatient_occupancy",
   "inpatient_occupancies",
   "btn_transfer",
@@ -211,8 +216,8 @@
   {
    "collapsible": 1,
    "fieldname": "references",
-   "fieldtype": "Section Break",
-   "label": "Admission Order Details"
+   "fieldtype": "Tab Break",
+   "label": "Admission Order"
   },
   {
    "fieldname": "cb_admission",
@@ -444,15 +449,40 @@
   {
    "fieldname": "items",
    "fieldtype": "Table",
-   "label": "Consumables",
+   "label": "Billables",
    "options": "Inpatient Record Item",
    "read_only": 1
   },
   {
-   "fieldname": "warehouse",
+   "fieldname": "prescriptions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Prescriptions"
+  },
+  {
+   "fieldname": "currency",
    "fieldtype": "Link",
-   "label": "Warehouse",
-   "options": "Warehouse"
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "column_break_xdfm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "section_break_dy9z",
+   "fieldtype": "Section Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "inpatient_billables_tab",
+   "fieldtype": "Tab Break",
+   "label": "Inpatient Billables"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -466,7 +496,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-05-03 15:16:01.414479",
+ "modified": "2023-05-10 16:07:02.526695",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

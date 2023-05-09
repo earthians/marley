@@ -26,6 +26,7 @@
   "default_intent",
   "column_break_1oy0",
   "default_priority",
+  "automatically_generate_billable",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -401,6 +402,13 @@
    "fieldname": "orders_tab",
    "fieldtype": "Tab Break",
    "label": "Orders"
+  },
+  {
+   "default": "0",
+   "description": "Nightly generate billable from Inpatient Occupancy",
+   "fieldname": "automatically_generate_billable",
+   "fieldtype": "Check",
+   "label": "Automatically Generate Billable"
   }
  ],
  "issingle": 1,

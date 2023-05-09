@@ -15,13 +15,15 @@
   "column_break_enkm",
   "conversion_factor",
   "stock_uom",
+  "rate",
+  "amount",
   "reference_section",
   "stock_entry"
  ],
  "fields": [
   {
    "bold": 1,
-   "columns": 3,
+   "columns": 2,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -31,6 +33,7 @@
    "reqd": 1
   },
   {
+   "columns": 1,
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
@@ -39,12 +42,14 @@
    "read_only": 1
   },
   {
+   "columns": 1,
    "fieldname": "quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Quantity"
   },
   {
+   "columns": 1,
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -63,12 +68,12 @@
    "read_only": 1
   },
   {
+   "fetch_from": "item_code.stock_uom",
    "fieldname": "stock_uom",
    "fieldtype": "Link",
    "label": "Stock UOM",
    "options": "UOM",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "reference_section",
@@ -88,12 +93,30 @@
    "fieldtype": "Check",
    "label": "Invoiced",
    "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Rate",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "options": "currency",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-04-26 14:43:54.567545",
+ "modified": "2023-05-10 18:05:31.875772",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record Item",
