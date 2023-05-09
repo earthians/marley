@@ -256,60 +256,88 @@ def get_clinical_procedures_to_invoice(patient, company):
 
 def get_inpatient_services_to_invoice(patient, company):
 	services_to_invoice = []
-	inpatient_services = frappe.db.sql(
-		"""
-			SELECT
-				io.*
-			FROM
-				`tabInpatient Record` ip, `tabInpatient Occupancy` io
-			WHERE
-				ip.patient=%s
-				and ip.company=%s
-				and io.parent=ip.name
-				and io.left=1
-				and io.invoiced=0
-		""",
-		(patient.name, company),
-		as_dict=1,
-	)
-
-	for inpatient_occupancy in inpatient_services:
-		service_unit_type = frappe.db.get_value(
-			"Healthcare Service Unit", inpatient_occupancy.service_unit, "service_unit_type"
+	if not frappe.db.get_single_value("Healthcare Settings", "automatically_generate_billable"):
+		inpatient_services = frappe.db.sql(
+			"""
+				SELECT
+					io.*
+				FROM
+					`tabInpatient Record` ip, `tabInpatient Occupancy` io
+				WHERE
+					ip.patient=%s
+					and ip.company=%s
+					and io.parent=ip.name
+					and io.left=1
+					and io.invoiced=0
+			""",
+			(patient.name, company),
+			as_dict=1,
 		)
-		service_unit_type = frappe.get_cached_doc("Healthcare Service Unit Type", service_unit_type)
-		if service_unit_type and service_unit_type.is_billable:
-			hours_occupied = flt(
-				time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2
+
+		for inpatient_occupancy in inpatient_services:
+			service_unit_type = frappe.db.get_value(
+				"Healthcare Service Unit", inpatient_occupancy.service_unit, "service_unit_type"
 			)
-			qty = 0.5
-			if hours_occupied > 0:
-				actual_qty = hours_occupied / service_unit_type.no_of_hours
-				floor = math.floor(actual_qty)
-				decimal_part = actual_qty - floor
-				if decimal_part > 0.5:
-					qty = rounded(floor + 1, 1)
-				elif decimal_part < 0.5 and decimal_part > 0:
-					qty = rounded(floor + 0.5, 1)
-				if qty <= 0:
-					qty = 0.5
+			service_unit_type = frappe.get_cached_doc("Healthcare Service Unit Type", service_unit_type)
+			if service_unit_type and service_unit_type.is_billable:
+				hours_occupied = flt(
+					time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2
+				)
+				qty = 0.5
+				if hours_occupied > 0:
+					actual_qty = hours_occupied / service_unit_type.no_of_hours
+					floor = math.floor(actual_qty)
+					decimal_part = actual_qty - floor
+					if decimal_part > 0.5:
+						qty = rounded(floor + 1, 1)
+					elif decimal_part < 0.5 and decimal_part > 0:
+						qty = rounded(floor + 0.5, 1)
+					if qty <= 0:
+						qty = 0.5
+				services_to_invoice.append(
+					{
+						"reference_type": "Inpatient Occupancy",
+						"reference_name": inpatient_occupancy.name,
+						"service": service_unit_type.item,
+						"qty": qty,
+					}
+				)
+			inpatient_record_doc = frappe.get_doc("Inpatient Record", inpatient_occupancy.parent)
+			for item in inpatient_record_doc.items:
+				if item.stock_entry and not item.invoiced:
+					services_to_invoice.append(
+					{
+						"reference_type": "Inpatient Record Item",
+						"reference_name": item.name,
+						"service": item.item_code,
+						"qty": item.quantity,
+					}
+				)
+
+	else:
+		inpatient_services = frappe.db.sql(
+			"""
+				SELECT
+					iri.*
+				FROM
+					`tabInpatient Record` ip, `tabInpatient Record Item` iri
+				WHERE
+					ip.patient=%s
+					and ip.company=%s
+					and iri.parent=ip.name
+					and iri.invoiced=0
+			""",
+			(patient.name, company),
+			as_dict=1,
+		)
+
+		for inpatient_occupancy in inpatient_services:
 			services_to_invoice.append(
 				{
-					"reference_type": "Inpatient Occupancy",
-					"reference_name": inpatient_occupancy.name,
-					"service": service_unit_type.item,
-					"qty": qty,
-				}
-			)
-		inpatient_record_doc = frappe.get_doc("Inpatient Record", inpatient_occupancy.parent)
-		for item in inpatient_record_doc.items:
-			if item.stock_entry and not item.invoiced:
-				services_to_invoice.append(
-				{
 					"reference_type": "Inpatient Record Item",
-					"reference_name": item.name,
-					"service": item.item_code,
-					"qty": item.quantity,
+					"reference_name": inpatient_occupancy.name,
+					"service": inpatient_occupancy.item_code,
+					"qty": inpatient_occupancy.quantity,
 				}
 			)
 

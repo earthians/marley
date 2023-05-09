@@ -35,6 +35,14 @@ frappe.ui.form.on('Inpatient Record', {
 			};
 		});
 
+		frm.set_query('price_list', function() {
+			return {
+				filters: {
+					"currency": frm.doc.currency
+				}
+			};
+		});
+
 		frm.set_query('warehouse', function() {
 			return {
 				filters: {
@@ -48,8 +56,17 @@ frappe.ui.form.on('Inpatient Record', {
 				frm.add_custom_button(__('Schedule Discharge'), function() {
 					schedule_discharge(frm);
 				});
-				frm.add_custom_button(__("Tranfer"), function() {
+				frm.add_custom_button(__("Transfer"), function() {
 					transfer_patient_dialog(frm);
+				});
+				frm.add_custom_button(__("Generate Billables"), function() {
+					frappe.call({
+						doc: frm.doc,
+						method: 'add_service_unit_rent_to_billable_items',
+						callback: function() {
+							frm.refresh();
+						}
+					})
 				});
 				if (!frm.doc.inpatient_occupancies.some(
 					e => e.transferred_for_procedure == 1 && e.left != 1)) {
@@ -120,6 +137,25 @@ let admit_patient_dialog = function(frm) {
 			{fieldtype: 'Link', label: 'Service Unit', fieldname: 'service_unit',
 				options: 'Healthcare Service Unit', reqd: 1
 			},
+			{fieldtype: 'Section Break', fieldname: 'sb1'
+			},
+			{fieldtype: 'Link', label: 'Currency', fieldname: 'currency',
+				options: 'Currency', reqd: 1
+			},
+			{fieldtype: 'Column Break', fieldname: 'cb1'
+			},
+			{fieldtype: 'Link', label: 'Price List', fieldname: 'price_list',
+				options: 'Price List', reqd: 1,
+				"get_query": function () {
+					return {
+						filters: [
+							["Price List", "currency", "=", dialog.get_value("currency")]
+						]
+					};
+				},
+			},
+			{fieldtype: 'Section Break', fieldname: 'sb2'
+			},
 			{fieldtype: 'Datetime', label: 'Admission Datetime', fieldname: 'check_in',
 				reqd: 1, default: frappe.datetime.now_datetime()
 			},
@@ -142,9 +178,11 @@ let admit_patient_dialog = function(frm) {
 				doc: frm.doc,
 				method: 'admit',
 				args:{
-					'service_unit': service_unit,
-					'check_in': check_in,
-					'expected_discharge': expected_discharge
+					"service_unit": service_unit,
+					"check_in": check_in,
+					"expected_discharge": expected_discharge,
+					"currency": dialog.get_value('currency'),
+					"price_list": dialog.get_value('price_list')
 				},
 				callback: function(data) {
 					if (!data.exc) {
@@ -177,6 +215,12 @@ let admit_patient_dialog = function(frm) {
 			}
 		};
 	};
+	frappe.db.get_value("Patient", frm.doc.patient, ["default_currency", "default_price_list"])
+		.then(r => {
+			let values = r.message;
+			dialog.set_value("currency", values.default_currency)
+			dialog.set_value("price_list", values.default_price_list)
+		})
 
 	dialog.show();
 };

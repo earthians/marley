@@ -9,7 +9,7 @@ import frappe
 from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
-from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today
+from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today, time_diff_in_hours, now
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
@@ -60,6 +60,8 @@ class InpatientRecord(Document):
 				"Patient", self.patient, {"inpatient_status": None, "inpatient_record": None}
 			)
 
+		set_item_rate(self)
+
 	def validate_dates(self):
 		if (getdate(self.expected_discharge) < getdate(self.scheduled_date)) or (
 			getdate(self.discharge_ordered_date) < getdate(self.scheduled_date)
@@ -94,8 +96,8 @@ class InpatientRecord(Document):
 			frappe.throw(msg)
 
 	@frappe.whitelist()
-	def admit(self, service_unit, check_in, expected_discharge=None):
-		admit_patient(self, service_unit, check_in, expected_discharge)
+	def admit(self, service_unit, check_in, expected_discharge=None, currency=None, price_list=None):
+		admit_patient(self, service_unit, check_in, expected_discharge, currency, price_list)
 
 	@frappe.whitelist()
 	def discharge(self):
@@ -108,6 +110,55 @@ class InpatientRecord(Document):
 		if service_unit:
 			transfer_patient(self, service_unit, check_in, txred)
 
+	@frappe.whitelist()
+	def add_service_unit_rent_to_billable_items(self):
+		try:
+			query = frappe.db.sql(f"""
+				SELECT
+					sum(TIMESTAMPDIFF(minute, io.check_in, now())) as now_difference,
+					sum(TIMESTAMPDIFF(minute, io.check_in, io.check_out)) as time_difference,
+					io.`left`,
+					io.parent,
+					io.name,
+					sut.item,
+					sut.uom,
+					sut.rate,
+					sut.no_of_hours
+
+				FROM
+					`tabInpatient Occupancy` as io left join
+					`tabHealthcare Service Unit` as su on io.service_unit=su.name left join
+					`tabHealthcare Service Unit Type` as sut on su.service_unit_type=sut.name
+				WHERE
+					io.parent={frappe.db.escape(self.name)}
+				GROUP BY
+					sut.item
+			""", as_dict=True)
+			self.items = []
+			for inpat in query:
+				if inpat.get("now_difference")>0 or inpat.get("time_difference")>0:
+					item_name, stock_uom = frappe.db.get_value(
+						"Item", inpat.get("item"), ["item_name", "stock_uom"]
+					)
+					se_child = self.append("items")
+					se_child.item_code = inpat.get("item")
+					se_child.item_name = item_name
+					se_child.stock_uom = stock_uom
+					se_child.uom = inpat.get("uom")
+					if inpat.get("left") == 1:
+						se_child.quantity = inpat.get("time_difference") / 60
+					else:
+						se_child.quantity = inpat.get("now_difference") / 60
+					se_child.rate = inpat.rate / inpat.get("no_of_hours")
+					se_child.amount = se_child.rate * se_child.quantity
+
+			for test in self.inpatient_occupancies:
+				if test.name == inpat.get("name"):
+					test.scheduled_billing_time = now()
+
+			self.save()
+		except Exception as e:
+			frappe.log_error(message=e, title="Can't bill Service Unit occupancy")
 
 @frappe.whitelist()
 def schedule_inpatient(args):
@@ -365,12 +416,14 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 	)
 
 
-def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=None):
+def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=None, currency=None, price_list=None):
 	validate_nursing_tasks(inpatient_record)
 
 	inpatient_record.admitted_datetime = check_in
 	inpatient_record.status = "Admitted"
 	inpatient_record.expected_discharge = expected_discharge
+	inpatient_record.currency = currency
+	inpatient_record.price_list = price_list
 
 	inpatient_record.set("inpatient_occupancies", [])
 	transfer_patient(inpatient_record, service_unit, check_in)
@@ -521,3 +574,39 @@ def create_stock_entry(items, inpatient_record):
 	stock_entry.save().submit()
 
 	return stock_entry.name
+
+def set_item_rate(doc):
+	from erpnext.stock.get_item_details import get_item_details
+	price_list, price_list_currency = frappe.db.get_values(
+			"Price List", {"selling": 1}, ["name", "currency"])[0]
+	total_amount = 0
+	for item in doc.items:
+		if not item.rate:
+			args = {
+				"doctype": "Sales Invoice",
+				"item_code": item.get("item_code"),
+				"company": doc.company,
+				"customer": frappe.db.get_value("Patient", doc.patient, "customer"),
+				"selling_price_list": doc.price_list or price_list,
+				"price_list_currency": doc.currency or price_list_currency,
+				"plc_conversion_rate": 1.0,
+				"conversion_rate": 1.0,
+			}
+			item_details = get_item_details(args)
+			item.rate = item_details.get("price_list_rate")
+			item.amount = item.rate * item.quantity
+
+		# if item.amount:
+		# 	total_amount += item.amount
+
+
+def add_occupied_service_unit_in_ip_to_billables():
+	if not frappe.db.get_single_value("Healthcare Settings", "automatically_generate_billable"):
+		return
+
+	inpatient_records = frappe.get_all(
+		"Inpatient Record", {"status": ("in", ["Admitted", "Discharge Scheduled"])}
+	)
+
+	for inpatient_record in inpatient_records:
+		frappe.get_doc("Inpatient Record", inpatient_record.name).add_service_unit_rent_to_billable_items()
