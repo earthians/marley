@@ -12,6 +12,8 @@
   "procedure_template",
   "column_break_30",
   "company",
+  "description_section",
+  "description",
   "section_break_6",
   "patient",
   "patient_name",
@@ -302,14 +304,6 @@
    "options": "Codification Table"
   },
   {
-   "fetch_from": "procedure_template.medical_code",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code",
-   "read_only": 1
-  },
-  {
    "fieldname": "service_request",
    "fieldtype": "Link",
    "label": "Service Request",
@@ -317,6 +311,17 @@
    "options": "Service Request",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fetch_from": "procedure_template.description",
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
   }
  ],
  "is_submittable": 1,
@@ -326,7 +331,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:57:21.878185",
+ "modified": "2023-05-11 18:26:47.790526",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

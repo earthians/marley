@@ -12,12 +12,13 @@
  "field_order": [
   "template",
   "medical_department",
-  "description",
   "is_ot_procedure",
   "column_break_5",
   "disabled",
   "pre_op_nursing_checklist_template",
   "post_op_nursing_checklist_template",
+  "description_section",
+  "description",
   "section_break_txof",
   "appointment_type",
   "column_break_yqen",
@@ -108,7 +109,7 @@
   },
   {
    "fieldname": "description",
-   "fieldtype": "Small Text",
+   "fieldtype": "Text Editor",
    "ignore_xss_filter": 1,
    "label": "Description",
    "no_copy": 1,
@@ -303,10 +304,15 @@
    "fieldname": "is_ot_procedure",
    "fieldtype": "Check",
    "label": "Is OT Procedure"
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Description"
   }
  ],
  "links": [],
- "modified": "2023-04-18 15:39:24.620171",
+ "modified": "2023-05-11 18:23:12.065891",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
