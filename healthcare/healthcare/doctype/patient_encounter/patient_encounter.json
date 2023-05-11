@@ -46,6 +46,8 @@
   "rehabilitation_section",
   "therapy_plan",
   "therapies",
+  "nursing_tasks_section",
+  "tasks",
   "section_break_33",
   "encounter_comment",
   "sb_refs",
@@ -351,6 +353,17 @@
   {
    "fieldname": "encounter_details",
    "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "tasks",
+   "fieldtype": "Table",
+   "label": "Tasks",
+   "options": "Patient Encounter Activity"
+  },
+  {
+   "fieldname": "nursing_tasks_section",
+   "fieldtype": "Section Break",
+   "label": "Nursing Tasks"
   }
  ],
  "is_submittable": 1,
@@ -360,7 +373,7 @@
    "link_fieldname": "admission_encounter"
   }
  ],
- "modified": "2023-05-08 12:24:44.350252",
+ "modified": "2023-05-10 11:21:25.210144",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

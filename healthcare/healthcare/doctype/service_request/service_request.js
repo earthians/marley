@@ -9,7 +9,8 @@ frappe.ui.form.on('Service Request', {
 				"Therapy Type",
 				"Lab Test Template",
 				"Clinical Procedure Template",
-				"Appointment Type"];
+				"Appointment Type",
+				"Healthcare Activity"];
 			return {
 				filters: {
 					name: ['in', order_template_doctypes]
@@ -90,6 +91,25 @@ frappe.ui.form.on('Service Request', {
 				}
 				frappe.new_doc("Patient Appointment");
 			}, __("Create"));
+
+		} else if (frm.doc.template_dt === "Healthcare Activity") {
+			frm.add_custom_button(__("Nursing Task"), function() {
+				frappe.db.get_value("Nursing Task", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
+				.then(r => {
+					if (Object.keys(r.message).length == 0) {
+						frm.trigger('make_nursing_task');
+					} else {
+						if (r.message && r.message.name) {
+							frappe.set_route("Form", "Nursing Task", r.message.name);
+							frappe.show_alert({
+								message: __(`Nursing Task is already created`),
+								indicator: "info",
+							});
+						}
+					}
+				})
+			}, __('Create'));
+
 		}
 
 		frm.page.set_inner_btn_group_as_primary(__('Create'));
@@ -122,6 +142,18 @@ frappe.ui.form.on('Service Request', {
 	make_therapy_session: function(frm) {
 		frappe.call({
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_therapy_session',
+			args: { service_request: frm.doc },
+			freeze: true,
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_nursing_task: function(frm) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_nursing_task',
 			args: { service_request: frm.doc },
 			freeze: true,
 			callback: function(r) {

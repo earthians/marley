@@ -162,6 +162,13 @@ class PatientEncounter(Document):
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
 				order.submit()
 
+		if self.tasks:
+			for task in self.tasks:
+				activity = frappe.get_doc("Healthcare Activity", task.healthcare_activity)
+				order = self.get_order_details(activity, task)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
+
 	def make_medication_request(self):
 		if self.drug_prescription:
 			# make_medication_request

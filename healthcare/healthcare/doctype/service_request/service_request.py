@@ -147,3 +147,29 @@ def make_therapy_session(service_request):
 	doc.medical_code = service_request.medical_code
 
 	return doc
+
+@frappe.whitelist()
+def make_nursing_task(service_request):
+	if isinstance(service_request, string_types):
+		service_request = json.loads(service_request)
+		service_request = frappe._dict(service_request)
+
+	description, task_doctype = frappe.db.get_value(
+		"Healthcare Activity", service_request.template_dn, ["description", "task_doctype"]
+	)
+	doc = frappe.new_doc("Nursing Task")
+	doc.activity = service_request.template_dn
+	doc.service_request = service_request.name
+	doc.medical_department = service_request.medical_department
+	doc.company = service_request.company
+	doc.patient = service_request.patient
+	doc.patient_name = service_request.patient_name
+	doc.gender = service_request.patient_gender
+	doc.patient_age = service_request.patient_age_data
+	doc.practitioner = service_request.practitioner
+	doc.requested_start_date = service_request.occurrence_date
+	doc.requested_start_time = service_request.occurrence_time
+	doc.description = description
+	doc.task_doctype = task_doctype
+
+	return doc

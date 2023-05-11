@@ -550,9 +550,13 @@
   {
    "link_doctype": "Therapy Session",
    "link_fieldname": "service_request"
+  },
+  {
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-05-08 11:00:26.572288",
+ "modified": "2023-05-10 15:14:34.754061",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

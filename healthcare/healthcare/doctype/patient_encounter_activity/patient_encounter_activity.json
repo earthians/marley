@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-05-10 11:18:02.656527",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "healthcare_activity",
+  "activity_duration",
+  "task_doctype"
+ ],
+ "fields": [
+  {
+   "fieldname": "healthcare_activity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Healthcare Activity",
+   "options": "Healthcare Activity",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "healthcare_activity.activity_duration",
+   "fieldname": "activity_duration",
+   "fieldtype": "Duration",
+   "in_list_view": 1,
+   "label": "Activity Duration",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "healthcare_activity.task_doctype",
+   "fieldname": "task_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Task DocType",
+   "options": "DocType",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-05-10 11:25:24.139694",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Patient Encounter Activity",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

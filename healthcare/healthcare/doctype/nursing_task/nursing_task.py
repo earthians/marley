@@ -51,6 +51,7 @@ class NursingTask(Document):
 					"task_duration": time_diff_in_seconds(self.task_end_time, self.task_start_time),
 				}
 			)
+			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
 
 		self.notify_update()
 

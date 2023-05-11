@@ -45,7 +45,8 @@
   "section_break_28",
   "task_doctype",
   "task_document_name",
-  "notes"
+  "notes",
+  "service_request"
  ],
  "fields": [
   {
@@ -319,12 +320,19 @@
    "fieldname": "source_section",
    "fieldtype": "Section Break",
    "label": "Source"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-01-19 15:34:31.760433",
+ "modified": "2023-05-10 15:08:03.937048",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Task",
