@@ -53,7 +53,9 @@
   "sb_refs",
   "amended_from",
   "encounter_details_tab",
-  "encounter_details"
+  "encounter_details",
+  "notes_tab",
+  "note"
  ],
  "fields": [
   {
@@ -367,10 +369,26 @@
    "fieldname": "submit_orders_on_save",
    "fieldtype": "Check",
    "label": "Submit Orders on Save"
+  },
+  {
+   "fieldname": "notes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "note",
+   "fieldtype": "Text Editor",
+   "label": "Note"
   }
  ],
  "is_submittable": 1,
- "links": [],
+ "links": [
+  {
+   "link_doctype": "Clinical Note",
+   "link_fieldname": "reference_name"
+  }
+ ],
  "modified": "2023-11-07 18:03:12.793649",
  "modified_by": "Administrator",
  "module": "Healthcare",

@@ -46,6 +46,14 @@ frappe.ui.form.on('Inpatient Record', {
 				} );
 			}
 		}
+
+		frm.add_custom_button(__("Clinical Note"), function() {
+			frappe.route_options = {
+				"patient": frm.doc.patient,
+				"reference_doc": "Inpatient Record",
+				"reference_name": frm.doc.name}
+					frappe.new_doc("Clinical Note");
+		},__('Create'));
 	},
 	btn_transfer: function(frm) {
 		transfer_patient_dialog(frm);
