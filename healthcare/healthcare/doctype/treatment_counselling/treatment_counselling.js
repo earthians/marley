@@ -24,7 +24,6 @@ frappe.ui.form.on("Treatment Counselling", {
 									if (r && r.message) {
 										frappe.set_route("Form", "Payment Entry", r.message);
 									}
-									console.log(r.message)
 								}
 							});
 						}, 'Create')

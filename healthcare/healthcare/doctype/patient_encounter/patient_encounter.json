@@ -53,7 +53,9 @@
   "sb_refs",
   "amended_from",
   "encounter_details_tab",
-  "encounter_details"
+  "encounter_details",
+  "notes_tab",
+  "note"
  ],
  "fields": [
   {
@@ -364,6 +366,17 @@
    "fieldname": "nursing_tasks_section",
    "fieldtype": "Section Break",
    "label": "Nursing Tasks"
+  },
+  {
+   "fieldname": "notes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "note",
+   "fieldtype": "Text Editor",
+   "label": "Note"
   }
  ],
  "is_submittable": 1,
@@ -371,9 +384,13 @@
   {
    "link_doctype": "Treatment Counselling",
    "link_fieldname": "admission_encounter"
+  },
+  {
+   "link_doctype": "Clinical Note",
+   "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-05-10 11:21:25.210144",
+ "modified": "2023-05-15 15:43:48.373270",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
