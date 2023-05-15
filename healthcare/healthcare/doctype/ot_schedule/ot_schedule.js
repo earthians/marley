@@ -8,10 +8,19 @@ frappe.ui.form.on("OT Schedule", {
 		}
 
 		if (frm.doc.docstatus == 0) {
-			frm.add_custom_button(__("Get Items"), function() {
+			frm.add_custom_button(__("Get Orders"), function() {
 				get_service_requests(frm);
 			});
 		}
+
+		frm.set_query('healthcare_service_unit', function() {
+			return {
+				filters: {
+					is_group: 0,
+					is_ot: 1
+				}
+			};
+		});
 	},
 
 	healthcare_service_unit: function (frm) {
@@ -26,7 +35,7 @@ frappe.ui.form.on("OT Schedule", {
 });
 
 
-frappe.ui.form.on("Procedure Schedules", {
+frappe.ui.form.on("Procedure Schedule", {
 	procedure_schedules_add: function(frm, cdt, cdn) {
 		set_time_to_child(frm);
 	},
@@ -50,7 +59,7 @@ let set_time_to_child = function(frm) {
 				schedule.from_time = idx_time_dict[schedule.idx-1]
 			}
 			if (schedule.duration && schedule.from_time) {
-				schedule.to_time = add_time(schedule.from_time, schedule.duration)
+				schedule.to_time = add_time(schedule.from_time, (schedule.duration/60))
 			}
 			if (schedule.to_time) {
 				idx_time_dict[schedule.idx] = schedule.to_time
@@ -85,7 +94,6 @@ var get_service_requests = function(frm) {
 				},
 				add_filters_group: 1,
 				action(selections) {
-					console.log(selections)
 					frappe.call({
 						method: "healthcare.healthcare.doctype.ot_schedule.ot_schedule.set_procedure_schedule",
 						args: {service_requests: selections},

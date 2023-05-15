@@ -80,7 +80,7 @@
    "fieldname": "procedure_schedules",
    "fieldtype": "Table",
    "label": "Procedure Schedules",
-   "options": "Procedure Schedules"
+   "options": "Procedure Schedule"
   },
   {
    "fieldname": "section_break_pnpf",
@@ -117,7 +117,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-04-19 14:34:02.632351",
+ "modified": "2023-05-12 13:44:41.166255",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "OT Schedule",

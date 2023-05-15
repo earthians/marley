@@ -5,6 +5,7 @@ import frappe
 import json
 from frappe import _, msgprint
 from frappe.model.document import Document
+from frappe.utils import get_datetime, get_weekday, get_time
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_appointment
 
@@ -26,13 +27,15 @@ class OTSchedule(Document):
 					update_appointment(sched)
 			msgprint(_("Appointment Updated"),alert=True,)
 
+	def validate(self):
+		validate_practitioner_schedule(self)
 
 @frappe.whitelist()
 def get_service_requests(date):
 	filters = [
 		["order_date", "=", date],
 	]
-	return frappe.get_list("Service Request", fields="*", filters=filters)
+	# return frappe.get_list("Service Request", fields="*", filters=filters)
 
 
 @frappe.whitelist()
@@ -67,7 +70,7 @@ def create_appointment(self, sched):
 	if sched.service_request:
 		appointment.service_request = sched.service_request
 		frappe.db.set_value("Service Request", sched.service_request, "status", "OT Scheduled")
-	frappe.db.set_value("Procedure Schedules", sched.name, "appointment_reference", appointment.name)
+	frappe.db.set_value("Procedure Schedule", sched.name, "appointment_reference", appointment.name)
 
 
 def update_appointment(sched):
@@ -92,4 +95,40 @@ def update_appointment(sched):
 		appointment_doc.flags.ignore_validate = True
 		appointment_doc.save(ignore_permissions=True)
 		appointment_doc.flags.ignore_validate = False
-		
+
+
+def validate_practitioner_schedule(self):
+	validate = False
+	pract_list = []
+	if self.procedure_schedules:
+		for sched in self.procedure_schedules:
+			pract_schedules = frappe.get_all(
+				"Practitioner Service Unit Schedule",
+				filters={"parent": sched.practitioner},
+				pluck="schedule", as_list=False
+			)
+			weekday = get_weekday(get_datetime(self.schedule_date))
+			pract_sched_data = frappe.db.sql("""
+					SELECT
+						min(from_time) as from_time,
+						max(to_time) as to_time
+					FROM
+						`tabHealthcare Schedule Time Slot`
+					WHERE
+						parent in ({pract_schedules}) AND day = {weekday}
+					GROUP BY
+						day
+				"""
+				.format(
+					pract_schedules=",".join(["%s"] * len(pract_schedules)),
+					weekday=frappe.db.escape(weekday),
+				), tuple(pract_schedules), as_dict=True
+			)
+			if pract_sched_data[0] and get_time(pract_sched_data[0].get("from_time")) > get_time(sched.get("from_time")):
+				validate = True
+			if pract_sched_data[0] and get_time(pract_sched_data[0].get("to_time")) < get_time(sched.get("to_time")):
+				validate = True
+			if validate:
+				pract_list.append(sched.get("practitioner"))
+	if validate:
+		frappe.throw(_("Practitioners {0} not available in the OT schedule time").format(pract_list), title=_("Not Available"))

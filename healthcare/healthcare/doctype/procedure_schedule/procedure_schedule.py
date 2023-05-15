@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class ProcedureSchedules(Document):
+class ProcedureSchedule(Document):
 	pass

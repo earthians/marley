@@ -12,13 +12,13 @@
  "field_order": [
   "template",
   "medical_department",
-  "is_ot_procedure",
   "column_break_5",
   "disabled",
   "pre_op_nursing_checklist_template",
   "post_op_nursing_checklist_template",
   "description_section",
   "description",
+  "is_ot_procedure",
   "section_break_txof",
   "appointment_type",
   "column_break_yqen",
@@ -264,7 +264,9 @@
   },
   {
    "fieldname": "disinfection_and_sterilization",
-   "fieldtype": "Float",
+   "fieldtype": "Duration",
+   "hide_days": 1,
+   "hide_seconds": 1,
    "label": "Disinfection and Sterilization (in Hours)"
   },
   {
@@ -290,12 +292,16 @@
   },
   {
    "fieldname": "actual_duration",
-   "fieldtype": "Float",
+   "fieldtype": "Duration",
+   "hide_days": 1,
+   "hide_seconds": 1,
    "label": "Actual Duration (in Hours)"
   },
   {
    "fieldname": "total_duration",
-   "fieldtype": "Float",
+   "fieldtype": "Duration",
+   "hide_days": 1,
+   "hide_seconds": 1,
    "label": "Total Duration (in Hours)",
    "read_only": 1
   },
@@ -312,7 +318,7 @@
   }
  ],
  "links": [],
- "modified": "2023-05-11 18:23:12.065891",
+ "modified": "2023-05-12 13:41:24.504164",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
