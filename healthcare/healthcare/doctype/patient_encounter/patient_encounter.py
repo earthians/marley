@@ -23,6 +23,10 @@ class PatientEncounter(Document):
 			self.make_service_request()
 			self.make_medication_request()
 			self.status = "Ordered"
+		self.insert_clinical_notes()
+
+	def validate_update_after_submit(self):
+		self.insert_clinical_notes()
 
 	def on_update(self):
 		if self.appointment:
@@ -266,6 +270,15 @@ class PatientEncounter(Document):
 		order.update({"order_description": description})
 		return order
 
+	def insert_clinical_notes(self):
+		clinical_note_doc = frappe.new_doc("Clinical Note")
+		clinical_note_doc.patient = self.patient
+		clinical_note_doc.reference_doc = "Patient Encounter"
+		clinical_note_doc.reference_name = self.name
+		clinical_note_doc.note = self.note
+		self.note = ""
+		clinical_note_doc.insert()
+
 
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):
@@ -437,6 +450,7 @@ def get_medications(medication):
 def get_encounter_details(patient):
 	medication_requests = []
 	service_requests = []
+	clinical_notes = []
 	medication_requests = frappe.get_all("Medication Request", {"patient": patient, "docstatus": ["in", [1, 2]]}, ["*"])
 	service_requests = frappe.get_all("Service Request", {"patient": patient, "docstatus": ["in", [1, 2]]}, ["*"])
 	for service_request in service_requests:
@@ -446,7 +460,9 @@ def get_encounter_details(patient):
 				subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
 				if subject:
 					service_request["lab_details"] = subject
-	return medication_requests, service_requests
+	clinical_notes = frappe.get_all("Clinical Note", {"patient": patient,}, ["posting_date", "note"])
+
+	return medication_requests, service_requests, clinical_notes
 
 
 @frappe.whitelist()

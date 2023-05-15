@@ -159,6 +159,14 @@ frappe.ui.form.on('Clinical Procedure', {
 			});
 		}
 
+		frm.add_custom_button(__("Clinical Note"), function() {
+			frappe.route_options = {
+				"patient": frm.doc.patient,
+				"reference_doc": "Clinical Procedure",
+				"reference_name": frm.doc.name}
+					frappe.new_doc("Clinical Note");
+		},__('Create'));
+
 	},
 
 	onload: function(frm) {

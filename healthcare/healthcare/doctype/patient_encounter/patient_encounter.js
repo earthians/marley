@@ -92,6 +92,15 @@ frappe.ui.form.on('Patient Encounter', {
 				create_procedure(frm);
 			},__('Create'));
 
+			frm.add_custom_button(__("Clinical Note"), function() {
+				frappe.route_options = {
+					"patient": frm.doc.patient,
+					"reference_doc": "Patient Encounter",
+					"reference_name": frm.doc.name}
+						frappe.new_doc("Clinical Note");
+			},__('Create'));
+
+
 			if (frm.doc.drug_prescription && frm.doc.inpatient_record && frm.doc.inpatient_status === "Admitted") {
 				frm.add_custom_button(__('Inpatient Medication Order'), function() {
 					frappe.model.open_mapped_doc({
@@ -839,6 +848,35 @@ var set_encounter_details = function(frm) {
 										</div>`
 									})
 							}
+
+							if (r.message[2] && r.message[2].length > 0) {
+								encounter_details += `
+									<span style="color:#646566;">Clinical Notes</span>`
+									r.message[2].forEach(function(element) {
+										encounter_details += `
+											<div class="page-card encounter-cards" id="card">
+												<div class="colo-sm-12">
+													<div class="card-body colo-sm-12">
+														<div class="card-body colo-sm-12">
+															<table>
+																<tr>
+																	<td>Date:</td>
+																	<td><b>${element.posting_date?`${element.posting_date.slice(0, element.posting_date.lastIndexOf(":"))}`:""}</b></td>
+																</tr>
+															</table>
+															<span class="colo-sm-10" style="font-size:10px; padding-left:10px;">
+																${element.note?element.note:""}
+															</span>
+														</div>`
+												encounter_details += `
+											</div>
+										</div>
+										</div>`
+									})
+							}
+
+
+
 							encounter_details += `<script>
 								function medication_status_change(status, request, doctype) {
 									if (status == 'Cancel') {
@@ -870,6 +908,8 @@ var set_encounter_details = function(frm) {
 							</script>
 						</div>`
 						frm.fields_dict.encounter_details.html(encounter_details);
+					} else {
+						frm.fields_dict.encounter_details.html("");
 					}
 				}
 			}
