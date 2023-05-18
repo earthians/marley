@@ -53,9 +53,10 @@
   "sb_refs",
   "amended_from",
   "encounter_details_tab",
+  "order_history_html",
   "encounter_details",
   "notes_tab",
-  "note"
+  "clinical_notes"
  ],
  "fields": [
   {
@@ -347,7 +348,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.docstatus==0;",
+   "depends_on": "eval:!doc.__islocal && doc.docstatus == 0;",
    "fieldname": "encounter_details_tab",
    "fieldtype": "Tab Break",
    "label": "Encounter Details"
@@ -371,15 +372,21 @@
    "label": "Submit Orders on Save"
   },
   {
+   "depends_on": "eval:!doc.__islocal && doc.docstatus == 0;",
    "fieldname": "notes_tab",
    "fieldtype": "Tab Break",
    "label": "Notes"
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "note",
-   "fieldtype": "Text Editor",
-   "label": "Note"
+   "fieldname": "clinical_notes",
+   "fieldtype": "HTML",
+   "label": "Clinical Notes"
+  },
+  {
+   "fieldname": "order_history_html",
+   "fieldtype": "HTML",
+   "label": "Order History"
   }
  ],
  "is_submittable": 1,

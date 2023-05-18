@@ -5,9 +5,12 @@
 
 import frappe
 from frappe import _
+import json
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import add_days, getdate
+from frappe.utils import add_days, getdate, cstr, now
+from frappe.desk.notifications import notify_mentions
+
 
 from healthcare.healthcare.utils import get_medical_codes
 
@@ -232,7 +235,7 @@ class PatientEncounter(Document):
 				"sequence": line_item.get("sequence"),
 				"intent": line_item.get("intent"),
 				"priority": line_item.get("priority"),
-				"quantity": line_item.get_quantity() if line_item.doctype == "Drug Prescription" else 1,
+				"quantity": line_item.get_quantity() if line_item.get("doctype") == "Drug Prescription" else 1,
 				"dosage": line_item.get("dosage"),
 				"dosage_form": line_item.get("dosage_form"),
 				"period": line_item.get("period"),
@@ -244,10 +247,21 @@ class PatientEncounter(Document):
 			}
 		)
 
-		if template_doc.doctype == "Lab Test Template":
-			description = template_doc.get("lab_test_description")
+		if not line_item.get("description"):
+			if template_doc.doctype == "Lab Test Template":
+				description = template_doc.get("lab_test_description")
+			else:
+				description = template_doc.get("description")
 		else:
-			description = template_doc.get("description")
+			description = line_item.get("description")
+
+		if template_doc.doctype == "Clinical Procedure Template":
+			order.update(
+				{
+				"referred_to_practitioner": line_item.get("practitioner"),
+				"ordered_for": line_item.get("date"),
+				}
+			)
 
 		if medication_request:
 			order.update(
@@ -276,8 +290,43 @@ class PatientEncounter(Document):
 		clinical_note_doc.reference_doc = "Patient Encounter"
 		clinical_note_doc.reference_name = self.name
 		clinical_note_doc.note = self.note
+		clinical_note_doc.practitioner = self.practitioner
 		self.note = ""
 		clinical_note_doc.insert()
+
+	@frappe.whitelist()
+	def add_clinical_note(self, note, note_type=None):
+		clinical_note_doc = frappe.new_doc("Clinical Note")
+		clinical_note_doc.patient = self.patient
+		clinical_note_doc.reference_doc = "Patient Encounter"
+		clinical_note_doc.reference_name = self.name
+		clinical_note_doc.note = note
+		clinical_note_doc.clinical_note_type = note_type
+		clinical_note_doc.practitioner = self.practitioner
+		clinical_note_doc.insert()
+
+	@frappe.whitelist()
+	def edit_clinical_note(self, note, note_name):
+		clinical_note_doc = frappe.get_doc("Clinical Note", note_name)
+		clinical_note_doc.note = note
+		clinical_note_doc.save()
+
+
+	@frappe.whitelist()
+	def delete_clinical_note(self, note_name):
+		if frappe.db.exists("Clinical Note", note_name):
+			frappe.delete_doc("Clinical Note", note_name)
+
+
+	@frappe.whitelist()
+	def get_clinical_notes(self, patient):
+		return frappe.get_all(
+			"Clinical Note",
+			{
+				"patient": patient,
+			},
+			["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
+		)
 
 
 @frappe.whitelist()
@@ -450,9 +499,8 @@ def get_medications(medication):
 def get_encounter_details(patient):
 	medication_requests = []
 	service_requests = []
-	clinical_notes = []
-	medication_requests = frappe.get_all("Medication Request", {"patient": patient, "docstatus": ["in", [1, 2]]}, ["*"])
-	service_requests = frappe.get_all("Service Request", {"patient": patient, "docstatus": ["in", [1, 2]]}, ["*"])
+	medication_requests = frappe.get_all("Medication Request", {"patient": patient, "docstatus":1}, ["*"])
+	service_requests = frappe.get_all("Service Request", {"patient": patient, "docstatus": 1}, ["*"])
 	for service_request in service_requests:
 		if service_request.template_dt == "Lab Test Template":
 			lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
@@ -466,13 +514,19 @@ def get_encounter_details(patient):
 
 
 @frappe.whitelist()
-def set_service_request_status(doctype, request, status):
-	if request and status:
-		frappe.db.set_value(doctype, request, "status", status)
-		return True
-
-
-@frappe.whitelist()
 def cancel_request(doctype, request):
 	request_doc = frappe.get_doc(doctype, request)
 	request_doc.cancel()
+
+@frappe.whitelist()
+def create_service_request(encounter, data, medication_request=False):
+	data = json.loads(data)
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	if medication_request:
+		template = frappe.get_doc("Medication", data.get("medication"))
+		order = encounter_doc.get_order_details(template, data, True)
+	else:
+		template = frappe.get_doc(data.get("order_template_type"), data.get("order_template"))
+		order = encounter_doc.get_order_details(template, data)
+	order.insert(ignore_permissions=True, ignore_mandatory=True)
+	order.submit()
