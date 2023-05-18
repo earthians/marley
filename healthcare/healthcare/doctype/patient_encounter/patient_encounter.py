@@ -26,10 +26,6 @@ class PatientEncounter(Document):
 			self.make_service_request()
 			self.make_medication_request()
 			self.status = "Ordered"
-		self.insert_clinical_notes()
-
-	def validate_update_after_submit(self):
-		self.insert_clinical_notes()
 
 	def on_update(self):
 		if self.appointment:
@@ -284,15 +280,6 @@ class PatientEncounter(Document):
 		order.update({"order_description": description})
 		return order
 
-	def insert_clinical_notes(self):
-		clinical_note_doc = frappe.new_doc("Clinical Note")
-		clinical_note_doc.patient = self.patient
-		clinical_note_doc.reference_doc = "Patient Encounter"
-		clinical_note_doc.reference_name = self.name
-		clinical_note_doc.note = self.note
-		clinical_note_doc.practitioner = self.practitioner
-		self.note = ""
-		clinical_note_doc.insert()
 
 	@frappe.whitelist()
 	def add_clinical_note(self, note, note_type=None):
