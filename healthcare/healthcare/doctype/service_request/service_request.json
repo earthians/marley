@@ -162,6 +162,7 @@
    "options": "Patient Care Type"
   },
   {
+   "allow_on_submit": 1,
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -556,7 +557,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-05-10 15:14:34.754061",
+ "modified": "2023-05-17 17:28:30.386595",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
