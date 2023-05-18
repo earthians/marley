@@ -160,6 +160,7 @@
    "options": "Patient Care Type"
   },
   {
+   "allow_on_submit": 1,
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",

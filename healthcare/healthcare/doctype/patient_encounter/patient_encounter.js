@@ -22,6 +22,8 @@ frappe.ui.form.on('Patient Encounter', {
 						}
 				})
 		}
+		show_clinical_notes(frm);
+		show_orders(frm);
 	},
 
 	setup: function(frm) {
@@ -96,8 +98,10 @@ frappe.ui.form.on('Patient Encounter', {
 				frappe.route_options = {
 					"patient": frm.doc.patient,
 					"reference_doc": "Patient Encounter",
-					"reference_name": frm.doc.name}
-						frappe.new_doc("Clinical Note");
+					"reference_name": frm.doc.name,
+					"practitioner": frm.doc.practitioner
+				}
+				frappe.new_doc("Clinical Note");
 			},__('Create'));
 
 
@@ -196,7 +200,9 @@ frappe.ui.form.on('Patient Encounter', {
 	patient: function(frm) {
 		frm.events.set_patient_info(frm);
 
-		set_encounter_details(frm)
+		show_clinical_notes(frm);
+		show_orders(frm);
+		set_encounter_details(frm);
 	},
 
 	practitioner: function(frm) {
@@ -309,6 +315,28 @@ frappe.ui.form.on('Patient Encounter', {
 	},
 
 });
+
+var show_clinical_notes = function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		frm.fields_dict.clinical_notes.html("");
+		const clinical_notes = new healthcare.ClinicalNotes({
+			frm: frm,
+			notes_wrapper: $(frm.fields_dict.clinical_notes.wrapper),
+		});
+		clinical_notes.refresh();
+	}
+}
+
+var show_orders = function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		const orders = new healthcare.Orders({
+			frm: frm,
+			open_activities_wrapper: $(frm.fields_dict.order_history_html.wrapper),
+			form_wrapper: $(frm.wrapper),
+		});
+		orders.refresh();
+	}
+}
 
 var schedule_inpatient = function(frm) {
 	var dialog = new frappe.ui.Dialog({
