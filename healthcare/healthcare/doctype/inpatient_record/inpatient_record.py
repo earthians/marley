@@ -145,10 +145,15 @@ class InpatientRecord(Document):
 					se_child.item_name = item_name
 					se_child.stock_uom = stock_uom
 					se_child.uom = inpat.get("uom")
+					uom = 60
+					if inpat.get("uom") == "Hour":
+						uom = 60
+					elif inpat.get("uom") == "Day":
+						uom = 1440
 					if inpat.get("left") == 1:
-						se_child.quantity = inpat.get("time_difference") / 60
+						se_child.quantity = inpat.get("time_difference") / uom
 					else:
-						se_child.quantity = inpat.get("now_difference") / 60
+						se_child.quantity = inpat.get("now_difference") / uom
 					se_child.rate = inpat.rate / inpat.get("no_of_hours")
 					se_child.amount = se_child.rate * se_child.quantity
 
@@ -436,7 +441,6 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 
 
 def transfer_patient(inpatient_record, service_unit, check_in, txred=0):
-	print(inpatient_record.inpatient_occupancies)
 	if any((inpat_occup.service_unit == service_unit and inpat_occup.left==0) for inpat_occup in inpatient_record.inpatient_occupancies):
 		return
 
