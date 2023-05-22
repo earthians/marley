@@ -340,17 +340,29 @@ def validate_inpatient_invoicing(inpatient_record):
 
 def get_pending_invoices(inpatient_record):
 	pending_invoices = {}
-	if inpatient_record.inpatient_occupancies:
-		service_unit_names = False
-		for inpatient_occupancy in inpatient_record.inpatient_occupancies:
-			if not inpatient_occupancy.invoiced:
-				if is_service_unit_billable(inpatient_occupancy.service_unit):
+	if not frappe.db.get_single_value("Healthcare Settings", "automatically_generate_billable"):
+		if inpatient_record.inpatient_occupancies:
+			service_unit_names = False
+			for inpatient_occupancy in inpatient_record.inpatient_occupancies:
+				if not inpatient_occupancy.invoiced:
+					if is_service_unit_billable(inpatient_occupancy.service_unit):
+						if service_unit_names:
+							service_unit_names += ", " + inpatient_occupancy.service_unit
+						else:
+							service_unit_names = inpatient_occupancy.service_unit
+			if service_unit_names:
+				pending_invoices["Inpatient Occupancy"] = service_unit_names
+	else:
+		if inpatient_record.items:
+			service_unit_names = False
+			for item in inpatient_record.items:
+				if not item.invoiced:
 					if service_unit_names:
-						service_unit_names += ", " + inpatient_occupancy.service_unit
+						service_unit_names += ", " + item.item_code
 					else:
-						service_unit_names = inpatient_occupancy.service_unit
-		if service_unit_names:
-			pending_invoices["Inpatient Occupancy"] = service_unit_names
+						service_unit_names = item.item_code
+			if service_unit_names:
+				pending_invoices["Items"] = service_unit_names
 
 	docs = ["Patient Appointment", "Patient Encounter", "Lab Test", "Clinical Procedure"]
 
