@@ -134,28 +134,50 @@ class InpatientRecord(Document):
 				GROUP BY
 					sut.item
 			""", as_dict=True)
-			self.items = []
 			for inpat in query:
-				if inpat.get("now_difference")>0 or inpat.get("time_difference")>0:
+				if (inpat.get("now_difference") and inpat.get("now_difference")>0) or (inpat.get("time_difference") and inpat.get("time_difference")>0):
 					item_name, stock_uom = frappe.db.get_value(
 						"Item", inpat.get("item"), ["item_name", "stock_uom"]
 					)
-					se_child = self.append("items")
-					se_child.item_code = inpat.get("item")
-					se_child.item_name = item_name
-					se_child.stock_uom = stock_uom
-					se_child.uom = inpat.get("uom")
+					item_row = frappe.db.get_value(
+						"Inpatient Record Item", {"item_code": inpat.get("item"), "parent": self.name}, ["name", "quantity", "invoiced"], as_dict=True
+					)
 					uom = 60
 					if inpat.get("uom") == "Hour":
 						uom = 60
 					elif inpat.get("uom") == "Day":
 						uom = 1440
+					quantity = 0
 					if inpat.get("left") == 1:
-						se_child.quantity = inpat.get("time_difference") / uom
+						quantity = inpat.get("time_difference") / uom
 					else:
-						se_child.quantity = inpat.get("now_difference") / uom
-					se_child.rate = inpat.rate / inpat.get("no_of_hours")
-					se_child.amount = se_child.rate * se_child.quantity
+						quantity = inpat.get("now_difference") / uom
+					if not item_row:
+						# to add item child first time
+						se_child = self.append("items")
+						se_child.item_code = inpat.get("item")
+						se_child.item_name = item_name
+						se_child.stock_uom = stock_uom
+						se_child.uom = inpat.get("uom")
+						se_child.quantity = quantity
+						se_child.rate = inpat.rate / inpat.get("no_of_hours")
+					else:
+						if item_row.get("invoiced"):
+							# if invoiced add another row
+							if item_row.get("quantity") and quantity and quantity > item_row.get("quantity"):
+								se_child = self.append("items")
+								se_child.item_code = inpat.get("item")
+								se_child.item_name = item_name
+								se_child.stock_uom = stock_uom
+								se_child.uom = inpat.get("uom")
+								se_child.quantity = quantity - item_row.get("quantity")
+								se_child.rate = inpat.rate / inpat.get("no_of_hours")
+						else:
+							# update existing row in item line if not invoiced
+							if quantity != item_row.get("quantity"):
+								for item in self.items:
+									if item.name == item_row.get("name"):
+										item.quantity = quantity
 
 			for test in self.inpatient_occupancies:
 				if test.name == inpat.get("name"):
@@ -612,6 +634,7 @@ def set_item_rate(doc):
 			item.rate = item_details.get("price_list_rate")
 			item.amount = item.rate * item.quantity
 
+		item.amount = item.rate * item.quantity
 		# if item.amount:
 		# 	total_amount += item.amount
 
