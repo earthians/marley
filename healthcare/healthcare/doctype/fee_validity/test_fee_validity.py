@@ -12,6 +12,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 	create_appointment,
 	create_healthcare_docs,
 	create_healthcare_service_items,
+	update_status,
 )
 
 test_dependencies = ["Company"]
@@ -37,20 +38,47 @@ class TestFeeValidity(FrappeTestCase):
 
 		# For first appointment, invoice is generated. First appointment not considered in fee validity
 		appointment = create_appointment(patient, practitioner, nowdate())
+		fee_validity = frappe.db.exists(
+			"Fee Validity",
+			{"patient": patient, "practitioner": practitioner, "patient_appointment": appointment.name},
+		)
 		invoiced = frappe.db.get_value("Patient Appointment", appointment.name, "invoiced")
 		self.assertEqual(invoiced, 1)
+		self.assertTrue(fee_validity)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Active")
 
 		# appointment should not be invoiced as it is within fee validity
 		appointment = create_appointment(patient, practitioner, add_days(nowdate(), 4))
 		invoiced = frappe.db.get_value("Patient Appointment", appointment.name, "invoiced")
 		self.assertEqual(invoiced, 0)
 
-		# appointment should be invoiced as it is within fee validity but the max_visits are exceeded
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 1)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Completed")
+
+		# appointment should be invoiced as it is within fee validity but the max_visits are exceeded, should insert new fee validity
 		appointment = create_appointment(patient, practitioner, add_days(nowdate(), 5), invoice=1)
 		invoiced = frappe.db.get_value("Patient Appointment", appointment.name, "invoiced")
 		self.assertEqual(invoiced, 1)
 
-		# appointment should be invoiced as it is not within fee validity and the max_visits are exceeded
-		appointment = create_appointment(patient, practitioner, add_days(nowdate(), 10), invoice=1)
+		fee_validity = frappe.db.exists(
+			"Fee Validity",
+			{"patient": patient, "practitioner": practitioner, "patient_appointment": appointment.name},
+		)
+		self.assertTrue(fee_validity)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Active")
+
+		# appointment should be invoiced as it is not within fee validity and insert new fee validity
+		appointment = create_appointment(patient, practitioner, add_days(nowdate(), 13), invoice=1)
 		invoiced = frappe.db.get_value("Patient Appointment", appointment.name, "invoiced")
 		self.assertEqual(invoiced, 1)
+
+		fee_validity = frappe.db.exists(
+			"Fee Validity",
+			{"patient": patient, "practitioner": practitioner, "patient_appointment": appointment.name},
+		)
+		self.assertTrue(fee_validity)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Active")
+
+		# For first appointment cancel should cancel fee validity
+		update_status(appointment.name, "Cancelled")
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
