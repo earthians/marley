@@ -2,7 +2,6 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 0,
  "creation": "2017-05-04 11:52:40.941507",
  "doctype": "DocType",
  "document_type": "Document",
@@ -25,10 +24,6 @@
   "section_break_12",
   "appointment_type",
   "duration",
-  "appointment_date",
-  "appointment_time",
-  "appointment_datetime",
-  "column_break_17",
   "service_request",
   "procedure_template",
   "get_procedure_from_encounter",
@@ -374,16 +369,16 @@
    "read_only": 1
   },
   {
-    "fieldname": "service_request",
-    "fieldtype": "Link",
-    "label": "Service Request",
-    "options": "Service Request",
-    "read_only": 1,
-    "search_index": 1
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "links": [],
- "modified": "2022-08-16 19:10:10.528001",
+ "modified": "2023-05-24 18:33:17.281569",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
