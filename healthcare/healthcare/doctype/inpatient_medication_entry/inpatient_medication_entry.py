@@ -2,12 +2,13 @@
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import datetime
 
 import frappe
 from erpnext.stock.utils import get_latest_stock_qty
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, get_link_to_form
+from frappe.utils import flt, get_link_to_form, get_time, getdate
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 
@@ -31,7 +32,6 @@ class InpatientMedicationEntry(Document):
 	def add_mo_to_table(self, orders):
 		# Add medication orders in the child table
 		self.set("medication_orders", [])
-
 		for data in orders:
 			self.append(
 				"medication_orders",
@@ -40,7 +40,7 @@ class InpatientMedicationEntry(Document):
 					"patient_name": data.patient_name,
 					"inpatient_record": data.inpatient_record,
 					"service_unit": data.service_unit,
-					"datetime": "%s %s" % (data.date, data.time or "00:00:00"),
+					"datetime": datetime.datetime.combine(getdate(data.date), get_time(data.time)),
 					"drug_code": data.drug,
 					"drug_name": data.drug_name,
 					"dosage": data.dosage,
