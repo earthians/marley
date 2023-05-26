@@ -80,3 +80,11 @@ class InpatientMedicationOrder(Document):
 					entry.time = dose.strength_time
 			self.end_date = dates[-1]
 		return
+
+	@frappe.whitelist()
+	def get_from_encounter(self, encounter):
+		patient_encounter = frappe.get_doc("Patient Encounter", encounter)
+		if not patient_encounter.drug_prescription:
+			return
+		for drug in patient_encounter.drug_prescription:
+			self.add_order_entries(drug)
