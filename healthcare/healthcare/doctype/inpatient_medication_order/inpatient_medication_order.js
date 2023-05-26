@@ -8,6 +8,7 @@ frappe.ui.form.on('Inpatient Medication Order', {
 		}
 
 		frm.events.show_medication_order_button(frm);
+		frm.events.show_get_from_encounter_button(frm);
 
 		frm.set_query('patient', () => {
 			return {
@@ -79,6 +80,26 @@ frappe.ui.form.on('Inpatient Medication Order', {
 				},
 			});
 			d.show();
+		});
+	},
+
+	show_get_from_encounter_button: function(frm) {
+		frm.fields_dict['medication_orders'].grid.add_custom_button(__('Get From Encounter'), () => {
+			if (!frm.doc.patient_encounter) {
+				frappe.throw(__("Please select a Patient Encounter to get from"));
+			}
+			frm.call({
+				doc: frm.doc,
+				method: 'get_from_encounter',
+				args: {
+					encounter: frm.doc.patient_encounter
+				},
+				freeze: true,
+				freeze_message: __('Getting From Encounter'),
+				callback: function() {
+					frm.refresh_field('medication_orders');
+				}
+			});
 		});
 	},
 
