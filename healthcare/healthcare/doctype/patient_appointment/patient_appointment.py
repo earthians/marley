@@ -61,12 +61,15 @@ class PatientAppointment(Document):
 		appointment_date = getdate(self.appointment_date)
 
 		# If appointment is created for today set status as Open else Scheduled
-		if appointment_date == today:
-			self.status = "Open"
-		elif appointment_date > today:
-			self.status = "Scheduled"
+		# if appointment_date == today:
+		# 	self.status = "Open"
+		# elif appointment_date > today:
+		# 	self.status = "Scheduled"
 
 	def validate_overlaps(self):
+		if self.day_appointment:
+			return
+
 		end_time = datetime.datetime.combine(
 			getdate(self.appointment_date), get_time(self.appointment_time)
 		) + datetime.timedelta(minutes=flt(self.duration))
@@ -554,7 +557,6 @@ def get_available_slots(practitioner_doc, date):
 						"tele_conf": practitioner_schedule.allow_video_conferencing,
 					}
 				)
-
 	return slot_details
 
 

@@ -42,6 +42,7 @@
   "mode_of_payment",
   "billing_item",
   "invoiced",
+  "day_appointment",
   "column_break_2",
   "paid_amount",
   "ref_sales_invoice",
@@ -375,10 +376,17 @@
    "options": "Service Request",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "day_appointment",
+   "fieldtype": "Check",
+   "label": "Day Appointment",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2023-05-24 18:33:17.281569",
+ "modified": "2023-05-26 20:16:59.567656",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

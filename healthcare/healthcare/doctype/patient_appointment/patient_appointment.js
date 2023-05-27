@@ -299,6 +299,7 @@ let check_and_set_availability = function(frm) {
 	let duration = null;
 	let add_video_conferencing = null;
 	let overlap_appointments = null;
+	let day_appointment = false;
 
 	show_availability();
 
@@ -331,7 +332,7 @@ let check_and_set_availability = function(frm) {
 					&& !overlap_appointments
 
 				frm.set_value('add_video_conferencing', add_video_conferencing);
-
+				console.log(duration)
 				if (!frm.doc.duration) {
 					frm.set_value('duration', duration);
 				}
@@ -339,6 +340,7 @@ let check_and_set_availability = function(frm) {
 				frm.set_value('practitioner', d.get_value('practitioner'));
 				frm.set_value('department', d.get_value('department'));
 				frm.set_value('appointment_date', d.get_value('appointment_date'));
+				frm.set_value('day_appointment', day_appointment)
 
 				if (service_unit) {
 					frm.set_value('service_unit', service_unit);
@@ -426,6 +428,7 @@ let check_and_set_availability = function(frm) {
 							$btn.addClass('btn-outline-primary');
 							selected_slot = $btn.attr('data-name');
 							service_unit = $btn.attr('data-service-unit');
+							day_appointment = $btn.attr('data-day-appointment');
 							duration = $btn.attr('data-duration');
 							add_video_conferencing = parseInt($btn.attr('data-tele-conf'));
 							overlap_appointments = parseInt($btn.attr('data-overlap-appointments'));
@@ -490,85 +493,114 @@ let check_and_set_availability = function(frm) {
 					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
 				</span><br>
 				<span><b> ${__('Service Unit: ')} </b> ${slot_info.service_unit}</span>`;
+				// console.log(4555555555555, slot_info, slot_info.maximum_appointments)
+				if (slot_info.service_unit_capacity) {
+					slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
+				}
 
-			if (slot_info.service_unit_capacity) {
-				slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
-			}
+				slot_html += '</div><br>';
 
-			slot_html += '</div><br>';
+				slot_html += slot_info.avail_slot.map(slot => {
+						appointment_count = 0;
+						disabled = false;
+						count_class = tool_tip = '';
+						start_str = slot.from_time;
+						slot_start_time = moment(slot.from_time, 'HH:mm:ss');
+						slot_end_time = moment(slot.to_time, 'HH:mm:ss');
+						interval = (slot_end_time - slot_start_time) / 60000 | 0;
 
-			slot_html += slot_info.avail_slot.map(slot => {
-				appointment_count = 0;
-				disabled = false;
-				count_class = tool_tip = '';
-				start_str = slot.from_time;
-				slot_start_time = moment(slot.from_time, 'HH:mm:ss');
-				slot_end_time = moment(slot.to_time, 'HH:mm:ss');
-				interval = (slot_end_time - slot_start_time) / 60000 | 0;
-
-				// restrict past slots based on the current time.
-				let now = moment();
-				if((now.format("YYYY-MM-DD") == appointment_date) && slot_start_time.isBefore(now)){
-					disabled = true;
-				} else {
-					// iterate in all booked appointments, update the start time and duration
-					slot_info.appointments.forEach((booked) => {
-						let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
-						let end_time = booked_moment.clone().add(booked.duration, 'minutes');
-
-						// Deal with 0 duration appointments
-						if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
-							if (booked.duration == 0) {
-								disabled = true;
-								return false;
-							}
-						}
-
-						// Check for overlaps considering appointment duration
-						if (slot_info.allow_overlap != 1) {
-							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-								// There is an overlap
-								disabled = true;
-								return false;
-							}
+						// restrict past slots based on the current time.
+						let now = moment();
+						let booked_moment = ""
+						if((now.format("YYYY-MM-DD") == appointment_date) && slot_start_time.isBefore(now)){
+							disabled = true;
 						} else {
-							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-								appointment_count++;
-							}
-							if (appointment_count >= slot_info.service_unit_capacity) {
-								// There is an overlap
-								disabled = true;
-								return false;
-							}
+							// iterate in all booked appointments, update the start time and duration
+							console.log(slot_info.appointments)
+							slot_info.appointments.forEach((booked) => {
+								booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
+								let end_time = booked_moment.clone().add(booked.duration, 'minutes');
+								
+								// to get apointment count for all day appointments
+								if (slot.maximum_appointments) {
+									if (booked_moment.isSameOrAfter(slot_start_time) || booked_moment.isSameOrBefore(slot_end_time)) {
+										appointment_count++;
+									}
+								}
+								// Deal with 0 duration appointments
+								if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
+									if (booked.duration == 0) {
+										disabled = true;
+										return false;
+									}
+								}
+
+								// Check for overlaps considering appointment duration
+								if (slot_info.allow_overlap != 1) {
+									if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+										// There is an overlap
+										disabled = true;
+										return false;
+									}
+								} else {
+									if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+										appointment_count++;
+									}
+									if (appointment_count >= slot_info.service_unit_capacity) {
+										// There is an overlap
+										disabled = true;
+										return false;
+									}
+								}
+							});
 						}
-					});
+
+						if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
+							available_slots = slot_info.service_unit_capacity - appointment_count;
+							count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
+							count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
+							tool_tip =`${available_slots} ${__('slots available for booking')}`;
+						}
+
+						if (slot.maximum_appointments) {
+							if (appointment_count >= slot.maximum_appointments) {
+								disabled = true;
+							}
+							else {
+								disabled = false;
+							}
+							available_slots = slot.maximum_appointments - appointment_count;
+							count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
+							count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
+							return `<button class="btn btn-secondary" data-name=${start_str}
+								data-service-unit="${slot_info.service_unit || ''}"
+								data-day-appointment=${1}
+								data-duration=${slot.duration}
+								${disabled ? 'disabled="disabled"' : ""}>${slot.from_time} -
+								${slot.to_time} ${slot.maximum_appointments ?
+								`<br><span class='badge ${count_class}'>${count} </span>` : ''}</button>`
+						} else {
+
+						return `
+							<button class="btn btn-secondary" data-name=${start_str}
+								data-duration=${interval}
+								data-service-unit="${slot_info.service_unit || ''}"
+								data-tele-conf="${slot_info.tele_conf || 0}"
+								data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
+								style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
+								data-toggle="tooltip" title="${tool_tip || ''}">
+								${start_str.substring(0, start_str.length - 3)}
+								${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
+							</button>`;
+
 				}
-
-				if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
-					available_slots = slot_info.service_unit_capacity - appointment_count;
-					count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
-					count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
-					tool_tip =`${available_slots} ${__('slots available for booking')}`;
-				}
-
-				return `
-					<button class="btn btn-secondary" data-name=${start_str}
-						data-duration=${interval}
-						data-service-unit="${slot_info.service_unit || ''}"
-						data-tele-conf="${slot_info.tele_conf || 0}"
-						data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
-						style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
-						data-toggle="tooltip" title="${tool_tip || ''}">
-						${start_str.substring(0, start_str.length - 3)}
-						${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
-					</button>`;
-
 			}).join("");
 
-			if (slot_info.service_unit_capacity) {
-				slot_html += `<br/><small>${__('Each slot indicates the capacity currently available for booking')}</small>`;
-			}
-			slot_html += `<br/><br/>`;
+				if (slot_info.service_unit_capacity) {
+					slot_html += `<br/><small>${__('Each slot indicates the capacity currently available for booking')}</small>`;
+				}
+				slot_html += `<br/><br/>`;
+
 		});
 
 		return slot_html;
