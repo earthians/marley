@@ -331,6 +331,7 @@ var show_orders = function(frm) {
 			frm: frm,
 			open_activities_wrapper: $(frm.fields_dict.order_history_html.wrapper),
 			form_wrapper: $(frm.wrapper),
+			create_orders: true,
 		});
 		orders.refresh();
 	}
