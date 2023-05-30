@@ -49,6 +49,8 @@
   "rehabilitation_section",
   "therapy_plan",
   "therapies",
+  "order_details_tab",
+  "orders_html",
   "inpatient_billables_tab",
   "currency",
   "column_break_xdfm",
@@ -476,6 +478,16 @@
    "fieldname": "inpatient_billables_tab",
    "fieldtype": "Tab Break",
    "label": "Inpatient Billables"
+  },
+  {
+   "fieldname": "order_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Order Details"
+  },
+  {
+   "fieldname": "orders_html",
+   "fieldtype": "HTML",
+   "label": "Orders Html"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -489,7 +501,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-05-10 16:07:02.526695",
+ "modified": "2023-05-30 11:39:19.565103",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

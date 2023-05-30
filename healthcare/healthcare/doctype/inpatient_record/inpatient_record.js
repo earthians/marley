@@ -16,6 +16,7 @@ frappe.ui.form.on('Inpatient Record', {
 			}
 		});
 		},
+
 	refresh: function(frm) {
 		frm.set_query('admission_service_unit_type', function() {
 			return {
@@ -107,6 +108,7 @@ frappe.ui.form.on('Inpatient Record', {
 
 	onload: function(frm) {
 		frm.get_field("inpatient_occupancies").grid.cannot_add_rows = true;
+		show_orders(frm);
 	},
 
 	btn_transfer: function(frm) {
@@ -719,4 +721,16 @@ let consume_items = function(frm) {
 		})
 
 	dialog.show();
+}
+
+var show_orders = function(frm) {
+	// if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		const orders = new healthcare.Orders({
+			frm: frm,
+			open_activities_wrapper: $(frm.fields_dict.orders_html.wrapper),
+			form_wrapper: $(frm.wrapper),
+			show_encounter: true,
+		});
+		orders.refresh();
+	// }
 }
