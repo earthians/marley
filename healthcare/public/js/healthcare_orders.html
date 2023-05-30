@@ -1,19 +1,21 @@
 <div class="orders">
 	<div class="new-btn pb-3">
+		{% if (create_orders) { %}
 		<span>
-			<button class="btn btn-sm small new-task-btn mr-1">
+			<button class="btn btn-sm small new-service-request-btn mr-1">
 				<svg class="icon icon-sm">
 					<use href="#icon-add"></use>
 				</svg>
 				{{ __("New Service Request") }}
 			</button>
-			<button class="btn btn-sm small new-event-btn">
+			<button class="btn btn-sm small new-medication-btn">
 				<svg class="icon icon-sm">
 					<use href="#icon-add"></use>
 				</svg>
 				{{ __("New Medication Request") }}
 			</button>
 		</span>
+		{% } %}
 	</div>
 	<div class="section-body">
 		<div class="service-requests pr-1">
@@ -52,59 +54,71 @@
 								</ul>
 								</div>
 						</div>
-							{% if(service_requests[i].order_date) { %}
+						<div class="service-request-details" style="width: 100%;">
+							<div style="width: 50%; float:left">
+								{% if(show_encounter) { %}
+								<div class="text-muted ml-1">
+									{{ __("Encounter:") }}
+									<b>{%= service_requests[i].order_group %}</b>
+								</div>
+								{% } %}
+								{% if(service_requests[i].order_date) { %}
 								<div class="text-muted ml-1">
 									{{ __("Order Date:") }}
 									<b>{%= frappe.datetime.global_date_format(service_requests[i].order_date) %}</b>
 								</div>
-							{% } %}
-							{% if(service_requests[i].status) { %}
+								{% } %}
+								{% if(service_requests[i].status) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Status:") }}
+										<b>{%= service_requests[i].status %}</b>
+									</div>
+								{% } %}
+								{% if(service_requests[i].practitioner_name) { %}
 								<div class="text-muted  ml-1">
-									{{ __("Status:") }}
-									<b>{%= service_requests[i].status %}</b>
+									{{ __("Practitioners:") }}
+									<b>{%= service_requests[i].practitioner_name %}</b>
 								</div>
-							{% } %}
-							{% if(service_requests[i].practitioner_name) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Practitioners:") }}
-								<b>{%= service_requests[i].practitioner_name %}</b>
-							</div>
-							{% } %}
-							{% if(service_requests[i].billing_status) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Billing Status:") }}
-									<b>{%= service_requests[i].billing_status %}</b>
-								</div>
-							{% } %}
-							{% if(service_requests[i].quantity) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Quantity:") }}
-									<b>{%= service_requests[i].quantity %}</b>
-								</div>
-							{% } %}
-							{% if(service_requests[i].order_time) { %}
+								{% } %}
+								{% if(service_requests[i].billing_status) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Billing Status:") }}
+										<b>{%= service_requests[i].billing_status %}</b>
+									</div>
+								{% } %}
+								{% if(service_requests[i].quantity) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Quantity:") }}
+										<b>{%= service_requests[i].quantity %}</b>
+									</div>
+								{% } %}
+							 </div>
+							 <div style="width: 50%; float:right">
+								{% if(service_requests[i].order_time) { %}
 								<div class="text-muted  ml-1">
 									{{ __("Order Time:") }}
 									<b>{%= service_requests[i].order_time %}</b>
 								</div>
-							{% } %}
-							{% if(service_requests[i].template_dt) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Order Type:") }}
-									<b>{%= service_requests[i].template_dt %}</b>
-								</div>
-							{% } %}
-							{% if(service_requests[i].template_dn) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Order Name:") }}
-									<b>{%= service_requests[i].template_dn %}</b>
-								</div>
-							{% } %}
-							{% if(service_requests[i].lab_details) { %}
-								<div class="text-muted lab-details">
-									{%= service_requests[i].lab_details %}
-								</div>
-							{% } %}
+								{% } %}
+								{% if(service_requests[i].template_dt) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Order Type:") }}
+										<b>{%= service_requests[i].template_dt %}</b>
+									</div>
+								{% } %}
+								{% if(service_requests[i].template_dn) { %}
+									<div class="text-muted ml-1">
+										{{ __("Order Name:") }}
+										<b>{%= service_requests[i].template_dn %}</b>
+									</div>
+								{% } %}
+							 </div>
+						</div>
+						{% if(service_requests[i].lab_details) { %}
+						<div class="text-muted lab-details">
+							{%= service_requests[i].lab_details %}
+						</div>
+					{% } %}
 				</div>
 			    {% } %}
             {% } else { %}
@@ -150,56 +164,60 @@
 									{% } %}
 								</ul>
 								</div>
-							
                         </div>
-						{% if(medication_requests[i].order_date) { %}
-							<div class="text-muted ml-1">
-								{{ __("Order Date:") }}
-								<b>{%= frappe.datetime.global_date_format(medication_requests[i].order_date) %}</b>
-							</div>
-						{% } %}
-						{% if(medication_requests[i].status) { %}
+						<div class="service-request-details" style="width: 100%;">
+							<div style="width: 50%; float:left">
+							{% if(medication_requests[i].order_date) { %}
+								<div class="text-muted ml-1">
+									{{ __("Order Date:") }}
+									<b>{%= frappe.datetime.global_date_format(medication_requests[i].order_date) %}</b>
+								</div>
+							{% } %}
+							{% if(medication_requests[i].status) { %}
+								<div class="text-muted  ml-1">
+									{{ __("Status:") }}
+									<b>{%= medication_requests[i].status %}</b>
+								</div>
+							{% } %}
+							{% if(medication_requests[i].practitioner_name) { %}
 							<div class="text-muted  ml-1">
-								{{ __("Status:") }}
-								<b>{%= medication_requests[i].status %}</b>
+								{{ __("Practitioners:") }}
+								<b>{%= medication_requests[i].practitioner_name %}</b>
 							</div>
-						{% } %}
-						{% if(medication_requests[i].practitioner_name) { %}
-						<div class="text-muted  ml-1">
-							{{ __("Practitioners:") }}
-							<b>{%= medication_requests[i].practitioner_name %}</b>
+							{% } %}
+							{% if(medication_requests[i].billing_status) { %}
+								<div class="text-muted  ml-1">
+									{{ __("Billing Status:") }}
+									<b>{%= medication_requests[i].billing_status %}</b>
+								</div>
+							{% } %}
 						</div>
-						{% } %}
-						{% if(medication_requests[i].billing_status) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Billing Status:") }}
-								<b>{%= medication_requests[i].billing_status %}</b>
-							</div>
-						{% } %}
-						{% if(medication_requests[i].quantity) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Quantity:") }}
-								<b>{%= medication_requests[i].quantity %}</b>
-							</div>
-						{% } %}
-						{% if(medication_requests[i].order_time) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Order Time:") }}
-								<b>{%= medication_requests[i].order_time %}</b>
-							</div>
-						{% } %}
-						{% if(medication_requests[i].period) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Period:") }}
-								<b>{%= medication_requests[i].period %}</b>
-							</div>
-						{% } %}
-						{% if(medication_requests[i].dosage_form) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Dosage Form:") }}
-								<b>{%= medication_requests[i].dosage_form %}</b>
-							</div>
-						{% } %}
+						<div style="width: 50%; float:right">
+							{% if(medication_requests[i].quantity) { %}
+								<div class="text-muted  ml-1">
+									{{ __("Quantity:") }}
+									<b>{%= medication_requests[i].quantity %}</b>
+								</div>
+							{% } %}
+							{% if(medication_requests[i].order_time) { %}
+								<div class="text-muted  ml-1">
+									{{ __("Order Time:") }}
+									<b>{%= medication_requests[i].order_time %}</b>
+								</div>
+							{% } %}
+							{% if(medication_requests[i].period) { %}
+								<div class="text-muted  ml-1">
+									{{ __("Period:") }}
+									<b>{%= medication_requests[i].period %}</b>
+								</div>
+							{% } %}
+							{% if(medication_requests[i].dosage_form) { %}
+								<div class="text-muted  ml-1">
+									{{ __("Dosage Form:") }}
+									<b>{%= medication_requests[i].dosage_form %}</b>
+								</div>
+							{% } %}
+						</div>
                     </div>
                 {% } %}
             {% } else { %}
@@ -226,9 +244,11 @@
 .service-request, .medication-request {
 	min-height: 90px;
 	border: 1px solid var(--border-color);
-	padding: 10px;
-	border-bottom: 0;
 	padding-right: 0;
+	font-size: 11px;
+	padding-bottom: 100px;
+	padding-left: 5px;
+	padding-top: 10px;
 }
 
 .single-activity:last-child {
@@ -272,6 +292,8 @@
 	font-size: 10px;
 	padding-left: 4px;
 	padding-right: 12px;
+	padding-top: 90px;
+	width: 100%;
 }
 
 </style>
