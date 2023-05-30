@@ -11,6 +11,7 @@
   "title",
   "naming_series",
   "medication",
+  "medicaiton_item",
   "order_date",
   "expected_date",
   "order_time",
@@ -33,6 +34,7 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_name",
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
@@ -443,12 +445,25 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "medicaiton_item",
+   "fieldtype": "Link",
+   "label": "Medicaiton Item",
+   "options": "Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-04-04 15:41:17.734067",
+ "modified": "2023-05-30 12:26:58.431916",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
