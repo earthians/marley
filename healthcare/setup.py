@@ -127,6 +127,16 @@ data = {
 				"read_only": True,
 			},
 		],
+		"Payment Entry": [
+			{
+				"fieldname": "treatment_counselling",
+				"label": "Treatment Counselling",
+				"fieldtype": "Link",
+				"options": "Treatment Counselling",
+				"insert_after": "payment_order",
+				"read_only": True,
+			},
+		]
 	},
 	"on_setup": "healthcare.setup.setup_healthcare",
 }
