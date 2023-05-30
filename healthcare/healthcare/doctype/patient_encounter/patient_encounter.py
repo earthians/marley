@@ -264,6 +264,7 @@ class PatientEncounter(Document):
 				{
 					"medication": template_doc.name,
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
+					"medicaiton_item": line_item.get("drug_code") if line_item.get("drug_code") else ""
 				}
 			)
 		else:
@@ -315,6 +316,23 @@ class PatientEncounter(Document):
 			["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
 		)
 
+	@frappe.whitelist()
+	def get_encounter_details(self):
+		medication_requests = []
+		service_requests = []
+		filters = {"patient": self.patient, "docstatus":1}
+		medication_requests = frappe.get_all("Medication Request", filters, ["*"])
+		service_requests = frappe.get_all("Service Request", filters, ["*"])
+		for service_request in service_requests:
+			if service_request.template_dt == "Lab Test Template":
+				lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
+				if lab_test:
+					subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
+					if subject:
+						service_request["lab_details"] = subject
+		clinical_notes = frappe.get_all("Clinical Note", {"patient": self.patient,}, ["posting_date", "note"])
+
+		return medication_requests, service_requests, clinical_notes
 
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):
@@ -480,24 +498,6 @@ def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
 @frappe.whitelist()
 def get_medications(medication):
 	return frappe.get_all("Medication Linked Item", {"parent": medication}, ["item"])
-
-
-@frappe.whitelist()
-def get_encounter_details(patient):
-	medication_requests = []
-	service_requests = []
-	medication_requests = frappe.get_all("Medication Request", {"patient": patient, "docstatus":1}, ["*"])
-	service_requests = frappe.get_all("Service Request", {"patient": patient, "docstatus": 1}, ["*"])
-	for service_request in service_requests:
-		if service_request.template_dt == "Lab Test Template":
-			lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
-			if lab_test:
-				subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
-				if subject:
-					service_request["lab_details"] = subject
-	clinical_notes = frappe.get_all("Clinical Note", {"patient": patient,}, ["posting_date", "note"])
-
-	return medication_requests, service_requests, clinical_notes
 
 
 @frappe.whitelist()

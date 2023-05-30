@@ -170,17 +170,18 @@ healthcare.Orders = class Orders {
 		$(this.open_activities_wrapper).empty();
 		let cur_form_footer = this.form_wrapper.find('.form-footer');
 
-		// open activities
 		frappe.call({
-			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_encounter_details",
+			method: "get_encounter_details",
+			doc: me.frm.doc,
 			args: {
-				patient: this.frm.doc.patient
 			},
 			callback: (r) => {
 				if (!r.exc) {
 					var activities_html = frappe.render_template('healthcare_orders', {
 						service_requests: r.message[1],
-						medication_requests: r.message[0]
+						medication_requests: r.message[0],
+						create_orders: me.create_orders,
+						show_encounter: this.show_encounter
 				});
 
 					$(activities_html).appendTo(me.open_activities_wrapper);
@@ -309,7 +310,7 @@ healthcare.Orders = class Orders {
 			});
 			d.show();
 		};
-		$(".new-task-btn").click(_create_service_request);
+		$(".new-service-request-btn").click(_create_service_request);
 	}
 
 	create_medication_request () {
@@ -483,7 +484,7 @@ healthcare.Orders = class Orders {
 			d.show();
 
 		};
-		$(".new-event-btn").click(_create_medication_request);
+		$(".new-medication-btn").click(_create_medication_request);
 	}
 
 	async update_status (status_btn, doctype, status) {
