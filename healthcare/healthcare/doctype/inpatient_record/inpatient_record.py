@@ -22,11 +22,22 @@ class InpatientRecord(Document):
 
 		if self.admission_encounter:  # Update encounter
 			frappe.db.set_value(
-				"Patient Encounter", self.admission_encounter, "inpatient_record", self.name
+				"Patient Encounter",
+				self.admission_encounter,
+				{"inpatient_record": self.name, "inpatient_status": self.status},
 			)
-			frappe.db.set_value(
-				"Patient Encounter", self.admission_encounter, "inpatient_status", self.status
-			)
+
+			filters = {"order_group": self.admission_encounter, "docstatus":1}
+			medication_requests = frappe.get_all("Medication Request", filters, ["name"])
+			service_requests = frappe.get_all("Service Request", filters, ["name"])
+
+			for service_request in service_requests:
+				frappe.db.set_value("Service Request", service_request.name,
+					{"inpatient_record": self.name, "inpatient_status": self.status})
+
+			for medication_request in medication_requests:
+				frappe.db.set_value("Medication Request", medication_request.name,
+					{"inpatient_record": self.name, "inpatient_status": self.status})
 
 		if self.admission_nursing_checklist_template:
 			NursingTask.create_nursing_tasks_from_template(
