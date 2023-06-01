@@ -198,9 +198,6 @@ frappe.ui.form.on('Patient Encounter', {
 
 	patient: function(frm) {
 		frm.events.set_patient_info(frm);
-
-		show_clinical_notes(frm);
-		show_orders(frm);
 	},
 
 	practitioner: function(frm) {
@@ -246,8 +243,9 @@ frappe.ui.form.on('Patient Encounter', {
 		}
 	},
 
-	set_patient_info: function(frm) {
+	set_patient_info: async function(frm) {
 		if (frm.doc.patient) {
+			let me = frm
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 				args: {
@@ -265,7 +263,12 @@ frappe.ui.form.on('Patient Encounter', {
 						'inpatient_record': data.message.inpatient_record,
 						'inpatient_status': data.message.inpatient_status
 					};
-					frm.set_value(values);
+
+					frappe.run_serially([
+						()=>frm.set_value(values),
+						()=>show_clinical_notes(frm),
+						()=>show_orders(frm),
+					]);
 				}
 			});
 		} else {
@@ -313,29 +316,6 @@ frappe.ui.form.on('Patient Encounter', {
 	},
 
 });
-
-var show_clinical_notes = function(frm) {
-	if (frm.doc.docstatus == 0 && frm.doc.patient) {
-		frm.fields_dict.clinical_notes.html("");
-		const clinical_notes = new healthcare.ClinicalNotes({
-			frm: frm,
-			notes_wrapper: $(frm.fields_dict.clinical_notes.wrapper),
-		});
-		clinical_notes.refresh();
-	}
-}
-
-var show_orders = function(frm) {
-	if (frm.doc.docstatus == 0 && frm.doc.patient) {
-		const orders = new healthcare.Orders({
-			frm: frm,
-			open_activities_wrapper: $(frm.fields_dict.order_history_html.wrapper),
-			form_wrapper: $(frm.wrapper),
-			create_orders: true,
-		});
-		orders.refresh();
-	}
-}
 
 var schedule_inpatient = function(frm) {
 	var dialog = new frappe.ui.Dialog({
@@ -680,3 +660,25 @@ var apply_code_sm_filter_to_child = function(frm, field, table_list, code_system
 		});
 	});
 };
+
+var show_clinical_notes = async function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		const clinical_notes = new healthcare.ClinicalNotes({
+			frm: frm,
+			notes_wrapper: $(frm.fields_dict.clinical_notes.wrapper),
+		});
+		clinical_notes.refresh();
+	}
+}
+
+var show_orders = async function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		const orders = new healthcare.Orders({
+			frm: frm,
+			open_activities_wrapper: $(frm.fields_dict.order_history_html.wrapper),
+			form_wrapper: $(frm.wrapper),
+			create_orders: true,
+		});
+		orders.refresh();
+	}
+}
