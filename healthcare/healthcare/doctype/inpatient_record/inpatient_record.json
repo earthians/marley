@@ -56,6 +56,10 @@
   "price_list",
   "section_break_dy9z",
   "items",
+  "section_break_5ttb",
+  "total",
+  "column_break_kpdk",
+  "paid_amount",
   "sb_inpatient_occupancy",
   "inpatient_occupancies",
   "btn_transfer",
@@ -483,6 +487,28 @@
    "fieldname": "inpatient_billables_tab",
    "fieldtype": "Tab Break",
    "label": "Inpatient Billables"
+  },
+  {
+   "fieldname": "section_break_5ttb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_kpdk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid Amount",
+   "options": "currency",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -496,7 +522,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-05-10 16:07:02.526695",
+ "modified": "2023-06-01 12:03:28.973838",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
