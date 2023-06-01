@@ -56,9 +56,9 @@ frappe.ui.form.on('Inpatient Record', {
 				frm.add_custom_button(__('Schedule Discharge'), function() {
 					schedule_discharge(frm);
 				});
-				frm.add_custom_button(__("Transfer"), function() {
+				frm.add_custom_button(__("Normal"), function() {
 					transfer_patient_dialog(frm);
-				});
+				},__('Transfer'));
 				frm.add_custom_button(__("Generate Billables"), function() {
 					frappe.call({
 						doc: frm.doc,
@@ -70,9 +70,9 @@ frappe.ui.form.on('Inpatient Record', {
 				});
 				if (!frm.doc.inpatient_occupancies.some(
 					e => e.transferred_for_procedure == 1 && e.left != 1)) {
-						frm.add_custom_button(__("Transfer For Procedure"), function() {
+						frm.add_custom_button(__("For Procedure"), function() {
 							transfer_for_procedure_dialog(frm);
-						});
+						},__('Transfer'));
 				}
 			} else if (frm.doc.status == 'Admission Scheduled') {
 				frm.add_custom_button(__('Cancel Admission'), function() {
@@ -306,6 +306,9 @@ let transfer_patient_dialog = function(frm) {
 	let not_left_service_unit = null;
 	let leave_to_service_unit = null;
 	if (transferred_for_procedure) {
+		var field = dialog.get_field("leave_from");
+		field.df.read_only = 0;
+		field.refresh();
 		for (let inpatient_occupancy in frm.doc.inpatient_occupancies) {
 			if (frm.doc.inpatient_occupancies[inpatient_occupancy].transferred_for_procedure == 1
 				&& frm.doc.inpatient_occupancies[inpatient_occupancy].left != 1) {
@@ -317,6 +320,9 @@ let transfer_patient_dialog = function(frm) {
 			}
 		}
 	} else {
+		var field = dialog.get_field("leave_from");
+		field.df.read_only = 1;
+		field.refresh();
 		for (let inpatient_occupancy in frm.doc.inpatient_occupancies) {
 			if (frm.doc.inpatient_occupancies[inpatient_occupancy].left != 1) {
 				not_left_service_unit = frm.doc.inpatient_occupancies[inpatient_occupancy].service_unit;
