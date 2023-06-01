@@ -86,6 +86,7 @@ var schedule_inpatient = function(frm) {
 		expected_length_of_stay: frm.doc.expected_length_of_stay,
 		admission_instruction: frm.doc.admission_instruction,
 		admission_nursing_checklist_template: frm.doc.admission_nursing_checklist_template,
+		paid_amount: frm.doc.paid_amount
 	}
 	frappe.call({
 		method: "healthcare.healthcare.doctype.treatment_counselling.treatment_counselling.create_ip_from_treatment_counselling",

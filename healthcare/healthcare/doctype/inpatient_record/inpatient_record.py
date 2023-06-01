@@ -61,6 +61,8 @@ class InpatientRecord(Document):
 			)
 
 		set_item_rate(self)
+		set_total(self)
+
 
 	def validate_dates(self):
 		if (getdate(self.expected_discharge) < getdate(self.scheduled_date)) or (
@@ -652,3 +654,12 @@ def add_occupied_service_unit_in_ip_to_billables():
 
 	for inpatient_record in inpatient_records:
 		frappe.get_doc("Inpatient Record", inpatient_record.name).add_service_unit_rent_to_billable_items()
+
+
+def set_total(self):
+	total = 0
+	if self.items:
+		for p in self.items:
+			if p.get("amount"):
+				total += p.get("amount")
+	self.total = total
