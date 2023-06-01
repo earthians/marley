@@ -123,8 +123,8 @@ class InpatientRecord(Document):
 					sut.item,
 					sut.uom,
 					sut.rate,
-					sut.no_of_hours
-
+					sut.no_of_hours,
+					sut.minimum_billable_unit
 				FROM
 					`tabInpatient Occupancy` as io left join
 					`tabHealthcare Service Unit` as su on io.service_unit=su.name left join
@@ -135,49 +135,52 @@ class InpatientRecord(Document):
 					sut.item
 			""", as_dict=True)
 			for inpat in query:
-				if (inpat.get("now_difference") and inpat.get("now_difference")>0) or (inpat.get("time_difference") and inpat.get("time_difference")>0):
-					item_name, stock_uom = frappe.db.get_value(
-						"Item", inpat.get("item"), ["item_name", "stock_uom"]
-					)
-					item_row = frappe.db.get_value(
-						"Inpatient Record Item", {"item_code": inpat.get("item"), "parent": self.name}, ["name", "quantity", "invoiced"], as_dict=True
-					)
+				# if (inpat.get("now_difference") and inpat.get("now_difference")>0) or (inpat.get("time_difference") and inpat.get("time_difference")>0):
+				item_name, stock_uom = frappe.db.get_value(
+					"Item", inpat.get("item"), ["item_name", "stock_uom"]
+				)
+				item_row = frappe.db.get_value(
+					"Inpatient Record Item", {"item_code": inpat.get("item"), "parent": self.name}, ["name", "quantity", "invoiced"], as_dict=True
+				)
+				uom = 60
+				if inpat.get("uom") == "Hour":
 					uom = 60
-					if inpat.get("uom") == "Hour":
-						uom = 60
-					elif inpat.get("uom") == "Day":
-						uom = 1440
-					quantity = 0
-					if inpat.get("left") == 1:
-						quantity = inpat.get("time_difference") / uom
+				elif inpat.get("uom") == "Day":
+					uom = 1440
+				minimum_billable_unit = inpat.get("minimum_billable_unit")
+				quantity = 1
+				if inpat.get("left") == 1:
+					quantity = inpat.get("time_difference") / uom
+				else:
+					quantity = inpat.get("now_difference") / uom
+				if minimum_billable_unit and quantity < minimum_billable_unit:
+					quantity = minimum_billable_unit
+				if not item_row:
+					# to add item child first time
+					se_child = self.append("items")
+					se_child.item_code = inpat.get("item")
+					se_child.item_name = item_name
+					se_child.stock_uom = stock_uom
+					se_child.uom = inpat.get("uom")
+					se_child.quantity = quantity
+					se_child.rate = inpat.rate / inpat.get("no_of_hours")
+				else:
+					if item_row.get("invoiced"):
+						# if invoiced add another row
+						if item_row.get("quantity") and quantity and quantity > item_row.get("quantity"):
+							se_child = self.append("items")
+							se_child.item_code = inpat.get("item")
+							se_child.item_name = item_name
+							se_child.stock_uom = stock_uom
+							se_child.uom = inpat.get("uom")
+							se_child.quantity = quantity - item_row.get("quantity")
+							se_child.rate = inpat.rate / inpat.get("no_of_hours")
 					else:
-						quantity = inpat.get("now_difference") / uom
-					if not item_row:
-						# to add item child first time
-						se_child = self.append("items")
-						se_child.item_code = inpat.get("item")
-						se_child.item_name = item_name
-						se_child.stock_uom = stock_uom
-						se_child.uom = inpat.get("uom")
-						se_child.quantity = quantity
-						se_child.rate = inpat.rate / inpat.get("no_of_hours")
-					else:
-						if item_row.get("invoiced"):
-							# if invoiced add another row
-							if item_row.get("quantity") and quantity and quantity > item_row.get("quantity"):
-								se_child = self.append("items")
-								se_child.item_code = inpat.get("item")
-								se_child.item_name = item_name
-								se_child.stock_uom = stock_uom
-								se_child.uom = inpat.get("uom")
-								se_child.quantity = quantity - item_row.get("quantity")
-								se_child.rate = inpat.rate / inpat.get("no_of_hours")
-						else:
-							# update existing row in item line if not invoiced
-							if quantity != item_row.get("quantity"):
-								for item in self.items:
-									if item.name == item_row.get("name"):
-										item.quantity = quantity
+						# update existing row in item line if not invoiced
+						if quantity != item_row.get("quantity"):
+							for item in self.items:
+								if item.name == item_row.get("name"):
+									item.quantity = quantity
 
 			for test in self.inpatient_occupancies:
 				if test.name == inpat.get("name"):
