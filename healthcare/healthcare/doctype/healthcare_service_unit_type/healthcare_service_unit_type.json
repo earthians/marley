@@ -22,6 +22,7 @@
   "item_group",
   "uom",
   "no_of_hours",
+  "minimum_billable_unit",
   "column_break_11",
   "rate",
   "description",
@@ -184,6 +185,23 @@
    "fieldname": "section_break_va83",
    "fieldtype": "Section Break",
    "hide_border": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_ot",
+   "fieldtype": "Check",
+   "label": "Is OT"
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "fieldname": "minimum_billable_unit",
+   "fieldtype": "Int",
+   "label": "Minimum Billable Unit"
   }
  ],
  "links": [],
