@@ -291,7 +291,7 @@ healthcare.Orders = class Orders {
 				primary_action: function() {
 					var data = d.get_values();
 					frappe.call({
-						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request",
+						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_medication_request_from_widget",
 						args: {
 							encounter: me.frm.doc.name,
 							data: data,
@@ -463,7 +463,7 @@ healthcare.Orders = class Orders {
 				primary_action: function() {
 					var data = d.get_values();
 					frappe.call({
-						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request",
+						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_medication_request_from_widget",
 						args: {
 							encounter: me.frm.doc.name,
 							data: data,

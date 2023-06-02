@@ -589,7 +589,7 @@ let create_medication_request = function(frm) {
 			if (r && !r.exc) {
 				frm.reload_doc();
 				frappe.show_alert({
-					message: __('Medicaiton Request(s) Created'),
+					message: __('medication Request(s) Created'),
 					indicator: 'success'
 				});
 			}

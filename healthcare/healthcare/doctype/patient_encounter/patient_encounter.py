@@ -51,6 +51,7 @@ class PatientEncounter(Document):
 			self.patient_name or self.patient, self.practitioner_name or self.practitioner
 		)[:100]
 
+
 	@staticmethod
 	@frappe.whitelist()
 	def get_applicable_treatment_plans(encounter):
@@ -231,7 +232,7 @@ class PatientEncounter(Document):
 				{
 					"medication": template_doc.name,
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
-					"medicaiton_item": line_item.get("drug_code") if line_item.get("drug_code") else ""
+					"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else ""
 				}
 			)
 		else:
@@ -491,7 +492,7 @@ def cancel_request(doctype, request):
 	request_doc.cancel()
 
 @frappe.whitelist()
-def create_service_request(encounter, data, medication_request=False):
+def create_service_medication_request_from_widget(encounter, data, medication_request=False):
 	data = json.loads(data)
 	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
 	if medication_request:

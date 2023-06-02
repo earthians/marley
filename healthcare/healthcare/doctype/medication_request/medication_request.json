@@ -11,7 +11,7 @@
   "title",
   "naming_series",
   "medication",
-  "medicaiton_item",
+  "medication_item",
   "order_date",
   "expected_date",
   "order_time",
@@ -463,16 +463,17 @@
    "read_only": 1
   },
   {
-   "fieldname": "medicaiton_item",
+   "allow_on_submit": 1,
+   "fieldname": "medication_item",
    "fieldtype": "Link",
-   "label": "Medicaiton Item",
+   "label": "Medication Item",
    "options": "Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-05-30 12:26:58.431916",
+ "modified": "2023-06-02 13:26:08.353540",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
