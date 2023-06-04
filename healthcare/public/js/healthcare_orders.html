@@ -54,19 +54,32 @@
 								</ul>
 								</div>
 						</div>
-						<div class="service-request-details" style="width: 100%;">
-							<div style="width: 50%; float:left">
-								{% if(show_encounter) { %}
-								<div class="text-muted ml-1">
-									{{ __("Encounter:") }}
-									<b>{%= service_requests[i].order_group %}</b>
+						<div class="service-request-details row" style="width: 100%;">
+							<div class="mb-2 head col-xs-3">
+								<div class="row">
+									<div class="col-xs-2">
+										{{ frappe.avatar(service_requests[i].practitioner_email) }}
+									</div>
+									<div class="col-xs-10">
+										<div class="time small text-muted">
+											{{ frappe.datetime.global_date_format(service_requests[i].order_date) }}<br>
+											{{ service_requests[i].practitioner_name }}
+										</div>
+									</div>
 								</div>
+							</div>
+							<div style="padding-bottom:20px; padding-right:10px;">
+								{% if(show_encounter) { %}
+									<div class="text-muted ml-1">
+										{{ __("Encounter:") }}
+										<b>{%= service_requests[i].order_group %}</b>
+									</div>
 								{% } %}
 								{% if(service_requests[i].order_date) { %}
-								<div class="text-muted ml-1">
-									{{ __("Order Date:") }}
-									<b>{%= frappe.datetime.global_date_format(service_requests[i].order_date) %}</b>
-								</div>
+									<div class="text-muted ml-1">
+										{{ __("Order Date:") }}
+										<b>{%= frappe.datetime.global_date_format(service_requests[i].order_date) %}</b>
+									</div>
 								{% } %}
 								{% if(service_requests[i].status) { %}
 									<div class="text-muted  ml-1">
@@ -75,15 +88,9 @@
 									</div>
 								{% } %}
 								{% if(service_requests[i].practitioner_name) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Practitioners:") }}
-									<b>{%= service_requests[i].practitioner_name %}</b>
-								</div>
-								{% } %}
-								{% if(service_requests[i].billing_status) { %}
 									<div class="text-muted  ml-1">
-										{{ __("Billing Status:") }}
-										<b>{%= service_requests[i].billing_status %}</b>
+										{{ __("Practitioners:") }}
+										<b>{%= service_requests[i].practitioner_name %}</b>
 									</div>
 								{% } %}
 								{% if(service_requests[i].quantity) { %}
@@ -93,12 +100,18 @@
 									</div>
 								{% } %}
 							 </div>
-							 <div style="width: 50%; float:right">
+							 <div style="padding-bottom:20px; padding-left:30px; padding-right:10px;">
+								{% if(service_requests[i].billing_status) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Billing Status:") }}
+										<b>{%= service_requests[i].billing_status %}</b>
+									</div>
+								{% } %}
 								{% if(service_requests[i].order_time) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Order Time:") }}
-									<b>{%= service_requests[i].order_time %}</b>
-								</div>
+									<div class="text-muted  ml-1">
+										{{ __("Order Time:") }}
+										<b>{%= service_requests[i].order_time %}</b>
+									</div>
 								{% } %}
 								{% if(service_requests[i].template_dt) { %}
 									<div class="text-muted  ml-1">
@@ -127,27 +140,25 @@
                 </div>
 		    {% } %}
 		</div>
-
-		<div class="medication-requests pl-1">
+		<div class="service-requests pr-1">
 			<div class="open-section-head">
 				<span class="ml-2">{{ __("Medication Requests") }}</span>
 			</div>
 			{% if (medication_requests && medication_requests.length) { %}
-                {% let icon_set = {"Sent/Received Email": "mail", "Call": "call", "Meeting": "share-people"}; %}
-                {% for(var i=0, l=medication_requests.length; i<l; i++) { %}
-                    <div class="medication-request" name="{{ medication_requests[i].name }}">
-                        <div class="flex justify-between">
-                            <div class="row label-area font-md ml-1 title">
-                                <span class="mr-2">
-                                    <svg class="icon icon-sm">
-                                        <use href="#icon-dot-horizontal"></use>
-                                    </svg>
-                                </span>
-                                <a href="/app/medication-request/{{ medication_requests[i].name }}" title="{{ __('Open Event') }}">
-                                    {%= medication_requests[i].name %}
-                                </a>
-                            </div>
-                            <div class="colo-sm-2" style="float:right; padding-right:10px; padding-top:10px;">
+				{% for(var i=0, l=medication_requests.length; i<l; i++) { %}
+					<div class="service-request" name="{{ medication_requests[i].name }}">
+						<div class="flex justify-between">
+							<div class="row label-area font-md ml-1">
+								<span class="mr-2">
+									<svg class="icon icon-sm">
+										<use href="#icon-menu"></use>
+									</svg>
+								</span>
+								<a href="/app/service-request/{{ medication_requests[i].name }}" title="{{ __('Medication Requests') }}">
+									{%= medication_requests[i].name %}
+								</a>
+							</div>
+							<div class="colo-sm-2" style="float:right; padding-right:10px; padding-top:10px; padding-bottom:10px;">
 								<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary order-btn">
 									{%= medication_requests[i].status %}
 									</button>
@@ -164,69 +175,82 @@
 									{% } %}
 								</ul>
 								</div>
-                        </div>
-						<div class="service-request-details" style="width: 100%;">
-							<div style="width: 50%; float:left">
-							{% if(medication_requests[i].order_date) { %}
-								<div class="text-muted ml-1">
-									{{ __("Order Date:") }}
-									<b>{%= frappe.datetime.global_date_format(medication_requests[i].order_date) %}</b>
+						</div>
+						<div class="service-request-details row" style="width: 100%;">
+							<div class="mb-2 head col-xs-3">
+								<div class="row">
+									<div class="col-xs-2">
+										{{ frappe.avatar(medication_requests[i].practitioner_email) }}
+									</div>
+									<div class="col-xs-10">
+										<div class="time small text-muted">
+											{{ frappe.datetime.global_date_format(service_requests[i].order_date) }}<br>
+											{{ service_requests[i].practitioner_name }}
+										</div>
+									</div>
 								</div>
-							{% } %}
-							{% if(medication_requests[i].status) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Status:") }}
-									<b>{%= medication_requests[i].status %}</b>
-								</div>
-							{% } %}
-							{% if(medication_requests[i].practitioner_name) { %}
-							<div class="text-muted  ml-1">
-								{{ __("Practitioners:") }}
-								<b>{%= medication_requests[i].practitioner_name %}</b>
 							</div>
-							{% } %}
-							{% if(medication_requests[i].billing_status) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Billing Status:") }}
-									<b>{%= medication_requests[i].billing_status %}</b>
-								</div>
-							{% } %}
+							<div style="padding-bottom:20px; padding-right:10px;">
+								{% if(medication_requests[i].order_date) { %}
+									<div class="text-muted ml-1">
+										{{ __("Order Date:") }}
+										<b>{%= frappe.datetime.global_date_format(medication_requests[i].order_date) %}</b>
+									</div>
+								{% } %}
+								{% if(medication_requests[i].status) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Status:") }}
+										<b>{%= medication_requests[i].status %}</b>
+									</div>
+								{% } %}
+								{% if(medication_requests[i].practitioner_name) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Practitioners:") }}
+										<b>{%= medication_requests[i].practitioner_name %}</b>
+									</div>
+								{% } %}
+								{% if(medication_requests[i].quantity) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Quantity:") }}
+										<b>{%= medication_requests[i].quantity %}</b>
+									</div>
+								{% } %}
+							 </div>
+							 <div style="padding-bottom:20px; padding-left:30px; padding-right:10px;">
+								{% if(medication_requests[i].billing_status) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Billing Status:") }}
+										<b>{%= medication_requests[i].billing_status %}</b>
+									</div>
+								{% } %}
+								{% if(medication_requests[i].order_time) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Order Time:") }}
+										<b>{%= medication_requests[i].order_time %}</b>
+									</div>
+								{% } %}
+								{% if(medication_requests[i].period) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Period:") }}
+										<b>{%= medication_requests[i].period %}</b>
+									</div>
+								{% } %}
+								{% if(medication_requests[i].dosage_form) { %}
+									<div class="text-muted  ml-1">
+										{{ __("Dosage Form:") }}
+										<b>{%= medication_requests[i].dosage_form %}</b>
+									</div>
+								{% } %}
+							 </div>
 						</div>
-						<div style="width: 50%; float:right">
-							{% if(medication_requests[i].quantity) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Quantity:") }}
-									<b>{%= medication_requests[i].quantity %}</b>
-								</div>
-							{% } %}
-							{% if(medication_requests[i].order_time) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Order Time:") }}
-									<b>{%= medication_requests[i].order_time %}</b>
-								</div>
-							{% } %}
-							{% if(medication_requests[i].period) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Period:") }}
-									<b>{%= medication_requests[i].period %}</b>
-								</div>
-							{% } %}
-							{% if(medication_requests[i].dosage_form) { %}
-								<div class="text-muted  ml-1">
-									{{ __("Dosage Form:") }}
-									<b>{%= medication_requests[i].dosage_form %}</b>
-								</div>
-							{% } %}
-						</div>
-                    </div>
-                {% } %}
+				</div>
+			    {% } %}
             {% } else { %}
-            <div class=" no-orders text-muted">
-                {{ __("No Medication Requests") }}
-            </div>
+			<div class=" no-orders text-muted">
+                    {{ __("No Medication Requests") }}
+                </div>
 		    {% } %}
 		</div>
-	</div>
 </div>
 
 
@@ -246,7 +270,6 @@
 	border: 1px solid var(--border-color);
 	padding-right: 0;
 	font-size: 11px;
-	padding-bottom: 100px;
 	padding-left: 5px;
 	padding-top: 10px;
 }
@@ -260,7 +283,7 @@
 }
 
 .service-requests {
-	width: 50%;
+	width: 100%;
 }
 
 .service-requests:first-child {
@@ -268,7 +291,7 @@
 }
 
 .medication-requests {
-	width: 50%;
+	width: 100%;
 }
 
 .open-section-head {
@@ -292,8 +315,12 @@
 	font-size: 10px;
 	padding-left: 4px;
 	padding-right: 12px;
-	padding-top: 90px;
 	width: 100%;
+}
+
+.service-request-details {
+	padding-left: 14px;
+	padding-right: 14px;
 }
 
 </style>

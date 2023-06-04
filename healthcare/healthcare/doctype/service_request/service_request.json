@@ -31,6 +31,7 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_email",
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
@@ -518,6 +519,13 @@
    "fieldname": "sample_collection_required",
    "fieldtype": "Check",
    "label": "Sample Collection Required",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "practitioner.user_id",
+   "fieldname": "practitioner_email",
+   "fieldtype": "Data",
+   "label": "Practitioner Email",
    "read_only": 1
   }
  ],
