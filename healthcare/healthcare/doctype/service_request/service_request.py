@@ -86,6 +86,15 @@ def make_clinical_procedure(service_request):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
+	if (
+		frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
+		and service_request.billing_status != "Invoiced"
+	):
+		frappe.throw(
+			_("Service Request need to be invoiced before proceeding"),
+			title=_("Payment Required"),
+		)
+
 	doc = frappe.new_doc("Clinical Procedure")
 	doc.procedure_template = service_request.template_dn
 	doc.service_request = service_request.name
@@ -109,6 +118,15 @@ def make_lab_test(service_request):
 	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
+
+	if (
+		frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
+		and service_request.billing_status != "Invoiced"
+	):
+		frappe.throw(
+			_("Service Request need to be invoiced before proceeding"),
+			title=_("Payment Required"),
+		)
 
 	doc = frappe.new_doc("Lab Test")
 	doc.template = service_request.template_dn
@@ -136,6 +154,15 @@ def make_therapy_session(service_request):
 	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
+
+	if (
+		frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
+		and service_request.billing_status != "Invoiced"
+	):
+		frappe.throw(
+			_("Service Request need to be invoiced before proceeding"),
+			title=_("Payment Required"),
+		)
 
 	doc = frappe.new_doc("Therapy Session")
 	doc.therapy_type = service_request.template_dn
