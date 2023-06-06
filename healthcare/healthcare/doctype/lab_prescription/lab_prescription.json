@@ -10,6 +10,7 @@
   "lab_test_code",
   "lab_test_name",
   "invoiced",
+  "service_request",
   "column_break_4",
   "lab_test_comment",
   "lab_test_created",
@@ -92,11 +93,19 @@
    "fieldtype": "Link",
    "label": "Patient Care Type",
    "options": "Patient Care Type"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "service_request",
+   "fieldtype": "Data",
+   "label": "Service Request",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-10-31 13:01:53.258924",
+ "modified": "2023-11-01 23:08:47.227779",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Prescription",
