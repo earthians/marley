@@ -409,7 +409,7 @@ def get_pending_invoices(inpatient_record):
 			if service_unit_names:
 				pending_invoices["Items"] = service_unit_names
 
-	docs = ["Patient Appointment", "Patient Encounter", "Lab Test", "Clinical Procedure"]
+	docs = ["Patient Appointment", "Patient Encounter", "Lab Test", "Clinical Procedure", "Service Request", "Medication Request"]
 
 	for doc in docs:
 		doc_name_list = get_unbilled_inpatient_docs(doc, inpatient_record)
@@ -435,14 +435,26 @@ def get_pending_doc(doc, doc_name_list, pending_invoices):
 
 
 def get_unbilled_inpatient_docs(doc, inpatient_record):
+	filters = {
+				"patient": inpatient_record.patient,
+				"inpatient_record": inpatient_record.name,
+				"docstatus": 1,
+		}
+	if doc in ["Service Request", "Medication Request"]:
+		filters.update(
+			{
+				"billing_status": "Pending",
+			}
+		)
+	else:
+		filters.update(
+			{
+				"invoiced": 0,
+			}
+		)
 	return frappe.db.get_list(
 		doc,
-		filters={
-			"patient": inpatient_record.patient,
-			"inpatient_record": inpatient_record.name,
-			"docstatus": 1,
-			"invoiced": 0,
-		},
+		filters=filters,
 	)
 
 
