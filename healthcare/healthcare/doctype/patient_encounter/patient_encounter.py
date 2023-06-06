@@ -3,13 +3,13 @@
 # For license information, please see license.txt
 
 
+import json
+
 import frappe
 from frappe import _
-import json
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import add_days, getdate, cstr, now
-from frappe.desk.notifications import notify_mentions
+from frappe.utils import add_days, getdate
 
 
 from healthcare.healthcare.utils import get_medical_codes
@@ -254,8 +254,8 @@ class PatientEncounter(Document):
 		if template_doc.doctype == "Clinical Procedure Template":
 			order.update(
 				{
-				"referred_to_practitioner": line_item.get("practitioner"),
-				"ordered_for": line_item.get("date"),
+					"referred_to_practitioner": line_item.get("practitioner"),
+					"ordered_for": line_item.get("date"),
 				}
 			)
 
@@ -264,7 +264,7 @@ class PatientEncounter(Document):
 				{
 					"medication": template_doc.name,
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
-					"medicaiton_item": line_item.get("drug_code") if line_item.get("drug_code") else ""
+					"medicaiton_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
 				}
 			)
 		else:
@@ -280,7 +280,6 @@ class PatientEncounter(Document):
 
 		order.update({"order_description": description})
 		return order
-
 
 	@frappe.whitelist()
 	def add_clinical_note(self, note, note_type=None):
@@ -299,12 +298,10 @@ class PatientEncounter(Document):
 		clinical_note_doc.note = note
 		clinical_note_doc.save()
 
-
 	@frappe.whitelist()
 	def delete_clinical_note(self, note_name):
 		if frappe.db.exists("Clinical Note", note_name):
 			frappe.delete_doc("Clinical Note", note_name)
-
 
 	@frappe.whitelist()
 	def get_clinical_notes(self, patient):
@@ -320,19 +317,28 @@ class PatientEncounter(Document):
 	def get_encounter_details(self):
 		medication_requests = []
 		service_requests = []
-		filters = {"patient": self.patient, "docstatus":1}
+		filters = {"patient": self.patient, "docstatus": 1}
 		medication_requests = frappe.get_all("Medication Request", filters, ["*"])
 		service_requests = frappe.get_all("Service Request", filters, ["*"])
 		for service_request in service_requests:
 			if service_request.template_dt == "Lab Test Template":
 				lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
 				if lab_test:
-					subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
+					subject = frappe.db.get_value(
+						"Patient Medical Record", {"reference_name": lab_test}, "subject"
+					)
 					if subject:
 						service_request["lab_details"] = subject
-		clinical_notes = frappe.get_all("Clinical Note", {"patient": self.patient,}, ["posting_date", "note"])
+		clinical_notes = frappe.get_all(
+			"Clinical Note",
+			{
+				"patient": self.patient,
+			},
+			["posting_date", "note"],
+		)
 
 		return medication_requests, service_requests, clinical_notes
+
 
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):
@@ -504,6 +510,7 @@ def get_medications(medication):
 def cancel_request(doctype, request):
 	request_doc = frappe.get_doc(doctype, request)
 	request_doc.cancel()
+
 
 @frappe.whitelist()
 def create_service_request(encounter, data, medication_request=False):
