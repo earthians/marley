@@ -20,6 +20,11 @@ class PatientEncounter(Document):
 		self.set_title()
 		validate_codification_table(self)
 		self.validate_medications()
+		if self.submit_all_orders:
+			self.make_service_request()
+			self.make_medication_request()
+			if self.docstatus == 0:
+				self.status = "Waiting For Review"
 
 	def on_update(self):
 		if self.appointment:
@@ -29,8 +34,10 @@ class PatientEncounter(Document):
 		if self.therapies:
 			create_therapy_plan(self)
 
-		self.make_service_request()
-		self.make_medication_request()
+		if not self.submit_all_orders:
+			self.make_service_request()
+			self.make_medication_request()
+		self.db_set("status", "Completed")
 
 	def before_cancel(self):
 		orders = frappe.get_all("Service Request", {"order_group": self.name})
@@ -40,6 +47,8 @@ class PatientEncounter(Document):
 				order_doc.cancel()
 
 	def on_cancel(self):
+		self.db_set("status", "Cancelled")
+
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
 
@@ -50,7 +59,6 @@ class PatientEncounter(Document):
 		self.title = _("{0} with {1}").format(
 			self.patient_name or self.patient, self.practitioner_name or self.practitioner
 		)[:100]
-
 
 	@staticmethod
 	@frappe.whitelist()
@@ -147,41 +155,50 @@ class PatientEncounter(Document):
 	def make_service_request(self):
 		if self.lab_test_prescription:
 			for lab_test in self.lab_test_prescription:
-				lab_template = frappe.get_doc("Lab Test Template", lab_test.lab_test_code)
-				order = self.get_order_details(lab_template, lab_test)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
-				order.submit()
+				if not lab_test.service_request:
+					lab_template = frappe.get_doc("Lab Test Template", lab_test.lab_test_code)
+					order = self.get_order_details(lab_template, lab_test)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					lab_test.service_request = order.name
 
 		if self.procedure_prescription:
 			for procedure in self.procedure_prescription:
-				procedure_template = frappe.get_doc("Clinical Procedure Template", procedure.procedure)
-				order = self.get_order_details(procedure_template, procedure)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
-				order.submit()
+				if not procedure.service_request:
+					procedure_template = frappe.get_doc("Clinical Procedure Template", procedure.procedure)
+					order = self.get_order_details(procedure_template, procedure)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					procedure.service_request = order.name
 
 		if self.therapies:
 			for therapy in self.therapies:
-				therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
-				order = self.get_order_details(therapy_type, therapy)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
-				order.submit()
+				if not therapy.service_request:
+					therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
+					order = self.get_order_details(therapy_type, therapy)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					therapy.service_request = order.name
 
 		if self.tasks:
 			for task in self.tasks:
-				activity = frappe.get_doc("Healthcare Activity", task.healthcare_activity)
-				order = self.get_order_details(activity, task)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
-				order.submit()
+				if not task.service_request:
+					activity = frappe.get_doc("Healthcare Activity", task.healthcare_activity)
+					order = self.get_order_details(activity, task)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					task.service_request = order.name
 
 	def make_medication_request(self):
 		if self.drug_prescription:
 			# make_medication_request
 			for drug in self.drug_prescription:
-				if drug.medication:
+				if drug.medication and not drug.medication_request:
 					medication = frappe.get_doc("Medication", drug.medication)
 					order = self.get_order_details(medication, drug, True)
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
+					drug.medication_request = order.name
 
 	def get_order_details(self, template_doc, line_item, medication_request=False):
 		order = frappe.get_doc(

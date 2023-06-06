@@ -14,7 +14,8 @@
   "comments",
   "appointment_booked",
   "procedure_created",
-  "invoiced"
+  "invoiced",
+  "service_request"
  ],
  "fields": [
   {
@@ -81,11 +82,17 @@
    "label": "Invoiced",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Data",
+   "label": "Service Request",
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-04-19 12:55:28.547453",
+ "modified": "2023-06-06 13:04:14.859671",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Procedure Prescription",
