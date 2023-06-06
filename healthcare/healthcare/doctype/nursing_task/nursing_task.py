@@ -19,6 +19,8 @@ class NursingTask(Document):
 
 		self.age = frappe.get_doc("Patient", self.patient).get_age()
 
+		frappe.db.set_value("Service Request", self.service_request, "task_done_at", now_datetime())
+
 	def validate(self):
 		if self.status == "Requested":
 			# auto submit if status is Requested

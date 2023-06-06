@@ -8,7 +8,8 @@
  "field_order": [
   "healthcare_activity",
   "activity_duration",
-  "task_doctype"
+  "task_doctype",
+  "repeat_in_every"
  ],
  "fields": [
   {
@@ -35,12 +36,20 @@
    "label": "Task DocType",
    "options": "DocType",
    "read_only": 1
+  },
+  {
+   "fieldname": "repeat_in_every",
+   "fieldtype": "Duration",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "in_list_view": 1,
+   "label": "Repeat In Every"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-05-10 11:25:24.139694",
+ "modified": "2023-06-05 07:19:24.165384",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter Activity",

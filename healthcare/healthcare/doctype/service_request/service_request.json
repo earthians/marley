@@ -55,6 +55,8 @@
   "occurrence_date",
   "occurrence_time",
   "healthcare_service_unit_type",
+  "repeat_in_every",
+  "task_done_at",
   "column_break_91",
   "order_description",
   "patient_instructions",
@@ -543,6 +545,18 @@
    "fieldtype": "Data",
    "label": "Practitioner Email",
    "read_only": 1
+  },
+  {
+   "fieldname": "repeat_in_every",
+   "fieldtype": "Duration",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Repeat in Every"
+  },
+  {
+   "fieldname": "task_done_at",
+   "fieldtype": "Datetime",
+   "label": "Task Done At"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -565,7 +579,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-06-02 18:40:19.828951",
+ "modified": "2023-06-05 11:27:41.872966",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

@@ -133,6 +133,7 @@ doc_events = {
 scheduler_events = {
 	"all": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.send_appointment_reminder",
+		"healthcare.healthcare.doctype.service_request.service_request.create_healthcare_activity_for_repeating_orders",
 	],
 	"daily": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",

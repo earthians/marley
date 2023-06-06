@@ -219,6 +219,7 @@ class PatientEncounter(Document):
 				description = template_doc.get("description")
 		else:
 			description = line_item.get("description")
+
 		if template_doc.doctype == "Clinical Procedure Template":
 			order.update(
 				{
@@ -226,7 +227,12 @@ class PatientEncounter(Document):
 				"ordered_for": line_item.get("date"),
 				}
 			)
-
+		elif template_doc.doctype == "Healthcare Activity":
+			order.update(
+				{
+				"repeat_in_every": line_item.get("repeat_in_every"),
+				}
+			)
 		if medication_request:
 			order.update(
 				{

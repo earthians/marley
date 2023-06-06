@@ -4,11 +4,14 @@
 
 from __future__ import unicode_literals
 
+import datetime
+
 import json
 
 import frappe
 from frappe import _
 from six import string_types
+from frappe.utils import now_datetime, time_diff_in_hours, get_time, getdate
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
@@ -194,9 +197,24 @@ def make_nursing_task(service_request):
 	doc.gender = service_request.patient_gender
 	doc.patient_age = service_request.patient_age_data
 	doc.practitioner = service_request.practitioner
-	doc.requested_start_date = service_request.occurrence_date
-	doc.requested_start_time = service_request.occurrence_time
+	doc.requested_start_time = now_datetime()
 	doc.description = description
 	doc.task_doctype = task_doctype
 
 	return doc
+
+@frappe.whitelist()
+def create_healthcare_activity_for_repeating_orders():
+	service_requests = frappe.db.get_all(
+		"Service Request",
+		filters={"docstatus": 1, "template_dt": "Healthcare Activity", "status": "Active"},
+		fields=["name", "task_done_at", "repeat_in_every"],
+	)
+	if service_requests:
+		for service_request in service_requests:
+			if not service_request.get("repeat_in_every"):
+				return
+			time_diff = time_diff_in_hours(now_datetime(), service_request.get("task_done_at"))
+			if time_diff >= (service_request.get("repeat_in_every")/3600):
+				nursing_task = make_nursing_task(frappe.get_doc("Service Request", service_request.get("name")))
+				nursing_task.save()
