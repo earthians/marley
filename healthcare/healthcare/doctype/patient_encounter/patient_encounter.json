@@ -29,6 +29,7 @@
   "medical_department",
   "google_meet_link",
   "invoiced",
+  "submit_orders_on_save",
   "sb_symptoms",
   "symptoms",
   "symptoms_in_print",
@@ -346,7 +347,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "\nOpen\nWaiting For Review\nCompleted\nCancelled",
+   "options": "\nOpen\nOrdered\nCompleted\nCancelled",
    "read_only": 1
   },
   {
@@ -354,6 +355,13 @@
    "fieldtype": "Table",
    "label": "Observations",
    "options": "Observation Prescription"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.__islocal;",
+   "fieldname": "submit_orders_on_save",
+   "fieldtype": "Check",
+   "label": "Submit Orders on Save"
   }
  ],
  "is_submittable": 1,
@@ -386,7 +394,20 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Ordered"
+  },
+  {
+   "color": "Blue",
+   "title": "Completed"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1

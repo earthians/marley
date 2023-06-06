@@ -10,6 +10,7 @@
   "procedure_name",
   "department",
   "practitioner",
+  "service_request",
   "column_break_ky11",
   "date",
   "comments",
@@ -117,11 +118,19 @@
   {
    "fieldname": "column_break_ky11",
    "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "service_request",
+   "fieldtype": "Data",
+   "label": "Service Request",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-10-31 12:58:54.804015",
+ "modified": "2023-11-01 23:09:04.600093",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Procedure Prescription",

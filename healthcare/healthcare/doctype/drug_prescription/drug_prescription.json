@@ -23,6 +23,7 @@
   "section_break_u9av",
   "intent",
   "priority",
+  "medication_request",
   "section_break_13",
   "comment",
   "update_schedule"
@@ -170,11 +171,19 @@
    "fieldtype": "Link",
    "label": "Priority",
    "options": "FHIR Value Set"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "medication_request",
+   "fieldtype": "Data",
+   "label": "Medication Request",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-10-31 15:44:26.100565",
+ "modified": "2023-11-01 23:09:36.121900",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Drug Prescription",
