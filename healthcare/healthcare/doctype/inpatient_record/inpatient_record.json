@@ -365,8 +365,8 @@
    "collapsible_depends_on": "eval:(doc.status == \"Admitted\")",
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "encounter_details_section",
-   "fieldtype": "Tab Break",
-   "label": "Encounter Impression",
+   "fieldtype": "Section Break",
+   "label": "Reason For Admission",
    "permlevel": 1
   },
   {
@@ -527,7 +527,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-06-01 12:03:28.973838",
+ "modified": "2023-06-05 13:55:52.306850",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
