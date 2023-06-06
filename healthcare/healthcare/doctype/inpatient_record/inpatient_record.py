@@ -126,7 +126,7 @@ class InpatientRecord(Document):
 					sut.uom,
 					sut.rate,
 					sut.no_of_hours,
-					sut.minimum_billable_unit
+					sut.minimum_billable_qty
 				FROM
 					`tabInpatient Occupancy` as io left join
 					`tabHealthcare Service Unit` as su on io.service_unit=su.name left join
@@ -149,14 +149,14 @@ class InpatientRecord(Document):
 					uom = 60
 				elif inpat.get("uom") == "Day":
 					uom = 1440
-				minimum_billable_unit = inpat.get("minimum_billable_unit")
+				minimum_billable_qty = inpat.get("minimum_billable_qty")
 				quantity = 1
 				if inpat.get("left") == 1:
 					quantity = inpat.get("time_difference") / uom
 				else:
 					quantity = inpat.get("now_difference") / uom
-				if minimum_billable_unit and quantity < minimum_billable_unit:
-					quantity = minimum_billable_unit
+				if minimum_billable_qty and quantity < minimum_billable_qty:
+					quantity = minimum_billable_qty
 				if not item_row:
 					# to add item child first time
 					se_child = self.append("items")
