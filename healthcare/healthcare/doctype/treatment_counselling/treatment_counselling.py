@@ -108,7 +108,7 @@ def set_treatment_plan_template_items(doc):
 		if doc.admission_service_unit_type:
 			su_item, su_rate = frappe.db.get_value("Healthcare Service Unit Type", doc.admission_service_unit_type, ["item", "rate"])
 			if su_item and su_rate:
-				doc.append("treatment_plan_template_items", {"type":"Item", "template": su_item, "qty": 1, "amount": su_rate})
+				doc.append("treatment_plan_template_items", {"type":"Item", "template": su_item, "qty": doc.expected_length_of_stay, "amount": su_rate})
 
 
 def set_total_amount(doc):
