@@ -197,6 +197,10 @@ healthcare.Orders = class Orders {
 						me.update_status(this, "Service Request", "Cancel");
 					});
 
+					$(".service-request").find(".service-request-replace").on("click", function() {
+						me.update_status(this, "Service Request", "Replaced");
+					});
+
 					$(".medication-request").find(".service-request-onhold").on("click", function() {
 						me.update_status(this, "Medication Request", "On Hold");
 					});
@@ -206,6 +210,11 @@ healthcare.Orders = class Orders {
 
 					$(".medication-request").find(".order-cancel").on("click", function() {
 						me.update_status(this, "Medication Request", "Cancel");
+					});
+
+					$(".medication-request").find(".service-request-replace").on("click", function() {
+						me.update_status(this, "Medication Request", "Replaced");
+						me.create_medication_request();
 					});
 
 					me.create_service_request();
