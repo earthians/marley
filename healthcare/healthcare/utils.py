@@ -374,7 +374,7 @@ def get_service_requests_to_invoice(patient, company):
 	service_requests = frappe.get_list(
 		"Service Request",
 		fields=["*"],
-		filters={"patient": patient.name, "company": company, "invoiced": 0, "docstatus": 1},
+		filters={"patient": patient.name, "company": company, "billing_status": "Pending", "docstatus": 1},
 	)
 	for service_request in service_requests:
 		item, is_billable = frappe.get_cached_value(
@@ -690,7 +690,7 @@ def get_drugs_to_invoice(encounter):
 					if medication_request.dosage and medication_request.period:
 						description = _("{0} for {1}").format(medication_request.dosage, medication_request.period)
 
-					if medication_request.medication_item and is_billable:
+					if medication_request.medication_item and is_billable and is_billable[0]==1:
 						billable_order_qty = medication_request.get("quantity", 1) - medication_request.get(
 							"qty_invoiced", 0
 						)

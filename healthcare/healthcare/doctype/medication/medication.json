@@ -16,6 +16,7 @@
   "disabled",
   "strength",
   "strength_uom",
+  "is_billable",
   "combinations_section",
   "combinations",
   "item_details",
@@ -213,10 +214,16 @@
    "fieldtype": "Table",
    "label": "Linked Items",
    "options": "Medication Linked Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_billable",
+   "fieldtype": "Check",
+   "label": "Is Billable"
   }
  ],
  "links": [],
- "modified": "2023-03-27 13:35:44.269907",
+ "modified": "2023-06-06 15:05:07.360096",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
