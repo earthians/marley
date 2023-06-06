@@ -24,7 +24,7 @@
   "item_group",
   "uom",
   "no_of_hours",
-  "minimum_billable_unit",
+  "minimum_billable_qty",
   "column_break_11",
   "rate",
   "description",
@@ -199,13 +199,13 @@
    "options": "Medical Department"
   },
   {
-   "fieldname": "minimum_billable_unit",
+   "fieldname": "minimum_billable_qty",
    "fieldtype": "Int",
-   "label": "Minimum Billable Unit"
+   "label": "Minimum Billable Quantity"
   }
  ],
  "links": [],
- "modified": "2023-06-01 11:25:51.922658",
+ "modified": "2023-06-06 12:40:16.576010",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
