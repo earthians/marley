@@ -34,6 +34,9 @@
   "column_break_lhbf",
   "is_billable",
   "rate",
+  "service_order_defaults_section",
+  "patient_care_type",
+  "staff_role",
   "consumption_tab",
   "consumables",
   "consume_stock",
@@ -45,10 +48,9 @@
   "sample",
   "column_break_21",
   "sample_details",
-  "service_order_defaults_section",
-  "patient_care_type",
-  "staff_role",
   "change_in_item",
+  "medication_tab",
+  "medications",
   "codification",
   "codification_table"
  ],
@@ -271,8 +273,7 @@
   },
   {
    "fieldname": "service_order_defaults_section",
-   "fieldtype": "Section Break",
-   "label": "Service Request Defaults"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "patient_care_type",
@@ -315,10 +316,20 @@
    "fieldname": "description_section",
    "fieldtype": "Section Break",
    "label": "Description"
+  },
+  {
+   "fieldname": "medication_tab",
+   "fieldtype": "Tab Break",
+   "label": "Medication"
+  },
+  {
+   "fieldname": "medications",
+   "fieldtype": "Table",
+   "options": "Drug Prescription"
   }
  ],
  "links": [],
- "modified": "2023-05-12 13:41:24.504164",
+ "modified": "2023-06-06 18:47:34.365867",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

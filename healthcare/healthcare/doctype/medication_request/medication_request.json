@@ -41,6 +41,7 @@
   "column_break_10",
   "reason_reference_doctype",
   "reason_reference",
+  "source_dt",
   "order_group",
   "sequence",
   "request_details_section",
@@ -66,6 +67,7 @@
   "medical_code_section",
   "medical_code_standard",
   "medical_code",
+  "section_break_o0nk",
   "amended_from"
  ],
  "fields": [
@@ -97,10 +99,10 @@
   },
   {
    "fieldname": "order_group",
-   "fieldtype": "Link",
+   "fieldtype": "Dynamic Link",
    "in_standard_filter": 1,
-   "label": "Order Group (Encounter)",
-   "options": "Patient Encounter"
+   "label": "Source Name",
+   "options": "source_dt"
   },
   {
    "fieldname": "column_break_91",
@@ -475,12 +477,22 @@
    "fieldname": "practitioner_email",
    "fieldtype": "Data",
    "label": "Practitioner Email"
+  },
+  {
+   "fieldname": "section_break_o0nk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "source_dt",
+   "fieldtype": "Link",
+   "label": "Source Doc",
+   "options": "DocType"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-02 18:41:08.213711",
+ "modified": "2023-06-07 16:19:37.403261",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",

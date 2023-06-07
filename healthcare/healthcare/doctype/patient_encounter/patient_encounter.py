@@ -210,7 +210,7 @@ class PatientEncounter(Document):
 				"status": "Draft",
 				"patient": self.get("patient"),
 				"practitioner": self.practitioner,
-				"order_group": self.name,
+				"order_group":self.name,
 				"sequence": line_item.get("sequence"),
 				"patient_care_type": template_doc.get("patient_care_type"),
 				"intent": line_item.get("intent"),
@@ -253,13 +253,19 @@ class PatientEncounter(Document):
 		if medication_request:
 			order.update(
 				{
+					"source_dt": "Patient Encounter",
 					"medication": template_doc.name,
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
 					"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else ""
 				}
 			)
 		else:
-			order.update({"template_dt": template_doc.doctype, "template_dn": template_doc.name})
+			order.update(
+				{
+					"template_dt": template_doc.doctype,
+					"template_dn": template_doc.name
+				}
+			)
 
 		order.update({"order_description": description})
 		return order

@@ -77,6 +77,14 @@ frappe.ui.form.on('Clinical Procedure Template', {
 				}
 			};
 		});
+
+		frm.set_query('drug_code', 'medications', function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			return {
+				query: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications_query',
+				filters: { name: row.medication }
+			};
+		});
 	},
 
 	link_existing_item: function (frm) {
@@ -250,3 +258,51 @@ let calculate_total_duration = function (frm) {
 		frm.set_value("total_duration", (frm.doc.disinfection_and_sterilization + frm.doc.actual_duration))
 	}
 };
+
+
+frappe.ui.form.on('Drug Prescription', {
+	dosage: function(frm, cdt, cdn){
+		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
+		let child = locals[cdt][cdn];
+		if (child.dosage) {
+			frappe.model.set_value(cdt, cdn, 'interval_uom', 'Day');
+			frappe.model.set_value(cdt, cdn, 'interval', 1);
+		}
+	},
+	period: function(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
+	},
+	interval_uom: function(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
+		let child = locals[cdt][cdn];
+		if (child.interval_uom == 'Hour') {
+			frappe.model.set_value(cdt, cdn, 'dosage', null);
+		}
+	},
+	medication:function(frm, cdt, cdn) {
+		let child = locals[cdt][cdn];
+		if (!child.medication) {
+			return;
+		}
+
+		frappe.call({
+			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications",
+			freeze: true,
+			args: {
+				medication: child.medication
+			},
+			callback: function(r) {
+				if (r && !r.exc && r.message) {
+					let data = r.message
+					if (data.length == 1) {
+						if (data[0].item) {
+							frappe.model.set_value(cdt, cdn, 'drug_code', data[0].item);
+						}
+					} else {
+						frappe.model.set_value(cdt, cdn, 'drug_code', "");
+					}
+				}
+			}
+		});
+	}
+});

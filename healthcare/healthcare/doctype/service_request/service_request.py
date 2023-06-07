@@ -11,7 +11,7 @@ import json
 import frappe
 from frappe import _
 from six import string_types
-from frappe.utils import now_datetime, time_diff_in_hours, get_time, getdate
+from frappe.utils import now_datetime, time_diff_in_hours, get_time, getdate, now
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
@@ -65,6 +65,10 @@ class ServiceRequest(ServiceRequestController):
 			status = "Invoiced"
 
 		self.db_set({"qty_invoiced": qty_invoiced, "billing_status": status})
+
+	def after_insert(self):
+		if self.template_dt == "Clinical Procedure Template":
+			insert_medication_request(self.template_dn, self.order_group)
 
 
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
@@ -218,3 +222,51 @@ def create_healthcare_activity_for_repeating_orders():
 			if time_diff >= (service_request.get("repeat_in_every")/3600):
 				nursing_task = make_nursing_task(frappe.get_doc("Service Request", service_request.get("name")))
 				nursing_task.save()
+
+def insert_medication_request(template_dn, order_group):
+	procedure_template_doc = frappe.get_doc("Clinical Procedure Template", template_dn)
+	encounter_doc = frappe.get_doc("Patient Encounter", order_group)
+	if procedure_template_doc.medications:
+		for drug in procedure_template_doc.medications:
+			if drug.medication and not drug.medication_request:
+				medication = frappe.get_doc("Medication", drug.medication)
+				order = frappe.get_doc(
+					{
+						"doctype": "Medication Request",
+						"order_date": getdate(now()),
+						"order_time": get_time(now()),
+						"company": encounter_doc.company,
+						"status": "Draft",
+						"patient": encounter_doc.get("patient"),
+						"practitioner": encounter_doc.practitioner,
+						"sequence": drug.get("sequence"),
+						"patient_care_type": medication.get("patient_care_type"),
+						"intent": drug.get("intent"),
+						"priority": drug.get("priority"),
+						"quantity": drug.get_quantity(),
+						"dosage": drug.get("dosage"),
+						"dosage_form": drug.get("dosage_form"),
+						"period": drug.get("period"),
+						"expected_date": drug.get("expected_date"),
+						"as_needed": drug.get("as_needed"),
+						"staff_role": medication.get("staff_role"),
+						"note": drug.get("note"),
+						"patient_instruction": drug.get("patient_instruction"),
+						"medical_code": medication.get("medical_code"),
+						"medical_code_standard": medication.get("medical_code_standard"),
+						"medication": medication.name,
+						"number_of_repeats_allowed": drug.get("number_of_repeats_allowed"),
+						"medication_item": drug.get("drug_code") if drug.get("drug_code") else "",
+						"source_dt": "Clinical Procedure Template",
+						"order_group": template_dn
+					}
+				)
+
+				if not drug.get("description"):
+					description = medication.get("description")
+				else:
+					description = drug.get("description")
+
+				order.update({"order_description": description})
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
