@@ -448,15 +448,9 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 				"service_request": "",
 			}
 		)
-
 	return frappe.db.get_list(
 		doc,
-		filters={
-			"patient": inpatient_record.patient,
-			"inpatient_record": inpatient_record.name,
-			"docstatus": 1,
-			"invoiced": 0,
-		},
+		filters=filters
 	)
 
 
@@ -663,3 +657,23 @@ def set_total(self):
 			if p.get("amount"):
 				total += p.get("amount")
 	self.total = total
+
+
+def validate_incompleted_service_requestes(inpatient_record):
+	filters = {
+		"patient": inpatient_record.patient,
+		"inpatient_record": inpatient_record.name,
+		"docstatus": 1,
+		"status": ["not in", ["Completed"]]
+	}
+
+	service_requests = frappe.db.get_list(
+		"Service Request",
+		filters=filters,
+		pluck = "name"
+	)
+	if service_requests and len(service_requests) > 0:
+		service_requests = [get_link_to_form("Service Request", service_request) for service_request in service_requests]
+		message = _("There are Orders yet to be carried out<br> {0}".format(', '.join(map(str, service_requests))))
+
+		frappe.throw(message, title=_("Incomplete Services"), is_minimizable=True, wide=True)
