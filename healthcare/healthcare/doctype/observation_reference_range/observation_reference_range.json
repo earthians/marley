@@ -1,0 +1,268 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-06-08 11:45:32.613055",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "permitted_data_type",
+  "uom",
+  "low_section",
+  "low_boolean_value",
+  "low_from",
+  "low_quantity",
+  "column_break_rdlf",
+  "low_to",
+  "section_break_ml0p",
+  "datetime",
+  "time",
+  "normal_boolean_value",
+  "ratio",
+  "observ_integer",
+  "observ_options",
+  "normal_quantity",
+  "normal_from",
+  "from_datetime",
+  "column_break_l8sr",
+  "to_datetime",
+  "normal_to",
+  "high_section",
+  "high_boolean_value",
+  "high_from",
+  "high_quantity",
+  "column_break_uqpz",
+  "high_to",
+  "section_break_jkn1",
+  "applies_to",
+  "gestational_age",
+  "column_break_hht8",
+  "age_from",
+  "column_break_t4bi",
+  "age_to",
+  "section_break_jxbb",
+  "reference_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applies To",
+   "options": "\nMale\nFemale\nPregnant"
+  },
+  {
+   "fieldname": "reference_text",
+   "fieldtype": "Small Text",
+   "label": "Reference Text"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type!=\"Quantity\";",
+   "fieldname": "column_break_l8sr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jkn1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_hht8",
+   "fieldtype": "Section Break",
+   "label": "Age Range"
+  },
+  {
+   "fieldname": "section_break_jxbb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.applies_to==\"Pregnant\";",
+   "description": "In Months",
+   "fieldname": "gestational_age",
+   "fieldtype": "Float",
+   "label": "Gestational Age"
+  },
+  {
+   "fieldname": "permitted_data_type",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Permitted Data Type",
+   "options": "Quantity\nData\nBoolean\nInteger\nRange\nRatio\nTime\nDateTime\nPeriod",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
+   "fieldname": "ratio",
+   "fieldtype": "Data",
+   "label": "Ratio"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"DateTime\";",
+   "fieldname": "datetime",
+   "fieldtype": "Datetime",
+   "label": "Datetime"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Time\";",
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time"
+  },
+  {
+   "depends_on": "eval:[\"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "Lab Test UOM"
+  },
+  {
+   "fieldname": "age_from",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Age From"
+  },
+  {
+   "fieldname": "age_to",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Age To"
+  },
+  {
+   "fieldname": "column_break_t4bi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "low_section",
+   "fieldtype": "Section Break",
+   "label": "Low"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Range\";",
+   "fieldname": "low_from",
+   "fieldtype": "Float",
+   "label": "Low From"
+  },
+  {
+   "fieldname": "column_break_rdlf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Range\";",
+   "fieldname": "low_to",
+   "fieldtype": "Float",
+   "label": "Low To"
+  },
+  {
+   "fieldname": "section_break_ml0p",
+   "fieldtype": "Section Break",
+   "label": "Normal"
+  },
+  {
+   "fieldname": "high_section",
+   "fieldtype": "Section Break",
+   "label": "High"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Range\";",
+   "fieldname": "high_from",
+   "fieldtype": "Float",
+   "label": "High From"
+  },
+  {
+   "fieldname": "column_break_uqpz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Range\";",
+   "fieldname": "high_to",
+   "fieldtype": "Float",
+   "label": "High To"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "normal_boolean_value",
+   "fieldtype": "Select",
+   "label": "Normal Value",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "low_boolean_value",
+   "fieldtype": "Select",
+   "label": "Low Value",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "high_boolean_value",
+   "fieldtype": "Select",
+   "label": "High Value",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Range\";",
+   "fieldname": "normal_from",
+   "fieldtype": "Float",
+   "label": "Normal From"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Range\";",
+   "fieldname": "normal_to",
+   "fieldtype": "Float",
+   "label": "Normal To"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
+   "fieldname": "low_quantity",
+   "fieldtype": "Float",
+   "label": "Low Quantity"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
+   "fieldname": "normal_quantity",
+   "fieldtype": "Float",
+   "label": "Normal Quantity"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
+   "fieldname": "high_quantity",
+   "fieldtype": "Float",
+   "label": "High Quantity"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Period\";",
+   "fieldname": "from_datetime",
+   "fieldtype": "Datetime",
+   "label": "From"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Period\";",
+   "fieldname": "to_datetime",
+   "fieldtype": "Datetime",
+   "label": "To"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Integer\";",
+   "fieldname": "observ_integer",
+   "fieldtype": "Int",
+   "label": "Integer"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Data\";",
+   "fieldname": "observ_options",
+   "fieldtype": "Small Text",
+   "label": "Options"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-06-13 17:32:01.538455",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Observation Reference Range",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
