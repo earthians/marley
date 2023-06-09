@@ -9,6 +9,7 @@ import frappe
 from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
+from frappe.model.mapper import get_mapped_doc
 from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today, time_diff_in_hours, now
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
@@ -577,6 +578,26 @@ def cancel_amend_treatment_counselling(args, treatment_counselling):
 	tpc_doc.cancel()
 	args["amended_from"] = treatment_counselling
 	create_treatment_counselling(args)
+
+
+@frappe.whitelist()
+def make_discharge_summary(source_name, target_doc=None, ignore_permissions=False):
+	doclist = get_mapped_doc(
+		"Inpatient Record",
+		source_name,
+		{
+			"Inpatient Record": {
+				"doctype": "Discharge Summary",
+				"field_map": {
+					"name": "inpatient_record",
+				},
+				"field_no_map": ["status", "chief_complaint", "diagnosis"],
+			},
+		},
+		target_doc,
+	)
+
+	return doclist
 
 
 @frappe.whitelist()

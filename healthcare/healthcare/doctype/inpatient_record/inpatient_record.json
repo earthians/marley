@@ -72,7 +72,8 @@
   "discharge_instructions",
   "followup_date",
   "sb_discharge_note",
-  "discharge_note"
+  "discharge_note",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -344,11 +345,12 @@
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_note",
    "fieldtype": "Section Break",
-   "label": "Discharge Notes"
+   "label": "Discharge"
   },
   {
    "fieldname": "discharge_note",
    "fieldtype": "Text Editor",
+   "label": "Discharge Notes",
    "permlevel": 1
   },
   {
@@ -509,6 +511,12 @@
    "label": "Paid Amount",
    "options": "currency",
    "read_only": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -520,9 +528,13 @@
   {
    "link_doctype": "Treatment Counselling",
    "link_fieldname": "inpatient_record"
+  },
+  {
+   "link_doctype": "Discharge Summary",
+   "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-06-01 12:03:28.973838",
+ "modified": "2023-06-05 12:08:38.552699",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
