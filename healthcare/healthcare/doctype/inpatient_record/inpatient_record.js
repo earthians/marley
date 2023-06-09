@@ -82,9 +82,22 @@ frappe.ui.form.on('Inpatient Record', {
 					admit_patient_dialog(frm);
 				} );
 			} else if (frm.doc.status == 'Discharge Scheduled') {
-				frm.add_custom_button(__('Discharge'), function() {
-					discharge_patient(frm);
-				} );
+				frappe.db.get_value('Discharge Summary', {'docstatus': ["<", 2], 'inpatient_record': frm.doc.name}, 'name')
+				.then(r => {
+					if (!r.message.name) {
+						frm.add_custom_button(__("Discharge Summary"), function() {
+							make_discharge_summary(frm);
+						}, "Create");
+					}
+				})
+				frappe.db.get_value('Discharge Summary', {'docstatus': 1, 'inpatient_record': frm.doc.name}, 'name')
+				.then(r => {
+					if (r.message.name) {
+						frm.add_custom_button(__('Discharge'), function() {
+							discharge_patient(frm);
+						} );
+					}
+				})
 			}
 
 			if (!["Discharge Scheduled", "Cancelled", "Discharged"].includes(frm.doc.status)) {
@@ -111,6 +124,14 @@ frappe.ui.form.on('Inpatient Record', {
 		transfer_patient_dialog(frm);
 	}
 });
+
+let make_discharge_summary = function(frm) {
+	frappe.model.open_mapped_doc({
+		method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.make_discharge_summary",
+		frm: frm
+	})
+};
+
 
 let discharge_patient = function(frm) {
 	frappe.call({
