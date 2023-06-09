@@ -449,6 +449,12 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 				"billing_status": "Pending",
 			}
 		)
+		if doc == "Service Request":
+			filters.update(
+				{
+					"template_dt": ["!=", "Healthcare Activity"],
+				}
+			)
 	else:
 		filters.update(
 			{

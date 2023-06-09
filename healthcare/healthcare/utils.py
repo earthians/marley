@@ -374,8 +374,15 @@ def get_service_requests_to_invoice(patient, company):
 	service_requests = frappe.get_list(
 		"Service Request",
 		fields=["*"],
-		filters={"patient": patient.name, "company": company, "billing_status": "Pending", "docstatus": 1},
+		filters={
+			"patient": patient.name,
+			"company": company,
+			"billing_status": "Pending",
+			"docstatus": 1,
+			"template_dt": ["!=", "Healthcare Activity"],
+		},
 	)
+
 	for service_request in service_requests:
 		item, is_billable = frappe.get_cached_value(
 			service_request.template_dt, service_request.template_dn, ["item", "is_billable"]
