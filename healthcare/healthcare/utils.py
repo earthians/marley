@@ -385,15 +385,16 @@ def get_service_item_and_practitioner_charge(doc):
 			doc.appointment_type, department, is_inpatient
 		)
 
-	if not service_item and not practitioner_charge:
+	if doc.get("practitioner") and not service_item and not practitioner_charge:
 		service_item, practitioner_charge = get_practitioner_service_item(doc.practitioner, is_inpatient)
-		if not service_item:
-			service_item = get_healthcare_service_item(is_inpatient)
+
+	if not service_item:
+		service_item = get_healthcare_service_item(is_inpatient)
 
 	if not service_item:
 		throw_config_service_item(is_inpatient)
 
-	if not practitioner_charge:
+	if doc.get("practitioner") and not practitioner_charge:
 		throw_config_practitioner_charge(is_inpatient, doc.practitioner)
 
 	return {"service_item": service_item, "practitioner_charge": practitioner_charge}
@@ -448,14 +449,13 @@ def get_practitioner_service_item(practitioner, is_inpatient):
 	practitioner_charge = None
 
 	if is_inpatient:
-		service_item, practitioner_charge = frappe.db.get_value(
-			"Healthcare Practitioner",
-			practitioner,
-			["inpatient_visit_charge_item", "inpatient_visit_charge"],
-		)
+		fields = ["inpatient_visit_charge_item", "inpatient_visit_charge"]
 	else:
+		fields = ["op_consulting_charge_item", "op_consulting_charge"]
+
+	if practitioner:
 		service_item, practitioner_charge = frappe.db.get_value(
-			"Healthcare Practitioner", practitioner, ["op_consulting_charge_item", "op_consulting_charge"]
+			"Healthcare Practitioner", practitioner, fields
 		)
 
 	return service_item, practitioner_charge
