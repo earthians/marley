@@ -38,7 +38,8 @@ frappe.ui.form.on('Patient Appointment', {
 				query: 'healthcare.controllers.queries.get_healthcare_service_units',
 				filters: {
 					company: frm.doc.company,
-					inpatient_record: frm.doc.inpatient_record
+					inpatient_record: frm.doc.inpatient_record,
+					allow_appointments: 1,
 				}
 			};
 		});
@@ -54,43 +55,10 @@ frappe.ui.form.on('Patient Appointment', {
 		frm.trigger('set_therapy_type_filter');
 
 		if (frm.is_new()) {
-			frm.page.set_primary_action(__('Check Availability'), function() {
-				if (!frm.doc.patient) {
-					frappe.msgprint({
-						title: __('Not Allowed'),
-						message: __('Please select Patient first'),
-						indicator: 'red'
-					});
-				} else {
-					frappe.call({
-						method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
-						args: { 'patient': frm.doc.patient },
-						callback: function(data) {
-							if (data.message == true) {
-								if (frm.doc.mode_of_payment && frm.doc.paid_amount) {
-									check_and_set_availability(frm);
-								}
-								if (!frm.doc.mode_of_payment) {
-									frappe.msgprint({
-										title: __('Not Allowed'),
-										message: __('Please select a Mode of Payment first'),
-										indicator: 'red'
-									});
-								}
-								if (!frm.doc.paid_amount) {
-									frappe.msgprint({
-										title: __('Not Allowed'),
-										message: __('Please set the Paid Amount first'),
-										indicator: 'red'
-									});
-								}
-							} else {
-								check_and_set_availability(frm);
-							}
-						}
-					});
-				}
-			});
+			frm.page.clear_primary_action();
+			if (frm.doc.appointment_for) {
+				frm.trigger('appointment_for');
+			}
 		} else {
 			frm.page.set_primary_action(__('Save'), () => frm.save());
 		}
@@ -139,9 +107,92 @@ frappe.ui.form.on('Patient Appointment', {
 		}
 	},
 
+	appointment_for: function(frm) {
+		if (frm.doc.appointment_for == 'Practitioner') {
+			if (!frm.doc.practitioner) {
+				frm.set_value('department', '');
+			}
+			frm.set_value('service_unit', '');
+			frm.trigger('set_check_availability_action');
+		} else if (frm.doc.appointment_for == 'Service Unit') {
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'department': '',
+			});
+			frm.trigger('set_book_action');
+		} else if (frm.doc.appointment_for == 'Department') {
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'service_unit': '',
+			});
+			frm.trigger('set_book_action');
+		} else {
+			if (frm.doc.appointment_for == 'Department') {
+				frm.set_value('service_unit', '');
+			}
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'department': '',
+				'service_unit': '',
+			});
+			frm.page.clear_primary_action();
+		}
+	},
+
+	set_book_action: function(frm) {
+		frm.page.set_primary_action(__('Book'), function() {
+			frm.enable_save();
+			frm.save();
+		});
+	},
+
+	set_check_availability_action: function(frm) {
+		frm.page.set_primary_action(__('Check Availability'), function() {
+			if (!frm.doc.patient) {
+				frappe.msgprint({
+					title: __('Not Allowed'),
+					message: __('Please select Patient first'),
+					indicator: 'red'
+				});
+			} else {
+				frappe.call({
+					method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
+					args: { 'patient': frm.doc.patient },
+					callback: function(data) {
+						if (data.message == true) {
+							if (frm.doc.mode_of_payment && frm.doc.paid_amount) {
+								check_and_set_availability(frm);
+							}
+							if (!frm.doc.mode_of_payment) {
+								frappe.msgprint({
+									title: __('Not Allowed'),
+									message: __('Please select a Mode of Payment first'),
+									indicator: 'red'
+								});
+							}
+							if (!frm.doc.paid_amount) {
+								frappe.msgprint({
+									title: __('Not Allowed'),
+									message: __('Please set the Paid Amount first'),
+									indicator: 'red'
+								});
+							}
+						} else {
+							check_and_set_availability(frm);
+						}
+					}
+				});
+			}
+		});
+	},
+
 	patient: function(frm) {
 		if (frm.doc.patient) {
 			frm.trigger('toggle_payment_fields');
+			frm.trigger('appointment_for');
 			frappe.call({
 				method: 'frappe.client.get',
 				args: {

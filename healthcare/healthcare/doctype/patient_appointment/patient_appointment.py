@@ -53,6 +53,7 @@ class OverlapError(frappe.ValidationError):
 class PatientAppointment(Document):
 	def validate(self):
 		self.validate_overlaps()
+		self.validate_appointments_without_practitioner()
 		self.validate_service_unit()
 		self.set_appointment_datetime()
 		self.validate_customer_created()
@@ -71,9 +72,14 @@ class PatientAppointment(Document):
 		self.insert_calendar_event()
 
 	def set_title(self):
-		self.title = _("{0} with {1}").format(
-			self.patient_name or self.patient, self.practitioner_name or self.practitioner
-		)
+		if self.practitioner:
+			self.title = _("{0} with {1}").format(
+				self.patient_name or self.patient, self.practitioner_name or self.practitioner
+			)
+		else:
+			self.title = _("{0} at {1}").format(
+				self.patient_name or self.patient, self.get(frappe.scrub(self.appointment_for))
+			)
 
 	def set_status(self):
 		today = getdate()
@@ -86,6 +92,9 @@ class PatientAppointment(Document):
 			self.status = "Scheduled"
 
 	def validate_overlaps(self):
+		if not self.practitioner:
+			return
+
 		end_time = datetime.datetime.combine(
 			getdate(self.appointment_date), get_time(self.appointment_time)
 		) + datetime.timedelta(minutes=flt(self.duration))
@@ -151,6 +160,40 @@ class PatientAppointment(Document):
 				),
 				OverlapError,
 			)
+
+	def validate_appointments_without_practitioner(self):
+		if not self.practitioner and self.appointment_type:
+			# fieldname: practitioner / department / service_unit
+			appointment_for_field = frappe.scrub(self.appointment_for)
+
+			# validate if respective field is set
+			if not self.get(appointment_for_field):
+				frappe.throw(
+					_("Please enter {}").format(frappe.bold(self.appointment_for)),
+					frappe.MandatoryError,
+				)
+
+			# validate if patient already has an appointment
+			booked_appointment = frappe.db.exists(
+				"Patient Appointment",
+				{
+					"patient": self.patient,
+					"status": ["!=", "Cancelled"],
+					appointment_for_field: self.get(appointment_for_field),
+					"appointment_date": self.appointment_date,
+					"name": ["!=", self.name],
+				},
+			)
+
+			if booked_appointment:
+				frappe.throw(
+					_("Patient already has an appointment {} booked at {} on {}").format(
+						get_link_to_form("Patient Appointment", booked_appointment),
+						frappe.bold(self.get(appointment_for_field)),
+						frappe.bold(format_date(self.appointment_date)),
+					),
+					frappe.DuplicateEntryError,
+				)
 
 	def validate_service_unit(self):
 		if self.inpatient_record and self.service_unit:
@@ -220,6 +263,9 @@ class PatientAppointment(Document):
 		self.flags.silent = False
 
 	def insert_calendar_event(self):
+		if not self.practitioner:
+			return
+
 		starts_on = datetime.datetime.combine(
 			getdate(self.appointment_date), get_time(self.appointment_time)
 		)
@@ -253,6 +299,7 @@ class PatientAppointment(Document):
 			}
 		)
 		participants = []
+
 		participants.append(
 			{"reference_doctype": "Healthcare Practitioner", "reference_docname": self.practitioner}
 		)
