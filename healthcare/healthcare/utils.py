@@ -381,19 +381,14 @@ def get_appointment_billing_item_and_rate(doc):
 	is_inpatient = doc.inpatient_record
 
 	if doc.get("practitioner"):
-		service_item, practitioner_charge = get_practitioner_billing_details(
-			doc.practitioner, is_inpatient
-		)
+		service_item, practitioner_charge = get_practitioner_service_item(doc.practitioner, is_inpatient)
 
-	if not service_item and doc.get("appointment_type"):
-		service_item, appointment_charge = get_appointment_type_billing_details(
-			doc.appointment_type, department if department else service_unit, is_inpatient
+	if doc.get("appointment_type") and not service_item:
+		service_item, appointment_charge = get_appointment_type_service_item(
+			doc.appointment_type, department, is_inpatient
 		)
 		if not practitioner_charge:
 			practitioner_charge = appointment_charge
-
-	if doc.get("practitioner") and not service_item and not practitioner_charge:
-		service_item, practitioner_charge = get_practitioner_service_item(doc.practitioner, is_inpatient)
 
 	if not service_item:
 		service_item = get_healthcare_service_item(is_inpatient)
