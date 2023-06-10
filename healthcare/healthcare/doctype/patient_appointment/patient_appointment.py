@@ -37,7 +37,7 @@ class OverlapError(frappe.ValidationError):
 class PatientAppointment(Document):
 	def validate(self):
 		self.validate_overlaps()
-		self.validate_based_on_appointments_for()
+		self.validate_appointments_without_practitioner()
 		self.validate_service_unit()
 		self.set_appointment_datetime()
 		self.validate_customer_created()
@@ -166,8 +166,8 @@ class PatientAppointment(Document):
 				OverlapError,
 			)
 
-	def validate_based_on_appointments_for(self):
-		if self.appointment_for:
+	def validate_appointments_without_practitioner(self):
+		if not self.practitioner and self.appointment_type:
 			# fieldname: practitioner / department / service_unit
 			appointment_for_field = frappe.scrub(self.appointment_for)
 
@@ -178,12 +178,7 @@ class PatientAppointment(Document):
 					frappe.MandatoryError,
 				)
 
-			if self.appointment_for == "Practitioner":
-				# appointments for practitioner are validated separately,
-				# based on practitioner schedule
-				return
-
-			# validate if patient already has an appointment for the day
+			# validate if patient already has an appointment
 			booked_appointment = frappe.db.exists(
 				"Patient Appointment",
 				{
@@ -197,7 +192,7 @@ class PatientAppointment(Document):
 
 			if booked_appointment:
 				frappe.throw(
-					_("Patient already has an appointment {} booked for {} on {}").format(
+					_("Patient already has an appointment {} booked at {} on {}").format(
 						get_link_to_form("Patient Appointment", booked_appointment),
 						frappe.bold(self.get(appointment_for_field)),
 						frappe.bold(format_date(self.appointment_date)),
