@@ -380,13 +380,15 @@ def get_service_item_and_practitioner_charge(doc):
 
 	is_inpatient = doc.inpatient_record
 
-	if doc.get("appointment_type"):
-		service_item, practitioner_charge = get_appointment_type_service_item(
+	if doc.get("practitioner"):
+		service_item, practitioner_charge = get_practitioner_service_item(doc.practitioner, is_inpatient)
+
+	if doc.get("appointment_type") and not service_item:
+		service_item, appointment_charge = get_appointment_type_service_item(
 			doc.appointment_type, department, is_inpatient
 		)
-
-	if doc.get("practitioner") and not service_item and not practitioner_charge:
-		service_item, practitioner_charge = get_practitioner_service_item(doc.practitioner, is_inpatient)
+		if not practitioner_charge:
+			practitioner_charge = appointment_charge
 
 	if not service_item:
 		service_item = get_healthcare_service_item(is_inpatient)
