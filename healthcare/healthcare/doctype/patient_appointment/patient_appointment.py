@@ -12,7 +12,7 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, get_link_to_form, get_time, getdate, get_datetime, time_diff_in_hours, add_to_date flt, format_date, get_link_to_form, get_time, getdate, get_datetime, convert_utc_to_timezone
+from frappe.utils import flt, get_link_to_form, get_time, getdate, format_date
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
@@ -23,23 +23,13 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.utils import (
-	check_fee_validity,
-	get_service_item_and_practitioner_charge,
-	manage_fee_validity,
-)
 
 from erpnext.www.book_appointment.index import (
 	convert_to_system_timezone,
 	convert_to_guest_timezone,
-	_deltatime_to_datetime,
 )
 
-# todo: clean up imports
-try:
-	from erpnext.hr.doctype.employee.employee import is_holiday
-except ImportError:
-	from erpnext.setup.doctype.employee.employee import is_holiday
+from healthcare.healthcare.utils import get_appointment_billing_item_and_rate
 
 
 class MaximumCapacityError(frappe.ValidationError):
@@ -53,7 +43,7 @@ class OverlapError(frappe.ValidationError):
 class PatientAppointment(Document):
 	def validate(self):
 		self.validate_overlaps()
-		self.validate_appointments_without_practitioner()
+		self.validate_based_on_appointments_for()
 		self.validate_service_unit()
 		self.set_appointment_datetime()
 		self.validate_customer_created()
@@ -161,8 +151,8 @@ class PatientAppointment(Document):
 				OverlapError,
 			)
 
-	def validate_appointments_without_practitioner(self):
-		if not self.practitioner and self.appointment_type:
+	def validate_based_on_appointments_for(self):
+		if self.appointment_for:
 			# fieldname: practitioner / department / service_unit
 			appointment_for_field = frappe.scrub(self.appointment_for)
 
@@ -173,7 +163,12 @@ class PatientAppointment(Document):
 					frappe.MandatoryError,
 				)
 
-			# validate if patient already has an appointment
+			if self.appointment_for == "Practitioner":
+				# appointments for practitioner are validated separately,
+				# based on practitioner schedule
+				return
+
+			# validate if patient already has an appointment for the day
 			booked_appointment = frappe.db.exists(
 				"Patient Appointment",
 				{
@@ -187,7 +182,7 @@ class PatientAppointment(Document):
 
 			if booked_appointment:
 				frappe.throw(
-					_("Patient already has an appointment {} booked at {} on {}").format(
+					_("Patient already has an appointment {} booked for {} on {}").format(
 						get_link_to_form("Patient Appointment", booked_appointment),
 						frappe.bold(self.get(appointment_for_field)),
 						frappe.bold(format_date(self.appointment_date)),
@@ -225,7 +220,7 @@ class PatientAppointment(Document):
 
 	def set_payment_details(self):
 		if frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing"):
-			details = get_service_item_and_practitioner_charge(self)
+			details = get_appointment_billing_item_and_rate(self)
 			self.db_set("billing_item", details.get("service_item"))
 			if not self.paid_amount:
 				self.db_set("paid_amount", details.get("practitioner_charge"))
@@ -250,7 +245,10 @@ class PatientAppointment(Document):
 					frappe.db.set_value("Patient Appointment", self.name, "notes", comments)
 
 	def update_fee_validity(self):
-		if not frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups"):
+		if (
+			not frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+			or not self.practitioner
+		):
 			return
 
 		fee_validity = manage_fee_validity(self)
@@ -433,7 +431,7 @@ def check_is_new_patient(patient, name=None):
 
 
 def get_appointment_item(appointment_doc, item):
-	details = get_service_item_and_practitioner_charge(appointment_doc)
+	details = get_appointment_billing_item_and_rate(appointment_doc)
 	charge = appointment_doc.paid_amount or details.get("practitioner_charge")
 	item.item_code = details.get("service_item")
 	item.description = _("Consulting Charges: {0}").format(appointment_doc.practitioner)

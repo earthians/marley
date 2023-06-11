@@ -223,6 +223,20 @@ frappe.ui.form.on('Patient Appointment', {
 
 	appointment_type: function(frm) {
 		if (frm.doc.appointment_type) {
+			if (frm.doc.appointment_for && frm.doc[frappe.scrub(frm.doc.appointment_for)]) {
+				frm.events.set_payment_details(frm);
+			}
+		}
+	},
+
+	department: function(frm) {
+		if (frm.doc.department && frm.doc.appointment_for == 'Department') {
+			frm.events.set_payment_details(frm);
+		}
+	},
+
+	service_unit: function(frm) {
+		if (frm.doc.service_unit && frm.doc.appointment_for == 'Service Unit') {
 			frm.events.set_payment_details(frm);
 		}
 	},
@@ -231,7 +245,7 @@ frappe.ui.form.on('Patient Appointment', {
 		frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing').then(val => {
 			if (val) {
 				frappe.call({
-					method: 'healthcare.healthcare.utils.get_service_item_and_practitioner_charge',
+					method: 'healthcare.healthcare.utils.get_appointment_billing_item_and_rate',
 					args: {
 						doc: frm.doc
 					},
@@ -468,7 +482,7 @@ let check_and_set_availability = function(frm) {
 						section_field.df.hidden = 0;
 
 						let payment_details = (await frappe.call(
-							'healthcare.healthcare.utils.get_service_item_and_practitioner_charge',
+							'healthcare.healthcare.utils.get_appointment_billing_item_and_rate',
 							{
 								doc: frm.doc
 							}
