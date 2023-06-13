@@ -4,7 +4,7 @@ set -ex
 
 cd ~ || exit
 
-sudo apt-get install redis-server libcups2-dev -qq
+sudo apt-get update && sudo apt-get install redis-server libcups2-dev --fix-missing
 
 pip install frappe-bench
 
