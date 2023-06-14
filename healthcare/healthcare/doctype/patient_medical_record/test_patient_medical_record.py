@@ -18,8 +18,8 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 
 class TestPatientMedicalRecord(FrappeTestCase):
 	def setUp(self):
-		frappe.db.set_value("Healthcare Settings", None, "enable_free_follow_ups", 0)
-		frappe.db.set_value("Healthcare Settings", None, "automate_appointment_invoicing", 1)
+		frappe.db.set_single_value("Healthcare Settings", "enable_free_follow_ups", 0)
+		frappe.db.set_single_value("Healthcare Settings", "automate_appointment_invoicing", 1)
 		make_pos_profile()
 
 	def test_medical_record(self):
