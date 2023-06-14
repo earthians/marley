@@ -419,8 +419,14 @@ def cancel_sales_invoice(sales_invoice):
 	if frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing"):
 		if len(sales_invoice.items) == 1:
 			if sales_invoice.docstatus == 1:
-				sales_invoice.cancel()
-				return True
+				frappe.throw(
+				_(
+					"The Sales Invoice {0} is Draft you cant cancel."
+				).format(
+					get_link_to_form("Sales Invoice", sales_invoice)
+				)
+			)
+			return True
 	return False
 
 
