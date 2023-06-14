@@ -46,10 +46,10 @@ def get_sms_text(doc):
 	doc = frappe.get_doc("Lab Test", doc)
 	context = {"doc": doc, "alert": doc, "comments": None}
 
-	emailed = frappe.db.get_value("Healthcare Settings", None, "sms_emailed")
+	emailed = frappe.db.get_single_value("Healthcare Settings", "sms_emailed")
 	sms_text["emailed"] = frappe.render_template(emailed, context)
 
-	printed = frappe.db.get_value("Healthcare Settings", None, "sms_printed")
+	printed = frappe.db.get_single_value("Healthcare Settings", "sms_printed")
 	sms_text["printed"] = frappe.render_template(printed, context)
 
 	return sms_text
