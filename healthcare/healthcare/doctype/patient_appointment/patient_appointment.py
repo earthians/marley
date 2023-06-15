@@ -418,7 +418,8 @@ def cancel_appointment(appointment_id):
 def cancel_sales_invoice(sales_invoice):
 	if frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing"):
 		if len(sales_invoice.items) == 1:
-			sales_invoice.cancel()
+			if sales_invoice.docstatus.is_submitted():
+				sales_invoice.cancel()
 			return True
 	return False
 
