@@ -13,6 +13,7 @@
   "preferred_display_name",
   "has_component",
   "column_break_zeln",
+  "medical_department",
   "description",
   "section_break_eovt",
   "result_template",
@@ -25,14 +26,15 @@
   "column_break_jsqz",
   "permitted_unit",
   "options",
-  "text",
+  "template",
   "components_section",
   "observation_component",
   "sample_collection_section",
   "sample",
-  "uom",
   "sample_qty",
+  "uom",
   "column_break_tyze",
+  "sample_type",
   "sample_details",
   "reference_ranges_tab",
   "observation_reference_range",
@@ -206,15 +208,30 @@
    "options": "Terms and Conditions"
   },
   {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "fetch_from": "sample.sample_type",
+   "fieldname": "sample_type",
+   "fieldtype": "Data",
+   "label": "Sample Type",
+   "options": "Sample Type",
+   "read_only": 1
+  },
+  {
    "depends_on": "eval:doc.permitted_data_type == \"Text\";",
-   "fieldname": "text",
-   "fieldtype": "Text Editor",
-   "label": "Text"
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Terms and Conditions"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-15 07:46:13.533938",
+ "modified": "2023-06-15 14:09:46.813559",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
