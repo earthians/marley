@@ -31,10 +31,11 @@
   "observation_component",
   "sample_collection_section",
   "sample",
+  "sample_type",
   "sample_qty",
   "uom",
   "column_break_tyze",
-  "sample_type",
+  "container_closure_color",
   "sample_details",
   "reference_ranges_tab",
   "observation_reference_range",
@@ -217,7 +218,7 @@
   {
    "fetch_from": "sample.sample_type",
    "fieldname": "sample_type",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Sample Type",
    "options": "Sample Type",
    "read_only": 1
@@ -228,6 +229,14 @@
    "fieldtype": "Link",
    "label": "Template",
    "options": "Terms and Conditions"
+  },
+  {
+   "fetch_from": "sample.container_closure_color",
+   "fetch_if_empty": 1,
+   "fieldname": "container_closure_color",
+   "fieldtype": "Link",
+   "label": "Container Closure Color",
+   "options": "Color"
   }
  ],
  "index_web_pages_for_search": 1,
