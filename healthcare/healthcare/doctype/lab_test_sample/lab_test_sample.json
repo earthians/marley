@@ -12,7 +12,8 @@
   "sample_type",
   "sample",
   "column_break_0sbu",
-  "sample_uom"
+  "sample_uom",
+  "container_closure_color"
  ],
  "fields": [
   {
@@ -32,6 +33,7 @@
    "options": "Lab Test UOM"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "sample_type",
    "fieldtype": "Link",
    "label": "Sample Type",
@@ -40,10 +42,16 @@
   {
    "fieldname": "column_break_0sbu",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "container_closure_color",
+   "fieldtype": "Link",
+   "label": "Container Closure Color",
+   "options": "Color"
   }
  ],
  "links": [],
- "modified": "2023-06-15 13:13:57.766996",
+ "modified": "2023-06-17 19:23:44.715794",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Sample",
