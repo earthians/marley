@@ -42,6 +42,7 @@
   "employee_designation",
   "user",
   "sample",
+  "result_tab",
   "sb_normal",
   "lab_test_html",
   "normal_test_items",
@@ -76,7 +77,11 @@
   "descriptive_toggle",
   "sensitivity_toggle",
   "amended_from",
-  "prescription"
+  "prescription",
+  "observation_tab",
+  "observation_template",
+  "observation_html",
+  "observation_result"
  ],
  "fields": [
   {
@@ -522,7 +527,7 @@
   {
    "collapsible": 1,
    "fieldname": "worksheet_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Worksheet Print"
   },
   {
@@ -597,7 +602,7 @@
   {
    "collapsible": 1,
    "fieldname": "medical_coding_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Medical Coding"
   },
   {
@@ -616,6 +621,34 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "result_tab",
+   "fieldtype": "Tab Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "observation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Observation"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "observation_template",
+   "fieldtype": "Link",
+   "label": "Observation Template",
+   "options": "Observation Template"
+  },
+  {
+   "fieldname": "observation_html",
+   "fieldtype": "HTML",
+   "label": "Observation Html"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "observation_result",
+   "fieldtype": "Small Text",
+   "label": "Observation Result"
   }
  ],
  "is_submittable": 1,
@@ -625,7 +658,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:56:38.766501",
+ "modified": "2023-06-14 15:34:18.529998",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
