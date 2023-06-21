@@ -178,11 +178,7 @@ def create_lab_test_from_encounter(encounter):
 				template = get_lab_test_template(service_request_doc.template_dn)
 				if template:
 					lab_test = create_lab_test_doc(
-						1 if service_request_doc.billing_status == "Invoiced" else 0,
-						encounter.practitioner,
-						patient,
-						template,
-						encounter.company,
+						encounter.practitioner, patient, template, encounter.company, service_request_doc.invoiced
 					)
 					lab_test.service_request = service_request_doc.name
 					lab_test.save(ignore_permissions=True)
@@ -212,11 +208,12 @@ def create_lab_test_from_invoice(sales_invoice):
 				template = get_lab_test_template(item.item_code)
 				if template:
 					lab_test = create_lab_test_doc(
-						True,
 						invoice.ref_practitioner,
 						patient,
 						template,
 						invoice.company,
+						True,
+						item.service_unit
 					)
 					if item.reference_dt == "Service Request":
 						lab_test.service_request = item.reference_dn
@@ -241,7 +238,9 @@ def get_lab_test_template(item):
 	return False
 
 
-def create_lab_test_doc(invoiced, practitioner, patient, template, company):
+def create_lab_test_doc(
+	practitioner, patient, template, company, invoiced=False, service_unit=None
+):
 	lab_test = frappe.new_doc("Lab Test")
 	lab_test.invoiced = invoiced
 	lab_test.practitioner = practitioner
@@ -256,6 +255,7 @@ def create_lab_test_doc(invoiced, practitioner, patient, template, company):
 	lab_test.lab_test_group = template.lab_test_group
 	lab_test.result_date = getdate()
 	lab_test.company = company
+	lab_test.service_unit = service_unit
 	return lab_test
 
 

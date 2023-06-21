@@ -34,6 +34,7 @@
   "email",
   "mobile",
   "c_b",
+  "service_unit",
   "practitioner",
   "practitioner_name",
   "requesting_department",
@@ -616,6 +617,27 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "result_tab",
+   "fieldtype": "Tab Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "observation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Observation"
+  },
+  {
+   "fieldname": "observation_html",
+   "fieldtype": "HTML",
+   "label": "Observation Html"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
   }
  ],
  "is_submittable": 1,
@@ -625,7 +647,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:56:38.766501",
+ "modified": "2023-06-21 00:31:52.282467",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
