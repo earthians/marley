@@ -40,5 +40,10 @@ class HealthcareSalesInvoice(SalesInvoice):
 				item_line.reference_dn = checked_item["dn"]
 			if checked_item["description"]:
 				item_line.description = checked_item["description"]
+			if checked_item["dt"] == "Lab Test":
+				lab_test = frappe.get_doc("Lab Test", checked_item["dn"])
+				item_line.service_unit = lab_test.service_unit
+				item_line.practitioner = lab_test.practitioner
+				item_line.medical_department = lab_test.department
 
 		self.set_missing_values(for_validate=True)
