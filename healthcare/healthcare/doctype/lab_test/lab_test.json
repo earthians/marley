@@ -33,6 +33,7 @@
   "email",
   "mobile",
   "c_b",
+  "service_unit",
   "practitioner",
   "practitioner_name",
   "requesting_department",
@@ -579,6 +580,12 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
   }
  ],
  "is_submittable": 1,
@@ -588,7 +595,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:56:38.766501",
+ "modified": "2023-06-21 00:31:52.282467",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
