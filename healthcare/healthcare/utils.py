@@ -499,6 +499,13 @@ def manage_invoice_validate(doc, method):
 				item.service_unit = doc.service_unit
 
 
+def manage_invoice_validate(doc, method):
+	if doc.service_unit and len(doc.items):
+		for item in doc.items:
+			if not item.service_unit:
+				item.service_unit = doc.service_unit
+
+
 def manage_invoice_submit_cancel(doc, method):
 	if not doc.patient:
 		return
