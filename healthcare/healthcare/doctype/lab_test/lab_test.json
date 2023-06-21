@@ -34,6 +34,7 @@
   "email",
   "mobile",
   "c_b",
+  "service_unit",
   "practitioner",
   "practitioner_name",
   "requesting_department",
@@ -634,6 +635,12 @@
    "fieldname": "observation_html",
    "fieldtype": "HTML",
    "label": "Observation Html"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
   }
  ],
  "is_submittable": 1,
@@ -643,7 +650,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-06-19 12:00:55.410271",
+ "modified": "2023-06-21 00:31:52.282467",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
