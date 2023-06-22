@@ -22,6 +22,7 @@
   "description",
   "results_section",
   "permitted_data_type",
+  "result_attach",
   "result_data",
   "result_text",
   "result_float",
@@ -123,7 +124,7 @@
    "fieldname": "permitted_data_type",
    "fieldtype": "Select",
    "label": "Permitted Data Type",
-   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod",
+   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach",
    "read_only": 1
   },
   {
@@ -143,11 +144,71 @@
    "fieldname": "result_float",
    "fieldtype": "Float",
    "label": "Result"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Docname",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Observation",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name"
+  },
+  {
+   "fieldname": "column_break_wwnp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parent_observation",
+   "fieldtype": "Link",
+   "label": "Parent Observation",
+   "options": "Observation",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.has_component",
+   "fieldname": "has_component",
+   "fieldtype": "Check",
+   "label": "Has Component",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Attach\";",
+   "fieldname": "result_attach",
+   "fieldtype": "Attach",
+   "label": "Result Attach"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-17 12:31:57.783044",
+ "modified": "2023-06-22 12:15:24.961005",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
