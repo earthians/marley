@@ -79,9 +79,7 @@
   "amended_from",
   "prescription",
   "observation_tab",
-  "observation_template",
-  "observation_html",
-  "observation_result"
+  "observation_html"
  ],
  "fields": [
   {
@@ -633,22 +631,9 @@
    "label": "Observation"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "observation_template",
-   "fieldtype": "Link",
-   "label": "Observation Template",
-   "options": "Observation Template"
-  },
-  {
    "fieldname": "observation_html",
    "fieldtype": "HTML",
    "label": "Observation Html"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "observation_result",
-   "fieldtype": "Small Text",
-   "label": "Observation Result"
   }
  ],
  "is_submittable": 1,
@@ -658,7 +643,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-06-14 15:34:18.529998",
+ "modified": "2023-06-19 12:00:55.410271",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
