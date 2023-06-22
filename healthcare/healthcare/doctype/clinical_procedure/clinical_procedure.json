@@ -46,7 +46,9 @@
   "service_request",
   "invoiced",
   "prescription",
-  "amended_from"
+  "amended_from",
+  "observation_tab",
+  "observation_html"
  ],
  "fields": [
   {
@@ -322,6 +324,16 @@
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description"
+  },
+  {
+   "fieldname": "observation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Observation"
+  },
+  {
+   "fieldname": "observation_html",
+   "fieldtype": "HTML",
+   "label": "Observation Html"
   }
  ],
  "is_submittable": 1,
@@ -331,7 +343,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-05-11 18:26:47.790526",
+ "modified": "2023-06-20 15:21:57.241577",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

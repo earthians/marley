@@ -174,6 +174,7 @@ frappe.ui.form.on('Clinical Procedure', {
 			frm.add_fetch('procedure_template', 'medical_department', 'medical_department');
 			frm.set_value('start_time', null);
 		}
+		show_observations(frm);
 	},
 
 	patient: function(frm) {
@@ -509,3 +510,15 @@ let show_procedure_templates = function(frm, result){
 	}
 	d.show();
 };
+
+var show_observations = function(frm) {
+	if (frm.doc.patient) {
+		frm.fields_dict.observation_html.html("");
+		const observation = new healthcare.Observation({
+			frm: frm,
+			notes_wrapper: $(frm.fields_dict.observation_html.wrapper),
+			create_observation: true,
+		});
+		observation.refresh();
+	}
+}
