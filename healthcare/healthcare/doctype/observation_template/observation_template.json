@@ -74,15 +74,16 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval:!doc.has_component",
    "fieldname": "permitted_data_type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Permitted Data Type",
-   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod"
+   "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
+   "depends_on": "eval:doc.permitted_data_type==\"Quantity\" && !doc.has_component;",
    "fieldname": "permitted_unit",
    "fieldtype": "Link",
    "label": "Permitted Unit",
@@ -142,8 +143,8 @@
   {
    "fieldname": "service_unit",
    "fieldtype": "Link",
-   "label": "Service Unit ",
-   "options": "Healthcare Service Unit"
+   "label": "Service Unit Type",
+   "options": "Healthcare Service Unit Type"
   },
   {
    "depends_on": "eval:doc.observation_category!=\"Imaging\";",
@@ -231,7 +232,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-15 14:09:46.813559",
+ "modified": "2023-06-21 18:16:32.622167",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",

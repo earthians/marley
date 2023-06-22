@@ -9,13 +9,14 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "observation",
   "observation_template",
+  "has_component",
   "column_break_7xu5",
   "posting_datetime",
   "status",
   "section_break_i70a",
   "patient",
+  "patient_name",
   "age",
   "gender",
   "description_section",
@@ -25,17 +26,16 @@
   "result_data",
   "result_text",
   "result_float",
+  "more_information_section",
+  "reference_doctype",
+  "reference_docname",
+  "column_break_wwnp",
+  "parent_observation",
   "medical_coding_section",
-  "codification_table"
+  "codification_table",
+  "amended_from"
  ],
  "fields": [
-  {
-   "fieldname": "observation",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Observation",
-   "reqd": 1
-  },
   {
    "fieldname": "observation_template",
    "fieldtype": "Link",
@@ -114,6 +114,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval:!doc.has_component",
    "fieldname": "results_section",
    "fieldtype": "Section Break",
    "label": "Results"
@@ -143,11 +144,66 @@
    "fieldname": "result_float",
    "fieldtype": "Float",
    "label": "Result"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Docname",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Observation",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name"
+  },
+  {
+   "fieldname": "column_break_wwnp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parent_observation",
+   "fieldtype": "Link",
+   "label": "Parent Observation",
+   "options": "Observation",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.has_component",
+   "fieldname": "has_component",
+   "fieldtype": "Check",
+   "label": "Has Component",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2023-06-17 12:31:57.783044",
+ "modified": "2023-06-22 11:08:31.708546",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
