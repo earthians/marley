@@ -7,42 +7,52 @@
  "engine": "InnoDB",
  "field_order": [
   "permitted_data_type",
+  "section_break_jkn1",
+  "applies_to",
+  "gestational_age",
+  "from_age_type",
+  "age_from",
+  "column_break_t4bi",
+  "age",
+  "to_age_type",
+  "age_to",
+  "section_break_yc1o",
+  "range_type",
   "section_break_ml0p",
   "datetime",
   "from_duration",
   "normal_boolean_value",
   "normal_ratio",
-  "normal_quantity",
   "normal_from",
   "from_datetime",
   "normal_select",
+  "normal_condition",
+  "normal_interpretation",
   "column_break_l8sr",
   "to_datetime",
   "to_duration",
   "normal_to",
+  "normal_long_interpretation",
   "abnormal_section",
   "abnormal_boolean_value",
   "abnormal_from",
   "abnormal_ratio",
   "abnormal_select",
+  "abnormal_condition",
+  "abnormal_interpretation",
   "column_break_rdlf",
   "abnormal_to",
+  "abnormal_long_interpretation",
   "critical_section",
   "critical_boolean_value",
   "critical_from",
   "critical_ratio",
   "critical_select",
+  "critical_condition",
+  "critical_interpretation",
   "column_break_uqpz",
   "critical_to",
-  "section_break_jkn1",
-  "applies_to",
-  "gestational_age",
-  "column_break_hht8",
-  "from_age_type",
-  "age_from",
-  "column_break_t4bi",
-  "to_age_type",
-  "age_to",
+  "critical_long_interpretation",
   "section_break_jxbb",
   "reference_text"
  ],
@@ -67,11 +77,6 @@
   {
    "fieldname": "section_break_jkn1",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_hht8",
-   "fieldtype": "Section Break",
-   "label": "Age Range"
   },
   {
    "fieldname": "section_break_jxbb",
@@ -99,12 +104,14 @@
    "label": "Datetime"
   },
   {
+   "depends_on": "eval:doc.age==\"Range\";",
    "fieldname": "age_from",
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Age From"
   },
   {
+   "depends_on": "eval:doc.age==\"Range\";",
    "fieldname": "age_to",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -119,6 +126,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_ml0p",
    "fieldtype": "Section Break",
    "label": "Normal"
@@ -147,12 +155,6 @@
    "label": "Normal To"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
-   "fieldname": "normal_quantity",
-   "fieldtype": "Float",
-   "label": "Normal Quantity"
-  },
-  {
    "depends_on": "eval:doc.permitted_data_type==\"Period\";",
    "fieldname": "from_datetime",
    "fieldtype": "Datetime",
@@ -166,6 +168,7 @@
   },
   {
    "default": "Years",
+   "depends_on": "eval:doc.age==\"Range\";",
    "fieldname": "from_age_type",
    "fieldtype": "Select",
    "label": "Age Type",
@@ -173,12 +176,14 @@
   },
   {
    "default": "Years",
+   "depends_on": "eval:doc.age==\"Range\";",
    "fieldname": "to_age_type",
    "fieldtype": "Select",
    "label": "Age Type",
    "options": "Years\nMonths\nDays"
   },
   {
+   "collapsible": 1,
    "fieldname": "abnormal_section",
    "fieldtype": "Section Break",
    "label": "Abnormal"
@@ -203,6 +208,7 @@
    "label": "Abnormal To"
   },
   {
+   "collapsible": 1,
    "fieldname": "critical_section",
    "fieldtype": "Section Break",
    "label": "Critical"
@@ -273,12 +279,84 @@
    "fieldname": "critical_select",
    "fieldtype": "Select",
    "label": "Options"
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Age",
+   "options": "All\nRange"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_condition",
+   "fieldtype": "Code",
+   "label": "Normal Condition"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_condition",
+   "fieldtype": "Code",
+   "label": "Abnormal Condition"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_condition",
+   "fieldtype": "Code",
+   "label": "Critical Condition"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_interpretation",
+   "fieldtype": "Data",
+   "label": "Normal Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_interpretation",
+   "fieldtype": "Data",
+   "label": "Abnormal Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_interpretation",
+   "fieldtype": "Data",
+   "label": "Critical Interpretation"
+  },
+  {
+   "fieldname": "section_break_yc1o",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "range_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Range Type",
+   "options": "\nNormal Range\nRecommended Range\nTreatment Range\nTherapeutic Desired Level\nPre Therapeutic Desired Level\nPost Therapeutic Desired Level\nEndocrine\nPre-Puberty\nFollicular Stage\nMidCycle\nLuteal\nPost-Menopause"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_long_interpretation",
+   "fieldtype": "Text",
+   "label": "Normal Long Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_long_interpretation",
+   "fieldtype": "Text",
+   "label": "Abnormal Long Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_long_interpretation",
+   "fieldtype": "Text",
+   "label": "Critical Long Interpretation"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-06-15 07:39:59.704720",
+ "modified": "2023-06-22 12:39:25.141413",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Reference Range",
