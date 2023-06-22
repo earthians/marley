@@ -42,6 +42,8 @@
   "descriptive_test_templates",
   "section_break_group",
   "lab_test_groups",
+  "observation_section",
+  "observation_component",
   "sample_collection_tab",
   "sb_sample_collection",
   "sample",
@@ -57,10 +59,14 @@
   "result_legend_section",
   "legend_print_position",
   "result_legend",
-  "service_order_defaults_section",
   "patient_care_type",
   "staff_role",
-  "change_in_item"
+  "change_in_item",
+  "medical_coding_section",
+  "medical_code_standard",
+  "medical_code",
+  "service_request_defaults_section",
+  "column_break_34"
  ],
  "fields": [
   {
@@ -123,7 +129,7 @@
    "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Result Format",
-   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nImaging\nNo Result"
+   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nImaging\nNo Result\nObservation"
   },
   {
    "default": "1",
@@ -424,12 +430,23 @@
    "fieldtype": "Column Break"
   },
   {
-  "fieldname": "column_break_buub",
+   "fieldname": "column_break_buub",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "observation_section",
+   "fieldtype": "Section Break",
+   "label": "Observation"
+  },
+  {
+   "fieldname": "observation_component",
+   "fieldtype": "Table MultiSelect",
+   "label": "Observation Component",
+   "options": "Observation Component"
   }
  ],
  "links": [],
- "modified": "2023-02-23 12:14:27.297802",
+ "modified": "2023-06-20 13:29:56.900394",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",

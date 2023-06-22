@@ -13,6 +13,8 @@ from healthcare.healthcare.doctype.service_request.service_request import (
 	update_service_request_status,
 )
 
+from healthcare.healthcare.doctype.observation.observation import add_observation
+
 
 class LabTest(Document):
 	def validate(self):
@@ -95,7 +97,6 @@ class LabTest(Document):
 						title=_("Mandatory Results"),
 					)
 
-
 def before_insert(self):
 	if self.service_request:
 		lab_test = frappe.db.exists(
@@ -110,6 +111,8 @@ def before_insert(self):
 				),
 				title=_("Already Exist"),
 			)
+
+	insert_observations(self)
 
 
 def create_test_from_template(lab_test):
@@ -450,3 +453,15 @@ def get_lab_test_prescribed(patient):
 		.where(hso.template_dt == "Lab Test Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
+
+def insert_observations(self):
+	template_observations = frappe.get_all("Observation Component", {"parent": self.template}, pluck="observation_template")
+	if template_observations:
+		for obs in template_observations:
+			if frappe.db.get_value("Observation Template", obs, "has_component"):
+				component_observations = frappe.get_all("Observation Component", {"parent": obs}, pluck="observation_template")
+				parent_observation = add_observation(self.patient, obs, "", "", "Lab Test", self.name)
+				for comp in component_observations:
+					add_observation(self.patient, comp, "", "", "Lab Test", self.name, parent_observation)
+			else:
+				add_observation(self.patient, obs, "", "", "Lab Test", self.name)
