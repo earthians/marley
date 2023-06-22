@@ -23,6 +23,7 @@
   "description",
   "results_section",
   "permitted_data_type",
+  "result_attach",
   "result_data",
   "result_text",
   "result_float",
@@ -124,7 +125,7 @@
    "fieldname": "permitted_data_type",
    "fieldtype": "Select",
    "label": "Permitted Data Type",
-   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod",
+   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach",
    "read_only": 1
   },
   {
@@ -198,12 +199,18 @@
    "fieldtype": "Check",
    "label": "Has Component",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Attach\";",
+   "fieldname": "result_attach",
+   "fieldtype": "Attach",
+   "label": "Result Attach"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-22 11:08:31.708546",
+ "modified": "2023-06-22 12:15:24.961005",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

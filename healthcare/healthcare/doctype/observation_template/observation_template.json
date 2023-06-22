@@ -31,11 +31,10 @@
   "observation_component",
   "sample_collection_section",
   "sample",
-  "sample_type",
   "sample_qty",
   "uom",
   "column_break_tyze",
-  "container_closure_color",
+  "sample_type",
   "sample_details",
   "reference_ranges_tab",
   "observation_reference_range",
@@ -81,14 +80,14 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Permitted Data Type",
-   "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod"
+   "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
   },
   {
    "depends_on": "eval:doc.permitted_data_type==\"Quantity\" && !doc.has_component;",
    "fieldname": "permitted_unit",
    "fieldtype": "Link",
    "label": "Permitted Unit",
-   "mandatory_depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
+   "mandatory_depends_on": "eval:doc.permitted_data_type==\"Quantity\" && !doc.has_component;",
    "options": "Lab Test UOM"
   },
   {
@@ -218,7 +217,7 @@
   {
    "fetch_from": "sample.sample_type",
    "fieldname": "sample_type",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Sample Type",
    "options": "Sample Type",
    "read_only": 1
@@ -229,19 +228,11 @@
    "fieldtype": "Link",
    "label": "Template",
    "options": "Terms and Conditions"
-  },
-  {
-   "fetch_from": "sample.container_closure_color",
-   "fetch_if_empty": 1,
-   "fieldname": "container_closure_color",
-   "fieldtype": "Link",
-   "label": "Container Closure Color",
-   "options": "Color"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-21 18:16:32.622167",
+ "modified": "2023-06-22 13:00:56.426970",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
