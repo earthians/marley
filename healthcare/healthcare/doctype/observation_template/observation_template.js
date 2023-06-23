@@ -21,6 +21,13 @@ frappe.ui.form.on("Observation Template", {
 				}
 			};
 		});
+		frm.set_query("reference_type", "observation_reference_range", function() {
+			return {
+				filters: {
+					"value_set": "Reference Type"
+				}
+			};
+		})
 	},
 	permitted_data_type: function(frm) {
 		set_observation_reference_range(frm);
@@ -41,9 +48,7 @@ var set_observation_reference_range = function(frm) {
 
 var set_select_field_options = function(frm) {
 	if (frm.doc.permitted_data_type == "Select") {
-		var normal_df = frappe.meta.get_docfield("Observation Reference Range","normal_select", cur_frm.doc.name);
-		var abnormal_df = frappe.meta.get_docfield("Observation Reference Range","abnormal_select", cur_frm.doc.name);
-		var critical_df = frappe.meta.get_docfield("Observation Reference Range","critical_select", cur_frm.doc.name);
-		normal_df.options = abnormal_df.options = critical_df.options = frm.doc.options;
+		var normal_df = frappe.meta.get_docfield("Observation Reference Range", "options", cur_frm.doc.name);
+		normal_df.options = frm.doc.options;
 	}
 }
