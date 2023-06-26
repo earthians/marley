@@ -26,6 +26,13 @@
   "result_data",
   "result_text",
   "result_float",
+  "result_select",
+  "more_information_section",
+  "reference_doctype",
+  "reference_docname",
+  "column_break_wwnp",
+  "parent_observation",
+  "service_request",
   "medical_coding_section",
   "codification_table"
  ],
@@ -204,11 +211,24 @@
    "fieldname": "result_attach",
    "fieldtype": "Attach",
    "label": "Result Attach"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Select\";",
+   "fieldname": "result_select",
+   "fieldtype": "Select",
+   "label": "Result Select"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-22 12:15:24.961005",
+ "modified": "2023-06-26 11:12:09.991669",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
