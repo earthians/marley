@@ -4,6 +4,14 @@
 frappe.ui.form.on("Observation Template", {
 	onload: function(frm) {
 		set_select_field_options(frm);
+		if (!frm.doc.observation_code) {
+			frm.set_value('item_code', frm.doc.observation);
+		}
+	},
+	observation: function(frm) {
+		if (!frm.doc.observation_code) {
+			frm.set_value('item_code', frm.doc.observation);
+		}
 	},
 	refresh: function(frm) {
 		frm.set_query("observation_component", function () {
@@ -29,9 +37,23 @@ frappe.ui.form.on("Observation Template", {
 			};
 		})
 	},
+
 	permitted_data_type: function(frm) {
 		set_observation_reference_range(frm);
-	}
+	},
+
+	observation_name: function(frm) {
+		frm.set_value("change_in_item", 1)
+	},
+
+	rate: function(frm) {
+		frm.set_value("change_in_item", 1)
+	},
+
+	item_group: function(frm) {
+		frm.set_value("change_in_item", 1)
+	},
+
 });
 
 frappe.ui.form.on("Observation Reference Range", {
