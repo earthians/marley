@@ -4,9 +4,6 @@
 frappe.ui.form.on("Observation Template", {
 	onload: function(frm) {
 		set_select_field_options(frm);
-		if (!frm.doc.observation_code) {
-			frm.set_value('item_code', frm.doc.observation);
-		}
 	},
 	observation: function(frm) {
 		if (!frm.doc.observation_code) {
