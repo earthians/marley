@@ -30,6 +30,7 @@
   "result_text",
   "result_float",
   "result_select",
+  "options",
   "more_information_section",
   "reference_doctype",
   "reference_docname",
@@ -240,12 +241,20 @@
    "label": "Sales Invoice",
    "options": "Sales Invoice",
    "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.options",
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Options",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-29 16:24:44.337793",
+ "modified": "2023-06-29 17:47:43.443261",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
