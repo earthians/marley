@@ -13,11 +13,13 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "value",
    "fieldtype": "Data",
    "label": "Value"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "value_set",
    "fieldtype": "Data",
    "label": "Value Set"
@@ -25,7 +27,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-15 08:12:47.909618",
+ "modified": "2023-06-23 15:27:25.286557",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "FHIR Value Set",
@@ -45,6 +47,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "search_fields": "value",
  "sort_field": "modified",
  "sort_order": "DESC",
