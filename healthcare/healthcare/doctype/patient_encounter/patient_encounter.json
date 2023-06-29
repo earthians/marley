@@ -41,6 +41,7 @@
   "sb_drug_prescription",
   "drug_prescription",
   "sb_test_prescription",
+  "observations",
   "lab_test_prescription",
   "sb_procedures",
   "procedure_prescription",

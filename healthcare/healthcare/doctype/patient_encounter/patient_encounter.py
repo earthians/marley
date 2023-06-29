@@ -163,6 +163,15 @@ class PatientEncounter(Document):
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
 
+		if self.observations:
+			for observation in self.observations:
+				if not observation.service_request:
+					template = frappe.get_doc("Observation Template", observation.observation_template)
+					order = self.get_order_details(template, observation)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					observation.service_request = order.name
+
 	def make_medication_request(self):
 		if self.drug_prescription:
 			# make_medication_request
