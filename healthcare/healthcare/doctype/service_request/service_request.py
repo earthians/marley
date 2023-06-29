@@ -10,6 +10,10 @@ import frappe
 from frappe import _
 from six import string_types
 
+from healthcare.healthcare.doctype.observation.observation import add_observation
+
+from frappe.utils import now_datetime, time_diff_in_hours, get_time, getdate, now
+
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
 
@@ -153,3 +157,154 @@ def make_therapy_session(service_request):
 	doc.medical_code = service_request.medical_code
 
 	return doc
+
+@frappe.whitelist()
+def make_nursing_task(service_request):
+	if isinstance(service_request, string_types):
+		service_request = json.loads(service_request)
+		service_request = frappe._dict(service_request)
+
+	description, task_doctype = frappe.db.get_value(
+		"Healthcare Activity", service_request.template_dn, ["description", "task_doctype"]
+	)
+	doc = frappe.new_doc("Nursing Task")
+	doc.activity = service_request.template_dn
+	doc.service_request = service_request.name
+	doc.medical_department = service_request.medical_department
+	doc.company = service_request.company
+	doc.patient = service_request.patient
+	doc.patient_name = service_request.patient_name
+	doc.gender = service_request.patient_gender
+	doc.patient_age = service_request.patient_age_data
+	doc.practitioner = service_request.practitioner
+	doc.requested_start_time = now_datetime()
+	doc.description = description
+	doc.task_doctype = task_doctype
+
+	return doc
+
+@frappe.whitelist()
+def make_observation(service_request):
+	if isinstance(service_request, string_types):
+		service_request = json.loads(service_request)
+		service_request = frappe._dict(service_request)
+
+	if (
+		frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
+		and service_request.billing_status != "Invoiced"
+	):
+		frappe.throw(
+			_("Service Request need to be invoiced before proceeding"),
+			title=_("Payment Required"),
+		)
+	if frappe.get_cached_value("Healthcare Settings", None, "create_sample_collection_for_lab_test"):
+		patient = frappe.get_doc("Patient", service_request.patient)
+		template = frappe.get_doc("Observation Template", service_request.template_dn)
+		sample_collection = ""
+		if template.has_component:
+			for obs in template.observation_component:
+				obs_template = frappe.get_doc("Observation Template", obs.observation_template)
+				sample_collection = create_sample_collection(patient, obs_template, service_request)
+		else:
+			sample_collection = create_sample_collection(patient, template, service_request)
+		return sample_collection
+	else:
+		doc = frappe.new_doc("Observation")
+		doc.posting_datetime = now_datetime()
+		doc.patient = service_request.patient
+		doc.observation_template = service_request.template_dn
+		doc.reference_doctype = "Patient Encounter"
+		doc.reference_docname  = service_request.order_group
+		doc.service_request = service_request.name
+		doc.insert()
+		has_component = frappe.db.get_value("Observation Template", service_request.template_dn, "has_component")
+		if has_component:
+			template_observations = frappe.get_all("Observation Component", {"parent": service_request.template_dn}, pluck="observation_template")
+			for obs in template_observations:
+				add_observation(service_request.patient, obs, "", "", "Patient Encounter", service_request.order_group, doc.name)
+
+		return doc
+
+@frappe.whitelist()
+def create_healthcare_activity_for_repeating_orders():
+	service_requests = frappe.db.get_all(
+		"Service Request",
+		filters={"docstatus": 1, "template_dt": "Healthcare Activity", "status": "Active"},
+		fields=["name", "task_done_at", "repeat_in_every"],
+	)
+	if service_requests:
+		for service_request in service_requests:
+			if not service_request.get("repeat_in_every"):
+				return
+			time_diff = time_diff_in_hours(now_datetime(), service_request.get("task_done_at"))
+			if time_diff >= (service_request.get("repeat_in_every")/3600):
+				nursing_task = make_nursing_task(frappe.get_doc("Service Request", service_request.get("name")))
+				nursing_task.save()
+
+def insert_medication_request(template_dn, order_group):
+	procedure_template_doc = frappe.get_doc("Clinical Procedure Template", template_dn)
+	encounter_doc = frappe.get_doc("Patient Encounter", order_group)
+	if procedure_template_doc.medications:
+		for drug in procedure_template_doc.medications:
+			if drug.medication and not drug.medication_request:
+				medication = frappe.get_doc("Medication", drug.medication)
+				order = frappe.get_doc(
+					{
+						"doctype": "Medication Request",
+						"order_date": getdate(now()),
+						"order_time": get_time(now()),
+						"company": encounter_doc.company,
+						"status": "Draft",
+						"patient": encounter_doc.get("patient"),
+						"practitioner": encounter_doc.practitioner,
+						"sequence": drug.get("sequence"),
+						"patient_care_type": medication.get("patient_care_type"),
+						"intent": drug.get("intent"),
+						"priority": drug.get("priority"),
+						"quantity": drug.get_quantity(),
+						"dosage": drug.get("dosage"),
+						"dosage_form": drug.get("dosage_form"),
+						"period": drug.get("period"),
+						"expected_date": drug.get("expected_date"),
+						"as_needed": drug.get("as_needed"),
+						"staff_role": medication.get("staff_role"),
+						"note": drug.get("note"),
+						"patient_instruction": drug.get("patient_instruction"),
+						"medical_code": medication.get("medical_code"),
+						"medical_code_standard": medication.get("medical_code_standard"),
+						"medication": medication.name,
+						"number_of_repeats_allowed": drug.get("number_of_repeats_allowed"),
+						"medication_item": drug.get("drug_code") if drug.get("drug_code") else "",
+						"source_dt": "Clinical Procedure Template",
+						"order_group": template_dn
+					}
+				)
+
+				if not drug.get("description"):
+					description = medication.get("description")
+				else:
+					description = drug.get("description")
+
+				order.update({"order_description": description})
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
+
+def create_sample_collection(patient, template, service_request):
+	sample_collection = frappe.new_doc("Sample Collection")
+	sample_collection.patient = patient.name
+	sample_collection.patient_age = patient.get_age()
+	sample_collection.patient_sex = patient.sex
+	sample_collection.company = service_request.company
+	sample_collection.service_request = service_request.name
+	sample_collection.append("observation_sample_collection",
+		{
+			"observation_template": service_request.name,
+			"sample": template.sample,
+			"sample_type": template.sample_type,
+			"container_closure_color": frappe.db.get_value("Observation Template", service_request.template_dn, "container_closure_color"),
+			"uom": template.uom,
+			"sample_qty": template.sample_qty
+		}
+	)
+	sample_collection.save(ignore_permissions=True)
+	return sample_collection

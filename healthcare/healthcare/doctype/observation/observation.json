@@ -18,6 +18,8 @@
   "patient",
   "age",
   "gender",
+  "column_break_meur",
+  "sample_id",
   "description_section",
   "description",
   "results_section",
@@ -30,6 +32,7 @@
   "more_information_section",
   "reference_doctype",
   "reference_docname",
+  "sales_invoice",
   "column_break_wwnp",
   "parent_observation",
   "service_request",
@@ -224,11 +227,28 @@
    "fieldname": "result_select",
    "fieldtype": "Select",
    "label": "Result Select"
+  },
+  {
+   "fieldname": "column_break_meur",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sample_id",
+   "fieldtype": "Data",
+   "label": "Sample Id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-26 11:12:09.991669",
+ "modified": "2023-06-29 16:24:44.337793",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
