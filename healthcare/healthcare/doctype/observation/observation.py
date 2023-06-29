@@ -9,8 +9,9 @@ from frappe.utils import date_diff, getdate, today, now_datetime
 class Observation(Document):
 	def validate(self):
 		dob  = frappe.db.get_value("Patient", self.patient, "dob")
-		if dob:
+		if dob and not self.age:
 			self.age = calculate_age(dob)
+
 
 def calculate_age(dob):
 	age = date_diff(today(), getdate(dob))
@@ -81,15 +82,17 @@ def edit_observation(observation, data_type, result):
 	observation_doc.save()
 
 @frappe.whitelist()
-def add_observation(patient, template, data_type, result, doc, docname, parent=None):
+def add_observation(patient, template, data_type, result, doc, docname, parent=None, sample_id=None, invoice=""):
 
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
 	observation_doc.patient = patient
 	observation_doc.observation_template = template
-	observation_doc.permitted_data_type = data_type
+	# observation_doc.permitted_data_type = data_type
 	observation_doc.reference_doctype = doc
 	observation_doc.reference_docname = docname
+	observation_doc.sales_invoice = invoice
+	observation_doc.sample_id = str(sample_id)
 	if data_type in ["Range", "Ratio"]:
 		observation_doc.result_data = result
 	elif data_type in ["Quantity", "Numeric"]:

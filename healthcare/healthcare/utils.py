@@ -19,7 +19,6 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
 from healthcare.setup import setup_healthcare
 
-
 @frappe.whitelist()
 def get_healthcare_services_to_invoice(patient, company):
 	patient = frappe.get_doc("Patient", patient)
@@ -535,6 +534,7 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
+		create_sample_collection(doc)
 
 	if method == "on_submit" and frappe.db.get_single_value(
 		"Healthcare Settings", "create_lab_test_on_si_submit"
@@ -1079,3 +1079,65 @@ def company_on_trash(doc, method):
 		service_unit_doc = frappe.get_doc("Healthcare Service Unit", su.get("name"))
 		service_unit_doc.flags.on_trash_company = True
 		service_unit_doc.delete()
+
+
+def create_sample_collection(doc):
+	query = f"""
+		select
+			ot.name
+		from
+			`tabSales Invoice Item` as sii left join
+			`tabService Request` as sr on sr.name = sii.reference_dn left join
+			`tabObservation Template` as ot on ot.name = sr.template_dn
+		where
+			sii.parent = '{doc.name}' and sr.template_dt = 'Observation Template'
+	"""
+	data = frappe.db.sql(query, as_dict=True)
+	# to include item direclty entered
+	for item in doc.items:
+		if not item.get("reference_dt") and not item.get("reference_dn"):
+			template_id = frappe.db.exists("Observation Template", {"item": item.item_code})
+			if template_id:
+				data.append({"name": template_id})
+	out_data = []
+	for d in data:
+		out_data.append(frappe.get_value("Observation Template", d.get("name"), ["sample_Type", "sample", "medical_department", "container_closure_color", "name", "sample_qty", "has_component"], as_dict=True))
+	groups = {}
+	# to group by
+	for item in out_data:
+		color = frappe.db.get_value("Color", item.get("container_closure_color"), "color")
+		if color:
+			item["color"] = color
+		key = (item.get("color"), item.get('medical_department'), item.get('sample_Type'), item.get("container_closure_color"))
+		if key in groups:
+			groups[key].append(item)
+		else:
+			groups[key] = [item]
+
+	sample_collection = insert_sample_collection(doc)
+	for grp in groups:
+		gen_hash = frappe.generate_hash(txt="", length=10)
+		for sub_grp in groups[grp]:
+			sample_collection.append("observation_sample_collection",
+				{
+					"observation_template": sub_grp.get("name"),
+					"container_closure_color": sub_grp.get("color"),
+					"sample": sub_grp.get("sample"),
+					"sample_type": sub_grp.get("sample_type"),
+					"sample_id": gen_hash if sub_grp.get("has_component") == 0 else ""
+				}
+			)
+
+	if sample_collection:
+		sample_collection.save(ignore_permissions=True)
+
+def insert_sample_collection(doc):
+	patient = frappe.get_doc("Patient", doc.patient)
+	sample_collection = frappe.new_doc("Sample Collection")
+	sample_collection.patient = patient.name
+	sample_collection.patient_age = patient.get_age()
+	sample_collection.patient_sex = patient.sex
+	sample_collection.company = doc.company
+	sample_collection.reference_doc = doc.doctype
+	sample_collection.reference_name = doc.name
+	return sample_collection

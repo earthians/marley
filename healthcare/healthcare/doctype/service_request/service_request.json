@@ -577,9 +577,13 @@
   {
    "link_doctype": "Nursing Task",
    "link_fieldname": "service_request"
+  },
+  {
+   "link_doctype": "Sample Collection",
+   "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-06-05 11:27:41.872966",
+ "modified": "2023-06-26 10:53:15.536552",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
