@@ -11,9 +11,9 @@
  "field_order": [
   "sample_type",
   "sample",
+  "container_closure_color",
   "column_break_0sbu",
-  "sample_uom",
-  "container_closure_color"
+  "sample_uom"
  ],
  "fields": [
   {
@@ -51,7 +51,7 @@
   }
  ],
  "links": [],
- "modified": "2023-06-17 19:23:44.715794",
+ "modified": "2023-06-29 12:37:11.086348",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Sample",
