@@ -26,15 +26,16 @@ def calculate_age(dob):
 		return age / 365.25
 
 @frappe.whitelist()
-def get_observation_template_reference(docname, patient, sex):
-	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "permitted_data_type", "has_component", "parent_observation"], filters={"reference_docname": docname, "parent_observation": ""})#, "has_component":0})
+def get_observation_template_reference(docname):
+	patient, gender, reference = frappe.get_value("Diagnostic Report", docname, ["patient", "gender", "docname"])
+	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "permitted_data_type", "has_component", "parent_observation"], filters={"sales_invoice": reference, "parent_observation": ""})#, "has_component":0})
 	age = calculate_age(frappe.db.get_value("Patient", patient, "dob"))
 	out_data = []
 	for obs in observation:
 		if not obs.get("has_component"):
 			observation_data = {}
 			if obs.get("observation_template"):
-				reference_details = get_observation_reference(obs.get("observation_template"), age, sex)
+				reference_details = get_observation_reference(obs.get("observation_template"), age, gender)
 				if reference_details:
 					observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = obs
@@ -45,7 +46,7 @@ def get_observation_template_reference(docname, patient, sex):
 			obs_dict = {}
 			for child in child_observations:
 				observation_data = {}
-				reference_details = get_observation_reference(child.get("observation_template"), age, sex)
+				reference_details = get_observation_reference(child.get("observation_template"), age, gender)
 				observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
@@ -92,7 +93,7 @@ def add_observation(patient, template, data_type, result, doc, docname, parent=N
 	observation_doc.reference_doctype = doc
 	observation_doc.reference_docname = docname
 	observation_doc.sales_invoice = invoice
-	observation_doc.sample_id = str(sample_id)
+	observation_doc.sample_id = sample_id
 	if data_type in ["Range", "Ratio"]:
 		observation_doc.result_data = result
 	elif data_type in ["Quantity", "Numeric"]:
