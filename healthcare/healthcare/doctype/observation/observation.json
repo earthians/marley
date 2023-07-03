@@ -231,8 +231,9 @@
   },
   {
    "fieldname": "sample_id",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Sample Id",
+   "options": "Specimen",
    "read_only": 1
   },
   {
@@ -254,7 +255,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-29 17:47:43.443261",
+ "modified": "2023-07-03 00:35:34.345460",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

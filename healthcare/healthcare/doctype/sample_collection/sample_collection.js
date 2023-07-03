@@ -21,16 +21,18 @@ frappe.ui.form.on('Sample Collection', {
 			}
 		}).addClass("btn-mark-collected");
 
-		frm.fields_dict["observation_sample_collection"].grid.wrapper.find('.btn-mark-collected').hide();
+		// frm.fields_dict["observation_sample_collection"].grid.wrapper.find('.btn-mark-collected').hide();
 
-		frm.fields_dict.observation_sample_collection.$wrapper.find('.sortable-handle').click(function () {
-			selected_child = frm.fields_dict.observation_sample_collection.grid.get_selected_children()
-			if (selected_child.length>0) {
-				frm.fields_dict["observation_sample_collection"].grid.wrapper.find('.btn-mark-collected').hide();
-			} else {
-				frm.fields_dict["observation_sample_collection"].grid.wrapper.find('.btn-mark-collected').show();
-			}
-		})
+		// frm.fields_dict.observation_sample_collection.$wrapper.find('.sortable-handle').click(function () {
+		// 	console.log("jj", frm.fields_dict.observation_sample_collection.grid.get_selected_children())
+		// 	selected_child = frm.fields_dict.observation_sample_collection.grid.get_selected_children()
+		// 	console.log(selected_child, selected_child.length)
+		// 	if (selected_child.length>0) {
+		// 		frm.fields_dict["observation_sample_collection"].grid.wrapper.find('.btn-mark-collected').show();
+		// 	} else {
+		// 		frm.fields_dict["observation_sample_collection"].grid.wrapper.find('.btn-mark-collected').hide();
+		// 	}
+		// })
 
 
 		if (frappe.defaults.get_default('create_sample_collection_for_lab_test')) {
@@ -202,6 +204,7 @@ frappe.ui.form.on("Observation Sample Collection", {
 			});
 			if (row.component_observations) {
 				$.each(JSON.parse(row.component_observations), function (k, item) {
+					console.log(item)
 					// if (item.status == "Open") {
 						d.fields_dict.items.df.data.push(item);
 					// }
@@ -218,6 +221,7 @@ frappe.ui.form.on("Observation Sample Collection", {
 
 			d.fields_dict.items.grid.add_custom_button(__("Mark Collected"), () => {
 				let selected_row = d.fields_dict.items.grid.get_selected_children();
+				console.log(selected_row)
 				if (selected_row.length>0) {
 					frappe.call({
 						"method": "healthcare.healthcare.doctype.sample_collection.sample_collection.create_observation",

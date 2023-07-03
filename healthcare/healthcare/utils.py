@@ -541,6 +541,10 @@ def manage_invoice_submit_cancel(doc, method):
 	):
 		create_multiple("Sales Invoice", doc.name)
 
+# todelete
+def validate(doc, method):
+	if doc.items:
+		create_sample_collection(doc)
 
 def set_invoiced(item, method, ref_invoice=None):
 	invoiced = False
@@ -1102,31 +1106,17 @@ def create_sample_collection(doc):
 	out_data = []
 	for d in data:
 		out_data.append(frappe.get_value("Observation Template", d.get("name"), ["sample_Type", "sample", "medical_department", "container_closure_color", "name", "sample_qty", "has_component"], as_dict=True))
-	groups = {}
-	# to group by
-	for item in out_data:
-		color = frappe.db.get_value("Color", item.get("container_closure_color"), "color")
-		if color:
-			item["color"] = color
-		key = (item.get("color"), item.get('medical_department'), item.get('sample_Type'), item.get("container_closure_color"))
-		if key in groups:
-			groups[key].append(item)
-		else:
-			groups[key] = [item]
 
 	sample_collection = insert_sample_collection(doc)
-	for grp in groups:
-		gen_hash = frappe.generate_hash(txt="", length=10)
-		for sub_grp in groups[grp]:
-			sample_collection.append("observation_sample_collection",
-				{
-					"observation_template": sub_grp.get("name"),
-					"container_closure_color": sub_grp.get("color"),
-					"sample": sub_grp.get("sample"),
-					"sample_type": sub_grp.get("sample_type"),
-					"sample_id": gen_hash if sub_grp.get("has_component") == 0 else ""
-				}
-			)
+	for grp in out_data:
+		sample_collection.append("observation_sample_collection",
+			{
+				"observation_template": grp.get("name"),
+				"container_closure_color": grp.get("color"),
+				"sample": grp.get("sample"),
+				"sample_type": grp.get("sample_type"),
+			}
+		)
 
 	if sample_collection:
 		sample_collection.save(ignore_permissions=True)
