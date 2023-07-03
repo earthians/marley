@@ -6,8 +6,6 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "header",
-  "body",
   "observation_template",
   "has_component",
   "sample",
@@ -25,6 +23,7 @@
   "section_break_a5gx",
   "show_components",
   "sample_id",
+  "specimen",
   "component_observation_parent",
   "component_observations"
  ],
@@ -123,18 +122,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "body",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Body"
-  },
-  {
-   "fieldname": "header",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Header"
-  },
-  {
    "columns": 2,
    "depends_on": "eval:doc.has_component==1;",
    "fieldname": "show_components",
@@ -173,12 +160,19 @@
    "hidden": 1,
    "label": "Component Observations",
    "read_only": 1
+  },
+  {
+   "fieldname": "specimen",
+   "fieldtype": "Link",
+   "label": "Specimen",
+   "options": "Specimen",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-06-29 16:19:37.605661",
+ "modified": "2023-07-03 07:09:48.662693",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Sample Collection",
