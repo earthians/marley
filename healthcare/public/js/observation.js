@@ -12,9 +12,7 @@ healthcare.Observation = class Observation {
 			() => frappe.call({
 			method: "healthcare.healthcare.doctype.observation.observation.get_observation_template_reference",
 			args: {
-				docname: me.frm.doc.name,
-				patient: me.frm.doc.patient,
-				sex: me.frm.doc.patient_sex
+				docname: me.frm.doc.name
 			},
 			freeze: true,
 			callback: function(r) {
@@ -26,7 +24,7 @@ healthcare.Observation = class Observation {
 						create_observation: me.create_observation
 					}
 				);
-				$(observation_html).appendTo(me.notes_wrapper);
+				$(observation_html).appendTo(me.observation_wrapper);
 				}
 			}),
 			() => {
@@ -34,6 +32,16 @@ healthcare.Observation = class Observation {
 				$(".observations").find(".edit-observation-btn").on("click", function() {
 					me.edit_observation(this);
 				});
+				document.getElementById("result-text").onchange = function() {
+					me.frm.dirty()
+				};
+				$(".observations").find(".result-text").change(function() {
+					me.frm.dirty()
+				})
+				// $('#result-text').change(function() {
+				// 	console.log("UUUUUUUUUUU")
+				// })
+
 			}
 		])
 	}
