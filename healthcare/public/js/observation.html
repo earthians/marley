@@ -1,0 +1,241 @@
+<div class="observation-section">
+	<div class="new-btn pb-3">
+		<span>
+			<button class="btn btn-sm small new-observation-btn mr-1">
+				<svg class="icon icon-sm">
+					<use href="#icon-add"></use>
+				</svg>
+				{{ __("New Observation") }}
+			</button>
+		</span>
+	</div>
+	<div class="observation-details row" style="width: 100%; color:rgb(169, 169, 169); padding-left: 35px;">
+		<div style="width: 20%;">
+			{{ __("Observation") }}
+		</div>
+		<div style="width: 19%;">
+			{{ __("Date Time") }}
+		</div>
+		<div style="padding-left:30px; padding-right:10px; width: 20%;">
+			{{ __("Result") }}
+		</div>
+		<div style="width: 7%;">
+			{{ __("UOM") }}
+		</div>
+		<div style="width: 20%;">
+			{{ __("Method") }}
+		</div>
+		<div style="width: 10%;">
+			{{ __("Reference Range") }}
+		</div>
+	</div>
+	<div class="section-body">
+		<div class="observations pr-1">
+			{% if (observation_details && observation_details.length) { %}
+				{% for(var i=0, l=observation_details.length; i<l; i++) { %}
+					{% if (observation_details[i].observation || observation_details[i].template_reference) { %}
+						<div class="observation" style="width: 100%;" name="{{ observation_details[i].observation.name }}" addatatype="{{ observation_details[i].observation.permitted_data_type }}">
+							<div class="observation-details row">
+								<div style="width: 20%;">
+									<a href="/app/observation/{{ observation_details[i].observation.name }}" title="{{ __('Observation') }}">
+										{% if (observation_details[i].template_reference.preferred_display_name) { %}
+											{%= observation_details[i].template_reference.preferred_display_name %}
+										{% } else { %}
+											{%= observation_details[i].observation.observation_template %}
+										{% } %}
+									</a>
+								</div>
+								<div style="width: 19%;">
+									{% if (observation_details[i].observation.posting_datetime) { %}
+										{{ frappe.datetime.global_date_format(observation_details[i].observation.posting_datetime) }}
+									{% } %}
+								</div>
+								<div class="result" style="width: 20%;">
+									{% if( ['Range', 'Ratio'].includes(observation_details[i].observation.permitted_data_type)) { %}
+										<div class="text-muted  ml-1 result-content">
+											<input type="text" id="result-text" name="fname" size="6" value="">
+											{%= observation_details[i].observation.result_data %}
+									{% } else if (['Quantity', 'Numeric'].includes(observation_details[i].observation.permitted_data_type)) { %}
+										<div class="text-muted ml-1 result-content">
+											<input type="text" id="result-text" name="fname" size="6" value="">
+											{%= observation_details[i].observation.result_float %}
+
+									{% } else if (observation_details[i].observation.permitted_data_type=='Text') { %}
+										<div class="text-muted ml-1 result-content">
+											<input type="text" id="result-text" name="fname" size="6" value="">
+											{%= observation_details[i].observation.result_text %}
+									{% } %}
+									</div>
+								</div>
+								<div style="width: 7%;">
+									{% if (observation_details[i].template_reference) { %}
+										{%= observation_details[i].template_reference.permitted_unit %}
+									{% } %}
+								</div>
+								<div style="width: 20%;">
+									{% if (observation_details[i].template_reference) { %}
+										{%= observation_details[i].template_reference.method %}
+									{% } %}
+								</div>
+								<div style="width: 10%;">
+									{% if (observation_details[i].template_reference) { %}
+										{{observation_details[i].template_reference.normal_from}}-{{observation_details[i].template_reference.normal_to}}
+									{% } %}
+								</div>
+								<div style="width: 1%;">
+									<span class="edit-observation-btn btn btn-link">
+										<svg class="icon icon-sm"><use xlink:href="#icon-edit"></use></svg>
+									</span>
+								</div>
+					</div>
+				</div>
+					{% } else { %}
+					{% for (let key in observation_details[i]) { %}
+					<div class="grouped-obs">
+							<div class="flex justify-between" style="padding-bottom: 10px;">
+									<b>
+										<a href="/app/observation/{{ key.split('|')[1] }}" title="{{ __('Grouped Observations') }}">
+											{%= key.split("|")[0] %}
+										</a>
+									</b>
+							</div>
+							{% for(var j=0, k=observation_details[i][key].length; j<k; j++) { %}
+								{% if (observation_details[i][key][j].observation || observation_details[i][key][j].template_reference) { %}
+									<div class="observation" name="{{ observation_details[i][key][j].observation.name }}" addatatype="{{ observation_details[i][key][j].observation.permitted_data_type }}">
+										<div class="observation-details row" style="width: 100%;">
+											<div style="width: 20%;">
+												<a href="/app/observation/{{ observation_details[i][key][j].observation.name }}" title="{{ __('Observation') }}">
+													{% if (observation_details[i][key][j].template_reference.preferred_display_name) { %}
+														{%= observation_details[i][key][j].template_reference.preferred_display_name %}
+													{% } else { %}
+														{%= observation_details[i][key][j].observation.observation_template %}
+													{% } %}
+												</a>
+											</div>
+											<div style="width: 19%;">
+												{% if (observation_details[i][key][j].observation.posting_datetime) { %}
+													{{ frappe.datetime.global_date_format(observation_details[i][key][j].observation.posting_datetime) }}
+												{% } %}
+											</div>
+											<div class="result" style="padding-left:30px; padding-right:10px; width: 23%;">
+												{% if( ['Range', 'Ratio'].includes(observation_details[i][key][j].observation.permitted_data_type)) { %}
+													<div class="text-muted  ml-1 result-content">
+														<input class="result-text" type="text" id="result-text" name="fname" size="6" value="">
+														{%= observation_details[i][key][j].observation.result_data %}
+												{% } else if (['Quantity', 'Numeric'].includes(observation_details[i][key][j].observation.permitted_data_type)) { %}
+													<div class="text-muted ml-1 result-content">
+														<input class="result-text" type="text" id="result-text" name="fname" size="6" value="">
+														{%= observation_details[i][key][j].observation.result_float %}
+												{% } else if (observation_details[i][key][j].observation.permitted_data_type=='Text') { %}
+													<div class="text-muted ml-1 result-content">
+														<input class="result-text" type="text" id="result-text" name="fname" size="6" value="">
+														{%= observation_details[i][key][j].observation.result_text %}
+												{% } %}
+												</div>
+											</div>
+											<div style="width: 7%;">
+												{% if (observation_details[i][key][j].template_reference) { %}
+													{%= observation_details[i][key][j].template_reference.permitted_unit %}
+												{% } %}
+											</div>
+											<div style="width: 20%;">
+												{% if (observation_details[i][key][j].template_reference) { %}
+													{%= observation_details[i][key][j].template_reference.method %}
+												{% } %}
+											</div>
+											<div style="width: 10%;">
+												{% if (observation_details[i][key][j].template_reference) { %}
+													{{observation_details[i][key][j].template_reference.normal_from}}-{{observation_details[i][key][j].template_reference.normal_to}}
+												{% } %}
+											</div>
+											<div style="width: 1%;">
+												<span class="edit-observation-btn btn btn-link">
+													<svg class="icon icon-sm"><use xlink:href="#icon-edit"></use></svg>
+												</span>
+											</div>
+									</div>
+								</div>
+								{% } %}
+							{% } %}
+							</div>
+					{% } %}
+					{% } %}
+			    {% } %}
+            {% } else { %}
+			<div class="no-obs text-muted">
+                    {{ __("No Observations") }}
+                </div>
+		    {% } %}
+		</div>
+	</div>
+</div>
+	</div>
+</div>
+</div>
+</div>
+
+
+<style>
+.observation-section {
+	min-height: 50px;
+	padding-left: 0px;
+	padding-bottom: 15px !important;
+}
+
+.observation-section .new-btn {
+	text-align: right;
+}
+
+.observation {
+	min-height: 90px;
+	border: 1px solid var(--border-color);
+	padding-right: 0;
+	font-size: 11px;
+	padding-left: 15px;
+	padding-top: 35px;
+	margin-bottom: 25px;
+	border-radius: 10px;
+}
+
+.grouped-obs {
+	border: 1px solid var(--border-color);
+	padding-right: 15px;
+	font-size: 11px;
+	padding-left: 15px;
+	padding-top: 15px;
+	margin-bottom: 25px;
+	border-radius: 10px;
+}
+
+.single-activity:last-child {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.checkbox {
+	min-width: 22px;
+}
+
+.observations {
+	width: 100%;
+}
+
+.observations:first-child {
+	border-right: 0;
+}
+
+.no-obs {
+    text-align: center;
+    padding: 30px;
+}
+
+.form-footer {
+	background-color: var(--bg-color);
+}
+
+.observation-details {
+	padding-left: 14px;
+	padding-right: 14px;
+}
+
+
+</style>
