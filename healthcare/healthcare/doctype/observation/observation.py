@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+import json
 from frappe.model.document import Document
 from frappe.utils import date_diff, getdate, today, now_datetime
 
@@ -50,7 +51,9 @@ def get_observation_template_reference(docname):
 				observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
-			obs_dict[str(obs.get("observation_template")) + "|" + str(obs.get("name"))] = obs_list
+			obs_dict["has_component"] = True
+			obs_dict[obs.get("name")] = obs_list
+			# obs_dict[str(obs.get("observation_template")) + "|" + str(obs.get("name"))] = obs_list
 			out_data.append(obs_dict)
 
 	return out_data
@@ -104,3 +107,16 @@ def add_observation(patient, template, data_type, result, doc, docname, parent=N
 		observation_doc.parent_observation = parent
 	observation_doc.insert()
 	return observation_doc.name
+
+@frappe.whitelist()
+def record_observation_result(values):
+	values = json.loads(values)
+	if values:
+		for val in values:
+			observation_details = frappe.db.get_value("Observation", val.get("observation"), ["permitted_data_type", "result_float", "result_attach", "result_data", "result_text", "result_select"], as_dict=True)
+			print(observation_details.get("permitted_data_type"))
+			if observation_details.get("permitted_data_type") == "Quantity":
+				print(val.get("result"), observation_details.get("result_float"))
+				if val.get("result") != observation_details.get("result_float"):
+					frappe.db.set_value("Observation", val["observation"], "result_float", val.get("result"))
+			print("\n\n\n\n")

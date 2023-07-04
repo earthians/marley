@@ -4,3 +4,6 @@ import "./healthcare_note.html";
 import "./healthcare_orders.html";
 import "./observation.js";
 import "./observation.html";
+import "./diagnostic_report_controller.js";
+import "./observation_widget.js";
+import "./observation_widget.html";

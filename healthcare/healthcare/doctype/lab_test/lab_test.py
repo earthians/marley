@@ -13,7 +13,6 @@ from healthcare.healthcare.doctype.service_request.service_request import (
 	update_service_request_status,
 )
 
-from healthcare.healthcare.doctype.observation.observation import add_observation
 
 
 class LabTest(Document):
