@@ -505,7 +505,8 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
-		create_sample_collection(doc)
+		if method == "on_submit":
+			create_sample_collection(doc)
 
 	if method == "on_submit":
 		if frappe.db.get_single_value("Healthcare Settings", "create_lab_test_on_si_submit"):
@@ -522,10 +523,6 @@ def manage_invoice_submit_cancel(doc, method):
 					if fee_validity:
 						frappe.db.set_value("Fee Validity", fee_validity, "sales_invoice_ref", doc.name)
 
-# todelete
-def validate(doc, method):
-	if doc.items:
-		create_sample_collection(doc)
 
 def set_invoiced(item, method, ref_invoice=None):
 	invoiced = False
