@@ -40,7 +40,9 @@
   "service_request",
   "medical_coding_section",
   "codification_table",
-  "amended_from"
+  "amended_from",
+  "remarks_tab",
+  "remarks"
  ],
  "fields": [
   {
@@ -250,12 +252,22 @@
    "hidden": 1,
    "label": "Options",
    "read_only": 1
+  },
+  {
+   "fieldname": "remarks_tab",
+   "fieldtype": "Tab Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Text Editor",
+   "label": "Remarks"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-03 00:35:34.345460",
+ "modified": "2023-07-05 21:50:58.228869",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

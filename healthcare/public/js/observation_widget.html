@@ -52,11 +52,18 @@
 							<input class="input-with-feedback form-control textresult-text result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">
 						</div>
 						{% } %}
-						<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px;">
-							<span class="add-note-observation-btn btn btn-link">
-								<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
-							</span>
+						<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
+							<div style="width: 10%;">
+								<span class="add-note-observation-btn btn btn-link">
+									<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
+								</span>
+							</div>
+						<div class="remarks" style="width: 50%; float:right;">
+							{% if (observation_details.observation.remarks)  { %}
+								{{observation_details.observation.remarks}}
+							{% } %}
 						</div>
+					</div>
 					</div>
 				{% } %}
 		</div>
