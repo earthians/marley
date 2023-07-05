@@ -1,8 +1,8 @@
-<div class="observation-section">
+<div class="observation-section grouped-obs">
 	<div class="section-body">
 		<div class="observations pr-1">
 				{% if (observation_details[observation_details.observation] && observation_details[observation_details.observation].length>0) { %}
-				<div class="grouped-obs">
+				<div class="">
 						<div class="flex justify-between" style="padding-bottom: 10px;">
 								<b>
 									<a href="/app/observation/{{ observation_details.observation }}" title="{{ __('Grouped Observations') }}">
@@ -35,11 +35,10 @@
 											{% } else if (['Quantity', 'Numeric'].includes(observation_details[observation_details.observation][j].observation.permitted_data_type)) { %}
 												<div class="">
 													<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details[observation_details.observation][j].observation.name}}" name="fname" size="6" value="{{ observation_details[observation_details.observation][j].observation.result_float }}">
-											{% } else if (observation_details[observation_details.observation][j].observation.permitted_data_type=='Text') { %}
-												<div class="">
-													<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details[observation_details.observation][j].observation.name}}" name="fname" size="6" value="{{ observation_details[observation_details.observation][j].observation.result_text }}">
 											{% } %}
+											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details[observation_details.observation][j].observation.permitted_data_type)) { %}
 											</div>
+											{% } %}
 										</div>
 										<div style="width: 7%;">
 											{% if (observation_details[observation_details.observation][j].template_reference) { %}
@@ -51,17 +50,29 @@
 												{%= observation_details[observation_details.observation][j].template_reference.method %}
 											{% } %}
 										</div>
-										<div style="width: 10%;">
+										<div style="width: 11%;">
 											{% if (observation_details[observation_details.observation][j].template_reference.display_reference) { %}
 												{{observation_details[observation_details.observation][j].template_reference.display_reference}}
 											{% } %}
 										</div>
-										<div style="width: 1%;">
-											<span class="edit-observation-btn btn btn-link">
-												<svg class="icon icon-sm"><use xlink:href="#icon-edit"></use></svg>
-											</span>
-										</div>
 								</div>
+								{% if (observation_details[observation_details.observation][j].observation.permitted_data_type=='Text')  { %}
+								<div class="obs-text">
+									<input class="input-with-feedback form-control textresult-text result-text" type="text" id="{{observation_details[observation_details.observation][j].observation.name}}" name="fname" size="6" value="{{ observation_details[observation_details.observation][j].observation.result_text }}">
+								</div>
+								{% } %}
+								<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
+									<div style="width: 10%;">
+										<span class="add-note-observation-btn btn btn-link">
+											<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
+										</span>
+									</div>
+								<div class="remarks" style="width: 50%; float:right;">
+									{% if (observation_details[observation_details.observation][j].observation.remarks)  { %}
+										{{observation_details[observation_details.observation][j].observation.remarks}}
+									{% } %}
+								</div>
+							</div>
 							</div>
 							{% } %}
 						{% } %}

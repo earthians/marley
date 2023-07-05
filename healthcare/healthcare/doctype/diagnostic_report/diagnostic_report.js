@@ -6,7 +6,7 @@ frappe.ui.form.on("Diagnostic Report", {
 		show_observations(frm);
 	},
 	validate: function(frm) {
-		if (frm.is_dirty()) {
+		if (!frm.doc.__islocal && frm.is_dirty()) {
 			this.observation.save_action("save")
 		}
 	// 	// var selectedValue = $(this).val();
