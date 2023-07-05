@@ -8,8 +8,7 @@ healthcare.ObservationWidget = class {
 
 	init_widget() {
 		var me = this;
-		if (me.data.has_component) {
-			// console.log(me.data[me.data.observation])
+		if (me.data.has_component || me.data.has_component == "true") {
 			let observation_html = frappe.render_template(
 				'observation_component_widget',
 				{
@@ -18,6 +17,7 @@ healthcare.ObservationWidget = class {
 			);
 			$(observation_html).appendTo(me.wrapper);
 		} else {
+
 			let observation_html = frappe.render_template(
 				'observation_widget',
 				{
@@ -28,15 +28,13 @@ healthcare.ObservationWidget = class {
 		}
 	}
 
-	add_note (edit_btn) {
-		const parentDiv = $(edit_btn).closest('.observation');
+	add_remarks (edit_btn) {
 		var me = this;
 		let row = $(edit_btn).closest('.observation');
 		let observation_name = row.attr("name");
-		// let permitted_data_type = row.attr("addatatype");
-		// let result = $(row).find(".result-content").html().trim();
+		let result = $(row).find(".remarks").html().trim();
 			var d = new frappe.ui.Dialog({
-				title: __('Edit Observation'),
+				title: __('Add Remarks'),
 				fields: [
 					{
 						"label": "Observation",
@@ -47,16 +45,31 @@ healthcare.ObservationWidget = class {
 						"read_only": 1,
 					},
 					{
-						"label": "Result Data",
-						"fieldname": "result_data",
+						"label": "Remarks",
+						"fieldname": "remarks",
 						"fieldtype": "Text Editor",
-						// "default": result
+						"default": result
 					}
 				],
 				primary_action: function() {
-
+					var data = d.get_values();
+					frappe.call({
+						method: "healthcare.healthcare.doctype.observation.observation.add_remarks",
+						args: {
+							remarks: data.remarks,
+							observation: data.observation,
+						},
+						freeze: true,
+						callback: function(r) {
+							if (!r.exc) {
+								me.frm.reload_doc()
+								// me.init_widget();
+							}
+							d.hide();
+						}
+					});
 				},
-				primary_action_label: __("Add Note")
+				primary_action_label: __("Add Remarks")
 			});
 			d.show();
 	}

@@ -7,6 +7,7 @@ healthcare.Diagnostic.Observation = class Observation {
 
 	refresh() {
 		var me = this;
+		this.observation_wrapper.find('.observation-section').remove();
         frappe.call({
 			method: "healthcare.healthcare.doctype.observation.observation.get_observation_template_reference",
 			args: {
@@ -29,15 +30,14 @@ healthcare.Diagnostic.Observation = class Observation {
 					data: r.message[0][key],
 				});
 			}
-			for (var i = 0; i < r.message[1]; i++) {
+			for (var i = 0; i < r.message[1]-1; i++) {
 				document.getElementsByClassName("result-text")[i].onchange = function() {
 					me.frm.dirty()
 				};
 			}
 		}
 		$(".observation").find(".add-note-observation-btn").on("click", function() {
-			console.log(1111111)
-			me.ObservationWidget.add_note()
+			me.add_remarks(this)
 		});
     }
 
@@ -62,9 +62,55 @@ healthcare.Diagnostic.Observation = class Observation {
 				},
 				freeze: true,
 				callback: function(r) {
-					me.frm.refresh()
+					me.frm.refresh(this)
 					}
 			})
 		}
 	}
+	add_remarks (edit_btn) {
+		var me = this;
+		let row = $(edit_btn).closest('.observation');
+		let observation_name = row.attr("name");
+		let result = $(row).find(".remarks").html().trim();
+			var d = new frappe.ui.Dialog({
+				title: __('Add Remarks'),
+				fields: [
+					{
+						"label": "Observation",
+						"fieldname": "observation",
+						"fieldtype": "Link",
+						"options": "Observation",
+						"default": observation_name,
+						"read_only": 1,
+					},
+					{
+						"label": "Remarks",
+						"fieldname": "remarks",
+						"fieldtype": "Text Editor",
+						"default": result
+					}
+				],
+				primary_action: function() {
+					var data = d.get_values();
+					frappe.call({
+						method: "healthcare.healthcare.doctype.observation.observation.add_remarks",
+						args: {
+							remarks: data.remarks,
+							observation: data.observation,
+						},
+						freeze: true,
+						callback: function(r) {
+							if (!r.exc) {
+								me.refresh();
+								// me.init_widget();
+							}
+							d.hide();
+						}
+					});
+				},
+				primary_action_label: __("Add Remarks")
+			});
+			d.show();
+	}
+
 }

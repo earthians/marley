@@ -10,10 +10,6 @@ cur_frm.cscript.custom_refresh = function (doc) {
 };
 
 frappe.ui.form.on('Lab Test', {
-	onload: function(frm) {
-		show_observations(frm);
-	},
-
 	setup: function (frm) {
 		frm.get_field('normal_test_items').grid.editable_fields = [
 			{ fieldname: 'lab_test_name', columns: 3 },
@@ -325,15 +321,3 @@ var calculate_age = function (dob) {
 	var years = age.getFullYear() - 1970;
 	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
 };
-
-var show_observations = function(frm) {
-	if (frm.doc.patient) {
-		frm.fields_dict.observation_html.html("");
-		const observation = new healthcare.Observation({
-			frm: frm,
-			notes_wrapper: $(frm.fields_dict.observation_html.wrapper),
-			create_observation: false,
-		});
-		observation.refresh();
-	}
-}
