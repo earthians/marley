@@ -32,6 +32,7 @@ def get_observation_template_reference(docname):
 	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "permitted_data_type", "has_component", "parent_observation"], filters={"sales_invoice": reference, "parent_observation": ""})#, "has_component":0})
 	age = calculate_age(frappe.db.get_value("Patient", patient, "dob"))
 	out_data = []
+	obs_length = len(observation)
 	for obs in observation:
 		if not obs.get("has_component"):
 			observation_data = {}
@@ -41,7 +42,9 @@ def get_observation_template_reference(docname):
 					observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = obs
 				out_data.append(observation_data)
+
 		else:
+			obs_length -= 1
 			child_observations = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "permitted_data_type", "parent_observation"], filters={"parent_observation": obs.get("name")})
 			obs_list = []
 			obs_dict = {}
@@ -52,26 +55,29 @@ def get_observation_template_reference(docname):
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
 			obs_dict["has_component"] = True
+			obs_dict["observation"] = obs.get("name")
 			obs_dict[obs.get("name")] = obs_list
+			obs_dict["display_name"] = obs.get("observation_template")
 			# obs_dict[str(obs.get("observation_template")) + "|" + str(obs.get("name"))] = obs_list
 			out_data.append(obs_dict)
+			obs_length += len(child_observations)
 
-	return out_data
+	return out_data, obs_length
 
 def get_observation_reference(observation_template, age, patient_sex):
-	template_dict = frappe.db.get_value("Observation Template", observation_template, ["method", "options as observation_options", "permitted_unit", "preferred_display_name"], as_dict=True)
-	data = frappe.db.sql(f"""
-		select
-			orr.*
-		from
-			`tabObservation Reference Range` as orr join
-			`tabObservation Template` as ot on ot.name=orr.parent
-		where
-			parent="{observation_template}"
-			and "{age}" between age_from and age_to
-			and applies_to = "{patient_sex}"
-			""", as_dict=True)
-	data.append(template_dict)
+	template_doc = frappe.get_doc("Observation Template", observation_template)
+	data = []
+	reference_data = {}
+	reference_data["method"] = template_doc.method
+	reference_data["observation_options"] = template_doc.options
+	reference_data["permitted_unit"] = template_doc.permitted_unit
+	reference_data["preferred_display_name"] = template_doc.preferred_display_name
+	display_reference = ""
+	for child in template_doc.observation_reference_range:
+		if child.age == "All" or (child.age == "Range" and float(child.age_from) <= float(age) <= float(child.age_to)):
+			display_reference += str(child.short_interpretation) + ":" + ((str(child.reference_from) +"-"+ str(child.reference_to)) if child.reference_from else str(child.conditions)) + "<br>"
+	reference_data["display_reference"] = display_reference
+	data.append(reference_data)
 	return data
 
 @frappe.whitelist()
@@ -113,10 +119,13 @@ def record_observation_result(values):
 	values = json.loads(values)
 	if values:
 		for val in values:
+			if not val.get("observation"):
+				return
 			observation_details = frappe.db.get_value("Observation", val.get("observation"), ["permitted_data_type", "result_float", "result_attach", "result_data", "result_text", "result_select"], as_dict=True)
-			print(observation_details.get("permitted_data_type"))
-			if observation_details.get("permitted_data_type") == "Quantity":
-				print(val.get("result"), observation_details.get("result_float"))
+
+			if observation_details.get("permitted_data_type") in ["Quantity", "Numeric"]:
 				if val.get("result") != observation_details.get("result_float"):
 					frappe.db.set_value("Observation", val["observation"], "result_float", val.get("result"))
-			print("\n\n\n\n")
+			elif observation_details.get("permitted_data_type") == "Text":
+				if val.get("result") != observation_details.get("result_text"):
+					frappe.db.set_value("Observation", val["observation"], "result_text", val.get("result"))

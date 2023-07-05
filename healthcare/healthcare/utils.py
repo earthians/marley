@@ -363,7 +363,7 @@ def get_service_requests_to_invoice(patient, company):
 
 
 @frappe.whitelist()
-def get_service_item_and_practitioner_charge(doc):
+def get_appointment_billing_item_and_rate(doc):
 	if isinstance(doc, str):
 		doc = json.loads(doc)
 		doc = frappe.get_doc(doc)
