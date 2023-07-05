@@ -20,7 +20,7 @@
   "to_age_type",
   "age_to",
   "section_break_d8yi",
-  "from",
+  "reference_from",
   "datetime",
   "from_duration",
   "boolean_value",
@@ -29,7 +29,7 @@
   "from_datetime",
   "conditions",
   "column_break_l8sr",
-  "to",
+  "reference_to",
   "to_datetime",
   "to_duration",
   "short_interpretation",
@@ -393,18 +393,6 @@
    "label": "Long Interpretation"
   },
   {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "from",
-   "fieldtype": "Data",
-   "label": "From"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "to",
-   "fieldtype": "Data",
-   "label": "To"
-  },
-  {
    "fieldname": "column_break_1wpd",
    "fieldtype": "Column Break"
   },
@@ -418,12 +406,24 @@
    "in_list_view": 1,
    "label": "Reference Type",
    "options": "FHIR Value Set"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "reference_from",
+   "fieldtype": "Data",
+   "label": "From"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "reference_to",
+   "fieldtype": "Data",
+   "label": "To"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-06-23 09:42:37.154486",
+ "modified": "2023-07-05 15:01:12.873420",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Reference Range",
