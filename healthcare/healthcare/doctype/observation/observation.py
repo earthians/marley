@@ -58,10 +58,11 @@ def get_observation_template_reference(docname):
 				observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
-			obs_dict["has_component"] = True
-			obs_dict["observation"] = obs.get("name")
-			obs_dict[obs.get("name")] = obs_list
-			obs_dict["display_name"] = obs.get("observation_template")
+			if len(child_observations) > 0:
+				obs_dict["has_component"] = True
+				obs_dict["observation"] = obs.get("name")
+				obs_dict[obs.get("name")] = obs_list
+				obs_dict["display_name"] = obs.get("observation_template")
 			# obs_dict[str(obs.get("observation_template")) + "|" + str(obs.get("name"))] = obs_list
 			out_data.append(obs_dict)
 			obs_length += len(child_observations)
