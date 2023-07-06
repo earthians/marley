@@ -29,13 +29,15 @@ def calculate_age(dob):
 @frappe.whitelist()
 def get_observation_template_reference(docname):
 	patient, gender, reference = frappe.get_value("Diagnostic Report", docname, ["patient", "gender", "docname"])
-	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "permitted_data_type", "has_component", "parent_observation", "remarks"], filters={"sales_invoice": reference, "parent_observation": ""})#, "has_component":0})
+	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "has_component", "parent_observation", "remarks", "options"], filters={"sales_invoice": reference, "parent_observation": ""})#, "has_component":0})
 	age = calculate_age(frappe.db.get_value("Patient", patient, "dob"))
 	out_data = []
 	obs_length = len(observation)
 	for obs in observation:
 		if not obs.get("has_component"):
 			observation_data = {}
+			if obs.get("permitted_data_type") == "Select" and obs.get("options"):
+					obs["options_list"] = obs.get("options").split("\n")
 			if obs.get("observation_template"):
 				reference_details = get_observation_reference(obs.get("observation_template"), age, gender)
 				if reference_details:
@@ -45,10 +47,12 @@ def get_observation_template_reference(docname):
 
 		else:
 			obs_length -= 1
-			child_observations = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "permitted_data_type", "parent_observation", "remarks"], filters={"parent_observation": obs.get("name"), "status":["!=", "Cancelled"]})
+			child_observations = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "parent_observation", "remarks", "options"], filters={"parent_observation": obs.get("name"), "status":["!=", "Cancelled"]})
 			obs_list = []
 			obs_dict = {}
 			for child in child_observations:
+				if child.get("permitted_data_type") == "Select" and child.get("options"):
+					child["options_list"] = child.get("options").split("\n")
 				observation_data = {}
 				reference_details = get_observation_reference(child.get("observation_template"), age, gender)
 				observation_data["template_reference"] = reference_details[0]
@@ -68,14 +72,15 @@ def get_observation_reference(observation_template, age, patient_sex):
 	template_doc = frappe.get_doc("Observation Template", observation_template)
 	data = []
 	reference_data = {}
-	reference_data["method"] = template_doc.method
+	reference_data["method"] = template_doc.method_value
 	reference_data["observation_options"] = template_doc.options
 	reference_data["permitted_unit"] = template_doc.permitted_unit
 	reference_data["preferred_display_name"] = template_doc.preferred_display_name
 	display_reference = ""
 	for child in template_doc.observation_reference_range:
 		if child.age == "All" or (child.age == "Range" and float(child.age_from) <= float(age) <= float(child.age_to)):
-			display_reference += str(child.short_interpretation) + ":" + ((str(child.reference_from) +"-"+ str(child.reference_to)) if child.reference_from else str(child.conditions)) + "<br>"
+			if child.short_interpretation and ((child.reference_from and child.reference_to) or child.conditions):
+				display_reference += str(child.short_interpretation) + ":" + ((str(child.reference_from) +"-"+ str(child.reference_to)) if child.reference_from else str(child.conditions)) + "<br>"
 	reference_data["display_reference"] = display_reference
 	data.append(reference_data)
 	return data
@@ -129,6 +134,9 @@ def record_observation_result(values):
 			elif observation_details.get("permitted_data_type") == "Text":
 				if val.get("result") != observation_details.get("result_text"):
 					frappe.db.set_value("Observation", val["observation"], "result_text", val.get("result"))
+			elif observation_details.get("permitted_data_type") == "Select":
+				if val.get("result") != observation_details.get("result_select"):
+					frappe.db.set_value("Observation", val["observation"], "result_select", val.get("result"))
 
 @frappe.whitelist()
 def add_remarks(remarks, observation):

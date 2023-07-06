@@ -55,6 +55,7 @@ healthcare.Diagnostic.Observation = class Observation {
 					values.push(val_dict);
 				}
 			}
+			console.log(values)
 			frappe.call({
 				method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
 				args: {
@@ -62,7 +63,7 @@ healthcare.Diagnostic.Observation = class Observation {
 				},
 				freeze: true,
 				callback: function(r) {
-					me.frm.refresh(this)
+					// me.frm.refresh(this)
 					}
 			})
 		}
@@ -81,7 +82,7 @@ healthcare.Diagnostic.Observation = class Observation {
 						"fieldtype": "Link",
 						"options": "Observation",
 						"default": observation_name,
-						"read_only": 1,
+						"hidden": 1,
 					},
 					{
 						"label": "Remarks",

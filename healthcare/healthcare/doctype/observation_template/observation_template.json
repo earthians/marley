@@ -19,6 +19,7 @@
   "result_template",
   "section_break_q56o",
   "method",
+  "method_value",
   "column_break_vvc2",
   "service_unit",
   "section_break_leuz",
@@ -307,11 +308,18 @@
    "fieldname": "item_code",
    "fieldtype": "Data",
    "label": "Item Code"
+  },
+  {
+   "fetch_from": "method.value",
+   "fieldname": "method_value",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Method Value"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-06-29 00:18:15.654761",
+ "modified": "2023-07-06 06:56:02.649994",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
