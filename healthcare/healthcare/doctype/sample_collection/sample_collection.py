@@ -34,6 +34,7 @@ class SampleCollection(Document):
 						"Observation Component",
 						{"parent": obs.get("observation_template")},
 						"observation_template",
+						order_by="idx"
 					)
 					data = []
 					for d in component_observations:
