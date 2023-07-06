@@ -11,6 +11,7 @@
   "observation",
   "observation_category",
   "preferred_display_name",
+  "sample_collection_required",
   "has_component",
   "column_break_zeln",
   "medical_department",
@@ -163,7 +164,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:!doc.has_component;",
+   "depends_on": "eval:!doc.has_component && doc.sample_collection_required==1;",
    "fieldname": "sample_collection_section",
    "fieldtype": "Tab Break",
    "label": "Sample Collection"
@@ -172,6 +173,7 @@
    "fieldname": "sample",
    "fieldtype": "Link",
    "label": "Sample",
+   "mandatory_depends_on": "eval:!doc.has_component && doc.sample_collection_required==1;",
    "options": "Lab Test Sample"
   },
   {
@@ -302,7 +304,8 @@
    "fieldtype": "Link",
    "label": "Item Group",
    "options": "Item Group",
-   "read_only_depends_on": "eval:doc.link_existing_item"
+   "read_only_depends_on": "eval:doc.link_existing_item",
+   "reqd": 1
   },
   {
    "fieldname": "item_code",
@@ -315,11 +318,18 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Method Value"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.has_component",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-06 06:56:02.649994",
+ "modified": "2023-07-06 12:19:59.826437",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
