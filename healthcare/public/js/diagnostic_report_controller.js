@@ -9,7 +9,7 @@ healthcare.Diagnostic.Observation = class Observation {
 		var me = this;
 		this.observation_wrapper.find('.observation-section').remove();
         frappe.call({
-			method: "healthcare.healthcare.doctype.observation.observation.get_observation_template_reference",
+			method: "healthcare.healthcare.doctype.observation.observation.get_observation_details",
 			args: {
 				docname: me.frm.doc.name
 			},
@@ -56,11 +56,11 @@ healthcare.Diagnostic.Observation = class Observation {
 					values.push(val_dict);
 				}
 			}
-			console.log(values)
 			frappe.call({
 				method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
 				args: {
-					values: values
+					values: values		console.log(row.attr("text_val"))
+
 				},
 				freeze: true,
 				callback: function(r) {

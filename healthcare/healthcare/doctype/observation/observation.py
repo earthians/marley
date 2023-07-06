@@ -27,9 +27,9 @@ def calculate_age(dob):
 		return age / 365.25
 
 @frappe.whitelist()
-def get_observation_template_reference(docname):
+def get_observation_details(docname):
 	patient, gender, reference = frappe.get_value("Diagnostic Report", docname, ["patient", "gender", "docname"])
-	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "has_component", "parent_observation", "remarks", "options"], filters={"sales_invoice": reference, "parent_observation": ""})#, "has_component":0})
+	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "has_component", "parent_observation", "remarks", "options"], filters={"sales_invoice": reference, "parent_observation": ""}, order_by="creation")
 	age = calculate_age(frappe.db.get_value("Patient", patient, "dob"))
 	out_data = []
 	obs_length = len(observation)
@@ -47,7 +47,7 @@ def get_observation_template_reference(docname):
 
 		else:
 			obs_length -= 1
-			child_observations = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "parent_observation", "remarks", "options"], filters={"parent_observation": obs.get("name"), "status":["!=", "Cancelled"]})
+			child_observations = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "parent_observation", "remarks", "options"], filters={"parent_observation": obs.get("name"), "status":["!=", "Cancelled"]}, order_by="creation")
 			obs_list = []
 			obs_dict = {}
 			for child in child_observations:
