@@ -1049,18 +1049,22 @@ def create_sample_collection(doc):
 				data.append({"name": template_id})
 	out_data = []
 	for d in data:
-		out_data.append(frappe.get_value("Observation Template", d.get("name"), ["sample_Type", "sample", "medical_department", "container_closure_color", "name", "sample_qty", "has_component"], as_dict=True))
+		out_data.append(frappe.get_value("Observation Template", d.get("name"), ["sample_Type", "sample", "medical_department", "container_closure_color", "name", "sample_qty", "has_component", "sample_collection_required"], as_dict=True))
+
+	if not any((d.get("sample_collection_required") == 1) for d in out_data):
+		return
 
 	sample_collection = insert_sample_collection(doc)
 	for grp in out_data:
-		sample_collection.append("observation_sample_collection",
-			{
-				"observation_template": grp.get("name"),
-				"container_closure_color": grp.get("color"),
-				"sample": grp.get("sample"),
-				"sample_type": grp.get("sample_type"),
-			}
-		)
+		if grp.get("sample_collection_required"):
+			sample_collection.append("observation_sample_collection",
+				{
+					"observation_template": grp.get("name"),
+					"container_closure_color": grp.get("color"),
+					"sample": grp.get("sample"),
+					"sample_type": grp.get("sample_type"),
+				}
+			)
 
 	if sample_collection:
 		sample_collection.save(ignore_permissions=True)
