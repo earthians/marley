@@ -15,6 +15,7 @@ from frappe.utils import now_datetime
 
 class SampleCollection(Document):
 	def after_insert(self):
+		insert_diagnostic_report(self)
 		if self.observation_sample_collection:
 			for obs in self.observation_sample_collection:
 				if obs.get("has_component"):
@@ -190,3 +191,11 @@ def create_specimen(selected, component_observations):
 				obs_ref[sub_grp.get("name")] = specimen.name
 
 	return obs_ref
+
+def insert_diagnostic_report(doc):
+	diagnostic_report = frappe.new_doc("Diagnostic Report")
+	diagnostic_report.patient = doc.patient
+	diagnostic_report.ref_doctype = doc.reference_doc
+	diagnostic_report.docname = doc.reference_name
+	diagnostic_report.sample_collection = doc.name
+	diagnostic_report.save()

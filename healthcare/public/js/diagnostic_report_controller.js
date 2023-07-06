@@ -24,6 +24,7 @@ healthcare.Diagnostic.Observation = class Observation {
     create_widget(r) {
 		var me = this;
 		if (r && r.message[0]) {
+			console.log(r.message[0])
 			for (let key in r.message[0]) {
 				this.ObservationWidget = new healthcare.ObservationWidget({
 					wrapper: me.observation_wrapper,
@@ -72,7 +73,11 @@ healthcare.Diagnostic.Observation = class Observation {
 		var me = this;
 		let row = $(edit_btn).closest('.observation');
 		let observation_name = row.attr("name");
-		let result = $(row).find(".remarks").html().trim();
+		let result_html = $(row).find(".remarks").html();
+		let result = "";
+		if (result_html) {
+			result = result_html.trim();
+		}
 			var d = new frappe.ui.Dialog({
 				title: __('Add Remarks'),
 				fields: [

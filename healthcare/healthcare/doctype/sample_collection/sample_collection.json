@@ -287,11 +287,11 @@
  "is_submittable": 1,
  "links": [
   {
-   "link_doctype": "Observation",
-   "link_fieldname": "reference_docname"
+   "link_doctype": "Diagnostic Report",
+   "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-06-28 18:54:49.814516",
+ "modified": "2023-07-06 08:07:43.718074",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
