@@ -9,7 +9,6 @@ from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedur
 	update_item_and_item_price,
 )
 
-
 class ObservationTemplate(Document):
 	def after_insert(self):
 		if not self.item and not self.link_existing_item:
@@ -19,6 +18,10 @@ class ObservationTemplate(Document):
 		# If change_in_item update Item and Price List
 		if self.change_in_item:
 			update_item_and_item_price(self)
+
+	def validate(self):
+		if self.has_component and self.sample_collection_required:
+			self.sample_collection_required = 0
 
 
 def create_item_from_template(doc):

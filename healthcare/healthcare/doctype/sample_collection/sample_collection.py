@@ -32,7 +32,8 @@ class SampleCollection(Document):
 					)
 					component_observations = frappe.get_all(
 						"Observation Component",
-						{"parent": obs.get("observation_template")},
+						{"parent": obs.get("observation_template"),
+						"sample_collection_required": 1},
 						"observation_template",
 						order_by="idx"
 					)
