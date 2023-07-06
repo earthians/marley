@@ -28,12 +28,14 @@
    "default": "0",
    "fieldname": "based_on_formula",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Based On Formula"
   },
   {
    "depends_on": "based_on_formula",
    "fieldname": "formula",
    "fieldtype": "Code",
+   "in_list_view": 1,
    "label": "Formula"
   },
   {
@@ -41,7 +43,6 @@
    "fetch_from": "observation_template.sample_collection_required",
    "fieldname": "sample_collection_required",
    "fieldtype": "Check",
-   "in_list_view": 1,
    "label": "Sample Collection Required",
    "read_only": 1
   }
@@ -49,7 +50,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-07-06 16:02:42.283915",
+ "modified": "2023-07-06 17:01:11.083678",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Component",
