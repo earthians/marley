@@ -9,7 +9,7 @@ healthcare.Diagnostic.Observation = class Observation {
 		var me = this;
 		this.observation_wrapper.find('.observation-section').remove();
         frappe.call({
-			method: "healthcare.healthcare.doctype.observation.observation.get_observation_template_reference",
+			method: "healthcare.healthcare.doctype.observation.observation.get_observation_details",
 			args: {
 				docname: me.frm.doc.name
 			},
