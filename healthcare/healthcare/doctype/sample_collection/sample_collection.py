@@ -68,12 +68,12 @@ class SampleCollection(Document):
 				if obs.get("has_component") and obs.get("component_observations"):
 					component_observations = json.loads(obs.get("component_observations"))
 					if not any((comp['status'] == "Open") for comp in component_observations):
-						obs.status = "Completed"
+						obs.status = "Collected"
 
 		if not any((obs.get("status") == "Open") for obs in self.observation_sample_collection):
-			self.status = "Completed"
+			self.status = "Collected"
 		else:
-			self.status = "Partly Completed"
+			self.status = "Partly Collected"
 
 
 @frappe.whitelist()
@@ -103,7 +103,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 						"Observation Sample Collection",
 						obs.get("name"),
 						{
-							"status": "Completed",
+							"status": "Collected",
 							"collection_date_time": now_datetime(),
 							"specimen": comp_obs_ref.get(obs.get("name")),
 						},
@@ -125,7 +125,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 							invoice
 						)
 						if observation:
-							comp["status"] = "Completed"
+							comp["status"] = "Collected"
 							comp["collection_date_time"] = now_datetime()
 							comp["specimen"] = comp_obs_ref.get(j+1) or comp_obs_ref.get(obs.get("name"))
 
@@ -135,7 +135,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 						{
 							"collection_date_time": now_datetime(),
 							"component_observations": json.dumps(component_observations, default=str),
-							"status": "Completed",
+							"status": "Collected",
 							"specimen": comp_obs_ref.get(j+1) or comp_obs_ref.get(obs.get("name")),
 						},
 					)
@@ -143,14 +143,14 @@ def create_observation(selected, sample_collection, component_observations=[], c
 		if component_observations:
 			for j, comp in enumerate(component_observations):
 				if comp.get("observation_template") == obs.get("observation_template"):
-					comp["status"] = "Completed"
+					comp["status"] = "Collected"
 					comp["collection_date_time"] = now_datetime()
 					comp["specimen"] = comp_obs_ref.get(j+1)
 
 	child_db_set_dict = {"component_observations": json.dumps(component_observations, default=str)}
-	# to set child table status completed if all childs are completed
+	# to set child table status Collected if all childs are Collected
 	if not any((comp['status'] == "Open") for comp in component_observations):
-		child_db_set_dict["status"] = "Completed"
+		child_db_set_dict["status"] = "Collected"
 
 	if child_name:
 		frappe.db.set_value(

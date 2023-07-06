@@ -235,7 +235,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Pending\nPartly Completed\nCompleted"
+   "options": "Pending\nPartly Collected\nCollected"
   },
   {
    "fieldname": "section_break_xap8",
@@ -291,7 +291,7 @@
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-07-06 08:07:43.718074",
+ "modified": "2023-07-06 08:13:43.569862",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
