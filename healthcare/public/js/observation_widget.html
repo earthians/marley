@@ -4,7 +4,7 @@
 				{% if (observation_details.observation || observation_details.template_reference) { %}
 					<div class="observation" style="width: 100%;" name="{{ observation_details.observation.name }}" addatatype="{{ observation_details.observation.permitted_data_type }}">
 						<div class="observation-details row" name="{{ observation_details.observation.name }}">
-							<div class="observation-name" id="observation-name" style="width: 17%;" value="{{observation_details.observation.name}}">
+							<div class="observation-name obs-field" id="observation-name" style="width: 17%;" value="{{observation_details.observation.name}}">
 								<a href="/app/observation/{{ observation_details.observation.name }}" title="{{ __('Observation') }}">
 									{% if (observation_details.template_reference.preferred_display_name) { %}
 										{%= observation_details.template_reference.preferred_display_name %}
@@ -13,12 +13,12 @@
 									{% } %}
 								</a>
 							</div>
-							<div style="width: 19%;">
+							<div class="obs-field" style="width: 19%;">
 								{% if (observation_details.observation.posting_datetime) { %}
 									{{ frappe.datetime.global_date_format(observation_details.observation.posting_datetime) }}
 								{% } %}
 							</div>
-							<div class="result" style="width: 20%;">
+							<div class="result obs-field" style="width: 20%;">
 								{% if( ['Range', 'Ratio'].includes(observation_details.observation.permitted_data_type)) { %}
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_data }}">
@@ -26,22 +26,34 @@
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_float }}">
 										
+								{% } else if (observation_details.observation.permitted_data_type=='Select') { %}
+									<div class="">
+									<select class="input-with-feedback form-control ellipsis result-text" id="{{observation_details.observation.name}}">
+										{% for (let opts in observation_details.observation.options_list) { %}
+										{{observation_details.observation.options_list[opts]}}
+										{% var selected = "" %}
+										{% if (observation_details.observation.options_list[opts] == 'Dark Yellow') { %}
+											{% selected = "selected" %}
+										{% } %}
+										<option value="{{observation_details.observation.options_list[opts]}}">{{observation_details.observation.options_list[opts]}}</option>
+										{% } %}
+										</select>
 								{% } %}
-								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
+								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select'].includes(observation_details.observation.permitted_data_type)) { %}
 								</div>
 								{% } %}
 							</div>
-							<div style="width: 7%;">
+							<div class="obs-field" style="width: 7%;">
 								{% if (observation_details.template_reference) { %}
 									{%= observation_details.template_reference.permitted_unit %}
 								{% } %}
 							</div>
-							<div style="width: 20%;">
+							<div class="obs-field" style="width: 20%;">
 								{% if (observation_details.template_reference) { %}
 									{%= observation_details.template_reference.method %}
 								{% } %}
 							</div>
-							<div style="width: 15%;">
+							<div class="obs-field" style="width: 15%;">
 								{% if (observation_details.template_reference.display_reference) { %}
 									{{observation_details.template_reference.display_reference}}
 								{% } %}
@@ -49,7 +61,7 @@
 						</div>
 						{% if (observation_details.observation.permitted_data_type=='Text')  { %}
 						<div class="obs-text">
-							<input class="input-with-feedback form-control textresult-text result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">
+							<textarea class="input-with-feedback form-control textresult-text result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">{{ observation_details.observation.result_text }}</textarea>
 						</div>
 						{% } %}
 						<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
@@ -73,44 +85,5 @@
 
 
 <style>
-.observation-section {
-	min-height: 50px;
-	padding-left: 0px;
-	padding-bottom: 1px !important;
-}
-
-.obs-text {
-	padding: 10px;
-}
-
-.textresult-text {
-	height: 100px
-}
-
-.observation-section .new-btn {
-	text-align: right;
-}
-
-.observation {
-	min-height: 90px;
-	border: 1px solid var(--border-color);
-	padding-right: 0;
-	font-size: 11px;
-	padding-left: 15px;
-	padding-top: 35px;
-	margin-bottom: 15px;
-	border-radius: 10px;
-}
-
-
-.observations {
-	width: 100%;
-}
-
-.observation-details {
-	padding-left: 14px;
-	padding-right: 14px;
-}
-
 
 </style>

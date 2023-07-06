@@ -65,6 +65,8 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "\nRegistered\nPreliminary\nFinal\nAmended\nCorrected\nCancelled\nEntered in Error\nUnknown"
   },
@@ -72,6 +74,7 @@
    "fieldname": "patient",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Patient",
    "options": "Patient",
    "reqd": 1
@@ -132,6 +135,8 @@
    "fetch_from": "observation_template.permitted_data_type",
    "fieldname": "permitted_data_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Permitted Data Type",
    "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach",
    "read_only": 1
@@ -267,7 +272,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-05 21:50:58.228869",
+ "modified": "2023-07-05 22:43:49.279820",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

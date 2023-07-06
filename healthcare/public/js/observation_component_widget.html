@@ -11,54 +11,67 @@
 								</b>
 						</div>
 						{% for(var j=0, k=observation_details[observation_details.observation].length; j<k; j++) { %}
-							{% if (observation_details[observation_details.observation][j].observation || observation_details[observation_details.observation][j].template_reference) { %}
-								<div class="observation" name="{{ observation_details[observation_details.observation][j].observation.name }}" addatatype="{{ observation_details[observation_details.observation][j].observation.permitted_data_type }}">
+						{% var child_obs = observation_details[observation_details.observation][j] %}
+							{% if (child_obs.observation || child_obs.template_reference) { %}
+								<div class="observation" name="{{ child_obs.observation.name }}" addatatype="{{ child_obs.observation.permitted_data_type }}">
 									<div class="observation-details row" style="width: 100%;">
-										<div class="observation-name" id="observation-name" style="width: 20%;" value="{{observation_details[observation_details.observation][j].observation.name}}">
-											<a href="/app/observation/{{ observation_details[observation_details.observation][j].observation.name }}" title="{{ __('Observation') }}">
-												{% if (observation_details[observation_details.observation][j].template_reference.preferred_display_name) { %}
-													{%= observation_details[observation_details.observation][j].template_reference.preferred_display_name %}
+										<div class="observation-name" id="observation-name" style="width: 20%;" value="{{child_obs.observation.name}}">
+											<a href="/app/observation/{{ child_obs.observation.name }}" title="{{ __('Observation') }}">
+												{% if (child_obs.template_reference.preferred_display_name) { %}
+													{%= child_obs.template_reference.preferred_display_name %}
 												{% } else { %}
-													{%= observation_details[observation_details.observation][j].observation.observation_template %}
+													{%= child_obs.observation.observation_template %}
 												{% } %}
 											</a>
 										</div>
 										<div style="width: 19%;">
-											{% if (observation_details[observation_details.observation][j].observation.posting_datetime) { %}
-												{{ frappe.datetime.global_date_format(observation_details[observation_details.observation][j].observation.posting_datetime) }}
+											{% if (child_obs.observation.posting_datetime) { %}
+												{{ frappe.datetime.global_date_format(child_obs.observation.posting_datetime) }}
 											{% } %}
 										</div>
+										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select'].includes(child_obs.observation.permitted_data_type)) { %}
 										<div class="result" style="padding-left:30px; padding-right:10px; width: 23%;">
-											{% if( ['Range', 'Ratio'].includes(observation_details[observation_details.observation][j].observation.permitted_data_type)) { %}
+											{% if( ['Range', 'Ratio'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
-													<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details[observation_details.observation][j].observation.name}}" name="fname" size="6" value="{{ observation_details[observation_details.observation][j].observation.result_data }}">
-											{% } else if (['Quantity', 'Numeric'].includes(observation_details[observation_details.observation][j].observation.permitted_data_type)) { %}
+													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}">
+											{% } else if (['Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
-													<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details[observation_details.observation][j].observation.name}}" name="fname" size="6" value="{{ observation_details[observation_details.observation][j].observation.result_float }}">
+													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_float }}">
+											{% } else if (child_obs.observation.permitted_data_type=='Select') { %}
+												<div class="">
+												<select class="input-with-feedback form-control ellipsis result-text" id="{{child_obs.observation.name}}">
+													{% for (let opts in child_obs.observation.options_list) { %}
+													{{child_obs.observation.options_list[opts]}}
+													{% var selected = "" %}
+													{% if (child_obs.observation.options_list[opts] == 'Dark Yellow') { %}
+														{% selected = "selected" %}
+													{% } %}
+													<option value="{{child_obs.observation.options_list[opts]}}">{{child_obs.observation.options_list[opts]}}</option>
+													{% } %}
+													</select>
 											{% } %}
-											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details[observation_details.observation][j].observation.permitted_data_type)) { %}
 											</div>
-											{% } %}
 										</div>
+										{% } %}
 										<div style="width: 7%;">
-											{% if (observation_details[observation_details.observation][j].template_reference) { %}
-												{%= observation_details[observation_details.observation][j].template_reference.permitted_unit %}
+											{% if (child_obs.template_reference) { %}
+												{%= child_obs.template_reference.permitted_unit %}
 											{% } %}
 										</div>
 										<div style="width: 20%;">
-											{% if (observation_details[observation_details.observation][j].template_reference) { %}
-												{%= observation_details[observation_details.observation][j].template_reference.method %}
+											{% if (child_obs.template_reference) { %}
+												{%= child_obs.template_reference.method %}
 											{% } %}
 										</div>
 										<div style="width: 11%;">
-											{% if (observation_details[observation_details.observation][j].template_reference.display_reference) { %}
-												{{observation_details[observation_details.observation][j].template_reference.display_reference}}
+											{% if (child_obs.template_reference.display_reference) { %}
+												{{child_obs.template_reference.display_reference}}
 											{% } %}
 										</div>
 								</div>
-								{% if (observation_details[observation_details.observation][j].observation.permitted_data_type=='Text')  { %}
+								{% if (child_obs.observation.permitted_data_type=='Text')  { %}
 								<div class="obs-text">
-									<input class="input-with-feedback form-control textresult-text result-text" type="text" id="{{observation_details[observation_details.observation][j].observation.name}}" name="fname" size="6" value="{{ observation_details[observation_details.observation][j].observation.result_text }}">
+									<textarea class="input-with-feedback form-control textresult-text result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_text }}">{{ child_obs.observation.result_text }}</textarea>
 								</div>
 								{% } %}
 								<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
@@ -67,11 +80,11 @@
 											<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
 										</span>
 									</div>
-								<div class="remarks" style="width: 50%; float:right;">
-									{% if (observation_details[observation_details.observation][j].observation.remarks)  { %}
-										{{observation_details[observation_details.observation][j].observation.remarks}}
-									{% } %}
+									{% if (child_obs.observation.remarks)  { %}
+								<div class="remarks">
+									{{child_obs.observation.remarks}}
 								</div>
+								{% } %}
 							</div>
 							</div>
 							{% } %}
@@ -86,7 +99,6 @@
 
 <style>
 .observation-section {
-	min-height: 50px;
 	padding-left: 0px;
 	padding-bottom: 1px !important;
 }
@@ -96,13 +108,12 @@
 }
 
 .observation {
-	min-height: 90px;
 	border: 1px solid var(--border-color);
 	padding-right: 0;
 	font-size: 11px;
 	padding-left: 15px;
-	padding-top: 35px;
-	margin-bottom: 15px;
+	padding-top: 15px;
+	margin-bottom: 5px;
 	margin-right: 15px;
 	border-radius: 10px;
 }
@@ -112,8 +123,9 @@
 	padding-right: 0;
 	font-size: 11px;
 	padding-left: 15px;
-	padding-top: 15px;
+	padding-top: 5px;
 	border-radius: 10px;
+	margin-bottom: 5px;
 }
 
 .observations {
@@ -124,6 +136,21 @@
 	padding-left: 14px;
 	padding-right: 14px;
 }
+.obs-field {
+	padding-top: 5px;
+}
 
+.textresult-text {
+	height: 100px;
+	margin-right: 15px;
+}
+
+.remarks {
+	width: 50%;
+	float:right;
+	background-color: #f4f5f6;
+	padding: 5px;
+	border-radius: 10px;
+}
 
 </style>
