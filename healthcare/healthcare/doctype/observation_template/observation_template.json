@@ -11,7 +11,6 @@
   "observation",
   "observation_category",
   "preferred_display_name",
-  "sample_collection_required",
   "has_component",
   "column_break_zeln",
   "medical_department",
@@ -32,6 +31,8 @@
   "components_section",
   "observation_component",
   "sample_collection_section",
+  "sample_collection_required",
+  "sample_collection_section_section",
   "sample",
   "sample_qty",
   "uom",
@@ -137,6 +138,8 @@
    "default": "0",
    "fieldname": "has_component",
    "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Has Component"
   },
   {
@@ -164,7 +167,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:!doc.has_component && doc.sample_collection_required==1;",
+   "depends_on": "eval:!doc.has_component;",
    "fieldname": "sample_collection_section",
    "fieldtype": "Tab Break",
    "label": "Sample Collection"
@@ -232,7 +235,7 @@
   {
    "fetch_from": "sample.sample_type",
    "fieldname": "sample_type",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Sample Type",
    "options": "Sample Type",
    "read_only": 1
@@ -325,11 +328,16 @@
    "fieldname": "sample_collection_required",
    "fieldtype": "Check",
    "label": "Sample Collection Required"
+  },
+  {
+   "depends_on": "eval:doc.sample_collection_required==1;",
+   "fieldname": "sample_collection_section_section",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-06 12:19:59.826437",
+ "modified": "2023-07-06 15:54:08.364540",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
