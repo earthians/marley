@@ -10,7 +10,7 @@ healthcare.Observation = class Observation {
 		this.notes_wrapper.find('.observation-section').remove();
 		frappe.run_serially([
 			() => frappe.call({
-			method: "healthcare.healthcare.doctype.observation.observation.get_observation_template_reference",
+			method: "healthcare.healthcare.doctype.observation.observation.get_observation_details",
 			args: {
 				docname: me.frm.doc.name
 			},

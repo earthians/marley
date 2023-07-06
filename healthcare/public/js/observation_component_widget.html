@@ -15,7 +15,7 @@
 							{% if (child_obs.observation || child_obs.template_reference) { %}
 								<div class="observation" name="{{ child_obs.observation.name }}" addatatype="{{ child_obs.observation.permitted_data_type }}">
 									<div class="observation-details row" style="width: 100%;">
-										<div class="observation-name" id="observation-name" style="width: 20%;" value="{{child_obs.observation.name}}">
+										<div class="observation-name" id="observation-name" style="width: 20%; vertical-align: middle !important;" value="{{child_obs.observation.name}}">
 											<a href="/app/observation/{{ child_obs.observation.name }}" title="{{ __('Observation') }}">
 												{% if (child_obs.template_reference.preferred_display_name) { %}
 													{%= child_obs.template_reference.preferred_display_name %}
@@ -38,17 +38,22 @@
 												<div class="">
 													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_float }}">
 											{% } else if (child_obs.observation.permitted_data_type=='Select') { %}
-												<div class="">
-												<select class="input-with-feedback form-control ellipsis result-text" id="{{child_obs.observation.name}}">
+												<div class="control-input">
+												<select class="input-with-feedback form-control ellipsis result-text" data-fieldtype="Select" id="{{child_obs.observation.name}}">
 													{% for (let opts in child_obs.observation.options_list) { %}
 													{{child_obs.observation.options_list[opts]}}
 													{% var selected = "" %}
 													{% if (child_obs.observation.options_list[opts] == 'Dark Yellow') { %}
 														{% selected = "selected" %}
 													{% } %}
-													<option value="{{child_obs.observation.options_list[opts]}}">{{child_obs.observation.options_list[opts]}}</option>
+													<option value="{{child_obs.observation.options_list[opts]}}" {{ selected }}>{{child_obs.observation.options_list[opts]}}</option>
 													{% } %}
 													</select>
+													<div class="select-icon ">
+														<svg class="icon  icon-sm" style="">
+															<use class="" href="#icon-select"></use>
+														</svg>
+													</div>
 											{% } %}
 											</div>
 										</div>
@@ -80,11 +85,11 @@
 											<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
 										</span>
 									</div>
-									{% if (child_obs.observation.remarks)  { %}
-								<div class="remarks">
-									{{child_obs.observation.remarks}}
-								</div>
-								{% } %}
+									{% if (child_obs.observation.remarks) { %}
+										<div class="remarks">
+											{{child_obs.observation.remarks}}
+										</div>
+									{% } %}
 							</div>
 							</div>
 							{% } %}
@@ -143,14 +148,16 @@
 .textresult-text {
 	height: 100px;
 	margin-right: 15px;
+	padding-top: 5px;
 }
 
 .remarks {
-	width: 50%;
+	width: 85%;
 	float:right;
 	background-color: #f4f5f6;
 	padding: 5px;
 	border-radius: 10px;
+	height: 100px;
 }
 
 </style>
