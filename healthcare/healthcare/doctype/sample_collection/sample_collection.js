@@ -127,7 +127,7 @@ frappe.ui.form.on("Observation Sample Collection", {
 								"in_list_view": 1,
 								"default": "Open",
 								"label": "Status",
-								"options": "Open\nCompleted",
+								"options": "Open\nCollected",
 								"read_only": 1
 							},
 							{
