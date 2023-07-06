@@ -1044,30 +1044,56 @@ def create_sample_collection(doc):
 	# to include item direclty entered
 	for item in doc.items:
 		if not item.get("reference_dt") and not item.get("reference_dn"):
-			template_id = frappe.db.exists("Observation Template", {"item": item.item_code})
+			template_id = frappe.db.exists(
+				"Observation Template", {"item": item.item_code}
+			)
 			if template_id:
 				data.append({"name": template_id})
 	out_data = []
 	for d in data:
-		out_data.append(frappe.get_value("Observation Template", d.get("name"), ["sample_Type", "sample", "medical_department", "container_closure_color", "name", "sample_qty", "has_component", "sample_collection_required"], as_dict=True))
-
-	if not any((d.get("sample_collection_required") == 1) for d in out_data):
-		return
+		out_data.append(
+			frappe.get_value(
+				"Observation Template",
+				d.get("name"),
+				[
+					"sample_Type",
+					"sample",
+					"medical_department",
+					"container_closure_color",
+					"name",
+					"sample_qty",
+					"has_component",
+					"sample_collection_required",
+				],
+				as_dict=True,
+			)
+		)
 
 	sample_collection = insert_sample_collection(doc)
 	for grp in out_data:
-		if grp.get("sample_collection_required"):
-			sample_collection.append("observation_sample_collection",
+		component_count = 0
+		if grp.get("has_component"):
+			component_count = frappe.db.count(
+				"Observation Component",
+				{"parent": grp.get("name"), "sample_collection_required": 1},
+			)
+		if grp.get("sample_collection_required") or component_count > 0:
+			sample_collection.append(
+				"observation_sample_collection",
 				{
 					"observation_template": grp.get("name"),
 					"container_closure_color": grp.get("color"),
 					"sample": grp.get("sample"),
 					"sample_type": grp.get("sample_type"),
-				}
+				},
 			)
 
-	if sample_collection:
+	if (
+		sample_collection
+		and len(sample_collection.get("observation_sample_collection")) > 0
+	):
 		sample_collection.save(ignore_permissions=True)
+
 
 def insert_sample_collection(doc):
 	patient = frappe.get_doc("Patient", doc.patient)

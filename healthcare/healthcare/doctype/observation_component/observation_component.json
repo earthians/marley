@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "observation_template",
+  "sample_collection_required",
   "column_break_seht",
   "based_on_formula",
   "formula"
@@ -34,12 +35,21 @@
    "fieldname": "formula",
    "fieldtype": "Code",
    "label": "Formula"
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.sample_collection_required",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Sample Collection Required",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-06-29 00:15:22.856513",
+ "modified": "2023-07-06 16:02:42.283915",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Component",
