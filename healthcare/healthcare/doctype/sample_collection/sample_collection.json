@@ -98,6 +98,7 @@
    "fieldtype": "Data",
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_list_view": 1,
    "label": "Age",
    "read_only": 1
   },
@@ -107,6 +108,7 @@
    "fieldtype": "Link",
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_list_view": 1,
    "label": "Gender",
    "options": "Gender",
    "read_only": 1
@@ -229,6 +231,7 @@
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Patient Name",
    "read_only": 1
   },
@@ -288,6 +291,7 @@
   {
    "fieldname": "referring_practitioner",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Referring Practitioner",
    "options": "Healthcare Practitioner",
    "read_only_depends_on": "referring_practitioner"
@@ -300,7 +304,7 @@
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-07-07 11:44:30.046887",
+ "modified": "2023-07-07 14:02:01.417443",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
