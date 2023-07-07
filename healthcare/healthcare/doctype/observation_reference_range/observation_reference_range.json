@@ -72,7 +72,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Applies To",
-   "options": "\nMale\nFemale\nPregnant"
+   "options": "All\nMale\nFemale\nPregnant"
   },
   {
    "fieldname": "reference_text",
@@ -93,7 +93,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.applies_to==\"Pregnant\";",
+   "depends_on": "eval:doc.applies_to == \"Pregnant\"",
    "description": "In Months",
    "fieldname": "gestational_age",
    "fieldtype": "Float",
@@ -114,14 +114,14 @@
    "label": "Datetime"
   },
   {
-   "depends_on": "eval:doc.age==\"Range\";",
+   "depends_on": "eval:doc.age == \"Range\"",
    "fieldname": "age_from",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Age From"
   },
   {
-   "depends_on": "eval:doc.age==\"Range\";",
+   "depends_on": "eval:doc.age == \"Range\"",
    "fieldname": "age_to",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -179,7 +179,7 @@
   },
   {
    "default": "Years",
-   "depends_on": "eval:doc.age==\"Range\";",
+   "depends_on": "eval: doc.age == \"Range\"",
    "fieldname": "from_age_type",
    "fieldtype": "Select",
    "label": "Age Type",
@@ -187,7 +187,7 @@
   },
   {
    "default": "Years",
-   "depends_on": "eval:doc.age==\"Range\";",
+   "depends_on": "eval:doc.age == \"Range\"",
    "fieldname": "to_age_type",
    "fieldtype": "Select",
    "label": "Age Type",
@@ -397,6 +397,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.age == \"Range\" || doc.applies_to == \"Pregnant\"",
    "fieldname": "section_break_dlfg",
    "fieldtype": "Section Break"
   },
@@ -423,7 +424,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-07-05 15:01:12.873420",
+ "modified": "2023-07-07 11:10:53.335716",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Reference Range",
