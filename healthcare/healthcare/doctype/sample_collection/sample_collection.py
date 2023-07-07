@@ -77,6 +77,12 @@ class SampleCollection(Document):
 		else:
 			self.status = "Partly Collected"
 
+	def before_submit(self):
+		if [sample for sample in self.observation_sample_collection if sample.status != "Collected"]:
+			frappe.throw(
+				msg=_("Cannot Submit, not all samples are marked as 'Collected'."), title=_("Not Allowed")
+			)
+
 
 @frappe.whitelist()
 def create_observation(selected, sample_collection, component_observations=[], child_name=None):
