@@ -14,16 +14,17 @@
   "patient_name",
   "patient_age",
   "patient_sex",
+  "referring_practitioner",
   "column_break_4",
-  "inpatient_record",
   "company",
   "status",
+  "inpatient_record",
+  "collection_point",
   "invoiced",
   "section_break_6",
   "sample",
   "sample_uom",
   "sample_qty",
-  "collection_point",
   "column_break_10",
   "collected_by",
   "collected_time",
@@ -120,6 +121,7 @@
    "options": "Company"
   },
   {
+   "depends_on": "!doc.observation_sample_collection",
    "fieldname": "section_break_6",
    "fieldtype": "Section Break",
    "hide_days": 1,
@@ -129,7 +131,6 @@
   {
    "fieldname": "sample",
    "fieldtype": "Link",
-   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "ignore_user_permissions": 1,
@@ -239,7 +240,8 @@
   },
   {
    "fieldname": "section_break_xap8",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Samples"
   },
   {
    "fieldname": "observation_sample_collection",
@@ -262,7 +264,7 @@
    "fieldname": "collection_point",
    "fieldtype": "Link",
    "label": "Collection Point",
-   "options": "Healthcare Service Unit Type"
+   "options": "Healthcare Service Unit"
   },
   {
    "fieldname": "reference_doc",
@@ -282,6 +284,13 @@
    "fieldname": "sample_html",
    "fieldtype": "HTML",
    "label": "Sample HTML"
+  },
+  {
+   "fieldname": "referring_practitioner",
+   "fieldtype": "Link",
+   "label": "Referring Practitioner",
+   "options": "Healthcare Practitioner",
+   "read_only_depends_on": "referring_practitioner"
   }
  ],
  "is_submittable": 1,
@@ -291,7 +300,7 @@
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-07-06 08:13:43.569862",
+ "modified": "2023-07-07 11:44:30.046887",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
