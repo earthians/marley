@@ -1,17 +1,64 @@
 # Copyright (c) 2023, healthcare and contributors
 # For license information, please see license.txt
 
-import frappe
 import json
+
+import frappe
 from frappe.model.document import Document
-from frappe.utils import date_diff, getdate, today, now_datetime
+from frappe.utils import date_diff, getdate, now_datetime, today
 
 
 class Observation(Document):
 	def validate(self):
-		dob  = frappe.db.get_value("Patient", self.patient, "dob")
-		if dob and not self.age:
-			self.age = calculate_age(dob)
+		self.set_age()
+		self.set_result_time()
+		self.set_status()
+
+	def set_age(self):
+		if not self.age:
+			dob = frappe.db.get_value("Patient", self.patient, "dob")
+			if dob:
+				self.age = calculate_age(dob)
+
+	def set_status(self):
+		if self.has_result() and self.status != "Final":
+			self.status = "Preliminary"
+		elif self.amended_from and self.status not in ["Amended", "Corrected"]:
+			self.status = "Amended"
+		elif self.status not in ["Final", "Cancelled", "Entered in Error", "Unknown"]:
+			self.status = "Registered"
+
+	def set_result_time(self):
+		if not self.time_of_result and self.has_result():
+			self.time_of_result = now_datetime()
+		else:
+			self.time_of_result = ""
+
+		if self.status == "Final" and not self.time_of_approval:
+			self.time_of_approval = now_datetime()
+		else:
+			self.time_of_approval = ""
+
+	def has_result(self):
+		result_fields = [
+			"result_attach",
+			"result_boolean",
+			"result_data",
+			"result_text",
+			"result_float",
+			"result_select",
+		]
+		for field in result_fields:
+			if self.get(field, None):
+				return True
+
+		# TODO: handle fields defaulting to now
+		# "result_datetime",
+		# "result_time",
+		# "result_period_from",
+		# "result_period_to",
+
+		return False
 
 
 def calculate_age(dob):
@@ -19,17 +66,37 @@ def calculate_age(dob):
 
 	# Check if the birthday has already occurred this year
 	if getdate(today()).month < getdate(dob).month or (
-		getdate(today()).month == getdate(dob).month
-		and getdate(today()).day < getdate(dob).day
+		getdate(today()).month == getdate(dob).month and getdate(today()).day < getdate(dob).day
 	):
 		age -= 1
 	if age:
 		return age / 365.25
 
+
 @frappe.whitelist()
 def get_observation_details(docname):
-	patient, gender, reference = frappe.get_value("Diagnostic Report", docname, ["patient", "gender", "docname"])
-	observation = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "has_component", "parent_observation", "remarks", "options"], filters={"sales_invoice": reference, "parent_observation": ""}, order_by="creation")
+	patient, gender, reference = frappe.get_value(
+		"Diagnostic Report", docname, ["patient", "gender", "docname"]
+	)
+	observation = frappe.get_all(
+		"Observation",
+		fields=[
+			"name",
+			"observation_template",
+			"posting_datetime",
+			"result_data",
+			"result_text",
+			"result_float",
+			"result_select",
+			"permitted_data_type",
+			"has_component",
+			"parent_observation",
+			"note",
+			"options",
+		],
+		filters={"sales_invoice": reference, "parent_observation": ""},
+		order_by="creation",
+	)
 	age = calculate_age(frappe.db.get_value("Patient", patient, "dob"))
 	out_data = []
 	obs_length = len(observation)
@@ -37,7 +104,7 @@ def get_observation_details(docname):
 		if not obs.get("has_component"):
 			observation_data = {}
 			if obs.get("permitted_data_type") == "Select" and obs.get("options"):
-					obs["options_list"] = obs.get("options").split("\n")
+				obs["options_list"] = obs.get("options").split("\n")
 			if obs.get("observation_template"):
 				reference_details = get_observation_reference(obs.get("observation_template"), age, gender)
 				if reference_details:
@@ -47,7 +114,24 @@ def get_observation_details(docname):
 
 		else:
 			obs_length -= 1
-			child_observations = frappe.get_all("Observation", fields=["name", "observation_template", "posting_datetime", "result_data", "result_text", "result_float", "result_select", "permitted_data_type", "parent_observation", "remarks", "options"], filters={"parent_observation": obs.get("name"), "status":["!=", "Cancelled"]}, order_by="creation")
+			child_observations = frappe.get_all(
+				"Observation",
+				fields=[
+					"name",
+					"observation_template",
+					"posting_datetime",
+					"result_data",
+					"result_text",
+					"result_float",
+					"result_select",
+					"permitted_data_type",
+					"parent_observation",
+					"note",
+					"options",
+				],
+				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"]},
+				order_by="creation",
+			)
 			obs_list = []
 			obs_dict = {}
 			for child in child_observations:
@@ -69,6 +153,7 @@ def get_observation_details(docname):
 
 	return out_data, obs_length
 
+
 def get_observation_reference(observation_template, age, patient_sex):
 	template_doc = frappe.get_doc("Observation Template", observation_template)
 	data = []
@@ -79,12 +164,26 @@ def get_observation_reference(observation_template, age, patient_sex):
 	reference_data["preferred_display_name"] = template_doc.preferred_display_name
 	display_reference = ""
 	for child in template_doc.observation_reference_range:
-		if child.age == "All" or (child.age == "Range" and float(child.age_from) <= float(age) <= float(child.age_to)):
-			if child.short_interpretation and ((child.reference_from and child.reference_to) or child.conditions):
-				display_reference += str(child.short_interpretation) + ":" + ((str(child.reference_from) +"-"+ str(child.reference_to)) if child.reference_from else str(child.conditions)) + "<br>"
+		if child.age == "All" or (
+			child.age == "Range" and float(child.age_from) <= float(age) <= float(child.age_to)
+		):
+			if child.short_interpretation and (
+				(child.reference_from and child.reference_to) or child.conditions
+			):
+				display_reference += (
+					str(child.short_interpretation)
+					+ ":"
+					+ (
+						(str(child.reference_from) + "-" + str(child.reference_to))
+						if child.reference_from
+						else str(child.conditions)
+					)
+					+ "<br>"
+				)
 	reference_data["display_reference"] = display_reference
 	data.append(reference_data)
 	return data
+
 
 @frappe.whitelist()
 def edit_observation(observation, data_type, result):
@@ -98,10 +197,13 @@ def edit_observation(observation, data_type, result):
 	observation_doc.save()
 
 @frappe.whitelist()
-def add_observation(patient, template, data_type, result, doc, docname, parent=None, sample_id=None, invoice=""):
+def add_observation(
+	patient, template, data_type, result, doc, docname, parent=None, sample_id=None, invoice=""
+):
 
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
+	observation_doc.observation = template
 	observation_doc.patient = patient
 	observation_doc.observation_template = template
 	# observation_doc.permitted_data_type = data_type
@@ -120,6 +222,7 @@ def add_observation(patient, template, data_type, result, doc, docname, parent=N
 	observation_doc.insert()
 	return observation_doc.name
 
+
 @frappe.whitelist()
 def record_observation_result(values):
 	values = json.loads(values)
@@ -127,7 +230,19 @@ def record_observation_result(values):
 		for val in values:
 			if not val.get("observation"):
 				return
-			observation_details = frappe.db.get_value("Observation", val.get("observation"), ["permitted_data_type", "result_float", "result_attach", "result_data", "result_text", "result_select"], as_dict=True)
+			observation_details = frappe.db.get_value(
+				"Observation",
+				val.get("observation"),
+				[
+					"permitted_data_type",
+					"result_float",
+					"result_attach",
+					"result_data",
+					"result_text",
+					"result_select",
+				],
+				as_dict=True,
+			)
 
 			if observation_details.get("permitted_data_type") in ["Quantity", "Numeric"]:
 				if val.get("result") != observation_details.get("result_float"):
@@ -139,7 +254,8 @@ def record_observation_result(values):
 				if val.get("result") != observation_details.get("result_select"):
 					frappe.db.set_value("Observation", val["observation"], "result_select", val.get("result"))
 
+
 @frappe.whitelist()
-def add_remarks(remarks, observation):
-	if remarks and observation:
-		frappe.db.set_value("Observation", observation, "remarks", remarks)
+def add_note(note, observation):
+	if note and observation:
+		frappe.db.set_value("Observation", observation, "note", note)

@@ -78,7 +78,7 @@
   },
   {
    "fieldname": "description",
-   "fieldtype": "Small Text",
+   "fieldtype": "Text Editor",
    "label": "Description"
   },
   {
@@ -87,7 +87,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:!doc.has_component",
    "fieldname": "permitted_data_type",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -96,7 +95,7 @@
    "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type==\"Quantity\" && !doc.has_component;",
+   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
    "fieldname": "permitted_unit",
    "fieldtype": "Link",
    "label": "Permitted Unit",
@@ -159,13 +158,14 @@
   {
    "fieldname": "service_unit",
    "fieldtype": "Link",
-   "label": "Service Unit Type",
-   "options": "Healthcare Service Unit Type"
+   "label": "Service Unit ",
+   "options": "Healthcare Service Unit"
   },
   {
    "depends_on": "eval:doc.observation_category!=\"Imaging\" && !doc.has_component;",
    "fieldname": "section_break_leuz",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Result Options"
   },
   {
    "depends_on": "eval:!doc.has_component;",
@@ -211,7 +211,8 @@
    "label": "Preferred Display Name"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Select\";",
+   "depends_on": "eval:[\"Select\", 'Boolean'].includes(doc.permitted_data_type)",
+   "description": "These options will be available for selection in Observation. No need to add a blank space before the first option",
    "fieldname": "options",
    "fieldtype": "Small Text",
    "label": "Options"
@@ -338,7 +339,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-06 15:54:08.364540",
+ "modified": "2023-07-09 14:00:33.492809",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
