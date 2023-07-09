@@ -38,7 +38,7 @@ healthcare.Diagnostic.Observation = class Observation {
 			}
 		}
 		$(".observation").find(".add-note-observation-btn").on("click", function() {
-			me.add_remarks(this)
+			me.add_note(this)
 		});
     }
 
@@ -47,7 +47,7 @@ healthcare.Diagnostic.Observation = class Observation {
 		if (func=="save") {
 			var normal_obs_div = document.getElementsByClassName("observation-name");
 			var values = [];
-  
+
 			for (var i = 0; i < normal_obs_div.length; i++) {
 				let val_dict = {}
 				val_dict["observation"] = normal_obs_div[i].getAttribute("value")
@@ -69,17 +69,17 @@ healthcare.Diagnostic.Observation = class Observation {
 			})
 		}
 	}
-	add_remarks (edit_btn) {
+	add_note (edit_btn) {
 		var me = this;
 		let row = $(edit_btn).closest('.observation');
 		let observation_name = row.attr("name");
-		let result_html = $(row).find(".remarks").html();
+		let result_html = $(row).find(".note").html();
 		let result = "";
 		if (result_html) {
 			result = result_html.trim();
 		}
 			var d = new frappe.ui.Dialog({
-				title: __('Add Remarks'),
+				title: __('Add Note'),
 				fields: [
 					{
 						"label": "Observation",
@@ -90,8 +90,8 @@ healthcare.Diagnostic.Observation = class Observation {
 						"hidden": 1,
 					},
 					{
-						"label": "Remarks",
-						"fieldname": "remarks",
+						"label": "Note",
+						"fieldname": "note",
 						"fieldtype": "Text Editor",
 						"default": result
 					}
@@ -99,9 +99,9 @@ healthcare.Diagnostic.Observation = class Observation {
 				primary_action: function() {
 					var data = d.get_values();
 					frappe.call({
-						method: "healthcare.healthcare.doctype.observation.observation.add_remarks",
+						method: "healthcare.healthcare.doctype.observation.observation.add_note",
 						args: {
-							remarks: data.remarks,
+							note: data.note,
 							observation: data.observation,
 						},
 						freeze: true,
@@ -114,7 +114,7 @@ healthcare.Diagnostic.Observation = class Observation {
 						}
 					});
 				},
-				primary_action_label: __("Add Remarks")
+				primary_action_label: __("Add Note")
 			});
 			d.show();
 	}

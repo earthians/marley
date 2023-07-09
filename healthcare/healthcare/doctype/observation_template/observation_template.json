@@ -78,7 +78,7 @@
   },
   {
    "fieldname": "description",
-   "fieldtype": "Small Text",
+   "fieldtype": "Text Editor",
    "label": "Description"
   },
   {
@@ -164,7 +164,8 @@
   {
    "depends_on": "eval:doc.observation_category!=\"Imaging\" && !doc.has_component;",
    "fieldname": "section_break_leuz",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Result Options"
   },
   {
    "depends_on": "eval:!doc.has_component;",
@@ -210,7 +211,8 @@
    "label": "Preferred Display Name"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Select\";",
+   "depends_on": "eval:[\"Select\", 'Boolean'].includes(doc.permitted_data_type)",
+   "description": "These options will be available for selection in Observation. No need to add a blank space before the first option",
    "fieldname": "options",
    "fieldtype": "Small Text",
    "label": "Options"
@@ -337,7 +339,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-06 15:54:08.364540",
+ "modified": "2023-07-09 14:00:33.492809",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
