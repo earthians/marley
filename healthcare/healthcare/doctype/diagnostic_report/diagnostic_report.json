@@ -11,7 +11,7 @@
   "patient",
   "patient_name",
   "gender",
-  "blood_group",
+  "age",
   "column_break_v6l1",
   "naming_series",
   "ref_doctype",
@@ -73,13 +73,6 @@
    "read_only": 1
   },
   {
-   "fetch_from": "patient.blood_group",
-   "fieldname": "blood_group",
-   "fieldtype": "Data",
-   "label": "Blood Group",
-   "read_only": 1
-  },
-  {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
@@ -100,13 +93,20 @@
    "options": "Diagnostic Report",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Age",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-06 08:09:07.739520",
+ "modified": "2023-07-09 15:44:47.294537",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
