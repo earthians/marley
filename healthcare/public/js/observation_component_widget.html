@@ -85,9 +85,9 @@
 											<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
 										</span>
 									</div>
-									{% if (child_obs.observation.remarks) { %}
-										<div class="remarks ql-editor">
-											{{child_obs.observation.remarks}}
+									{% if (child_obs.observation.note) { %}
+										<div class="note ql-editor">
+											{{child_obs.observation.note}}
 										</div>
 									{% } %}
 							</div>
@@ -151,7 +151,7 @@
 	padding-top: 5px;
 }
 
-.remarks {
+.note {
 	width: 85%;
 	float:right;
 	background-color: #f4f5f6;

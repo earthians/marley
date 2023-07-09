@@ -2,11 +2,26 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Observation", {
-	refresh: function(frm) {
+	onload_post_render: function(frm) {
+		frm.trigger("set_options");
+	},
+
+	permitted_data_type: function(frm) {
+		frm.trigger("set_options");
+	},
+
+	options: function(frm) {
+		frm.trigger("set_options");
+	},
+
+	set_options: function(frm) {
 		if (frm.doc.permitted_data_type == "Select") {
 			frm.set_df_property('result_select', 'options', frm.doc.options);
+		} else if (frm.doc.permitted_data_type == "Boolean") {
+			frm.set_df_property('result_boolean', 'options', frm.doc.options);
 		}
 	},
+
 	observation_template: function(frm) {
 		get_medical_codes(frm);
 	},

@@ -2,12 +2,14 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template import (
 	make_item_price,
 	update_item_and_item_price,
 )
+
 
 class ObservationTemplate(Document):
 	def after_insert(self):
@@ -22,6 +24,12 @@ class ObservationTemplate(Document):
 	def validate(self):
 		if self.has_component and self.sample_collection_required:
 			self.sample_collection_required = 0
+
+		if self.permitted_data_type == "Boolean":
+			if len(self.options.split("\n")) > 2:
+				frappe.throw(
+					_("You cannot provide more than 2 options for Boolean result"), frappe.ValidationError
+				)
 
 
 def create_item_from_template(doc):
