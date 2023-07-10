@@ -24,7 +24,7 @@
   "age",
   "gender",
   "column_break_meur",
-  "sample_id",
+  "specimen",
   "sample_collection_time",
   "column_break_yo05",
   "sample_status",
@@ -236,13 +236,6 @@
    "label": "Sample Details"
   },
   {
-   "fieldname": "sample_id",
-   "fieldtype": "Link",
-   "label": "Sample ID",
-   "options": "Specimen",
-   "read_only": 1
-  },
-  {
    "fieldname": "sales_invoice",
    "fieldtype": "Link",
    "label": "Sales Invoice",
@@ -262,7 +255,8 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "reqd": 1
   },
   {
    "fieldname": "sample_collection_time",
@@ -364,11 +358,18 @@
    "fieldname": "tab_more_information",
    "fieldtype": "Tab Break",
    "label": "More Information"
+  },
+  {
+   "fieldname": "specimen",
+   "fieldtype": "Link",
+   "label": "Specimen",
+   "options": "Specimen",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-09 16:03:20.998316",
+ "modified": "2023-07-09 16:25:59.782322",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

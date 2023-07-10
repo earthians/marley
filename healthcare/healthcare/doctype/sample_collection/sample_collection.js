@@ -201,9 +201,9 @@ frappe.ui.form.on("Observation Sample Collection", {
 								"read_only": 1
 							},
 							{
-								"fieldname": "sample_id",
+								"fieldname": "specimen",
 								"fieldtype": "Data",
-								"label": "Sample ID",
+								"label": "Specimen",
 								"read_only": 1
 							},
 						],

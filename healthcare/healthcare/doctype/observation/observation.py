@@ -196,21 +196,20 @@ def edit_observation(observation, data_type, result):
 		observation_doc.result_text = result
 	observation_doc.save()
 
+
 @frappe.whitelist()
 def add_observation(
-	patient, template, data_type, result, doc, docname, parent=None, sample_id=None, invoice=""
+	patient, template, data_type, result, doc, docname, parent=None, specimen=None, invoice=""
 ):
-
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
-	observation_doc.observation = template
 	observation_doc.patient = patient
 	observation_doc.observation_template = template
 	# observation_doc.permitted_data_type = data_type
 	observation_doc.reference_doctype = doc
 	observation_doc.reference_docname = docname
 	observation_doc.sales_invoice = invoice
-	observation_doc.sample_id = sample_id
+	observation_doc.specimen = specimen
 	if data_type in ["Range", "Ratio"]:
 		observation_doc.result_data = result
 	elif data_type in ["Quantity", "Numeric"]:
