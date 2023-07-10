@@ -10,9 +10,14 @@ from healthcare.healthcare.doctype.observation.observation import calculate_age
 class DiagnosticReport(Document):
 	def validate(self):
 		self.set_age()
+		self.set_invoice_status()
 
 	def set_age(self):
 		if not self.age:
 			dob = frappe.db.get_value("Patient", self.patient, "dob")
 			if dob:
 				self.age = calculate_age(dob)
+
+	def set_invoice_status(self):
+		if self.ref_doctype == "Sales Invoice" and self.docname:
+			self.sales_invoice_status = frappe.db.get_value("Sales Invoice", self.docname, "status")
