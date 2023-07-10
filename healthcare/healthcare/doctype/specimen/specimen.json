@@ -10,9 +10,9 @@
  "field_order": [
   "naming_series",
   "speciment_type",
+  "received_time",
   "column_break_wyhn",
   "status",
-  "received_time",
   "section_break_aas5",
   "note"
  ],
@@ -40,11 +40,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "received_time",
-   "fieldtype": "Datetime",
-   "label": "Received Time"
-  },
-  {
    "fieldname": "section_break_aas5",
    "fieldtype": "Section Break"
   },
@@ -52,11 +47,16 @@
    "fieldname": "note",
    "fieldtype": "Text Editor",
    "label": "Note"
+  },
+  {
+   "fieldname": "received_time",
+   "fieldtype": "Datetime",
+   "label": "Received Time"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-02 07:26:35.868485",
+ "modified": "2023-07-09 16:08:51.626651",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Specimen",

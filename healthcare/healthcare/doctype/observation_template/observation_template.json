@@ -158,8 +158,8 @@
   {
    "fieldname": "service_unit",
    "fieldtype": "Link",
-   "label": "Service Unit ",
-   "options": "Healthcare Service Unit"
+   "label": "Service Unit Type",
+   "options": "Healthcare Service Unit Type"
   },
   {
    "depends_on": "eval:doc.observation_category!=\"Imaging\" && !doc.has_component;",
@@ -339,7 +339,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-09 14:00:33.492809",
+ "modified": "2023-07-09 17:30:50.476878",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
