@@ -266,15 +266,19 @@
    "reqd": 1
   },
   {
+   "fetch_from": "specimen.received_time",
    "fieldname": "sample_collection_time",
    "fieldtype": "Datetime",
-   "label": "Sample Collection Time"
+   "label": "Sample Collection Time",
+   "read_only": 1
   },
   {
+   "fetch_from": "specimen.status",
+   "fetch_if_empty": 1,
    "fieldname": "sample_status",
    "fieldtype": "Select",
    "label": "Sample Status",
-   "options": "\nAccepted\nRejected"
+   "options": "\nAvailable\nUnavailable\nUnsatisfactory\nEntered In Error"
   },
   {
    "fetch_from": "observation_template.observation_category",
