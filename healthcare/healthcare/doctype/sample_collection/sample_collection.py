@@ -10,6 +10,9 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 from healthcare.healthcare.doctype.observation.observation import add_observation
+
+from healthcare.healthcare.doctype.observation_template.observation_template import get_observation_template_details
+
 from frappe.utils import now_datetime
 
 
@@ -19,29 +22,12 @@ class SampleCollection(Document):
 		if self.observation_sample_collection:
 			for obs in self.observation_sample_collection:
 				if obs.get("has_component"):
-					observation = add_observation(
-						self.patient,
-						obs.get("observation_template"),
-						"",
-						"",
-						"Sample Collection",
-						self.name,
-						"",
-						"",
-						self.reference_name
-					)
-					component_observations = frappe.get_all(
-						"Observation Component",
-						{"parent": obs.get("observation_template"),
-						"sample_collection_required": 1},
-						"observation_template",
-						order_by="idx"
-					)
+					sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(obs.get("observation_template"))
 					data = []
-					for d in component_observations:
+					for d in sample_reqd_component_obs:
 						obs_temp = frappe.get_value(
 							"Observation Template",
-							d.get("observation_template"),
+							d,
 							[
 								"sample_Type",
 								"sample",
@@ -53,13 +39,11 @@ class SampleCollection(Document):
 							as_dict=True,
 						)
 						obs_temp["status"] = "Open"
-						obs_temp["component_observation_parent"] = observation
 						data.append(obs_temp)
 					frappe.db.set_value(
 						"Observation Sample Collection",
 						obs.get("name"),
 						{
-							"component_observation_parent": observation,
 							"component_observations": json.dumps(data),
 						},
 					)
