@@ -13,6 +13,7 @@ class Observation(Document):
 		self.set_age()
 		self.set_result_time()
 		self.set_status()
+		self.reference = get_observation_reference(self.observation_template, self.age, self.gender)[0].get("display_reference")
 
 	def set_age(self):
 		if not self.age:
@@ -75,8 +76,8 @@ def calculate_age(dob):
 
 @frappe.whitelist()
 def get_observation_details(docname):
-	patient, gender, reference = frappe.get_value(
-		"Diagnostic Report", docname, ["patient", "gender", "docname"]
+	patient, gender, reference, age = frappe.get_value(
+		"Diagnostic Report", docname, ["patient", "gender", "docname", "age"]
 	)
 	observation = frappe.get_all(
 		"Observation",
@@ -97,7 +98,6 @@ def get_observation_details(docname):
 		filters={"sales_invoice": reference, "parent_observation": ""},
 		order_by="creation",
 	)
-	age = calculate_age(frappe.db.get_value("Patient", patient, "dob"))
 	out_data = []
 	obs_length = len(observation)
 	for obs in observation:
@@ -147,7 +147,6 @@ def get_observation_details(docname):
 				obs_dict["observation"] = obs.get("name")
 				obs_dict[obs.get("name")] = obs_list
 				obs_dict["display_name"] = obs.get("observation_template")
-			# obs_dict[str(obs.get("observation_template")) + "|" + str(obs.get("name"))] = obs_list
 			out_data.append(obs_dict)
 			obs_length += len(child_observations)
 
