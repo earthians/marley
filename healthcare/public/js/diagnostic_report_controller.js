@@ -24,7 +24,6 @@ healthcare.Diagnostic.Observation = class Observation {
     create_widget(r) {
 		var me = this;
 		if (r && r.message[0]) {
-			console.log(r.message[0])
 			for (let key in r.message[0]) {
 				this.ObservationWidget = new healthcare.ObservationWidget({
 					wrapper: me.observation_wrapper,
@@ -56,7 +55,6 @@ healthcare.Diagnostic.Observation = class Observation {
 					values.push(val_dict);
 				}
 			}
-			console.log(values)
 			frappe.call({
 				method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
 				args: {
