@@ -1,4 +1,4 @@
-<div class="observation-section grouped-obs">
+<div class="observation-section grouped-obs" style="background-color:var(--bg-color);">
 	<div class="section-body">
 		<div class="observations pr-1">
 				{% if (observation_details[observation_details.observation] && observation_details[observation_details.observation].length>0) { %}
@@ -13,7 +13,7 @@
 						{% for(var j=0, k=observation_details[observation_details.observation].length; j<k; j++) { %}
 						{% var child_obs = observation_details[observation_details.observation][j] %}
 							{% if (child_obs.observation || child_obs.template_reference) { %}
-								<div class="observation" name="{{ child_obs.observation.name }}" addatatype="{{ child_obs.observation.permitted_data_type }}">
+								<div class="observation" name="{{ child_obs.observation.name }}" addatatype="{{ child_obs.observation.permitted_data_type }}" style="background-color:var(--modal-bg);">
 									<div class="observation-details row" style="width: 100%;">
 										<div class="observation-name" id="observation-name" style="width: 20%; vertical-align: middle !important;" value="{{child_obs.observation.name}}">
 											<a href="/app/observation/{{ child_obs.observation.name }}" title="{{ __('Observation') }}">
@@ -86,7 +86,7 @@
 										</span>
 									</div>
 									{% if (child_obs.observation.note) { %}
-										<div class="note">
+										<div class="note ql-editor">
 											{{child_obs.observation.note}}
 										</div>
 									{% } %}
