@@ -67,3 +67,27 @@ def create_item_from_template(doc):
 	frappe.db.set_value("Observation Template", doc.name, "item", item.name)
 
 	doc.reload()
+
+
+def get_observation_template_details(observation_template):
+	query = f'''
+	select
+		CASE WHEN ot.sample_collection_required=0 THEN ot.name END as no_sample_reqd,
+		CASE WHEN ot.sample_collection_required=1 THEN ot.name END as sample_reqd
+	from
+		`tabObservation Component` as oc left join
+		`tabObservation Template` as ot on oc.observation_template=ot.name
+	where
+		oc.parent={frappe.db.escape(observation_template)}
+	'''
+	data = frappe.db.sql(query, as_dict=True)
+	sample_reqd_component_obs = []
+	non_sample_reqd_component_obs = []
+
+	for d in data:
+		if d.get("no_sample_reqd"):
+			non_sample_reqd_component_obs.append(d.get("no_sample_reqd"))
+		elif d.get("sample_reqd"):
+			sample_reqd_component_obs.append(d.get("sample_reqd"))
+
+	return sample_reqd_component_obs, non_sample_reqd_component_obs

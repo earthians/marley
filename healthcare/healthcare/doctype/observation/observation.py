@@ -199,7 +199,7 @@ def edit_observation(observation, data_type, result):
 
 @frappe.whitelist()
 def add_observation(
-	patient, template, data_type, result, doc, docname, parent=None, specimen=None, invoice=""
+	patient, template, data_type=None, result=None, doc=None, docname=None, parent=None, specimen=None, invoice=""
 ):
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
