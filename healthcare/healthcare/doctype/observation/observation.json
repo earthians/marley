@@ -45,6 +45,9 @@
   "time_of_approval",
   "column_break_zrac",
   "observation_method",
+  "reference_section",
+  "reference",
+  "column_break_2ts3",
   "section_break_xbqa",
   "note",
   "description_section",
@@ -387,11 +390,26 @@
    "label": "Observation Method",
    "options": "FHIR Value Set",
    "read_only": 1
+  },
+  {
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Small Text",
+   "label": "Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2ts3",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-10 19:17:00.368001",
+ "modified": "2023-07-10 19:39:09.438866",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
