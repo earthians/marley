@@ -19,6 +19,10 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
 from healthcare.setup import setup_healthcare
 
+from healthcare.healthcare.doctype.observation.observation import add_observation
+
+from healthcare.healthcare.doctype.observation_template.observation_template import get_observation_template_details
+
 @frappe.whitelist()
 def get_healthcare_services_to_invoice(patient, company):
 	patient = frappe.get_doc("Patient", patient)
@@ -506,7 +510,7 @@ def manage_invoice_submit_cancel(doc, method):
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
 		if method == "on_submit":
-			create_sample_collection(doc)
+			create_sample_collection_and_observation(doc)
 
 	if method == "on_submit":
 		if frappe.db.get_single_value("Healthcare Settings", "create_lab_test_on_si_submit"):
@@ -1029,7 +1033,7 @@ def company_on_trash(doc, method):
 		service_unit_doc.delete()
 
 
-def create_sample_collection(doc):
+def create_sample_collection_and_observation(doc):
 	query = f"""
 		select
 			ot.name
@@ -1069,24 +1073,59 @@ def create_sample_collection(doc):
 			)
 		)
 
-	sample_collection = insert_sample_collection(doc)
+	sample_collection = create_sample_collection(doc)
 	for grp in out_data:
-		component_count = 0
 		if grp.get("has_component"):
-			component_count = frappe.db.count(
-				"Observation Component",
-				{"parent": grp.get("name"), "sample_collection_required": 1},
-			)
-		if grp.get("sample_collection_required") or component_count > 0:
-			sample_collection.append(
-				"observation_sample_collection",
-				{
-					"observation_template": grp.get("name"),
-					"container_closure_color": grp.get("color"),
-					"sample": grp.get("sample"),
-					"sample_type": grp.get("sample_type"),
-				},
-			)
+			# parent observation
+			parent_observation = add_observation(
+					doc.patient,
+					grp.get("name"),
+					invoice=doc.name,
+				)
+
+			sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(grp.get("name"))
+			# create observation for non sample_collection_reqd grouped templates
+
+			if len(non_sample_reqd_component_obs)>0:
+				for comp in non_sample_reqd_component_obs:
+					add_observation(
+						doc.patient,
+						comp,
+						parent=parent_observation,
+						invoice=doc.name
+					)
+			# create sample_colleciton child row for  sample_collection_reqd grouped templates
+			if len(sample_reqd_component_obs)>0:
+				sample_collection.append(
+					"observation_sample_collection",
+					{
+						"observation_template": grp.get("name"),
+						"container_closure_color": grp.get("color"),
+						"sample": grp.get("sample"),
+						"sample_type": grp.get("sample_type"),
+						"component_observation_parent": parent_observation,
+					},
+				)
+
+		else:
+			# create observation for non sample_collection_reqd individual templates
+			if not grp.get("sample_collection_required"):
+				add_observation(
+					doc.patient,
+					grp.get("name"),
+					invoice=doc.name,
+				)
+			else:
+				# create sample_colleciton child row for  sample_collection_reqd individual templates
+				sample_collection.append(
+					"observation_sample_collection",
+					{
+						"observation_template": grp.get("name"),
+						"container_closure_color": grp.get("color"),
+						"sample": grp.get("sample"),
+						"sample_type": grp.get("sample_type"),
+					},
+				)
 
 	if (
 		sample_collection
@@ -1095,7 +1134,7 @@ def create_sample_collection(doc):
 		sample_collection.save(ignore_permissions=True)
 
 
-def insert_sample_collection(doc):
+def create_sample_collection(doc):
 	patient = frappe.get_doc("Patient", doc.patient)
 	sample_collection = frappe.new_doc("Sample Collection")
 	sample_collection.patient = patient.name
