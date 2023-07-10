@@ -54,6 +54,7 @@
   "reference_doctype",
   "reference_docname",
   "sales_invoice",
+  "sales_invoice_status",
   "service_request",
   "column_break_wwnp",
   "parent_observation"
@@ -373,11 +374,18 @@
    "label": "Specimen",
    "options": "Specimen",
    "read_only": 1
+  },
+  {
+   "fetch_from": "sales_invoice.status",
+   "fieldname": "sales_invoice_status",
+   "fieldtype": "Data",
+   "label": "Sales Invoice Status",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-09 16:25:59.782322",
+ "modified": "2023-07-10 18:07:33.906197",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
