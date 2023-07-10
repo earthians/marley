@@ -97,7 +97,7 @@
   },
   {
    "fieldname": "age",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Age",
    "read_only": 1
