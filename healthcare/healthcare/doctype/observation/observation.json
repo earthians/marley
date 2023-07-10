@@ -43,6 +43,8 @@
   "options",
   "time_of_result",
   "time_of_approval",
+  "column_break_zrac",
+  "observation_method",
   "section_break_xbqa",
   "note",
   "description_section",
@@ -373,11 +375,23 @@
    "fieldtype": "Data",
    "label": "Sales Invoice Status",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_zrac",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "observation_template.method",
+   "fieldname": "observation_method",
+   "fieldtype": "Link",
+   "label": "Observation Method",
+   "options": "FHIR Value Set",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-10 18:07:33.906197",
+ "modified": "2023-07-10 19:17:00.368001",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
