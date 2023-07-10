@@ -16,6 +16,7 @@
   "naming_series",
   "ref_doctype",
   "docname",
+  "sales_invoice_status",
   "sample_collection",
   "section_break_wtn1",
   "observation",
@@ -100,13 +101,19 @@
    "in_list_view": 1,
    "label": "Age",
    "read_only": 1
+  },
+  {
+   "fieldname": "sales_invoice_status",
+   "fieldtype": "Data",
+   "label": "Sales Invoice Status",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-09 15:44:47.294537",
+ "modified": "2023-07-10 18:09:26.972766",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
