@@ -1,14 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "format:{YY}{MM}{DD}{#####}",
  "creation": "2023-07-02 07:19:59.158538",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
   "speciment_type",
   "received_time",
   "column_break_wyhn",
@@ -17,12 +16,6 @@
   "note"
  ],
  "fields": [
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "SPEC-.YYYY.-"
-  },
   {
    "fieldname": "status",
    "fieldtype": "Select",
@@ -56,11 +49,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-09 16:08:51.626651",
+ "modified": "2023-07-11 19:50:33.687181",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Specimen",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
