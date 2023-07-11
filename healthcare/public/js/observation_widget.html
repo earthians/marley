@@ -25,7 +25,9 @@
 								{% } else if (['Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_float }}">
-
+								{% } else if (observation_details.observation.permitted_data_type=='Text') { %}
+									<div class="">
+										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">
 								{% } else if (observation_details.observation.permitted_data_type=='Select') { %}
 								<div class="control-input" style="display: flex;">
 									<select class="input-with-feedback form-control ellipsis result-text" style="float:left" id="{{observation_details.observation.name}}">
@@ -46,7 +48,7 @@
 											</svg>
 										</div>
 								{% } %}
-								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select'].includes(observation_details.observation.permitted_data_type)) { %}
+								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(observation_details.observation.permitted_data_type)) { %}
 								</div>
 								{% } %}
 							</div>
@@ -66,11 +68,6 @@
 								{% } %}
 							</div>
 						</div>
-						{% if (observation_details.observation.permitted_data_type=='Text')  { %}
-						<div class="obs-text">
-							<textarea class="input-with-feedback form-control textresult-text result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">{{ observation_details.observation.result_text }}</textarea>
-						</div>
-						{% } %}
 						<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
 							<div style="width: 10%;">
 								<span class="add-note-observation-btn btn btn-link">
