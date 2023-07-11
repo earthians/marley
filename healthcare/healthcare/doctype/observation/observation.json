@@ -24,6 +24,9 @@
   "column_break_qxq5",
   "age",
   "gender",
+  "section_break_zz5k",
+  "healthcare_practitioner",
+  "practitioner_name",
   "column_break_meur",
   "specimen",
   "sample_collection_time",
@@ -420,11 +423,28 @@
    "fieldname": "observation_idx",
    "fieldtype": "Int",
    "label": "Observation idx"
+  },
+  {
+   "fieldname": "section_break_zz5k",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "healthcare_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fetch_from": "healthcare_practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-11 15:31:15.459210",
+ "modified": "2023-07-11 16:07:32.633571",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

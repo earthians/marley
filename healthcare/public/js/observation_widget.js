@@ -17,7 +17,6 @@ healthcare.ObservationWidget = class {
 			);
 			$(observation_html).appendTo(me.wrapper);
 		} else {
-
 			let observation_html = frappe.render_template(
 				'observation_widget',
 				{

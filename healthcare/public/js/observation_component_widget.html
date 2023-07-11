@@ -3,12 +3,21 @@
 		<div class="observations pr-1">
 				{% if (observation_details[observation_details.observation] && observation_details[observation_details.observation].length>0) { %}
 				<div class="">
-						<div class="flex justify-between" style="padding-bottom: 10px;">
+						<div class="flex" style="padding-bottom: 10px;">
 								<b>
 									<a href="/app/observation/{{ observation_details.observation }}" title="{{ __('Grouped Observations') }}">
 										{%= observation_details.display_name %}
 									</a>
 								</b>
+								<div style="padding-left: 5px;">
+									<a href="/app/healthcare-practitioner/{{ observation_details.healthcare_practitioner }}" title="{{ __('Practitioner') }}">
+										{% if (observation_details.practitioner_name) { %}
+											{%= observation_details.practitioner_name %}
+										{% } else { %}
+											{%= observation_details.healthcare_practitioner %}
+										{% } %}
+									</a>
+								</div>
 						</div>
 						{% for(var j=0, k=observation_details[observation_details.observation].length; j<k; j++) { %}
 						{% var child_obs = observation_details[observation_details.observation][j] %}
@@ -25,12 +34,21 @@
 											</a>
 										</div>
 										<div style="width: 19%;">
-											{% if (child_obs.observation.posting_datetime) { %}
-												{{ frappe.datetime.global_date_format(child_obs.observation.posting_datetime) }}
-											{% } %}
+											<div class="">
+												{% if (child_obs.observation.specimen) { %}
+												<a href="/app/specimen/{{ child_obs.observation.specimen }}" title="{{ child_obs.observation.specimen }}">
+													{%= child_obs.observation.specimen %}
+												</a>
+												{% } %}
+											</div>
+											<div class="text-muted" style="font-size: 10px;" >
+												{% if (child_obs.observation.received_time) { %}
+													{{ frappe.datetime.global_date_format(child_obs.observation.received_time) }}
+												{% } %}
+											</div>
 										</div>
 										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(child_obs.observation.permitted_data_type)) { %}
-										<div class="result" style="padding-left:30px; padding-right:10px; width: 23%;">
+										<div class="result obs-field" style="padding-left:30px; padding-right:10px; width: 20%;">
 											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
 													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}">
@@ -58,6 +76,11 @@
 													</div>
 											{% } %}
 											</div>
+											<div class="text-muted" style="font-size: 10px; padding-left: 25px;">
+												{% if (child_obs.observation.time_of_result) { %}
+													{{ frappe.datetime.global_date_format(child_obs.observation.time_of_result) }}
+												{% } %}
+											</div>
 										</div>
 										{% } %}
 										<div style="width: 7%;">
@@ -83,7 +106,7 @@
 										</span>
 									</div>
 									{% if (child_obs.observation.note) { %}
-										<div class="note ql-editor">
+										<div class="note">
 											{{child_obs.observation.note}}
 										</div>
 									{% } %}
