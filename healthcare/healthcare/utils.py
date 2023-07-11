@@ -487,8 +487,6 @@ def get_healthcare_service_item(is_inpatient):
 	return service_item
 
 
-<<<<<<< HEAD
-=======
 def get_practitioner_charge(practitioner, is_inpatient):
 	if is_inpatient:
 		practitioner_charge = frappe.db.get_value(
@@ -510,7 +508,6 @@ def manage_invoice_validate(doc, method):
 				item.service_unit = doc.service_unit
 
 
->>>>>>> db9b33e809... fix: add Service Unit, Practitioner and Department custom field in Sales Invoice Item
 def manage_invoice_submit_cancel(doc, method):
 	if not doc.patient:
 		return
