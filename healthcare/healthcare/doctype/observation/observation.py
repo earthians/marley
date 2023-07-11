@@ -69,7 +69,7 @@ class Observation(Document):
 
 	def validate_input(self):
 		if self.permitted_data_type in ["Quantity", "Numeric"]:
-			if not self.result_data.isdigit():
+			if self.result_data and not self.result_data.isdigit():
 				frappe.throw(_("Non numeric result {0} is not allowed for Permitted Type {1}").format(frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)))
 
 
@@ -93,18 +93,7 @@ def get_observation_details(docname):
 	observation = frappe.get_all(
 		"Observation",
 		fields=[
-			"name",
-			"observation_template",
-			"posting_datetime",
-			"result_data",
-			"result_text",
-			"result_float",
-			"result_select",
-			"permitted_data_type",
-			"has_component",
-			"parent_observation",
-			"note",
-			"options",
+			"*"
 		],
 		filters={"sales_invoice": reference, "parent_observation": ""},
 		order_by="creation",
@@ -128,17 +117,7 @@ def get_observation_details(docname):
 			child_observations = frappe.get_all(
 				"Observation",
 				fields=[
-					"name",
-					"observation_template",
-					"posting_datetime",
-					"result_data",
-					"result_text",
-					"result_float",
-					"result_select",
-					"permitted_data_type",
-					"parent_observation",
-					"note",
-					"options",
+					"*"
 				],
 				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"]},
 				order_by="observation_idx",
