@@ -31,12 +31,9 @@
 										</div>
 										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(child_obs.observation.permitted_data_type)) { %}
 										<div class="result" style="padding-left:30px; padding-right:10px; width: 23%;">
-											{% if( ['Range', 'Ratio'].includes(child_obs.observation.permitted_data_type)) { %}
+											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
 													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}">
-											{% } else if (['Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
-												<div class="">
-													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_float }}">
 											{% } else if (child_obs.observation.permitted_data_type=='Text') { %}
 											<div class="">
 												<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_text }}">
