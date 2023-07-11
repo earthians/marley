@@ -38,19 +38,21 @@
 												<div class="">
 													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_float }}">
 											{% } else if (child_obs.observation.permitted_data_type=='Select') { %}
-												<div class="control-input">
-												<select class="input-with-feedback form-control ellipsis result-text" data-fieldtype="Select" id="{{child_obs.observation.name}}">
-													{% for (let opts in child_obs.observation.options_list) { %}
-													{{child_obs.observation.options_list[opts]}}
-													{% var selected = "" %}
-													{% if (child_obs.observation.options_list[opts] == 'Dark Yellow') { %}
-														{% selected = "selected" %}
-													{% } %}
-													<option value="{{child_obs.observation.options_list[opts]}}" {{ selected }}>{{child_obs.observation.options_list[opts]}}</option>
-													{% } %}
+												<div class="control-input" style="display: flex;">
+													<select class="input-with-feedback form-control ellipsis result-text" style="float:left" data-fieldtype="Select" id="{{child_obs.observation.name}}">
+														<option value="Null"></option>
+														{% for (let opts in child_obs.observation.options_list) { %}
+															{% if (child_obs.observation.options_list[opts]) { %}
+																{% var selected = "" %}
+																{% if (child_obs.observation.options_list[opts] == child_obs.observation.result_select) { %}
+																	{% selected = "selected" %}
+																{% } %}
+																<option value="{{child_obs.observation.options_list[opts]}}" {{ selected }}>{{child_obs.observation.options_list[opts]}}</option>
+															{% } %}
+														{% } %}
 													</select>
-													<div class="select-icon ">
-														<svg class="icon  icon-sm" style="">
+													<div class="select-icon obser-select">
+														<svg class="icon  icon-sm" style="margin-top: 7px;">
 															<use class="" href="#icon-select"></use>
 														</svg>
 													</div>
@@ -157,6 +159,14 @@
 	background-color: #f4f5f6;
 	padding: 5px;
 	border-radius: 10px;
+}
+
+.obser-select{
+	float:right;
+	background-color: var(--control-bg);
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+	margin-left: -2px;
 }
 
 </style>
