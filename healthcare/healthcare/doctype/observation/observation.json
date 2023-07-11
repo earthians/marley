@@ -62,7 +62,8 @@
   "sales_invoice_status",
   "service_request",
   "column_break_wwnp",
-  "parent_observation"
+  "parent_observation",
+  "observation_idx"
  ],
  "fields": [
   {
@@ -413,11 +414,16 @@
   {
    "fieldname": "column_break_2ts3",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "observation_idx",
+   "fieldtype": "Int",
+   "label": "Observation idx"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-10 19:39:09.438866",
+ "modified": "2023-07-11 07:20:02.042533",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
