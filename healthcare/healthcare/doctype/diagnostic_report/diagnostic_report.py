@@ -12,6 +12,12 @@ class DiagnosticReport(Document):
 		self.set_age()
 		self.set_invoice_status()
 
+	def before_insert(self):
+		if self.ref_doctype == "Sales Invoice" and self.docname:
+			self.practitioner =  frappe.db.get_value(self.ref_doctype, self.docname, "ref_practitioner")
+
+
+
 	def set_age(self):
 		if not self.age:
 			dob = frappe.db.get_value("Patient", self.patient, "dob")

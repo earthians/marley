@@ -18,6 +18,8 @@
   "docname",
   "sales_invoice_status",
   "sample_collection",
+  "practitioner",
+  "practitioner_name",
   "section_break_wtn1",
   "observation",
   "amended_from"
@@ -111,13 +113,26 @@
    "fieldtype": "Data",
    "label": "Sales Invoice Status",
    "read_only": 1
+  },
+  {
+   "fieldname": "practitioner",
+   "fieldtype": "Link",
+   "label": "Practitioner",
+   "options": "Healthcare Practitioner",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-11 06:41:50.780194",
+ "modified": "2023-07-11 18:37:50.092156",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
