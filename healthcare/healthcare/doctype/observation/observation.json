@@ -160,7 +160,7 @@
    "read_only_depends_on": "observation_template"
   },
   {
-   "depends_on": "eval:[\"Range\", 'Ratio'].includes(doc.permitted_data_type)",
+   "depends_on": "eval:[\"Range\", \"Ratio\", \"Quantity\", \"Numeric\"].includes(doc.permitted_data_type)",
    "fieldname": "result_data",
    "fieldtype": "Data",
    "label": "Result"
@@ -175,6 +175,7 @@
    "depends_on": "eval:[\"Quantity\", 'Numeric'].includes(doc.permitted_data_type)",
    "fieldname": "result_float",
    "fieldtype": "Float",
+   "hidden": 1,
    "label": "Result"
   },
   {
@@ -274,19 +275,15 @@
    "reqd": 1
   },
   {
-   "fetch_from": "specimen.received_time",
    "fieldname": "sample_collection_time",
    "fieldtype": "Datetime",
-   "label": "Sample Collection Time",
-   "read_only": 1
+   "label": "Sample Collection Time"
   },
   {
-   "fetch_from": "specimen.status",
-   "fetch_if_empty": 1,
    "fieldname": "sample_status",
    "fieldtype": "Select",
    "label": "Sample Status",
-   "options": "\nAvailable\nUnavailable\nUnsatisfactory\nEntered In Error"
+   "options": "\nAccepted\nRejected"
   },
   {
    "fetch_from": "observation_template.observation_category",
@@ -427,7 +424,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-11 07:20:02.042533",
+ "modified": "2023-07-11 15:13:33.849269",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
