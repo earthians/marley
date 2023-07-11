@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import json
-
+from frappe import _
 import frappe
 from frappe.model.document import Document
 from frappe.utils import date_diff, getdate, now_datetime, today
@@ -16,6 +16,7 @@ class Observation(Document):
 		self.reference = get_observation_reference(
 			self.observation_template, self.age, self.gender)[0].get("display_reference"
 		)
+		self.validate_input()
 
 	def before_insert(self):
 		set_observation_idx(self)
@@ -65,6 +66,11 @@ class Observation(Document):
 		# "result_period_to",
 
 		return False
+
+	def validate_input(self):
+		if self.permitted_data_type in ["Quantity", "Numeric"]:
+			if not self.result_data.isdigit():
+				frappe.throw(_("Non numeric result {0} is not allowed for Permitted Type {1}").format(frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)))
 
 
 def calculate_age(dob):
