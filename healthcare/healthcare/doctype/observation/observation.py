@@ -13,7 +13,12 @@ class Observation(Document):
 		self.set_age()
 		self.set_result_time()
 		self.set_status()
-		self.reference = get_observation_reference(self.observation_template, self.age, self.gender)[0].get("display_reference")
+		self.reference = get_observation_reference(
+			self.observation_template, self.age, self.gender)[0].get("display_reference"
+		)
+
+	def before_insert(self):
+		set_observation_idx(self)
 
 	def set_age(self):
 		if not self.age:
@@ -130,7 +135,7 @@ def get_observation_details(docname):
 					"options",
 				],
 				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"]},
-				order_by="creation",
+				order_by="observation_idx",
 			)
 			obs_list = []
 			obs_dict = {}
@@ -257,3 +262,11 @@ def record_observation_result(values):
 def add_note(note, observation):
 	if note and observation:
 		frappe.db.set_value("Observation", observation, "note", note)
+
+
+def set_observation_idx(doc):
+	if doc.parent_observation:
+		parent_template = frappe.db.get_value("Observation", doc.parent_observation, "observation_template")
+		idx = frappe.db.get_value("Observation Component", {"parent": parent_template, "observation_template":doc.observation_template}, "idx")
+		if idx:
+			doc.observation_idx = idx
