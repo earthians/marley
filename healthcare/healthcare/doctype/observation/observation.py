@@ -192,10 +192,10 @@ def get_observation_reference(observation_template, age, patient_sex):
 @frappe.whitelist()
 def edit_observation(observation, data_type, result):
 	observation_doc = frappe.get_doc("Observation", observation)
-	if data_type in ["Range", "Ratio"]:
+	if data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
 		observation_doc.result_data = result
-	elif data_type in ["Quantity", "Numeric"]:
-		observation_doc.result_float = result
+	# elif data_type in ["Quantity", "Numeric"]:
+	# 	observation_doc.result_float = result
 	elif data_type == "Text":
 		observation_doc.result_text = result
 	observation_doc.save()
@@ -222,10 +222,10 @@ def add_observation(
 	observation_doc.reference_docname = docname
 	observation_doc.sales_invoice = invoice
 	observation_doc.specimen = specimen
-	if data_type in ["Range", "Ratio"]:
+	if data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
 		observation_doc.result_data = result
-	elif data_type in ["Quantity", "Numeric"]:
-		observation_doc.result_float = result
+	# elif data_type in ["Quantity", "Numeric"]:
+	# 	observation_doc.result_float = result
 	elif data_type == "Text":
 		observation_doc.result_text = result
 	if parent:
@@ -255,9 +255,9 @@ def record_observation_result(values):
 				as_dict=True,
 			)
 
-			if observation_details.get("permitted_data_type") in ["Quantity", "Numeric"]:
-				if val.get("result") != observation_details.get("result_float"):
-					frappe.db.set_value("Observation", val["observation"], "result_float", val.get("result"))
+			if observation_details.get("permitted_data_type") in ["Range", "Ratio", "Quantity", "Numeric"]:
+				if val.get("result") != observation_details.get("result_data"):
+					frappe.db.set_value("Observation", val["observation"], "result_data", val.get("result"))
 			elif observation_details.get("permitted_data_type") == "Text":
 				if val.get("result") != observation_details.get("result_text"):
 					frappe.db.set_value("Observation", val["observation"], "result_text", val.get("result"))

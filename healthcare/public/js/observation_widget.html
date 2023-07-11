@@ -19,12 +19,9 @@
 								{% } %}
 							</div>
 							<div class="result obs-field" style="width: 20%;">
-								{% if( ['Range', 'Ratio'].includes(observation_details.observation.permitted_data_type)) { %}
+								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_data }}">
-								{% } else if (['Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
-									<div class="">
-										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_float }}">
 								{% } else if (observation_details.observation.permitted_data_type=='Text') { %}
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">
