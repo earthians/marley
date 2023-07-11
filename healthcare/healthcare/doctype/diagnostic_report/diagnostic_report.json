@@ -26,6 +26,8 @@
   {
    "fieldname": "patient",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Patient",
    "options": "Patient",
    "read_only": 1
@@ -52,6 +54,8 @@
   {
    "fieldname": "docname",
    "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Docname",
    "options": "ref_doctype",
    "read_only": 1
@@ -113,7 +117,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-10 18:09:26.972766",
+ "modified": "2023-07-11 06:41:50.780194",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
