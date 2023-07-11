@@ -91,7 +91,8 @@ healthcare.Diagnostic.Observation = class Observation {
 						"label": "Note",
 						"fieldname": "note",
 						"fieldtype": "Text Editor",
-						"default": result
+						"default": result,
+						reqd: 1,
 					}
 				],
 				primary_action: function() {

@@ -77,7 +77,13 @@ def create_observation(selected, sample_collection, component_observations=[], c
 	patient = frappe.db.get_value("Sample Collection", sample_collection, "patient")
 	comp_obs_ref = create_specimen(selected, component_observations)
 	for i, obs in enumerate(selected):
+		parent_observation = obs.get("component_observation_parent")
+
+		if child_name:
+			parent_observation = frappe.db.get_value("Observation Sample Collection", child_name, "component_observation_parent")
+
 		if obs.get("status") == "Open":
+			# non has_component templates
 			if not obs.get("has_component") or obs.get("has_component") == 0:
 				observation = add_observation(
 					patient,
@@ -86,7 +92,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 					"",
 					"Sample Collection",
 					sample_collection,
-					obs.get("component_observation_parent"),
+					parent_observation,
 					comp_obs_ref.get(obs.get("name")) or comp_obs_ref.get(i+1) or comp_obs_ref.get(obs.get("idx")),
 					invoice
 				)
@@ -101,7 +107,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 						},
 					)
 			else:
-				# to deal the component template checket from main table and collected
+				# to deal the component template checked from main table and collected
 				if obs.get("component_observations"):
 					component_observations = json.loads(obs.get("component_observations"))
 					for j, comp in enumerate(component_observations):

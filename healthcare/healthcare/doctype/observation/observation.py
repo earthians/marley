@@ -109,8 +109,10 @@ def get_observation_details(docname):
 				reference_details = get_observation_reference(obs.get("observation_template"), age, gender)
 				if reference_details:
 					observation_data["template_reference"] = reference_details[0]
-				observation_data["observation"] = obs
+				if obs.get("specimen"):
+					obs["received_time"] = frappe.get_value("Specimen", obs.get("specimen"), "received_time")
 				out_data.append(observation_data)
+				observation_data["observation"] = obs
 
 		else:
 			obs_length -= 1
@@ -127,6 +129,8 @@ def get_observation_details(docname):
 			for child in child_observations:
 				if child.get("permitted_data_type") == "Select" and child.get("options"):
 					child["options_list"] = child.get("options").split("\n")
+				if child.get("specimen"):
+					child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
 				observation_data = {}
 				reference_details = get_observation_reference(child.get("observation_template"), age, gender)
 				observation_data["template_reference"] = reference_details[0]
@@ -137,6 +141,8 @@ def get_observation_details(docname):
 				obs_dict["observation"] = obs.get("name")
 				obs_dict[obs.get("name")] = obs_list
 				obs_dict["display_name"] = obs.get("observation_template")
+				obs_dict["practitioner_name"] = obs.get("practitioner_name")
+				obs_dict["healthcare_practitioner"] = obs.get("healthcare_practitioner")
 			out_data.append(obs_dict)
 			obs_length += len(child_observations)
 
@@ -151,6 +157,7 @@ def get_observation_reference(observation_template, age, patient_sex):
 	reference_data["observation_options"] = template_doc.options
 	reference_data["permitted_unit"] = template_doc.permitted_unit
 	reference_data["preferred_display_name"] = template_doc.preferred_display_name
+	reference_data["sample"] = template_doc.sample
 	display_reference = ""
 	for child in template_doc.observation_reference_range:
 		if child.age == "All" or (
@@ -241,14 +248,16 @@ def record_observation_result(values):
 			)
 
 			if observation_details.get("permitted_data_type") in ["Range", "Ratio", "Quantity", "Numeric"]:
+				if observation_details.get("permitted_data_type")  in ["Quantity", "Numeric"] and val.get("result") and not val.get("result").isdigit():
+					return
 				if val.get("result") != observation_details.get("result_data"):
-					frappe.db.set_value("Observation", val["observation"], "result_data", val.get("result"))
+					frappe.db.set_value("Observation", val["observation"], {"result_data": val.get("result"), "time_of_result": now_datetime()})
 			elif observation_details.get("permitted_data_type") == "Text":
 				if val.get("result") != observation_details.get("result_text"):
-					frappe.db.set_value("Observation", val["observation"], "result_text", val.get("result"))
+					frappe.db.set_value("Observation", val["observation"], {"result_text": val.get("result"), "time_of_result": now_datetime()})
 			elif observation_details.get("permitted_data_type") == "Select":
 				if val.get("result") != observation_details.get("result_select"):
-					frappe.db.set_value("Observation", val["observation"], "result_select", val.get("result"))
+					frappe.db.set_value("Observation", val["observation"], {"result_select": val.get("result"), "time_of_result": now_datetime()})
 
 
 @frappe.whitelist()

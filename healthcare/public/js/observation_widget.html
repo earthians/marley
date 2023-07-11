@@ -1,10 +1,11 @@
-<div class="observation-section">
+<div class="observation-section grouped-obs" style="background-color:var(--bg-color);">
+	<div class="observation-section">
 	<div class="section-body">
 		<div class="observations pr-1">
 				{% if (observation_details.observation || observation_details.template_reference) { %}
-					<div class="observation" style="width: 100%;" name="{{ observation_details.observation.name }}" addatatype="{{ observation_details.observation.permitted_data_type }}">
-						<div class="observation-details row" name="{{ observation_details.observation.name }}">
-							<div class="observation-name obs-field" id="observation-name" style="width: 17%;" value="{{observation_details.observation.name}}">
+					<div class="observation" style="background-color:var(--modal-bg);" name="{{ observation_details.observation.name }}" addatatype="{{ observation_details.observation.permitted_data_type }}" >
+						<div class="observation-details row" style="width: 100%;" name="{{ observation_details.observation.name }}">
+							<div class="observation-name obs-field" id="observation-name" style="width: 20%;" value="{{observation_details.observation.name}}">
 								<a href="/app/observation/{{ observation_details.observation.name }}" title="{{ __('Observation') }}">
 									{% if (observation_details.template_reference.preferred_display_name) { %}
 										{%= observation_details.template_reference.preferred_display_name %}
@@ -14,11 +15,20 @@
 								</a>
 							</div>
 							<div class="obs-field" style="width: 19%;">
-								{% if (observation_details.observation.posting_datetime) { %}
-									{{ frappe.datetime.global_date_format(observation_details.observation.posting_datetime) }}
+								<div class="">
+									{% if (observation_details.observation.specimen) { %}
+									<a href="/app/specimen/{{ observation_details.observation.specimen }}" title="{{ observation_details.observation.specimen }}">
+										{%= observation_details.observation.specimen %}
+									</a>
+									{% } %}
+								</div>
+								<div class="text-muted" style="font-size: 10px;">
+								{% if (observation_details.observation.received_time) { %}
+									{{ frappe.datetime.global_date_format(observation_details.observation.received_time) }}
 								{% } %}
+								</div>
 							</div>
-							<div class="result obs-field" style="width: 20%;">
+							<div class="result obs-field" style="padding-left:30px; padding-right:10px; width: 20%;">
 								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_data }}">
@@ -47,6 +57,11 @@
 								{% } %}
 								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(observation_details.observation.permitted_data_type)) { %}
 								</div>
+								<div class="text-muted" style="font-size: 10px; padding-left: 25px;">
+									{% if (observation_details.observation.time_of_result) { %}
+										{{ frappe.datetime.global_date_format(observation_details.observation.time_of_result) }}
+									{% } %}
+								</div>
 								{% } %}
 							</div>
 							<div class="obs-field" style="width: 7%;">
@@ -59,7 +74,7 @@
 									{%= observation_details.template_reference.method %}
 								{% } %}
 							</div>
-							<div class="obs-field" style="width: 15%;">
+							<div class="obs-field" style="width: 11%;">
 								{% if (observation_details.template_reference.display_reference) { %}
 									{{observation_details.template_reference.display_reference}}
 								{% } %}
@@ -71,7 +86,7 @@
 									<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
 								</span>
 							</div>
-						<div class="note ql-editor">
+						<div class="note">
 							{% if (observation_details.observation.note)  { %}
 								{{observation_details.observation.note}}
 							{% } %}
@@ -83,6 +98,7 @@
 	</div>
 </div>
 	</div>
+</div>
 
 
 <style>
