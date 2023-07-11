@@ -29,7 +29,7 @@
 												{{ frappe.datetime.global_date_format(child_obs.observation.posting_datetime) }}
 											{% } %}
 										</div>
-										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select'].includes(child_obs.observation.permitted_data_type)) { %}
+										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(child_obs.observation.permitted_data_type)) { %}
 										<div class="result" style="padding-left:30px; padding-right:10px; width: 23%;">
 											{% if( ['Range', 'Ratio'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
@@ -37,6 +37,9 @@
 											{% } else if (['Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
 													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_float }}">
+											{% } else if (child_obs.observation.permitted_data_type=='Text') { %}
+											<div class="">
+												<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_text }}">
 											{% } else if (child_obs.observation.permitted_data_type=='Select') { %}
 												<div class="control-input" style="display: flex;">
 													<select class="input-with-feedback form-control ellipsis result-text" style="float:left" data-fieldtype="Select" id="{{child_obs.observation.name}}">
@@ -76,11 +79,6 @@
 											{% } %}
 										</div>
 								</div>
-								{% if (child_obs.observation.permitted_data_type=='Text')  { %}
-								<div class="obs-text">
-									<textarea class="input-with-feedback form-control textresult-text result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_text }}">{{ child_obs.observation.result_text }}</textarea>
-								</div>
-								{% } %}
 								<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
 									<div style="width: 10%;">
 										<span class="add-note-observation-btn btn btn-link">
