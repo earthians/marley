@@ -27,17 +27,24 @@
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_float }}">
 
 								{% } else if (observation_details.observation.permitted_data_type=='Select') { %}
-									<div class="">
-									<select class="input-with-feedback form-control ellipsis result-text" id="{{observation_details.observation.name}}">
+								<div class="control-input" style="display: flex;">
+									<select class="input-with-feedback form-control ellipsis result-text" style="float:left" id="{{observation_details.observation.name}}">
+										<option value="Null"></option>
 										{% for (let opts in observation_details.observation.options_list) { %}
-										{{observation_details.observation.options_list[opts]}}
-										{% var selected = "" %}
-										{% if (observation_details.observation.options_list[opts] == 'Dark Yellow') { %}
-											{% selected = "selected" %}
-										{% } %}
-										<option value="{{observation_details.observation.options_list[opts]}}">{{observation_details.observation.options_list[opts]}}</option>
+											{% if (observation_details.observation.options_list[opts]) { %}
+												{% var selected = "" %}
+												{% if (observation_details.observation.options_list[opts] == observation_details.observation.result_select) { %}
+													{% selected = "selected" %}
+												{% } %}
+												<option value="{{observation_details.observation.options_list[opts]}}"{{ selected }}>{{observation_details.observation.options_list[opts]}}</option>
+											{% } %}
 										{% } %}
 										</select>
+										<div class="select-icon obser-select">
+											<svg class="icon  icon-sm" style="margin-top: 7px;">
+												<use class="" href="#icon-select"></use>
+											</svg>
+										</div>
 								{% } %}
 								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select'].includes(observation_details.observation.permitted_data_type)) { %}
 								</div>
