@@ -30,7 +30,7 @@ healthcare.Diagnostic.Observation = class Observation {
 					data: r.message[0][key],
 				});
 			}
-			for (var i = 0; i < r.message[1]-1; i++) {
+			for (var i = 0; i < r.message[1]; i++) {
 				document.getElementsByClassName("result-text")[i].onchange = function() {
 					me.frm.dirty()
 				};
