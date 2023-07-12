@@ -409,7 +409,7 @@ def cancel_appointment(appointment_id):
 
 	if appointment.event:
 		event_doc = frappe.get_doc("Event", appointment.event)
-		event_doc.event_type = "Cancelled"
+		event_doc.status = "Cancelled"
 		event_doc.save()
 
 	frappe.msgprint(msg)
