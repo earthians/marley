@@ -3,7 +3,7 @@
 	<div class="section-body">
 		<div class="observations pr-1">
 				{% if (observation_details.observation || observation_details.template_reference) { %}
-					<div class="observation" style="background-color:var(--modal-bg);" name="{{ observation_details.observation.name }}" addatatype="{{ observation_details.observation.permitted_data_type }}" >
+					<div class="observation" name="{{ observation_details.observation.name }}" addatatype="{{ observation_details.observation.permitted_data_type }}" >
 						<div class="observation-details row" style="width: 100%;" name="{{ observation_details.observation.name }}">
 							<div class="observation-name obs-field" id="observation-name" style="width: 20%;" value="{{observation_details.observation.name}}">
 								<a href="/app/observation/{{ observation_details.observation.name }}" title="{{ __('Observation') }}">
