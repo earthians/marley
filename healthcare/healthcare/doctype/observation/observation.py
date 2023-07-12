@@ -72,7 +72,7 @@ class Observation(Document):
 
 	def validate_input(self):
 		if self.permitted_data_type in ["Quantity", "Numeric"]:
-			if not is_numbers_with_exceptions(self.result_data):
+			if self.result_data and not is_numbers_with_exceptions(self.result_data):
 				frappe.throw(
 					_(
 						"Non numeric result {0} is not allowed for Permitted Data Type {1}"
@@ -265,7 +265,7 @@ def record_observation_result(values):
 				if observation_details.get("permitted_data_type") in [
 					"Quantity",
 					"Numeric",
-				] and not is_numbers_with_exceptions(val.get("result")):
+				] and val.get("result") and not is_numbers_with_exceptions(val.get("result")):
 					frappe.msgprint(
 						_("Non numeric result {0} is not allowed for Permitted Type {1}").format(
 							frappe.bold(val.get("result")),
