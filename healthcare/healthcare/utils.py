@@ -1041,6 +1041,7 @@ def company_on_trash(doc, method):
 
 
 def create_sample_collection_and_observation(doc):
+	insert_diagnostic_report(doc)
 	query = f"""
 		select
 			ot.name
@@ -1151,3 +1152,11 @@ def create_sample_collection(doc):
 	sample_collection.reference_doc = doc.doctype
 	sample_collection.reference_name = doc.name
 	return sample_collection
+
+def insert_diagnostic_report(doc):
+	diagnostic_report = frappe.new_doc("Diagnostic Report")
+	diagnostic_report.patient = doc.patient
+	diagnostic_report.ref_doctype = doc.doctype
+	diagnostic_report.docname = doc.name
+	# diagnostic_report.sample_collection = doc.name
+	diagnostic_report.save()
