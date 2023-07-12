@@ -4,6 +4,9 @@
 import json
 from frappe import _
 import frappe
+
+import re
+
 from frappe.model.document import Document
 from frappe.utils import date_diff, getdate, now_datetime, today
 
@@ -69,8 +72,14 @@ class Observation(Document):
 
 	def validate_input(self):
 		if self.permitted_data_type in ["Quantity", "Numeric"]:
-			if self.result_data and not self.result_data.isdigit():
-				frappe.throw(_("Non numeric result {0} is not allowed for Permitted Type {1}").format(frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)))
+			if not is_numbers_with_exceptions(self.result_data):
+				frappe.throw(
+					_(
+						"Non numeric result {0} is not allowed for Permitted Data Type {1}"
+					).format(
+						frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)
+					)
+				)
 
 
 def calculate_age(dob):
@@ -247,9 +256,26 @@ def record_observation_result(values):
 				as_dict=True,
 			)
 
-			if observation_details.get("permitted_data_type") in ["Range", "Ratio", "Quantity", "Numeric"]:
-				if observation_details.get("permitted_data_type")  in ["Quantity", "Numeric"] and val.get("result") and not val.get("result").isdigit():
+			if observation_details.get("permitted_data_type") in [
+				"Range",
+				"Ratio",
+				"Quantity",
+				"Numeric",
+			]:
+				if observation_details.get("permitted_data_type") in [
+					"Quantity",
+					"Numeric",
+				] and not is_numbers_with_exceptions(val.get("result")):
+					frappe.msgprint(
+						_("Non numeric result {0} is not allowed for Permitted Type {1}").format(
+							frappe.bold(val.get("result")),
+							frappe.bold(observation_details.get("permitted_data_type")),
+						),
+						indicator="orange",
+						alert=True,
+					)
 					return
+
 				if val.get("result") != observation_details.get("result_data"):
 					frappe.db.set_value("Observation", val["observation"], {"result_data": val.get("result"), "time_of_result": now_datetime()})
 			elif observation_details.get("permitted_data_type") == "Text":
@@ -272,3 +298,7 @@ def set_observation_idx(doc):
 		idx = frappe.db.get_value("Observation Component", {"parent": parent_template, "observation_template":doc.observation_template}, "idx")
 		if idx:
 			doc.observation_idx = idx
+
+def is_numbers_with_exceptions(value):
+	pattern = r'^[0-9{}]+$'.format(re.escape("<>"))
+	return re.match(pattern, value) is not None
