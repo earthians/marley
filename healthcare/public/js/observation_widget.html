@@ -13,6 +13,11 @@
 										{%= observation_details.observation.observation_template %}
 									{% } %}
 								</a>
+								<div>
+									<span class="add-note-observation-btn btn btn-link">
+										<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
+									</span>
+								</div>
 							</div>
 							<div class="obs-field" style="width: 19%;">
 								<div class="">
@@ -80,18 +85,11 @@
 								{% } %}
 							</div>
 						</div>
-						<div style="width: 100%; padding: 0px; padding-bottom:10px; padding-top:10px; display: flex;">
-							<div style="width: 10%;">
-								<span class="add-note-observation-btn btn btn-link">
-									<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
-								</span>
+						{% if (observation_details.observation.note)  { %}
+							<div class="note">
+									{{observation_details.observation.note}}
 							</div>
-						<div class="note">
-							{% if (observation_details.observation.note)  { %}
-								{{observation_details.observation.note}}
-							{% } %}
-						</div>
-					</div>
+						{% } %}
 					</div>
 				{% } %}
 		</div>
@@ -102,5 +100,72 @@
 
 
 <style>
+	.observation-section {
+	padding-left: 0px;
+	padding-bottom: 1px !important;
+}
+
+.observation-section .new-btn {
+	text-align: right;
+}
+
+.observation {
+	border: 1px solid var(--border-color);
+	padding-right: 0;
+	font-size: 11px;
+	padding-left: 15px;
+	padding-top: 15px;
+	margin-bottom: 5px;
+	margin-right: 15px;
+	border-radius: var(--border-radius-md);
+	background-color: var(--fg-color);
+	box-shadow: var(--card-shadow);
+}
+.grouped-obs {
+	min-height: 90px;
+	border: 1px solid var(--border-color);
+	padding-right: 0;
+	font-size: 11px;
+	padding-left: 15px;
+	padding-top: 5px;
+	border-radius: 10px;
+	margin-bottom: 5px;
+}
+
+.observations {
+	width: 100%;
+}
+
+.observation-details {
+	padding-left: 14px;
+	padding-right: 14px;
+}
+.obs-field {
+	padding-top: 5px;
+}
+
+.textresult-text {
+	height: 100px;
+	margin-right: 15px;
+	padding-top: 5px;
+}
+
+.note {
+	width: 99%;
+	background-color: var(--control-bg);
+	border-radius: 5px;
+	margin-bottom: 15px;
+	margin-right: 15px;
+	min-height: 20px;
+	text-align: center;
+}
+
+.obser-select{
+	float:right;
+	background-color: var(--control-bg);
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+	margin-left: -2px;
+}
 
 </style>
