@@ -110,6 +110,7 @@ def get_observation_details(docname):
 	out_data = []
 	obs_length = len(observation)
 	for obs in observation:
+		has_result = False
 		if not obs.get("has_component"):
 			observation_data = {}
 			if obs.get("permitted_data_type") == "Select" and obs.get("options"):
@@ -145,6 +146,8 @@ def get_observation_details(docname):
 				observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
+				if child.get("result_data") or child.get("result_text") or child.get("result_select")  not in [None, "", "Null"]:
+					has_result = True
 			if len(child_observations) > 0:
 				obs_dict["has_component"] = True
 				obs_dict["observation"] = obs.get("name")
@@ -153,6 +156,9 @@ def get_observation_details(docname):
 				obs_dict["practitioner_name"] = obs.get("practitioner_name")
 				obs_dict["healthcare_practitioner"] = obs.get("healthcare_practitioner")
 				obs_dict["description"] = obs.get("description")
+				obs_dict["has_result"] = False
+				if has_result:
+					obs_dict["has_result"] = True
 			out_data.append(obs_dict)
 			obs_length += len(child_observations)
 
