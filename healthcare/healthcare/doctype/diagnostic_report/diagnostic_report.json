@@ -13,6 +13,7 @@
   "gender",
   "age",
   "column_break_v6l1",
+  "company",
   "naming_series",
   "ref_doctype",
   "docname",
@@ -118,21 +119,27 @@
    "fieldname": "practitioner",
    "fieldtype": "Link",
    "label": "Practitioner",
-   "options": "Healthcare Practitioner",
-   "read_only": 1
+   "options": "Healthcare Practitioner"
   },
   {
    "fetch_from": "practitioner.practitioner_name",
    "fieldname": "practitioner_name",
    "fieldtype": "Data",
    "label": "Practitioner Name"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-11 18:37:50.092156",
+ "modified": "2023-07-14 12:58:55.521174",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",

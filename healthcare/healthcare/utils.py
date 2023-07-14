@@ -1162,6 +1162,7 @@ def create_sample_collection(doc):
 
 def insert_diagnostic_report(doc):
 	diagnostic_report = frappe.new_doc("Diagnostic Report")
+	diagnostic_report.company = doc.company
 	diagnostic_report.patient = doc.patient
 	diagnostic_report.ref_doctype = doc.doctype
 	diagnostic_report.docname = doc.name
