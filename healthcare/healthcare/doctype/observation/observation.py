@@ -152,6 +152,7 @@ def get_observation_details(docname):
 				obs_dict["display_name"] = obs.get("observation_template")
 				obs_dict["practitioner_name"] = obs.get("practitioner_name")
 				obs_dict["healthcare_practitioner"] = obs.get("healthcare_practitioner")
+				obs_dict["description"] = obs.get("description")
 			out_data.append(obs_dict)
 			obs_length += len(child_observations)
 
@@ -167,6 +168,7 @@ def get_observation_reference(observation_template, age, patient_sex):
 	reference_data["permitted_unit"] = template_doc.permitted_unit
 	reference_data["preferred_display_name"] = template_doc.preferred_display_name
 	reference_data["sample"] = template_doc.sample
+	reference_data["sample_type"] = template_doc.sample_type
 	display_reference = ""
 	for child in template_doc.observation_reference_range:
 		if child.age == "All" or (
