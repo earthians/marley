@@ -595,4 +595,4 @@ def test_appointment_reschedule(self, appointment):
 
 def test_appointment_cancel(self, appointment):
 	update_status(appointment.name, "Cancelled")
-	self.assertTrue(frappe.db.exists("Event", {"name": appointment.event, "event_type": "Cancelled"}))
+	self.assertTrue(frappe.db.exists("Event", {"name": appointment.event, "status": "Cancelled"}))
