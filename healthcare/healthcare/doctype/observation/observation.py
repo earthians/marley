@@ -143,7 +143,8 @@ def get_observation_details(docname):
 					child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
 				observation_data = {}
 				reference_details = get_observation_reference(child.get("observation_template"), age, gender)
-				observation_data["template_reference"] = reference_details[0]
+				if reference_details:
+					observation_data["template_reference"] = reference_details[0]
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
 				if child.get("result_data") or child.get("result_text") or child.get("result_select")  not in [None, "", "Null"]:
@@ -177,22 +178,20 @@ def get_observation_reference(observation_template, age, patient_sex):
 	reference_data["sample_type"] = template_doc.sample_type
 	display_reference = ""
 	for child in template_doc.observation_reference_range:
+		if not child.applies_to == "All":
+			if not child.applies_to == patient_sex:
+				continue
 		if child.age == "All" or (
 			child.age == "Range" and float(child.age_from) <= float(age) <= float(child.age_to)
 		):
-			if child.short_interpretation and (
-				(child.reference_from and child.reference_to) or child.conditions
-			):
-				display_reference += (
-					str(child.short_interpretation)
-					+ ":"
-					+ (
-						(str(child.reference_from) + "-" + str(child.reference_to))
-						if child.reference_from
-						else str(child.conditions)
-					)
-					+ "<br>"
-				)
+			if (child.reference_from and child.reference_to) or child.conditions:
+				if child.reference_from and child.reference_to:
+					display_reference += str(child.reference_from) + "-" + str(child.reference_to)
+				elif child.conditions:
+					display_reference += str(child.conditions)
+				else:
+					display_reference += ""
+				display_reference += ((": " + str(child.short_interpretation)) if child.short_interpretation else "") + "<br>"
 	reference_data["display_reference"] = display_reference
 	data.append(reference_data)
 	return data
