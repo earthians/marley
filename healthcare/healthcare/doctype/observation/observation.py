@@ -307,5 +307,5 @@ def set_observation_idx(doc):
 			doc.observation_idx = idx
 
 def is_numbers_with_exceptions(value):
-	pattern = r'^[0-9{}]+$'.format(re.escape("<>"))
+	pattern = r'^[0-9{}]+$'.format(re.escape(".<>"))
 	return re.match(pattern, value) is not None
