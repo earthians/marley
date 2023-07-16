@@ -5,11 +5,22 @@ frappe.ui.form.on("Observation Template", {
 	onload: function(frm) {
 		set_select_field_options(frm);
 	},
+
 	observation: function(frm) {
 		if (!frm.doc.observation_code) {
 			frm.set_value('item_code', frm.doc.observation);
 		}
+		if (!frm.doc.has_component && !frm.doc.abbr) {
+			frm.set_value("abbr", frappe.get_abbr(frm.doc.observation).toUpperCase());
+		}
 	},
+
+	preferred_display_name: function(frm) {
+		if (!frm.doc.has_component && !frm.doc.abbr) {
+			frm.set_value("abbr", frappe.get_abbr(frm.doc.preferred_display_name).toUpperCase())
+		}
+	},
+
 	refresh: function(frm) {
 		frm.set_query("observation_component", function () {
 			return {
@@ -22,14 +33,14 @@ frappe.ui.form.on("Observation Template", {
 		frm.set_query("method", function () {
 			return {
 				"filters": {
-					"value_set": "Observation Method"
+					"value_set": "Observation Method",
 				}
 			};
 		});
 		frm.set_query("reference_type", "observation_reference_range", function() {
 			return {
 				filters: {
-					"value_set": "Reference Type"
+					"value_set": "Reference Type",
 				}
 			};
 		})
