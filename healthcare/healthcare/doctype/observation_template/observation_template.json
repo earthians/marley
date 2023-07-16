@@ -11,6 +11,7 @@
   "observation",
   "observation_category",
   "preferred_display_name",
+  "abbr",
   "has_component",
   "column_break_zeln",
   "medical_department",
@@ -107,6 +108,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
    "fieldname": "method",
    "fieldtype": "Link",
    "label": "Method",
@@ -136,6 +138,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.observation_category === \"Laboratory\"",
    "fieldname": "has_component",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -150,7 +153,7 @@
   },
   {
    "collapsible": 1,
-   "depends_on": "eval:!doc.has_component;",
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
    "fieldname": "reference_ranges_tab",
    "fieldtype": "Tab Break",
    "label": "Reference Ranges"
@@ -168,7 +171,7 @@
    "label": "Result Options"
   },
   {
-   "depends_on": "eval:!doc.has_component;",
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
    "fieldname": "sample_collection_section",
    "fieldtype": "Tab Break",
    "label": "Sample Collection"
@@ -277,7 +280,8 @@
    "mandatory_depends_on": "eval:doc.link_existing_item",
    "no_copy": 1,
    "options": "Item",
-   "read_only_depends_on": "eval: !doc.__islocal"
+   "read_only_depends_on": "eval: !doc.__islocal",
+   "search_index": 1
   },
   {
    "fieldname": "column_break_tktn",
@@ -335,11 +339,18 @@
    "depends_on": "eval:doc.sample_collection_required==1;",
    "fieldname": "sample_collection_section_section",
    "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "label": "Abbr",
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-09 17:30:50.476878",
+ "modified": "2023-07-16 20:05:49.699224",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
