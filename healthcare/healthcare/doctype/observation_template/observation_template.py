@@ -31,6 +31,30 @@ class ObservationTemplate(Document):
 					_("You cannot provide more than 2 options for Boolean result"), frappe.ValidationError
 				)
 
+		if self.has_component:
+			self.abbr = ""
+		else:
+			self.validate_abbr()
+
+	def validate_abbr(self):
+		if not self.abbr:
+			self.abbr = frappe.utils.get_abbr(self.observation)
+		else:
+			self.abbr = self.abbr.strip()
+
+		if not self.abbr:
+			frappe.throw(_("Abbreviation is mandatory"))
+
+		ob_t = frappe.qb.DocType("Observation Template")
+		duplicate = (
+			frappe.qb.from_(ob_t)
+			.select("name")
+			.where(ob_t.abbr.eq(self.abbr) & ob_t.observation.ne(self.observation))
+		).run(as_dict=True)
+
+		if len(duplicate):
+			frappe.throw(_(f"Abbreviation already used for {duplicate[0].name}"))
+
 
 def create_item_from_template(doc):
 	uom = frappe.db.exists("UOM", "Unit") or frappe.db.get_single_value("Stock Settings", "stock_uom")
@@ -70,7 +94,7 @@ def create_item_from_template(doc):
 
 
 def get_observation_template_details(observation_template):
-	query = f'''
+	query = f"""
 	select
 		CASE WHEN ot.sample_collection_required=0 THEN ot.name END as no_sample_reqd,
 		CASE WHEN ot.sample_collection_required=1 THEN ot.name END as sample_reqd
@@ -79,7 +103,7 @@ def get_observation_template_details(observation_template):
 		`tabObservation Template` as ot on oc.observation_template=ot.name
 	where
 		oc.parent={frappe.db.escape(observation_template)}
-	'''
+	"""
 	data = frappe.db.sql(query, as_dict=True)
 	sample_reqd_component_obs = []
 	non_sample_reqd_component_obs = []
