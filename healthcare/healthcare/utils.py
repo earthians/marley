@@ -1167,4 +1167,4 @@ def insert_diagnostic_report(doc):
 	diagnostic_report.ref_doctype = doc.doctype
 	diagnostic_report.docname = doc.name
 	# diagnostic_report.sample_collection = doc.name
-	diagnostic_report.save()
+	diagnostic_report.save(ignore_permissions=True)
