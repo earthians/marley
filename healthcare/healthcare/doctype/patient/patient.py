@@ -253,6 +253,15 @@ class Patient(Document):
 		contact.flags.skip_patient_update = True
 		contact.save(ignore_permissions=True)
 
+	def calculate_age(self, ref_date=None):
+		if self.dob:
+			if not ref_date:
+				ref_date = frappe.utils.nowdate()
+			diff = frappe.utils.date_diff(ref_date, self.dob)
+			years = diff//365
+			months = (diff - (years * 365))//30
+			days = ((diff - (years * 365)) - (months * 30))
+			return f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}'
 
 def create_customer(doc):
 	customer = frappe.get_doc(
