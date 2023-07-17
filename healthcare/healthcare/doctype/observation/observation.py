@@ -99,14 +99,16 @@ def get_observation_details(docname):
 		fields=[
 			"*"
 		],
-		filters={"sales_invoice": reference, "parent_observation": ""},
+		filters={"sales_invoice": reference, "parent_observation": "", "status": ["!=", "Cancelled"]},
 		order_by="creation",
 	)
 	out_data = []
-	obs_length = len(observation)
+	obs_length = 0
 	for obs in observation:
 		has_result = False
 		if not obs.get("has_component"):
+			if obs.get("permitted_data_type"):
+				obs_length += 1
 			observation_data = {}
 			if obs.get("permitted_data_type") == "Select" and obs.get("options"):
 				obs["options_list"] = obs.get("options").split("\n")
@@ -120,7 +122,6 @@ def get_observation_details(docname):
 				observation_data["observation"] = obs
 
 		else:
-			obs_length -= 1
 			child_observations = frappe.get_all(
 				"Observation",
 				fields=[
@@ -132,6 +133,8 @@ def get_observation_details(docname):
 			obs_list = []
 			obs_dict = {}
 			for child in child_observations:
+				if child.get("permitted_data_type"):
+					obs_length += 1
 				if child.get("permitted_data_type") == "Select" and child.get("options"):
 					child["options_list"] = child.get("options").split("\n")
 				if child.get("specimen"):
@@ -156,7 +159,7 @@ def get_observation_details(docname):
 				if has_result:
 					obs_dict["has_result"] = True
 			out_data.append(obs_dict)
-			obs_length += len(child_observations)
+			# obs_length += len(child_observations)
 
 	return out_data, obs_length
 
