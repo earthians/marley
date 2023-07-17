@@ -26,9 +26,8 @@ class Observation(Document):
 
 	def set_age(self):
 		if not self.age:
-			dob = frappe.db.get_value("Patient", self.patient, "dob")
-			if dob:
-				self.age = calculate_age(dob)
+			patient_doc = frappe.get_doc("Patient", self.patient)
+			self.age = patient_doc.calculate_age()
 
 	def set_status(self):
 		if self.has_result() and self.status != "Final":
@@ -80,18 +79,6 @@ class Observation(Document):
 						frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)
 					)
 				)
-
-
-def calculate_age(dob):
-	age = date_diff(today(), getdate(dob))
-
-	# Check if the birthday has already occurred this year
-	if getdate(today()).month < getdate(dob).month or (
-		getdate(today()).month == getdate(dob).month and getdate(today()).day < getdate(dob).day
-	):
-		age -= 1
-	if age:
-		return age / 365.25
 
 
 @frappe.whitelist()

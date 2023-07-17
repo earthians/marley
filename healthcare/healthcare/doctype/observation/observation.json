@@ -129,7 +129,7 @@
   },
   {
    "fieldname": "age",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Age",
    "read_only": 1
   },
@@ -436,7 +436,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-11 16:07:32.633571",
+ "modified": "2023-07-17 12:55:47.075154",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
