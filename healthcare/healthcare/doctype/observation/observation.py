@@ -16,8 +16,9 @@ class Observation(Document):
 		self.set_age()
 		self.set_result_time()
 		self.set_status()
+		age = frappe.utils.date_diff(frappe.utils.nowdate(), frappe.db.get_value("Patient", self.patient, "dob"))
 		self.reference = get_observation_reference(
-			self.observation_template, self.age, self.gender)[0].get("display_reference"
+			self.observation_template, age, self.gender)[0].get("display_reference"
 		)
 		self.validate_input()
 
@@ -83,9 +84,16 @@ class Observation(Document):
 
 @frappe.whitelist()
 def get_observation_details(docname):
-	patient, gender, reference, age = frappe.get_value(
-		"Diagnostic Report", docname, ["patient", "gender", "docname", "age"]
+	patient, gender, reference, reference_posting_date = frappe.get_value(
+		"Diagnostic Report", docname, ["patient", "gender", "docname", "reference_posting_date"]
 	)
+	dob = frappe.db.get_value("Patient", patient, "dob")
+	age = 0
+	if dob:
+		if not reference_posting_date:
+			reference_posting_date = frappe.utils.nowdate()
+		age = frappe.utils.date_diff(reference_posting_date, dob)
+
 	observation = frappe.get_all(
 		"Observation",
 		fields=[
