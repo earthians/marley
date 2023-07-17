@@ -28,7 +28,7 @@ class SampleCollection(Document):
 							"Observation Template",
 							d,
 							[
-								"sample_Type",
+								"sample_type",
 								"sample",
 								"medical_department",
 								"container_closure_color",
@@ -74,7 +74,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 	if len(component_observations) > 0:
 		component_observations = json.loads(component_observations)
 	patient = frappe.db.get_value("Sample Collection", sample_collection, "patient")
-	comp_obs_ref = create_specimen(selected, component_observations)
+	comp_obs_ref = create_specimen(patient, selected, component_observations)
 	for i, obs in enumerate(selected):
 		parent_observation = obs.get("component_observation_parent")
 
@@ -156,12 +156,12 @@ def create_observation(selected, sample_collection, component_observations=[], c
 			child_db_set_dict,
 		)
 
-def create_specimen(selected, component_observations):
+def create_specimen(patient, selected, component_observations):
 	groups = {}
 	# to group by
 	for sel in selected:
 		if not sel.get("has_component") or sel.get("has_component") == 0:
-			key = (sel.get("color"), sel.get('medical_department'), sel.get('sample_Type'), sel.get("container_closure_color"))
+			key = (sel.get("color"), sel.get('medical_department'), sel.get('sample_type'), sel.get("container_closure_color"))
 			if key in groups:
 				groups[key].append(sel)
 			else:
@@ -170,16 +170,17 @@ def create_specimen(selected, component_observations):
 			comp_observations = json.loads(sel.get("component_observations"))
 			for comp in comp_observations:
 				comp["name"] = sel.get("name")
-				key = (comp.get("color"), comp.get('medical_department'), comp.get('sample_Type'), comp.get("container_closure_color"))
+				key = (comp.get("color"), comp.get('medical_department'), comp.get('sample_type'), comp.get("container_closure_color"))
 				if key in groups:
 					groups[key].append(comp)
 				else:
 					groups[key] = [comp]
-
 	obs_ref = {}
 	for gr in groups:
 		specimen = frappe.new_doc("Specimen")
 		specimen.received_time = now_datetime()
+		specimen.patient = patient
+		specimen.specimen_type = groups[gr][0].get("sample_type")
 		specimen.save()
 		for sub_grp in groups[gr]:
 			if component_observations:
