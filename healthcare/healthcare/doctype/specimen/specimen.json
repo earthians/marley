@@ -69,9 +69,11 @@
    "options": "Patient"
   },
   {
+   "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
-   "label": "Patient Name"
+   "label": "Patient Name",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_1kvr",
@@ -80,18 +82,21 @@
   {
    "fieldname": "patient_age",
    "fieldtype": "Data",
-   "label": "Patient Age"
+   "label": "Patient Age",
+   "read_only": 1
   },
   {
+   "fetch_from": "patient.sex",
    "fieldname": "patient_gender",
    "fieldtype": "Link",
    "label": "Patient Gender",
-   "options": "Gender"
+   "options": "Gender",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-17 11:44:25.603921",
+ "modified": "2023-07-17 14:05:46.972102",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Specimen",
