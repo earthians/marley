@@ -8,10 +8,17 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "speciment_type",
+  "specimen_type",
   "received_time",
   "column_break_wyhn",
   "status",
+  "barcode",
+  "section_break_auky",
+  "patient",
+  "patient_name",
+  "column_break_1kvr",
+  "patient_age",
+  "patient_gender",
   "section_break_aas5",
   "note"
  ],
@@ -21,12 +28,6 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Available\nUnavailable\nUnsatisfactory\nEntered In Error"
-  },
-  {
-   "fieldname": "speciment_type",
-   "fieldtype": "Link",
-   "label": "Speciment Type",
-   "options": "FHIR Value Set"
   },
   {
    "fieldname": "column_break_wyhn",
@@ -45,11 +46,52 @@
    "fieldname": "received_time",
    "fieldtype": "Datetime",
    "label": "Received Time"
+  },
+  {
+   "fieldname": "barcode",
+   "fieldtype": "Barcode",
+   "label": "Barcode"
+  },
+  {
+   "fieldname": "specimen_type",
+   "fieldtype": "Link",
+   "label": "Specimen Type",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fieldname": "section_break_auky",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient"
+  },
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name"
+  },
+  {
+   "fieldname": "column_break_1kvr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "patient_age",
+   "fieldtype": "Data",
+   "label": "Patient Age"
+  },
+  {
+   "fieldname": "patient_gender",
+   "fieldtype": "Link",
+   "label": "Patient Gender",
+   "options": "Gender"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-11 19:50:33.687181",
+ "modified": "2023-07-17 11:44:25.603921",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Specimen",
