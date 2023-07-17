@@ -50,7 +50,10 @@ healthcare.Diagnostic.Observation = class Observation {
 			for (var i = 0; i < normal_obs_div.length; i++) {
 				let val_dict = {}
 				val_dict["observation"] = normal_obs_div[i].getAttribute("value")
-				val_dict["result"] = document.getElementById(normal_obs_div[i].getAttribute("value")).value
+				val_dict["result"] = ""
+				if (document.getElementById(normal_obs_div[i].getAttribute("value"))) {
+					val_dict["result"] = document.getElementById(normal_obs_div[i].getAttribute("value")).value
+				}
 				if (val_dict["result"]) {
 					values.push(val_dict);
 				}
