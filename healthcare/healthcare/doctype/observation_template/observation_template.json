@@ -18,6 +18,8 @@
   "description",
   "section_break_eovt",
   "result_template",
+  "column_break_ll27",
+  "interpretation_template",
   "section_break_q56o",
   "method",
   "method_value",
@@ -346,11 +348,22 @@
    "fieldtype": "Data",
    "label": "Abbr",
    "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_ll27",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.observation_category == \"Imaging\"",
+   "fieldname": "interpretation_template",
+   "fieldtype": "Link",
+   "label": "Interpretation Template",
+   "options": "Terms and Conditions"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-16 20:05:49.699224",
+ "modified": "2023-07-16 20:32:04.726973",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
