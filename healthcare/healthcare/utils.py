@@ -1121,7 +1121,7 @@ def create_sample_collection_and_observation(doc):
 				"Observation Template",
 				d.get("name"),
 				[
-					"sample_Type",
+					"sample_type",
 					"sample",
 					"medical_department",
 					"container_closure_color",
