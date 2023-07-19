@@ -11,7 +11,6 @@
   "naming_series",
   "observation_template",
   "observation_category",
-  "has_component",
   "column_break_7xu5",
   "company",
   "medical_department",
@@ -20,12 +19,24 @@
   "section_break_i70a",
   "patient",
   "patient_name",
+  "gender",
   "column_break_qxq5",
   "age",
-  "gender",
+  "days",
   "section_break_zz5k",
   "healthcare_practitioner",
   "practitioner_name",
+  "template_details_section",
+  "preferred_display_name",
+  "has_component",
+  "sample_collection_required",
+  "permitted_unit",
+  "column_break_pxgu",
+  "sample",
+  "sample_type",
+  "method",
+  "result_template",
+  "interpretation_template",
   "column_break_meur",
   "specimen",
   "sample_collection_time",
@@ -47,6 +58,7 @@
   "time_of_result",
   "time_of_approval",
   "column_break_zrac",
+  "result_interpretation",
   "observation_method",
   "reference_section",
   "reference",
@@ -161,7 +173,7 @@
    "label": "Result"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Text\";",
+   "depends_on": "eval:doc.permitted_data_type == \"Text\" || doc.observation_category == \"Imaging\";",
    "fieldname": "result_text",
    "fieldtype": "Text Editor",
    "label": "Result"
@@ -282,7 +294,6 @@
   },
   {
    "fetch_from": "observation_template.observation_category",
-   "fetch_if_empty": 1,
    "fieldname": "observation_category",
    "fieldtype": "Select",
    "label": "Observation Category",
@@ -432,11 +443,95 @@
    "fieldtype": "Data",
    "label": "Practitioner Name",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "template_details_section",
+   "fieldtype": "Section Break",
+   "label": "Template Details"
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.sample_collection_required",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.preferred_display_name",
+   "fieldname": "preferred_display_name",
+   "fieldtype": "Data",
+   "label": "Preferred Display Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.permitted_unit",
+   "fieldname": "permitted_unit",
+   "fieldtype": "Link",
+   "label": "Permitted Unit",
+   "options": "Lab Test UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pxgu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "observation_template.sample",
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fetch_from": "observation_template.sample_type",
+   "fieldname": "sample_type",
+   "fieldtype": "Link",
+   "label": "Sample Type",
+   "options": "Sample Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.method_value",
+   "fieldname": "method",
+   "fieldtype": "Data",
+   "label": "Method",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Days",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.observation_category == \"Imaging\";\n",
+   "fieldname": "result_interpretation",
+   "fieldtype": "Text Editor",
+   "label": "Result Interpretation"
+  },
+  {
+   "fetch_from": "observation_template.result_template",
+   "fieldname": "result_template",
+   "fieldtype": "Link",
+   "label": "Result Template",
+   "options": "Terms and Conditions",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.interpretation_template",
+   "fieldname": "interpretation_template",
+   "fieldtype": "Link",
+   "label": "Interpretation Template",
+   "options": "Terms and Conditions",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-17 12:55:47.075154",
+ "modified": "2023-07-19 12:07:41.164153",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

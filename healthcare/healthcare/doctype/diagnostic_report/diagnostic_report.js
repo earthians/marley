@@ -9,9 +9,6 @@ frappe.ui.form.on("Diagnostic Report", {
 		if (!frm.doc.__islocal && frm.is_dirty()) {
 			this.observation.save_action("save")
 		}
-	// 	// var selectedValue = $(this).val();
-
-	// 	console.log("kkkkkkkkkkk", $('#result-text').val(), $(".observations").find(".result-text").val(), document.getElementById("result-text").val())
 	},
 });
 
