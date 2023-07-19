@@ -261,7 +261,9 @@ class Patient(Document):
 			years = diff//365
 			months = (diff - (years * 365))//30
 			days = ((diff - (years * 365)) - (months * 30))
-			return f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}'
+			return {"age_in_string": f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}',
+					"age_in_days": diff
+				}
 
 def create_customer(doc):
 	customer = frappe.get_doc(

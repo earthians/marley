@@ -11,7 +11,6 @@ frappe.ui.form.on("Clinical Note", {
 });
 
 var set_terms_and_conditions = function(frm, terms_and_conditions=''){
-    console.log(frm.doc.terms_and_conditions)
     if (frm.doc.terms_and_conditions) {
       return frappe.call({
         method: 'erpnext.setup.doctype.terms_and_conditions.terms_and_conditions.get_terms_and_conditions',

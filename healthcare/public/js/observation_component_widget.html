@@ -21,13 +21,13 @@
 						</div>
 						{% for(var j=0, k=observation_details[observation_details.observation].length; j<k; j++) { %}
 						{% var child_obs = observation_details[observation_details.observation][j] %}
-							{% if (child_obs.observation || child_obs.template_reference) { %}
+							{% if (child_obs.observation) { %}
 								<div class="observation" name="{{ child_obs.observation.name }}" addatatype="{{ child_obs.observation.permitted_data_type }}">
 									<div class="observation-details row" style="width: 100%;">
 										<div class="observation-name" id="observation-name" style="width: 20%; vertical-align: middle !important;" value="{{child_obs.observation.name}}">
 											<a href="/app/observation/{{ child_obs.observation.name }}" title="{{ __('Observation') }}">
-												{% if (child_obs.template_reference.preferred_display_name) { %}
-													{%= child_obs.template_reference.preferred_display_name %}
+												{% if (child_obs.observation.preferred_display_name) { %}
+													{%= child_obs.observation.preferred_display_name %}
 												{% } else { %}
 													{%= child_obs.observation.observation_template %}
 												{% } %}
@@ -89,18 +89,18 @@
 										</div>
 										{% } %}
 										<div style="width: 7%;">
-											{% if (child_obs.template_reference) { %}
-												{%= child_obs.template_reference.permitted_unit %}
+											{% if (child_obs.observation.permitted_unit) { %}
+												{%= child_obs.observation.permitted_unit %}
 											{% } %}
 										</div>
 										<div style="width: 20%;">
-											{% if (child_obs.template_reference) { %}
-												{%= child_obs.template_reference.method %}
+											{% if (child_obs.observation.method) { %}
+												{%= child_obs.observation.method %}
 											{% } %}
 										</div>
 										<div style="width: 11%;">
-											{% if (child_obs.template_reference.display_reference) { %}
-												{{child_obs.template_reference.display_reference}}
+											{% if (child_obs.observation.reference) { %}
+												{{child_obs.observation.reference}}
 											{% } %}
 										</div>
 								</div>

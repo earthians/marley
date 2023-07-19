@@ -332,7 +332,6 @@ let check_and_set_availability = function(frm) {
 					&& !overlap_appointments
 
 				frm.set_value('add_video_conferencing', add_video_conferencing);
-				console.log(duration)
 				if (!frm.doc.duration) {
 					frm.set_value('duration', duration);
 				}
@@ -493,7 +492,6 @@ let check_and_set_availability = function(frm) {
 					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
 				</span><br>
 				<span><b> ${__('Service Unit: ')} </b> ${slot_info.service_unit}</span>`;
-				// console.log(4555555555555, slot_info, slot_info.maximum_appointments)
 				if (slot_info.service_unit_capacity) {
 					slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
 				}
@@ -516,7 +514,6 @@ let check_and_set_availability = function(frm) {
 							disabled = true;
 						} else {
 							// iterate in all booked appointments, update the start time and duration
-							console.log(slot_info.appointments)
 							slot_info.appointments.forEach((booked) => {
 								booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
 								let end_time = booked_moment.clone().add(booked.duration, 'minutes');
