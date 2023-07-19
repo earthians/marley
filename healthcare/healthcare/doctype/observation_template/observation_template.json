@@ -16,15 +16,15 @@
   "column_break_zeln",
   "medical_department",
   "description",
-  "section_break_eovt",
-  "result_template",
-  "column_break_ll27",
-  "interpretation_template",
   "section_break_q56o",
   "method",
   "method_value",
   "column_break_vvc2",
   "service_unit",
+  "section_break_eovt",
+  "result_template",
+  "column_break_ll27",
+  "interpretation_template",
   "section_break_leuz",
   "permitted_data_type",
   "column_break_jsqz",
@@ -85,7 +85,7 @@
    "label": "Description"
   },
   {
-   "depends_on": "eval:doc.observation_category!=\"Imaging\" && !doc.has_component;",
+   "depends_on": "eval: !doc.has_component;",
    "fieldname": "section_break_q56o",
    "fieldtype": "Section Break"
   },
@@ -95,6 +95,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Permitted Data Type",
+   "mandatory_depends_on": "eval: doc.observation_category == \"Laboratory\";",
    "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
   },
   {
@@ -110,7 +111,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
+   "depends_on": "eval: [\"Laboratory\", \"Imaging\"].includes(doc.observation_category) && !doc.has_component",
    "fieldname": "method",
    "fieldtype": "Link",
    "label": "Method",
@@ -363,7 +364,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-16 20:32:04.726973",
+ "modified": "2023-07-18 15:15:16.054317",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",

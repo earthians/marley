@@ -399,7 +399,6 @@ let check_and_set_availability = function(frm) {
 					&& !overlap_appointments
 
 				frm.set_value('add_video_conferencing', add_video_conferencing);
-
 				if (!frm.doc.duration) {
 					frm.set_value('duration', duration);
 				}
