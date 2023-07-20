@@ -95,7 +95,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Permitted Data Type",
-   "mandatory_depends_on": "eval: doc.observation_category == \"Laboratory\";",
+   "mandatory_depends_on": "eval: doc.observation_category == \"Laboratory\" && !doc.has_component;",
    "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
   },
   {
@@ -366,7 +366,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-20 11:19:00.477219",
+ "modified": "2023-07-20 12:05:28.446646",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
