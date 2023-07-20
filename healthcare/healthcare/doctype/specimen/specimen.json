@@ -96,7 +96,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-17 14:05:46.972102",
+ "modified": "2023-07-20 18:18:46.964110",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Specimen",
@@ -118,5 +118,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
