@@ -22,7 +22,7 @@
 						{% for(var j=0, k=observation_details[observation_details.observation].length; j<k; j++) { %}
 						{% var child_obs = observation_details[observation_details.observation][j] %}
 							{% if (child_obs.observation) { %}
-								<div class="observation" name="{{ child_obs.observation.name }}" addatatype="{{ child_obs.observation.permitted_data_type }}">
+								<div class="observation" name="{{ child_obs.observation.name }}">
 									<div class="observation-details row" style="width: 100%;">
 										<div class="observation-name" id="observation-name" style="width: 20%; vertical-align: middle !important;" value="{{child_obs.observation.name}}">
 											<a href="/app/observation/{{ child_obs.observation.name }}" title="{{ __('Observation') }}">
@@ -52,6 +52,7 @@
 												{% } %}
 											</div>
 										</div>
+										{% if (child_obs.observation.observation_category=='Laboratory') { %}
 										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(child_obs.observation.permitted_data_type)) { %}
 										<div class="result obs-field" style="padding-left:30px; padding-right:10px; width: 20%;">
 											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
@@ -88,6 +89,10 @@
 											</div>
 										</div>
 										{% } %}
+										{% } else if (child_obs.observation.observation_category=='Imaging') { %}
+										<div class="" style="padding-left:30px; padding-right:10px; width: 20%;">
+										</div>
+										{% } %}
 										<div style="width: 7%;">
 											{% if (child_obs.observation.permitted_unit) { %}
 												{%= child_obs.observation.permitted_unit %}
@@ -104,6 +109,30 @@
 											{% } %}
 										</div>
 								</div>
+								{%  if (child_obs.observation.observation_category=='Imaging') { %}
+								<div style="width:100%;  padding-bottom:20px; display: flex;">
+									<div style="width:50%; padding-right:5px;">
+										<button class="btn btn-default btn-findings" style="font-size: 10px;" name="{{ child_obs.observation.result_template }}">
+											Findings
+										</button>
+										{% if (child_obs.observation.result_text) { %}
+											<div class="frappe-control result-text-editor btn-findings-text" data-fieldtype="Text Editor" data-fieldname="result_text">
+												{{child_obs.observation.result_text}}
+											</div>
+										{% } %}
+									</div>
+									<div style="width:50%; padding-left:5px;">
+										<button class="btn btn-default btn-interpr" style="font-size: 10px;" name="{{ child_obs.observation.interpretation_template }}">
+											Interpretation
+										</button>
+										{% if (child_obs.observation.result_interpretation) { %}
+											<div class="frappe-control result-text-editor btn-interpr-text" data-fieldtype="Text Editor" data-fieldname="result_text">
+												{{child_obs.observation.result_interpretation}}
+											</div>
+										{% } %}
+									</div>
+								</div>
+								{% } %}
 									{% if (child_obs.observation.note) { %}
 										<div class="note">
 											{{child_obs.observation.note}}
@@ -171,7 +200,7 @@
 	padding-top: 5px;
 }
 
-.note {
+.note, .result-text-editor {
 	width: 99%;
 	background-color: var(--control-bg);
 	border-radius: 5px;
@@ -189,4 +218,8 @@
 	margin-left: -2px;
 }
 
+.btn-findings-text, .btn-interpr-text {
+	padding: 5px;
+	margin: 5px;
+}
 </style>

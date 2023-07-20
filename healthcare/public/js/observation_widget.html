@@ -85,6 +85,30 @@
 								{% } %}
 							</div>
 						</div>
+						{%  if (observation_details.observation.observation_category=='Imaging') { %}
+								<div style="width:100%;  padding-bottom:20px; display: flex;">
+									<div style="width:50%; padding-right:5px;">
+										<button class="btn btn-default btn-findings" style="font-size: 10px;" name="{{ observation_details.observation.result_template }}">
+											Findings
+										</button>
+										{% if (observation_details.observation.result_text) { %}
+											<div class="frappe-control result-text-editor btn-findings-text" data-fieldtype="Text Editor" data-fieldname="result_text">
+												{{observation_details.observation.result_text}}
+											</div>
+										{% } %}
+									</div>
+									<div style="width:50%; padding-left:5px;">
+										<button class="btn btn-default btn-interpr" style="font-size: 10px;" name="{{ observation_details.observation.interpretation_template }}">
+											Interpretation
+										</button>
+										{% if (observation_details.observation.result_interpretation) { %}
+											<div class="frappe-control result-text-editor btn-interpr-text" data-fieldtype="Text Editor" data-fieldname="result_text">
+												{{observation_details.observation.result_interpretation}}
+											</div>
+										{% } %}
+									</div>
+								</div>
+								{% } %}
 						{% if (observation_details.observation.note)  { %}
 							<div class="note">
 									{{observation_details.observation.note}}
@@ -150,7 +174,7 @@
 	padding-top: 5px;
 }
 
-.note {
+.note, .result-text-editor {
 	width: 99%;
 	background-color: var(--control-bg);
 	border-radius: 5px;
@@ -166,6 +190,11 @@
 	border-top-right-radius: 10px;
 	border-bottom-right-radius: 10px;
 	margin-left: -2px;
+}
+
+.btn-findings-text, .btn-interpr-text {
+	padding: 5px;
+	margin: 5px;
 }
 
 </style>
