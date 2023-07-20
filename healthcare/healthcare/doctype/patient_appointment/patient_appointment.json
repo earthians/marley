@@ -42,7 +42,7 @@
   "mode_of_payment",
   "billing_item",
   "invoiced",
-  "day_appointment",
+  "based_on_checkin",
   "column_break_2",
   "paid_amount",
   "ref_sales_invoice",
@@ -379,7 +379,7 @@
   },
   {
    "default": "0",
-   "fieldname": "day_appointment",
+   "fieldname": "based_on_checkin",
    "fieldtype": "Check",
    "label": "Day Appointment",
    "read_only": 1

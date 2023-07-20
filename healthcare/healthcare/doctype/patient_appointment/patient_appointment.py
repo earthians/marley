@@ -67,7 +67,7 @@ class PatientAppointment(Document):
 			self.status = "Scheduled"
 
 	def validate_overlaps(self):
-		if self.day_appointment:
+		if self.based_on_checkin:
 			return
 
 		end_time = datetime.datetime.combine(

@@ -299,7 +299,7 @@ let check_and_set_availability = function(frm) {
 	let duration = null;
 	let add_video_conferencing = null;
 	let overlap_appointments = null;
-	let day_appointment = false;
+	let based_on_checkin = false;
 
 	show_availability();
 
@@ -339,7 +339,7 @@ let check_and_set_availability = function(frm) {
 				frm.set_value('practitioner', d.get_value('practitioner'));
 				frm.set_value('department', d.get_value('department'));
 				frm.set_value('appointment_date', d.get_value('appointment_date'));
-				frm.set_value('day_appointment', day_appointment)
+				frm.set_value('based_on_checkin', based_on_checkin)
 
 				if (service_unit) {
 					frm.set_value('service_unit', service_unit);
@@ -427,7 +427,7 @@ let check_and_set_availability = function(frm) {
 							$btn.addClass('btn-outline-primary');
 							selected_slot = $btn.attr('data-name');
 							service_unit = $btn.attr('data-service-unit');
-							day_appointment = $btn.attr('data-day-appointment');
+							based_on_checkin = $btn.attr('data-day-appointment');
 							duration = $btn.attr('data-duration');
 							add_video_conferencing = parseInt($btn.attr('data-tele-conf'));
 							overlap_appointments = parseInt($btn.attr('data-overlap-appointments'));
@@ -517,7 +517,7 @@ let check_and_set_availability = function(frm) {
 							slot_info.appointments.forEach((booked) => {
 								booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
 								let end_time = booked_moment.clone().add(booked.duration, 'minutes');
-								
+
 								// to get apointment count for all day appointments
 								if (slot.maximum_appointments) {
 									if (booked_moment.isSameOrAfter(slot_start_time) || booked_moment.isSameOrBefore(slot_end_time)) {
