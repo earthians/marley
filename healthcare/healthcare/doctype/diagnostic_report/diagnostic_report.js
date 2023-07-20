@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Diagnostic Report", {
-	onload: function(frm) {
+	refresh: function(frm) {
 		show_observations(frm);
 	},
 	validate: function(frm) {
