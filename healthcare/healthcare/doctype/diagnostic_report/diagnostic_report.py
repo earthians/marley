@@ -22,7 +22,8 @@ class DiagnosticReport(Document):
 	def set_age(self):
 		if not self.age:
 			patient_doc = frappe.get_doc("Patient", self.patient)
-			self.age = patient_doc.calculate_age(self.reference_posting_date).get("age_in_string")
+			if patient_doc.dob:
+				self.age = patient_doc.calculate_age(self.reference_posting_date).get("age_in_string")
 
 	def set_title(self):
 		self.title = f"{self.patient_name} - {self.age or ''} {self.gender}"

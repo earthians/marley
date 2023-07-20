@@ -26,10 +26,9 @@ class Observation(Document):
 
 	def set_age(self):
 		patient_doc = frappe.get_doc("Patient", self.patient)
-		self.age = patient_doc.calculate_age().get("age_in_string")
-		# self.years = patient_doc.calculate_age()[1].get("years")
-		# self.months = patient_doc.calculate_age()[1].get("months")
-		self.days = patient_doc.calculate_age().get("age_in_days")
+		if patient_doc.dob:
+			self.age = patient_doc.calculate_age().get("age_in_string")
+			self.days = patient_doc.calculate_age().get("age_in_days")
 
 	def set_status(self):
 		if self.has_result() and self.status != "Final":
