@@ -9,6 +9,7 @@ import re
 
 from frappe.model.document import Document
 from frappe.utils import date_diff, getdate, now_datetime, today
+from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import get_terms_and_conditions
 
 
 class Observation(Document):
@@ -290,10 +291,13 @@ def record_observation_result(values):
 					observation_doc.save()
 
 			if observation_doc.get("observation_category") == "Imaging":
-				observation_doc.result_text = val.get("result")
-				observation_doc.time_of_result = now_datetime()
-				observation_doc.result_interpretation = val.get("interpretation")
-				observation_doc.save()
+				if val.get("result"):
+					observation_doc.result_text = val.get("result")
+				if val.get("interpretation"):
+					observation_doc.result_interpretation = val.get("interpretation")
+				if val.get("result") or val.get("interpretation"):
+					observation_doc.time_of_result = now_datetime()
+					observation_doc.save()
 
 
 @frappe.whitelist()
@@ -312,3 +316,15 @@ def set_observation_idx(doc):
 def is_numbers_with_exceptions(value):
 	pattern = r'^[0-9{}]+$'.format(re.escape(".<>"))
 	return re.match(pattern, value) is not None
+
+@frappe.whitelist()
+def get_observation_result_template(template_name, observation):
+	if observation:
+		observation_doc = frappe.get_doc("Observation", observation)
+		patient_doc = frappe.get_doc("Patient", observation_doc.get("patient"))
+		observation_doc = json.loads(observation_doc.as_json())
+		patient_doc = json.loads(patient_doc.as_json())
+		# merged_dict = {"patient": patient_doc, "observation":observation_doc}
+		merged_dict = {**observation_doc, **patient_doc}
+		terms = get_terms_and_conditions(template_name, merged_dict)
+	return terms
