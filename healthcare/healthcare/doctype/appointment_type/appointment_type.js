@@ -9,13 +9,40 @@ frappe.ui.form.on('Appointment Type', {
 			};
 		});
 
-		frm.set_query('medical_department', 'items', function(doc) {
-			let item_list = doc.items.map(({medical_department}) => medical_department);
-			return {
-				filters: [
-					['Medical Department', 'name', 'not in', item_list]
-				]
-			};
+		frm.set_query('dt', 'items', function() {
+			if (['Department', 'Practitioner'].includes(frm.doc.allow_booking_for)) {
+				return {
+					filters: {'name': ['=', 'Medical Department']}
+				};
+			} else if (frm.doc.allow_booking_for === "Service Unit") {
+				return {
+					filters: {'name': ['=', 'Healthcare Service Unit']}
+				};
+			}
+		});
+
+		frm.set_query('dn', 'items', function(doc, cdt, cdn) {
+			let child = locals[cdt][cdn];
+			if (child.dt === 'Medical Department') {
+				let item_list = doc.items
+					.filter(item => item.dt === 'Medical Department')
+					.map(({dn}) => dn);
+				return {
+					filters: [
+						['Medical Department', 'name', 'not in', item_list]
+					]
+				};
+			} else if (child.dt === 'Healthcare Service Unit') {
+				let item_list = doc.items
+					.filter(item => item.dt === 'Healthcare Service Unit')
+					.map(({dn}) => dn);
+				return {
+					filters: [
+						['Healthcare Service Unit', 'name', 'not in', item_list],
+						['Healthcare Service Unit', 'allow_appointments', "=", 1],
+					]
+				};
+			}
 		});
 
 		frm.set_query('op_consulting_charge_item', 'items', function() {
