@@ -38,7 +38,8 @@ frappe.ui.form.on('Patient Appointment', {
 				query: 'healthcare.controllers.queries.get_healthcare_service_units',
 				filters: {
 					company: frm.doc.company,
-					inpatient_record: frm.doc.inpatient_record
+					inpatient_record: frm.doc.inpatient_record,
+					allow_appointments: 1,
 				}
 			};
 		});
@@ -54,43 +55,10 @@ frappe.ui.form.on('Patient Appointment', {
 		frm.trigger('set_therapy_type_filter');
 
 		if (frm.is_new()) {
-			frm.page.set_primary_action(__('Check Availability'), function() {
-				if (!frm.doc.patient) {
-					frappe.msgprint({
-						title: __('Not Allowed'),
-						message: __('Please select Patient first'),
-						indicator: 'red'
-					});
-				} else {
-					frappe.call({
-						method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
-						args: { 'patient': frm.doc.patient },
-						callback: function(data) {
-							if (data.message == true) {
-								if (frm.doc.mode_of_payment && frm.doc.paid_amount) {
-									check_and_set_availability(frm);
-								}
-								if (!frm.doc.mode_of_payment) {
-									frappe.msgprint({
-										title: __('Not Allowed'),
-										message: __('Please select a Mode of Payment first'),
-										indicator: 'red'
-									});
-								}
-								if (!frm.doc.paid_amount) {
-									frappe.msgprint({
-										title: __('Not Allowed'),
-										message: __('Please set the Paid Amount first'),
-										indicator: 'red'
-									});
-								}
-							} else {
-								check_and_set_availability(frm);
-							}
-						}
-					});
-				}
-			});
+			frm.page.clear_primary_action();
+			if (frm.doc.appointment_for) {
+				frm.trigger('appointment_for');
+			}
 		} else {
 			frm.page.set_primary_action(__('Save'), () => frm.save());
 		}
@@ -102,7 +70,7 @@ frappe.ui.form.on('Patient Appointment', {
 			}, __('View'));
 		}
 
-		if (frm.doc.status == 'Open' || (frm.doc.status == 'Scheduled' && !frm.doc.__islocal)) {
+		if (["Open", "Checked In"].includes(frm.doc.status) || (frm.doc.status == 'Scheduled' && !frm.doc.__islocal)) {
 			frm.add_custom_button(__('Cancel'), function() {
 				update_status(frm, 'Cancelled');
 			});
@@ -137,11 +105,101 @@ frappe.ui.form.on('Patient Appointment', {
 				create_vital_signs(frm);
 			}, __('Create'));
 		}
+
+		if (!frm.doc.__islocal && frm.doc.status=="Open" && frm.doc.appointment_based_on_check_in) {
+			frm.add_custom_button(__('Check In'), () => {
+				frm.set_value("status", "Checked In");
+				frm.save();
+			});
+		}
+	},
+
+	appointment_for: function(frm) {
+		if (frm.doc.appointment_for == 'Practitioner') {
+			if (!frm.doc.practitioner) {
+				frm.set_value('department', '');
+			}
+			frm.set_value('service_unit', '');
+			frm.trigger('set_check_availability_action');
+		} else if (frm.doc.appointment_for == 'Service Unit') {
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'department': '',
+			});
+			frm.trigger('set_book_action');
+		} else if (frm.doc.appointment_for == 'Department') {
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'service_unit': '',
+			});
+			frm.trigger('set_book_action');
+		} else {
+			if (frm.doc.appointment_for == 'Department') {
+				frm.set_value('service_unit', '');
+			}
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'department': '',
+				'service_unit': '',
+			});
+			frm.page.clear_primary_action();
+		}
+	},
+
+	set_book_action: function(frm) {
+		frm.page.set_primary_action(__('Book'), function() {
+			frm.enable_save();
+			frm.save();
+		});
+	},
+
+	set_check_availability_action: function(frm) {
+		frm.page.set_primary_action(__('Check Availability'), function() {
+			if (!frm.doc.patient) {
+				frappe.msgprint({
+					title: __('Not Allowed'),
+					message: __('Please select Patient first'),
+					indicator: 'red'
+				});
+			} else {
+				frappe.call({
+					method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
+					args: { 'patient': frm.doc.patient },
+					callback: function(data) {
+						if (data.message == true) {
+							if (frm.doc.mode_of_payment && frm.doc.paid_amount) {
+								check_and_set_availability(frm);
+							}
+							if (!frm.doc.mode_of_payment) {
+								frappe.msgprint({
+									title: __('Not Allowed'),
+									message: __('Please select a Mode of Payment first'),
+									indicator: 'red'
+								});
+							}
+							if (!frm.doc.paid_amount) {
+								frappe.msgprint({
+									title: __('Not Allowed'),
+									message: __('Please set the Paid Amount first'),
+									indicator: 'red'
+								});
+							}
+						} else {
+							check_and_set_availability(frm);
+						}
+					}
+				});
+			}
+		});
 	},
 
 	patient: function(frm) {
 		if (frm.doc.patient) {
 			frm.trigger('toggle_payment_fields');
+			frm.trigger('appointment_for');
 			frappe.call({
 				method: 'frappe.client.get',
 				args: {
@@ -172,6 +230,20 @@ frappe.ui.form.on('Patient Appointment', {
 
 	appointment_type: function(frm) {
 		if (frm.doc.appointment_type) {
+			if (frm.doc.appointment_for && frm.doc[frappe.scrub(frm.doc.appointment_for)]) {
+				frm.events.set_payment_details(frm);
+			}
+		}
+	},
+
+	department: function(frm) {
+		if (frm.doc.department && frm.doc.appointment_for == 'Department') {
+			frm.events.set_payment_details(frm);
+		}
+	},
+
+	service_unit: function(frm) {
+		if (frm.doc.service_unit && frm.doc.appointment_for == 'Service Unit') {
 			frm.events.set_payment_details(frm);
 		}
 	},
@@ -180,7 +252,7 @@ frappe.ui.form.on('Patient Appointment', {
 		frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing').then(val => {
 			if (val) {
 				frappe.call({
-					method: 'healthcare.healthcare.utils.get_service_item_and_practitioner_charge',
+					method: 'healthcare.healthcare.utils.get_appointment_billing_item_and_rate',
 					args: {
 						doc: frm.doc
 					},
@@ -288,6 +360,7 @@ let check_and_set_availability = function(frm) {
 	let duration = null;
 	let add_video_conferencing = null;
 	let overlap_appointments = null;
+	let appointment_based_on_check_in = false;
 
 	show_availability();
 
@@ -323,7 +396,6 @@ let check_and_set_availability = function(frm) {
 					&& !overlap_appointments
 
 				frm.set_value('add_video_conferencing', add_video_conferencing);
-
 				if (!frm.doc.duration) {
 					frm.set_value('duration', duration);
 				}
@@ -334,6 +406,7 @@ let check_and_set_availability = function(frm) {
 				if (d.get_value('mode_of_payment') != frm.doc.mode_of_payment) {
 					frm.set_value('mode_of_payment', d.get_value('mode_of_payment'));
 				};
+				frm.set_value('appointment_based_on_check_in', appointment_based_on_check_in)
 
 				if (service_unit) {
 					frm.set_value('service_unit', service_unit);
@@ -417,7 +490,7 @@ let check_and_set_availability = function(frm) {
 						section_field.df.hidden = 0;
 
 						let payment_details = (await frappe.call(
-							'healthcare.healthcare.utils.get_service_item_and_practitioner_charge',
+							'healthcare.healthcare.utils.get_appointment_billing_item_and_rate',
 							{
 								doc: frm.doc
 							}
@@ -463,6 +536,7 @@ let check_and_set_availability = function(frm) {
 							$btn.addClass('btn-outline-primary');
 							selected_slot = $btn.attr('data-name');
 							service_unit = $btn.attr('data-service-unit');
+							appointment_based_on_check_in = $btn.attr('data-day-appointment');
 							duration = $btn.attr('data-duration');
 							add_video_conferencing = parseInt($btn.attr('data-tele-conf'));
 							overlap_appointments = parseInt($btn.attr('data-overlap-appointments'));
@@ -540,85 +614,111 @@ let check_and_set_availability = function(frm) {
 					${slot_info.tele_conf && !slot_info.allow_overlap ? '<i class="fa fa-video-camera fa-1x" aria-hidden="true"></i>' : ''}
 				</span><br>
 				<span><b> ${__('Service Unit: ')} </b> ${slot_info.service_unit}</span>`;
+				if (slot_info.service_unit_capacity) {
+					slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
+				}
 
-			if (slot_info.service_unit_capacity) {
-				slot_html += `<br><span> <b> ${__('Maximum Capacity:')} </b> ${slot_info.service_unit_capacity} </span>`;
-			}
+				slot_html += '</div><br>';
 
-			slot_html += '</div><br>';
+				slot_html += slot_info.avail_slot.map(slot => {
+						appointment_count = 0;
+						disabled = false;
+						count_class = tool_tip = '';
+						start_str = slot.from_time;
+						slot_start_time = moment(slot.from_time, 'HH:mm:ss');
+						slot_end_time = moment(slot.to_time, 'HH:mm:ss');
+						interval = (slot_end_time - slot_start_time) / 60000 | 0;
 
-			slot_html += slot_info.avail_slot.map(slot => {
-				appointment_count = 0;
-				disabled = false;
-				count_class = tool_tip = '';
-				start_str = slot.from_time;
-				slot_start_time = moment(slot.from_time, 'HH:mm:ss');
-				slot_end_time = moment(slot.to_time, 'HH:mm:ss');
-				interval = (slot_end_time - slot_start_time) / 60000 | 0;
-
-				// restrict past slots based on the current time.
-				let now = moment();
-				if((now.format("YYYY-MM-DD") == appointment_date) && slot_start_time.isBefore(now)){
-					disabled = true;
-				} else {
-					// iterate in all booked appointments, update the start time and duration
-					slot_info.appointments.forEach((booked) => {
-						let booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
-						let end_time = booked_moment.clone().add(booked.duration, 'minutes');
-
-						// Deal with 0 duration appointments
-						if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
-							if (booked.duration == 0) {
-								disabled = true;
-								return false;
-							}
-						}
-
-						// Check for overlaps considering appointment duration
-						if (slot_info.allow_overlap != 1) {
-							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-								// There is an overlap
-								disabled = true;
-								return false;
-							}
+						// restrict past slots based on the current time.
+						let now = moment();
+						let booked_moment = ""
+						if((now.format("YYYY-MM-DD") == appointment_date) && (slot_start_time.isBefore(now) && !slot.maximum_appointments)){
+							disabled = true;
 						} else {
-							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
-								appointment_count++;
-							}
-							if (appointment_count >= slot_info.service_unit_capacity) {
-								// There is an overlap
-								disabled = true;
-								return false;
-							}
+							// iterate in all booked appointments, update the start time and duration
+							slot_info.appointments.forEach((booked) => {
+								booked_moment = moment(booked.appointment_time, 'HH:mm:ss');
+								let end_time = booked_moment.clone().add(booked.duration, 'minutes');
+
+								// to get apointment count for all day appointments
+								if (slot.maximum_appointments) {
+									if (booked.appointment_date == appointment_date) {
+										appointment_count++;
+									}
+								}
+								// Deal with 0 duration appointments
+								if (booked_moment.isSame(slot_start_time) || booked_moment.isBetween(slot_start_time, slot_end_time)) {
+									if (booked.duration == 0) {
+										disabled = true;
+										return false;
+									}
+								}
+
+								// Check for overlaps considering appointment duration
+								if (slot_info.allow_overlap != 1) {
+									if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+										// There is an overlap
+										disabled = true;
+										return false;
+									}
+								} else {
+									if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+										appointment_count++;
+									}
+									if (appointment_count >= slot_info.service_unit_capacity) {
+										// There is an overlap
+										disabled = true;
+										return false;
+									}
+								}
+							});
 						}
-					});
+						if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
+							available_slots = slot_info.service_unit_capacity - appointment_count;
+							count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
+							count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
+							tool_tip =`${available_slots} ${__('slots available for booking')}`;
+						}
+
+						if (slot.maximum_appointments) {
+							if (appointment_count >= slot.maximum_appointments) {
+								disabled = true;
+							}
+							else {
+								disabled = false;
+							}
+							available_slots = slot.maximum_appointments - appointment_count;
+							count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
+							count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
+							return `<button class="btn btn-secondary" data-name=${start_str}
+								data-service-unit="${slot_info.service_unit || ''}"
+								data-day-appointment=${1}
+								data-duration=${slot.duration}
+								${disabled ? 'disabled="disabled"' : ""}>${slot.from_time} -
+								${slot.to_time} ${slot.maximum_appointments ?
+								`<br><span class='badge ${count_class}'>${count} </span>` : ''}</button>`
+						} else {
+
+						return `
+							<button class="btn btn-secondary" data-name=${start_str}
+								data-duration=${interval}
+								data-service-unit="${slot_info.service_unit || ''}"
+								data-tele-conf="${slot_info.tele_conf || 0}"
+								data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
+								style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
+								data-toggle="tooltip" title="${tool_tip || ''}">
+								${start_str.substring(0, start_str.length - 3)}
+								${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
+							</button>`;
+
 				}
-
-				if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
-					available_slots = slot_info.service_unit_capacity - appointment_count;
-					count = `${(available_slots > 0 ? available_slots : __('Full'))}`;
-					count_class = `${(available_slots > 0 ? 'badge-success' : 'badge-danger')}`;
-					tool_tip =`${available_slots} ${__('slots available for booking')}`;
-				}
-
-				return `
-					<button class="btn btn-secondary" data-name=${start_str}
-						data-duration=${interval}
-						data-service-unit="${slot_info.service_unit || ''}"
-						data-tele-conf="${slot_info.tele_conf || 0}"
-						data-overlap-appointments="${slot_info.service_unit_capacity || 0}"
-						style="margin: 0 10px 10px 0; width: auto;" ${disabled ? 'disabled="disabled"' : ""}
-						data-toggle="tooltip" title="${tool_tip || ''}">
-						${start_str.substring(0, start_str.length - 3)}
-						${slot_info.service_unit_capacity ? `<br><span class='badge ${count_class}'> ${count} </span>` : ''}
-					</button>`;
-
 			}).join("");
 
-			if (slot_info.service_unit_capacity) {
-				slot_html += `<br/><small>${__('Each slot indicates the capacity currently available for booking')}</small>`;
-			}
-			slot_html += `<br/><br/>`;
+				if (slot_info.service_unit_capacity) {
+					slot_html += `<br/><small>${__('Each slot indicates the capacity currently available for booking')}</small>`;
+				}
+				slot_html += `<br/><br/>`;
+
 		});
 
 		return slot_html;
