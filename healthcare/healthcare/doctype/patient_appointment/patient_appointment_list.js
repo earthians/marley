@@ -9,7 +9,9 @@ frappe.listview_settings['Patient Appointment'] = {
 			"Scheduled": "yellow",
 			"Closed": "green",
 			"Cancelled": "red",
-			"Expired": "grey"
+			"Expired": "grey",
+			"Checked In": "blue",
+			"Checked Out": "orange"
 		};
 		return [__(doc.status), colors[doc.status], "status,=," + doc.status];
 	}
