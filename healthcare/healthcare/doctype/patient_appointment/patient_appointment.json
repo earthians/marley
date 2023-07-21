@@ -2,8 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 0,
- "creation": "2017-05-04 11:52:40.941507",
+ "creation": "2017-05-04 11:52:41.141507",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
@@ -11,19 +10,23 @@
   "naming_series",
   "title",
   "status",
-  "patient",
-  "patient_name",
-  "patient_sex",
-  "patient_age",
-  "inpatient_record",
+  "appointment_type",
+  "appointment_for",
   "column_break_1",
   "company",
   "practitioner",
   "practitioner_name",
   "department",
   "service_unit",
+  "appointment_date",
+  "section_patient_details",
+  "patient",
+  "patient_name",
+  "inpatient_record",
+  "column_break_4pp7",
+  "patient_sex",
+  "patient_age",
   "section_break_12",
-  "appointment_type",
   "duration",
   "procedure_template",
   "get_procedure_from_encounter",
@@ -32,11 +35,10 @@
   "therapy_type",
   "get_prescribed_therapies",
   "column_break_17",
-  "appointment_date",
   "appointment_time",
   "appointment_datetime",
-  "event",
   "add_video_conferencing",
+  "event",
   "google_meet_link",
   "section_break_16",
   "mode_of_payment",
@@ -47,6 +49,8 @@
   "ref_sales_invoice",
   "section_break_3",
   "referring_practitioner",
+  "position_in_queue",
+  "appointment_based_on_check_in",
   "reminded",
   "column_break_36",
   "notes"
@@ -78,6 +82,7 @@
    "ignore_user_permissions": 1,
    "label": "Appointment Type",
    "options": "Appointment Type",
+   "reqd": 1,
    "set_only_once": 1
   },
   {
@@ -100,12 +105,12 @@
    "in_filter": 1,
    "in_list_view": 1,
    "label": "Status",
-   "options": "\nScheduled\nOpen\nClosed\nCancelled",
+   "options": "\nScheduled\nOpen\nChecked In\nChecked Out\nClosed\nCancelled\nNo Show",
    "read_only": 1,
    "search_index": 1
   },
   {
-   "depends_on": "eval:doc.patient;",
+   "depends_on": "eval:doc.patient",
    "fieldname": "procedure_template",
    "fieldtype": "Link",
    "label": "Clinical Procedure Template",
@@ -132,34 +137,39 @@
    "fieldname": "service_unit",
    "fieldtype": "Link",
    "label": "Service Unit",
+   "mandatory_depends_on": "eval:doc.appointment_for==\"Service Unit\"",
    "options": "Healthcare Service Unit",
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.appointment_for!=\"Service Unit\""
   },
   {
-   "depends_on": "eval:doc.practitioner;",
+   "depends_on": "eval:!doc.__is_local",
    "fieldname": "section_break_12",
    "fieldtype": "Section Break",
    "label": "Appointment Details"
   },
   {
+   "depends_on": "eval:doc.appointment_for==\"Practitioner\"",
    "fieldname": "practitioner",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Healthcare Practitioner",
    "options": "Healthcare Practitioner",
-   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
   {
    "fetch_from": "practitioner.department",
+   "fetch_if_empty": 1,
    "fieldname": "department",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Department",
+   "mandatory_depends_on": "eval:doc.appointment_for==\"Department\"",
    "options": "Medical Department",
+   "read_only_depends_on": "eval:doc.appointment_for!=\"Department\"",
    "search_index": 1,
    "set_only_once": 1
   },
@@ -174,16 +184,18 @@
    "in_standard_filter": 1,
    "label": "Date",
    "read_only": 1,
+   "read_only_depends_on": "eval:doc.appointment_for==\"Practitioner\"",
    "reqd": 1,
    "search_index": 1
   },
   {
+   "depends_on": "eval: doc.appointment_for == \"Practitioner\"",
    "fieldname": "appointment_time",
    "fieldtype": "Time",
    "in_list_view": 1,
    "label": "Time",
-   "read_only": 1,
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.appointment_based_on_check_in == false && doc.appointment_for == \"Practitioner\";",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_16",
@@ -357,6 +369,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.appointment_for == \"Practitioner\"",
    "fieldname": "add_video_conferencing",
    "fieldtype": "Check",
    "label": "Add Video Conferencing"
@@ -367,10 +380,43 @@
    "label": "Event",
    "options": "Event",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "appointment_based_on_check_in",
+   "fieldtype": "Check",
+   "label": "Appointment Based On Check In",
+   "read_only": 1
+  },
+  {
+   "fieldname": "position_in_queue",
+   "fieldtype": "Int",
+   "label": "Position In Queue",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "appointment_type.allow_booking_for",
+   "fieldname": "appointment_for",
+   "fieldtype": "Select",
+   "label": "Appointment For",
+   "options": "\nPractitioner\nDepartment\nService Unit",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_patient_details",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "fieldname": "column_break_4pp7",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "modified": "2022-08-16 19:10:10.528001",
+ "modified": "2023-06-10 13:39:03.455568",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
