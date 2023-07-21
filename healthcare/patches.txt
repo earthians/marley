@@ -1,3 +1,12 @@
+[pre_model_sync]
 healthcare.patches.v0_0.setup_abdm_custom_fields
 healthcare.patches.v0_0.set_medical_code_from_field_to_codification_table
 healthcare.patches.v15_0.set_fee_validity_status
+<<<<<<< HEAD
+=======
+healthcare.patches.v15_0.create_custom_fields_in_sales_invoice_item
+
+[post_model_sync]
+healthcare.patches.v15_0.rename_field_medical_department_in_appoitment_type_service_item
+healthcare.patches.v15_0.set_default_dynamic_link_dt_for_appointment_type_service_item
+>>>>>>> 291095d (fix: book Patient Appointment based on check in)
