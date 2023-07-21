@@ -10,11 +10,10 @@
  "field_order": [
   "appointment_type",
   "default_duration",
+  "allow_booking_for",
   "column_break_jdo1",
   "color",
-  "ip",
   "billing_tab",
-  "billing_section",
   "price_list",
   "items"
  ],
@@ -29,15 +28,6 @@
    "reqd": 1,
    "translatable": 1,
    "unique": 1
-  },
-  {
-   "bold": 1,
-   "default": "0",
-   "fieldname": "ip",
-   "fieldtype": "Check",
-   "label": "Is Inpatient",
-   "print_hide": 1,
-   "report_hide": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -56,11 +46,6 @@
    "label": "Color",
    "no_copy": 1,
    "report_hide": 1
-  },
-  {
-   "fieldname": "billing_section",
-   "fieldtype": "Section Break",
-   "label": "Billing"
   },
   {
    "fieldname": "price_list",
@@ -82,10 +67,18 @@
   {
    "fieldname": "column_break_jdo1",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "Practitioner",
+   "fieldname": "allow_booking_for",
+   "fieldtype": "Select",
+   "label": "Allow Booking For",
+   "options": "Practitioner\nDepartment\nService Unit",
+   "reqd": 1
   }
  ],
  "links": [],
- "modified": "2023-01-13 20:02:20.353136",
+ "modified": "2023-06-10 13:43:27.137414",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Appointment Type",
