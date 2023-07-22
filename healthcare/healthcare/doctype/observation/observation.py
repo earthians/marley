@@ -2,14 +2,15 @@
 # For license information, please see license.txt
 
 import json
-from frappe import _
-import frappe
-
 import re
 
+import frappe
+from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
+	get_terms_and_conditions,
+)
+from frappe import _
 from frappe.model.document import Document
-from frappe.utils import date_diff, getdate, now_datetime, today
-from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import get_terms_and_conditions
+from frappe.utils import now_datetime
 
 
 class Observation(Document):
@@ -17,7 +18,6 @@ class Observation(Document):
 		self.set_age()
 		self.set_result_time()
 		self.set_status()
-		age = frappe.utils.date_diff(frappe.utils.nowdate(), frappe.db.get_value("Patient", self.patient, "dob"))
 		self.reference = get_observation_reference(self)
 		self.validate_input()
 
@@ -74,9 +74,7 @@ class Observation(Document):
 		if self.permitted_data_type in ["Quantity", "Numeric"]:
 			if self.result_data and not is_numbers_with_exceptions(self.result_data):
 				frappe.throw(
-					_(
-						"Non numeric result {0} is not allowed for Permitted Data Type {1}"
-					).format(
+					_("Non numeric result {0} is not allowed for Permitted Data Type {1}").format(
 						frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)
 					)
 				)
@@ -96,9 +94,7 @@ def get_observation_details(docname):
 
 	observation = frappe.get_list(
 		"Observation",
-		fields=[
-			"*"
-		],
+		fields=["*"],
 		filters={"sales_invoice": reference, "parent_observation": "", "status": ["!=", "Cancelled"]},
 		order_by="creation",
 	)
@@ -121,9 +117,7 @@ def get_observation_details(docname):
 		else:
 			child_observations = frappe.get_list(
 				"Observation",
-				fields=[
-					"*"
-				],
+				fields=["*"],
 				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"]},
 				order_by="observation_idx",
 			)
@@ -139,7 +133,11 @@ def get_observation_details(docname):
 				observation_data = {}
 				observation_data["observation"] = child
 				obs_list.append(observation_data)
-				if child.get("result_data") or child.get("result_text") or child.get("result_select")  not in [None, "", "Null"]:
+				if (
+					child.get("result_data")
+					or child.get("result_text")
+					or child.get("result_select") not in [None, "", "Null"]
+				):
 					has_result = True
 			if len(child_observations) > 0:
 				obs_dict["has_component"] = True
@@ -160,6 +158,7 @@ def get_observation_details(docname):
 def get_observation_reference(doc):
 	template_doc = frappe.get_doc("Observation Template", doc.observation_template)
 	display_reference = ""
+
 	for child in template_doc.observation_reference_range:
 		if not child.applies_to == "All":
 			if not child.applies_to == doc.gender:
@@ -188,6 +187,7 @@ def get_observation_reference(doc):
 
 	return display_reference
 
+
 def set_reference_string(child):
 	display_reference = ""
 	if (child.reference_from and child.reference_to) or child.conditions:
@@ -197,7 +197,9 @@ def set_reference_string(child):
 			display_reference += str(child.conditions)
 		else:
 			display_reference += ""
-		display_reference += ((": " + str(child.short_interpretation)) if child.short_interpretation else "") + "<br>"
+		display_reference += (
+			(": " + str(child.short_interpretation)) if child.short_interpretation else ""
+		) + "<br>"
 	return display_reference
 
 
@@ -260,10 +262,15 @@ def record_observation_result(values):
 				"Quantity",
 				"Numeric",
 			]:
-				if observation_doc.get("permitted_data_type") in [
-					"Quantity",
-					"Numeric",
-				] and val.get("result") and not is_numbers_with_exceptions(val.get("result")):
+				if (
+					observation_doc.get("permitted_data_type")
+					in [
+						"Quantity",
+						"Numeric",
+					]
+					and val.get("result")
+					and not is_numbers_with_exceptions(val.get("result"))
+				):
 					frappe.msgprint(
 						_("Non numeric result {0} is not allowed for Permitted Type {1}").format(
 							frappe.bold(val.get("result")),
@@ -307,14 +314,22 @@ def add_note(note, observation):
 
 def set_observation_idx(doc):
 	if doc.parent_observation:
-		parent_template = frappe.db.get_value("Observation", doc.parent_observation, "observation_template")
-		idx = frappe.db.get_value("Observation Component", {"parent": parent_template, "observation_template":doc.observation_template}, "idx")
+		parent_template = frappe.db.get_value(
+			"Observation", doc.parent_observation, "observation_template"
+		)
+		idx = frappe.db.get_value(
+			"Observation Component",
+			{"parent": parent_template, "observation_template": doc.observation_template},
+			"idx",
+		)
 		if idx:
 			doc.observation_idx = idx
 
+
 def is_numbers_with_exceptions(value):
-	pattern = r'^[0-9{}]+$'.format(re.escape(".<>"))
+	pattern = r"^[0-9{}]+$".format(re.escape(".<>"))
 	return re.match(pattern, value) is not None
+
 
 @frappe.whitelist()
 def get_observation_result_template(template_name, observation):
