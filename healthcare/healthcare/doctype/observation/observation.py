@@ -192,14 +192,15 @@ def set_reference_string(child):
 	display_reference = ""
 	if (child.reference_from and child.reference_to) or child.conditions:
 		if child.reference_from and child.reference_to:
-			display_reference += str(child.reference_from) + "-" + str(child.reference_to)
+			display_reference = f"{str(child.reference_from)} - {str(child.reference_to)}"
 		elif child.conditions:
-			display_reference += str(child.conditions)
-		else:
-			display_reference += ""
-		display_reference += (
-			(": " + str(child.short_interpretation)) if child.short_interpretation else ""
-		) + "<br>"
+			display_reference = f"{str(child.conditions)}"
+
+		display_reference += f"{display_reference}: {str(child.short_interpretation) if child.short_interpretation else ''}<br>"
+
+	elif child.short_interpretation or child.long_interpretation:
+		display_reference = f"{(child.short_interpretation if child.short_interpretation else child.long_interpretation)}<br>"
+
 	return display_reference
 
 
