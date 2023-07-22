@@ -196,7 +196,8 @@ def set_reference_string(child):
 		elif child.conditions:
 			display_reference = f"{str(child.conditions)}"
 
-		display_reference += f"{display_reference}: {str(child.short_interpretation) if child.short_interpretation else ''}<br>"
+		if child.short_interpretation:
+			display_reference = f"{display_reference}: {str(child.short_interpretation)}<br>"
 
 	elif child.short_interpretation or child.long_interpretation:
 		display_reference = f"{(child.short_interpretation if child.short_interpretation else child.long_interpretation)}<br>"
