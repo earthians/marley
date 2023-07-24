@@ -653,7 +653,7 @@ def create_clinical_procedure_template():
 	return template
 
 
-def create_appointment_type(args=None):
+def create_appointment_type(args=None):  # nosemgrep
 	if not args:
 		args = frappe.local.form_dict
 
