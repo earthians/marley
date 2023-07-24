@@ -14,7 +14,6 @@
   "observation",
   "observation_template",
   "observation_category",
-  "has_component",
   "column_break_7xu5",
   "company",
   "medical_department",
@@ -29,13 +28,23 @@
   "section_break_zz5k",
   "healthcare_practitioner",
   "practitioner_name",
+  "template_details_section",
+  "has_component",
+  "preferred_display_name",
+  "sample_collection_required",
+  "permitted_unit",
+  "column_break_pxgu",
+  "sample",
+  "sample_type",
+  "permitted_data_type",
+  "method",
   "column_break_meur",
   "specimen",
   "sample_collection_time",
   "column_break_yo05",
   "sample_status",
   "result_section",
-  "permitted_data_type",
+  "result_template",
   "result_attach",
   "result_boolean",
   "result_data",
@@ -50,6 +59,8 @@
   "time_of_result",
   "time_of_approval",
   "column_break_zrac",
+  "interpretation_template",
+  "result_interpretation",
   "observation_method",
   "reference_section",
   "reference",
@@ -68,7 +79,8 @@
   "service_request",
   "column_break_wwnp",
   "parent_observation",
-  "observation_idx"
+  "observation_idx",
+  "days"
  ],
  "fields": [
   {
@@ -83,7 +95,9 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Observation Template",
-   "options": "Observation Template"
+   "options": "Observation Template",
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_7xu5",
@@ -224,15 +238,6 @@
    "read_only": 1
   },
   {
-   "default": "0",
-   "fetch_from": "observation_template.has_component",
-   "fieldname": "has_component",
-   "fieldtype": "Check",
-   "label": "Has Component",
-   "read_only": 1,
-   "read_only_depends_on": "observation_template"
-  },
-  {
    "depends_on": "eval:doc.permitted_data_type == \"Attach\";",
    "fieldname": "result_attach",
    "fieldtype": "Attach",
@@ -292,11 +297,11 @@
   },
   {
    "fetch_from": "observation_template.observation_category",
-   "fetch_if_empty": 1,
    "fieldname": "observation_category",
    "fieldtype": "Select",
    "label": "Observation Category",
    "options": "\nSocial History\nVital Signs\nImaging\nLaboratory\nProcedure\nSurvey\nExam\nTherapy\nActivity",
+   "read_only": 1,
    "read_only_depends_on": "observation_template",
    "reqd": 1
   },
@@ -442,73 +447,110 @@
    "fieldtype": "Data",
    "label": "Practitioner Name",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "template_details_section",
+   "fieldtype": "Section Break",
+   "label": "Template Details"
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.sample_collection_required",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.preferred_display_name",
+   "fieldname": "preferred_display_name",
+   "fieldtype": "Data",
+   "label": "Preferred Display Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.permitted_unit",
+   "fieldname": "permitted_unit",
+   "fieldtype": "Link",
+   "label": "Permitted Unit",
+   "options": "Lab Test UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pxgu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "observation_template.sample",
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fetch_from": "observation_template.sample_type",
+   "fieldname": "sample_type",
+   "fieldtype": "Link",
+   "label": "Sample Type",
+   "options": "Sample Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.method_value",
+   "fieldname": "method",
+   "fieldtype": "Data",
+   "label": "Method",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Days",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.observation_category == \"Imaging\";\n",
+   "fieldname": "result_interpretation",
+   "fieldtype": "Text Editor",
+   "label": "Result Interpretation"
+  },
+  {
+   "fetch_from": "observation_template.result_template",
+   "fieldname": "result_template",
+   "fieldtype": "Link",
+   "label": "Result Template",
+   "options": "Terms and Conditions",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.interpretation_template",
+   "fieldname": "interpretation_template",
+   "fieldtype": "Link",
+   "label": "Interpretation Template",
+   "options": "Terms and Conditions",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.has_component",
+   "fieldname": "has_component",
+   "fieldtype": "Check",
+   "label": "Has Component",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-22 10:05:52.072095",
+ "modified": "2023-07-24 19:25:20.826456",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "import": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Healthcare Administrator",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "create": 1,
-   "email": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Laboratory User",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "LabTest Approver",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  }
- ],
+ "permissions": [],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
