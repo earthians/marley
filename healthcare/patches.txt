@@ -9,4 +9,8 @@ healthcare.patches.v15_0.create_custom_fields_in_sales_invoice_item
 [post_model_sync]
 healthcare.patches.v15_0.rename_field_medical_department_in_appoitment_type_service_item
 healthcare.patches.v15_0.set_default_dynamic_link_dt_for_appointment_type_service_item
+<<<<<<< HEAD
 >>>>>>> 291095d (fix: book Patient Appointment based on check in)
+=======
+healthcare.patches.v15_0.set_allow_booking_for_in_appointment_type
+>>>>>>> 025117b (fix(patch): Set Allow Booking For in Appointment Type)
