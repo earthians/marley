@@ -514,11 +514,11 @@ let show_procedure_templates = function(frm, result){
 var show_observations = function(frm) {
 	if (frm.doc.patient) {
 		frm.fields_dict.observation_html.html("");
-		const observation = new healthcare.Observation({
-			frm: frm,
-			notes_wrapper: $(frm.fields_dict.observation_html.wrapper),
-			create_observation: true,
-		});
-		observation.refresh();
+		// const observation = new healthcare.Observation({
+		// 	frm: frm,
+		// 	notes_wrapper: $(frm.fields_dict.observation_html.wrapper),
+		// 	create_observation: true,
+		// });
+		// observation.refresh();
 	}
 }

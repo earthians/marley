@@ -82,16 +82,7 @@ class Observation(Document):
 
 @frappe.whitelist()
 def get_observation_details(docname):
-	patient, gender, reference, reference_posting_date = frappe.get_value(
-		"Diagnostic Report", docname, ["patient", "gender", "docname", "reference_posting_date"]
-	)
-	dob = frappe.db.get_value("Patient", patient, "dob")
-	age = 0
-	if dob:
-		if not reference_posting_date:
-			reference_posting_date = frappe.utils.nowdate()
-		age = frappe.utils.date_diff(reference_posting_date, dob)
-
+	reference = frappe.get_value("Diagnostic Report", docname, "docname")
 	observation = frappe.get_list(
 		"Observation",
 		fields=["*"],
@@ -151,7 +142,6 @@ def get_observation_details(docname):
 				if has_result:
 					obs_dict["has_result"] = True
 			out_data.append(obs_dict)
-
 	return out_data, obs_length
 
 

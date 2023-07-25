@@ -328,6 +328,7 @@
   {
    "fieldname": "observation_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Observation"
   },
   {
@@ -343,7 +344,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-06-20 15:21:57.241577",
+ "modified": "2023-07-25 12:03:37.502675",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
