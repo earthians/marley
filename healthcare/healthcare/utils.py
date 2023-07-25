@@ -488,26 +488,11 @@ def get_healthcare_service_item(is_inpatient):
 	return service_item
 
 
-<<<<<<< HEAD
-def get_practitioner_charge(practitioner, is_inpatient):
-	if is_inpatient:
-		practitioner_charge = frappe.db.get_value(
-			"Healthcare Practitioner", practitioner, "inpatient_visit_charge"
-		)
-	else:
-		practitioner_charge = frappe.db.get_value(
-			"Healthcare Practitioner", practitioner, "op_consulting_charge"
-		)
-	if practitioner_charge:
-		return practitioner_charge
-	return False
-=======
 def manage_invoice_validate(doc, method):
 	if doc.service_unit and len(doc.items):
 		for item in doc.items:
 			if not item.service_unit:
 				item.service_unit = doc.service_unit
->>>>>>> 291095d (fix: book Patient Appointment based on check in)
 
 
 def manage_invoice_submit_cancel(doc, method):
