@@ -13,6 +13,8 @@ frappe.ui.form.on('Sample Collection', {
 							selected: selected_child,
 							sample_collection: frm.doc.name
 						},
+						freeze: true,
+						freeze_message: __("Marking Collected..."),
 						callback: function (r) {
 							if (!r.exc) {
 								frm.reload_doc();
@@ -239,6 +241,8 @@ frappe.ui.form.on("Observation Sample Collection", {
 								component_observations: row.component_observations,
 								child_name: row.name
 							},
+							freeze: true,
+							freeze_message: __("Marking Collected..."),
 							callback: function (r) {
 								if (!r.exc) {
 									d.hide()
