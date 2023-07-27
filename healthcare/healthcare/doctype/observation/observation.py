@@ -150,8 +150,8 @@ def get_observation_details(docname):
 				obs_dict["has_result"] = False
 				if has_result:
 					obs_dict["has_result"] = True
-			out_data.append(obs_dict)
-
+			if len(obs_dict) > 0:
+				out_data.append(obs_dict)
 	return out_data, obs_length
 
 
