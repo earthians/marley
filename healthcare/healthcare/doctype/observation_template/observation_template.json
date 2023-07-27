@@ -99,7 +99,7 @@
    "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type==\"Quantity\";",
+   "depends_on": "eval: [\"Text\", \"Quantity\"].includes(doc.permitted_data_type);",
    "fieldname": "permitted_unit",
    "fieldtype": "Link",
    "label": "Permitted Unit",
@@ -366,7 +366,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-20 12:05:28.446646",
+ "modified": "2023-07-27 07:45:40.503846",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
