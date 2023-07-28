@@ -23,6 +23,11 @@ from healthcare.healthcare.doctype.observation.observation import add_observatio
 
 from healthcare.healthcare.doctype.observation_template.observation_template import get_observation_template_details
 
+from io import BytesIO
+import barcode
+from barcode.writer import ImageWriter
+import base64
+
 @frappe.whitelist()
 def get_healthcare_services_to_invoice(patient, company):
 	patient = frappe.get_doc("Patient", patient)
@@ -1161,3 +1166,23 @@ def insert_diagnostic_report(doc):
 	diagnostic_report.docname = doc.name
 	# diagnostic_report.sample_collection = doc.name
 	diagnostic_report.save(ignore_permissions=True)
+
+@frappe.whitelist()
+def generate_barcodes(in_val):
+	from io import BytesIO
+	from barcode import Code128
+	from barcode.writer import ImageWriter
+
+	stream = BytesIO()
+	Code128(str(in_val), writer=ImageWriter()).write(
+		stream,
+		{
+			"module_height": 3,
+			"text_distance": 0.9,
+			"write_text": False,
+		},
+	)
+	barcode_base64 = base64.b64encode(stream.getbuffer()).decode()
+	stream.close()
+
+	return barcode_base64
