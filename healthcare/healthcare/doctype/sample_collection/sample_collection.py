@@ -161,7 +161,7 @@ def create_specimen(patient, selected, component_observations):
 	# to group by
 	for sel in selected:
 		if not sel.get("has_component") or sel.get("has_component") == 0:
-			key = (sel.get("color"), sel.get('medical_department'), sel.get('sample_type'), sel.get("container_closure_color"))
+			key = (sel.get('medical_department'), sel.get('sample'), sel.get("container_closure_color"))
 			if key in groups:
 				groups[key].append(sel)
 			else:
@@ -170,7 +170,7 @@ def create_specimen(patient, selected, component_observations):
 			comp_observations = json.loads(sel.get("component_observations"))
 			for comp in comp_observations:
 				comp["name"] = sel.get("name")
-				key = (comp.get("color"), comp.get('medical_department'), comp.get('sample_type'), comp.get("container_closure_color"))
+				key = (comp.get('medical_department'), comp.get('sample'), comp.get("container_closure_color"))
 				if key in groups:
 					groups[key].append(comp)
 				else:

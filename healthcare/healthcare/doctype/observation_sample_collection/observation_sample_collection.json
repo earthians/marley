@@ -15,6 +15,7 @@
   "status",
   "container_closure_color",
   "sample_qty",
+  "medical_department",
   "section_break_tdtv",
   "collection_date_time",
   "collection_point",
@@ -26,7 +27,6 @@
   "reference_docname",
   "section_break_a5gx",
   "show_components",
-  "specimen",
   "specimen",
   "component_observation_parent",
   "component_observations"
@@ -168,9 +168,8 @@
   },
   {
    "fieldname": "specimen",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Specimen",
-   "options": "Specimen",
    "read_only": 1
   },
   {
@@ -195,12 +194,20 @@
    "fieldtype": "Data",
    "label": "Collected By",
    "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.medical_department",
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-07-09 16:43:13.178531",
+ "modified": "2023-07-29 13:35:17.440876",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Sample Collection",
