@@ -170,10 +170,10 @@ def get_observation_reference(doc):
 			elif child.to_age_type == "Days":
 				day_to = float(child.age_to)
 
-			if float(day_from) <= float(doc.days) <= float(day_to):
+			if doc.days and float(day_from) <= float(doc.days) <= float(day_to):
 				display_reference += set_reference_string(child)
 
-		elif child.age == "All":
+		elif child.age == "All" or not doc.days:
 			display_reference += set_reference_string(child)
 
 	return display_reference
