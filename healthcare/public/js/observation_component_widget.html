@@ -4,26 +4,26 @@
 				{% if (observation_details[observation_details.observation] && observation_details[observation_details.observation].length>0) { %}
 				<div class="">
 						<div class="flex" style="padding-bottom: 10px;">
-								<b>
-									<a href="/app/observation/{{ observation_details.observation }}" title="{{ __('Grouped Observations') }}">
-										{%= observation_details.display_name %}
-									</a>
-								</b>
-								<div style="padding-left: 5px;">
-									<a href="/app/healthcare-practitioner/{{ observation_details.healthcare_practitioner }}" title="{{ __('Practitioner') }}">
-										{% if (observation_details.practitioner_name) { %}
-											{%= observation_details.practitioner_name %}
-										{% } else { %}
-											{%= observation_details.healthcare_practitioner %}
-										{% } %}
-									</a>
-								</div>
+							<b>
+								<a href="/app/observation/{{ observation_details.observation }}" title="{{ __('Grouped Observations') }}">
+									{%= observation_details.display_name %}
+								</a>
+							</b>
+							<div style="padding-left: 5px;">
+								<a href="/app/healthcare-practitioner/{{ observation_details.healthcare_practitioner }}" title="{{ __('Practitioner') }}">
+									{% if (observation_details.practitioner_name) { %}
+										{%= observation_details.practitioner_name %}
+									{% } else { %}
+										{%= observation_details.healthcare_practitioner %}
+									{% } %}
+								</a>
+							</div>
 						</div>
 						{% for(var j=0, k=observation_details[observation_details.observation].length; j<k; j++) { %}
 						{% var child_obs = observation_details[observation_details.observation][j] %}
 							{% if (child_obs.observation) { %}
 								<div class="observation" name="{{ child_obs.observation.name }}">
-									<div class="observation-details row" style="width: 100%;">
+									<div class="observation-details row" style="width: 100%;" name="{{child_obs.observation.name}}">
 										<div class="observation-name" id="observation-name" style="width: 20%; vertical-align: middle !important;" value="{{child_obs.observation.name}}">
 											<a href="/app/observation/{{ child_obs.observation.name }}" title="{{ __('Observation') }}">
 												{% if (child_obs.observation.preferred_display_name) { %}
@@ -52,6 +52,7 @@
 												{% } %}
 											</div>
 										</div>
+										{% let allow_input = "" %}
 										{% if (child_obs.observation.observation_category=='Laboratory') { %}
 											{% var input_readonly = "" %}
 											{% var input_disabled = "" %}
@@ -61,9 +62,14 @@
 											{% } %}
 										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(child_obs.observation.permitted_data_type)) { %}
 										<div class="result obs-field" style="padding-left:30px; padding-right:10px; width: 20%;">
+
+											{% if ([1, 2].includes(docstatus)) {  %}
+											{% allow_input = "readonly" %}
+												{% allow_input = "readonly" %}
+											{% } %}
 											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
-													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}" {{input_readonly}}>
+													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}" {{allow_input}}>
 											{% } else if (child_obs.observation.permitted_data_type=='Text') { %}
 												{% var text_result = child_obs.observation.result_text %}
 												{% if (text_result && text_result.includes('</div>')) { %}
@@ -73,7 +79,7 @@
 													{% var text_result = paragraphElement.textContent %}
 												{% } %}
 											<div class="">
-												<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ text_result }}" {{input_readonly}}>
+												<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_text }}" {{allow_input}}>
 											{% } else if (child_obs.observation.permitted_data_type=='Select') { %}
 												<div class="control-input" style="display: flex;">
 													<select class="input-with-feedback form-control ellipsis result-text" style="float:left" data-fieldtype="Select" id="{{child_obs.observation.name}}" {{input_disabled}}>
@@ -111,7 +117,7 @@
 												{%= child_obs.observation.permitted_unit %}
 											{% } %}
 										</div>
-										<div style="width: 20%;">
+										<div style="width: 19%;">
 											{% if (child_obs.observation.method) { %}
 												{%= child_obs.observation.method %}
 											{% } %}
@@ -119,6 +125,17 @@
 										<div style="width: 11%;">
 											{% if (child_obs.observation.reference) { %}
 												{{child_obs.observation.reference}}
+											{% } %}
+										</div>
+										<div style="width: 1%;">
+											{%  if (!['Authorised', 'Unauthorised'].includes(child_obs.observation.status)) { %}
+											<span class="authorise-btn btn btn-link" title="Authorise" value="Authorised">
+												<svg class="icon icon-sm"><use xlink:href="#icon-check"></use></svg>
+											</span>
+											{% } else if (child_obs.observation.status=='Authorised') { %}
+											<span class="authorise-btn btn btn-link" title="Unauthorise" value="Unauthorised">
+												<b>X</b>
+											</span>
 											{% } %}
 										</div>
 								</div>

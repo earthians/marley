@@ -3,23 +3,23 @@
 
 frappe.ui.form.on("Diagnostic Report", {
 	refresh: function(frm) {
-		show_observations(frm);
+		show_diagnostic_report(frm);
 	},
-	validate: function(frm) {
+	before_save: function(frm) {
 		if (!frm.doc.__islocal && frm.is_dirty()) {
-			this.observation.save_action("save")
+			this.diagnostic_report.save_action("save")
 		}
 	},
 });
 
-var show_observations = function(frm) {
+var show_diagnostic_report = function(frm) {
+	frm.fields_dict.observation.html("");
 	if (frm.doc.patient) {
-		frm.fields_dict.observation.html("");
-		this.observation = new healthcare.Diagnostic.Observation({
+		this.diagnostic_report = new healthcare.Diagnostic.DiagnosticReport({
 			frm: frm,
 			observation_wrapper: $(frm.fields_dict.observation.wrapper),
 			create_observation: false,
 		});
-		this.observation.refresh();
+		this.diagnostic_report.refresh();
 	}
 }

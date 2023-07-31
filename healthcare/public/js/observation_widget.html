@@ -33,7 +33,9 @@
 								{% } %}
 								</div>
 							</div>
+							{% let allow_input = "" %}
 							<div class="result obs-field" style="padding-left:30px; padding-right:10px; width: 20%;">
+<<<<<<< HEAD
 								{% var input_readonly = "" %}
 								{% var input_disabled = "" %}
 								{% if ([1, 2].includes(docstatus)) { %}
@@ -43,6 +45,16 @@
 								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_data }}" {{input_readonly}}>
+=======
+								{% if ([1, 2].includes(docstatus)) {  %}
+								{% allow_input = "readonly" %}
+									{% allow_input = "readonly" %}
+								{% } %}
+
+								{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(observation_details.observation.permitted_data_type)) { %}
+									<div class="">
+										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_data }}" {{allow_input}}>
+>>>>>>> 6ad8231466... Diagnostic Report Widget - change WIP
 								{% } else if (observation_details.observation.permitted_data_type=='Text') { %}
 									{% var text_result = observation_details.observation.result_text %}
 									{% if (text_result && text_result.includes('</div>')) { %}
@@ -52,7 +64,11 @@
 										{% var text_result = paragraphElement.textContent %}
 									{% } %}
 									<div class="">
+<<<<<<< HEAD
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value='{{ text_result }}' {{input_readonly}}>
+=======
+										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}" {{allow_input}}>
+>>>>>>> 6ad8231466... Diagnostic Report Widget - change WIP
 								{% } else if (observation_details.observation.permitted_data_type=='Select') { %}
 								<div class="control-input" style="display: flex;">
 									<select class="input-with-feedback form-control ellipsis result-text" style="float:left" id="{{observation_details.observation.name}}" {{disabled}}>
@@ -87,7 +103,7 @@
 									{%= observation_details.observation.permitted_unit %}
 								{% } %}
 							</div>
-							<div class="obs-field" style="width: 20%;">
+							<div class="obs-field" style="width: 19%;">
 								{% if (observation_details.observation.method) { %}
 									{%= observation_details.observation.method %}
 								{% } %}
@@ -95,6 +111,17 @@
 							<div class="obs-field" style="width: 11%;">
 								{% if (observation_details.observation.reference) { %}
 									{{observation_details.observation.reference}}
+								{% } %}
+							</div>
+							<div class="obs-field" style="width: 1%;">
+								{%  if (!['Authorised', 'Unauthorised'].includes(observation_details.observation.status)) { %}
+								<span class="authorise-btn btn btn-link" title="Authorise" value="Authorised">
+									<svg class="icon icon-sm"><use xlink:href="#icon-check"></use></svg>
+								</span>
+								{% } else if (observation_details.observation.status=='Authorised') { %}
+								<span class="authorise-btn btn btn-link" title="Unauthorise" value="Unauthorised">
+									<b>X</b>
+								</span>
 								{% } %}
 							</div>
 						</div>
@@ -137,77 +164,6 @@
 
 
 <style>
-	.observation-section {
-	padding-left: 0px;
-	padding-bottom: 1px !important;
-}
 
-.observation-section .new-btn {
-	text-align: right;
-}
-
-.observation {
-	border: 1px solid var(--border-color);
-	padding-right: 0;
-	font-size: 11px;
-	padding-left: 15px;
-	padding-top: 15px;
-	margin-bottom: 5px;
-	margin-right: 15px;
-	border-radius: var(--border-radius-md);
-	background-color: var(--fg-color);
-	box-shadow: var(--card-shadow);
-}
-.grouped-obs {
-	min-height: 90px;
-	border: 1px solid var(--border-color);
-	padding-right: 0;
-	font-size: 11px;
-	padding-left: 15px;
-	padding-top: 5px;
-	border-radius: 10px;
-	margin-bottom: 5px;
-}
-
-.observations {
-	width: 100%;
-}
-
-.observation-details {
-	padding-left: 14px;
-	padding-right: 14px;
-}
-.obs-field {
-	padding-top: 5px;
-}
-
-.textresult-text {
-	height: 100px;
-	margin-right: 15px;
-	padding-top: 5px;
-}
-
-.note, .result-text-editor {
-	width: 99%;
-	background-color: var(--control-bg);
-	border-radius: 5px;
-	margin-bottom: 15px;
-	margin-right: 15px;
-	min-height: 20px;
-	text-align: center;
-}
-
-.obser-select{
-	float:right;
-	background-color: var(--control-bg);
-	border-top-right-radius: 10px;
-	border-bottom-right-radius: 10px;
-	margin-left: -2px;
-}
-
-.btn-findings-text, .btn-interpr-text {
-	padding: 5px;
-	margin: 5px;
-}
 
 </style>

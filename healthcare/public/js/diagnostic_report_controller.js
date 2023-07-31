@@ -1,14 +1,14 @@
-frappe.provide("healthcare.Diagnostic.Observation");
+frappe.provide("healthcare.Diagnostic.DiagnosticReport");
 
-healthcare.Diagnostic.Observation = class Observation {
+healthcare.Diagnostic.DiagnosticReport = class DiagnosticReport {
 	constructor(opts) {
 		$.extend(this, opts);
 	}
 
 	refresh() {
 		var me = this;
-		this.observation_wrapper.find('.observation-section').remove();
-        frappe.call({
+		this.ObservationWidgets = []
+		  frappe.call({
 			method: "healthcare.healthcare.doctype.observation.observation.get_observation_details",
 			args: {
 				docname: me.frm.doc.name
@@ -21,114 +21,36 @@ healthcare.Diagnostic.Observation = class Observation {
 			me.save_action("load")
 	}
 
-    create_widget(r) {
+	create_widget(r) {
 		var me = this;
 		if (r && r.message[0]) {
+		this.result = []
 			for (let key in r.message[0]) {
-				this.ObservationWidget = new healthcare.ObservationWidget({
+				me.ObservationWidgets[key] = new healthcare.ObservationWidget({
 					wrapper: me.observation_wrapper,
 					data: r.message[0][key],
-					docstatus: me.frm.doc.docstatus,
+					frm: me.frm,
+					result: this.result
 				});
 			}
-			for (var i = 0; i < r.message[1]; i++) {
-				document.getElementsByClassName("result-text")[i].onchange = function() {
-					me.frm.dirty()
-				};
-			}
 		}
-		$(".observation").find(".add-note-observation-btn").on("click", function() {
-			me.add_note(this)
-		});
-
-		$(".observation").find(".btn-findings").on("click", function() {
-			me.add_finding_interpretation(this, ".btn-findings")
-		});
-		$(".observation").find(".btn-interpr").on("click", function() {
-			me.add_finding_interpretation(this, ".btn-interpr")
-		});
-    }
+	}
 
 	save_action(func) {
 		var me = this;
 		if (func=="save") {
-			var normal_obs_div = document.getElementsByClassName("observation-name");
-			var values = [];
-
-			for (var i = 0; i < normal_obs_div.length; i++) {
-				let val_dict = {}
-				val_dict["observation"] = normal_obs_div[i].getAttribute("value")
-				val_dict["result"] = ""
-				if (document.getElementById(normal_obs_div[i].getAttribute("value"))) {
-					val_dict["result"] = document.getElementById(normal_obs_div[i].getAttribute("value")).value
-				}
-				if (val_dict["result"]) {
-					values.push(val_dict);
-				}
-			}
 			frappe.call({
 				method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
 				args: {
-					values: values
+					values: this.result
 				},
 				freeze: true,
 				callback: function(r) {
 					// me.frm.refresh(this)
-					}
+				}
 			})
 		}
 	}
-	add_note (edit_btn) {
-		var me = this;
-		let row = $(edit_btn).closest('.observation');
-		let observation_name = row.attr("name");
-		let result_html = $(row).find(".note").html();
-		let result = "";
-		if (result_html) {
-			result = result_html.trim();
-		}
-			var d = new frappe.ui.Dialog({
-				title: __('Add Note'),
-				fields: [
-					{
-						"label": "Observation",
-						"fieldname": "observation",
-						"fieldtype": "Link",
-						"options": "Observation",
-						"default": observation_name,
-						"hidden": 1,
-					},
-					{
-						"label": "Note",
-						"fieldname": "note",
-						"fieldtype": "Text Editor",
-						"default": result,
-						reqd: 1,
-					}
-				],
-				primary_action: function() {
-					var data = d.get_values();
-					frappe.call({
-						method: "healthcare.healthcare.doctype.observation.observation.add_note",
-						args: {
-							note: data.note,
-							observation: data.observation,
-						},
-						freeze: true,
-						callback: function(r) {
-							if (!r.exc) {
-								me.refresh();
-								// me.init_widget();
-							}
-							d.hide();
-						}
-					});
-				},
-				primary_action_label: __("Add Note")
-			});
-			d.show();
-	}
-
 	add_finding_interpretation (edit_btn, btn_attr) {
 		var me = this;
 		let row = $(edit_btn).closest('.observation');
@@ -201,6 +123,83 @@ healthcare.Diagnostic.Observation = class Observation {
 				}
 			}
 			d.show();
+	}
+
+	authorise_observation (edit_btn) {
+		var me = this;
+		let status = edit_btn.getAttribute("value")
+		let row = $(edit_btn).closest('.observation');
+		let observation_name = row.attr("name");
+		if (status == "Approved") {
+			frappe.confirm(__("Are you sure you want to authorise Observation <b>" + observation_name +"</b>"), function () {
+				frappe.call({
+					method: 'healthcare.healthcare.doctype.observation.observation.set_observation_status',
+					args: {
+						observation: observation_name,
+						status: status,
+					},
+					callback: function (r) {
+						me.refresh();
+					}
+				});
+			})
+		} else if (status == "Disapproved") {
+			var d = new frappe.ui.Dialog({
+				title: __('Reason For Unauthorisation'),
+				fields: [
+					{
+						"label": "Reason",
+						"fieldname": "unauthorisation_reason",
+						"fieldtype": "Text",
+						reqd: 1,
+					}
+				],
+				primary_action: function() {
+					var data = d.get_values();
+					frappe.call({
+						method: "healthcare.healthcare.doctype.observation.observation.set_observation_status",
+						args: {
+							observation: observation_name,
+							status: status,
+							reason: data.unauthorisation_reason,
+						},
+						freeze: true,
+						callback: function(r) {
+							if (!r.exc) {
+								me.refresh();
+							}
+							d.hide();
+						}
+					});
+				},
+				primary_action_label: __("Unauthorise")
+				});
+				d.show()
+		}
+
+	}
+
+	authorise_all (me, data) {
+		var me = this;
+		let observs = []
+			for (var i = 1; i < data[1]; i++) {
+				let obsvrs_name = document.getElementsByClassName("observation-details")[i].getAttribute("name")
+				if (obsvrs_name) {
+					observs.push(obsvrs_name)
+				}
+			}
+			if (observs.length > 0) {
+				frappe.call({
+					method: 'healthcare.healthcare.doctype.observation.observation.set_observation_status',
+					args: {
+						observation: observs,
+						status: "Authorise",
+					},
+					callback: function (r) {
+						me.refresh();
+					}
+				});
+			}
 	}
 }
 
