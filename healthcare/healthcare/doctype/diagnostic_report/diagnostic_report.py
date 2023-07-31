@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from healthcare.healthcare.doctype.observation.observation import (
@@ -14,6 +15,7 @@ class DiagnosticReport(Document):
 		self.set_reference_details()
 		self.set_age()
 		self.set_title()
+		set_observation_status(self)
 
 	def before_insert(self):
 		if self.ref_doctype == "Sales Invoice" and self.docname:
@@ -37,3 +39,30 @@ class DiagnosticReport(Document):
 
 def diagnostic_report_print(diagnostic_report):
 	return get_observation_details(diagnostic_report)
+
+def validate_observations_has_result(doc):
+	if doc.ref_doctype == "Sales Invoice":
+		submittable = True
+		observations = frappe.db.get_all("Observation", {
+			"sales_invoice":doc.docname,
+			"docstatus":["!=", 2],
+			"has_component": False,
+			"status":["!=", "Cancelled"]}, pluck="name")
+		for obs in observations:
+			if not frappe.get_doc("Observation", obs).has_result():
+				submittable = False
+		return submittable
+
+def set_observation_status(doc):
+	if doc.ref_doctype == "Sales Invoice":
+		observations = frappe.db.get_all("Observation", {
+			"sales_invoice":doc.docname,
+			"docstatus":["!=", 2],
+			"has_component": False,
+			"status":["!=", "Cancelled"]}, pluck="name")
+		for obs in observations:
+			if doc.status in ["Approved", "Disapproved"]:
+				observation_doc = frappe.get_doc("Observation", obs)
+				if observation_doc.has_result() and not observation_doc.status in ["Approved", "Disapproved"]:
+					observation_doc.status = doc.status
+					observation_doc.save()

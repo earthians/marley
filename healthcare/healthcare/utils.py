@@ -541,6 +541,7 @@ def manage_invoice_validate(doc, method):
 		for item in doc.items:
 			if not item.service_unit:
 				item.service_unit = doc.service_unit
+	# create_sample_collection_and_observation(doc)
 
 
 def manage_invoice_submit_cancel(doc, method):

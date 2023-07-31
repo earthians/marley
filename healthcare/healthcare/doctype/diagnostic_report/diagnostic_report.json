@@ -16,6 +16,7 @@
   "practitioner_name",
   "column_break_v6l1",
   "company",
+  "status",
   "naming_series",
   "ref_doctype",
   "docname",
@@ -155,12 +156,19 @@
    "fieldtype": "Date",
    "label": "Reference Posting Date",
    "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nPending Review\nApproved\nDisapproved",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
- "is_submittable": 1,
  "links": [],
- "modified": "2023-07-20 18:18:02.071365",
+ "modified": "2023-08-05 18:35:42.870474",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",

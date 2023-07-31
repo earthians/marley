@@ -31,12 +31,13 @@ class Observation(Document):
 			self.days = patient_doc.calculate_age().get("age_in_days")
 
 	def set_status(self):
-		if self.has_result() and self.status != "Final":
-			self.status = "Preliminary"
-		elif self.amended_from and self.status not in ["Amended", "Corrected"]:
-			self.status = "Amended"
-		elif self.status not in ["Final", "Cancelled", "Entered in Error", "Unknown"]:
-			self.status = "Registered"
+		if self.status not in ["Approved", "Disapproved"]:
+			if self.has_result() and self.status != "Final":
+				self.status = "Preliminary"
+			elif self.amended_from and self.status not in ["Amended", "Corrected"]:
+				self.status = "Amended"
+			elif self.status not in ["Final", "Cancelled", "Entered in Error", "Unknown"]:
+				self.status = "Registered"
 
 	def set_result_time(self):
 		if not self.time_of_result:
@@ -87,7 +88,7 @@ def get_observation_details(docname):
 	observation = frappe.get_list(
 		"Observation",
 		fields=["*"],
-		filters={"sales_invoice": reference, "parent_observation": "", "status": ["!=", "Cancelled"]},
+		filters={"sales_invoice": reference, "parent_observation": "", "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
 		order_by="creation",
 	)
 	out_data = []
@@ -110,7 +111,7 @@ def get_observation_details(docname):
 			child_observations = frappe.get_list(
 				"Observation",
 				fields=["*"],
-				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"]},
+				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
 				order_by="observation_idx",
 			)
 			obs_list = []
@@ -246,6 +247,7 @@ def add_observation(
 def record_observation_result(values):
 	values = json.loads(values)
 	if values:
+		values = [dict(t) for t in {tuple(d.items()) for d in values}]
 		for val in values:
 			if not val.get("observation"):
 				return
@@ -276,16 +278,37 @@ def record_observation_result(values):
 					return
 
 				if val.get("result") != observation_doc.get("result_data"):
-					observation_doc.result_data = val.get("result")
-					observation_doc.save()
+					if val.get("result"):
+						observation_doc.result_data = val.get("result")
+					# observation_doc.time_of_result = now_datetime()
+					if val.get("note"):
+						observation_doc.note = val.get("note")
+					if observation_doc.docstatus == 0:
+						observation_doc.save()
+					elif observation_doc.docstatus == 1:
+						observation_doc.save("Update")
 			elif observation_doc.get("permitted_data_type") == "Text":
 				if val.get("result") != observation_doc.get("result_text"):
-					observation_doc.result_text = val.get("result")
-					observation_doc.save()
+					if val.get("result"):
+						observation_doc.result_text = val.get("result")
+					# observation_doc.time_of_result = now_datetime()
+					if val.get("note"):
+						observation_doc.note = val.get("note")
+					if observation_doc.docstatus == 0:
+						observation_doc.save()
+					elif observation_doc.docstatus == 1:
+						observation_doc.save("Update")
 			elif observation_doc.get("permitted_data_type") == "Select":
 				if val.get("result") != observation_doc.get("result_select"):
-					observation_doc.result_select = val.get("result")
-					observation_doc.save()
+					if val.get("result"):
+						observation_doc.result_select = val.get("result")
+					# observation_doc.time_of_result = now_datetime()
+					if val.get("note"):
+						observation_doc.note = val.get("note")
+					if observation_doc.docstatus == 0:
+						observation_doc.save()
+					elif observation_doc.docstatus == 1:
+						observation_doc.save("Update")
 
 			if observation_doc.get("observation_category") == "Imaging":
 				if val.get("result"):
@@ -293,8 +316,20 @@ def record_observation_result(values):
 				if val.get("interpretation"):
 					observation_doc.result_interpretation = val.get("interpretation")
 				if val.get("result") or val.get("interpretation"):
-					observation_doc.time_of_result = now_datetime()
+					# observation_doc.time_of_result = now_datetime()
+					if val.get("note"):
+						observation_doc.note = val.get("note")
+					if observation_doc.docstatus == 0:
+						observation_doc.save()
+					elif observation_doc.docstatus == 1:
+						observation_doc.save("Update")
+
+			if not val.get("result") and val.get("note"):
+				observation_doc.note = val.get("note")
+				if observation_doc.docstatus == 0:
 					observation_doc.save()
+				elif observation_doc.docstatus == 1:
+					observation_doc.save("Update")
 
 
 @frappe.whitelist()
@@ -333,3 +368,22 @@ def get_observation_result_template(template_name, observation):
 		merged_dict = {**observation_doc, **patient_doc}
 		terms = get_terms_and_conditions(template_name, merged_dict)
 	return terms
+
+
+@frappe.whitelist()
+def set_observation_status(observation, status, reason=None):
+	observation_doc = frappe.get_doc("Observation", observation)
+	if observation_doc.has_result():
+		observation_doc.status = status
+		if reason:
+			observation_doc.disapproval_reason = reason
+		# observation_doc.save()
+		if status == "Approved":
+			observation_doc.submit()
+		if status == "Disapproved":
+			new_doc = frappe.copy_doc(observation_doc)
+			new_doc.status = ""
+			new_doc.insert()
+			observation_doc.cancel()
+	else:
+		frappe.throw(_("Please enter result to Approve."))
