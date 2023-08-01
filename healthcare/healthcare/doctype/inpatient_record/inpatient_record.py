@@ -456,6 +456,14 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 				}
 			)
 	else:
+		if doc == "Patient Encounter":
+			filters.update(
+				{
+					"appointment": "",
+				}
+			)
+		else:
+			del filters['docstatus']
 		filters.update(
 			{
 				"invoiced": 0,
@@ -467,6 +475,7 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 				"service_request": "",
 			}
 		)
+
 	return frappe.db.get_list(
 		doc,
 		filters=filters,
