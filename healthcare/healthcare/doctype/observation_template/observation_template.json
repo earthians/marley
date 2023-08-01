@@ -55,7 +55,9 @@
   "item_group",
   "column_break_tktn",
   "rate",
-  "change_in_item"
+  "change_in_item",
+  "conditions_tab",
+  "diagnosis"
  ],
  "fields": [
   {
@@ -362,11 +364,22 @@
    "fieldtype": "Link",
    "label": "Interpretation Template",
    "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "conditions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Conditions"
+  },
+  {
+   "fieldname": "diagnosis",
+   "fieldtype": "Table MultiSelect",
+   "label": "Diagnosis",
+   "options": "Patient Encounter Diagnosis"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-27 07:45:40.503846",
+ "modified": "2023-08-01 16:40:50.946727",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
