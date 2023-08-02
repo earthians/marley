@@ -28,6 +28,9 @@ class PatientEncounter(Document):
 
 		self.make_service_request()
 		self.make_medication_request()
+		# to save service_request name in prescription
+		self.save("Update")
+		self.db_set("status", "Completed")
 
 	def before_cancel(self):
 		orders = frappe.get_all("Service Request", {"order_group": self.name})
@@ -179,7 +182,8 @@ class PatientEncounter(Document):
 				"status": "Draft",
 				"patient": self.get("patient"),
 				"practitioner": self.practitioner,
-				"order_group": self.name,
+				"source_doc": "Patient Encounter",
+				"order_group":self.name,
 				"sequence": line_item.get("sequence"),
 				"patient_care_type": template_doc.get("patient_care_type"),
 				"intent": line_item.get("intent"),
