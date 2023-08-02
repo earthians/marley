@@ -53,6 +53,8 @@ class InpatientRecord(Document):
 				doc=self,
 			)
 
+		insert_pending_service_request(self)
+
 	def validate(self):
 		self.validate_dates()
 		self.validate_already_scheduled_or_admitted()
@@ -698,3 +700,33 @@ def validate_incompleted_service_requestes(inpatient_record):
 		message = _("There are Orders yet to be carried out<br> {0}".format(', '.join(map(str, service_requests))))
 
 		frappe.throw(message, title=_("Incomplete Services"), is_minimizable=True, wide=True)
+
+def insert_pending_service_request(doc):
+	treatment_counselling = frappe.db.exists({"doctype": "Treatment Counselling", "inpatient_record": doc.name})
+	if treatment_counselling:
+		counselling_doc = frappe.get_doc("Treatment Counselling", treatment_counselling)
+
+		for treatment_items in counselling_doc.treatment_plan_template_items:
+			if not treatment_items.service_request:
+				template_doc = frappe.get_doc(treatment_items.type, treatment_items.template)
+				order = frappe.get_doc(
+					{
+						"doctype": "Service Request",
+						"order_date": today(),
+						"order_time": now(),
+						"company": doc.company,
+						"status": "Draft",
+						"patient": doc.get("patient"),
+						"practitioner": doc.primary_practitioner,
+						"source_doc": "Inpatient Record",
+						"order_group":doc.name,
+						"patient_care_type": template_doc.get("patient_care_type"),
+						"staff_role": template_doc.get("staff_role"),
+						"medical_code": template_doc.get("medical_code"),
+						"medical_code_standard": template_doc.get("medical_code_standard"),
+						"template_dt": treatment_items.get("type"),
+						"template_dn": treatment_items.get("template"),
+					}
+				)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()

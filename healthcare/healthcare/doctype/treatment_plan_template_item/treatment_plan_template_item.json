@@ -9,6 +9,8 @@
   "template",
   "qty",
   "amount",
+  "column_break_x5li",
+  "service_request",
   "section_break_whtf",
   "drug_code",
   "drug_name",
@@ -140,12 +142,22 @@
    "fieldtype": "Currency",
    "label": "Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_x5li",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Data",
+   "label": "Service Request",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-04-10 15:19:38.922300",
+ "modified": "2023-08-02 12:13:21.726162",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Treatment Plan Template Item",
