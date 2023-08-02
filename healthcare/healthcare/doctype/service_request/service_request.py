@@ -70,7 +70,7 @@ class ServiceRequest(ServiceRequestController):
 
 	def after_insert(self):
 		if self.template_dt == "Clinical Procedure Template":
-			insert_medication_request(self.template_dn, self.order_group)
+			insert_medication_request(self.template_dn, self.order_group, self.source_doc)
 
 
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
@@ -267,9 +267,10 @@ def create_healthcare_activity_for_repeating_orders():
 				nursing_task = make_nursing_task(frappe.get_doc("Service Request", service_request.get("name")))
 				nursing_task.save()
 
-def insert_medication_request(template_dn, order_group):
+def insert_medication_request(template_dn, order_group, source):
 	procedure_template_doc = frappe.get_doc("Clinical Procedure Template", template_dn)
-	encounter_doc = frappe.get_doc("Patient Encounter", order_group)
+
+	source_doc = frappe.get_doc(source, order_group)
 	if procedure_template_doc.medications:
 		for drug in procedure_template_doc.medications:
 			if drug.medication and not drug.medication_request:
@@ -279,10 +280,10 @@ def insert_medication_request(template_dn, order_group):
 						"doctype": "Medication Request",
 						"order_date": getdate(now()),
 						"order_time": get_time(now()),
-						"company": encounter_doc.company,
+						"company": source_doc.company,
 						"status": "Draft",
-						"patient": encounter_doc.get("patient"),
-						"practitioner": encounter_doc.practitioner,
+						"patient": source_doc.get("patient"),
+						"practitioner": source_doc.get("practitioner"),
 						"sequence": drug.get("sequence"),
 						"patient_care_type": medication.get("patient_care_type"),
 						"intent": drug.get("intent"),
