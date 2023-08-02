@@ -155,6 +155,7 @@
    "label": "Number Of Repeats Allowed"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "medication_request",
    "fieldtype": "Data",
    "label": "Medication Request",
@@ -163,7 +164,7 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-06-06 18:48:52.300274",
+ "modified": "2023-08-02 12:41:01.433230",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Drug Prescription",
