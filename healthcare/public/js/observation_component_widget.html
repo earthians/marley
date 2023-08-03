@@ -53,17 +53,30 @@
 											</div>
 										</div>
 										{% if (child_obs.observation.observation_category=='Laboratory') { %}
+											{% var input_readonly = "" %}
+											{% var input_disabled = "" %}
+											{% if ([1, 2].includes(docstatus)) { %}
+												{% input_readonly = "readonly" %}
+												{% input_disabled = "disabled" %}
+											{% } %}
 										{% if( ['Range', 'Ratio', 'Quantity', 'Numeric', 'Select', 'Text'].includes(child_obs.observation.permitted_data_type)) { %}
 										<div class="result obs-field" style="padding-left:30px; padding-right:10px; width: 20%;">
 											{% if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(child_obs.observation.permitted_data_type)) { %}
 												<div class="">
-													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}">
+													<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_data }}" {{input_readonly}}>
 											{% } else if (child_obs.observation.permitted_data_type=='Text') { %}
+												{% var text_result = child_obs.observation.result_text %}
+												{% if (text_result && text_result.includes('</div>')) { %}
+													{% var tempElement = document.createElement('div'); %}
+													{% tempElement.innerHTML = text_result; %}
+													{% var paragraphElement = tempElement.querySelector('p'); %}
+													{% var text_result = paragraphElement.textContent %}
+												{% } %}
 											<div class="">
-												<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ child_obs.observation.result_text }}">
+												<input class="input-with-feedback form-control result-text" type="text" id="{{child_obs.observation.name}}" name="fname" size="6" value="{{ text_result }}" {{input_readonly}}>
 											{% } else if (child_obs.observation.permitted_data_type=='Select') { %}
 												<div class="control-input" style="display: flex;">
-													<select class="input-with-feedback form-control ellipsis result-text" style="float:left" data-fieldtype="Select" id="{{child_obs.observation.name}}">
+													<select class="input-with-feedback form-control ellipsis result-text" style="float:left" data-fieldtype="Select" id="{{child_obs.observation.name}}" {{input_disabled}}>
 														<option value="Null"></option>
 														{% for (let opts in child_obs.observation.options_list) { %}
 															{% if (child_obs.observation.options_list[opts]) { %}

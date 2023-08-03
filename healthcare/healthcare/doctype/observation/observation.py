@@ -39,10 +39,11 @@ class Observation(Document):
 			self.status = "Registered"
 
 	def set_result_time(self):
-		if not self.time_of_result and self.has_result():
-			self.time_of_result = now_datetime()
-		else:
-			self.time_of_result = ""
+		if not self.time_of_result:
+			if self.has_result():
+				self.time_of_result = now_datetime()
+			else:
+				self.time_of_result = ""
 
 		if self.status == "Final" and not self.time_of_approval:
 			self.time_of_approval = now_datetime()
