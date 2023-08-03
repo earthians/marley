@@ -276,17 +276,14 @@ def record_observation_result(values):
 
 				if val.get("result") != observation_doc.get("result_data"):
 					observation_doc.result_data = val.get("result")
-					observation_doc.time_of_result = now_datetime()
 					observation_doc.save()
 			elif observation_doc.get("permitted_data_type") == "Text":
 				if val.get("result") != observation_doc.get("result_text"):
 					observation_doc.result_text = val.get("result")
-					observation_doc.time_of_result = now_datetime()
 					observation_doc.save()
 			elif observation_doc.get("permitted_data_type") == "Select":
 				if val.get("result") != observation_doc.get("result_select"):
 					observation_doc.result_select = val.get("result")
-					observation_doc.time_of_result = now_datetime()
 					observation_doc.save()
 
 			if observation_doc.get("observation_category") == "Imaging":
