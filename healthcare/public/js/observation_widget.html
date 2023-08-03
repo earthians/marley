@@ -38,8 +38,15 @@
 									<div class="">
 										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_data }}">
 								{% } else if (observation_details.observation.permitted_data_type=='Text') { %}
+								{% var text_result = observation_details.observation.result_text %}
+								{% if (text_result && text_result.includes('</div>')) { %}
+									{% var tempElement = document.createElement('div'); %}
+									{% tempElement.innerHTML = text_result; %}
+									{% var paragraphElement = tempElement.querySelector('p'); %}
+									{% var text_result = paragraphElement.textContent %}
+								{% } %}
 									<div class="">
-										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value="{{ observation_details.observation.result_text }}">
+										<input class="input-with-feedback form-control result-text" type="text" id="{{observation_details.observation.name}}" name="fname" size="6" value='{{ text_result }}'>
 								{% } else if (observation_details.observation.permitted_data_type=='Select') { %}
 								<div class="control-input" style="display: flex;">
 									<select class="input-with-feedback form-control ellipsis result-text" style="float:left" id="{{observation_details.observation.name}}">
