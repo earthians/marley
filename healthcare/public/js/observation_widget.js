@@ -12,7 +12,8 @@ healthcare.ObservationWidget = class {
 			let observation_html = frappe.render_template(
 				'observation_component_widget',
 				{
-				observation_details: me.data
+				observation_details: me.data,
+				docstatus: me.docstatus,
 				}
 			);
 			$(observation_html).appendTo(me.wrapper);
@@ -20,7 +21,8 @@ healthcare.ObservationWidget = class {
 			let observation_html = frappe.render_template(
 				'observation_widget',
 				{
-				observation_details: me.data
+				observation_details: me.data,
+				docstatus: me.docstatus,
 				}
 			);
 			$(observation_html).appendTo(me.wrapper);

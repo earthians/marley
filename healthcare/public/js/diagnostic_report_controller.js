@@ -28,6 +28,7 @@ healthcare.Diagnostic.Observation = class Observation {
 				this.ObservationWidget = new healthcare.ObservationWidget({
 					wrapper: me.observation_wrapper,
 					data: r.message[0][key],
+					docstatus: me.frm.doc.docstatus,
 				});
 			}
 			for (var i = 0; i < r.message[1]; i++) {
