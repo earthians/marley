@@ -104,6 +104,7 @@ def get_observation_details(docname):
 	obs_length = 0
 	for obs in observation:
 		has_result = False
+		obs_approved = False
 		if not obs.get("has_component"):
 			if obs.get("permitted_data_type"):
 				obs_length += 1
@@ -141,6 +142,8 @@ def get_observation_details(docname):
 					or child.get("result_select") not in [None, "", "Null"]
 				):
 					has_result = True
+				if child.get("status")=="Approved":
+					obs_approved = True
 			if len(child_observations) > 0:
 				obs_dict["has_component"] = True
 				obs_dict["observation"] = obs.get("name")
@@ -149,9 +152,8 @@ def get_observation_details(docname):
 				obs_dict["practitioner_name"] = obs.get("practitioner_name")
 				obs_dict["healthcare_practitioner"] = obs.get("healthcare_practitioner")
 				obs_dict["description"] = obs.get("description")
-				obs_dict["has_result"] = False
-				if has_result:
-					obs_dict["has_result"] = True
+				obs_dict["has_result"] = has_result
+				obs_dict["obs_approved"] = obs_approved
 			if len(obs_dict) > 0:
 				out_data.append(obs_dict)
 	return out_data, obs_length
