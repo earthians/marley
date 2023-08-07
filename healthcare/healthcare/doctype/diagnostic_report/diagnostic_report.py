@@ -65,4 +65,10 @@ def set_observation_status(doc):
 				observation_doc = frappe.get_doc("Observation", obs)
 				if observation_doc.has_result() and not observation_doc.status in ["Approved", "Disapproved"]:
 					observation_doc.status = doc.status
-					observation_doc.save()
+					if doc.status == "Approved":
+						observation_doc.save().submit()
+					if doc.status == "Disapproved":
+						new_doc = frappe.copy_doc(observation_doc)
+						new_doc.status = ""
+						new_doc.insert()
+						observation_doc.cancel()
