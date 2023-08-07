@@ -179,7 +179,7 @@
    "label": "Result"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Text\";",
+   "depends_on": "eval:doc.permitted_data_type == \"Text\" || doc.observation_category == \"Imaging\";",
    "fieldname": "result_text",
    "fieldtype": "Text Editor",
    "label": "Result"
@@ -546,7 +546,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-05 17:48:52.470786",
+ "modified": "2023-08-07 14:36:12.207988",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

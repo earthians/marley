@@ -291,7 +291,6 @@ def record_observation_result(values):
 				if val.get("result") != observation_doc.get("result_data"):
 					if val.get("result"):
 						observation_doc.result_data = val.get("result")
-					# observation_doc.time_of_result = now_datetime()
 					if val.get("note"):
 						observation_doc.note = val.get("note")
 					if observation_doc.docstatus == 0:
@@ -302,7 +301,6 @@ def record_observation_result(values):
 				if val.get("result") != observation_doc.get("result_text"):
 					if val.get("result"):
 						observation_doc.result_text = val.get("result")
-					# observation_doc.time_of_result = now_datetime()
 					if val.get("note"):
 						observation_doc.note = val.get("note")
 					if observation_doc.docstatus == 0:
@@ -313,7 +311,6 @@ def record_observation_result(values):
 				if val.get("result") != observation_doc.get("result_select"):
 					if val.get("result"):
 						observation_doc.result_select = val.get("result")
-					# observation_doc.time_of_result = now_datetime()
 					if val.get("note"):
 						observation_doc.note = val.get("note")
 					if observation_doc.docstatus == 0:
@@ -327,7 +324,6 @@ def record_observation_result(values):
 				if val.get("interpretation"):
 					observation_doc.result_interpretation = val.get("interpretation")
 				if val.get("result") or val.get("interpretation"):
-					# observation_doc.time_of_result = now_datetime()
 					if val.get("note"):
 						observation_doc.note = val.get("note")
 					if observation_doc.docstatus == 0:
@@ -388,7 +384,6 @@ def set_observation_status(observation, status, reason=None):
 		observation_doc.status = status
 		if reason:
 			observation_doc.disapproval_reason = reason
-		# observation_doc.save()
 		if status == "Approved":
 			observation_doc.submit()
 		if status == "Disapproved":
