@@ -172,8 +172,9 @@ healthcare.ObservationWidget = class {
 					fieldtype: 'Section Break',
 				},
 				{
-					fieldname: 'note_data',
-					fieldtype: 'HTML',
+					fieldname: 'note_text',
+					fieldtype: 'Text',
+					read_only: 1,
 				},
 				{
 					fieldtype: 'Section Break',
@@ -298,21 +299,9 @@ healthcare.ObservationWidget = class {
 		  });
 
 		if (obs_data.note) {
-			var note = trim_html(obs_data.note)
-			let note_data_html = `<div class="text-muted" style="
-				font-size:10px;
-				width: 99%;
-				background-color: var(--control-bg);
-				border-radius: 5px;
-				margin-right: 15px;
-				margin-left: 3px;
-				min-height: 20px;
-				margin-bottom: 5px;">`
-
-			note_data_html += `<span class"" style="">${note}</span>`
-			note_data_html += `</div>`
-			me[obs_data.name].get_field('note_data').html(note_data_html);
+			me[obs_data.name].set_value("note_text", obs_data.note)
 		}
+
 		if (obs_data.observation_category == "Imaging") {
 			me[obs_data.name].set_value("findings_text", obs_data.result_text)
 			me[obs_data.name].set_value("result_interpretation", obs_data.result_interpretation)
@@ -338,7 +327,8 @@ healthcare.ObservationWidget = class {
 	add_note (observation, note) {
 		var me = this;
 		let observation_name = observation;
-		let result = note;
+		let note_text = me[observation].get_value('note_text') || note
+		// let result = note;
 			var d = new frappe.ui.Dialog({
 				title: __('Add Note'),
 				fields: [
@@ -354,37 +344,21 @@ healthcare.ObservationWidget = class {
 						"label": __("Note"),
 						"fieldname": "note",
 						"fieldtype": "Text Editor",
-						"default": result,
-						reqd: 1,
+						"default": note_text,
 					}
 				],
 				primary_action: function() {
 					me.frm.dirty()
 					var data = d.get_values();
-					if (data.note) {
-						let note_data_html = `<div class="text-muted" style="
-							font-size:10px;
-							width: 99%;
-							background-color: var(--control-bg);
-							border-radius: 5px;
-							margin-right: 15px;
-							margin-left: 15px;
-							min-height: 20px;">`
-
-						note_data_html += `<span class"" style="">${data.note}</span>`
-						note_data_html += `</div>`
-						me[observation].get_field('note_data').html(note_data_html);
-					}
-					var note = trim_html(data.note)
-
+					me[observation].set_value("note_text", data.note)
 					if (me.result.length > 0) {
 						me.result.forEach(function(res) {
 						if (res.observation == observation) {
-							res["note"] =  note
+							res["note"] =  data.note
 						}
 						});
 					} else {
-						me.result.push({"observation": observation, "note": note})
+						me.result.push({"observation": observation, "note": data.note})
 					}
 					d.hide();
 				},
@@ -450,10 +424,10 @@ healthcare.ObservationWidget = class {
 		let note = ""
 		if (type=="Findings") {
 			template = obs_data.result_template
-			note = obs_data.result_text
+			note = me[obs_data.name].get_value('result_text') || obs_data.result_text
 		} else if (type=="Interpretation") {
 			template = obs_data.interpretation_template
-			note = obs_data.result_interpretation
+			note = me[obs_data.name].get_value('result_interpretation') || obs_data.result_interpretation
 		}
 		var d = new frappe.ui.Dialog({
 			title: __(type),
@@ -478,7 +452,6 @@ healthcare.ObservationWidget = class {
 					"fieldname": "note",
 					"fieldtype": "Text Editor",
 					"default" : note,
-					reqd: 1,
 				}
 			],
 			primary_action: function() {
