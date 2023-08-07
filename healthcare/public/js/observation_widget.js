@@ -86,10 +86,6 @@ healthcare.ObservationWidget = class {
 		me.$widget = me.wrapper.find(`.grouped-obs`)
 	}
 
-	destroy() {
-		// this.$widget.remove()
-	}
-
 	init_field_group(obs_data, wrapper) {
 		var me = this;
 		var default_input = ""
@@ -139,11 +135,13 @@ healthcare.ObservationWidget = class {
 						me.frm.dirty()
 						me.set_result_n_name(obs_data.name)
 					},
-					default: default_input
+					default: default_input,
+					hidden: 1 ? obs_data.observation_category == "Imaging" : 0,
 				},
 				{
 					fieldname: 'result_date',
 					fieldtype: 'HTML',
+					hidden: 1 ? obs_data.observation_category == "Imaging" : 0,
 				},
 				{
 					'fieldtype': 'Column Break',
@@ -176,6 +174,35 @@ healthcare.ObservationWidget = class {
 				{
 					fieldname: 'note_data',
 					fieldtype: 'HTML',
+				},
+				{
+					fieldtype: 'Section Break',
+					hidden: 1 ? obs_data.observation_category != "Imaging" : 0,
+				},
+				{
+					label: __("Findings"),
+					fieldname: 'findings',
+					fieldtype: 'Button',
+					click: () => me.add_finding_interpretation(obs_data, "Findings"),
+				},
+				{
+					fieldname: 'findings_text',
+					fieldtype: 'Text',
+					read_only: 1,
+				},
+				{
+					'fieldtype': 'Column Break',
+				},
+				{
+					label: __("Interpretation"),
+					fieldname: 'interpretation',
+					fieldtype: 'Button',
+					click: () => me.add_finding_interpretation(obs_data, "Interpretation"),
+				},
+				{
+					fieldname: 'result_interpretation',
+					fieldtype: 'Text',
+					read_only: 1,
 				},
 
 			],
@@ -215,8 +242,7 @@ healthcare.ObservationWidget = class {
 		let result_date_html = `<div class="text-muted" style="font-size:8px; margin-top:-12px;">${obs_data.time_of_result ? frappe.datetime.global_date_format(obs_data.time_of_result): ""}</div>`
 		me[obs_data.name].get_field('result_date').html(result_date_html);
 
-		let method_html = `<div style="display:flex"><div style="font-size:10px; padding-top:20px; padding-right:45px; width:10%;">${obs_data.permitted_unit}</div>`
-		// me[obs_data.name].get_field('unit').html(unit_html);
+		let method_html = `<div style="display:flex"><div style="font-size:10px; padding-top:20px; padding-right:45px; width:10%;">${obs_data.permitted_unit?obs_data.permitted_unit:""}</div>`
 
 
 		method_html+= `<div class="text-muted" style="font-size:10px; padding-top:20px;">`
@@ -287,15 +313,25 @@ healthcare.ObservationWidget = class {
 			note_data_html += `</div>`
 			me[obs_data.name].get_field('note_data').html(note_data_html);
 		}
+		if (obs_data.observation_category == "Imaging") {
+			me[obs_data.name].set_value("findings_text", obs_data.result_text)
+			me[obs_data.name].set_value("result_interpretation", obs_data.result_interpretation)
+		}
 
 	}
 
 	set_result_n_name(observation) {
 		var me = this;
-		let result = me[observation].get_values();
-		result["observation"] =  observation
-		if (!me.result.includes(result)) {
-			me.result.push(result)
+		let dialog_values = me[observation].get_values();
+		dialog_values["observation"] =  observation
+		let valuexists = me.result.some(dict => dict.observation === observation);
+		for (var res of me.result) {
+			if (observation == res.observation) {
+				res["result"] = dialog_values.result
+			}
+		}
+		if (!valuexists) {
+			me.result.push(dialog_values)
 		}
 	}
 
@@ -307,7 +343,7 @@ healthcare.ObservationWidget = class {
 				title: __('Add Note'),
 				fields: [
 					{
-						"label": "Observation",
+						"label": __("Observation"),
 						"fieldname": "observation",
 						"fieldtype": "Link",
 						"options": "Observation",
@@ -315,7 +351,7 @@ healthcare.ObservationWidget = class {
 						"hidden": 1,
 					},
 					{
-						"label": "Note",
+						"label": __("Note"),
 						"fieldname": "note",
 						"fieldtype": "Text Editor",
 						"default": result,
@@ -377,7 +413,7 @@ healthcare.ObservationWidget = class {
 				title: __('Reason For Unauthorisation'),
 				fields: [
 					{
-						"label": "Reason",
+						"label": __("Reason"),
 						"fieldname": "unauthorisation_reason",
 						"fieldtype": "Text",
 						reqd: 1,
@@ -408,6 +444,77 @@ healthcare.ObservationWidget = class {
 
 	}
 
+	add_finding_interpretation (obs_data, type) {
+		var me = this;
+		let template = ""
+		let note = ""
+		if (type=="Findings") {
+			template = obs_data.result_template
+			note = obs_data.result_text
+		} else if (type=="Interpretation") {
+			template = obs_data.interpretation_template
+			note = obs_data.result_interpretation
+		}
+		var d = new frappe.ui.Dialog({
+			title: __(type),
+			fields: [
+				{
+					"label": "Observation",
+					"fieldname": "observation",
+					"fieldtype": "Link",
+					"options": "Observation",
+					"default": obs_data.name,
+					"hidden": 1,
+				},
+				{
+					"label": "Template",
+					"fieldname": "template",
+					"fieldtype": "Link",
+					"options": "Terms and Conditions",
+					"default": template,
+				},
+				{
+					"label": "Note",
+					"fieldname": "note",
+					"fieldtype": "Text Editor",
+					"default" : note,
+					reqd: 1,
+				}
+			],
+			primary_action: function() {
+				me.frm.dirty()
+				var data = d.get_values();
+				let val_dict = {};
+				var values = [];
+				val_dict["observation"] = obs_data.name
+				val_dict["result"] = ""
+				if (type=="Findings") {
+					val_dict["result"] = data.note
+					me[obs_data.name].set_value("findings_text", data.note)
+				} else if (type=="Interpretation") {
+					val_dict["interpretation"] = data.note
+					me[obs_data.name].set_value("result_interpretation", data.note)
+				}
+				d.hide();
+				values.push(val_dict);
+				me.result.push(val_dict)
+			},
+			primary_action_label: __("Add")
+			});
+			if ((!note || note == "") && d.get_values("template")) {
+				set_text_to_dialog(d)
+			}
+			d.fields_dict['template'].df.onchange = () => {
+				const regex = /<p>(.*?)<\/p>/;
+				const match = d.get_value("note").match(regex);
+				const result_value = match ? match[1] : null;
+				if (d.get_value('template') && (!result_value || result_value == "<br>")) {
+					set_text_to_dialog(d)
+				}
+			}
+			d.show();
+	}
+
 }
 
 var trim_html = function(text_result) {
@@ -418,5 +525,20 @@ var trim_html = function(text_result) {
 		return paragraphElement.textContent
 	} else {
 		return text_result
+	}
+}
+
+var set_text_to_dialog = function(d) {
+	if (d.get_value("template")) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.observation.observation.get_observation_result_template',
+			args: {
+				template_name: d.get_value("template"),
+				observation: d.get_value("observation")
+			},
+			callback: function (r) {
+				d.set_value('note', r.message)
+			}
+		});
 	}
 }
