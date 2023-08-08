@@ -384,7 +384,7 @@ healthcare.ObservationWidget = class {
 			})
 		} else if (status == "Disapproved") {
 			var d = new frappe.ui.Dialog({
-				title: __('Reason For Unauthorisation'),
+				title: __('Reason For Disapproval'),
 				fields: [
 					{
 						"label": __("Reason"),
