@@ -54,7 +54,8 @@ def validate_observations_has_result(doc):
 		return submittable
 
 def set_observation_status(doc):
-	if doc.ref_doctype == "Sales Invoice":
+	prev_doc = doc.get_doc_before_save()
+	if doc.ref_doctype == "Sales Invoice" and prev_doc and doc.status != prev_doc.status:
 		observations = frappe.db.get_all("Observation", {
 			"sales_invoice":doc.docname,
 			"docstatus":["!=", 2],
@@ -64,8 +65,8 @@ def set_observation_status(doc):
 			if doc.status in ["Approved", "Disapproved"]:
 				observation_doc = frappe.get_doc("Observation", obs)
 				if observation_doc.has_result():
-					observation_doc.status = doc.status
 					if doc.status == "Approved" and not observation_doc.status in ["Approved", "Disapproved"]:
+						observation_doc.status = doc.status
 						observation_doc.save().submit()
 					if doc.status == "Disapproved" and observation_doc.status == "Approved":
 						new_doc = frappe.copy_doc(observation_doc)
