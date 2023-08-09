@@ -331,6 +331,7 @@ healthcare.ObservationWidget = class {
 		// let result = note;
 			var d = new frappe.ui.Dialog({
 				title: __('Add Note'),
+				static: true,
 				fields: [
 					{
 						"label": __("Observation"),
@@ -365,6 +366,7 @@ healthcare.ObservationWidget = class {
 				primary_action_label: __("Add Note")
 			});
 			d.show();
+			d.get_close_btn().show();
 	}
 
 	auth_observation (observation, status) {
@@ -431,6 +433,7 @@ healthcare.ObservationWidget = class {
 		}
 		var d = new frappe.ui.Dialog({
 			title: __(type),
+			static: true,
 			fields: [
 				{
 					"label": "Observation",
@@ -486,6 +489,7 @@ healthcare.ObservationWidget = class {
 				}
 			}
 			d.show();
+			d.get_close_btn().show();
 	}
 
 }
