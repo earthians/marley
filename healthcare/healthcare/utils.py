@@ -509,7 +509,6 @@ def manage_invoice_validate(doc, method):
 		for item in doc.items:
 			if not item.service_unit:
 				item.service_unit = doc.service_unit
-	# create_sample_collection_and_observation(doc)
 
 
 def manage_invoice_submit_cancel(doc, method):
@@ -1094,6 +1093,7 @@ def create_sample_collection_and_observation(doc):
 			parent_observation = add_observation(
 					doc.patient,
 					grp.get("name"),
+					practitioner=doc.ref_practitioner,
 					invoice=doc.name,
 				)
 
@@ -1105,6 +1105,7 @@ def create_sample_collection_and_observation(doc):
 					add_observation(
 						doc.patient,
 						comp,
+						practitioner=doc.ref_practitioner,
 						parent=parent_observation,
 						invoice=doc.name
 					)
@@ -1127,6 +1128,7 @@ def create_sample_collection_and_observation(doc):
 				add_observation(
 					doc.patient,
 					grp.get("name"),
+					practitioner=doc.ref_practitioner,
 					invoice=doc.name,
 				)
 			else:
@@ -1155,6 +1157,7 @@ def create_sample_collection(doc):
 	sample_collection.patient_age = patient.get_age()
 	sample_collection.patient_sex = patient.sex
 	sample_collection.company = doc.company
+	sample_collection.referring_practitioner = doc.ref_practitioner
 	sample_collection.reference_doc = doc.doctype
 	sample_collection.reference_name = doc.name
 	return sample_collection
@@ -1165,6 +1168,7 @@ def insert_diagnostic_report(doc):
 	diagnostic_report.patient = doc.patient
 	diagnostic_report.ref_doctype = doc.doctype
 	diagnostic_report.docname = doc.name
+	diagnostic_report.practitioner = doc.ref_practitioner
 	# diagnostic_report.sample_collection = doc.name
 	diagnostic_report.save(ignore_permissions=True)
 

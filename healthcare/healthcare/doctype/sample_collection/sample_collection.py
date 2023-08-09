@@ -69,12 +69,11 @@ class SampleCollection(Document):
 
 @frappe.whitelist()
 def create_observation(selected, sample_collection, component_observations=[], child_name=None):
-	invoice = frappe.db.get_value("Sample Collection", sample_collection, "reference_name")
+	sample_col_doc  = frappe.db.get_value("Sample Collection", sample_collection, ["reference_name", "patient", "referring_practitioner"], as_dict=1)
 	selected = json.loads(selected)
 	if len(component_observations) > 0:
 		component_observations = json.loads(component_observations)
-	patient = frappe.db.get_value("Sample Collection", sample_collection, "patient")
-	comp_obs_ref = create_specimen(patient, selected, component_observations)
+	comp_obs_ref = create_specimen(sample_col_doc.get("patient"), selected, component_observations)
 	for i, obs in enumerate(selected):
 		parent_observation = obs.get("component_observation_parent")
 
@@ -85,7 +84,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 			# non has_component templates
 			if not obs.get("has_component") or obs.get("has_component") == 0:
 				observation = add_observation(
-					patient,
+					sample_col_doc.get("patient"),
 					obs.get("observation_template"),
 					"",
 					"",
@@ -93,7 +92,8 @@ def create_observation(selected, sample_collection, component_observations=[], c
 					sample_collection,
 					parent_observation,
 					comp_obs_ref.get(obs.get("name")) or comp_obs_ref.get(i+1) or comp_obs_ref.get(obs.get("idx")),
-					invoice
+					sample_col_doc.get("reference_name"),
+					practitioner=sample_col_doc.get("referring_practitioner"),
 				)
 				if observation:
 					frappe.db.set_value(
@@ -111,7 +111,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 					component_observations = json.loads(obs.get("component_observations"))
 					for j, comp in enumerate(component_observations):
 						observation = add_observation(
-							patient,
+							sample_col_doc.get("patient"),
 							comp.get("observation_template"),
 							"",
 							"",
@@ -119,7 +119,8 @@ def create_observation(selected, sample_collection, component_observations=[], c
 							sample_collection,
 							obs.get("component_observation_parent"),
 							comp_obs_ref.get(j+1) or comp_obs_ref.get(obs.get("name")),
-							invoice
+							sample_col_doc.get("reference_name"),
+							practitioner=sample_col_doc.get("referring_practitioner"),
 						)
 						if observation:
 							comp["status"] = "Collected"

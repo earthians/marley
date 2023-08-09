@@ -232,6 +232,7 @@ def add_observation(
 	parent=None,
 	specimen=None,
 	invoice="",
+	practitioner=None,
 ):
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
@@ -241,6 +242,7 @@ def add_observation(
 	observation_doc.reference_doctype = doc
 	observation_doc.reference_docname = docname
 	observation_doc.sales_invoice = invoice
+	observation_doc.healthcare_practitioner = practitioner
 	observation_doc.specimen = specimen
 	if data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
 		observation_doc.result_data = result
