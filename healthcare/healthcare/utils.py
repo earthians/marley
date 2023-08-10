@@ -912,7 +912,6 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 		""".format(
 			section_html, html
 		)
-
 	return {"html": doc_html}
 
 
@@ -1046,7 +1045,7 @@ def company_on_trash(doc, method):
 
 
 def create_sample_collection_and_observation(doc):
-	insert_diagnostic_report(doc)
+	diag_report_required = False
 	query = f"""
 		select
 			ot.name
@@ -1089,6 +1088,7 @@ def create_sample_collection_and_observation(doc):
 	sample_collection = create_sample_collection(doc)
 	for grp in out_data:
 		if grp.get("has_component"):
+			diag_report_required = True
 			# parent observation
 			parent_observation = add_observation(
 					doc.patient,
@@ -1123,6 +1123,7 @@ def create_sample_collection_and_observation(doc):
 				)
 
 		else:
+			diag_report_required = True
 			# create observation for non sample_collection_reqd individual templates
 			if not grp.get("sample_collection_required"):
 				add_observation(
@@ -1148,6 +1149,9 @@ def create_sample_collection_and_observation(doc):
 		and len(sample_collection.get("observation_sample_collection")) > 0
 	):
 		sample_collection.save(ignore_permissions=True)
+
+	if diag_report_required:
+		insert_diagnostic_report(doc)
 
 
 def create_sample_collection(doc):
