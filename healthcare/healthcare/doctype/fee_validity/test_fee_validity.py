@@ -31,7 +31,7 @@ class TestFeeValidity(FrappeTestCase):
 		healthcare_settings.enable_free_follow_ups = 1
 		healthcare_settings.max_visits = 1
 		healthcare_settings.valid_days = 7
-		healthcare_settings.automate_appointment_invoicing = 1
+		healthcare_settings.show_payment_popup = 1
 		healthcare_settings.op_consulting_charge_item = item
 		healthcare_settings.save(ignore_permissions=True)
 		patient, practitioner = create_healthcare_docs()
