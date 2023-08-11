@@ -15,7 +15,7 @@
   "column_break_9",
   "collect_registration_fee",
   "registration_fee",
-  "automate_appointment_invoicing",
+  "show_payment_popup",
   "enable_free_follow_ups",
   "max_visits",
   "valid_days",
@@ -231,10 +231,10 @@
   },
   {
    "default": "0",
-   "description": "Manage Appointment Invoice submit and cancel automatically for Patient Encounter",
-   "fieldname": "automate_appointment_invoicing",
+   "description": "Checking this will popup dialog for Appointment Invoicing",
+   "fieldname": "show_payment_popup",
    "fieldtype": "Check",
-   "label": "Automate Appointment Invoicing"
+   "label": "Show Payment Popup"
   },
   {
    "default": "0",
@@ -360,7 +360,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-01-13 17:51:25.440851",
+ "modified": "2023-08-10 17:51:25.440851",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
