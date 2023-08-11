@@ -510,7 +510,7 @@ def manage_invoice_submit_cancel(doc, method):
 			create_multiple("Sales Invoice", doc.name)
 
 		if (
-			not frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing")
+			not frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
 			and frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
 			and doc.items
 		):
