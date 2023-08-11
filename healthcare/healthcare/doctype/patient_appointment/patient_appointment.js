@@ -202,62 +202,6 @@ frappe.ui.form.on('Patient Appointment', {
 		});
 	},
 
-	appointment_for: function(frm) {
-		if (frm.doc.appointment_for == 'Practitioner') {
-			if (!frm.doc.practitioner) {
-				frm.set_value('department', '');
-			}
-			frm.set_value('service_unit', '');
-			frm.trigger('set_check_availability_action');
-		} else if (frm.doc.appointment_for == 'Service Unit') {
-			frm.set_value({
-				'practitioner': '',
-				'practitioner_name': '',
-				'department': '',
-			});
-			frm.trigger('set_book_action');
-		} else if (frm.doc.appointment_for == 'Department') {
-			frm.set_value({
-				'practitioner': '',
-				'practitioner_name': '',
-				'service_unit': '',
-			});
-			frm.trigger('set_book_action');
-		} else {
-			if (frm.doc.appointment_for == 'Department') {
-				frm.set_value('service_unit', '');
-			}
-			frm.set_value({
-				'practitioner': '',
-				'practitioner_name': '',
-				'department': '',
-				'service_unit': '',
-			});
-			frm.page.clear_primary_action();
-		}
-	},
-
-	set_book_action: function(frm) {
-		frm.page.set_primary_action(__('Book'), function() {
-			frm.enable_save();
-			frm.save();
-		});
-	},
-
-	set_check_availability_action: function(frm) {
-		frm.page.set_primary_action(__('Check Availability'), function() {
-			if (!frm.doc.patient) {
-				frappe.msgprint({
-					title: __('Not Allowed'),
-					message: __('Please select Patient first'),
-					indicator: 'red'
-				});
-			} else {
-				check_and_set_availability(frm);
-			}
-		});
-	},
-
 	patient: function(frm) {
 		if (frm.doc.patient) {
 			frm.trigger('toggle_payment_fields');
