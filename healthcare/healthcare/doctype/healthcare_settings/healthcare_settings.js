@@ -64,9 +64,9 @@ frappe.tour['Healthcare Settings'] = [
 		description: __('If your Healthcare facility bills registrations of Patients, you can check this and set the Registration Fee in the field below. Checking this will create new Patients with a Disabled status by default and will only be enabled after invoicing the Registration Fee.')
 	},
 	{
-		fieldname: 'automate_appointment_invoicing',
-		title: __('Automate Appointment Invoicing'),
-		description: __('Checking this will automatically create a Sales Invoice whenever an appointment is booked for a Patient.')
+		fieldname: 'show_payment_popup',
+		title: __('Show Payment Popup'),
+		description: __('Checking this will popup to invoice appointment')
 	},
 	{
 		fieldname: 'validate_nursing_checklists',

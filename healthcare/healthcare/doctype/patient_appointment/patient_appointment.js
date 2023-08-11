@@ -112,6 +112,94 @@ frappe.ui.form.on('Patient Appointment', {
 				frm.save();
 			});
 		}
+
+		frm.trigger("make_invoice_button");
+	},
+
+	make_invoice_button: function (frm) {
+		// add button to invoice when show_payment_popup enabled
+		if (!frm.is_new() && !frm.doc.invoiced && frm.doc.status != "Cancelled") {
+			frappe.db.get_single_value("Healthcare Settings", "show_payment_popup").then(async val => {
+				fee_validity = (await frappe.call(
+					"healthcare.healthcare.doctype.fee_validity.fee_validity.get_fee_validity",
+					{ "appointment_name": frm.doc.name, "date": frm.doc.appointment_date , "ignore_status": true })).message;
+
+				if (val && !fee_validity.length) {
+					frm.add_custom_button(__("Make Payment"), function () {
+						make_payment(frm, val);
+					});
+				}
+			});
+        }
+	},
+
+	appointment_for: function(frm) {
+		if (frm.doc.appointment_for == 'Practitioner') {
+			if (!frm.doc.practitioner) {
+				frm.set_value('department', '');
+			}
+			frm.set_value('service_unit', '');
+			frm.trigger('set_check_availability_action');
+		} else if (frm.doc.appointment_for == 'Service Unit') {
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'department': '',
+			});
+			frm.trigger('set_book_action');
+		} else if (frm.doc.appointment_for == 'Department') {
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'service_unit': '',
+			});
+			frm.trigger('set_book_action');
+		} else {
+			if (frm.doc.appointment_for == 'Department') {
+				frm.set_value('service_unit', '');
+			}
+			frm.set_value({
+				'practitioner': '',
+				'practitioner_name': '',
+				'department': '',
+				'service_unit': '',
+			});
+			frm.page.clear_primary_action();
+		}
+	},
+
+	set_book_action: function(frm) {
+		frm.page.set_primary_action(__('Book'), async function() {
+			frm.enable_save();
+			await frm.save();
+			if (!frm.is_new()) {
+				await frappe.db.get_single_value("Healthcare Settings", "show_payment_popup").then(val => {
+					frappe.call({
+						method: "healthcare.healthcare.doctype.fee_validity.fee_validity.check_fee_validity",
+						args: { "appointment": frm.doc },
+						callback: (r) => {
+							if (val && !r.message && !frm.doc.invoiced) {
+								make_payment(frm, val);
+							}
+						}
+					});
+				});
+			}
+		});
+	},
+
+	set_check_availability_action: function(frm) {
+		frm.page.set_primary_action(__('Check Availability'), function() {
+			if (!frm.doc.patient) {
+				frappe.msgprint({
+					title: __('Not Allowed'),
+					message: __('Please select Patient first'),
+					indicator: 'red'
+				});
+			} else {
+				check_and_set_availability(frm);
+			}
+		});
 	},
 
 	appointment_for: function(frm) {
@@ -165,115 +253,7 @@ frappe.ui.form.on('Patient Appointment', {
 					indicator: 'red'
 				});
 			} else {
-				frappe.call({
-					method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
-					args: { 'patient': frm.doc.patient },
-					callback: function(data) {
-						if (data.message == true) {
-							if (frm.doc.mode_of_payment && frm.doc.paid_amount) {
-								check_and_set_availability(frm);
-							}
-							if (!frm.doc.mode_of_payment) {
-								frappe.msgprint({
-									title: __('Not Allowed'),
-									message: __('Please select a Mode of Payment first'),
-									indicator: 'red'
-								});
-							}
-							if (!frm.doc.paid_amount) {
-								frappe.msgprint({
-									title: __('Not Allowed'),
-									message: __('Please set the Paid Amount first'),
-									indicator: 'red'
-								});
-							}
-						} else {
-							check_and_set_availability(frm);
-						}
-					}
-				});
-			}
-		});
-	},
-
-	appointment_for: function(frm) {
-		if (frm.doc.appointment_for == 'Practitioner') {
-			if (!frm.doc.practitioner) {
-				frm.set_value('department', '');
-			}
-			frm.set_value('service_unit', '');
-			frm.trigger('set_check_availability_action');
-		} else if (frm.doc.appointment_for == 'Service Unit') {
-			frm.set_value({
-				'practitioner': '',
-				'practitioner_name': '',
-				'department': '',
-			});
-			frm.trigger('set_book_action');
-		} else if (frm.doc.appointment_for == 'Department') {
-			frm.set_value({
-				'practitioner': '',
-				'practitioner_name': '',
-				'service_unit': '',
-			});
-			frm.trigger('set_book_action');
-		} else {
-			if (frm.doc.appointment_for == 'Department') {
-				frm.set_value('service_unit', '');
-			}
-			frm.set_value({
-				'practitioner': '',
-				'practitioner_name': '',
-				'department': '',
-				'service_unit': '',
-			});
-			frm.page.clear_primary_action();
-		}
-	},
-
-	set_book_action: function(frm) {
-		frm.page.set_primary_action(__('Book'), function() {
-			frm.enable_save();
-			frm.save();
-		});
-	},
-
-	set_check_availability_action: function(frm) {
-		frm.page.set_primary_action(__('Check Availability'), function() {
-			if (!frm.doc.patient) {
-				frappe.msgprint({
-					title: __('Not Allowed'),
-					message: __('Please select Patient first'),
-					indicator: 'red'
-				});
-			} else {
-				frappe.call({
-					method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
-					args: { 'patient': frm.doc.patient },
-					callback: function(data) {
-						if (data.message == true) {
-							if (frm.doc.mode_of_payment && frm.doc.paid_amount) {
-								check_and_set_availability(frm);
-							}
-							if (!frm.doc.mode_of_payment) {
-								frappe.msgprint({
-									title: __('Not Allowed'),
-									message: __('Please select a Mode of Payment first'),
-									indicator: 'red'
-								});
-							}
-							if (!frm.doc.paid_amount) {
-								frappe.msgprint({
-									title: __('Not Allowed'),
-									message: __('Please set the Paid Amount first'),
-									indicator: 'red'
-								});
-							}
-						} else {
-							check_and_set_availability(frm);
-						}
-					}
-				});
+				check_and_set_availability(frm);
 			}
 		});
 	},
@@ -331,7 +311,7 @@ frappe.ui.form.on('Patient Appointment', {
 	},
 
 	set_payment_details: function(frm) {
-		frappe.db.get_single_value('Healthcare Settings', 'automate_appointment_invoicing').then(val => {
+		frappe.db.get_single_value('Healthcare Settings', 'show_payment_popup').then(val => {
 			if (val) {
 				frappe.call({
 					method: 'healthcare.healthcare.utils.get_appointment_billing_item_and_rate',
@@ -383,31 +363,28 @@ frappe.ui.form.on('Patient Appointment', {
 
 	toggle_payment_fields: function(frm) {
 		frappe.call({
-			method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_fields_reqd',
+			method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_reqd',
 			args: { 'patient': frm.doc.patient },
 			callback: function(data) {
 				if (data.message.fee_validity) {
-					// if fee validity exists and automated appointment invoicing is enabled,
+					// if fee validity exists and show payment popup is enabled,
 					// show payment fields as non-mandatory
 					frm.toggle_display('mode_of_payment', 0);
 					frm.toggle_display('paid_amount', 0);
 					frm.toggle_display('billing_item', 0);
-					frm.toggle_reqd('mode_of_payment', 0);
 					frm.toggle_reqd('paid_amount', 0);
 					frm.toggle_reqd('billing_item', 0);
 				} else if (data.message) {
 					frm.toggle_display('mode_of_payment', 1);
 					frm.toggle_display('paid_amount', 1);
 					frm.toggle_display('billing_item', 1);
-					frm.toggle_reqd('mode_of_payment', 1);
 					frm.toggle_reqd('paid_amount', 1);
 					frm.toggle_reqd('billing_item', 1);
 				} else {
-					// if automated appointment invoicing is disabled, hide fields
+					// if show payment popup is disabled, hide fields
 					frm.toggle_display('mode_of_payment', data.message ? 1 : 0);
 					frm.toggle_display('paid_amount', data.message ? 1 : 0);
 					frm.toggle_display('billing_item', data.message ? 1 : 0);
-					frm.toggle_reqd('mode_of_payment', data.message ? 1 : 0);
 					frm.toggle_reqd('paid_amount', data.message ? 1 : 0);
 					frm.toggle_reqd('billing_item', data.message ? 1 : 0);
 				}
@@ -466,13 +443,9 @@ let check_and_set_availability = function(frm) {
 				{ fieldtype: 'Date', reqd: 1, fieldname: 'appointment_date', label: 'Date', min_date: new Date(frappe.datetime.get_today()) },
 				{ fieldtype: 'Section Break' },
 				{ fieldtype: 'HTML', fieldname: 'available_slots' },
-				{ fieldtype: 'Section Break', fieldname: 'payment_section', label: 'Payment Details', hidden: 1 },
-				{ fieldtype: 'Link', options: 'Mode of Payment', fieldname: 'mode_of_payment', label: 'Mode of Payment' },
-				{ fieldtype: 'Column Break' },
-				{ fieldtype: 'Currency', fieldname: 'consultation_charge', label: 'Consultation Charge', read_only: 1 },
 			],
 			primary_action_label: __('Book'),
-			primary_action: function() {
+			primary_action: async function() {
 				frm.set_value('appointment_time', selected_slot);
 				add_video_conferencing = add_video_conferencing && !d.$wrapper.find(".opt-out-check").is(":checked")
 					&& !overlap_appointments
@@ -481,13 +454,11 @@ let check_and_set_availability = function(frm) {
 				if (!frm.doc.duration) {
 					frm.set_value('duration', duration);
 				}
+				let practitioner = frm.doc.practitioner;
 
 				frm.set_value('practitioner', d.get_value('practitioner'));
 				frm.set_value('department', d.get_value('department'));
 				frm.set_value('appointment_date', d.get_value('appointment_date'));
-				if (d.get_value('mode_of_payment') != frm.doc.mode_of_payment) {
-					frm.set_value('mode_of_payment', d.get_value('mode_of_payment'));
-				};
 				frm.set_value('appointment_based_on_check_in', appointment_based_on_check_in)
 
 				if (service_unit) {
@@ -496,7 +467,25 @@ let check_and_set_availability = function(frm) {
 
 				d.hide();
 				frm.enable_save();
-				frm.save();
+				await frm.save();
+				if (!frm.is_new() && (!practitioner || practitioner == d.get_value('practitioner'))) {
+					await frappe.db.get_single_value("Healthcare Settings", "show_payment_popup").then(val => {
+						frappe.call({
+							method: "healthcare.healthcare.doctype.fee_validity.fee_validity.check_fee_validity",
+							args: { "appointment": frm.doc },
+							callback: (r) => {
+								if (val && !r.message && !frm.doc.invoiced) {
+									make_payment(frm, val);
+								} else {
+									frappe.call({
+										method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_fee_validity",
+										args: { "appointment": frm.doc }
+									});
+								}
+							}
+						});
+					});
+				}
 				d.get_primary_btn().attr('disabled', true);
 			}
 		});
@@ -505,7 +494,6 @@ let check_and_set_availability = function(frm) {
 			'department': frm.doc.department,
 			'practitioner': frm.doc.practitioner,
 			'appointment_date': frm.doc.appointment_date,
-			'mode_of_payment': frm.doc.mode_of_payment,
 		});
 
 		let selected_department = frm.doc.department;
@@ -537,55 +525,15 @@ let check_and_set_availability = function(frm) {
 
 		d.fields_dict['appointment_date'].df.onchange = () => {
 			show_slots(d, fd);
-			validate_fee_validity(frm, d);
 		};
 		d.fields_dict['practitioner'].df.onchange = () => {
 			if (d.get_value('practitioner') && d.get_value('practitioner') != selected_practitioner) {
 				selected_practitioner = d.get_value('practitioner');
 				show_slots(d, fd);
-				validate_fee_validity(frm, d);
 			}
 		};
 
 		d.show();
-	}
-
-	function validate_fee_validity(frm, d) {
-		var section_field = d.get_field("payment_section");
-		var payment_field = d.get_field("mode_of_payment");
-		section_field.df.hidden = 1;
-		payment_field.df.reqd = 0;
-
-		if (d.get_value('appointment_date') && !frm.doc.invoiced) {
-			frappe.db.get_single_value('Healthcare Settings', 'enable_free_follow_ups').then(async function (val) {
-				if (val) {
-					fee_validity = (await frappe.call(
-						'healthcare.healthcare.doctype.fee_validity.fee_validity.check_fee_validity',
-						{
-							appointment: frm.doc,
-							date: d.get_value('appointment_date'),
-							practitioner: d.get_value('practitioner')
-						}
-					)).message || null;
-					if (!fee_validity) {
-						payment_field.df.reqd = 1;
-						section_field.df.hidden = 0;
-
-						let payment_details = (await frappe.call(
-							'healthcare.healthcare.utils.get_appointment_billing_item_and_rate',
-							{
-								doc: frm.doc
-							}
-						)).message;
-						d.set_value('consultation_charge', payment_details.practitioner_charge);
-						payment_field.refresh();
-						section_field.refresh();
-					}
-				}
-			});
-		}
-		payment_field.refresh();
-		section_field.refresh();
 	}
 
 	function show_slots(d, fd) {
@@ -686,7 +634,7 @@ let check_and_set_availability = function(frm) {
 			} else if (fee_validity != 'Disabled') {
 				slot_html += `
 					<span style="color:red">
-					${__('Patient has no fee validity, need to be invoiced')} <b></b>
+					${__('Patient has no fee validity')}
 					</span><br>`;
 			}
 
@@ -959,4 +907,121 @@ let calculate_age = function(birth) {
 	age.setTime(ageMS);
 	let years =  age.getFullYear() - 1970;
 	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
+};
+
+let make_payment = function (frm, automate_invoicing) {
+	if (automate_invoicing) {
+		make_registration (frm, automate_invoicing);
+	}
+
+	function make_registration (frm, automate_invoicing) {
+		if (automate_invoicing == true && !frm.doc.paid_amount) {
+			frappe.throw({
+				title: __("Not Allowed"),
+				message: __("Please set the Paid Amount first"),
+			});
+		}
+
+		let fields = [
+			{
+				label: "Patient",
+				fieldname: "patient",
+				fieldtype: "Data",
+				read_only: true,
+			},
+			{
+				label: "Mode of Payment",
+				fieldname: "mode_of_payment",
+				fieldtype: "Link",
+				options: "Mode of Payment",
+				reqd: 1,
+			},
+			{
+				label: "Consultation Charge",
+				fieldname: "consultation_charge",
+				fieldtype: "Currency",
+				read_only: true,
+			}
+		];
+
+		if (frm.doc.appointment_for == "Practitioner") {
+			pract_dict = {
+				label: "Practitioner",
+				fieldname: "practitioner",
+				fieldtype: "Data",
+				read_only: true,
+			};
+			fields.splice(1, 0, pract_dict);
+		} else if (frm.doc.appointment_for == "Service Unit") {
+			su_dict = {
+				label: "Service Unit",
+				fieldname: "service_unit",
+				fieldtype: "Data",
+				read_only: true,
+			};
+			fields.splice(1, 0, su_dict);
+		} else if (frm.doc.appointment_for == "Department") {
+			dept_dict = {
+				label: "Department",
+				fieldname: "department",
+				fieldtype: "Data",
+				read_only: true,
+			};
+			fields.splice(1, 0, dept_dict);
+		}
+
+		if (automate_invoicing) {
+			show_payment_dialog(frm, fields);
+		}
+	}
+
+	function show_payment_dialog(frm, fields) {
+		let d = new frappe.ui.Dialog({
+			title: "Enter Payment Details",
+			fields: fields,
+			primary_action_label: "Create Invoice",
+			primary_action(values) {
+				frm.set_value("mode_of_payment", values.mode_of_payment)
+				frm.save();
+				frappe.call({
+					method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
+					args: { "appointment_name": frm.doc.name },
+					callback: async function (data) {
+						if (!data.exc) {
+							await frm.reload_doc();
+							if (frm.doc.ref_sales_invoice) {
+								d.get_primary_btn().attr("disabled", true);
+								d.get_secondary_btn().attr("disabled", false);
+							}
+						}
+					}
+				});
+			},
+			secondary_action_label: __(`<svg class="icon  icon-sm" style="">
+				<use class="" href="#icon-printer"></use>
+			</svg>`),
+			secondary_action() {
+				window.open("/app/print/Sales Invoice/" + frm.doc.ref_sales_invoice, "_blank");
+				d.hide();
+			}
+		});
+		d.get_secondary_btn().attr("disabled", true);
+		d.set_values({
+			"patient": frm.doc.patient_name,
+			"consultation_charge": frm.doc.paid_amount,
+		});
+
+		if (frm.doc.appointment_for == "Practitioner") {
+			d.set_value("practitioner", frm.doc.practitioner_name);
+		} else if (frm.doc.appointment_for == "Service Unit") {
+			d.set_value("service_unit", frm.doc.service_unit);
+		} else if (frm.doc.appointment_for == "Department") {
+			d.set_value("department", frm.doc.department);
+		}
+
+		if (frm.doc.mode_of_payment) {
+			d.set_value("mode_of_payment", frm.doc.mode_of_payment);
+		}
+		d.show();
+	}
 };
