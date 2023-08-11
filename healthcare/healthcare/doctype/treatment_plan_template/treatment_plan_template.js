@@ -12,6 +12,7 @@ frappe.ui.form.on("Treatment Plan Template", {
 						"Therapy Type",
 						"Medication",
 						"Healthcare Service Unit",
+						"Observation Template"
 					]],
 				}
 			};
