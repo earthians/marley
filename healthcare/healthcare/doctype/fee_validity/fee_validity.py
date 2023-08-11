@@ -80,6 +80,8 @@ def check_fee_validity(appointment, date=None, practitioner=None):
 	}
 	if appointment.status != "Cancelled":
 		filters["status"] = "Active"
+	else:
+		filters["patient_appointment"] = appointment.name
 
 	validity = frappe.db.exists(
 		"Fee Validity",
@@ -92,8 +94,8 @@ def check_fee_validity(appointment, date=None, practitioner=None):
 			return
 		else:
 			validity = get_fee_validity(appointment.get("name"), date) or None
-			if validity:
-				return validity
+			if validity and len(validity):
+				return frappe.get_doc("Fee Validity", validity[0].get("name"))
 		return
 
 	validity = frappe.get_doc("Fee Validity", validity)
@@ -155,11 +157,12 @@ def manage_fee_validity(appointment):
 
 
 @frappe.whitelist()
-def get_fee_validity(appointment_name, date):
+def get_fee_validity(appointment_name, date, ignore_status=False):
 	"""
 	Get the fee validity details for the free visit appointment
 	:params appointment_name: Appointment doc name
 	:params date: Schedule date
+	:params ignore_status: status will not filter in query
 	:return fee validity name and valid_till values of free visit appointments
 	"""
 	if appointment_name:
@@ -167,18 +170,22 @@ def get_fee_validity(appointment_name, date):
 	fee_validity = frappe.qb.DocType("Fee Validity")
 	child = frappe.qb.DocType("Fee Validity Reference")
 
-	return (
+	query = (
 		frappe.qb.from_(fee_validity)
 		.inner_join(child)
 		.on(fee_validity.name == child.parent)
 		.select(fee_validity.name, fee_validity.valid_till)
-		.where(fee_validity.status == "Active")
 		.where(fee_validity.start_date <= date)
 		.where(fee_validity.valid_till >= date)
 		.where(fee_validity.patient == appointment_doc.patient)
 		.where(fee_validity.practitioner == appointment_doc.practitioner)
 		.where(child.appointment == appointment_name)
-	).run(as_dict=True)
+	)
+
+	if not ignore_status:
+		query = query.where(fee_validity.status == "Active")
+
+	return query.run(as_dict=True)
 
 
 def update_validity_status():
