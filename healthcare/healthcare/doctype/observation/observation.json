@@ -15,8 +15,9 @@
   "observation_category",
   "column_break_7xu5",
   "company",
-  "medical_department",
+  "posting_date",
   "status",
+  "medical_department",
   "amended_from",
   "section_break_i70a",
   "patient",
@@ -104,7 +105,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Registered\nPreliminary\nFinal\nAmended\nCorrected\nCancelled\nEntered in Error\nUnknown\nApproved\nDisapproved"
+   "options": "Registered\nPreliminary\nFinal\nAmended\nCorrected\nCancelled\nEntered in Error\nUnknown\nApproved\nDisapproved",
+   "read_only_depends_on": "eval:doc.docstatus==1;"
   },
   {
    "fieldname": "patient",
@@ -541,12 +543,19 @@
    "fieldtype": "Text",
    "label": "Disapproval Reason",
    "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-07 14:36:12.207988",
+ "modified": "2023-08-11 18:16:29.245816",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
