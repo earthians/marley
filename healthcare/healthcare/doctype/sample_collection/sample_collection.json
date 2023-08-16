@@ -103,12 +103,11 @@
    "read_only": 1
   },
   {
-   "fetch_from": "patient.sex",
+   "fetch_from": "patient.",
    "fieldname": "patient_sex",
    "fieldtype": "Link",
    "hide_days": 1,
    "hide_seconds": 1,
-   "in_list_view": 1,
    "label": "Gender",
    "options": "Gender",
    "read_only": 1
@@ -238,6 +237,8 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "Pending\nPartly Collected\nCollected"
   },
@@ -297,14 +298,13 @@
    "read_only_depends_on": "referring_practitioner"
   }
  ],
- "is_submittable": 1,
  "links": [
   {
    "link_doctype": "Diagnostic Report",
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-07-07 14:02:01.417443",
+ "modified": "2023-08-16 13:37:57.362059",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
@@ -312,8 +312,6 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "amend": 1,
-   "cancel": 1,
    "create": 1,
    "email": 1,
    "export": 1,
@@ -322,7 +320,6 @@
    "report": 1,
    "role": "Laboratory User",
    "share": 1,
-   "submit": 1,
    "write": 1
   }
  ],
