@@ -60,11 +60,11 @@ class SampleCollection(Document):
 		else:
 			self.status = "Partly Collected"
 
-	def before_submit(self):
-		if [sample for sample in self.observation_sample_collection if sample.status != "Collected"]:
-			frappe.throw(
-				msg=_("Cannot Submit, not all samples are marked as 'Collected'."), title=_("Not Allowed")
-			)
+	# def before_submit(self):
+	# 	if [sample for sample in self.observation_sample_collection if sample.status != "Collected"]:
+	# 		frappe.throw(
+	# 			msg=_("Cannot Submit, not all samples are marked as 'Collected'."), title=_("Not Allowed")
+	# 		)
 
 
 @frappe.whitelist()
@@ -156,6 +156,14 @@ def create_observation(selected, sample_collection, component_observations=[], c
 			child_name,
 			child_db_set_dict,
 		)
+	if sample_collection:
+		non_collected_samples = frappe.db.get_all("Observation Sample Collection", {"parent": sample_collection, "status": ["!=", "Collected"]})
+		if non_collected_samples and len(non_collected_samples)>0:
+			set_status = "Partly Collected"
+		else:
+			set_status = "Collected"
+
+		frappe.db.set_value("Sample Collection", sample_collection, "status", set_status)
 
 def create_specimen(patient, selected, component_observations):
 	groups = {}
