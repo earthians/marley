@@ -263,9 +263,9 @@ healthcare.ObservationWidget = class {
 
 		let auth_html = ""
 		if (!['Approved'].includes(obs_data.status)) {
-			auth_html += `<div style="padding-left:20px; padding-right:20px;" title="Approve">
+			auth_html += `<div style="float:right;">
 				<button class="btn btn-xs btn-secondary small" id="authorise-observation-btn-${obs_data.name}">
-				<svg class="icon icon-sm"><use xlink:href="#icon-check"></use></svg>
+				<span style="font-size:10px;">Approve</span>
 				</button>`
 			auth_html += `</div></div>`
 			me[obs_data.name].get_field('auth_btn').html(auth_html);
@@ -274,9 +274,9 @@ healthcare.ObservationWidget = class {
 				me.auth_observation(obs_data.name, "Approved")
 			});
 		} else if (obs_data.status=='Approved') {
-			auth_html += `<div style="padding-left:20px; padding-right:20px;" title="Disapprove">
-				<button class="btn btn-xs btn-secondary small" id="unauthorise-observation-btn-${obs_data.name}">
-				<b>X</b>
+			auth_html += `<div style="float:right;">
+				<button class="btn btn-xs btn-del btn-secondary small" id="unauthorise-observation-btn-${obs_data.name}">
+				<span class="btn-observ" style="font-size:10px;">Disapprove</span>
 				</button>`
 			auth_html += `</div></div>`
 			me[obs_data.name].get_field('auth_btn').html(auth_html);
