@@ -37,8 +37,7 @@
   "section_break_put4",
   "service_request",
   "reference_doc",
-  "reference_name",
-  "amended_from"
+  "reference_name"
  ],
  "fields": [
   {
@@ -75,7 +74,7 @@
    "search_index": 1
   },
   {
-   "fetch_from": "inpatient_record.patient",
+   "fetch_from": ".patient",
    "fieldname": "patient",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -84,6 +83,7 @@
    "in_standard_filter": 1,
    "label": "Patient",
    "options": "Patient",
+   "read_only_depends_on": "eval:[\"Partly Collected\", \"Collected\"].includes(doc.status);",
    "reqd": 1,
    "search_index": 1
   },
@@ -120,7 +120,8 @@
    "hide_seconds": 1,
    "in_standard_filter": 1,
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "read_only_depends_on": "eval:[\"Partly Collected\", \"Collected\"].includes(doc.status);"
   },
   {
    "depends_on": "!doc.observation_sample_collection",
@@ -188,17 +189,6 @@
    "report_hide": 1
   },
   {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "hide_days": 1,
-   "hide_seconds": 1,
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Sample Collection",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "section_break_15",
    "fieldtype": "Section Break",
    "hide_days": 1,
@@ -239,7 +229,8 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Pending\nPartly Collected\nCollected"
+   "options": "Pending\nPartly Collected\nCollected",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_xap8",
@@ -304,7 +295,7 @@
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-07-07 14:02:01.417443",
+ "modified": "2023-08-17 07:10:11.348983",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
