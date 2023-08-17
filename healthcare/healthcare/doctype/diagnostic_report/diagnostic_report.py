@@ -8,14 +8,14 @@ from frappe.model.document import Document
 from healthcare.healthcare.doctype.observation.observation import (
 	get_observation_details,
 )
-
+from frappe.model.workflow import (get_workflow_name, get_workflow_state_field)
 
 class DiagnosticReport(Document):
 	def validate(self):
 		self.set_reference_details()
 		self.set_age()
 		self.set_title()
-		set_observation_status(self)
+		# set_diagnostic_status(self)
 
 	def before_insert(self):
 		if self.ref_doctype == "Sales Invoice" and self.docname:
@@ -53,23 +53,39 @@ def validate_observations_has_result(doc):
 				submittable = False
 		return submittable
 
-def set_observation_status(doc):
-	prev_doc = doc.get_doc_before_save()
-	if doc.ref_doctype == "Sales Invoice" and prev_doc and doc.status != prev_doc.status:
+def set_diagnostic_status(doc):
+	if doc.get("__islocal"):
+		return
+	observations = frappe.db.get_all("Observation", {"sales_invoice": doc.docname, "docstatus": 0, "status": ["!=", "Approved"], "has_component":0})
+	workflow_name = get_workflow_name("Diagnostic Report")
+	workflow_state_field = get_workflow_state_field(workflow_name)
+	if observations and len(observations)>0:
+		set_status = "Partially Approved"
+	else:
+		set_status = "Approved"
+	doc.status = set_status
+	doc.set(workflow_state_field, set_status)
+
+
+@frappe.whitelist()
+def set_observation_status(docname):
+	doc = frappe.get_doc("Diagnostic Report", docname)
+	if doc.ref_doctype == "Sales Invoice":
 		observations = frappe.db.get_all("Observation", {
 			"sales_invoice":doc.docname,
 			"docstatus":["!=", 2],
 			"has_component": False,
-			"status":["!=", "Cancelled"]}, pluck="name")
-		for obs in observations:
-			if doc.status in ["Approved", "Disapproved"]:
-				observation_doc = frappe.get_doc("Observation", obs)
-				if observation_doc.has_result():
-					if doc.status == "Approved" and not observation_doc.status in ["Approved", "Disapproved"]:
-						observation_doc.status = doc.status
-						observation_doc.save().submit()
-					if doc.status == "Disapproved" and observation_doc.status == "Approved":
-						new_doc = frappe.copy_doc(observation_doc)
-						new_doc.status = ""
-						new_doc.insert()
-						observation_doc.cancel()
+			"status":["not in", ["Cancelled", "Approved", "Disapproved"]]}, pluck="name")
+		if observations:
+			for obs in observations:
+				if doc.status in ["Approved", "Disapproved"]:
+					observation_doc = frappe.get_doc("Observation", obs)
+					if observation_doc.has_result():
+						if doc.status == "Approved" and not observation_doc.status in ["Approved", "Disapproved"]:
+							observation_doc.status = doc.status
+							observation_doc.save().submit()
+						if doc.status == "Disapproved" and observation_doc.status == "Approved":
+							new_doc = frappe.copy_doc(observation_doc)
+							new_doc.status = ""
+							new_doc.insert()
+							observation_doc.cancel()
