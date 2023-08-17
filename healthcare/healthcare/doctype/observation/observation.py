@@ -11,6 +11,7 @@ from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
+from frappe.model.workflow import (get_workflow_name, get_workflow_state_field)
 
 
 class Observation(Document):
@@ -20,6 +21,9 @@ class Observation(Document):
 		self.set_status()
 		self.reference = get_observation_reference(self)
 		self.validate_input()
+
+	def on_update(self):
+		set_diagnostic_report_status(self)
 
 	def before_insert(self):
 		set_observation_idx(self)
@@ -386,3 +390,19 @@ def set_observation_status(observation, status, reason=None):
 			observation_doc.cancel()
 	else:
 		frappe.throw(_("Please enter result to Approve."))
+
+def set_diagnostic_report_status(doc):
+	if doc.has_result() and doc.sales_invoice and not doc.has_component and doc.sales_invoice:
+		observations = frappe.db.get_all("Observation", {"sales_invoice": doc.sales_invoice, "docstatus": 0, "status": ["!=", "Approved"], "has_component":0})
+		diagnostic_report = frappe.db.get_value("Diagnostic Report", {"ref_doctype": "Sales Invoice", "docname":doc.sales_invoice}, ["name"], as_dict=True)
+		if diagnostic_report:
+			workflow_name = get_workflow_name("Diagnostic Report")
+			workflow_state_field = get_workflow_state_field(workflow_name)
+			if observations and len(observations)>0:
+				set_status = "Partially Approved"
+			else:
+				set_status = "Approved"
+			set_value_dict = {"status": set_status}
+			if workflow_state_field:
+				set_value_dict[workflow_state_field] = set_status
+			frappe.db.set_value("Diagnostic Report", diagnostic_report.get("name"), set_value_dict, update_modified=False)

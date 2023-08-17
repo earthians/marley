@@ -162,13 +162,13 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending Review\nApproved\nDisapproved",
+   "options": "Open\nPending Review\nPartially Approved\nApproved\nDisapproved",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-05 18:35:42.870474",
+ "modified": "2023-08-11 19:03:19.596850",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
@@ -190,7 +190,12 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Open"
+  }
+ ],
  "title_field": "title",
  "track_changes": 1
 }
