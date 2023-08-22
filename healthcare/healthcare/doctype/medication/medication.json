@@ -86,16 +86,14 @@
    "fieldtype": "Link",
    "label": "Default Prescription Dosage",
    "mandatory_depends_on": "!dosage_by_interval",
-   "options": "Prescription Dosage",
-   "reqd": 1
+   "options": "Prescription Dosage"
   },
   {
    "fieldname": "default_prescription_duration",
    "fieldtype": "Link",
    "label": "Default Prescription Duration",
    "mandatory_depends_on": "!dosage_by_interval",
-   "options": "Prescription Duration",
-   "reqd": 1
+   "options": "Prescription Duration"
   },
   {
    "fieldname": "default_interval",
@@ -223,7 +221,7 @@
   }
  ],
  "links": [],
- "modified": "2023-06-06 15:05:07.360096",
+ "modified": "2023-08-22 11:34:33.785945",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
