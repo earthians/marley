@@ -708,99 +708,101 @@ var show_orders = async function(frm) {
 
 var show_patient_vital_charts = function(frm, btn_id, scale_unit, title) {
 	frm.fields_dict.vitals_chart.html("");
-	frappe.call({
-		method: 'healthcare.healthcare.utils.get_patient_vitals',
-		args: {
-			patient: frm.doc.patient
-		},
-		callback: function(r) {
-			if (r.message) {
-				let show_chart_btns_html = `
-					<div id="vital-btns" style='padding-top:10px;'>
-						<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-0' data-show-chart-id='bp' data-pts='mmHg' data-title='Blood Pressure'>
-							${__('Blood Pressure')}
-						</a>
-						<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-1' data-show-chart-id='pulse_rate' data-pts='per Minutes' data-title='Respiratory/Pulse Rate'>
-							${__('Respiratory/Pulse Rate')}
-						</a>
-						<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-2' data-show-chart-id='temperature' data-pts='°C or °F' data-title='Temperature'>
-							${__('Temperature')}
-						</a>
-						<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-3' data-show-chart-id='bmi' data-pts='' data-title='BMI'>
-							${__('BMI')}
-						</a>
-					</div>
-					<div id="chart" class="col-sm-12 patient_vital_charts"></div>`;
-				frm.fields_dict.vitals_chart.html(show_chart_btns_html);
-				var vital_btns = document.getElementById("vital-btns");
-				var btns = vital_btns.querySelectorAll(".btn-show-chart");
+	if (frm.doc.patient) {
+		frappe.call({
+			method: 'healthcare.healthcare.utils.get_patient_vitals',
+			args: {
+				patient: frm.doc.patient
+			},
+			callback: function(r) {
+				if (r.message) {
+					let show_chart_btns_html = `
+						<div id="vital-btns" style='padding-top:10px;'>
+							<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-0' data-show-chart-id='bp' data-pts='mmHg' data-title='Blood Pressure'>
+								${__('Blood Pressure')}
+							</a>
+							<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-1' data-show-chart-id='pulse_rate' data-pts='per Minutes' data-title='Respiratory/Pulse Rate'>
+								${__('Respiratory/Pulse Rate')}
+							</a>
+							<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-2' data-show-chart-id='temperature' data-pts='°C or °F' data-title='Temperature'>
+								${__('Temperature')}
+							</a>
+							<a class='btn btn-default btn-xs btn-show-chart' id='btn-chart-3' data-show-chart-id='bmi' data-pts='' data-title='BMI'>
+								${__('BMI')}
+							</a>
+						</div>
+						<div id="chart" class="col-sm-12 patient_vital_charts"></div>`;
+					frm.fields_dict.vitals_chart.html(show_chart_btns_html);
+					var vital_btns = document.getElementById("vital-btns");
+					var btns = vital_btns.querySelectorAll(".btn-show-chart");
 
-				btns.forEach(function(button) {
-					button.addEventListener("click", function() {
-						show_patient_vital_charts(frm, $(button).attr("data-show-chart-id"), $(button).attr("data-pts"), $(button).attr("data-title"));
+					btns.forEach(function(button) {
+						button.addEventListener("click", function() {
+							show_patient_vital_charts(frm, $(button).attr("data-show-chart-id"), $(button).attr("data-pts"), $(button).attr("data-title"));
+						});
 					});
-				});
-				let data = r.message;
-				let labels = [], datasets = [];
-				let bp_systolic = [], bp_diastolic = [], temperature = [];
-				let pulse = [], respiratory_rate = [], bmi = [], height = [], weight = [];
+					let data = r.message;
+					let labels = [], datasets = [];
+					let bp_systolic = [], bp_diastolic = [], temperature = [];
+					let pulse = [], respiratory_rate = [], bmi = [], height = [], weight = [];
 
-				for (let i=0; i<data.length; i++) {
-					labels.push(data[i].signs_date+' | '+data[i].signs_time);
+					for (let i=0; i<data.length; i++) {
+						labels.push(data[i].signs_date+' | '+data[i].signs_time);
 
-					if (btn_id === 'bp') {
-						bp_systolic.push(data[i].bp_systolic);
-						bp_diastolic.push(data[i].bp_diastolic);
+						if (btn_id === 'bp') {
+							bp_systolic.push(data[i].bp_systolic);
+							bp_diastolic.push(data[i].bp_diastolic);
+						}
+						if (btn_id === 'temperature') {
+							temperature.push(data[i].temperature);
+						}
+						if (btn_id === 'pulse_rate') {
+							pulse.push(data[i].pulse);
+							respiratory_rate.push(data[i].respiratory_rate);
+						}
+						if (btn_id === 'bmi') {
+							bmi.push(data[i].bmi);
+							height.push(data[i].height);
+							weight.push(data[i].weight);
+						}
 					}
 					if (btn_id === 'temperature') {
-						temperature.push(data[i].temperature);
-					}
-					if (btn_id === 'pulse_rate') {
-						pulse.push(data[i].pulse);
-						respiratory_rate.push(data[i].respiratory_rate);
+						datasets.push({name: 'Temperature', values: temperature, chartType: 'line'});
 					}
 					if (btn_id === 'bmi') {
-						bmi.push(data[i].bmi);
-						height.push(data[i].height);
-						weight.push(data[i].weight);
+						datasets.push({name: 'BMI', values: bmi, chartType: 'line'});
+						datasets.push({name: 'Height', values: height, chartType: 'line'});
+						datasets.push({name: 'Weight', values: weight, chartType: 'line'});
 					}
-				}
-				if (btn_id === 'temperature') {
-					datasets.push({name: 'Temperature', values: temperature, chartType: 'line'});
-				}
-				if (btn_id === 'bmi') {
-					datasets.push({name: 'BMI', values: bmi, chartType: 'line'});
-					datasets.push({name: 'Height', values: height, chartType: 'line'});
-					datasets.push({name: 'Weight', values: weight, chartType: 'line'});
-				}
-				if (btn_id === 'bp') {
-					datasets.push({name: 'BP Systolic', values: bp_systolic, chartType: 'line'});
-					datasets.push({name: 'BP Diastolic', values: bp_diastolic, chartType: 'line'});
-				}
-				if (btn_id === 'pulse_rate') {
-					datasets.push({name: 'Heart Rate / Pulse', values: pulse, chartType: 'line'});
-					datasets.push({name: 'Respiratory Rate', values: respiratory_rate, chartType: 'line'});
-				}
-
-				new frappe.Chart('.patient_vital_charts', {
-					data: {
-						labels: labels,
-						datasets: datasets
-					},
-
-					title: title,
-					type: 'axis-mixed',
-					height: 200,
-					colors: ['purple', '#ffa3ef', 'light-blue'],
-
-					tooltipOptions: {
-						formatTooltipX: d => (d + '').toUpperCase(),
-						formatTooltipY: d => d + ' ' + scale_unit,
+					if (btn_id === 'bp') {
+						datasets.push({name: 'BP Systolic', values: bp_systolic, chartType: 'line'});
+						datasets.push({name: 'BP Diastolic', values: bp_diastolic, chartType: 'line'});
 					}
-				});
-			} else {
-				frm.fields_dict.vitals_chart.html("");
+					if (btn_id === 'pulse_rate') {
+						datasets.push({name: 'Heart Rate / Pulse', values: pulse, chartType: 'line'});
+						datasets.push({name: 'Respiratory Rate', values: respiratory_rate, chartType: 'line'});
+					}
+
+					new frappe.Chart('.patient_vital_charts', {
+						data: {
+							labels: labels,
+							datasets: datasets
+						},
+
+						title: title,
+						type: 'axis-mixed',
+						height: 200,
+						colors: ['purple', '#ffa3ef', 'light-blue'],
+
+						tooltipOptions: {
+							formatTooltipX: d => (d + '').toUpperCase(),
+							formatTooltipY: d => d + ' ' + scale_unit,
+						}
+					});
+				} else {
+					frm.fields_dict.vitals_chart.html("");
+				}
 			}
-		}
-	});
+		});
+	}
 }
