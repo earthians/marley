@@ -99,15 +99,16 @@ def insert_item(doc, item):
 
 
 def make_item_price(item, item_price):
-	price_list_name = frappe.db.get_value("Price List", {"selling": 1})
-	frappe.get_doc(
-		{
-			"doctype": "Item Price",
-			"price_list": price_list_name,
-			"item_code": item,
-			"price_list_rate": item_price,
-		}
-	).insert(ignore_permissions=True, ignore_mandatory=True)
+	if not frappe.db.exists({"doctype": "Item Price", "price_list_rate": item_price, "item_code": item}):
+		price_list_name = frappe.db.get_value("Price List", {"selling": 1})
+		frappe.get_doc(
+			{
+				"doctype": "Item Price",
+				"price_list": price_list_name,
+				"item_code": item,
+				"price_list_rate": item_price,
+			}
+		).insert(ignore_permissions=True, ignore_mandatory=True)
 
 
 @frappe.whitelist()
