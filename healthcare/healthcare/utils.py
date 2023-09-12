@@ -333,7 +333,12 @@ def get_service_requests_to_invoice(patient, company):
 	service_requests = frappe.get_list(
 		"Service Request",
 		fields=["*"],
-		filters={"patient": patient.name, "company": company, "invoiced": 0, "docstatus": 1},
+		filters={
+			"patient": patient.name,
+			"company": company,
+			"billing_status": ["!=", ["Invoiced"]],
+			"docstatus": 1,
+		},
 	)
 	for service_request in service_requests:
 		item, is_billable = frappe.get_cached_value(
@@ -567,7 +572,6 @@ def set_invoiced(item, method, ref_invoice=None):
 				"Lab Test Template": "Lab Test"
 				# 'Healthcare Service Unit': 'Inpatient Occupancy'
 			}
-
 
 
 def validate_invoiced_on_submit(item):

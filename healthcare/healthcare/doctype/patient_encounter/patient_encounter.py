@@ -183,7 +183,7 @@ class PatientEncounter(Document):
 				"patient": self.get("patient"),
 				"practitioner": self.practitioner,
 				"source_doc": "Patient Encounter",
-				"order_group":self.name,
+				"order_group": self.name,
 				"sequence": line_item.get("sequence"),
 				"patient_care_type": template_doc.get("patient_care_type"),
 				"intent": line_item.get("intent"),

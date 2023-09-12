@@ -59,15 +59,24 @@ class ServiceRequest(ServiceRequestController):
 		updates qty_invoiced and set  billing status
 		"""
 		qty_invoiced = self.qty_invoiced + qty
-
+		invoiced = 0
 		if qty_invoiced == 0:
 			status = "Pending"
 		if qty_invoiced < self.quantity:
 			status = "Partly Invoiced"
 		else:
+			invoiced = 1
 			status = "Invoiced"
 
 		self.db_set({"qty_invoiced": qty_invoiced, "billing_status": status})
+		if self.template_dt == "Lab Test Template":
+			dt = "Lab Test"
+		elif self.template_dt == "Clinical Procedure Template":
+			dt = "Clinical Procedure"
+		elif self.template_dt == "Therapy Type":
+			dt = "Therapy Session"
+		dt_name = frappe.db.get_value(dt, {"service_request": self.name})
+		frappe.db.set_value(dt, dt_name, "invoiced", invoiced)
 
 
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
