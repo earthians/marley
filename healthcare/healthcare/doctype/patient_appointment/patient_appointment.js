@@ -120,7 +120,7 @@ frappe.ui.form.on('Patient Appointment', {
 		// add button to invoice when show_payment_popup enabled
 		if (!frm.is_new() && !frm.doc.invoiced && frm.doc.status != "Cancelled") {
 			frappe.db.get_single_value("Healthcare Settings", "show_payment_popup").then(async val => {
-				fee_validity = (await frappe.call(
+				let fee_validity = (await frappe.call(
 					"healthcare.healthcare.doctype.fee_validity.fee_validity.get_fee_validity",
 					{ "appointment_name": frm.doc.name, "date": frm.doc.appointment_date , "ignore_status": true })).message;
 
@@ -889,7 +889,7 @@ let make_payment = function (frm, automate_invoicing) {
 		];
 
 		if (frm.doc.appointment_for == "Practitioner") {
-			pract_dict = {
+			let pract_dict = {
 				label: "Practitioner",
 				fieldname: "practitioner",
 				fieldtype: "Data",
@@ -897,7 +897,7 @@ let make_payment = function (frm, automate_invoicing) {
 			};
 			fields.splice(1, 0, pract_dict);
 		} else if (frm.doc.appointment_for == "Service Unit") {
-			su_dict = {
+			let su_dict = {
 				label: "Service Unit",
 				fieldname: "service_unit",
 				fieldtype: "Data",
@@ -905,7 +905,7 @@ let make_payment = function (frm, automate_invoicing) {
 			};
 			fields.splice(1, 0, su_dict);
 		} else if (frm.doc.appointment_for == "Department") {
-			dept_dict = {
+			let dept_dict = {
 				label: "Department",
 				fieldname: "department",
 				fieldtype: "Data",
