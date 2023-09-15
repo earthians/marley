@@ -34,11 +34,26 @@ class HealthcarePractitioner(Document):
 				self.inpatient_visit_charge_item,
 				"Configure a service Item for Inpatient Consulting Charge Item",
 			)
+			if not self.inpatient_visit_charge:
+				frappe.throw(
+					_(
+						"Inpatient Consulting Charge is mandatory if you are setting Inpatient Consulting Charge Item"
+					),
+					frappe.MandatoryError,
+				)
+
 		if self.op_consulting_charge_item:
 			validate_service_item(
 				self.op_consulting_charge_item,
-				"Configure a service Item for Out Patient Consulting Charge Item",
+				"Configure a service Item for Outpatient Consulting Charge Item",
 			)
+			if not self.op_consulting_charge:
+				frappe.throw(
+					_(
+						"Outpatient Consulting Charge is mandatory if you are setting Outpatient Consulting Charge Item"
+					),
+					frappe.MandatoryError,
+				)
 
 		if self.user_id:
 			self.validate_user_id()
@@ -106,7 +121,7 @@ class HealthcarePractitioner(Document):
 
 def validate_service_item(item, msg):
 	if frappe.db.get_value("Item", item, "is_stock_item"):
-		frappe.throw(_(msg))
+		frappe.throw(_(msg), frappe.ValidationError)
 
 
 @frappe.whitelist()

@@ -133,6 +133,7 @@ scheduler_events = {
 	],
 	"daily": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",
+		"healthcare.healthcare.doctype.fee_validity.fee_validity.update_validity_status",
 	],
 }
 
