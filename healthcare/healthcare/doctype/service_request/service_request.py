@@ -230,9 +230,11 @@ def make_observation(service_request):
 		if template.has_component:
 			for obs in template.observation_component:
 				obs_template = frappe.get_doc("Observation Template", obs.observation_template)
-				sample_collection = create_sample_collection(patient, obs_template, service_request)
+				if obs_template.get("sample_collection_required"):
+					sample_collection = create_sample_collection(patient, obs_template, service_request)
 		else:
-			sample_collection = create_sample_collection(patient, template, service_request)
+			if template.get("sample_collection_required"):
+				sample_collection = create_sample_collection(patient, template, service_request)
 		return sample_collection
 	else:
 		doc = frappe.new_doc("Observation")
@@ -325,7 +327,7 @@ def create_sample_collection(patient, template, service_request):
 	sample_collection.service_request = service_request.name
 	sample_collection.append("observation_sample_collection",
 		{
-			"observation_template": service_request.name,
+			"observation_template": service_request.template_dn,
 			"sample": template.sample,
 			"sample_type": template.sample_type,
 			"container_closure_color": frappe.db.get_value("Observation Template", service_request.template_dn, "container_closure_color"),
