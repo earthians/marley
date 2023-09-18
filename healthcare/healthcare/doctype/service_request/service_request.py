@@ -35,6 +35,12 @@ class ServiceRequest(ServiceRequestController):
 		if self.amended_from:
 			frappe.db.set_value("Service Request", self.amended_from, "status", "Replaced")
 
+		if self.template_dt == "Observation Template" and self.template_dn:
+			self.sample_collection_required = frappe.db.get_value(
+				"Observation Template", self.template_dn, "sample_collection_required"
+			)
+
+
 	def set_order_details(self):
 		if not self.template_dt and not self.template_dn:
 			frappe.throw(
@@ -195,6 +201,7 @@ def make_therapy_session(service_request):
 	return doc
 
 
+
 @frappe.whitelist()
 def make_observation(service_request):
 	if isinstance(service_request, string_types):
@@ -209,54 +216,73 @@ def make_observation(service_request):
 			_("Service Request need to be invoiced before proceeding"),
 			title=_("Payment Required"),
 		)
-	if frappe.get_cached_value("Healthcare Settings", None, "create_sample_collection_for_lab_test"):
-		patient = frappe.get_doc("Patient", service_request.patient)
-		template = frappe.get_doc("Observation Template", service_request.template_dn)
-		sample_collection = ""
-		if template.has_component:
-			for obs in template.observation_component:
-				obs_template = frappe.get_doc("Observation Template", obs.observation_template)
-				if obs_template.get("sample_collection_required"):
-					sample_collection = create_sample_collection(patient, obs_template, service_request)
-		else:
-			if template.get("sample_collection_required"):
-				sample_collection = create_sample_collection(patient, template, service_request)
-		return sample_collection
+
+	patient = frappe.get_doc("Patient", service_request.patient)
+	template = frappe.get_doc("Observation Template", service_request.template_dn)
+	sample_collection = ""
+	if template.has_component:
+		sample_collection = create_sample_collection(patient, service_request)
+		observation = create_observation(service_request)
+		save_sample_collection = False
+		for obs in template.observation_component:
+			obs_template = frappe.get_doc("Observation Template", obs.observation_template)
+			if obs_template.get("sample_collection_required"):
+				save_sample_collection = True
+				sample_collection.append("observation_sample_collection",
+					{
+						"observation_template": service_request.template_dn,
+						"sample": obs_template.sample,
+						"sample_type": obs_template.sample_type,
+						"container_closure_color": frappe.db.get_value("Observation Template", service_request.template_dn, "container_closure_color"),
+						"uom": obs_template.uom,
+						"sample_qty": obs_template.sample_qty
+					}
+				)
+			else:
+				add_observation(service_request.patient, obs, "", "", "Patient Encounter", service_request.order_group, observation.name)
+
+		if save_sample_collection:
+			sample_collection.save(ignore_permissions=True)
+
 	else:
-		doc = frappe.new_doc("Observation")
-		doc.posting_datetime = now_datetime()
-		doc.patient = service_request.patient
-		doc.observation_template = service_request.template_dn
-		doc.reference_doctype = "Patient Encounter"
-		doc.reference_docname  = service_request.order_group
-		doc.service_request = service_request.name
-		doc.insert()
-		has_component = frappe.db.get_value("Observation Template", service_request.template_dn, "has_component")
-		if has_component:
-			template_observations = frappe.get_all("Observation Component", {"parent": service_request.template_dn}, pluck="observation_template")
-			for obs in template_observations:
-				add_observation(service_request.patient, obs, "", "", "Patient Encounter", service_request.order_group, doc.name)
+		if template.get("sample_collection_required"):
+			sample_collection = create_sample_collection(patient, service_request, template)
+		else:
+			observation = create_observation(service_request)
 
-		return doc
+	return sample_collection if sample_collection and not template.has_component else observation
 
 
 
-def create_sample_collection(patient, template, service_request):
+
+def create_sample_collection(patient, service_request, template=None):
 	sample_collection = frappe.new_doc("Sample Collection")
 	sample_collection.patient = patient.name
 	sample_collection.patient_age = patient.get_age()
 	sample_collection.patient_sex = patient.sex
 	sample_collection.company = service_request.company
 	sample_collection.service_request = service_request.name
-	sample_collection.append("observation_sample_collection",
-		{
-			"observation_template": service_request.template_dn,
-			"sample": template.sample,
-			"sample_type": template.sample_type,
-			"container_closure_color": frappe.db.get_value("Observation Template", service_request.template_dn, "container_closure_color"),
-			"uom": template.uom,
-			"sample_qty": template.sample_qty
-		}
-	)
-	sample_collection.save(ignore_permissions=True)
+	if template:
+		sample_collection.append("observation_sample_collection",
+			{
+				"observation_template": service_request.template_dn,
+				"sample": template.sample,
+				"sample_type": template.sample_type,
+				"container_closure_color": frappe.db.get_value("Observation Template", service_request.template_dn, "container_closure_color"),
+				"uom": template.uom,
+				"sample_qty": template.sample_qty
+			}
+		)
+		sample_collection.save(ignore_permissions=True)
 	return sample_collection
+
+def create_observation(service_request):
+	doc = frappe.new_doc("Observation")
+	doc.posting_datetime = now_datetime()
+	doc.patient = service_request.patient
+	doc.observation_template = service_request.template_dn
+	doc.reference_doctype = "Patient Encounter"
+	doc.reference_docname  = service_request.order_group
+	doc.service_request = service_request.name
+	doc.insert()
+	return doc

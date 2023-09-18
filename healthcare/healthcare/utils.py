@@ -1046,17 +1046,18 @@ def company_on_trash(doc, method):
 
 def create_sample_collection_and_observation(doc):
 	diag_report_required = False
-	query = f"""
-		select
-			ot.name
-		from
-			`tabSales Invoice Item` as sii left join
-			`tabService Request` as sr on sr.name = sii.reference_dn left join
-			`tabObservation Template` as ot on ot.name = sr.template_dn
-		where
-			sii.parent = '{doc.name}' and sr.template_dt = 'Observation Template'
-	"""
-	data = frappe.db.sql(query, as_dict=True)
+	data = []
+	# query = f"""
+	# 	select
+	# 		ot.name
+	# 	from
+	# 		`tabSales Invoice Item` as sii left join
+	# 		`tabService Request` as sr on sr.name = sii.reference_dn left join
+	# 		`tabObservation Template` as ot on ot.name = sr.template_dn
+	# 	where
+	# 		sii.parent = '{doc.name}' and sr.template_dt = 'Observation Template'
+	# """
+	# data = frappe.db.sql(query, as_dict=True)
 	# to include item direclty entered
 	for item in doc.items:
 		if not item.get("reference_dt") and not item.get("reference_dn"):
