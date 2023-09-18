@@ -113,15 +113,19 @@ frappe.ui.form.on('Service Request', {
 
 		} else if (frm.doc.template_dt === "Observation Template") {
 			frm.add_custom_button(__('Observation'), function() {
-				frappe.db.get_value("Sample Collection", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
+				let doctype = "Observation"
+				if (frm.doc.sample_collection_required) {
+					doctype = "Sample Collection"
+				}
+				frappe.db.get_value(doctype, {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
 				.then(r => {
 					if (Object.keys(r.message).length == 0) {
 						frm.trigger('make_observation');
 					} else {
 						if (r.message && r.message.name) {
-							frappe.set_route("Form", "Sample Collection", r.message.name);
+							frappe.set_route("Form", doctype, r.message.name);
 							frappe.show_alert({
-								message: __(`Sample Collection is already created`),
+								message: __(`${doctype} is already created`),
 								indicator: "info",
 							});
 						}
