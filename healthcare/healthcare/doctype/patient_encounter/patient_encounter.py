@@ -268,7 +268,8 @@ class PatientEncounter(Document):
 					"source_dt": "Patient Encounter",
 					"medication": template_doc.name,
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
-					"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else ""
+					"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
+					"healthcare_activity": line_item.get("healthcare_activity") if line_item.get("healthcare_activity") else "",
 				}
 			)
 		else:

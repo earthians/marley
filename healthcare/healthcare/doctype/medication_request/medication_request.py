@@ -3,8 +3,12 @@
 
 from __future__ import unicode_literals
 
+import json
+
 import frappe
 from frappe import _
+from six import string_types
+from frappe.utils import now_datetime
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
@@ -89,3 +93,25 @@ class MedicationRequest(ServiceRequestController):
 @frappe.whitelist()
 def set_medication_request_status(medication_request, status):
 	frappe.db.set_value("Medication Request", medication_request, "status", status)
+
+@frappe.whitelist()
+def make_nursing_task(medication_request, healthcare_activity=None):
+	if isinstance(medication_request, string_types):
+		medication_request = json.loads(medication_request)
+		medication_request = frappe._dict(medication_request)
+
+	doc = frappe.new_doc("Nursing Task")
+	doc.activity = healthcare_activity if healthcare_activity else medication_request.healthcare_activity
+	doc.service_doctype = "Medication Request"
+	doc.service_name = medication_request.name
+	doc.medical_department = medication_request.medical_department
+	doc.company = medication_request.company
+	doc.patient = medication_request.patient
+	doc.patient_name = medication_request.patient_name
+	doc.gender = medication_request.patient_gender
+	doc.patient_age = medication_request.patient_age_data
+	doc.practitioner = medication_request.practitioner
+	doc.requested_start_time = now_datetime()
+	doc.description = medication_request.order_description
+
+	return doc

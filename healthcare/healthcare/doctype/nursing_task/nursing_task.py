@@ -19,7 +19,6 @@ class NursingTask(Document):
 
 		self.age = frappe.get_doc("Patient", self.patient).get_age()
 
-		frappe.db.set_value("Service Request", self.service_request, "task_done_at", now_datetime())
 
 	def validate(self):
 		if self.status == "Requested":
@@ -28,6 +27,7 @@ class NursingTask(Document):
 
 	def on_submit(self):
 		self.db_set("status", "Requested")
+		frappe.db.set_value(self.service_doctype, self.service_name, "task_done_at", now_datetime())
 
 	def on_cancel(self):
 		if self.status == "Completed":
@@ -53,7 +53,7 @@ class NursingTask(Document):
 					"task_duration": time_diff_in_seconds(self.task_end_time, self.task_start_time),
 				}
 			)
-			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
+			frappe.db.set_value(self.service_doctype, self.service_name, "status", "Completed")
 
 		self.notify_update()
 

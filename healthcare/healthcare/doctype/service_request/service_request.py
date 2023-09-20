@@ -202,7 +202,8 @@ def make_nursing_task(service_request):
 	)
 	doc = frappe.new_doc("Nursing Task")
 	doc.activity = service_request.template_dn
-	doc.service_request = service_request.name
+	doc.service_doctype = "Service Request"
+	doc.service_name = service_request.name
 	doc.medical_department = service_request.medical_department
 	doc.company = service_request.company
 	doc.patient = service_request.patient

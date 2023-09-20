@@ -38,6 +38,8 @@
   "practitioner_email",
   "medical_department",
   "referred_to_practitioner",
+  "healthcare_activity",
+  "task_done_at",
   "column_break_10",
   "reason_reference_doctype",
   "reason_reference",
@@ -487,12 +489,30 @@
    "fieldtype": "Link",
    "label": "Source Doc",
    "options": "DocType"
+  },
+  {
+   "fieldname": "healthcare_activity",
+   "fieldtype": "Link",
+   "label": "Healthcare Activity",
+   "options": "Healthcare Activity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "task_done_at",
+   "fieldtype": "Datetime",
+   "label": "Task Done At",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2023-06-07 16:19:37.403261",
+ "links": [
+  {
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "service_name"
+  }
+ ],
+ "modified": "2023-09-20 15:15:51.288891",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",

@@ -21,6 +21,7 @@
   "period",
   "number_of_repeats_allowed",
   "medication_request",
+  "healthcare_activity",
   "section_break_13",
   "comment",
   "update_schedule"
@@ -160,11 +161,17 @@
    "fieldtype": "Data",
    "label": "Medication Request",
    "read_only": 1
+  },
+  {
+   "fieldname": "healthcare_activity",
+   "fieldtype": "Link",
+   "label": "Healthcare Activity",
+   "options": "Healthcare Activity"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-08-02 12:41:01.433230",
+ "modified": "2023-09-20 12:23:50.558011",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Drug Prescription",

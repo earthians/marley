@@ -46,7 +46,8 @@
   "task_doctype",
   "task_document_name",
   "notes",
-  "service_request"
+  "service_doctype",
+  "service_name"
  ],
  "fields": [
   {
@@ -322,17 +323,24 @@
    "label": "Source"
   },
   {
-   "fieldname": "service_request",
+   "fieldname": "service_doctype",
    "fieldtype": "Link",
-   "label": "Service Request",
-   "options": "Service Request",
+   "label": "Service Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Service Name",
+   "options": "service_doctype",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-05-10 15:08:03.937048",
+ "modified": "2023-09-20 13:47:26.346427",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Task",
