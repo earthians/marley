@@ -3,8 +3,7 @@
 
 frappe.ui.form.on('Patient Encounter', {
 	onload: function(frm) {
-		if (!frm.doc.__islocal && frm.doc.docstatus === 1 &&
-			frm.doc.inpatient_status == 'Admission Scheduled') {
+		if (!frm.doc.__islocal && frm.doc.docstatus === 1) {
 				frappe.db.get_value('Inpatient Record', frm.doc.inpatient_record,
 					['admission_encounter', 'status']).then(r => {
 						if (r.message) {
@@ -334,7 +333,7 @@ var schedule_discharge = function(frm) {
 	var dialog = new frappe.ui.Dialog ({
 		title: 'Inpatient Discharge',
 		fields: [
-			{fieldtype: 'Datetime', label: 'Discharge Ordered Datetime', fieldname: 'discharge_ordered_datetime', default: 'Today', read_only: 1},
+			{fieldtype: 'Datetime', label: 'Discharge Ordered Datetime', fieldname: 'discharge_ordered_datetime', default: frappe.datetime.now_datetime()},
 			{fieldtype: 'Date', label: 'Followup Date', fieldname: 'followup_date'},
 			{fieldtype: 'Link', label: 'Nursing Checklist Template', options: 'Nursing Checklist Template', fieldname: 'discharge_nursing_checklist_template'},
 			{fieldtype: 'Column Break'},
@@ -344,7 +343,7 @@ var schedule_discharge = function(frm) {
 		],
 		primary_action_label: __('Order Discharge'),
 		primary_action : function() {
-			var args = {
+			var discharge_details = {
 				patient: frm.doc.patient,
 				discharge_encounter: frm.doc.name,
 				discharge_practitioner: frm.doc.practitioner,
@@ -356,7 +355,7 @@ var schedule_discharge = function(frm) {
 			}
 			frappe.call ({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge',
-				args: {args},
+				args: {discharge_details},
 				callback: function(data) {
 					if(!data.exc){
 						frm.reload_doc();
