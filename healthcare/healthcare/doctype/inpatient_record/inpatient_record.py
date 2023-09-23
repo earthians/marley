@@ -146,8 +146,8 @@ def schedule_inpatient(args):
 
 
 @frappe.whitelist()
-def schedule_discharge(args):
-	discharge_order = json.loads(args)
+def schedule_discharge(discharge_details):
+	discharge_order = json.loads(discharge_details)
 	inpatient_record_id = frappe.db.get_value(
 		"Patient", discharge_order["patient"], "inpatient_record"
 	)

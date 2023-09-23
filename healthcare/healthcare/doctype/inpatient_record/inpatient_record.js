@@ -265,7 +265,7 @@ var schedule_discharge = function(frm) {
 		],
 		primary_action_label: __('Order Discharge'),
 		primary_action : function() {
-			var args = {
+			var discharge_details = {
 				patient: frm.doc.patient,
 				discharge_practitioner: dialog.get_value('discharge_practitioner'),
 				discharge_ordered_datetime: dialog.get_value('discharge_ordered_datetime'),
@@ -275,7 +275,7 @@ var schedule_discharge = function(frm) {
 			}
 			frappe.call ({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge',
-				args: {args},
+				args: {discharge_details},
 				callback: function(data) {
 					if(!data.exc){
 						frm.reload_doc();
