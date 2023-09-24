@@ -6,6 +6,8 @@
 import json
 import math
 
+from collections import OrderedDict
+
 import frappe
 from erpnext.setup.utils import insert_record
 from frappe import _
@@ -1098,31 +1100,29 @@ def company_on_trash(doc, method):
 
 
 def create_sample_collection_and_observation(doc):
+	meta = frappe.get_meta("Sales Invoice Item", cached=True)
 	diag_report_required = False
 	data = []
-	# query = f"""
-	# 	select
-	# 		ot.name
-	# 	from
-	# 		`tabSales Invoice Item` as sii left join
-	# 		`tabService Request` as sr on sr.name = sii.reference_dn left join
-	# 		`tabObservation Template` as ot on ot.name = sr.template_dn
-	# 	where
-	# 		sii.parent = '{doc.name}' and sr.template_dt = 'Observation Template'
-	# """
-	# data = frappe.db.sql(query, as_dict=True)
-	# to include item direclty entered
 	for item in doc.items:
+		# to set patient in item table if not set
+		if meta.has_field("patient") and not item.patient:
+			item.patient = doc.patient
+
 		if not item.get("reference_dt") and not item.get("reference_dn"):
 			template_id = frappe.db.exists(
 				"Observation Template", {"item": item.item_code}
 			)
 			if template_id:
-				data.append({"name": template_id})
+				temp_dict = {}
+				temp_dict["name"] = template_id
+				if meta.has_field("patient") and item.get("patient"):
+					temp_dict["patient"] = item.get("patient")
+					temp_dict["child"] = item.get("name")
+				data.append(temp_dict)
+
 	out_data = []
 	for d in data:
-		out_data.append(
-			frappe.get_value(
+		observation_template = frappe.get_value(
 				"Observation Template",
 				d.get("name"),
 				[
@@ -1137,79 +1137,53 @@ def create_sample_collection_and_observation(doc):
 				],
 				as_dict=True,
 			)
-		)
+		if observation_template:
+			observation_template["patient"] = d.get("patient")
+			observation_template["child"] = d.get("child")
+			out_data.append(observation_template)
 
-	sample_collection = create_sample_collection(doc)
+	if not meta.has_field("patient"):
+		sample_collection = create_sample_collection(doc, doc.patient)
+	else:
+		grouped = {}
+		for grp in out_data:
+			grouped.setdefault(grp.patient, []).append(grp)
+		if grouped:
+			out_data = grouped
+
 	for grp in out_data:
-		if grp.get("has_component"):
-			diag_report_required = True
-			# parent observation
-			parent_observation = add_observation(
-					doc.patient,
-					grp.get("name"),
-					practitioner=doc.ref_practitioner,
-					invoice=doc.name,
-				)
+		patient  = doc.patient
+		if meta.has_field("patient") and grp:
+			patient = grp
 
-			sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(grp.get("name"))
-			# create observation for non sample_collection_reqd grouped templates
+		if meta.has_field("patient"):
+			sample_collection = create_sample_collection(doc, patient)
+			for obs in out_data[grp]:
+				insert_observation_and_sample_collection(doc, patient, obs, sample_collection, obs.get("child"))
+			if (
+				sample_collection
+				and len(sample_collection.get("observation_sample_collection")) > 0
+			):
+				sample_collection.save(ignore_permissions=True)
 
-			if len(non_sample_reqd_component_obs)>0:
-				for comp in non_sample_reqd_component_obs:
-					add_observation(
-						doc.patient,
-						comp,
-						practitioner=doc.ref_practitioner,
-						parent=parent_observation,
-						invoice=doc.name
-					)
-			# create sample_colleciton child row for  sample_collection_reqd grouped templates
-			if len(sample_reqd_component_obs)>0:
-				sample_collection.append(
-					"observation_sample_collection",
-					{
-						"observation_template": grp.get("name"),
-						"container_closure_color": grp.get("color"),
-						"sample": grp.get("sample"),
-						"sample_type": grp.get("sample_type"),
-						"component_observation_parent": parent_observation,
-					},
-				)
-
+			if diag_report_required:
+				insert_diagnostic_report(doc, patient, sample_collection.name)
 		else:
-			diag_report_required = True
-			# create observation for non sample_collection_reqd individual templates
-			if not grp.get("sample_collection_required"):
-				add_observation(
-					doc.patient,
-					grp.get("name"),
-					practitioner=doc.ref_practitioner,
-					invoice=doc.name,
-				)
-			else:
-				# create sample_colleciton child row for  sample_collection_reqd individual templates
-				sample_collection.append(
-					"observation_sample_collection",
-					{
-						"observation_template": grp.get("name"),
-						"container_closure_color": grp.get("color"),
-						"sample": grp.get("sample"),
-						"sample_type": grp.get("sample_type"),
-					},
-				)
+			insert_observation_and_sample_collection(doc, patient, grp, sample_collection)
 
-	if (
-		sample_collection
-		and len(sample_collection.get("observation_sample_collection")) > 0
-	):
-		sample_collection.save(ignore_permissions=True)
+	if not meta.has_field("patient"):
+		if (
+			sample_collection
+			and len(sample_collection.get("observation_sample_collection")) > 0
+		):
+			sample_collection.save(ignore_permissions=True)
 
-	if diag_report_required:
-		insert_diagnostic_report(doc, sample_collection.name)
+		if diag_report_required:
+			insert_diagnostic_report(doc, patient, sample_collection.name)
 
 
-def create_sample_collection(doc):
-	patient = frappe.get_doc("Patient", doc.patient)
+def create_sample_collection(doc, patient):
+	patient = frappe.get_doc("Patient", patient)
 	sample_collection = frappe.new_doc("Sample Collection")
 	sample_collection.patient = patient.name
 	sample_collection.patient_age = patient.get_age()
@@ -1220,15 +1194,81 @@ def create_sample_collection(doc):
 	sample_collection.reference_name = doc.name
 	return sample_collection
 
-def insert_diagnostic_report(doc,  sample_collection=None):
+def insert_diagnostic_report(doc, patient, sample_collection=None):
 	diagnostic_report = frappe.new_doc("Diagnostic Report")
 	diagnostic_report.company = doc.company
-	diagnostic_report.patient = doc.patient
+	diagnostic_report.patient = patient
 	diagnostic_report.ref_doctype = doc.doctype
 	diagnostic_report.docname = doc.name
 	diagnostic_report.practitioner = doc.ref_practitioner
 	diagnostic_report.sample_collection = sample_collection
 	diagnostic_report.save(ignore_permissions=True)
+
+def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child = None):
+	diag_report_required = False
+	if grp.get("has_component"):
+		diag_report_required = True
+		# parent observation
+		parent_observation = add_observation(
+				patient,
+				grp.get("name"),
+				practitioner=doc.ref_practitioner,
+				invoice=doc.name,
+				child = child if child else "",
+			)
+
+		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(grp.get("name"))
+		# create observation for non sample_collection_reqd grouped templates
+
+		if len(non_sample_reqd_component_obs)>0:
+			for comp in non_sample_reqd_component_obs:
+				add_observation(
+					patient,
+					comp,
+					practitioner=doc.ref_practitioner,
+					parent=parent_observation,
+					invoice=doc.name,
+					child = child if child else "",
+				)
+		# create sample_colleciton child row for  sample_collection_reqd grouped templates
+		if len(sample_reqd_component_obs)>0:
+			sample_collection.append(
+				"observation_sample_collection",
+				{
+					"observation_template": grp.get("name"),
+					"container_closure_color": grp.get("color"),
+					"sample": grp.get("sample"),
+					"sample_type": grp.get("sample_type"),
+					"component_observation_parent": parent_observation,
+					"reference_child" : child if child else "",
+				},
+			)
+
+	else:
+		diag_report_required = True
+		# create observation for non sample_collection_reqd individual templates
+		if not grp.get("sample_collection_required"):
+			add_observation(
+				patient,
+				grp.get("name"),
+				practitioner=doc.ref_practitioner,
+				invoice=doc.name,
+				child = child if child else "",
+			)
+		else:
+			# create sample_colleciton child row for  sample_collection_reqd individual templates
+			sample_collection.append(
+				"observation_sample_collection",
+				{
+					"observation_template": grp.get("name"),
+					"container_closure_color": grp.get("color"),
+					"sample": grp.get("sample"),
+					"sample_type": grp.get("sample_type"),
+					"reference_child" : child if child else "",
+				},
+			)
+	return sample_collection, diag_report_required
+
 
 @frappe.whitelist()
 def generate_barcodes(in_val):

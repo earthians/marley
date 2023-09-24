@@ -94,6 +94,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 					comp_obs_ref.get(obs.get("name")) or comp_obs_ref.get(i+1) or comp_obs_ref.get(obs.get("idx")),
 					sample_col_doc.get("reference_name"),
 					practitioner=sample_col_doc.get("referring_practitioner"),
+					child = obs.get("reference_child") if obs.get("reference_child") else "",
 				)
 				if observation:
 					frappe.db.set_value(
@@ -121,6 +122,7 @@ def create_observation(selected, sample_collection, component_observations=[], c
 							comp_obs_ref.get(j+1) or comp_obs_ref.get(obs.get("name")),
 							sample_col_doc.get("reference_name"),
 							practitioner=sample_col_doc.get("referring_practitioner"),
+							child = obs.get("reference_child") if obs.get("reference_child") else "",
 						)
 						if observation:
 							comp["status"] = "Collected"

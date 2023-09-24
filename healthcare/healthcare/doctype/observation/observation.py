@@ -228,6 +228,7 @@ def add_observation(
 	specimen=None,
 	invoice="",
 	practitioner=None,
+	child = None,
 ):
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
@@ -247,6 +248,7 @@ def add_observation(
 		observation_doc.result_text = result
 	if parent:
 		observation_doc.parent_observation = parent
+	observation_doc.sales_invoice_item = child if child else ""
 	observation_doc.insert()
 	return observation_doc.name
 
