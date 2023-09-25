@@ -62,9 +62,15 @@ class PatientAppointment(Document):
 
 		# If appointment is created for today set status as Open else Scheduled
 		if appointment_date == today:
-			self.status = "Open"
+			if self.status not in ["Checked In", "Checked Out"]:
+				self.status = "Open"
+
 		elif appointment_date > today:
 			self.status = "Scheduled"
+
+		elif appointment_date < today:
+			if self.status == "Scheduled":
+				self.status = "No Show"
 
 	def validate_overlaps(self):
 		if self.based_on_checkin:
