@@ -1159,7 +1159,12 @@ def create_sample_collection_and_observation(doc):
 		if meta.has_field("patient"):
 			sample_collection = create_sample_collection(doc, patient)
 			for obs in out_data[grp]:
-				insert_observation_and_sample_collection(doc, patient, obs, sample_collection, obs.get("child"))
+				(
+					sample_collection,
+					diag_report_required,
+				) = insert_observation_and_sample_collection(
+					doc, patient, obs, sample_collection, obs.get("child")
+				)
 			if (
 				sample_collection
 				and len(sample_collection.get("observation_sample_collection")) > 0
@@ -1169,7 +1174,10 @@ def create_sample_collection_and_observation(doc):
 			if diag_report_required:
 				insert_diagnostic_report(doc, patient, sample_collection.name)
 		else:
-			insert_observation_and_sample_collection(doc, patient, grp, sample_collection)
+			sample_collection, diag_report_required = insert_observation_and_sample_collection(
+				doc, patient, grp, sample_collection
+			)
+
 
 	if not meta.has_field("patient"):
 		if (
