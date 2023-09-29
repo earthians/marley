@@ -258,7 +258,7 @@ def add_observation(
 	if parent:
 		observation_doc.parent_observation = parent
 	observation_doc.sales_invoice_item = child if child else ""
-	observation_doc.insert()
+	observation_doc.insert(ignore_permissions=True)
 	return observation_doc.name
 
 
