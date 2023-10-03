@@ -352,17 +352,27 @@ class PatientAppointment(Document):
 				self.google_meet_link = event_doc.google_meet_link
 
 	def set_postition_in_queue(self):
+		from frappe.query_builder.functions import Max
+
 		if self.status == "Checked In" and not self.position_in_queue:
-			app_count = frappe.db.count(
-				"Patient Appointment",
-				{
-					"status": "Checked In",
-					"practitioner": self.practitioner,
-					"service_unit": self.service_unit,
-					"appointment_time": self.appointment_time,
-				},
-			)
-			self.position_in_queue = app_count + 1
+			appointment = frappe.qb.DocType("Patient Appointment")
+			position = (
+				frappe.qb.from_(appointment)
+				.select(
+					Max(appointment.position_in_queue).as_("max_position"),
+				)
+				.where(
+					(appointment.status == "Checked In")
+					& (appointment.practitioner == self.practitioner)
+					& (appointment.service_unit == self.service_unit)
+					& (appointment.appointment_time == self.appointment_time)
+				)
+			).run(as_dict=True)[0]
+			position_in_queue = 1
+			if position and position.get("max_position"):
+				position_in_queue = position.get("max_position") + 1
+
+			self.position_in_queue = position_in_queue
 
 
 @frappe.whitelist()
