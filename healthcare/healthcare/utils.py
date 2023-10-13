@@ -1055,17 +1055,25 @@ def create_sample_collection_and_observation(doc):
 		if meta.has_field("patient") and not item.patient:
 			item.patient = doc.patient
 
-		if not item.get("reference_dt") and not item.get("reference_dn"):
-			template_id = frappe.db.exists(
-				"Observation Template", {"item": item.item_code}
-			)
-			if template_id:
-				temp_dict = {}
-				temp_dict["name"] = template_id
-				if meta.has_field("patient") and item.get("patient"):
-					temp_dict["patient"] = item.get("patient")
-					temp_dict["child"] = item.get("name")
-				data.append(temp_dict)
+		# ignore if already created from service request
+		if item.get("reference_dt") == "Service Request" and item.get("reference_dn"):
+			if frappe.db.exists(
+				"Observation", {"service_request": item.get("reference_dn")}
+			) or frappe.db.exists(
+				"Sample Collection", {"service_request": item.get("reference_dn")}
+			):
+				continue
+
+		template_id = frappe.db.exists(
+			"Observation Template", {"item": item.item_code}
+		)
+		if template_id:
+			temp_dict = {}
+			temp_dict["name"] = template_id
+			if meta.has_field("patient") and item.get("patient"):
+				temp_dict["patient"] = item.get("patient")
+				temp_dict["child"] = item.get("name")
+			data.append(temp_dict)
 
 	out_data = []
 	for d in data:
