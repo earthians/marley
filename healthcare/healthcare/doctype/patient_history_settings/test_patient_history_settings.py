@@ -45,7 +45,7 @@ class TestPatientHistorySettings(FrappeTestCase):
 		self.assertTrue(medical_rec)
 
 		medical_rec = frappe.get_doc("Patient Medical Record", medical_rec)
-		expected_subject = "Date:{0}Rating:3Feedback:Test Patient History Settings".format(
+		expected_subject = "Date:{0}Rating:0.3Feedback:Test Patient History Settings".format(
 			frappe.utils.format_date(getdate())
 		)
 		self.assertEqual(strip_html(medical_rec.subject), expected_subject)
@@ -83,7 +83,7 @@ def create_doc(patient):
 			"doctype": "Test Patient Feedback",
 			"patient": patient,
 			"date": getdate(),
-			"rating": 3,
+			"rating": 0.3,
 			"feedback": "Test Patient History Settings",
 		}
 	).insert()
