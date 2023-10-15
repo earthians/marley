@@ -22,11 +22,28 @@ class InpatientRecord(Document):
 
 		if self.admission_encounter:  # Update encounter
 			frappe.db.set_value(
-				"Patient Encounter", self.admission_encounter, "inpatient_record", self.name
+				"Patient Encounter",
+				self.admission_encounter,
+				{"inpatient_record": self.name, "inpatient_status": self.status},
 			)
-			frappe.db.set_value(
-				"Patient Encounter", self.admission_encounter, "inpatient_status", self.status
-			)
+
+			filters = {"order_group": self.admission_encounter, "docstatus": 1}
+			medication_requests = frappe.get_all("Medication Request", filters, ["name"])
+			service_requests = frappe.get_all("Service Request", filters, ["name"])
+
+			for service_request in service_requests:
+				frappe.db.set_value(
+					"Service Request",
+					service_request.name,
+					{"inpatient_record": self.name, "inpatient_status": self.status},
+				)
+
+			for medication_request in medication_requests:
+				frappe.db.set_value(
+					"Medication Request",
+					medication_request.name,
+					{"inpatient_record": self.name, "inpatient_status": self.status},
+				)
 
 		if self.admission_nursing_checklist_template:
 			NursingTask.create_nursing_tasks_from_template(
@@ -207,6 +224,8 @@ def discharge_patient(inpatient_record):
 
 	validate_inpatient_invoicing(inpatient_record)
 
+	validate_incompleted_service_requests(inpatient_record)
+
 	inpatient_record.discharge_datetime = now_datetime()
 	inpatient_record.status = "Discharged"
 
@@ -287,6 +306,29 @@ def get_pending_doc(doc, doc_name_list, pending_invoices):
 
 
 def get_unbilled_inpatient_docs(doc, inpatient_record):
+	filters = {
+		"patient": inpatient_record.patient,
+		"inpatient_record": inpatient_record.name,
+		"docstatus": 1,
+	}
+	if doc in ["Service Request", "Medication Request"]:
+		filters.update(
+			{
+				"billing_status": "Pending",
+			}
+		)
+	else:
+		filters.update(
+			{
+				"invoiced": 0,
+			}
+		)
+	if doc in ["Lab Test", "Clinical Procedure"]:
+		filters.update(
+			{
+				"service_request": "",
+			}
+		)
 	return frappe.db.get_list(
 		doc,
 		filters={
@@ -380,3 +422,21 @@ def set_ip_order_cancelled(inpatient_record, reason, encounter=None):
 			frappe.db.set_value(
 				"Patient Encounter", encounter_name, {"inpatient_status": None, "inpatient_record": None}
 			)
+
+
+def validate_incompleted_service_requests(inpatient_record):
+	filters = {
+		"patient": inpatient_record.patient,
+		"inpatient_record": inpatient_record.name,
+		"docstatus": 1,
+		"status": ["not in", ["Completed"]],
+	}
+
+	service_requests = frappe.db.get_list("Service Request", filters=filters, pluck="name")
+	if service_requests and len(service_requests) > 0:
+		service_requests = [
+			get_link_to_form("Service Request", service_request) for service_request in service_requests
+		]
+		message = _("There are Orders yet to be carried out<br> {0}")
+
+		frappe.throw(message.format(", ".join(service_requests)))

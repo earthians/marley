@@ -16,6 +16,7 @@ class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
 		validate_codification_table(self)
+		self.validate_medications()
 
 	def on_update(self):
 		if self.appointment:
@@ -24,6 +25,19 @@ class PatientEncounter(Document):
 	def on_submit(self):
 		if self.therapies:
 			create_therapy_plan(self)
+
+		self.make_service_request()
+		self.make_medication_request()
+		# to save service_request name in prescription
+		self.save("Update")
+		self.db_set("status", "Completed")
+
+	def before_cancel(self):
+		orders = frappe.get_all("Service Request", {"order_group": self.name})
+		for order in orders:
+			order_doc = frappe.get_doc("Service Request", order.name)
+			if order_doc.docstatus == 1:
+				order_doc.cancel()
 
 	def on_cancel(self):
 		if self.appointment:
@@ -109,6 +123,100 @@ class PatientEncounter(Document):
 				"therapies",
 				{"therapy_type": plan_item.template, "no_of_sessions": plan_item.qty},
 			)
+
+	def validate_medications(self):
+		if not self.drug_prescription:
+			return
+
+		for item in self.drug_prescription:
+			if not item.medication and not item.drug_code:
+				frappe.throw(
+					_("Row #{0} (Drug Prescription): Medication or Item Code is mandatory").format(item.idx)
+				)
+
+	def validate_therapies(self):
+		if not self.therapies:
+			return
+
+		for therapy in self.therapies:
+			if therapy.get_quantity() <= 0:
+				frappe.throw(
+					_("Row #{0} (Therapies): Number of Sessions should be at least 1").format(therapy.idx)
+				)
+
+	def make_service_request(self):
+		if self.lab_test_prescription:
+			for lab_test in self.lab_test_prescription:
+				lab_template = frappe.get_doc("Lab Test Template", lab_test.lab_test_code)
+				order = self.get_order_details(lab_template, lab_test)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+		if self.procedure_prescription:
+			for procedure in self.procedure_prescription:
+				procedure_template = frappe.get_doc("Clinical Procedure Template", procedure.procedure)
+				order = self.get_order_details(procedure_template, procedure)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+		if self.therapies:
+			for therapy in self.therapies:
+				therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
+				order = self.get_order_details(therapy_type, therapy)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+	def make_medication_request(self):
+		if self.drug_prescription:
+			# make_medication_request
+			for drug in self.drug_prescription:
+				if drug.medication:
+					medication = frappe.get_doc("Medication", drug.medication)
+					order = self.get_order_details(medication, drug, True)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+	def get_order_details(self, template_doc, line_item, medication_request=False):
+		order = frappe.get_doc(
+			{
+				"doctype": "Medication Request" if medication_request else "Service Request",
+				"order_date": self.encounter_date,
+				"order_time": self.encounter_time,
+				"company": self.company,
+				"status": "Draft",
+				"patient": self.get("patient"),
+				"practitioner": self.practitioner,
+				"source_doc": "Patient Encounter",
+				"order_group": self.name,
+				"sequence": line_item.get("sequence"),
+				"patient_care_type": template_doc.get("patient_care_type"),
+				"intent": line_item.get("intent"),
+				"priority": line_item.get("priority"),
+				"quantity": line_item.get_quantity() if line_item.doctype == "Drug Prescription" else 1,
+				"dosage": line_item.get("dosage"),
+				"dosage_form": line_item.get("dosage_form"),
+				"period": line_item.get("period"),
+				"expected_date": line_item.get("expected_date"),
+				"as_needed": line_item.get("as_needed"),
+				"staff_role": template_doc.get("staff_role"),
+				"note": line_item.get("note"),
+				"patient_instruction": line_item.get("patient_instruction"),
+			}
+		)
+
+		if template_doc.doctype == "Lab Test Template":
+			description = template_doc.get("lab_test_description")
+		else:
+			description = template_doc.get("description")
+
+		if medication_request:
+			order.update(
+				{
+					"medication": template_doc.name,
+					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
+				}
+			)
+		else:
+			order.update({"template_dt": template_doc.doctype, "template_dn": template_doc.name})
+
+		order.update({"order_description": description})
+		return order
 
 
 @frappe.whitelist()
@@ -205,3 +313,74 @@ def validate_codification_table(doc):
 							"system": m_code.get("system"),
 						},
 					)
+
+
+@frappe.whitelist()
+def create_service_request(encounter):
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	if not frappe.db.exists("Service Request", {"order_group": encounter}):
+		encounter_doc.make_service_request()
+
+		for lab_presc in encounter_doc.lab_test_prescription:
+			if lab_presc.invoiced:
+				frappe.db.set_value(
+					"Service Request",
+					{"order_group": encounter, "template_dn": lab_presc.lab_test_code},
+					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+				)
+
+		for proc_presc in encounter_doc.procedure_prescription:
+			if proc_presc.invoiced:
+				frappe.db.set_value(
+					"Service Request",
+					{"order_group": encounter, "template_dn": proc_presc.procedure},
+					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+				)
+
+
+@frappe.whitelist()
+def create_medication_request(encounter):
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	if not frappe.db.exists("Medication Request", {"order_group": encounter}):
+		encounter_doc.make_medication_request()
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
+	medication_name = filters.get("name")
+	medication_child = frappe.qb.DocType("Medication Linked Item")
+	medication = frappe.qb.DocType("Medication")
+	item = frappe.qb.DocType("Item")
+	data = (
+		frappe.qb.select(medication_child.brand, medication_child.manufacturer, medication_child.item)
+		.from_(medication_child)
+		.left_join(medication)
+		.on(medication.name == medication_child.parent)
+		.left_join(item)
+		.on(item.name == medication_child.item)
+		.where((medication.name == medication_name) & (item.disabled == 0))
+	).run(as_dict=True)
+	data_list = []
+	for d in data:
+		display_list = []
+		if d.get("item"):
+			display_list.append(d.get("item"))
+		if d.get("brand"):
+			display_list.append(d.get("brand"))
+		if d.get("manufacturer"):
+			display_list.append(d.get("manufacturer"))
+		default_warehouse = frappe.get_cached_value("Stock Settings", None, "default_warehouse")
+		if default_warehouse:
+			actual_qty = frappe.db.get_value(
+				"Bin", {"warehouse": default_warehouse, "item_code": d.get("name")}, "actual_qty"
+			)
+			display_list.append("Qty:" + str(actual_qty) if actual_qty else "0")
+		data_list.append(display_list)
+	res = tuple(tuple(sub) for sub in data_list)
+	return res
+
+
+@frappe.whitelist()
+def get_medications(medication):
+	return frappe.get_all("Medication Linked Item", {"parent": medication}, ["item"])

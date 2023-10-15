@@ -9,7 +9,7 @@ import math
 import frappe
 from erpnext.setup.utils import insert_record
 from frappe import _
-from frappe.utils import cstr, get_link_to_form, rounded, time_diff_in_hours
+from frappe.utils import cstr, flt, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -33,7 +33,7 @@ def get_healthcare_services_to_invoice(patient, company):
 		items_to_invoice += get_inpatient_services_to_invoice(patient, company)
 		items_to_invoice += get_therapy_plans_to_invoice(patient, company)
 		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
-
+		items_to_invoice += get_service_requests_to_invoice(patient, company)
 		return items_to_invoice
 
 
@@ -53,7 +53,7 @@ def get_appointments_to_invoice(patient, company):
 			"patient": patient.name,
 			"company": company,
 			"invoiced": 0,
-			"status": ["not in", "Cancelled"],
+			"status": ["!=", "Cancelled"],
 		},
 		order_by="appointment_date",
 	)
@@ -142,7 +142,13 @@ def get_lab_tests_to_invoice(patient, company):
 	lab_tests = frappe.get_list(
 		"Lab Test",
 		fields=["name", "template"],
-		filters={"patient": patient.name, "company": company, "invoiced": False, "docstatus": 1},
+		filters={
+			"patient": patient.name,
+			"company": company,
+			"invoiced": False,
+			"docstatus": 1,
+			"service_request": "",
+		},
 	)
 	for lab_test in lab_tests:
 		item, is_billable = frappe.get_cached_value(
@@ -153,31 +159,6 @@ def get_lab_tests_to_invoice(patient, company):
 				{"reference_type": "Lab Test", "reference_name": lab_test.name, "service": item}
 			)
 
-	lab_prescriptions = frappe.db.sql(
-		"""
-			SELECT
-				lp.name, lp.lab_test_code
-			FROM
-				`tabPatient Encounter` et, `tabLab Prescription` lp
-			WHERE
-				et.patient=%s
-				and lp.parent=et.name
-				and lp.lab_test_created=0
-				and lp.invoiced=0
-		""",
-		(patient.name),
-		as_dict=1,
-	)
-
-	for prescription in lab_prescriptions:
-		item, is_billable = frappe.get_cached_value(
-			"Lab Test Template", prescription.lab_test_code, ["item", "is_billable"]
-		)
-		if prescription.lab_test_code and is_billable:
-			lab_tests_to_invoice.append(
-				{"reference_type": "Lab Prescription", "reference_name": prescription.name, "service": item}
-			)
-
 	return lab_tests_to_invoice
 
 
@@ -186,7 +167,13 @@ def get_clinical_procedures_to_invoice(patient, company):
 	procedures = frappe.get_list(
 		"Clinical Procedure",
 		fields="*",
-		filters={"patient": patient.name, "company": company, "invoiced": False},
+		filters={
+			"patient": patient.name,
+			"company": company,
+			"invoiced": False,
+			"docstatus": 1,
+			"service_request": "",
+		},
 	)
 	for procedure in procedures:
 		if not procedure.appointment:
@@ -209,12 +196,11 @@ def get_clinical_procedures_to_invoice(patient, company):
 				"Healthcare Settings", "clinical_procedure_consumable_item"
 			)
 			if not service_item:
-				frappe.throw(
-					_("Please configure Clinical Procedure Consumable Item in {0}").format(
-						frappe.utils.get_link_to_form("Healthcare Settings", "Healthcare Settings")
-					),
-					title=_("Missing Configuration"),
+				msg = _("Please Configure Clinical Procedure Consumable Item in {0}").format(
+					get_link_to_form("Healthcare Settings", "Healthcare Settings")
 				)
+
+				frappe.throw(msg, title=_("Missing Configuration"))
 
 			clinical_procedures_to_invoice.append(
 				{
@@ -223,36 +209,6 @@ def get_clinical_procedures_to_invoice(patient, company):
 					"service": service_item,
 					"rate": procedure.consumable_total_amount,
 					"description": procedure.consumption_details,
-				}
-			)
-
-	procedure_prescriptions = frappe.db.sql(
-		"""
-			SELECT
-				pp.name, pp.procedure
-			FROM
-				`tabPatient Encounter` et, `tabProcedure Prescription` pp
-			WHERE
-				et.patient=%s
-				and pp.parent=et.name
-				and pp.procedure_created=0
-				and pp.invoiced=0
-				and pp.appointment_booked=0
-		""",
-		(patient.name),
-		as_dict=1,
-	)
-
-	for prescription in procedure_prescriptions:
-		item, is_billable = frappe.get_cached_value(
-			"Clinical Procedure Template", prescription.procedure, ["item", "is_billable"]
-		)
-		if is_billable:
-			clinical_procedures_to_invoice.append(
-				{
-					"reference_type": "Procedure Prescription",
-					"reference_name": prescription.name,
-					"service": item,
 				}
 			)
 
@@ -284,7 +240,9 @@ def get_inpatient_services_to_invoice(patient, company):
 		)
 		service_unit_type = frappe.get_cached_doc("Healthcare Service Unit Type", service_unit_type)
 		if service_unit_type and service_unit_type.is_billable:
-			hours_occupied = time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in)
+			hours_occupied = flt(
+				time_diff_in_hours(inpatient_occupancy.check_out, inpatient_occupancy.check_in), 2
+			)
 			qty = 0.5
 			if hours_occupied > 0:
 				actual_qty = hours_occupied / service_unit_type.no_of_hours
@@ -318,6 +276,7 @@ def get_therapy_plans_to_invoice(patient, company):
 			"invoiced": 0,
 			"company": company,
 			"therapy_plan_template": ("!=", ""),
+			"docstatus": 1,
 		},
 	)
 	for plan in therapy_plans:
@@ -349,6 +308,8 @@ def get_therapy_sessions_to_invoice(patient, company):
 			"invoiced": 0,
 			"company": company,
 			"therapy_plan": ("not in", therapy_plans_created_from_template),
+			"docstatus": 1,
+			"service_request": "",
 		},
 	)
 	for therapy in therapy_sessions:
@@ -365,6 +326,45 @@ def get_therapy_sessions_to_invoice(patient, company):
 				)
 
 	return therapy_sessions_to_invoice
+
+
+def get_service_requests_to_invoice(patient, company):
+	orders_to_invoice = []
+	service_requests = frappe.get_list(
+		"Service Request",
+		fields=["*"],
+		filters={
+			"patient": patient.name,
+			"company": company,
+			"billing_status": ["!=", ["Invoiced"]],
+			"docstatus": 1,
+		},
+	)
+	for service_request in service_requests:
+		item, is_billable = frappe.get_cached_value(
+			service_request.template_dt, service_request.template_dn, ["item", "is_billable"]
+		)
+		price_list, price_list_currency = frappe.db.get_values(
+			"Price List", {"selling": 1}, ["name", "currency"]
+		)[0]
+		args = {
+			"doctype": "Sales Invoice",
+			"item_code": item,
+			"company": service_request.get("company"),
+			"customer": frappe.db.get_value("Patient", service_request.get("patient"), "customer"),
+			"plc_conversion_rate": 1.0,
+			"conversion_rate": 1.0,
+		}
+		if is_billable:
+			orders_to_invoice.append(
+				{
+					"reference_type": "Service Request",
+					"reference_name": service_request.name,
+					"service": item,
+					"qty": service_request.quantity if service_request.quantity else 1,
+				}
+			)
+	return orders_to_invoice
 
 
 @frappe.whitelist()
@@ -502,8 +502,9 @@ def manage_invoice_submit_cancel(doc, method):
 	if doc.items:
 		for item in doc.items:
 			if item.get("reference_dt") and item.get("reference_dn"):
-				if frappe.get_meta(item.reference_dt).has_field("invoiced"):
-					set_invoiced(item, method, doc.name)
+				# TODO check
+				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
+				set_invoiced(item, method, doc.name)
 
 	if method == "on_submit":
 		if frappe.db.get_single_value("Healthcare Settings", "create_lab_test_on_si_submit"):
@@ -536,7 +537,8 @@ def set_invoiced(item, method, ref_invoice=None):
 		else:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 	else:
-		frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
+		if item.reference_dt not in ["Service Request", "Medication Request"]:
+			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 
 	if item.reference_dt == "Patient Appointment":
 		if frappe.db.get_value("Patient Appointment", item.reference_dn, "procedure_template"):
@@ -554,6 +556,22 @@ def set_invoiced(item, method, ref_invoice=None):
 		manage_prescriptions(
 			invoiced, item.reference_dt, item.reference_dn, "Clinical Procedure", "procedure_created"
 		)
+	elif item.reference_dt in ["Service Request", "Medication Request"]:
+		# if order is invoiced, set both order and service transaction as invoiced
+		hso = frappe.get_doc(item.reference_dt, item.reference_dn)
+		if invoiced:
+			hso.update_invoice_details(item.qty)
+		else:
+			hso.update_invoice_details(item.qty * -1)
+
+		# service transaction linking to HSO
+		if item.reference_dt == "Service Request":
+			template_map = {
+				"Clinical Procedure Template": "Clinical Procedure",
+				"Therapy Type": "Therapy Session",
+				"Lab Test Template": "Lab Test"
+				# 'Healthcare Service Unit': 'Inpatient Occupancy'
+			}
 
 
 def validate_invoiced_on_submit(item):
@@ -563,6 +581,11 @@ def validate_invoiced_on_submit(item):
 		== item.item_code
 	):
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, "consumption_invoiced")
+
+	elif item.reference_dt in ["Service Request", "Medication Request"]:
+		billing_status = frappe.db.get_value(item.reference_dt, item.reference_dn, "billing_status")
+		is_invoiced = True if billing_status == "Invoiced" else False
+
 	else:
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, "invoiced")
 	if is_invoiced:
@@ -596,23 +619,51 @@ def get_drugs_to_invoice(encounter):
 		patient = frappe.get_doc("Patient", encounter.patient)
 		if patient:
 			if patient.customer:
-				items_to_invoice = []
-				for drug_line in encounter.drug_prescription:
-					if drug_line.drug_code:
-						qty = 1
-						if frappe.db.get_value("Item", drug_line.drug_code, "stock_uom") == "Nos":
-							qty = drug_line.get_quantity()
+				orders_to_invoice = []
+				medication_requests = frappe.get_list(
+					"Medication Request",
+					fields=["*"],
+					filters={
+						"patient": patient.name,
+						"order_group": encounter.name,
+						"billing_status": ["in", ["Pending", "Partly Invoiced"]],
+						"docstatus": 1,
+					},
+				)
+				for medication_request in medication_requests:
+					is_billable = frappe.get_cached_value(
+						"Medication", medication_request.medication, ["is_billable"]
+					)
 
-						description = ""
-						if drug_line.dosage and drug_line.period:
-							description = _("{0} for {1}").format(drug_line.dosage, drug_line.period)
+					description = ""
+					if medication_request.dosage and medication_request.period:
+						description = _("{0} for {1}").format(medication_request.dosage, medication_request.period)
 
-						items_to_invoice.append(
-							{"drug_code": drug_line.drug_code, "quantity": qty, "description": description}
+					if medication_request.medicaiton_item and is_billable:
+						billable_order_qty = medication_request.get("quantity", 1) - medication_request.get(
+							"qty_invoiced", 0
 						)
-				return items_to_invoice
-			else:
-				validate_customer_created(patient)
+						if medication_request.number_of_repeats_allowed:
+							if (
+								medication_request.total_dispensable_quantity
+								>= medication_request.quantity + medication_request.qty_invoiced
+							):
+								billable_order_qty = medication_request.get("quantity", 1)
+							else:
+								billable_order_qty = (
+									medication_request.total_dispensable_quantity - medication_request.get("qty_invoiced", 0)
+								)
+
+						orders_to_invoice.append(
+							{
+								"reference_type": "Medication Request",
+								"reference_name": medication_request.name,
+								"drug_code": medication_request.medicaiton_item,
+								"quantity": billable_order_qty,
+								"description": description,
+							}
+						)
+				return orders_to_invoice
 
 
 @frappe.whitelist()

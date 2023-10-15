@@ -16,6 +16,9 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.doctype.service_request.service_request import (
+	update_service_request_status,
+)
 from healthcare.healthcare.utils import validate_nursing_tasks
 
 
@@ -24,6 +27,24 @@ class TherapySession(Document):
 		self.set_exercises_from_therapy_type()
 		self.validate_duplicate()
 		self.set_total_counts()
+
+	def after_insert(self):
+		if self.service_request:
+			update_service_request_status(self.service_request, self.doctype, self.name)
+
+		self.create_nursing_tasks(post_event=False)
+
+	def on_update(self):
+		if self.appointment:
+			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
+
+	def on_cancel(self):
+		if self.appointment:
+			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
+		if self.service_request:
+			frappe.db.set_value("Service Request", self.service_request, "status", "Active")
+
+		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 
 	def validate_duplicate(self):
 		end_time = datetime.datetime.combine(
@@ -66,18 +87,8 @@ class TherapySession(Document):
 		validate_nursing_tasks(self)
 		self.update_sessions_count_in_therapy_plan()
 
-	def on_update(self):
-		if self.appointment:
-			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
-
-	def on_cancel(self):
-		if self.appointment:
-			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
-
-		self.update_sessions_count_in_therapy_plan(on_cancel=True)
-
-	def after_insert(self):
-		self.create_nursing_tasks(post_event=False)
+		if self.service_request:
+			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
 
 	def create_nursing_tasks(self, post_event=True):
 		template = frappe.db.get_value("Therapy Type", self.therapy_type, "nursing_checklist_template")
@@ -120,6 +131,21 @@ class TherapySession(Document):
 						"exercises",
 						(frappe.copy_doc(exercise)).as_dict(),
 					)
+
+	def before_insert(self):
+		if self.service_request:
+			therapy_session = frappe.db.exists(
+				"Therapy Session",
+				{"service_request": self.service_request, "docstatus": ["!=", 2]},
+			)
+			if therapy_session:
+				frappe.throw(
+					_("Therapy Session {0} already created from service request {1}").format(
+						frappe.bold(get_link_to_form("Therapy Session", therapy_session)),
+						frappe.bold(get_link_to_form("Service Request", self.service_request)),
+					),
+					title=_("Already Exist"),
+				)
 
 
 @frappe.whitelist()

@@ -57,6 +57,9 @@
   "result_legend_section",
   "legend_print_position",
   "result_legend",
+  "service_order_defaults_section",
+  "patient_care_type",
+  "staff_role",
   "change_in_item"
  ],
  "fields": [
@@ -141,6 +144,25 @@
    "mandatory_depends_on": "eval:doc.is_billable && !doc.link_existing_item"
   },
   {
+   "collapsible": 1,
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding"
+  },
+  {
+   "fieldname": "medical_code_standard",
+   "fieldtype": "Link",
+   "label": "Medical Code Standard",
+   "options": "Medical Code Standard"
+  },
+  {
+   "depends_on": "medical_code_standard",
+   "fieldname": "medical_code",
+   "fieldtype": "Link",
+   "label": "Medical Code",
+   "options": "Medical Code"
+  },
+  {
    "depends_on": "eval:doc.lab_test_template_type == 'Single'",
    "fieldname": "section_break_normal",
    "fieldtype": "Section Break",
@@ -213,6 +235,7 @@
    "no_copy": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "sb_sample_collection",
    "fieldtype": "Section Break",
    "label": "Sample Collection"
@@ -377,7 +400,31 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_buub",
+   "collapsible": 1,
+   "fieldname": "service_request_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request Defaults"
+  },
+  {
+   "fetch_from": "service_request_category.patient_care_type",
+   "fetch_if_empty": 1,
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "column_break_34",
+   "fieldtype": "Column Break"
+  },
+  {
+  "fieldname": "column_break_buub",
    "fieldtype": "Column Break"
   }
  ],

@@ -39,6 +39,8 @@
   "sb_in_ac",
   "income_account",
   "receivable_account",
+  "order_details_section",
+  "process_service_request_only_if_paid",
   "alerts_tab",
   "out_patient_sms_alerts",
   "send_registration_msg",
@@ -356,6 +358,17 @@
    "fieldtype": "Link",
    "label": "Default Google Calendar",
    "options": "Google Calendar"
+  },
+  {
+   "fieldname": "order_details_section",
+   "fieldtype": "Section Break",
+   "label": "Order Details"
+  },
+  {
+   "default": "0",
+   "fieldname": "process_service_request_only_if_paid",
+   "fieldtype": "Check",
+   "label": "Process Service Request If Billing Status Is Paid"
   }
  ],
  "issingle": 1,

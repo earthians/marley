@@ -31,7 +31,10 @@
   "exercises",
   "change_in_item",
   "codification",
-  "codification_table"
+  "codification_table",
+  "service_request_defaults_section",
+  "patient_care_type",
+  "staff_role"
  ],
  "fields": [
   {
@@ -184,9 +187,29 @@
    "options": "Nursing Checklist Template"
   },
   {
-   "fieldname": "exercises_tab",
-   "fieldtype": "Tab Break",
-   "label": "Exercises"
+   "collapsible": 1,
+   "fieldname": "service_request_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request Defaults"
+  },
+  {
+   "fetch_from": "service_request_category.patient_care_type",
+   "fetch_if_empty": 1,
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+  "fieldname": "exercises_tab",
+  "fieldtype": "Tab Break",
+  "label": "Exercises"
   }
  ],
  "links": [],

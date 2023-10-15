@@ -1,0 +1,525 @@
+{
+ "actions": [],
+ "allow_auto_repeat": 1,
+ "autoname": "naming_series:",
+ "beta": 1,
+ "creation": "2020-09-09 15:30:33.141582",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "naming_series",
+  "medication",
+  "medicaiton_item",
+  "order_date",
+  "expected_date",
+  "order_time",
+  "column_break_4",
+  "company",
+  "status",
+  "color",
+  "patient_detail_section",
+  "patient",
+  "patient_name",
+  "patient_gender",
+  "patient_birth_date",
+  "patient_age_data",
+  "patient_age",
+  "patient_blood_group",
+  "column_break_16",
+  "patient_email",
+  "patient_mobile",
+  "inpatient_record",
+  "inpatient_status",
+  "order_source_section",
+  "practitioner",
+  "practitioner_name",
+  "medical_department",
+  "referred_to_practitioner",
+  "column_break_10",
+  "reason_reference_doctype",
+  "reason_reference",
+  "order_group",
+  "sequence",
+  "request_details_section",
+  "staff_role",
+  "item_code",
+  "column_break_14",
+  "intent",
+  "priority",
+  "order_specs_section",
+  "quantity",
+  "dosage_form",
+  "dosage",
+  "number_of_repeats_allowed",
+  "column_break_91",
+  "order_description",
+  "period",
+  "occurrence_time",
+  "total_dispensable_quantity",
+  "billing_section",
+  "billing_status",
+  "qty_invoiced",
+  "column_break_26",
+  "medical_code_section",
+  "codification_table",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HMR-",
+   "reqd": 1
+  },
+  {
+   "depends_on": "order_group",
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence in Order Group"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "order_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Order Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "order_group",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Order Group (Encounter)",
+   "options": "Patient Encounter"
+  },
+  {
+   "fieldname": "column_break_91",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expected_date",
+   "fieldtype": "Date",
+   "label": "Expected By"
+  },
+  {
+   "description": "The role responsible for performing the medication request",
+   "fetch_from": "order_template.staff_role",
+   "fetch_if_empty": 1,
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role",
+   "search_index": 1
+  },
+  {
+   "default": "Draft",
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nActive\nScheduled\nIn Progress\nOn Hold\nCompleted\nCancelled\nReplaced\nEntered in Error\nUnknown",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "intent",
+   "fieldtype": "Link",
+   "label": "Intent",
+   "options": "Service Request Intent"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "options": "Service Request Priority"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "medical_code_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding"
+  },
+  {
+   "default": "1",
+   "fieldname": "quantity",
+   "fieldtype": "Int",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "reason_reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reason Reference DocType",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason_reference",
+   "fieldtype": "Dynamic Link",
+   "label": "Reason Reference",
+   "options": "reason_reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_14",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "order_description",
+   "fieldtype": "Small Text",
+   "label": "Order Description"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "practitioner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ordered by Practitioner",
+   "options": "Healthcare Practitioner",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "order_source_section",
+   "fieldtype": "Section Break",
+   "label": "Order Source"
+  },
+  {
+   "fetch_from": "practitioner.department",
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_age",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "priority.color",
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "hidden": 1,
+   "label": "Color"
+  },
+  {
+   "fieldname": "dosage_form",
+   "fieldtype": "Link",
+   "label": "Dosage Form",
+   "options": "Dosage Form",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:!doc.as_needed",
+   "fieldname": "dosage",
+   "fieldtype": "Link",
+   "label": "Dosage",
+   "options": "Prescription Dosage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "referred_to_practitioner",
+   "fieldtype": "Link",
+   "label": "Referred to Practitioner",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "depends_on": "order_template",
+   "fetch_from": "order_template.item",
+   "fieldname": "item_code",
+   "fieldtype": "Read Only",
+   "label": "Order Item Code",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_status",
+   "fieldname": "inpatient_status",
+   "fieldtype": "Data",
+   "label": "Inpatient Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "order_time",
+   "fieldtype": "Time",
+   "label": "Order Time",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "patient_gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.blood_group",
+   "fieldname": "patient_blood_group",
+   "fieldtype": "Select",
+   "label": "Blood Group",
+   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.email",
+   "fieldname": "patient_email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.mobile",
+   "fieldname": "patient_mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "options": "Phone",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "patient_birth_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Birth Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_detail_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "fieldname": "order_specs_section",
+   "fieldtype": "Section Break",
+   "label": "Order Specifications"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_26",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.as_needed;",
+   "fieldname": "period",
+   "fieldtype": "Link",
+   "label": "Period",
+   "options": "Prescription Duration"
+  },
+  {
+   "depends_on": "eval:!doc.as_needed && doc.order_doctype!==\"Medication\";",
+   "fieldname": "occurrence_time",
+   "fieldtype": "Time",
+   "label": "Occurrence Time"
+  },
+  {
+   "fieldname": "patient_age_data",
+   "fieldtype": "Data",
+   "label": "Patient Age",
+   "read_only": 1
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "qty_invoiced",
+   "fieldtype": "Float",
+   "label": "Quantity Invoiced",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Pending",
+   "fieldname": "billing_status",
+   "fieldtype": "Select",
+   "label": "Billing Status",
+   "options": "Pending\nPartly Invoiced\nInvoiced",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Medication Request",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "medication",
+   "fieldtype": "Link",
+   "label": "Medication",
+   "options": "Medication",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "number_of_repeats_allowed",
+   "fieldtype": "Float",
+   "label": "Number Of Repeats Allowed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_dispensable_quantity",
+   "fieldtype": "Float",
+   "label": "Total Dispensable Quantity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_details_section",
+   "fieldtype": "Section Break",
+   "label": "Request Details"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "medicaiton_item",
+   "fieldtype": "Link",
+   "label": "Medicaiton Item",
+   "options": "Item"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-05-30 12:26:58.431916",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Medication Request",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "restrict_to_domain": "Healthcare",
+ "search_fields": "title,patient,order_group,inpatient_record,practitioner,patient_email,patient_mobile",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}
