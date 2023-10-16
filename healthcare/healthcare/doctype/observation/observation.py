@@ -88,13 +88,28 @@ class Observation(Document):
 
 @frappe.whitelist()
 def get_observation_details(docname):
-	reference = frappe.get_value("Diagnostic Report", docname, "docname")
-	observation = frappe.get_list(
-		"Observation",
-		fields=["*"],
-		filters={"sales_invoice": reference, "parent_observation": "", "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
-		order_by="creation",
-	)
+	reference = frappe.get_value("Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True)
+	if reference.get("ref_doctype") == "Sales Invoice":
+		observation = frappe.get_list(
+			"Observation",
+			fields=["*"],
+			filters={"sales_invoice": reference.get("docname"), "parent_observation": "", "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
+			order_by="creation",
+		)
+	elif reference.get("ref_doctype") == "Patient Encounter":
+		service_requests = frappe.get_all(
+			"Service Request",
+			filters={"source_doc": reference.get("ref_doctype"), "order_group": reference.get("docname"), "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
+			order_by="creation",
+			pluck="name",
+		)
+		observation = frappe.get_list(
+			"Observation",
+			fields=["*"],
+			filters={"service_request": ["in", service_requests], "parent_observation": "", "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
+			order_by="creation",
+		)
+
 	out_data = []
 	obs_length = 0
 	for obs in observation:

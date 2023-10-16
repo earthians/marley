@@ -127,7 +127,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Practitioner",
-   "options": "Healthcare Practitioner"
+   "options": "Healthcare Practitioner",
+   "read_only": 1
   },
   {
    "fetch_from": "practitioner.practitioner_name",
@@ -168,7 +169,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-11 19:03:19.596850",
+ "modified": "2023-10-16 17:53:14.702170",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",

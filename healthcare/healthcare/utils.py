@@ -1111,7 +1111,7 @@ def create_sample_collection_and_observation(doc):
 		# ignore if already created from service request
 		if item.get("reference_dt") == "Service Request" and item.get("reference_dn"):
 			if frappe.db.exists(
-				"Observation", {"service_request": item.get("reference_dn")}
+				"Observation Sample Collection", {"service_request": item.get("reference_dn")}
 			) or frappe.db.exists(
 				"Sample Collection", {"service_request": item.get("reference_dn")}
 			):
