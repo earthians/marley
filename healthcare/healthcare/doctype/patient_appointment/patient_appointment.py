@@ -393,8 +393,10 @@ def check_payment_reqd(patient):
 
 
 @frappe.whitelist()
-def invoice_appointment(appointment_name):
+def invoice_appointment(appointment_name, mode_of_payment, paid_amount):
 	appointment_doc = frappe.get_doc("Patient Appointment", appointment_name)
+	appointment_doc.mode_of_payment = mode_of_payment
+	appointment_doc.paid_amount = paid_amount
 	show_payment_popup = frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
 	free_follow_ups = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
 
@@ -445,6 +447,7 @@ def create_sales_invoice(appointment_doc):
 			"invoiced": 1,
 			"ref_sales_invoice": sales_invoice.name,
 			"paid_amount": appointment_doc.paid_amount,
+			"mode_of_payment": appointment_doc.mode_of_payment
 		},
 	)
 	appointment_doc.reload()

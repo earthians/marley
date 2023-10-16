@@ -130,7 +130,7 @@ frappe.ui.form.on('Patient Appointment', {
 					});
 				}
 			});
-        }
+		}
 	},
 
 	appointment_for: function(frm) {
@@ -884,7 +884,7 @@ let make_payment = function (frm, automate_invoicing) {
 				label: "Consultation Charge",
 				fieldname: "consultation_charge",
 				fieldtype: "Currency",
-				read_only: true,
+				read_only: false,
 			}
 		];
 
@@ -925,11 +925,13 @@ let make_payment = function (frm, automate_invoicing) {
 			fields: fields,
 			primary_action_label: "Create Invoice",
 			primary_action(values) {
-				frm.set_value("mode_of_payment", values.mode_of_payment)
-				frm.save();
 				frappe.call({
 					method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
-					args: { "appointment_name": frm.doc.name },
+					args: {
+						"appointment_name": frm.doc.name,
+						"mode_of_payment": values.mode_of_payment,
+						"paid_amount": values.consultation_charge
+					},
 					callback: async function (data) {
 						if (!data.exc) {
 							await frm.reload_doc();
