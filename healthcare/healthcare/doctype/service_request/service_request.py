@@ -322,6 +322,12 @@ def make_observation(service_request):
 		else:
 			observation = create_observation(service_request)
 
+	diagnostic_report = frappe.db.exists(
+			"Diagnostic Report", {"reference_name": service_request.order_group}
+		)
+	if not diagnostic_report:
+		insert_diagnostic_report(service_request, sample_collection)
+
 	if sample_collection:
 		return sample_collection.name, "Sample Collection"
 	elif observation:
@@ -362,6 +368,16 @@ def create_observation(service_request):
 	doc.service_request = service_request.name
 	doc.insert()
 	return doc
+
+def insert_diagnostic_report(doc, sample_collection=None):
+	diagnostic_report = frappe.new_doc("Diagnostic Report")
+	diagnostic_report.company = doc.company
+	diagnostic_report.patient = doc.patient
+	diagnostic_report.ref_doctype = doc.source_doc
+	diagnostic_report.docname = doc.order_group
+	diagnostic_report.practitioner = doc.practitioner
+	diagnostic_report.sample_collection = sample_collection
+	diagnostic_report.save(ignore_permissions=True)
 
 
 def check_observation_sample_exist(service_request):
