@@ -85,24 +85,7 @@ frappe.ui.form.on('Service Request', {
 
 		} else if (frm.doc.template_dt === "Observation Template") {
 			frm.add_custom_button(__('Observation'), function() {
-				let doctype = "Observation"
-				if (frm.doc.sample_collection_required) {
-					doctype = "Sample Collection"
-				}
-				frappe.db.get_value(doctype, {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
-				.then(r => {
-					if (Object.keys(r.message).length == 0) {
-						frm.trigger('make_observation');
-					} else {
-						if (r.message && r.message.name) {
-							frappe.set_route("Form", doctype, r.message.name);
-							frappe.show_alert({
-								message: __(`${doctype} is already created`),
-								indicator: "info",
-							});
-						}
-					}
-				})
+				frm.trigger('make_observation');
 			}, __('Create'));
 
 		}
@@ -152,8 +135,21 @@ frappe.ui.form.on('Service Request', {
 			args: { service_request: frm.doc },
 			freeze: true,
 			callback: function(r) {
-				var doclist = frappe.model.sync(r.message);
-				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+				if (r.message) {
+					var title = "";
+					var indicator =  "info";
+					if (r.message[2]) {
+						title = `${r.message[0]} is already created`
+					} else {
+						title = `${r.message[0]} is created`
+						indicator = "green"
+					}
+					frappe.show_alert({
+						message: __(`${title}`),
+						indicator: indicator,
+					});
+					frappe.set_route('Form', r.message[1], r.message[0]);
+				}
 			}
 		});
 	},
