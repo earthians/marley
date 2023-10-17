@@ -896,6 +896,12 @@ let make_payment = function (frm, automate_invoicing) {
 				fieldname: "consultation_charge",
 				fieldtype: "Currency",
 				read_only: true,
+			},
+			{
+				label: "Discount Amount",
+				fieldname: "discount_amount",
+				fieldtype: "Currency",
+				default: 0,
 			}
 		];
 
@@ -936,21 +942,29 @@ let make_payment = function (frm, automate_invoicing) {
 			fields: fields,
 			primary_action_label: "Create Invoice",
 			primary_action(values) {
-				frm.set_value("mode_of_payment", values.mode_of_payment)
-				frm.save();
-				frappe.call({
-					method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
-					args: { "appointment_name": frm.doc.name },
-					callback: async function (data) {
-						if (!data.exc) {
-							await frm.reload_doc();
-							if (frm.doc.ref_sales_invoice) {
-								d.get_primary_btn().attr("disabled", true);
-								d.get_secondary_btn().attr("disabled", false);
+				if (values.consultation_charge >= values.discount_amount) {
+					frappe.call({
+						method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
+						args: {
+							"appointment_name": frm.doc.name,
+							"mode_of_payment": values.mode_of_payment,
+							"discount_amount": values.discount_amount
+						},
+						callback: async function (data) {
+							if (!data.exc) {
+								await frm.reload_doc();
+								if (frm.doc.ref_sales_invoice) {
+									d.get_field("mode_of_payment").$input.prop("disabled", true);
+									d.get_field("discount_amount").$input.prop("disabled", true);
+									d.get_primary_btn().attr("disabled", true);
+									d.get_secondary_btn().attr("disabled", false);
+								}
 							}
 						}
-					}
-				});
+					});
+				} else {
+					frappe.throw(__("Discount Amount should be less than or equal to Consultation Charge"))
+				}
 			},
 			secondary_action_label: __(`<svg class="icon  icon-sm" style="">
 				<use class="" href="#icon-printer"></use>
