@@ -344,8 +344,7 @@
    "fieldtype": "Link",
    "label": "Medical Department",
    "options": "Medical Department",
-   "read_only_depends_on": "observation_template",
-   "reqd": 1
+   "read_only_depends_on": "observation_template"
   },
   {
    "fieldname": "time_of_result",
@@ -562,13 +561,39 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-23 08:51:08.067675",
+ "modified": "2023-10-18 05:29:23.000831",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
