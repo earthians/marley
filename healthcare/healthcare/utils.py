@@ -548,7 +548,7 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
-		if method == "on_submit":
+		if method == "on_submit" and frappe.db.get_single_value("Healthcare Settings", "create_observation_on_si_submit"):
 			create_sample_collection_and_observation(doc)
 
 	if method == "on_submit":
