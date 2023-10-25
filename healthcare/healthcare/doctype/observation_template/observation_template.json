@@ -318,9 +318,9 @@
    "fieldname": "item_group",
    "fieldtype": "Link",
    "label": "Item Group",
+   "mandatory_depends_on": "eval:doc.is_billable;",
    "options": "Item Group",
-   "read_only_depends_on": "eval:doc.link_existing_item",
-   "reqd": 1
+   "read_only_depends_on": "eval:doc.link_existing_item"
   },
   {
    "depends_on": "eval:doc.is_billable;",
@@ -379,7 +379,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-08-01 16:40:50.946727",
+ "modified": "2023-10-25 05:30:46.124529",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
