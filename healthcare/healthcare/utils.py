@@ -45,6 +45,7 @@ def get_healthcare_services_to_invoice(patient, company):
 		items_to_invoice += get_therapy_plans_to_invoice(patient, company)
 		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
 		items_to_invoice += get_service_requests_to_invoice(patient, company)
+		items_to_invoice += get_observations_to_invoice(patient, company)
 		return items_to_invoice
 
 
@@ -171,6 +172,30 @@ def get_lab_tests_to_invoice(patient, company):
 			)
 
 	return lab_tests_to_invoice
+
+def get_observations_to_invoice(patient, company):
+	observations_to_invoice = []
+	observations = frappe.get_list(
+		"Observation",
+		fields=["name", "observation_template"],
+		filters={
+			"patient": patient.name,
+			"company": company,
+			"invoiced": False,
+			"docstatus": 1,
+			"service_request": "",
+		},
+	)
+	for observation in observations:
+		item, is_billable = frappe.get_cached_value(
+			"Observation Template", observation.observation_template, ["item", "is_billable"]
+		)
+		if is_billable:
+			observations_to_invoice.append(
+				{"reference_type": "Observation", "reference_name": observation.name, "service": item}
+			)
+
+	return observations_to_invoice
 
 
 def get_clinical_procedures_to_invoice(patient, company):
@@ -347,7 +372,7 @@ def get_service_requests_to_invoice(patient, company):
 		filters={
 			"patient": patient.name,
 			"company": company,
-			"billing_status": ["!=", ["Invoiced"]],
+			"billing_status": ["!=", "Invoiced"],
 			"docstatus": 1,
 		},
 	)

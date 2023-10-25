@@ -82,7 +82,8 @@
   "disapproval_reason",
   "parent_observation",
   "observation_idx",
-  "days"
+  "days",
+  "invoiced"
  ],
  "fields": [
   {
@@ -556,12 +557,19 @@
    "fieldtype": "Data",
    "label": "Sales Invoice Item",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "invoiced",
+   "fieldtype": "Check",
+   "label": "Invoiced",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-18 05:29:23.000831",
+ "modified": "2023-10-25 06:00:59.016090",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
