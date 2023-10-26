@@ -3,7 +3,7 @@
 
 
 import frappe
-from frappe import _, msgprint
+from frappe import _
 
 
 def execute(filters=None):
@@ -16,7 +16,6 @@ def execute(filters=None):
 	lab_test_list = get_lab_tests(filters)
 
 	if not lab_test_list:
-		msgprint(_("No records found"))
 		return columns, lab_test_list
 
 	data = []
