@@ -78,7 +78,7 @@ var set_observation_reference_range = function(frm) {
 
 var set_select_field_options = function(frm) {
 	if (frm.doc.permitted_data_type == "Select") {
-		var normal_df = frappe.meta.get_docfield("Observation Reference Range", "options", cur_frm.doc.name);
+		var normal_df = frappe.meta.get_docfield("Observation Reference Range", "options", frm.doc.name);
 		normal_df.options = frm.doc.options;
 	}
 }

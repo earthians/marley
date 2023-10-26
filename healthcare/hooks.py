@@ -62,9 +62,9 @@ doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
 # add methods and filters to jinja environment
 jinja = {
 	"methods": [
-        "healthcare.healthcare.doctype.diagnostic_report.diagnostic_report.diagnostic_report_print",
-        "healthcare.healthcare.utils.generate_barcodes",
-        ]
+		"healthcare.healthcare.doctype.diagnostic_report.diagnostic_report.diagnostic_report_print",
+		"healthcare.healthcare.utils.generate_barcodes",
+	]
 }
 
 # Installation

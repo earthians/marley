@@ -5,30 +5,23 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, nowtime
 
-from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
-	create_patient,
-)
-
-from healthcare.healthcare.doctype.lab_test.test_lab_test import (
-	create_practitioner,
-)
-
-from healthcare.healthcare.doctype.observation_template.test_observation_template import (
-	create_observation_template,
-	create_grouped_observation_template,
-)
-
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
+)
+from healthcare.healthcare.doctype.lab_test.test_lab_test import create_practitioner
+from healthcare.healthcare.doctype.observation_template.test_observation_template import (
+	create_grouped_observation_template,
+	create_observation_template,
+)
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_patient,
 )
 
 
 class TestObservation(FrappeTestCase):
 	def test_single_observation_from_invoice(self):
-		frappe.db.set_single_value(
-			"Healthcare Settings", "create_observation_on_si_submit", 1
-		)
+		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
 		obs_name = "Total Cholesterol"
 		# observation without sample
 		patient = create_patient()
@@ -90,9 +83,7 @@ class TestObservation(FrappeTestCase):
 		)
 
 	def test_has_component_observation_from_invoice(self):
-		frappe.db.set_single_value(
-			"Healthcare Settings", "create_observation_on_si_submit", 1
-		)
+		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
 		patient = create_patient()
 		idx = 2
 		obs_name = "Complete Blood Count (CBC)"
@@ -217,9 +208,7 @@ def create_patient_encounter(patient, observation_template):
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
 
-	patient_encounter.append(
-		"observations", {"observation_template": observation_template}
-	)
+	patient_encounter.append("observations", {"observation_template": observation_template})
 
 	patient_encounter.submit()
 	return patient_encounter

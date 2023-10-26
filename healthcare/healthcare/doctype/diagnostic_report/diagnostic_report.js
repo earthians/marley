@@ -40,7 +40,7 @@ var show_diagnostic_report = function(frm) {
 var generate_pdf_with_print_format = function(frm) {
 	const letterheads = get_letterhead_options();
 	const dialog = new frappe.ui.Dialog({
-		title: __(`Print ${frm.doc.name}`),
+		title: __('Print {0}', [frm.doc.name]),
 		fields: [
 			{
 				fieldtype: "Select",

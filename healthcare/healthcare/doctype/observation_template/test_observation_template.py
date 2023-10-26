@@ -7,14 +7,10 @@ from frappe.tests.utils import FrappeTestCase
 
 class TestObservationTemplate(FrappeTestCase):
 	def test_observation_item(self):
-		obs_template = create_observation_template(
-			"Total Cholesterol", sample_required=False
-		)
+		obs_template = create_observation_template("Total Cholesterol", sample_required=False)
 		self.assertTrue(frappe.db.exists("Item", obs_template.item_code))
 		self.assertEqual(
-			frappe.db.get_value(
-				"Item Price", {"item_code": obs_template.item_code}, "price_list_rate"
-			),
+			frappe.db.get_value("Item Price", {"item_code": obs_template.item_code}, "price_list_rate"),
 			obs_template.rate,
 		)
 

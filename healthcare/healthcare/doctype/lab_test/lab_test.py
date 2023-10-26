@@ -212,12 +212,7 @@ def create_lab_test_from_invoice(sales_invoice):
 				template = get_lab_test_template(item.item_code)
 				if template:
 					lab_test = create_lab_test_doc(
-						invoice.ref_practitioner,
-						patient,
-						template,
-						invoice.company,
-						True,
-						item.service_unit
+						invoice.ref_practitioner, patient, template, invoice.company, True, item.service_unit
 					)
 					if item.reference_dt == "Service Request":
 						lab_test.service_request = item.reference_dn

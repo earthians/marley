@@ -55,12 +55,14 @@ class ObservationTemplate(Document):
 		).run(as_dict=True)
 
 		if len(duplicate):
-			frappe.throw(_(f"Abbreviation already used for {duplicate[0].name}"))
+			frappe.throw(_("Abbreviation already used for {0}").format(duplicate[0].name))
 
 
 def create_item_from_template(doc):
 	if doc.is_billable:
-		uom = frappe.db.exists("UOM", "Unit") or frappe.db.get_single_value("Stock Settings", "stock_uom")
+		uom = frappe.db.exists("UOM", "Unit") or frappe.db.get_single_value(
+			"Stock Settings", "stock_uom"
+		)
 		# Insert item
 		item = frappe.get_doc(
 			{
@@ -81,9 +83,6 @@ def create_item_from_template(doc):
 			}
 		).insert(ignore_permissions=True, ignore_mandatory=True)
 
-		price_list_name = frappe.db.get_value(
-			"Selling Settings", None, "selling_price_list"
-		) or frappe.db.get_value("Price List", {"selling": 1})
 		if doc.rate:
 			make_item_price(item.name, doc.rate)
 		else:
@@ -95,17 +94,26 @@ def create_item_from_template(doc):
 
 
 def get_observation_template_details(observation_template):
-	query = f"""
-	select
-		CASE WHEN ot.sample_collection_required=0 THEN ot.name END as no_sample_reqd,
-		CASE WHEN ot.sample_collection_required=1 THEN ot.name END as sample_reqd
-	from
-		`tabObservation Component` as oc left join
-		`tabObservation Template` as ot on oc.observation_template=ot.name
-	where
-		oc.parent={frappe.db.escape(observation_template)}
-	"""
-	data = frappe.db.sql(query, as_dict=True)
+	obs_comp = frappe.qb.DocType("Observation Component")
+	obs_temp = frappe.qb.DocType("Observation Template")
+	from pypika import Case
+
+	data = (
+		frappe.qb.from_(obs_comp)
+		.left_join(obs_temp)
+		.on(obs_comp.observation_template == obs_temp.name)
+		.select(
+			Case()
+			.when(obs_temp.sample_collection_required == 0, obs_temp.name)
+			.else_(None)
+			.as_("no_sample_reqd"),
+			Case()
+			.when(obs_temp.sample_collection_required == 1, obs_temp.name)
+			.else_(None)
+			.as_("sample_reqd"),
+		)
+		.where(obs_comp.parent == observation_template)
+	).run(as_dict=True)
 	sample_reqd_component_obs = []
 	non_sample_reqd_component_obs = []
 

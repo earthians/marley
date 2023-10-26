@@ -40,7 +40,7 @@ var get_medical_codes = function(frm) {
 					frm.doc.codification_table = []
 					$.each(r.message, function(k, val) {
 						if (val.medical_code) {
-							var child = cur_frm.add_child("codification_table");
+							var child = frm.add_child("codification_table");
 							child.medical_code = val.medical_code
 							child.medical_code_standard = val.medical_code_standard
 							child.code = val.code

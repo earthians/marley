@@ -2,13 +2,11 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe import _
 from frappe.model.document import Document
+from frappe.model.workflow import get_workflow_name, get_workflow_state_field
 
-from healthcare.healthcare.doctype.observation.observation import (
-	get_observation_details,
-)
-from frappe.model.workflow import (get_workflow_name, get_workflow_state_field)
+from healthcare.healthcare.doctype.observation.observation import get_observation_details
+
 
 class DiagnosticReport(Document):
 	def validate(self):
@@ -40,26 +38,36 @@ class DiagnosticReport(Document):
 def diagnostic_report_print(diagnostic_report):
 	return get_observation_details(diagnostic_report)
 
+
 def validate_observations_has_result(doc):
 	if doc.ref_doctype == "Sales Invoice":
 		submittable = True
-		observations = frappe.db.get_all("Observation", {
-			"sales_invoice":doc.docname,
-			"docstatus":["!=", 2],
-			"has_component": False,
-			"status":["!=", "Cancelled"]}, pluck="name")
+		observations = frappe.db.get_all(
+			"Observation",
+			{
+				"sales_invoice": doc.docname,
+				"docstatus": ["!=", 2],
+				"has_component": False,
+				"status": ["!=", "Cancelled"],
+			},
+			pluck="name",
+		)
 		for obs in observations:
 			if not frappe.get_doc("Observation", obs).has_result():
 				submittable = False
 		return submittable
 
+
 def set_diagnostic_status(doc):
 	if doc.get("__islocal"):
 		return
-	observations = frappe.db.get_all("Observation", {"sales_invoice": doc.docname, "docstatus": 0, "status": ["!=", "Approved"], "has_component":0})
+	observations = frappe.db.get_all(
+		"Observation",
+		{"sales_invoice": doc.docname, "docstatus": 0, "status": ["!=", "Approved"], "has_component": 0},
+	)
 	workflow_name = get_workflow_name("Diagnostic Report")
 	workflow_state_field = get_workflow_state_field(workflow_name)
-	if observations and len(observations)>0:
+	if observations and len(observations) > 0:
 		set_status = "Partially Approved"
 	else:
 		set_status = "Approved"
@@ -71,11 +79,16 @@ def set_diagnostic_status(doc):
 def set_observation_status(docname):
 	doc = frappe.get_doc("Diagnostic Report", docname)
 	if doc.ref_doctype == "Sales Invoice":
-		observations = frappe.db.get_all("Observation", {
-			"sales_invoice":doc.docname,
-			"docstatus":["!=", 2],
-			"has_component": False,
-			"status":["not in", ["Cancelled", "Approved", "Disapproved"]]}, pluck="name")
+		observations = frappe.db.get_all(
+			"Observation",
+			{
+				"sales_invoice": doc.docname,
+				"docstatus": ["!=", 2],
+				"has_component": False,
+				"status": ["not in", ["Cancelled", "Approved", "Disapproved"]],
+			},
+			pluck="name",
+		)
 		if observations:
 			for obs in observations:
 				if doc.status in ["Approved", "Disapproved"]:

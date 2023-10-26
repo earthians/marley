@@ -325,7 +325,7 @@ def get_unbilled_inpatient_docs(doc, inpatient_record):
 				}
 			)
 		else:
-			del filters['docstatus']
+			del filters["docstatus"]
 		filters.update(
 			{
 				"invoiced": 0,

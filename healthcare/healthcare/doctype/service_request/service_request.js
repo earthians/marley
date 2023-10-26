@@ -145,7 +145,7 @@ frappe.ui.form.on('Service Request', {
 						indicator = "green"
 					}
 					frappe.show_alert({
-						message: __(`${title}`),
+						message: __("{0}", [title]),
 						indicator: indicator,
 					});
 					frappe.set_route('Form', r.message[1], r.message[0]);

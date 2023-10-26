@@ -3,10 +3,9 @@
 # For license information, please see license.txt
 
 
+import base64
 import json
 import math
-
-from collections import OrderedDict
 
 import frappe
 from frappe import _
@@ -19,16 +18,12 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 )
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
+from healthcare.healthcare.doctype.observation.observation import add_observation
+from healthcare.healthcare.doctype.observation_template.observation_template import (
+	get_observation_template_details,
+)
 from healthcare.setup import setup_healthcare
 
-from healthcare.healthcare.doctype.observation.observation import add_observation
-
-from healthcare.healthcare.doctype.observation_template.observation_template import get_observation_template_details
-
-from io import BytesIO
-import barcode
-from barcode.writer import ImageWriter
-import base64
 
 @frappe.whitelist()
 def get_healthcare_services_to_invoice(patient, company):
@@ -172,6 +167,7 @@ def get_lab_tests_to_invoice(patient, company):
 			)
 
 	return lab_tests_to_invoice
+
 
 def get_observations_to_invoice(patient, company):
 	observations_to_invoice = []
@@ -531,13 +527,6 @@ def manage_invoice_validate(doc, method):
 				item.service_unit = doc.service_unit
 
 
-def manage_invoice_validate(doc, method):
-	if doc.service_unit and len(doc.items):
-		for item in doc.items:
-			if not item.service_unit:
-				item.service_unit = doc.service_unit
-
-
 def manage_invoice_submit_cancel(doc, method):
 	if not doc.patient:
 		return
@@ -548,7 +537,9 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
-		if method == "on_submit" and frappe.db.get_single_value("Healthcare Settings", "create_observation_on_si_submit"):
+		if method == "on_submit" and frappe.db.get_single_value(
+			"Healthcare Settings", "create_observation_on_si_submit"
+		):
 			create_sample_collection_and_observation(doc)
 
 	if method == "on_submit":
@@ -1089,9 +1080,7 @@ def create_sample_collection_and_observation(doc):
 			):
 				continue
 
-		template_id = frappe.db.exists(
-			"Observation Template", {"item": item.item_code}
-		)
+		template_id = frappe.db.exists("Observation Template", {"item": item.item_code})
 		if template_id:
 			temp_dict = {}
 			temp_dict["name"] = template_id
@@ -1103,25 +1092,24 @@ def create_sample_collection_and_observation(doc):
 	out_data = []
 	for d in data:
 		observation_template = frappe.get_value(
-				"Observation Template",
-				d.get("name"),
-				[
-					"sample_type",
-					"sample",
-					"medical_department",
-					"container_closure_color",
-					"name",
-					"sample_qty",
-					"has_component",
-					"sample_collection_required",
-				],
-				as_dict=True,
-			)
+			"Observation Template",
+			d.get("name"),
+			[
+				"sample_type",
+				"sample",
+				"medical_department",
+				"container_closure_color",
+				"name",
+				"sample_qty",
+				"has_component",
+				"sample_collection_required",
+			],
+			as_dict=True,
+		)
 		if observation_template:
 			observation_template["patient"] = d.get("patient")
 			observation_template["child"] = d.get("child")
 			out_data.append(observation_template)
-
 	if not meta.has_field("patient"):
 		sample_collection = create_sample_collection(doc, doc.patient)
 	else:
@@ -1132,23 +1120,16 @@ def create_sample_collection_and_observation(doc):
 			out_data = grouped
 
 	for grp in out_data:
-		patient  = doc.patient
+		patient = doc.patient
 		if meta.has_field("patient") and grp:
 			patient = grp
-
 		if meta.has_field("patient"):
 			sample_collection = create_sample_collection(doc, patient)
 			for obs in out_data[grp]:
-				(
-					sample_collection,
-					diag_report_required,
-				) = insert_observation_and_sample_collection(
+				(sample_collection, diag_report_required,) = insert_observation_and_sample_collection(
 					doc, patient, obs, sample_collection, obs.get("child")
 				)
-			if (
-				sample_collection
-				and len(sample_collection.get("observation_sample_collection")) > 0
-			):
+			if sample_collection and len(sample_collection.get("observation_sample_collection")) > 0:
 				sample_collection.save(ignore_permissions=True)
 
 			if diag_report_required:
@@ -1158,12 +1139,8 @@ def create_sample_collection_and_observation(doc):
 				doc, patient, grp, sample_collection
 			)
 
-
 	if not meta.has_field("patient"):
-		if (
-			sample_collection
-			and len(sample_collection.get("observation_sample_collection")) > 0
-		):
+		if sample_collection and len(sample_collection.get("observation_sample_collection")) > 0:
 			sample_collection.save(ignore_permissions=True)
 
 		if diag_report_required:
@@ -1182,6 +1159,7 @@ def create_sample_collection(doc, patient):
 	sample_collection.reference_name = doc.name
 	return sample_collection
 
+
 def insert_diagnostic_report(doc, patient, sample_collection=None):
 	diagnostic_report = frappe.new_doc("Diagnostic Report")
 	diagnostic_report.company = doc.company
@@ -1192,23 +1170,26 @@ def insert_diagnostic_report(doc, patient, sample_collection=None):
 	diagnostic_report.sample_collection = sample_collection
 	diagnostic_report.save(ignore_permissions=True)
 
-def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child = None):
+
+def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child=None):
 	diag_report_required = False
 	if grp.get("has_component"):
 		diag_report_required = True
 		# parent observation
 		parent_observation = add_observation(
-				patient,
-				grp.get("name"),
-				practitioner=doc.ref_practitioner,
-				invoice=doc.name,
-				child = child if child else "",
-			)
+			patient,
+			grp.get("name"),
+			practitioner=doc.ref_practitioner,
+			invoice=doc.name,
+			child=child if child else "",
+		)
 
-		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(grp.get("name"))
+		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
+			grp.get("name")
+		)
 		# create observation for non sample_collection_reqd grouped templates
 
-		if len(non_sample_reqd_component_obs)>0:
+		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
 				add_observation(
 					patient,
@@ -1216,10 +1197,10 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 					practitioner=doc.ref_practitioner,
 					parent=parent_observation,
 					invoice=doc.name,
-					child = child if child else "",
+					child=child if child else "",
 				)
 		# create sample_colleciton child row for  sample_collection_reqd grouped templates
-		if len(sample_reqd_component_obs)>0:
+		if len(sample_reqd_component_obs) > 0:
 			sample_collection.append(
 				"observation_sample_collection",
 				{
@@ -1228,7 +1209,7 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 					"sample": grp.get("sample"),
 					"sample_type": grp.get("sample_type"),
 					"component_observation_parent": parent_observation,
-					"reference_child" : child if child else "",
+					"reference_child": child if child else "",
 				},
 			)
 
@@ -1241,7 +1222,7 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 				grp.get("name"),
 				practitioner=doc.ref_practitioner,
 				invoice=doc.name,
-				child = child if child else "",
+				child=child if child else "",
 			)
 		else:
 			# create sample_colleciton child row for  sample_collection_reqd individual templates
@@ -1252,7 +1233,7 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 					"container_closure_color": grp.get("color"),
 					"sample": grp.get("sample"),
 					"sample_type": grp.get("sample_type"),
-					"reference_child" : child if child else "",
+					"reference_child": child if child else "",
 				},
 			)
 	return sample_collection, diag_report_required
@@ -1261,6 +1242,7 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 @frappe.whitelist()
 def generate_barcodes(in_val):
 	from io import BytesIO
+
 	from barcode import Code128
 	from barcode.writer import ImageWriter
 
