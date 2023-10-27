@@ -124,6 +124,9 @@ class PatientEncounter(Document):
 				{"therapy_type": plan_item.template, "no_of_sessions": plan_item.qty},
 			)
 
+		if plan_item.type == "Observation Template":
+			self.append("observations", {"observation_template": plan_item.template})
+
 	def validate_medications(self):
 		if not self.drug_prescription:
 			return
