@@ -5,9 +5,10 @@ from __future__ import unicode_literals
 
 import unittest
 
-import erpnext
 import frappe
 from frappe.utils import getdate, nowtime
+
+import erpnext
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
