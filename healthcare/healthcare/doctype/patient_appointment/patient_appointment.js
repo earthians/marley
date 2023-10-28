@@ -941,13 +941,13 @@ let make_payment = function (frm, automate_invoicing) {
 			title: "Enter Payment Details",
 			fields: fields,
 			primary_action_label: "Create Invoice",
-			primary_action(values) {
+			primary_action: async function(values) {
+				await frm.save();
 				if (values.consultation_charge >= values.discount_amount) {
 					frappe.call({
 						method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
 						args: {
 							"appointment_name": frm.doc.name,
-							"mode_of_payment": values.mode_of_payment,
 							"discount_amount": values.discount_amount
 						},
 						callback: async function (data) {
@@ -974,6 +974,11 @@ let make_payment = function (frm, automate_invoicing) {
 				d.hide();
 			}
 		});
+		d.fields_dict["mode_of_payment"].df.onchange = () => {
+			if (d.get_value("mode_of_payment")) {
+				frm.set_value("mode_of_payment", d.get_value("mode_of_payment"));
+			}
+		};
 		d.get_secondary_btn().attr("disabled", true);
 		d.set_values({
 			"patient": frm.doc.patient_name,
