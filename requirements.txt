@@ -1,3 +1,0 @@
-# frappe -- https://github.com/frappe/frappe is installed via 'bench init'
-# erpnext -- https://github.com/frappe/erpnext is installed automatically
-responses==0.20.0
