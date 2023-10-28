@@ -394,9 +394,8 @@ def check_payment_reqd(patient):
 
 
 @frappe.whitelist()
-def invoice_appointment(appointment_name, mode_of_payment, discount_amount):
+def invoice_appointment(appointment_name, discount_amount=0):
 	appointment_doc = frappe.get_doc("Patient Appointment", appointment_name)
-	appointment_doc.mode_of_payment = mode_of_payment
 	show_payment_popup = frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
 	free_follow_ups = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
 
@@ -416,7 +415,7 @@ def invoice_appointment(appointment_name, mode_of_payment, discount_amount):
 	update_fee_validity(appointment_doc)
 
 
-def create_sales_invoice(appointment_doc, discount_amount):
+def create_sales_invoice(appointment_doc, discount_amount=0):
 	sales_invoice = frappe.new_doc("Sales Invoice")
 	sales_invoice.patient = appointment_doc.patient
 	sales_invoice.customer = frappe.get_value("Patient", appointment_doc.patient, "customer")
@@ -427,14 +426,14 @@ def create_sales_invoice(appointment_doc, discount_amount):
 
 	item = sales_invoice.append("items", {})
 	item = get_appointment_item(appointment_doc, item)
-	appointment_doc.paid_amount = flt(item.amount) - flt(discount_amount)
+	paid_amount = flt(appointment_doc.paid_amount) - flt(discount_amount)
 
 	# Add payments if payment details are supplied else proceed to create invoice as Unpaid
 	if appointment_doc.mode_of_payment and appointment_doc.paid_amount:
 		sales_invoice.is_pos = 1
 		payment = sales_invoice.append("payments", {})
 		payment.mode_of_payment = appointment_doc.mode_of_payment
-		payment.amount = appointment_doc.paid_amount
+		payment.amount = paid_amount
 
 	# Set discount amount in invoice equal to discount amount entered in payment popup
 	sales_invoice.discount_amount = flt(discount_amount)
@@ -450,8 +449,7 @@ def create_sales_invoice(appointment_doc, discount_amount):
 		{
 			"invoiced": 1,
 			"ref_sales_invoice": sales_invoice.name,
-			"paid_amount": appointment_doc.paid_amount,
-			"mode_of_payment": appointment_doc.mode_of_payment,
+			"paid_amount": paid_amount
 		},
 	)
 	appointment_doc.reload()
