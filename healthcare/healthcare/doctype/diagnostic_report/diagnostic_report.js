@@ -4,14 +4,14 @@
 frappe.ui.form.on("Diagnostic Report", {
 	refresh: function(frm) {
 		show_diagnostic_report(frm);
-		if (!frm.doc.__islocal) {
-			frm.add_custom_button(__(`Get PDF1`), function () {
+		if (!frm.is_new()) {
+			frm.add_custom_button(__(`Get PDF`), function () {
 				generate_pdf_with_print_format(frm)
 			})
 		}
 	},
 	before_save: function(frm) {
-		if (!frm.doc.__islocal && frm.is_dirty()) {
+		if (!frm.doc.is_new() && frm.is_dirty()) {
 			this.diagnostic_report.save_action("save")
 		}
 	},

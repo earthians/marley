@@ -89,12 +89,24 @@ class TestObservation(FrappeTestCase):
 		obs_name = "Complete Blood Count (CBC)"
 		obs_template = create_grouped_observation_template(obs_name, idx)
 		sales_invoice = create_sales_invoice(patient, obs_name + str(idx))
-
+		# parent_observation
 		self.assertTrue(
 			frappe.db.exists(
 				"Observation",
 				{
 					"observation_template": obs_template.name,
+					"patient": patient,
+					"sales_invoice": sales_invoice.name,
+				},
+			)
+		)
+
+		# child_observation
+		self.assertTrue(
+			frappe.db.exists(
+				"Observation",
+				{
+					"observation_template": obs_name + str(idx + 1),
 					"patient": patient,
 					"sales_invoice": sales_invoice.name,
 				},

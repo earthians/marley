@@ -92,17 +92,15 @@ def create_observation(selected, sample_collection, component_observations=None,
 			# non has_component templates
 			if not obs.get("has_component") or obs.get("has_component") == 0:
 				observation = add_observation(
-					sample_col_doc.get("patient"),
-					obs.get("observation_template"),
-					"",
-					"",
-					"Sample Collection",
-					sample_collection,
-					parent_observation,
-					comp_obs_ref.get(obs.get("name"))
+					patient=sample_col_doc.get("patient"),
+					template=obs.get("observation_template"),
+					doc="Sample Collection",
+					docname=sample_collection,
+					parent=parent_observation,
+					specimen=comp_obs_ref.get(obs.get("name"))
 					or comp_obs_ref.get(i + 1)
 					or comp_obs_ref.get(obs.get("idx")),
-					sample_col_doc.get("reference_name"),
+					invoice=sample_col_doc.get("reference_name"),
 					practitioner=sample_col_doc.get("referring_practitioner"),
 					child=obs.get("reference_child") if obs.get("reference_child") else "",
 				)
@@ -124,13 +122,11 @@ def create_observation(selected, sample_collection, component_observations=None,
 						observation = add_observation(
 							sample_col_doc.get("patient"),
 							comp.get("observation_template"),
-							"",
-							"",
-							"Sample Collection",
-							sample_collection,
-							obs.get("component_observation_parent"),
-							comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
-							sample_col_doc.get("reference_name"),
+							doc="Sample Collection",
+							docname=sample_collection,
+							parent=obs.get("component_observation_parent"),
+							specimen=comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
+							invoice=sample_col_doc.get("reference_name"),
 							practitioner=sample_col_doc.get("referring_practitioner"),
 							child=obs.get("reference_child") if obs.get("reference_child") else "",
 						)

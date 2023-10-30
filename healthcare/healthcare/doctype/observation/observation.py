@@ -92,6 +92,7 @@ def get_observation_details(docname):
 	reference = frappe.get_value(
 		"Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True
 	)
+
 	if reference.get("ref_doctype") == "Sales Invoice":
 		observation = frappe.get_list(
 			"Observation",
@@ -128,67 +129,89 @@ def get_observation_details(docname):
 			order_by="creation",
 		)
 
+	out_data, obs_length = aggregate_and_return_observation_data(observation)
+
+	return out_data, obs_length
+
+
+def aggregate_and_return_observation_data(observations):
 	out_data = []
 	obs_length = 0
-	for obs in observation:
-		has_result = False
-		obs_approved = False
+
+	for obs in observations:
+
 		if not obs.get("has_component"):
 			if obs.get("permitted_data_type"):
 				obs_length += 1
-			observation_data = {}
+
 			if obs.get("permitted_data_type") == "Select" and obs.get("options"):
 				obs["options_list"] = obs.get("options").split("\n")
-			if obs.get("observation_template"):
-				if obs.get("specimen"):
-					obs["received_time"] = frappe.get_value("Specimen", obs.get("specimen"), "received_time")
-				out_data.append(observation_data)
-				observation_data["observation"] = obs
+
+			if obs.get("observation_template") and obs.get("specimen"):
+				obs["received_time"] = frappe.get_value("Specimen", obs.get("specimen"), "received_time")
+
+			out_data.append({"observation": obs})
 
 		else:
-			child_observations = frappe.get_list(
-				"Observation",
-				fields=["*"],
-				filters={
-					"parent_observation": obs.get("name"),
-					"status": ["!=", "Cancelled"],
-					"docstatus": ["!=", 2],
-				},
-				order_by="observation_idx",
-			)
-			obs_list = []
-			obs_dict = {}
-			for child in child_observations:
-				if child.get("permitted_data_type"):
-					obs_length += 1
-				if child.get("permitted_data_type") == "Select" and child.get("options"):
-					child["options_list"] = child.get("options").split("\n")
-				if child.get("specimen"):
-					child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
-				observation_data = {}
-				observation_data["observation"] = child
-				obs_list.append(observation_data)
-				if (
-					child.get("result_data")
-					or child.get("result_text")
-					or child.get("result_select") not in [None, "", "Null"]
-				):
-					has_result = True
-				if child.get("status") == "Approved":
-					obs_approved = True
-			if len(child_observations) > 0:
-				obs_dict["has_component"] = True
-				obs_dict["observation"] = obs.get("name")
-				obs_dict[obs.get("name")] = obs_list
-				obs_dict["display_name"] = obs.get("observation_template")
-				obs_dict["practitioner_name"] = obs.get("practitioner_name")
-				obs_dict["healthcare_practitioner"] = obs.get("healthcare_practitioner")
-				obs_dict["description"] = obs.get("description")
-				obs_dict["has_result"] = has_result
-				obs_dict["obs_approved"] = obs_approved
+			child_observations = get_child_observations(obs)
+			obs_dict = return_child_observation_data_as_dict(child_observations, obs, obs_length)
+
 			if len(obs_dict) > 0:
 				out_data.append(obs_dict)
+
 	return out_data, obs_length
+
+
+def get_child_observations(obs):
+	return frappe.get_list(
+		"Observation",
+		fields=["*"],
+		filters={
+			"parent_observation": obs.get("name"),
+			"status": ["!=", "Cancelled"],
+			"docstatus": ["!=", 2],
+		},
+		order_by="observation_idx",
+	)
+
+
+def return_child_observation_data_as_dict(child_observations, obs, obs_length):
+	obs_list = []
+	has_result = False
+	obs_approved = False
+
+	for child in child_observations:
+		if child.get("permitted_data_type"):
+			obs_length += 1
+		if child.get("permitted_data_type") == "Select" and child.get("options"):
+			child["options_list"] = child.get("options").split("\n")
+		if child.get("specimen"):
+			child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
+		observation_data = {"observation": child}
+		obs_list.append(observation_data)
+
+		if (
+			child.get("result_data")
+			or child.get("result_text")
+			or child.get("result_select") not in [None, "", "Null"]
+		):
+			has_result = True
+		if child.get("status") == "Approved":
+			obs_approved = True
+
+	obs_dict = {
+		"has_component": True,
+		"observation": obs.get("name"),
+		obs.get("name"): obs_list,
+		"display_name": obs.get("observation_template"),
+		"practitioner_name": obs.get("practitioner_name"),
+		"healthcare_practitioner": obs.get("healthcare_practitioner"),
+		"description": obs.get("description"),
+		"has_result": has_result,
+		"obs_approved": obs_approved,
+	}
+
+	return obs_dict
 
 
 def get_observation_reference(doc):
@@ -254,38 +277,26 @@ def edit_observation(observation, data_type, result):
 
 
 @frappe.whitelist()
-def add_observation(
-	patient,
-	template,
-	data_type=None,
-	result=None,
-	doc=None,
-	docname=None,
-	parent=None,
-	specimen=None,
-	invoice="",
-	practitioner=None,
-	child=None,
-):
+def add_observation(**args):
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
-	observation_doc.patient = patient
-	observation_doc.observation_template = template
-	observation_doc.permitted_data_type = data_type
-	observation_doc.reference_doctype = doc
-	observation_doc.reference_docname = docname
-	observation_doc.sales_invoice = invoice
-	observation_doc.healthcare_practitioner = practitioner
-	observation_doc.specimen = specimen
-	if data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
-		observation_doc.result_data = result
+	observation_doc.patient = args.get("patient")
+	observation_doc.observation_template = args.get("template")
+	observation_doc.permitted_data_type = args.get("data_type")
+	observation_doc.reference_doctype = args.get("doc")
+	observation_doc.reference_docname = args.get("docname")
+	observation_doc.sales_invoice = args.get("invoice")
+	observation_doc.healthcare_practitioner = args.get("practitioner")
+	observation_doc.specimen = args.get("specimen")
+	if args.get("data_type") in ["Range", "Ratio", "Quantity", "Numeric"]:
+		observation_doc.result_data = args.get("result")
 	# elif data_type in ["Quantity", "Numeric"]:
 	# 	observation_doc.result_float = result
-	elif data_type == "Text":
-		observation_doc.result_text = result
-	if parent:
-		observation_doc.parent_observation = parent
-	observation_doc.sales_invoice_item = child if child else ""
+	elif args.get("data_type") == "Text":
+		observation_doc.result_text = args.get("result")
+	if args.get("parent"):
+		observation_doc.parent_observation = args.get("parent")
+	observation_doc.sales_invoice_item = args.get("child") if args.get("child") else ""
 	observation_doc.insert(ignore_permissions=True)
 	return observation_doc.name
 
