@@ -345,14 +345,6 @@ def create_sample_doc(template, patient, invoice, company=None):
 			sample_collection.sample_qty = template.sample_qty
 			sample_collection.company = company
 
-			if template.sample_details:
-				sample_collection.sample_details = (
-					_("Test :")
-					+ (template.get("lab_test_name") or template.get("template"))
-					+ "\n"
-					+ "Collection Detials:\n\t"
-					+ template.sample_details
-				)
 			sample_collection.save(ignore_permissions=True)
 
 		return sample_collection
