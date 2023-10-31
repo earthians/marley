@@ -180,6 +180,9 @@ frappe.ui.form.on('Patient Encounter', {
 				};
 			});
 		}
+		var table_list =  ["drug_prescription", "lab_test_prescription", "observations", "procedure_prescription", "therapies"]
+		apply_fhir_filter_to_child(frm, "priority", table_list, "Priority")
+		apply_fhir_filter_to_child(frm, "intent", table_list, "Intent")
 	},
 
 	appointment: function(frm) {
@@ -631,3 +634,16 @@ frappe.ui.form.on('Drug Prescription', {
 		});
 	}
 });
+
+
+var apply_fhir_filter_to_child = function(frm, field, table_list, value_set) {
+	table_list.forEach(function(table) {
+		frm.set_query(field, table, function() {
+			return {
+				filters: {
+					value_set: value_set
+				}
+			};
+		});
+	});
+}

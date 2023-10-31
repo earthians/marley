@@ -225,7 +225,13 @@ class PatientEncounter(Document):
 				}
 			)
 		else:
-			order.update({"template_dt": template_doc.doctype, "template_dn": template_doc.name})
+			order.update(
+				{
+					"template_dt": template_doc.doctype,
+					"template_dn": template_doc.name,
+					"patient_care_type": line_item.patient_care_type,
+				}
+			)
 
 		order.update({"order_description": description})
 		return order

@@ -64,7 +64,6 @@
   "column_break_9",
   "source",
   "referring_practitioner",
-  "color",
   "reason_reference_doctype",
   "reason_reference",
   "order_group_doctype",
@@ -174,14 +173,14 @@
    "fieldname": "intent",
    "fieldtype": "Link",
    "label": "Intent",
-   "options": "Service Request Intent"
+   "options": "FHIR Value Set"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Priority",
-   "options": "Service Request Priority"
+   "options": "FHIR Value Set"
   },
   {
    "collapsible": 1,
@@ -313,13 +312,6 @@
    "hidden": 1,
    "label": "Age",
    "read_only": 1
-  },
-  {
-   "fetch_from": "priority.color",
-   "fieldname": "color",
-   "fieldtype": "Color",
-   "hidden": 1,
-   "label": "Color"
   },
   {
    "depends_on": "eval:doc.order_doctype===\"Medication\";",
@@ -544,7 +536,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-09-18 16:12:27.146261",
+ "modified": "2023-10-31 15:25:52.596645",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

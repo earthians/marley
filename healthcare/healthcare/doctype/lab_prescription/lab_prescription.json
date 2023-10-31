@@ -1,7 +1,6 @@
 {
  "actions": [],
  "allow_copy": 1,
- "beta": 0,
  "creation": "2016-09-16 16:53:06.882970",
  "doctype": "DocType",
  "document_type": "Document",
@@ -13,7 +12,12 @@
   "invoiced",
   "column_break_4",
   "lab_test_comment",
-  "lab_test_created"
+  "lab_test_created",
+  "section_break_pkty",
+  "patient_care_type",
+  "column_break_on3b",
+  "intent",
+  "priority"
  ],
  "fields": [
   {
@@ -62,11 +66,37 @@
    "print_hide": 1,
    "report_hide": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_pkty",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_on3b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intent",
+   "fieldtype": "Link",
+   "label": "Intent",
+   "options": "FHIR Value Set"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "label": "Priority",
+   "options": "FHIR Value Set"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2020-02-26 17:03:00.255560",
+ "modified": "2023-10-31 13:01:53.258924",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Prescription",
@@ -74,5 +104,6 @@
  "permissions": [],
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }

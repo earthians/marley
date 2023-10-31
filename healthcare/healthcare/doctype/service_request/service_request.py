@@ -60,10 +60,10 @@ class ServiceRequest(ServiceRequestController):
 			self.staff_role = template.staff_role
 
 		if not self.intent:
-			self.intent = "Original Order"
+			self.intent = frappe.get_cached_value("FHIR Value Set", {"value": "Original Order"}, "name")
 
 		if not self.priority:
-			self.priority = "Routine"
+			self.priority = frappe.get_cached_value("FHIR Value Set", {"value": "Routine"}, "name")
 
 	def update_invoice_details(self, qty):
 		"""
