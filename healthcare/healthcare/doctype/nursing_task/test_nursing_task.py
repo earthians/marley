@@ -35,7 +35,9 @@ from healthcare.healthcare.doctype.therapy_type.test_therapy_type import create_
 class TestNursingTask(FrappeTestCase):
 	def setUp(self) -> None:
 		nursing_checklist_templates = frappe.get_test_records("Nursing Checklist Template")
-		self.nc_template = frappe.get_doc(nursing_checklist_templates[0]).insert(
+
+		self.activity = frappe.get_doc(nursing_checklist_templates[0]).insert(ignore_if_duplicate=True)
+		self.nc_template = frappe.get_doc(nursing_checklist_templates[1]).insert(
 			ignore_if_duplicate=True
 		)
 
@@ -131,4 +133,18 @@ def complete_nusing_tasks(document):
 	for task_name in tasks:
 		task = frappe.get_doc("Nursing Task", task_name)
 		task.status = "Completed"
+		task.task_document_name = create_vital_signs(document.patient)
 		task.save()
+
+
+def create_vital_signs(patient):
+	return frappe.get_doc(
+		{
+			"doctype": "Vital Signs",
+			"patient": patient,
+			"signs_date": frappe.utils.nowdate(),
+			"signs_time": frappe.utils.nowtime(),
+			"bp_systolic": 120,
+			"bp_diastolic": 80,
+		}
+	).insert(ignore_if_duplicate=True)
