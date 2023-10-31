@@ -2,12 +2,14 @@
 # For license information, please see license.txt
 import json
 
+from six import string_types
+
 import frappe
-from erpnext import get_default_company
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, get_datetime, getdate, now_datetime, time_diff_in_seconds
-from six import string_types
+
+from erpnext import get_default_company
 
 
 class NursingTask(Document):

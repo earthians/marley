@@ -7,10 +7,11 @@ import json
 import math
 
 import frappe
-from erpnext.setup.utils import insert_record
 from frappe import _
 from frappe.utils import cstr, flt, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
+
+from erpnext.setup.utils import insert_record
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,

@@ -4,9 +4,10 @@
 
 
 import frappe
-from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days, nowdate
+
+from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,

@@ -6,9 +6,10 @@ from __future__ import unicode_literals
 
 import json
 
+from six import string_types
+
 import frappe
 from frappe import _
-from six import string_types
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
 
