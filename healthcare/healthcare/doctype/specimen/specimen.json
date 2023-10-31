@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{YY}{MM}{DD}{#####}",
+ "creation": "2023-07-02 07:19:59.158538",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "specimen_type",
+  "received_time",
+  "column_break_wyhn",
+  "status",
+  "barcode",
+  "section_break_auky",
+  "patient",
+  "patient_name",
+  "column_break_1kvr",
+  "patient_age",
+  "patient_gender",
+  "section_break_aas5",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Available\nUnavailable\nUnsatisfactory\nEntered In Error"
+  },
+  {
+   "fieldname": "column_break_wyhn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_aas5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Text Editor",
+   "label": "Note"
+  },
+  {
+   "fieldname": "received_time",
+   "fieldtype": "Datetime",
+   "label": "Received Time"
+  },
+  {
+   "fieldname": "barcode",
+   "fieldtype": "Barcode",
+   "label": "Barcode"
+  },
+  {
+   "fieldname": "specimen_type",
+   "fieldtype": "Link",
+   "label": "Specimen Type",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fieldname": "section_break_auky",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient"
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1kvr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "patient_age",
+   "fieldtype": "Data",
+   "label": "Patient Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "patient_gender",
+   "fieldtype": "Link",
+   "label": "Patient Gender",
+   "options": "Gender",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-07-20 18:18:46.964110",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Specimen",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

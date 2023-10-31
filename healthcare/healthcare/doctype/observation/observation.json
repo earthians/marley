@@ -1,0 +1,609 @@
+{
+ "actions": [],
+ "allow_events_in_timeline": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-06-09 11:01:49.970959",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "observation_template",
+  "observation_category",
+  "column_break_7xu5",
+  "company",
+  "posting_date",
+  "status",
+  "medical_department",
+  "amended_from",
+  "section_break_i70a",
+  "patient",
+  "patient_name",
+  "column_break_qxq5",
+  "age",
+  "gender",
+  "section_break_zz5k",
+  "healthcare_practitioner",
+  "practitioner_name",
+  "template_details_section",
+  "has_component",
+  "preferred_display_name",
+  "sample_collection_required",
+  "permitted_unit",
+  "column_break_pxgu",
+  "sample",
+  "sample_type",
+  "permitted_data_type",
+  "method",
+  "column_break_meur",
+  "specimen",
+  "sample_collection_time",
+  "column_break_yo05",
+  "sample_status",
+  "result_section",
+  "result_template",
+  "result_attach",
+  "result_boolean",
+  "result_data",
+  "result_text",
+  "result_float",
+  "result_select",
+  "result_datetime",
+  "result_time",
+  "result_period_from",
+  "result_period_to",
+  "options",
+  "time_of_result",
+  "time_of_approval",
+  "column_break_zrac",
+  "interpretation_template",
+  "result_interpretation",
+  "observation_method",
+  "reference_section",
+  "reference",
+  "column_break_2ts3",
+  "section_break_xbqa",
+  "note",
+  "description_section",
+  "description",
+  "medical_coding_section",
+  "codification_table",
+  "tab_more_information",
+  "reference_doctype",
+  "reference_docname",
+  "sales_invoice",
+  "sales_invoice_status",
+  "sales_invoice_item",
+  "service_request",
+  "column_break_wwnp",
+  "disapproval_reason",
+  "parent_observation",
+  "observation_idx",
+  "days",
+  "invoiced"
+ ],
+ "fields": [
+  {
+   "fieldname": "observation_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Observation Template",
+   "options": "Observation Template",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_7xu5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Registered",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Registered\nPreliminary\nFinal\nAmended\nCorrected\nCancelled\nEntered in Error\nUnknown\nApproved\nDisapproved",
+   "read_only_depends_on": "eval:doc.docstatus==1;"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Description"
+  },
+  {
+   "fetch_from": "observation_template.description",
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming",
+   "options": "HLC-OBS-.YYYY.-",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Tab Break",
+   "label": "Medical Coding"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "section_break_i70a",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "observation_template.permitted_data_type",
+   "fieldname": "permitted_data_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Permitted Data Type",
+   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach",
+   "read_only_depends_on": "observation_template"
+  },
+  {
+   "depends_on": "eval:[\"Range\", \"Ratio\", \"Quantity\", \"Numeric\"].includes(doc.permitted_data_type)",
+   "fieldname": "result_data",
+   "fieldtype": "Data",
+   "label": "Result"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Text\" || doc.observation_category == \"Imaging\";",
+   "fieldname": "result_text",
+   "fieldtype": "Text Editor",
+   "label": "Result"
+  },
+  {
+   "depends_on": "eval:[\"Quantity\", 'Numeric'].includes(doc.permitted_data_type)",
+   "fieldname": "result_float",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Result"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Docname",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Observation",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name"
+  },
+  {
+   "fieldname": "column_break_wwnp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parent_observation",
+   "fieldtype": "Link",
+   "label": "Parent Observation",
+   "options": "Observation",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Attach\";",
+   "fieldname": "result_attach",
+   "fieldtype": "Attach",
+   "label": "Attach Result"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Select\";",
+   "fieldname": "result_select",
+   "fieldtype": "Select",
+   "label": "Result"
+  },
+  {
+   "fieldname": "column_break_meur",
+   "fieldtype": "Section Break",
+   "label": "Sample Details"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.observation_template && [\"Select\", \"Boolean\"].includes(doc.permitted_data_type)",
+   "fetch_from": "observation_template.options",
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Allowed Options",
+   "read_only": 1,
+   "read_only_depends_on": "observation_template"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sample_collection_time",
+   "fieldtype": "Datetime",
+   "label": "Sample Collection Time"
+  },
+  {
+   "fieldname": "sample_status",
+   "fieldtype": "Select",
+   "label": "Sample Status",
+   "options": "\nAccepted\nRejected"
+  },
+  {
+   "fetch_from": "observation_template.observation_category",
+   "fieldname": "observation_category",
+   "fieldtype": "Select",
+   "label": "Observation Category",
+   "options": "\nSocial History\nVital Signs\nImaging\nLaboratory\nProcedure\nSurvey\nExam\nTherapy\nActivity",
+   "read_only": 1,
+   "read_only_depends_on": "observation_template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_qxq5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_yo05",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "result_section",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "section_break_xbqa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Period\";",
+   "fieldname": "result_period_from",
+   "fieldtype": "Datetime",
+   "label": "Result Period From"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Period\";",
+   "fieldname": "result_period_to",
+   "fieldtype": "Datetime",
+   "label": "Result Period To"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"DateTime\";",
+   "fieldname": "result_datetime",
+   "fieldtype": "Datetime",
+   "label": "Result"
+  },
+  {
+   "fetch_from": "observation_template.medical_department",
+   "fetch_if_empty": 1,
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only_depends_on": "observation_template"
+  },
+  {
+   "fieldname": "time_of_result",
+   "fieldtype": "Datetime",
+   "label": "Time of Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "time_of_approval",
+   "fieldtype": "Datetime",
+   "label": "Time of Approval",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Text Editor",
+   "label": "Note"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Boolean\";",
+   "fieldname": "result_boolean",
+   "fieldtype": "Select",
+   "label": "Result"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Time\";",
+   "fieldname": "result_time",
+   "fieldtype": "Datetime",
+   "label": "Result"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "tab_more_information",
+   "fieldtype": "Tab Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "specimen",
+   "fieldtype": "Link",
+   "label": "Specimen",
+   "options": "Specimen",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "sales_invoice.status",
+   "fieldname": "sales_invoice_status",
+   "fieldtype": "Data",
+   "label": "Sales Invoice Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_zrac",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "observation_template.method",
+   "fieldname": "observation_method",
+   "fieldtype": "Link",
+   "label": "Observation Method",
+   "options": "FHIR Value Set",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_section",
+   "fieldtype": "Section Break",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Small Text",
+   "label": "Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2ts3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "observation_idx",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Observation idx"
+  },
+  {
+   "fieldname": "section_break_zz5k",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "healthcare_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fetch_from": "healthcare_practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Practitioner Name",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "template_details_section",
+   "fieldtype": "Section Break",
+   "label": "Template Details"
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.sample_collection_required",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.preferred_display_name",
+   "fieldname": "preferred_display_name",
+   "fieldtype": "Data",
+   "label": "Preferred Display Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.permitted_unit",
+   "fieldname": "permitted_unit",
+   "fieldtype": "Link",
+   "label": "Permitted Unit",
+   "options": "Lab Test UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_pxgu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "observation_template.sample",
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fetch_from": "observation_template.sample_type",
+   "fieldname": "sample_type",
+   "fieldtype": "Link",
+   "label": "Sample Type",
+   "options": "Sample Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.method_value",
+   "fieldname": "method",
+   "fieldtype": "Data",
+   "label": "Method",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Days",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.observation_category == \"Imaging\";\n",
+   "fieldname": "result_interpretation",
+   "fieldtype": "Text Editor",
+   "label": "Result Interpretation"
+  },
+  {
+   "fetch_from": "observation_template.result_template",
+   "fieldname": "result_template",
+   "fieldtype": "Link",
+   "label": "Result Template",
+   "options": "Terms and Conditions",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "observation_template.interpretation_template",
+   "fieldname": "interpretation_template",
+   "fieldtype": "Link",
+   "label": "Interpretation Template",
+   "options": "Terms and Conditions",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "observation_template.has_component",
+   "fieldname": "has_component",
+   "fieldtype": "Check",
+   "label": "Has Component",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "disapproval_reason",
+   "fieldtype": "Text",
+   "label": "Disapproval Reason",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_invoice_item",
+   "fieldtype": "Data",
+   "label": "Sales Invoice Item",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "invoiced",
+   "fieldtype": "Check",
+   "label": "Invoiced",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-10-25 06:00:59.016090",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Observation",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

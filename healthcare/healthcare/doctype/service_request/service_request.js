@@ -5,8 +5,13 @@
 frappe.ui.form.on('Service Request', {
 	refresh: function(frm) {
 		frm.set_query('template_dt', function() {
-			let order_template_doctypes = ['Therapy Type', 'Lab Test Template',
-				'Clinical Procedure Template'];
+			let order_template_doctypes = [
+				"Therapy Type",
+				"Lab Test Template",
+				"Clinical Procedure Template",
+				"Appointment Type",
+				"Observation Template",
+				"Healthcare Activity"];
 			return {
 				filters: {
 					name: ['in', order_template_doctypes]
@@ -77,6 +82,12 @@ frappe.ui.form.on('Service Request', {
 					}
 				})
 			}, __('Create'));
+
+		} else if (frm.doc.template_dt === "Observation Template") {
+			frm.add_custom_button(__('Observation'), function() {
+				frm.trigger('make_observation');
+			}, __('Create'));
+
 		}
 
 		frm.page.set_inner_btn_group_as_primary(__('Create'));
@@ -114,6 +125,31 @@ frappe.ui.form.on('Service Request', {
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
 				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_observation: function(frm) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_observation',
+			args: { service_request: frm.doc },
+			freeze: true,
+			callback: function(r) {
+				if (r.message) {
+					var title = "";
+					var indicator =  "info";
+					if (r.message[2]) {
+						title = `${r.message[0]} is already created`
+					} else {
+						title = `${r.message[0]} is created`
+						indicator = "green"
+					}
+					frappe.show_alert({
+						message: __("{0}", [title]),
+						indicator: indicator,
+					});
+					frappe.set_route('Form', r.message[1], r.message[0]);
+				}
 			}
 		});
 	},

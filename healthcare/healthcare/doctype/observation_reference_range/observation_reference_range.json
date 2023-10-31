@@ -1,0 +1,436 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-06-08 11:45:32.613055",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "permitted_data_type",
+  "reference_type",
+  "section_break_jkn1",
+  "applies_to",
+  "column_break_1wpd",
+  "age",
+  "section_break_dlfg",
+  "gestational_age",
+  "from_age_type",
+  "age_from",
+  "column_break_t4bi",
+  "to_age_type",
+  "age_to",
+  "section_break_d8yi",
+  "reference_from",
+  "datetime",
+  "from_duration",
+  "boolean_value",
+  "ratio",
+  "options",
+  "from_datetime",
+  "conditions",
+  "column_break_l8sr",
+  "reference_to",
+  "to_datetime",
+  "to_duration",
+  "short_interpretation",
+  "long_interpretation",
+  "section_break_ml0p",
+  "normal_boolean_value",
+  "normal_ratio",
+  "normal_from",
+  "normal_select",
+  "normal_condition",
+  "normal_interpretation",
+  "normal_to",
+  "normal_long_interpretation",
+  "abnormal_section",
+  "abnormal_boolean_value",
+  "abnormal_from",
+  "abnormal_ratio",
+  "abnormal_select",
+  "abnormal_condition",
+  "abnormal_interpretation",
+  "column_break_rdlf",
+  "abnormal_to",
+  "abnormal_long_interpretation",
+  "critical_section",
+  "critical_boolean_value",
+  "critical_from",
+  "critical_ratio",
+  "critical_select",
+  "critical_condition",
+  "critical_interpretation",
+  "column_break_uqpz",
+  "critical_to",
+  "critical_long_interpretation",
+  "section_break_jxbb",
+  "reference_text"
+ ],
+ "fields": [
+  {
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applies To",
+   "options": "All\nMale\nFemale\nPregnant"
+  },
+  {
+   "fieldname": "reference_text",
+   "fieldtype": "Small Text",
+   "label": "Reference Text"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type!=\"Quantity\";",
+   "fieldname": "column_break_l8sr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jkn1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_jxbb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.applies_to == \"Pregnant\"",
+   "description": "In Months",
+   "fieldname": "gestational_age",
+   "fieldtype": "Float",
+   "label": "Gestational Age"
+  },
+  {
+   "fieldname": "permitted_data_type",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Permitted Data Type",
+   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"DateTime\";",
+   "fieldname": "datetime",
+   "fieldtype": "Datetime",
+   "label": "Datetime"
+  },
+  {
+   "depends_on": "eval:doc.age == \"Range\"",
+   "fieldname": "age_from",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Age From"
+  },
+  {
+   "depends_on": "eval:doc.age == \"Range\"",
+   "fieldname": "age_to",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Age To"
+  },
+  {
+   "fieldname": "column_break_t4bi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rdlf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_ml0p",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Normal"
+  },
+  {
+   "fieldname": "column_break_uqpz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "normal_boolean_value",
+   "fieldtype": "Select",
+   "label": "Normal Value",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_from",
+   "fieldtype": "Float",
+   "label": "Normal From"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_to",
+   "fieldtype": "Float",
+   "label": "Normal To"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Period\";",
+   "fieldname": "from_datetime",
+   "fieldtype": "Datetime",
+   "label": "From Datetime"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Period\";",
+   "fieldname": "to_datetime",
+   "fieldtype": "Datetime",
+   "label": "To"
+  },
+  {
+   "default": "Years",
+   "depends_on": "eval: doc.age == \"Range\"",
+   "fieldname": "from_age_type",
+   "fieldtype": "Select",
+   "label": "Age Type",
+   "options": "Years\nMonths\nDays"
+  },
+  {
+   "default": "Years",
+   "depends_on": "eval:doc.age == \"Range\"",
+   "fieldname": "to_age_type",
+   "fieldtype": "Select",
+   "label": "Age Type",
+   "options": "Years\nMonths\nDays"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "abnormal_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Abnormal"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "abnormal_boolean_value",
+   "fieldtype": "Select",
+   "label": "Abnormal Value",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_from",
+   "fieldtype": "Float",
+   "label": "Abnormal From"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_to",
+   "fieldtype": "Float",
+   "label": "Abnormal To"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "critical_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Critical"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "critical_boolean_value",
+   "fieldtype": "Select",
+   "label": "Critical Value",
+   "options": "Yes\nNo"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_from",
+   "fieldtype": "Float",
+   "label": "Critical From"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_to",
+   "fieldtype": "Float",
+   "label": "Critical To"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
+   "fieldname": "normal_ratio",
+   "fieldtype": "Data",
+   "label": "Ratio"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
+   "fieldname": "abnormal_ratio",
+   "fieldtype": "Data",
+   "label": "Abnormal Ratio"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
+   "fieldname": "critical_ratio",
+   "fieldtype": "Data",
+   "label": "Critical Ratio"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Time\";",
+   "fieldname": "from_duration",
+   "fieldtype": "Duration",
+   "label": "From Duration"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Time\";",
+   "fieldname": "to_duration",
+   "fieldtype": "Duration",
+   "label": "To Duration"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
+   "fieldname": "normal_select",
+   "fieldtype": "Select",
+   "label": "Options"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
+   "fieldname": "abnormal_select",
+   "fieldtype": "Select",
+   "label": "Options"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
+   "fieldname": "critical_select",
+   "fieldtype": "Select",
+   "label": "Options"
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Age",
+   "options": "All\nRange"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_condition",
+   "fieldtype": "Code",
+   "label": "Normal Condition"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_condition",
+   "fieldtype": "Code",
+   "label": "Abnormal Condition"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_condition",
+   "fieldtype": "Code",
+   "label": "Critical Condition"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_interpretation",
+   "fieldtype": "Data",
+   "label": "Normal Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_interpretation",
+   "fieldtype": "Data",
+   "label": "Abnormal Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_interpretation",
+   "fieldtype": "Data",
+   "label": "Critical Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "normal_long_interpretation",
+   "fieldtype": "Text",
+   "label": "Normal Long Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "abnormal_long_interpretation",
+   "fieldtype": "Text",
+   "label": "Abnormal Long Interpretation"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "critical_long_interpretation",
+   "fieldtype": "Text",
+   "label": "Critical Long Interpretation"
+  },
+  {
+   "fieldname": "section_break_d8yi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
+   "fieldname": "boolean_value",
+   "fieldtype": "Select",
+   "label": "Boolean Value",
+   "options": "\nYes\nNo"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
+   "fieldname": "ratio",
+   "fieldtype": "Data",
+   "label": "Ratio"
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
+   "fieldname": "options",
+   "fieldtype": "Select",
+   "label": "Options"
+  },
+  {
+   "fieldname": "conditions",
+   "fieldtype": "Code",
+   "label": "Conditions"
+  },
+  {
+   "fieldname": "short_interpretation",
+   "fieldtype": "Data",
+   "label": "Short Interpretation"
+  },
+  {
+   "fieldname": "long_interpretation",
+   "fieldtype": "Small Text",
+   "label": "Long Interpretation"
+  },
+  {
+   "fieldname": "column_break_1wpd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.age == \"Range\" || doc.applies_to == \"Pregnant\"",
+   "fieldname": "section_break_dlfg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reference_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reference Type",
+   "options": "FHIR Value Set"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "reference_from",
+   "fieldtype": "Data",
+   "label": "From"
+  },
+  {
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "reference_to",
+   "fieldtype": "Data",
+   "label": "To"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-07-07 11:10:53.335716",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Observation Reference Range",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

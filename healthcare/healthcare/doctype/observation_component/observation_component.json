@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-06-08 12:37:26.737683",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "observation_template",
+  "abbr",
+  "column_break_seht",
+  "based_on_formula",
+  "formula"
+ ],
+ "fields": [
+  {
+   "fieldname": "observation_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Observation Template",
+   "options": "Observation Template"
+  },
+  {
+   "fieldname": "column_break_seht",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "based_on_formula",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Based On Formula"
+  },
+  {
+   "depends_on": "based_on_formula",
+   "fieldname": "formula",
+   "fieldtype": "Code",
+   "in_list_view": 1,
+   "label": "Formula"
+  },
+  {
+   "columns": 1,
+   "fetch_from": "observation_template.abbr",
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Abbr",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-07-16 19:13:13.918443",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Observation Component",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

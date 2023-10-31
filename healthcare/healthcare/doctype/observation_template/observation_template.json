@@ -1,0 +1,406 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:observation",
+ "creation": "2023-06-08 11:36:30.350377",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "observation",
+  "observation_category",
+  "preferred_display_name",
+  "abbr",
+  "has_component",
+  "column_break_zeln",
+  "medical_department",
+  "description",
+  "section_break_q56o",
+  "method",
+  "method_value",
+  "column_break_vvc2",
+  "service_unit",
+  "section_break_eovt",
+  "result_template",
+  "column_break_ll27",
+  "interpretation_template",
+  "section_break_leuz",
+  "permitted_data_type",
+  "column_break_jsqz",
+  "permitted_unit",
+  "options",
+  "template",
+  "components_section",
+  "observation_component",
+  "sample_collection_section",
+  "sample_collection_required",
+  "sample_collection_section_section",
+  "sample",
+  "sample_qty",
+  "uom",
+  "column_break_tyze",
+  "sample_type",
+  "container_closure_color",
+  "sample_details",
+  "reference_ranges_tab",
+  "observation_reference_range",
+  "medical_codes_tab",
+  "codification_table",
+  "billing_tab",
+  "is_billable",
+  "link_existing_item",
+  "item",
+  "item_code",
+  "item_group",
+  "column_break_tktn",
+  "rate",
+  "change_in_item",
+  "conditions_tab",
+  "diagnosis"
+ ],
+ "fields": [
+  {
+   "fieldname": "observation",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Observation",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "observation_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Observation Category",
+   "options": "\nSocial History\nVital Signs\nImaging\nLaboratory\nProcedure\nSurvey\nExam\nTherapy\nActivity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_zeln",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "depends_on": "eval: !doc.has_component;",
+   "fieldname": "section_break_q56o",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "permitted_data_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Permitted Data Type",
+   "mandatory_depends_on": "eval: doc.observation_category == \"Laboratory\" && !doc.has_component;",
+   "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
+  },
+  {
+   "depends_on": "eval: [\"Text\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "fieldname": "permitted_unit",
+   "fieldtype": "Link",
+   "label": "Permitted Unit",
+   "mandatory_depends_on": "eval:doc.permitted_data_type==\"Quantity\" && !doc.has_component;",
+   "options": "Lab Test UOM"
+  },
+  {
+   "fieldname": "column_break_jsqz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: [\"Laboratory\", \"Imaging\"].includes(doc.observation_category) && !doc.has_component",
+   "fieldname": "method",
+   "fieldtype": "Link",
+   "label": "Method",
+   "options": "FHIR Value Set"
+  },
+  {
+   "fieldname": "observation_reference_range",
+   "fieldtype": "Table",
+   "options": "Observation Reference Range"
+  },
+  {
+   "fieldname": "observation_component",
+   "fieldtype": "Table",
+   "label": "Observation Component",
+   "options": "Observation Component"
+  },
+  {
+   "fieldname": "medical_codes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Medical Codes"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Code",
+   "options": "Codification Table"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.observation_category === \"Laboratory\"",
+   "fieldname": "has_component",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Has Component"
+  },
+  {
+   "depends_on": "eval:doc.has_component==1;",
+   "fieldname": "components_section",
+   "fieldtype": "Section Break",
+   "label": "Components"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
+   "fieldname": "reference_ranges_tab",
+   "fieldtype": "Tab Break",
+   "label": "Reference Ranges"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit Type",
+   "options": "Healthcare Service Unit Type"
+  },
+  {
+   "depends_on": "eval:doc.observation_category!=\"Imaging\" && !doc.has_component;",
+   "fieldname": "section_break_leuz",
+   "fieldtype": "Section Break",
+   "label": "Result Options"
+  },
+  {
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
+   "fieldname": "sample_collection_section",
+   "fieldtype": "Tab Break",
+   "label": "Sample Collection"
+  },
+  {
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "mandatory_depends_on": "eval:!doc.has_component && doc.sample_collection_required==1;",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fetch_from": "sample.sample_uom",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "Lab Test UOM"
+  },
+  {
+   "fieldname": "sample_qty",
+   "fieldtype": "Float",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "column_break_tyze",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sample_details",
+   "fieldtype": "Small Text",
+   "label": "Collection Details"
+  },
+  {
+   "fieldname": "column_break_vvc2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "preferred_display_name",
+   "fieldtype": "Data",
+   "label": "Preferred Display Name"
+  },
+  {
+   "depends_on": "eval:[\"Select\", 'Boolean'].includes(doc.permitted_data_type)",
+   "description": "These options will be available for selection in Observation. No need to add a blank space before the first option",
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Options"
+  },
+  {
+   "depends_on": "eval:doc.observation_category==\"Imaging\";",
+   "fieldname": "section_break_eovt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "result_template",
+   "fieldtype": "Link",
+   "label": "Result Template",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "fetch_from": "sample.sample_type",
+   "fieldname": "sample_type",
+   "fieldtype": "Link",
+   "label": "Sample Type",
+   "options": "Sample Type",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.permitted_data_type == \"Text\";",
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fetch_from": "sample.container_closure_color",
+   "fetch_if_empty": 1,
+   "fieldname": "container_closure_color",
+   "fieldtype": "Link",
+   "label": "Container Closure Color",
+   "options": "Color"
+  },
+  {
+   "fieldname": "billing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Billing"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.__islocal;",
+   "fieldname": "link_existing_item",
+   "fieldtype": "Check",
+   "label": "Link Existing Item"
+  },
+  {
+   "depends_on": "eval: (!doc.__islocal || doc.link_existing_item) && doc.is_billable;",
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "mandatory_depends_on": "eval:doc.link_existing_item",
+   "no_copy": 1,
+   "options": "Item",
+   "read_only_depends_on": "eval: !doc.__islocal",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_tktn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.link_existing_item || !doc.__islocal;",
+   "fieldname": "is_billable",
+   "fieldtype": "Check",
+   "label": "Is Billable",
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "change_in_item",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Change In Item"
+  },
+  {
+   "depends_on": "eval:doc.is_billable && (!doc.link_existing_item || !doc.__islocal)",
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
+  },
+  {
+   "depends_on": "eval:doc.is_billable;",
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Item Group",
+   "mandatory_depends_on": "eval:doc.is_billable;",
+   "options": "Item Group",
+   "read_only_depends_on": "eval:doc.link_existing_item"
+  },
+  {
+   "depends_on": "eval:doc.is_billable;",
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "label": "Item Code"
+  },
+  {
+   "fetch_from": "method.value",
+   "fieldname": "method_value",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Method Value"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.has_component",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required"
+  },
+  {
+   "depends_on": "eval:doc.sample_collection_required==1;",
+   "fieldname": "sample_collection_section_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.observation_category === \"Laboratory\" && !doc.has_component",
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "label": "Abbr",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_ll27",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.observation_category == \"Imaging\"",
+   "fieldname": "interpretation_template",
+   "fieldtype": "Link",
+   "label": "Interpretation Template",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "conditions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Conditions"
+  },
+  {
+   "fieldname": "diagnosis",
+   "fieldtype": "Table MultiSelect",
+   "label": "Diagnosis",
+   "options": "Patient Encounter Diagnosis"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-10-25 05:30:46.124529",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Observation Template",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
