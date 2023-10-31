@@ -33,6 +33,22 @@ frappe.ui.form.on(cur_frm.doctype, { // nosemgrep
 			};
 		});
 
+		frm.set_query('priority', function () {
+			return {
+				filters: {
+					value_set: 'Priority'
+				}
+			};
+		});
+
+		frm.set_query('intent', function () {
+			return {
+				filters: {
+					value_set: 'Intent'
+				}
+			};
+		});
+
 		frm.trigger('setup_status_buttons');
 	},
 

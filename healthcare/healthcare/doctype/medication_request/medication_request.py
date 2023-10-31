@@ -39,10 +39,10 @@ class MedicationRequest(ServiceRequestController):
 			self.staff_role = medication.staff_role
 
 		if not self.intent:
-			self.intent = "Original Order"
+			self.intent = frappe.get_cached_value("FHIR Value Set", {"value": "Original Order"}, "name")
 
 		if not self.priority:
-			self.priority = "Routine"
+			self.priority = frappe.get_cached_value("FHIR Value Set", {"value": "Routine"}, "name")
 
 	def calculate_total_dispensable_quantity(self):
 		if self.number_of_repeats_allowed:

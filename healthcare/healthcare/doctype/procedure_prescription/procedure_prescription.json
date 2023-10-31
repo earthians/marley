@@ -1,7 +1,6 @@
 {
  "actions": [],
  "allow_copy": 1,
- "beta": 0,
  "creation": "2017-11-17 15:52:48.324157",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,11 +10,17 @@
   "procedure_name",
   "department",
   "practitioner",
+  "column_break_ky11",
   "date",
   "comments",
   "appointment_booked",
   "procedure_created",
-  "invoiced"
+  "invoiced",
+  "section_break_ggcp",
+  "patient_care_type",
+  "column_break_ld7o",
+  "intent",
+  "priority"
  ],
  "fields": [
   {
@@ -82,11 +87,41 @@
    "label": "Invoiced",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_ggcp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "column_break_ld7o",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intent",
+   "fieldtype": "Link",
+   "label": "Intent",
+   "options": "FHIR Value Set"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "label": "Priority",
+   "options": "FHIR Value Set"
+  },
+  {
+   "fieldname": "column_break_ky11",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2020-02-26 15:42:33.988081",
+ "modified": "2023-10-31 12:58:54.804015",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Procedure Prescription",
@@ -95,5 +130,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

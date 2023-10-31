@@ -18,7 +18,6 @@
   "column_break_4",
   "company",
   "status",
-  "color",
   "patient_detail_section",
   "patient",
   "patient_name",
@@ -136,14 +135,14 @@
    "fieldname": "intent",
    "fieldtype": "Link",
    "label": "Intent",
-   "options": "Service Request Intent"
+   "options": "FHIR Value Set"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Priority",
-   "options": "Service Request Priority"
+   "options": "FHIR Value Set"
   },
   {
    "collapsible": 1,
@@ -242,13 +241,6 @@
    "hidden": 1,
    "label": "Age",
    "read_only": 1
-  },
-  {
-   "fetch_from": "priority.color",
-   "fieldname": "color",
-   "fieldtype": "Color",
-   "hidden": 1,
-   "label": "Color"
   },
   {
    "fieldname": "dosage_form",
@@ -463,7 +455,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-05-30 12:26:58.431916",
+ "modified": "2023-10-31 16:23:55.717811",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",

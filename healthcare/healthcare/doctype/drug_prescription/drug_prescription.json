@@ -20,6 +20,9 @@
   "interval_uom",
   "period",
   "number_of_repeats_allowed",
+  "section_break_u9av",
+  "intent",
+  "priority",
   "section_break_13",
   "comment",
   "update_schedule"
@@ -151,11 +154,27 @@
    "fieldname": "number_of_repeats_allowed",
    "fieldtype": "Float",
    "label": "Number Of Repeats Allowed"
+  },
+  {
+   "fieldname": "section_break_u9av",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "intent",
+   "fieldtype": "Link",
+   "label": "Intent",
+   "options": "FHIR Value Set"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "label": "Priority",
+   "options": "FHIR Value Set"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-03-31 17:51:12.430347",
+ "modified": "2023-10-31 15:44:26.100565",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Drug Prescription",
