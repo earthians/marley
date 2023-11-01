@@ -72,6 +72,7 @@
   "service_details_section",
   "template_dt",
   "template_dn",
+  "sample_collection_required",
   "qty_invoiced",
   "billing_status"
  ],
@@ -518,6 +519,13 @@
    "fieldtype": "Link",
    "label": "Source Doc",
    "options": "DocType"
+  },
+  {
+   "default": "0",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -536,7 +544,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-08-02 16:51:58.714707",
+ "modified": "2023-09-18 16:12:27.146261",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

@@ -42,6 +42,7 @@
   "drug_prescription",
   "sb_test_prescription",
   "lab_test_prescription",
+  "observations",
   "sb_procedures",
   "procedure_prescription",
   "rehabilitation_section",
@@ -347,11 +348,17 @@
    "label": "Status",
    "options": "\nOpen\nWaiting For Review\nCompleted\nCancelled",
    "read_only": 1
+  },
+  {
+   "fieldname": "observations",
+   "fieldtype": "Table",
+   "label": "Observations",
+   "options": "Observation Prescription"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-09-13 03:25:39.573220",
+ "modified": "2023-10-25 05:22:26.351979",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

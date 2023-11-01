@@ -124,6 +124,9 @@ class PatientEncounter(Document):
 				{"therapy_type": plan_item.template, "no_of_sessions": plan_item.qty},
 			)
 
+		if plan_item.type == "Observation Template":
+			self.append("observations", {"observation_template": plan_item.template})
+
 	def validate_medications(self):
 		if not self.drug_prescription:
 			return
@@ -162,6 +165,15 @@ class PatientEncounter(Document):
 				therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
 				order = self.get_order_details(therapy_type, therapy)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
+
+		if self.observations:
+			for observation in self.observations:
+				if not observation.service_request:
+					template = frappe.get_doc("Observation Template", observation.observation_template)
+					order = self.get_order_details(template, observation)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					observation.service_request = order.name
 
 	def make_medication_request(self):
 		if self.drug_prescription:

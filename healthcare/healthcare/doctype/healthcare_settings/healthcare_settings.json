@@ -25,6 +25,7 @@
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
+  "create_observation_on_si_submit",
   "create_sample_collection_for_lab_test",
   "column_break_34",
   "lab_test_approval_required",
@@ -353,7 +354,7 @@
    "label": "Alerts"
   },
   {
-  "description": "For use while scheduling tele-consultations via Google Meet",
+   "description": "For use while scheduling tele-consultations via Google Meet",
    "fieldname": "default_google_calendar",
    "fieldtype": "Link",
    "label": "Default Google Calendar",
@@ -369,11 +370,17 @@
    "fieldname": "process_service_request_only_if_paid",
    "fieldtype": "Check",
    "label": "Process Service Request If Billing Status Is Paid"
+  },
+  {
+   "default": "0",
+   "fieldname": "create_observation_on_si_submit",
+   "fieldtype": "Check",
+   "label": "Create Observation(s) on Sales Invoice Submission"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-08-10 17:51:25.440851",
+ "modified": "2023-10-24 05:59:06.422559",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
