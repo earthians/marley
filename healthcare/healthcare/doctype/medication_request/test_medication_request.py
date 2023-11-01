@@ -21,7 +21,7 @@ class TestMedicationRequest(unittest.TestCase):
 	def test_medication_request(self):
 		patient, practitioner = create_healthcare_docs()
 		medication = create_medcation()
-		encounter = create_encounter(patient, practitioner, "drug_prescription", medication)
+		encounter = create_encounter(patient, practitioner, "drug_prescription", medication, submit=True)
 		self.assertTrue(frappe.db.exists("Medication Request", {"order_group": encounter.name}))
 		medication_request = frappe.db.get_value(
 			"Medication Request", {"order_group": encounter.name}, "name"
