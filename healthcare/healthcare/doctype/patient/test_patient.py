@@ -115,3 +115,19 @@ class TestPatient(FrappeTestCase):
 
 		customer = frappe.get_doc("Customer", patient.customer)
 		self.assertEqual(customer.image, patient.image)
+
+	def test_multiple_paients_linked_with_same_customer(self):
+		frappe.db.sql("""delete from `tabPatient`""")
+		frappe.db.set_single_value("Healthcare Settings", "link_customer_to_patient", 1)
+
+		patient_name_1 = create_patient(patient_name="John Doe")
+		p1_customer_name = frappe.get_value("Patient", patient_name_1, "customer")
+		p1_customer = frappe.get_doc("Customer", p1_customer_name)
+		self.assertEqual(p1_customer.customer_name, "John Doe")
+
+		patient_name_2 = create_patient(patient_name="Jane Doe", customer=p1_customer.name)
+		p2_customer_name = frappe.get_value("Patient", patient_name_2, "customer")
+		p2_customer = frappe.get_doc("Customer", p2_customer_name)
+
+		self.assertEqual(p1_customer_name, p2_customer_name)
+		self.assertEqual(p2_customer.customer_name, "John Doe")
