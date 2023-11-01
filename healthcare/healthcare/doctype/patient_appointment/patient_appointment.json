@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2017-05-04 11:52:41.141507",
+ "creation": "2017-05-04 11:52:40.941507",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
@@ -28,6 +28,7 @@
   "patient_age",
   "section_break_12",
   "duration",
+  "service_request",
   "procedure_template",
   "get_procedure_from_encounter",
   "procedure_prescription",
@@ -413,6 +414,14 @@
   {
    "fieldname": "column_break_4pp7",
    "fieldtype": "Column Break"
+  },
+  {
+    "fieldname": "service_request",
+    "fieldtype": "Link",
+    "label": "Service Request",
+    "options": "Service Request",
+    "read_only": 1,
+    "search_index": 1
   }
  ],
  "links": [],

@@ -21,6 +21,7 @@
   "inpatient_status",
   "column_break_6",
   "company",
+  "status",
   "encounter_date",
   "encounter_time",
   "practitioner",
@@ -41,6 +42,7 @@
   "drug_prescription",
   "sb_test_prescription",
   "lab_test_prescription",
+  "observations",
   "sb_procedures",
   "procedure_prescription",
   "rehabilitation_section",
@@ -339,11 +341,24 @@
    "fieldtype": "Data",
    "label": "Google Meet Link",
    "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nOpen\nWaiting For Review\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "observations",
+   "fieldtype": "Table",
+   "label": "Observations",
+   "options": "Observation Prescription"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-01-14 19:09:28.299085",
+ "modified": "2023-10-25 05:22:26.351979",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

@@ -68,6 +68,14 @@ frappe.ui.form.on('Clinical Procedure Template', {
 					}
 				};
 			}
+		})
+
+		frm.set_query('staff_role', function () {
+			return {
+				filters: {
+					'restrict_to_domain': 'Healthcare'
+				}
+			};
 		});
 	},
 
@@ -221,7 +229,6 @@ frappe.tour['Clinical Procedure Template'] = [
 		fieldname: 'consume_stock',
 		title: __('Allow Stock Consumption'),
 		description: __('Check this if the Clinical Procedure utilises consumables. Click ') + "<a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/clinical_procedure_template#22-manage-procedure-consumables' target='_blank'>here</a>" + __(' to know more')
-
 	},
 	{
 		fieldname: 'medical_department',

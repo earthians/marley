@@ -1,4 +1,5 @@
 import click
+
 import frappe
 
 from healthcare.setup import before_uninstall as remove_customizations

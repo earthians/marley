@@ -16,13 +16,14 @@
   "column_break_26",
   "company",
   "status",
+  "date",
+  "time",
   "submitted_date",
   "result_date",
   "approved_date",
   "expected_result_date",
   "expected_result_time",
   "printed_on",
-  "invoiced",
   "sb_first",
   "patient",
   "patient_name",
@@ -64,6 +65,9 @@
   "result_legend_section",
   "legend_print_position",
   "result_legend",
+  "more_information_section",
+  "service_request",
+  "invoiced",
   "section_break_50",
   "email_sent",
   "sms_sent",
@@ -570,6 +574,28 @@
    "report_hide": 1
   },
   {
+   "allow_in_quick_entry": 1,
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Time"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
    "collapsible": 1,
    "fieldname": "medical_coding_section",
    "fieldtype": "Section Break",
@@ -586,6 +612,17 @@
    "fieldtype": "Link",
    "label": "Service Unit",
    "options": "Healthcare Service Unit"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Service Request",
+   "no_copy": 1,
+   "options": "Service Request",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "is_submittable": 1,

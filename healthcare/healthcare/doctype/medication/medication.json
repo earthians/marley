@@ -1,0 +1,270 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:generic_name",
+ "creation": "2020-03-24 15:56:36.583587",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "generic_name",
+  "medication_class",
+  "abbr",
+  "national_drug_code",
+  "is_combination",
+  "column_break_4",
+  "disabled",
+  "strength",
+  "strength_uom",
+  "combinations_section",
+  "combinations",
+  "item_details",
+  "linked_items",
+  "defaults_section",
+  "default_prescription_dosage",
+  "default_prescription_duration",
+  "dosage_form",
+  "column_break_16",
+  "default_interval",
+  "default_interval_uom",
+  "section_break_36",
+  "reference_url",
+  "change_in_item",
+  "medical_coding_section",
+  "codification_table",
+  "service_request_defaults_section",
+  "patient_care_type",
+  "staff_role",
+  "drug_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "national_drug_code",
+   "fieldtype": "Data",
+   "label": "National Drug Code",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "generic_name",
+   "fieldtype": "Data",
+   "label": "Generic Name",
+   "no_copy": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "medication_class",
+   "fieldtype": "Link",
+   "label": "Medication Class",
+   "options": "Medication Class",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "strength",
+   "fieldtype": "Float",
+   "label": "Strength",
+   "no_copy": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "strength_uom",
+   "fieldtype": "Link",
+   "label": "Strength UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Defaults"
+  },
+  {
+   "fieldname": "default_prescription_dosage",
+   "fieldtype": "Link",
+   "label": "Default Prescription Dosage",
+   "mandatory_depends_on": "!dosage_by_interval",
+   "options": "Prescription Dosage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_prescription_duration",
+   "fieldtype": "Link",
+   "label": "Default Prescription Duration",
+   "mandatory_depends_on": "!dosage_by_interval",
+   "options": "Prescription Duration",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_interval",
+   "fieldtype": "Int",
+   "label": "Default Interval",
+   "mandatory_depends_on": "dosage_by_interval"
+  },
+  {
+   "fieldname": "default_interval_uom",
+   "fieldtype": "Select",
+   "label": "Default Interval UOM",
+   "mandatory_depends_on": "dosage_by_interval",
+   "options": "Hour\nDay"
+  },
+  {
+   "fieldname": "reference_url",
+   "fieldtype": "HTML Editor",
+   "label": "Reference URL"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "default": "0",
+   "fieldname": "change_in_item",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "in_filter": 1,
+   "label": "Change In Item",
+   "no_copy": 1,
+   "print_hide": 1,
+   "report_hide": 1
+  },
+  {
+   "fieldname": "section_break_36",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Abbr",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "dosage_form",
+   "fieldtype": "Link",
+   "label": "Dosage Form",
+   "options": "Dosage Form"
+  },
+  {
+   "fieldname": "column_break_16",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "!doc.__islocal",
+   "description": "Properties of the linked Item, you may further configure Batch Number and Expiry, Serial Number, Shelf Life etc. in the Item master",
+   "fieldname": "item_details",
+   "fieldtype": "Section Break",
+   "label": "Linked Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "service_request_defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Service Request Defaults"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "drug_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Drug Code",
+   "no_copy": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "is_combination",
+   "fieldname": "combinations_section",
+   "fieldtype": "Section Break",
+   "label": "Combinations"
+  },
+  {
+   "depends_on": "is_combination",
+   "fieldname": "combinations",
+   "fieldtype": "Table",
+   "label": "Combinations",
+   "options": "Medication Ingredient"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_combination",
+   "fieldtype": "Check",
+   "label": "Is Combination"
+  },
+  {
+   "fieldname": "linked_items",
+   "fieldtype": "Table",
+   "label": "Linked Items",
+   "options": "Medication Linked Item"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "medical_coding_section",
+   "fieldtype": "Section Break",
+   "label": "Medical Coding"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  }
+ ],
+ "links": [],
+ "modified": "2023-04-06 16:56:21.260005",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Medication",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "abbr, national_drug_code, generic_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

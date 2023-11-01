@@ -1,22 +1,21 @@
 {
- "allow_copy": 1, 
- "allow_guest_to_view": 0, 
- "allow_import": 1, 
- "allow_rename": 1, 
- "autoname": "field:diagnosis", 
- "beta": 0,
- "creation": "2017-02-15 12:23:59.341108", 
- "custom": 0, 
- "docstatus": 0, 
- "doctype": "DocType", 
- "document_type": "", 
- "editable_grid": 1, 
- "engine": "InnoDB", 
+ "actions": [],
+ "allow_copy": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:diagnosis",
+ "beta": 1,
+ "creation": "2017-02-15 12:23:59.341108",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
  "field_order": [
-    "diagnosis",
-    "codification",
-    "codification_table"
-   ],
+  "diagnosis",
+  "column_break_2",
+  "estimated_duration",
+  "codification",
+  "codification_table"
+ ],
  "fields": [
   {
    "fieldname": "diagnosis",
@@ -28,23 +27,34 @@
    "unique": 1
   },
   {
-   "fieldname": "codification_table",
-   "fieldtype": "Table",
-   "label": "Medical Codes",
-   "options": "Codification Table"
+   "allow_in_quick_entry": 1,
+   "fieldname": "estimated_duration",
+   "fieldtype": "Duration",
+   "hide_seconds": 1,
+   "in_list_view": 1,
+   "label": "Estimated Duration"
   },
   {
-   "fieldname": "codification",
-   "fieldtype": "Section Break",
-   "label": "Medical Coding"
-  }
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+  "fieldname": "codification_table",
+  "fieldtype": "Table",
+  "label": "Medical Codes",
+  "options": "Codification Table"
+ },
+ {
+  "fieldname": "codification",
+  "fieldtype": "Section Break",
+  "label": "Medical Coding"
+ }
  ],
  "links": [],
- "modified": "2022-01-26 12:17:17.358472",
+ "modified": "2021-03-14 20:34:07.440600",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnosis",
- "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

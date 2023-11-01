@@ -36,6 +36,11 @@ frappe.ui.form.on('Patient Encounter', {
 			{fieldname: 'period', columns: 2},
 			{fieldname: 'dosage_form', columns: 2}
 		];
+		if (frappe.meta.get_docfield('Drug Prescription', 'medication').in_list_view === 1) {
+			frm.get_field('drug_prescription').grid.editable_fields.splice(0, 0, {fieldname: 'medication', columns: 3});
+			frm.get_field('drug_prescription').grid.editable_fields.splice(2, 1); // remove item description
+		}
+
 		frm.get_field('lab_test_prescription').grid.editable_fields = [
 			{fieldname: 'lab_test_code', columns: 2},
 			{fieldname: 'lab_test_name', columns: 4},
@@ -64,6 +69,22 @@ frappe.ui.form.on('Patient Encounter', {
 					frappe.msgprint(__('Please select Patient'));
 				}
 			},__('View'));
+
+			if (frm.doc.docstatus == 1 && frm.doc.drug_prescription && frm.doc.drug_prescription.length>0) {
+				frm.add_custom_button(__('Medication Request'), function() {
+					create_medication_request(frm);
+				},__('Create'));
+			}
+
+			if (frm.doc.docstatus == 1 && (
+				(frm.doc.lab_test_prescription && frm.doc.lab_test_prescription.length>0) ||
+				(frm.doc.procedure_prescription && frm.doc.procedure_prescription.length>0) ||
+				(frm.doc.therapies && frm.doc.therapies.length>0)
+				)) {
+				frm.add_custom_button(__('Service Request'), function() {
+					create_service_request(frm);
+				},__('Create'));
+			}
 
 			frm.add_custom_button(__('Vital Signs'), function() {
 				create_vital_signs(frm);
@@ -133,6 +154,14 @@ frappe.ui.form.on('Patient Encounter', {
 			}
 		});
 
+		frm.set_query("medication", "drug_prescription", function() {
+			return {
+				filters: {
+					disabled: false
+				}
+			};
+		})
+
 		frm.set_df_property('patient', 'read_only', frm.doc.appointment ? 1 : 0);
 
 		if (frm.doc.google_meet_link && frappe.datetime.now_date() <= frm.doc.encounter_date) {
@@ -141,6 +170,15 @@ frappe.ui.form.on('Patient Encounter', {
 					`<a target='_blank' href='${frm.doc.google_meet_link}'>Google Meet</a>`,
 				])
 			);
+		}
+		if (frappe.meta.get_docfield('Drug Prescription', 'medication').in_list_view === 1) {
+			frm.set_query('drug_code', 'drug_prescription', function(doc, cdt, cdn) {
+				let row = frappe.get_doc(cdt, cdn);
+				return {
+					query: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications_query',
+					filters: { name: row.medication }
+				};
+			});
 		}
 	},
 
@@ -455,33 +493,18 @@ let create_nursing_tasks = function(frm) {
 				}
 			});
 
-			d.hide();
+			d.hide();		frm.set_query('lab_test_code', 'lab_test_prescription', function() {
+				return {
+					filters: {
+						is_billable: 1
+					}
+				};
+			});
 		}
 	});
 
 	d.show();
 };
-
-frappe.ui.form.on('Drug Prescription', {
-	dosage: function(frm, cdt, cdn){
-		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
-		let child = locals[cdt][cdn];
-		if (child.dosage) {
-			frappe.model.set_value(cdt, cdn, 'interval_uom', 'Day');
-			frappe.model.set_value(cdt, cdn, 'interval', 1);
-		}
-	},
-	period: function(frm, cdt, cdn) {
-		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
-	},
-	interval_uom: function(frm, cdt, cdn) {
-		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
-		let child = locals[cdt][cdn];
-		if (child.interval_uom == 'Hour') {
-			frappe.model.set_value(cdt, cdn, 'dosage', null);
-		}
-	}
-});
 
 let calculate_age = function(birth) {
 	let ageMS = Date.parse(Date()) - Date.parse(birth);
@@ -518,3 +541,93 @@ let cancel_ip_order = function(frm) {
 		});
 	}, __('Reason for Cancellation'), __('Submit'));
 }
+
+let create_service_request = function(frm) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request",
+		freeze: true,
+		args: {
+			encounter: frm.doc.name
+		},
+		callback: function(r) {
+			if (r && !r.exc) {
+				frm.reload_doc();
+				frappe.show_alert({
+					message: __('Service Request(s) Created'),
+					indicator: 'success'
+				});
+			}
+		}
+	});
+};
+
+let create_medication_request = function(frm) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_medication_request",
+		freeze: true,
+		args: {
+			encounter: frm.doc.name
+		},
+		callback: function(r) {
+			if (r && !r.exc) {
+				frm.reload_doc();
+				frappe.show_alert({
+					message: __('Medicaiton Request(s) Created'),
+					indicator: 'success'
+				});
+			}
+		}
+	});
+};
+
+
+frappe.ui.form.on('Drug Prescription', {
+	dosage: function(frm, cdt, cdn){
+		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
+		let child = locals[cdt][cdn];
+		if (child.dosage) {
+			frappe.model.set_value(cdt, cdn, 'interval_uom', 'Day');
+			frappe.model.set_value(cdt, cdn, 'interval', 1);
+		}
+	},
+
+	period: function(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
+	},
+
+	interval_uom: function(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, 'update_schedule', 1);
+		let child = locals[cdt][cdn];
+		if (child.interval_uom == 'Hour') {
+			frappe.model.set_value(cdt, cdn, 'dosage', null);
+		}
+	},
+
+	medication:function(frm, cdt, cdn) {
+		// to set drug_code(item) if Medication Item table have only one item
+		let child = locals[cdt][cdn];
+		if (!child.medication) {
+			return;
+		}
+
+		frappe.call({
+			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications",
+			freeze: true,
+			args: {
+				medication: child.medication
+			},
+			callback: function(r) {
+				if (r && !r.exc && r.message) {
+					let data = r.message
+					if (data.length == 1) {
+						if (data[0].item) {
+							frappe.model.set_value(cdt, cdn, 'drug_code', data[0].item);
+						}
+					} else {
+						frappe.model.set_value(cdt, cdn, 'drug_code', "");
+					}
+				}
+			}
+		});
+	}
+});

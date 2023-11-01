@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "creation": "2023-03-23 11:54:50.247310",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "medication",
+  "strength",
+  "strength_uom"
+ ],
+ "fields": [
+  {
+   "fetch_from": "medication.strength",
+   "fieldname": "strength",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Strength",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "medication.strength_uom",
+   "fieldname": "strength_uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strength UOM",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "medication",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Medication",
+   "options": "Medication",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2023-03-27 13:34:21.387111",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Medication Ingredient",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "restrict_to_domain": "Healthcare",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

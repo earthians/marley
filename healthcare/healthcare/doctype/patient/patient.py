@@ -4,10 +4,8 @@
 
 
 import dateutil
+
 import frappe
-from erpnext import get_default_currency
-from erpnext.accounts.party import get_dashboard_info
-from erpnext.selling.doctype.customer.customer import make_address
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.contacts.doctype.contact.contact import get_default_contact
@@ -15,6 +13,10 @@ from frappe.model.document import Document
 from frappe.model.naming import set_name_by_naming_series
 from frappe.utils import cint, cstr, getdate
 from frappe.utils.nestedset import get_root_of
+
+from erpnext import get_default_currency
+from erpnext.accounts.party import get_dashboard_info
+from erpnext.selling.doctype.customer.customer import make_address
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
@@ -252,6 +254,19 @@ class Patient(Document):
 
 		contact.flags.skip_patient_update = True
 		contact.save(ignore_permissions=True)
+
+	def calculate_age(self, ref_date=None):
+		if self.dob:
+			if not ref_date:
+				ref_date = frappe.utils.nowdate()
+			diff = frappe.utils.date_diff(ref_date, self.dob)
+			years = diff // 365
+			months = (diff - (years * 365)) // 30
+			days = (diff - (years * 365)) - (months * 30)
+			return {
+				"age_in_string": f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}',
+				"age_in_days": diff,
+			}
 
 
 def create_customer(doc):
