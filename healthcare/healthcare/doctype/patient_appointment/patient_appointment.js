@@ -892,10 +892,33 @@ let make_payment = function (frm, automate_invoicing) {
 				reqd: 1,
 			},
 			{
+				fieldtype: "Column Break",
+			},
+			{
 				label: "Consultation Charge",
 				fieldname: "consultation_charge",
 				fieldtype: "Currency",
 				read_only: true,
+			},
+			{
+				label: "Total Payable",
+				fieldname: "total_payable",
+				fieldtype: "Currency",
+				read_only: true,
+			},
+			{
+				label: __("Additional Discount"),
+				fieldtype:"Section Break",
+				collapsible: 1,
+			},
+			{
+				label: "Discount Percentage",
+				fieldname: "discount_percentage",
+				fieldtype: "Percent",
+				default: 0,
+			},
+			{
+				fieldtype: "Column Break",
 			},
 			{
 				label: "Discount Amount",
@@ -912,7 +935,7 @@ let make_payment = function (frm, automate_invoicing) {
 				fieldtype: "Data",
 				read_only: true,
 			};
-			fields.splice(1, 0, pract_dict);
+			fields.splice(3, 0, pract_dict);
 		} else if (frm.doc.appointment_for == "Service Unit") {
 			let su_dict = {
 				label: "Service Unit",
@@ -920,7 +943,7 @@ let make_payment = function (frm, automate_invoicing) {
 				fieldtype: "Data",
 				read_only: true,
 			};
-			fields.splice(1, 0, su_dict);
+			fields.splice(3, 0, su_dict);
 		} else if (frm.doc.appointment_for == "Department") {
 			let dept_dict = {
 				label: "Department",
@@ -928,7 +951,7 @@ let make_payment = function (frm, automate_invoicing) {
 				fieldtype: "Data",
 				read_only: true,
 			};
-			fields.splice(1, 0, dept_dict);
+			fields.splice(3, 0, dept_dict);
 		}
 
 		if (automate_invoicing) {
@@ -942,29 +965,29 @@ let make_payment = function (frm, automate_invoicing) {
 			fields: fields,
 			primary_action_label: "Create Invoice",
 			primary_action: async function(values) {
-				await frm.save();
-				if (values.consultation_charge >= values.discount_amount) {
-					frappe.call({
-						method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
-						args: {
-							"appointment_name": frm.doc.name,
-							"discount_amount": values.discount_amount
-						},
-						callback: async function (data) {
-							if (!data.exc) {
-								await frm.reload_doc();
-								if (frm.doc.ref_sales_invoice) {
-									d.get_field("mode_of_payment").$input.prop("disabled", true);
-									d.get_field("discount_amount").$input.prop("disabled", true);
-									d.get_primary_btn().attr("disabled", true);
-									d.get_secondary_btn().attr("disabled", false);
-								}
+				if (frm.is_dirty()) {
+					await frm.save();
+				}
+				frappe.call({
+					method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.invoice_appointment",
+					args: {
+						"appointment_name": frm.doc.name,
+						"discount_percentage": values.discount_percentage,
+						"discount_amount": values.discount_amount
+					},
+					callback: async function (data) {
+						if (!data.exc) {
+							await frm.reload_doc();
+							if (frm.doc.ref_sales_invoice) {
+								d.get_field("mode_of_payment").$input.prop("disabled", true);
+								d.get_field("discount_percentage").$input.prop("disabled", true);
+								d.get_field("discount_amount").$input.prop("disabled", true);
+								d.get_primary_btn().attr("disabled", true);
+								d.get_secondary_btn().attr("disabled", false);
 							}
 						}
-					});
-				} else {
-					frappe.throw(__("Discount Amount should be less than or equal to Consultation Charge"))
-				}
+					}
+				});
 			},
 			secondary_action_label: __(`<svg class="icon  icon-sm" style="">
 				<use class="" href="#icon-printer"></use>
@@ -983,6 +1006,7 @@ let make_payment = function (frm, automate_invoicing) {
 		d.set_values({
 			"patient": frm.doc.patient_name,
 			"consultation_charge": frm.doc.paid_amount,
+			"total_payable": frm.doc.paid_amount,
 		});
 
 		if (frm.doc.appointment_for == "Practitioner") {
@@ -997,5 +1021,56 @@ let make_payment = function (frm, automate_invoicing) {
 			d.set_value("mode_of_payment", frm.doc.mode_of_payment);
 		}
 		d.show();
+
+		d.fields_dict["discount_percentage"].df.onchange = () => validate_discount("discount_percentage");
+		d.fields_dict["discount_amount"].df.onchange = () => validate_discount("discount_amount");
+
+		function validate_discount(field) {
+			let message = "";
+			let discount_percentage = d.get_value("discount_percentage");
+			let discount_amount = d.get_value("discount_amount");
+			let consultation_charge = d.get_value("consultation_charge");
+
+			if (field === "discount_percentage") {
+				if (discount_percentage > 100 || discount_percentage < 0) {
+					d.get_primary_btn().attr("disabled", true);
+					message = "Invalid discount percentage";
+				} else {
+					d.get_primary_btn().attr("disabled", false);
+					frm.via_discount_percentage = true;
+					if (discount_percentage && discount_amount) {
+						d.set_value("discount_amount", 0);
+					}
+					discount_amount = consultation_charge * (discount_percentage / 100);
+
+					d.set_values({
+						"discount_amount": discount_amount,
+						"total_payable": consultation_charge - discount_amount,
+					}).then(() => delete frm.via_discount_percentage);
+				}
+			} else if (field === "discount_amount") {
+				if (consultation_charge < discount_amount || discount_amount < 0) {
+					d.get_primary_btn().attr("disabled", true);
+					message = "Discount amount should not be more than Consultation Charge";
+				} else {
+					d.get_primary_btn().attr("disabled", false);
+					if (!frm.via_discount_percentage) {
+						discount_percentage = (discount_amount / consultation_charge) * 100;
+						d.set_values({
+							"discount_percentage": discount_percentage,
+							"total_payable": consultation_charge - discount_amount,
+						});
+					}
+				}
+			}
+			show_message(d, message, field);
+		}
 	}
+};
+
+let show_message = function(d, message, field) {
+	var field = d.get_field(field);
+	field.df.description = `<div style="color:red;
+		padding:5px 5px 5px 5px">${message}</div>`
+	field.refresh();
 };

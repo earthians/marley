@@ -394,12 +394,11 @@ def check_payment_reqd(patient):
 
 
 @frappe.whitelist()
-def invoice_appointment(appointment_name, discount_amount=0):
+def invoice_appointment(appointment_name, discount_percentage=0, discount_amount=0):
 	appointment_doc = frappe.get_doc("Patient Appointment", appointment_name)
-	show_payment_popup = frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
-	free_follow_ups = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+	settings = frappe.get_single("Healthcare Settings")
 
-	if free_follow_ups:
+	if settings.enable_free_follow_ups:
 		fee_validity = check_fee_validity(appointment_doc)
 
 		if fee_validity and fee_validity.status != "Active":
@@ -410,12 +409,12 @@ def invoice_appointment(appointment_name, discount_amount=0):
 	else:
 		fee_validity = None
 
-	if show_payment_popup and not appointment_doc.invoiced and not fee_validity:
-		create_sales_invoice(appointment_doc, discount_amount)
+	if settings.show_payment_popup and not appointment_doc.invoiced and not fee_validity:
+		create_sales_invoice(appointment_doc, discount_percentage, discount_amount)
 	update_fee_validity(appointment_doc)
 
 
-def create_sales_invoice(appointment_doc, discount_amount=0):
+def create_sales_invoice(appointment_doc, discount_percentage=0, discount_amount=0):
 	sales_invoice = frappe.new_doc("Sales Invoice")
 	sales_invoice.patient = appointment_doc.patient
 	sales_invoice.customer = frappe.get_value("Patient", appointment_doc.patient, "customer")
@@ -426,7 +425,17 @@ def create_sales_invoice(appointment_doc, discount_amount=0):
 
 	item = sales_invoice.append("items", {})
 	item = get_appointment_item(appointment_doc, item)
-	paid_amount = flt(appointment_doc.paid_amount) - flt(discount_amount)
+
+	paid_amount = flt(appointment_doc.paid_amount)
+	# Set discount amount and percentage if entered in payment popup
+	if flt(discount_percentage):
+		sales_invoice.additional_discount_percentage = flt(discount_percentage)
+		paid_amount = flt(appointment_doc.paid_amount) - (
+			flt(appointment_doc.paid_amount) * (flt(discount_percentage) / 100)
+		)
+	if flt(discount_amount):
+		sales_invoice.discount_amount = flt(discount_amount)
+		paid_amount = flt(appointment_doc.paid_amount) - flt(discount_amount)
 
 	# Add payments if payment details are supplied else proceed to create invoice as Unpaid
 	if appointment_doc.mode_of_payment and appointment_doc.paid_amount:
@@ -434,9 +443,6 @@ def create_sales_invoice(appointment_doc, discount_amount=0):
 		payment = sales_invoice.append("payments", {})
 		payment.mode_of_payment = appointment_doc.mode_of_payment
 		payment.amount = paid_amount
-
-	# Set discount amount in invoice equal to discount amount entered in payment popup
-	sales_invoice.discount_amount = flt(discount_amount)
 
 	sales_invoice.set_missing_values(for_validate=True)
 	sales_invoice.flags.ignore_mandatory = True
@@ -449,10 +455,10 @@ def create_sales_invoice(appointment_doc, discount_amount=0):
 		{
 			"invoiced": 1,
 			"ref_sales_invoice": sales_invoice.name,
-			"paid_amount": paid_amount
+			"paid_amount": paid_amount,
 		},
 	)
-	appointment_doc.reload()
+	appointment_doc.notify_update()
 
 
 @frappe.whitelist()
