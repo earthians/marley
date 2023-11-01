@@ -249,20 +249,6 @@ class Patient(Document):
 		contact.flags.skip_patient_update = True
 		contact.save(ignore_permissions=True)
 
-<<<<<<< HEAD
-=======
-	def calculate_age(self, ref_date=None):
-		if self.dob:
-			if not ref_date:
-				ref_date = frappe.utils.nowdate()
-			diff = frappe.utils.date_diff(ref_date, self.dob)
-			years = diff // 365
-			months = (diff - (years * 365)) // 30
-			days = (diff - (years * 365)) - (months * 30)
-			return {
-				"age_in_string": f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}',
-				"age_in_days": diff,
-			}
 
 	def update_linked_customer(self):
 		customer = frappe.get_doc("Customer", self.customer)
@@ -293,7 +279,6 @@ class Patient(Document):
 		)
 		self.notify_update()
 
->>>>>>> c5d9de2 (fix: linking existing customer to new Paitient overwrites customer name and other details (#306))
 
 def create_customer(doc):
 	customer = frappe.get_doc(
