@@ -10,6 +10,7 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
   "responses==0.23.1",
+  "python-barcode~=0.13.1",
 ]
 
 [build-system]
