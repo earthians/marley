@@ -3,13 +3,13 @@ from frappe import _
 from . import __version__ as app_version  # noqa
 
 app_name = "healthcare"
-app_title = "Healthcare"
-app_publisher = "healthcare"
-app_description = "healthcare"
+app_title = "Frappe Health"
+app_publisher = "earthians Health Informatics Pvt. Ltd."
+app_description = "Modern, Open Source HIS built on Frappe and ERPNext"
 app_icon = "octicon octicon-file-directory"
 app_color = "grey"
-app_email = "contact@frappe.io"
-app_license = "MIT"
+app_email = "info@earthianslive.com"
+app_license = "GNU GPL V3"
 required_apps = ["erpnext"]
 
 # Includes in <head>
