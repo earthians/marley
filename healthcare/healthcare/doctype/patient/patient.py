@@ -249,7 +249,6 @@ class Patient(Document):
 		contact.flags.skip_patient_update = True
 		contact.save(ignore_permissions=True)
 
-
 	def update_linked_customer(self):
 		customer = frappe.get_doc("Customer", self.customer)
 		if self.customer_group:
