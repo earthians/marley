@@ -21,6 +21,7 @@ from healthcare.healthcare.doctype.observation_template.observation_template imp
 
 class ServiceRequest(ServiceRequestController):
 	def validate(self):
+		super().validate()
 		if self.template_dt and self.template_dn and not self.codification_table:
 			template_doc = frappe.get_doc(self.template_dt, self.template_dn)
 			for mcode in template_doc.codification_table:
