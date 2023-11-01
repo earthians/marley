@@ -32,6 +32,7 @@ class Patient(Document):
 	def validate(self):
 		self.set_full_name()
 		self.flags.is_new_doc = self.is_new()
+		self.flags.existing_customer = self.is_new() and bool(self.customer)
 
 	def before_insert(self):
 		self.set_missing_customer_details()
@@ -46,18 +47,13 @@ class Patient(Document):
 	def on_update(self):
 		if frappe.db.get_single_value("Healthcare Settings", "link_customer_to_patient"):
 			if self.customer:
-				customer = frappe.get_doc("Customer", self.customer)
-				if self.customer_group:
-					customer.customer_group = self.customer_group
-				if self.territory:
-					customer.territory = self.territory
-				customer.customer_name = self.patient_name
-				customer.default_price_list = self.default_price_list
-				customer.default_currency = self.default_currency
-				customer.language = self.language
-				customer.image = self.image
-				customer.ignore_mandatory = True
-				customer.save(ignore_permissions=True)
+				if self.flags.existing_customer or frappe.db.exists(
+					{"doctype": "Patient", "name": ["!=", self.name], "customer": self.customer}
+				):
+					self.update_patient_based_on_existing_customer()
+				else:
+					self.update_linked_customer()
+
 			else:
 				create_customer(self)
 
@@ -253,6 +249,51 @@ class Patient(Document):
 		contact.flags.skip_patient_update = True
 		contact.save(ignore_permissions=True)
 
+<<<<<<< HEAD
+=======
+	def calculate_age(self, ref_date=None):
+		if self.dob:
+			if not ref_date:
+				ref_date = frappe.utils.nowdate()
+			diff = frappe.utils.date_diff(ref_date, self.dob)
+			years = diff // 365
+			months = (diff - (years * 365)) // 30
+			days = (diff - (years * 365)) - (months * 30)
+			return {
+				"age_in_string": f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}',
+				"age_in_days": diff,
+			}
+
+	def update_linked_customer(self):
+		customer = frappe.get_doc("Customer", self.customer)
+		if self.customer_group:
+			customer.customer_group = self.customer_group
+		if self.territory:
+			customer.territory = self.territory
+		customer.customer_name = self.patient_name
+		customer.default_price_list = self.default_price_list
+		customer.default_currency = self.default_currency
+		customer.language = self.language
+		customer.image = self.image
+		customer.ignore_mandatory = True
+		customer.save(ignore_permissions=True)
+
+		frappe.msgprint(_("Customer {0} updated").format(customer.name), alert=True)
+
+	def update_patient_based_on_existing_customer(self):
+		customer = frappe.get_doc("Customer", self.customer)
+		self.db_set(
+			{
+				"customer_group": customer.customer_group,
+				"territory": customer.territory,
+				"default_price_list": customer.default_price_list,
+				"default_currency": customer.default_currency,
+				"language": customer.language,
+			}
+		)
+		self.notify_update()
+
+>>>>>>> c5d9de2 (fix: linking existing customer to new Paitient overwrites customer name and other details (#306))
 
 def create_customer(doc):
 	customer = frappe.get_doc(
@@ -271,7 +312,7 @@ def create_customer(doc):
 	).insert(ignore_permissions=True, ignore_mandatory=True)
 
 	frappe.db.set_value("Patient", doc.name, "customer", customer.name)
-	frappe.msgprint(_("Customer {0} is created.").format(customer.name), alert=True)
+	frappe.msgprint(_("Customer {0} created and linked to Patient").format(customer.name), alert=True)
 
 
 def make_invoice(patient, company):
