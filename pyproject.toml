@@ -2,13 +2,14 @@
 name = "healthcare"
 description = "Modern, Open Source HIS built on Frappe and ERPNext"
 authors = [
-    { name = "earthians Health Informatics Pvt. Ltd.", email = "info@earthianslive.com" }
+    { name = "earthians Health Informatics Pvt. Ltd.", email = "info@earthianslive.com" },
 ]
 readme = "README.md"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.10"
 dynamic = ["version"]
-
 dependencies = [
-    "responses==0.20.0",
+  "responses==0.23.1",
 ]
 
 [build-system]
