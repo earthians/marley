@@ -9,7 +9,7 @@
   "sb_op_settings",
   "patient_name_by",
   "link_customer_to_patient",
-  "default_medical_code_standard",
+  "default_code_system",
   "validate_nursing_checklists",
   "default_google_calendar",
   "column_break_9",
@@ -63,12 +63,6 @@
    "fieldname": "sb_op_settings",
    "fieldtype": "Section Break",
    "label": "Outpatient Settings"
-  },
-  {
-   "fieldname": "default_medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Default Medical Code Standard",
-   "options": "Medical Code Standard"
   },
   {
    "fieldname": "column_break_9",
@@ -376,11 +370,17 @@
    "fieldname": "create_observation_on_si_submit",
    "fieldtype": "Check",
    "label": "Create Observation(s) on Sales Invoice Submission"
+  },
+  {
+   "fieldname": "default_code_system",
+   "fieldtype": "Link",
+   "label": "Default Code System",
+   "options": "Code System"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-10-24 05:59:06.422559",
+ "modified": "2023-11-03 12:58:54.795803",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

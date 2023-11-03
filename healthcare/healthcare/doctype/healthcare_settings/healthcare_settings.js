@@ -30,6 +30,13 @@ frappe.ui.form.on('Healthcare Settings', {
 				}
 			};
 		});
+		frm.set_query('default_code_system', function(doc) {
+			return {
+				filters: {
+					'is_fhir_defined': false
+				}
+			};
+		});
 		set_query_service_item(frm, 'inpatient_visit_charge_item');
 		set_query_service_item(frm, 'op_consulting_charge_item');
 		set_query_service_item(frm, 'clinical_procedure_consumable_item');
@@ -52,6 +59,11 @@ frappe.tour['Healthcare Settings'] = [
 		fieldname: 'link_customer_to_patient',
 		title: __('Link Customer to Patient'),
 		description: __('If checked, a customer will be created for every Patient. Patient Invoices will be created against this Customer. You can also select existing Customer while creating a Patient. This field is checked by default.')
+	},
+	{
+		fieldname: 'default_code_system',
+		title: __('Default Code System'),
+		description: __('Will be set as the default Code System selected in the Codification Table')
 	},
 	{
 		fieldname: 'default_google_calendar',

@@ -57,9 +57,10 @@
   "result_legend_section",
   "legend_print_position",
   "result_legend",
-  "service_order_defaults_section",
+  "service_request_defaults_section",
   "patient_care_type",
   "staff_role",
+  "column_break_34",
   "change_in_item"
  ],
  "fields": [
@@ -142,25 +143,6 @@
    "in_list_view": 1,
    "label": "Rate",
    "mandatory_depends_on": "eval:doc.is_billable && !doc.link_existing_item"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "medical_coding_section",
-   "fieldtype": "Section Break",
-   "label": "Medical Coding"
-  },
-  {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
   },
   {
    "depends_on": "eval:doc.lab_test_template_type == 'Single'",
@@ -424,12 +406,12 @@
    "fieldtype": "Column Break"
   },
   {
-  "fieldname": "column_break_buub",
+   "fieldname": "column_break_buub",
    "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "modified": "2023-02-23 12:14:27.297802",
+ "modified": "2023-11-03 15:28:04.801812",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
