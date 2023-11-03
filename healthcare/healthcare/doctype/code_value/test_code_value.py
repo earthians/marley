@@ -6,5 +6,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestMedicalCodeStandard(FrappeTestCase):
+class TestCodeValue(FrappeTestCase):
 	pass

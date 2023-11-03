@@ -6,50 +6,37 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "medical_code",
-  "medical_code_standard",
-  "column_break_3",
+  "code_system",
   "system",
+  "is_fhir_defined",
+  "oid",
+  "column_break_3",
+  "code_value",
   "code",
+  "display",
   "section_break_5",
-  "description"
+  "definition"
  ],
  "fields": [
   {
-   "fieldname": "medical_code",
+   "columns": 2,
+   "fieldname": "code_value",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "in_list_view": 1,
-   "label": "Medical Code",
-   "options": "Medical Code",
+   "label": "Code Value",
+   "options": "Code Value",
    "reqd": 1
   },
   {
-   "fetch_from": "medical_code.code",
+   "columns": 2,
+   "fetch_from": "code_value.code_value",
    "fieldname": "code",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
    "in_list_view": 1,
    "label": "Code",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "medical_code.description",
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "ignore_xss_filter": 1,
-   "in_list_view": 1,
-   "label": "Description",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "medical_code.medical_code_standard",
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard",
-   "read_only_depends_on": "medical_code",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -61,16 +48,60 @@
    "fieldtype": "Section Break"
   },
   {
-   "fetch_from": "medical_code_standard.uri",
+   "columns": 2,
+   "fetch_from": "code_system.uri",
    "fieldname": "system",
    "fieldtype": "Data",
    "label": "System",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "code_system",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Code System",
+   "options": "Code System",
+   "read_only_depends_on": "code_value",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "code_value.definition",
+   "fieldname": "definition",
+   "fieldtype": "Small Text",
+   "ignore_xss_filter": 1,
+   "in_list_view": 1,
+   "label": "Definition",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "code_value.display",
+   "fieldname": "display",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Display",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_fhir_defined",
+   "fieldtype": "Check",
+   "label": "Is FHIR Defined",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "code_system.oid",
+   "fieldname": "oid",
+   "fieldtype": "Data",
+   "label": "OID",
    "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-02-23 11:17:39.669181",
+ "modified": "2023-11-03 13:28:04.445778",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Codification Table",

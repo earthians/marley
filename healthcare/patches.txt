@@ -4,6 +4,7 @@ healthcare.patches.v0_0.set_medical_code_from_field_to_codification_table
 healthcare.patches.v0_0.setup_service_request
 healthcare.patches.v15_0.create_custom_fields_in_sales_invoice_item
 healthcare.patches.v15_0.rename_automate_appointment_invoicing
+healthcare.patches.v15_0.rename_medical_code_standard_and_medical_code
 
 [post_model_sync]
 healthcare.patches.v15_0.rename_field_medical_department_in_appoitment_type_service_item
