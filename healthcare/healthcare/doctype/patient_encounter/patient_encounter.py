@@ -213,7 +213,6 @@ class PatientEncounter(Document):
 				"source_doc": "Patient Encounter",
 				"order_group": self.name,
 				"sequence": line_item.get("sequence"),
-				"patient_care_type": template_doc.get("patient_care_type"),
 				"intent": line_item.get("intent"),
 				"priority": line_item.get("priority"),
 				"quantity": line_item.get_quantity() if line_item.doctype == "Drug Prescription" else 1,
@@ -245,7 +244,9 @@ class PatientEncounter(Document):
 				{
 					"template_dt": template_doc.doctype,
 					"template_dn": template_doc.name,
-					"patient_care_type": line_item.patient_care_type,
+					"patient_care_type": line_item.patient_care_type
+					if line_item.patient_care_type
+					else template_doc.get("patient_care_type"),
 				}
 			)
 
@@ -340,10 +341,10 @@ def validate_codification_table(doc):
 					doc.append(
 						"codification_table",
 						{
-							"medical_code": m_code.get("medical_code"),
-							"medical_code_standard": m_code.get("medical_code_standard"),
+							"code_value": m_code.get("code_value"),
+							"code_system": m_code.get("code_system"),
 							"code": m_code.get("code"),
-							"description": m_code.get("description"),
+							"definition": m_code.get("definition"),
 							"system": m_code.get("system"),
 						},
 					)

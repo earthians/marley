@@ -80,13 +80,13 @@
    "fieldname": "intent",
    "fieldtype": "Link",
    "label": "Intent",
-   "options": "FHIR Value Set"
+   "options": "Code Value"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Link",
    "label": "Priority",
-   "options": "FHIR Value Set"
+   "options": "Code Value"
   },
   {
    "fieldname": "patient_care_type",

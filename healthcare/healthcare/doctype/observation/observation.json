@@ -405,7 +405,7 @@
    "fieldname": "observation_method",
    "fieldtype": "Link",
    "label": "Observation Method",
-   "options": "FHIR Value Set",
+   "options": "Code Value",
    "read_only": 1
   },
   {

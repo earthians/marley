@@ -173,14 +173,14 @@
    "fieldname": "intent",
    "fieldtype": "Link",
    "label": "Intent",
-   "options": "FHIR Value Set"
+   "options": "Code Value"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Priority",
-   "options": "FHIR Value Set"
+   "options": "Code Value"
   },
   {
    "collapsible": 1,

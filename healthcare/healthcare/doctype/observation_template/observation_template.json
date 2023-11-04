@@ -57,7 +57,10 @@
   "rate",
   "change_in_item",
   "conditions_tab",
-  "diagnosis"
+  "diagnosis",
+  "service_request_defaults_tab",
+  "patient_care_type",
+  "staff_role"
  ],
  "fields": [
   {
@@ -117,7 +120,7 @@
    "fieldname": "method",
    "fieldtype": "Link",
    "label": "Method",
-   "options": "FHIR Value Set"
+   "options": "Code Value"
   },
   {
    "fieldname": "observation_reference_range",
@@ -329,7 +332,7 @@
    "label": "Item Code"
   },
   {
-   "fetch_from": "method.value",
+   "fetch_from": "method.code_value",
    "fieldname": "method_value",
    "fieldtype": "Data",
    "hidden": 1,
@@ -375,11 +378,28 @@
    "fieldtype": "Table MultiSelect",
    "label": "Diagnosis",
    "options": "Patient Encounter Diagnosis"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "fieldname": "service_request_defaults_tab",
+   "fieldtype": "Tab Break",
+   "label": "Service Request Defaults"
+  },
+  {
+   "fieldname": "staff_role",
+   "fieldtype": "Link",
+   "label": "Staff Role",
+   "options": "Role"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-10-25 05:30:46.124529",
+ "modified": "2023-11-06 15:05:35.409342",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
