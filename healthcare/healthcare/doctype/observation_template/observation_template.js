@@ -33,14 +33,14 @@ frappe.ui.form.on("Observation Template", {
 		frm.set_query("method", function () {
 			return {
 				"filters": {
-					"value_set": "Observation Method",
+					"code_system": "Observation Method",
 				}
 			};
 		});
 		frm.set_query("reference_type", "observation_reference_range", function() {
 			return {
 				filters: {
-					"value_set": "Reference Type",
+					"code_system": "Reference Type",
 				}
 			};
 		})

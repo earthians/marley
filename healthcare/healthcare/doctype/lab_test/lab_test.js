@@ -44,12 +44,12 @@ frappe.ui.form.on('Lab Test', {
 			});
 		}
 
-		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.medical_code_standard) {
+			if (row.code_system) {
 				return {
 					filters: {
-						medical_code_standard: row.medical_code_standard
+						code_system: row.code_system
 					}
 				};
 			}
@@ -95,10 +95,10 @@ frappe.ui.form.on('Lab Test', {
 					if (!r.exc && r.message) {
 						frm.doc.codification_table = []
 						$.each(r.message, function(k, val) {
-							if (val.medical_code) {
+							if (val.code_value) {
 								var child = cur_frm.add_child("codification_table");
-								child.medical_code = val.medical_code
-								child.medical_code_standard = val.medical_code_standard
+								child.code_value = val.code_value
+								child.code_system = val.code_system
 								child.code = val.code
 								child.description = val.description
 								child.system = val.system

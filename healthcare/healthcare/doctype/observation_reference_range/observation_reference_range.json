@@ -406,7 +406,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Reference Type",
-   "options": "FHIR Value Set"
+   "options": "Code Value"
   },
   {
    "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",

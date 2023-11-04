@@ -30,15 +30,6 @@ frappe.ui.form.on('Clinical Procedure Template', {
 		mark_change_in_item(frm);
 	},
 
-	medical_code: function (frm) {
-		frm.set_query("medical_code", function () {
-			return {
-				filters: {
-					medical_code_standard: frm.doc.medical_code_standard
-				}
-			};
-		});
-	},
 
 	refresh: function (frm) {
 		frm.fields_dict['items'].grid.set_column_disp('barcode', false);
@@ -59,12 +50,12 @@ frappe.ui.form.on('Clinical Procedure Template', {
 			};
 		});
 
-		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.medical_code_standard) {
+			if (row.code_system) {
 				return {
 					filters: {
-						medical_code_standard: row.medical_code_standard
+						code_system: row.code_system
 					}
 				};
 			}

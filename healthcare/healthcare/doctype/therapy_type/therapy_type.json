@@ -32,7 +32,7 @@
   "change_in_item",
   "codification",
   "codification_table",
-  "service_request_defaults_section",
+  "service_request_defaults_tab",
   "patient_care_type",
   "staff_role"
  ],
@@ -187,12 +187,6 @@
    "options": "Nursing Checklist Template"
   },
   {
-   "collapsible": 1,
-   "fieldname": "service_request_defaults_section",
-   "fieldtype": "Section Break",
-   "label": "Service Request Defaults"
-  },
-  {
    "fetch_from": "service_request_category.patient_care_type",
    "fetch_if_empty": 1,
    "fieldname": "patient_care_type",
@@ -207,13 +201,19 @@
    "options": "Role"
   },
   {
-  "fieldname": "exercises_tab",
-  "fieldtype": "Tab Break",
-  "label": "Exercises"
+   "fieldname": "exercises_tab",
+   "fieldtype": "Tab Break",
+   "label": "Exercises"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "service_request_defaults_tab",
+   "fieldtype": "Tab Break",
+   "label": "Service Request Defaults"
   }
  ],
  "links": [],
- "modified": "2023-02-23 12:37:26.832923",
+ "modified": "2023-11-06 14:59:47.927972",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Type",

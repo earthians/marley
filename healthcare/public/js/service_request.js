@@ -36,7 +36,7 @@ frappe.ui.form.on(cur_frm.doctype, { // nosemgrep
 		frm.set_query('priority', function () {
 			return {
 				filters: {
-					value_set: 'Priority'
+					code_system: 'Priority'
 				}
 			};
 		});
@@ -44,7 +44,7 @@ frappe.ui.form.on(cur_frm.doctype, { // nosemgrep
 		frm.set_query('intent', function () {
 			return {
 				filters: {
-					value_set: 'Intent'
+					code_system: 'Intent'
 				}
 			};
 		});

@@ -143,12 +143,12 @@ frappe.ui.form.on('Patient Encounter', {
 			};
 		});
 
-		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.medical_code_standard) {
+			if (row.code_system) {
 				return {
 					filters: {
-						medical_code_standard: row.medical_code_standard
+						code_system: row.code_system
 					}
 				};
 			}
@@ -181,8 +181,8 @@ frappe.ui.form.on('Patient Encounter', {
 			});
 		}
 		var table_list =  ["drug_prescription", "lab_test_prescription", "observations", "procedure_prescription", "therapies"]
-		apply_fhir_filter_to_child(frm, "priority", table_list, "Priority")
-		apply_fhir_filter_to_child(frm, "intent", table_list, "Intent")
+		apply_code_sm_filter_to_child(frm, "priority", table_list, "Priority")
+		apply_code_sm_filter_to_child(frm, "intent", table_list, "Intent")
 	},
 
 	appointment: function(frm) {
@@ -636,12 +636,12 @@ frappe.ui.form.on('Drug Prescription', {
 });
 
 
-var apply_fhir_filter_to_child = function(frm, field, table_list, value_set) {
+var apply_code_sm_filter_to_child = function(frm, field, table_list, code_system) {
 	table_list.forEach(function(table) {
 		frm.set_query(field, table, function() {
 			return {
 				filters: {
-					value_set: value_set
+					code_system: code_system
 				}
 			};
 		});

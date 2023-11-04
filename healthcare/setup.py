@@ -744,19 +744,120 @@ def setup_service_request_masters():
 		{"doctype": "Patient Care Type", "patient_care_type": _("Preventive")},
 		{"doctype": "Patient Care Type", "patient_care_type": _("Intervention")},
 		{"doctype": "Patient Care Type", "patient_care_type": _("Diagnostic")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Order")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Proposal")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Plan")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Directive")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Original Order")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Reflex Order")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Filler Order")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Instance Order")},
-		{"doctype": "FHIR Value Set", "value_set": "Intent", "value": _("Option")},
-		{"doctype": "FHIR Value Set", "value_set": "Priority", "value": _("Routine")},
-		{"doctype": "FHIR Value Set", "value_set": "Priority", "value": _("Urgent")},
-		{"doctype": "FHIR Value Set", "value_set": "Priority", "value": _("ASAP")},
-		{"doctype": "FHIR Value Set", "value_set": "Priority", "value": _("STAT")},
+		{
+			"doctype": "Code System",
+			"uri": "http://hl7.org/fhir/ValueSet/request-intent",
+			"is_fhir_defined": 1,
+			"code_system": _("Intent"),
+			"description": _(
+				"Codes indicating the degree of authority/intentionality associated with a request."
+			),
+		},
+		{
+			"doctype": "Code System",
+			"uri": "http://hl7.org/fhir/ValueSet/request-priority",
+			"is_fhir_defined": 1,
+			"code_system": _("Priority"),
+			"description": _("Identifies the level of importance to be assigned to actioning the request."),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Order"),
+			"definition": _(
+				"The request represents a request/demand and authorization for action by the requestor."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Proposal"),
+			"definition": _(
+				"The request is a suggestion made by someone/something that does not have an intention to ensure it occurs and without providing an authorization to act."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Plan"),
+			"definition": _(
+				"The request represents an intention to ensure something occurs without providing an authorization for others to act."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Directive"),
+			"definition": _(
+				"The request represents a legally binding instruction authored by a Patient or RelatedPerson."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Original Order"),
+			"definition": _("The request represents an original authorization for action."),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Reflex Order"),
+			"definition": _(
+				"The request represents an automatically generated supplemental authorization for action based on a parent authorization together with initial results of the action taken against that parent authorization."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Filler Order"),
+			"definition": _(
+				"The request represents the view of an authorization instantiated by a fulfilling system representing the details of the fulfiller's intention to act upon a submitted order."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Instance Order"),
+			"definition": _(
+				"An order created in fulfillment of a broader order that represents the authorization for a single activity occurrence. E.g. The administration of a single dose of a drug."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Intent",
+			"code_value": _("Option"),
+			"definition": _(
+				"The request represents a component or option for a RequestOrchestration that establishes timing, conditionality and/or other constraints among a set of requests."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Priority",
+			"code_value": _("Routine"),
+			"definition": _("The request has normal priority."),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Priority",
+			"code_value": _("Urgent"),
+			"definition": _("The request should be actioned promptly - higher priority than routine."),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Priority",
+			"code_value": _("ASAP"),
+			"definition": _(
+				"The request should be actioned as soon as possible - higher priority than urgent."
+			),
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": "Priority",
+			"code_value": _("STAT"),
+			"definition": _(
+				"The request should be actioned immediately - highest possible priority. E.g. an emergency."
+			),
+		},
 	]
 	insert_record(records)
 

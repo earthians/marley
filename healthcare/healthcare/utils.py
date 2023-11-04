@@ -1057,17 +1057,17 @@ def get_medical_codes(template_dt, template_dn, code_standard=None):
 	filters = {"parent": template_dn, "parenttype": template_dt}
 
 	if code_standard:
-		filters["medical_code_standard"] = code_standard
+		filters["code_system"] = code_standard
 
 	return frappe.db.get_all(
 		"Codification Table",
 		filters=filters,
 		fields=[
-			"medical_code",
+			"code_value",
 			"code",
 			"system",
-			"description",
-			"medical_code_standard",
+			"definition",
+			"code_system",
 		],
 	)
 
