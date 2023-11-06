@@ -22,6 +22,10 @@
   "inpatient_settings_section",
   "allow_discharge_despite_unbilled_services",
   "do_not_bill_inpatient_encounters",
+  "orders_tab",
+  "default_intent",
+  "column_break_1oy0",
+  "default_priority",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -376,11 +380,32 @@
    "fieldtype": "Link",
    "label": "Default Code System",
    "options": "Code System"
+  },
+  {
+   "fieldname": "default_intent",
+   "fieldtype": "Link",
+   "label": "Default Intent",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "column_break_1oy0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_priority",
+   "fieldtype": "Link",
+   "label": "Default Priority",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "orders_tab",
+   "fieldtype": "Tab Break",
+   "label": "Orders"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-11-03 12:58:54.795803",
+ "modified": "2023-11-06 14:20:22.424895",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
