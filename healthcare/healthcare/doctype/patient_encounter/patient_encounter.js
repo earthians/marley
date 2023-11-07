@@ -40,12 +40,6 @@ frappe.ui.form.on('Patient Encounter', {
 			frm.get_field('drug_prescription').grid.editable_fields.splice(0, 0, {fieldname: 'medication', columns: 3});
 			frm.get_field('drug_prescription').grid.editable_fields.splice(2, 1); // remove item description
 		}
-
-		frm.get_field('lab_test_prescription').grid.editable_fields = [
-			{fieldname: 'lab_test_code', columns: 2},
-			{fieldname: 'lab_test_name', columns: 4},
-			{fieldname: 'lab_test_comment', columns: 4}
-		];
 	},
 
 	refresh: function(frm) {
@@ -180,7 +174,7 @@ frappe.ui.form.on('Patient Encounter', {
 				};
 			});
 		}
-		var table_list =  ["drug_prescription", "lab_test_prescription", "observations", "procedure_prescription", "therapies"]
+		var table_list =  ["drug_prescription", "lab_test_prescription", "procedure_prescription", "therapies"]
 		apply_code_sm_filter_to_child(frm, "priority", table_list, "Priority")
 		apply_code_sm_filter_to_child(frm, "intent", table_list, "Intent")
 	},
