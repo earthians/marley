@@ -220,7 +220,7 @@ def create_patient_encounter(patient, observation_template):
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
 
-	patient_encounter.append("observations", {"observation_template": observation_template})
+	patient_encounter.append("lab_test_prescription", {"observation_template": observation_template})
 
 	patient_encounter.submit()
 	return patient_encounter
