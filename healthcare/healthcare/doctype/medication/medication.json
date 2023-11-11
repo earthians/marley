@@ -32,10 +32,8 @@
   "change_in_item",
   "medical_coding_section",
   "codification_table",
-  "service_request_defaults_section",
-  "patient_care_type",
-  "staff_role",
-  "drug_code"
+  "section_break_sbkz",
+  "staff_role"
  ],
  "fields": [
   {
@@ -165,30 +163,10 @@
    "label": "Linked Item"
   },
   {
-   "collapsible": 1,
-   "fieldname": "service_request_defaults_section",
-   "fieldtype": "Section Break",
-   "label": "Service Request Defaults"
-  },
-  {
-   "fieldname": "patient_care_type",
-   "fieldtype": "Link",
-   "label": "Patient Care Type",
-   "options": "Patient Care Type"
-  },
-  {
    "fieldname": "staff_role",
    "fieldtype": "Link",
    "label": "Staff Role",
    "options": "Role"
-  },
-  {
-   "fieldname": "drug_code",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Drug Code",
-   "no_copy": 1
   },
   {
    "collapsible": 1,
@@ -227,10 +205,15 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_sbkz",
+   "fieldtype": "Section Break"
   }
  ],
  "links": [],
- "modified": "2023-04-06 16:56:21.260005",
+ "modified": "2023-10-31 12:31:46.349852",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",

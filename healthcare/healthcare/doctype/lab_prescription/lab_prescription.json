@@ -1,7 +1,6 @@
 {
  "actions": [],
  "allow_copy": 1,
- "beta": 0,
  "creation": "2016-09-16 16:53:06.882970",
  "doctype": "DocType",
  "document_type": "Document",
@@ -9,27 +8,32 @@
  "engine": "InnoDB",
  "field_order": [
   "lab_test_code",
+  "observation_template",
   "lab_test_name",
   "invoiced",
+  "service_request",
   "column_break_4",
   "lab_test_comment",
-  "lab_test_created"
+  "lab_test_created",
+  "section_break_pkty",
+  "patient_care_type",
+  "column_break_on3b",
+  "intent",
+  "priority"
  ],
  "fields": [
   {
    "fieldname": "lab_test_code",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
-   "in_list_view": 1,
    "label": "Lab Test",
-   "options": "Lab Test Template",
-   "reqd": 1
+   "options": "Lab Test Template"
   },
   {
+   "depends_on": "lab_test_code;",
    "fetch_from": "lab_test_code.lab_test_name",
    "fieldname": "lab_test_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Lab Test Name"
   },
   {
@@ -62,11 +66,52 @@
    "print_hide": 1,
    "report_hide": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_pkty",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_on3b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intent",
+   "fieldtype": "Link",
+   "label": "Intent",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "label": "Priority",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "patient_care_type",
+   "fieldtype": "Link",
+   "label": "Patient Care Type",
+   "options": "Patient Care Type"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "service_request",
+   "fieldtype": "Data",
+   "label": "Service Request",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "observation_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Observation",
+   "options": "Observation Template"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2020-02-26 17:03:00.255560",
+ "modified": "2023-11-07 15:48:41.681329",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Prescription",
@@ -74,5 +119,6 @@
  "permissions": [],
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }

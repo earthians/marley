@@ -557,6 +557,23 @@ def manage_invoice_submit_cancel(doc, method):
 					if fee_validity:
 						frappe.db.set_value("Fee Validity", fee_validity, "sales_invoice_ref", doc.name)
 
+	if method == "on_cancel":
+		if doc.items and (doc.additional_discount_percentage or doc.discount_amount):
+			for item in doc.items:
+				if (
+					item.get("reference_dt")
+					and item.get("reference_dn")
+					and item.get("reference_dt") == "Patient Appointment"
+				):
+					frappe.db.set_value(
+						item.get("reference_dt"),
+						item.get("reference_dn"),
+						{
+							"paid_amount": item.amount,
+							"ref_sales_invoice": None,
+						},
+					)
+
 
 def set_invoiced(item, method, ref_invoice=None):
 	invoiced = False
@@ -1040,17 +1057,17 @@ def get_medical_codes(template_dt, template_dn, code_standard=None):
 	filters = {"parent": template_dn, "parenttype": template_dt}
 
 	if code_standard:
-		filters["medical_code_standard"] = code_standard
+		filters["code_system"] = code_standard
 
 	return frappe.db.get_all(
 		"Codification Table",
 		filters=filters,
 		fields=[
-			"medical_code",
+			"code_value",
 			"code",
 			"system",
-			"description",
-			"medical_code_standard",
+			"definition",
+			"code_system",
 		],
 	)
 

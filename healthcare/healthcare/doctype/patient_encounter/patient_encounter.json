@@ -29,6 +29,7 @@
   "medical_department",
   "google_meet_link",
   "invoiced",
+  "submit_orders_on_save",
   "sb_symptoms",
   "symptoms",
   "symptoms_in_print",
@@ -42,7 +43,6 @@
   "drug_prescription",
   "sb_test_prescription",
   "lab_test_prescription",
-  "observations",
   "sb_procedures",
   "procedure_prescription",
   "rehabilitation_section",
@@ -346,19 +346,20 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "\nOpen\nWaiting For Review\nCompleted\nCancelled",
+   "options": "\nOpen\nOrdered\nCompleted\nCancelled",
    "read_only": 1
   },
   {
-   "fieldname": "observations",
-   "fieldtype": "Table",
-   "label": "Observations",
-   "options": "Observation Prescription"
+   "default": "0",
+   "depends_on": "eval:!doc.__islocal;",
+   "fieldname": "submit_orders_on_save",
+   "fieldtype": "Check",
+   "label": "Submit Orders on Save"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-25 05:22:26.351979",
+ "modified": "2023-11-07 18:03:12.793649",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
@@ -386,7 +387,20 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Ordered"
+  },
+  {
+   "color": "Blue",
+   "title": "Completed"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1

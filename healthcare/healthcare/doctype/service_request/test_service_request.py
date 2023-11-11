@@ -28,7 +28,7 @@ class TestServiceRequest(unittest.TestCase):
 		patient, practitioner = create_healthcare_docs()
 		insulin_resistance_template = create_lab_test_template()
 		encounter = create_encounter(
-			patient, practitioner, "lab_test_prescription", insulin_resistance_template
+			patient, practitioner, "lab_test_prescription", insulin_resistance_template, submit=True
 		)
 		self.assertTrue(frappe.db.exists("Service Request", {"order_group": encounter.name}))
 		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name}, "name")
@@ -50,8 +50,28 @@ class TestServiceRequest(unittest.TestCase):
 			)
 			self.assertTrue(frappe.db.get_value("Lab Test", lab_test.name, "invoiced"))
 
+	def test_creation_on_encounter_with_create_order_on_save_checked(self):
+		patient, practitioner = create_healthcare_docs()
+		insulin_resistance_template = create_lab_test_template()
+		encounter = create_encounter(
+			patient, practitioner, "lab_test_prescription", insulin_resistance_template
+		)
+		encounter.submit_orders_on_save = True
+		encounter.save()
+		self.assertTrue(frappe.db.exists("Service Request", {"order_group": encounter.name}))
+		encounter.submit()
 
-def create_encounter(patient, practitioner, type, template):
+		# to check if submit creates order
+		self.assertEqual(
+			frappe.db.count(
+				"Service Request",
+				filters={"order_group": encounter.name},
+			),
+			1,
+		)
+
+
+def create_encounter(patient, practitioner, type, template, submit=False):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
 	patient_encounter.practitioner = practitioner
@@ -63,8 +83,10 @@ def create_encounter(patient, practitioner, type, template):
 		)
 	elif type == "drug_prescription":
 		patient_encounter.append(type, {"medication": template.name})
-
-	patient_encounter.submit()
+	if submit:
+		patient_encounter.submit()
+	else:
+		patient_encounter.save()
 	return patient_encounter
 
 

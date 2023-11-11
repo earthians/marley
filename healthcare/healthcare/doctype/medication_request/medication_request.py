@@ -39,10 +39,10 @@ class MedicationRequest(ServiceRequestController):
 			self.staff_role = medication.staff_role
 
 		if not self.intent:
-			self.intent = "Original Order"
+			self.intent = frappe.db.get_single_value("Healthcare Settings", "default_intent")
 
 		if not self.priority:
-			self.priority = "Routine"
+			self.priority = frappe.db.get_single_value("Healthcare Settings", "default_priority")
 
 	def calculate_total_dispensable_quantity(self):
 		if self.number_of_repeats_allowed:

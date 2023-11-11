@@ -37,13 +37,12 @@
   "sample",
   "column_break_21",
   "sample_details",
-  "service_order_defaults_section",
-  "patient_care_type",
-  "column_break_28",
-  "staff_role",
   "change_in_item",
   "codification",
-  "codification_table"
+  "codification_table",
+  "service_request_defaults_tab",
+  "patient_care_type",
+  "staff_role"
  ],
  "fields": [
   {
@@ -245,11 +244,6 @@
    "label": "Sample Collection"
   },
   {
-   "fieldname": "service_order_defaults_section",
-   "fieldtype": "Section Break",
-   "label": "Service Request Defaults"
-  },
-  {
    "fieldname": "patient_care_type",
    "fieldtype": "Link",
    "label": "Patient Care Type",
@@ -260,10 +254,15 @@
    "fieldtype": "Link",
    "label": "Staff Role",
    "options": "Role"
+  },
+  {
+   "fieldname": "service_request_defaults_tab",
+   "fieldtype": "Tab Break",
+   "label": "Service Request Defaults"
   }
  ],
  "links": [],
- "modified": "2021-12-23 07:45:12.398227",
+ "modified": "2023-11-06 15:00:26.292044",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

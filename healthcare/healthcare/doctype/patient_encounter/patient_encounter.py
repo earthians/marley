@@ -15,8 +15,14 @@ from healthcare.healthcare.utils import get_medical_codes
 class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
-		validate_codification_table(self)
 		self.validate_medications()
+		self.validate_therapies()
+		self.validate_observations()
+		set_codification_table_from_diagnosis(self)
+		if not self.is_new() and self.submit_orders_on_save:
+			self.make_service_request()
+			self.make_medication_request()
+			self.status = "Ordered"
 
 	def on_update(self):
 		if self.appointment:
@@ -25,7 +31,6 @@ class PatientEncounter(Document):
 	def on_submit(self):
 		if self.therapies:
 			create_therapy_plan(self)
-
 		self.make_service_request()
 		self.make_medication_request()
 		# to save service_request name in prescription
@@ -40,6 +45,8 @@ class PatientEncounter(Document):
 				order_doc.cancel()
 
 	def on_cancel(self):
+		self.db_set("status", "Cancelled")
+
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
 
@@ -125,7 +132,7 @@ class PatientEncounter(Document):
 			)
 
 		if plan_item.type == "Observation Template":
-			self.append("observations", {"observation_template": plan_item.template})
+			self.append("lab_test_prescription", {"observation_template": plan_item.template})
 
 	def validate_medications(self):
 		if not self.drug_prescription:
@@ -142,47 +149,69 @@ class PatientEncounter(Document):
 			return
 
 		for therapy in self.therapies:
-			if therapy.get_quantity() <= 0:
+			if therapy.no_of_sessions <= 0:
 				frappe.throw(
 					_("Row #{0} (Therapies): Number of Sessions should be at least 1").format(therapy.idx)
+				)
+
+	def validate_observations(self):
+		if not self.lab_test_prescription:
+			return
+
+		for observation in self.lab_test_prescription:
+			if not observation.observation_template and not observation.lab_test_code:
+				frappe.throw(
+					_("Row #{0} (Lab Tests): Observation Template or Lab Test Template is mandatory").format(
+						observation.idx
+					)
 				)
 
 	def make_service_request(self):
 		if self.lab_test_prescription:
 			for lab_test in self.lab_test_prescription:
-				lab_template = frappe.get_doc("Lab Test Template", lab_test.lab_test_code)
-				order = self.get_order_details(lab_template, lab_test)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				if lab_test.observation_template:
+					template_doc = "Observation Template"
+					template = "observation_template"
+				elif lab_test.lab_test_code:
+					template_doc = "Lab Test Template"
+					template = "lab_test_code"
+				else:
+					continue
+				if not lab_test.service_request:
+					lab_template = frappe.get_doc(template_doc, lab_test.get(template))
+					order = self.get_order_details(lab_template, lab_test)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					lab_test.service_request = order.name
 
 		if self.procedure_prescription:
 			for procedure in self.procedure_prescription:
-				procedure_template = frappe.get_doc("Clinical Procedure Template", procedure.procedure)
-				order = self.get_order_details(procedure_template, procedure)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				if not procedure.service_request:
+					procedure_template = frappe.get_doc("Clinical Procedure Template", procedure.procedure)
+					order = self.get_order_details(procedure_template, procedure)
+					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					procedure.service_request = order.name
 
 		if self.therapies:
 			for therapy in self.therapies:
-				therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
-				order = self.get_order_details(therapy_type, therapy)
-				order.insert(ignore_permissions=True, ignore_mandatory=True)
-
-		if self.observations:
-			for observation in self.observations:
-				if not observation.service_request:
-					template = frappe.get_doc("Observation Template", observation.observation_template)
-					order = self.get_order_details(template, observation)
+				if not therapy.service_request:
+					therapy_type = frappe.get_doc("Therapy Type", therapy.therapy_type)
+					order = self.get_order_details(therapy_type, therapy)
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
-					observation.service_request = order.name
+					therapy.service_request = order.name
 
 	def make_medication_request(self):
 		if self.drug_prescription:
 			# make_medication_request
 			for drug in self.drug_prescription:
-				if drug.medication:
+				if drug.medication and not drug.medication_request:
 					medication = frappe.get_doc("Medication", drug.medication)
 					order = self.get_order_details(medication, drug, True)
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
+					order.submit()
+					drug.medication_request = order.name
 
 	def get_order_details(self, template_doc, line_item, medication_request=False):
 		order = frappe.get_doc(
@@ -197,7 +226,6 @@ class PatientEncounter(Document):
 				"source_doc": "Patient Encounter",
 				"order_group": self.name,
 				"sequence": line_item.get("sequence"),
-				"patient_care_type": template_doc.get("patient_care_type"),
 				"intent": line_item.get("intent"),
 				"priority": line_item.get("priority"),
 				"quantity": line_item.get_quantity() if line_item.doctype == "Drug Prescription" else 1,
@@ -225,7 +253,15 @@ class PatientEncounter(Document):
 				}
 			)
 		else:
-			order.update({"template_dt": template_doc.doctype, "template_dn": template_doc.name})
+			order.update(
+				{
+					"template_dt": template_doc.doctype,
+					"template_dn": template_doc.name,
+					"patient_care_type": line_item.patient_care_type
+					if line_item.patient_care_type
+					else template_doc.get("patient_care_type"),
+				}
+			)
 
 		order.update({"order_description": description})
 		return order
@@ -308,9 +344,8 @@ def delete_ip_medication_order(encounter):
 		frappe.delete_doc("Inpatient Medication Order", record, force=1)
 
 
-def validate_codification_table(doc):
-	if doc.diagnosis:
-		doc.codification_table = []
+def set_codification_table_from_diagnosis(doc):
+	if doc.diagnosis and not doc.codification_table:
 		for diag in doc.diagnosis:
 			medical_code_details = get_medical_codes("Diagnosis", diag.diagnosis)
 			if medical_code_details and len(medical_code_details) > 0:
@@ -318,10 +353,10 @@ def validate_codification_table(doc):
 					doc.append(
 						"codification_table",
 						{
-							"medical_code": m_code.get("medical_code"),
-							"medical_code_standard": m_code.get("medical_code_standard"),
+							"code_value": m_code.get("code_value"),
+							"code_system": m_code.get("code_system"),
 							"code": m_code.get("code"),
-							"description": m_code.get("description"),
+							"definition": m_code.get("definition"),
 							"system": m_code.get("system"),
 						},
 					)

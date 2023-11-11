@@ -21,6 +21,7 @@ from healthcare.healthcare.doctype.observation_template.observation_template imp
 
 class ServiceRequest(ServiceRequestController):
 	def validate(self):
+		super().validate()
 		if self.template_dt and self.template_dn and not self.codification_table:
 			template_doc = frappe.get_doc(self.template_dt, self.template_dn)
 			for mcode in template_doc.codification_table:
@@ -60,10 +61,10 @@ class ServiceRequest(ServiceRequestController):
 			self.staff_role = template.staff_role
 
 		if not self.intent:
-			self.intent = "Original Order"
+			self.intent = frappe.db.get_single_value("Healthcare Settings", "default_intent")
 
 		if not self.priority:
-			self.priority = "Routine"
+			self.priority = frappe.db.get_single_value("Healthcare Settings", "default_priority")
 
 	def update_invoice_details(self, qty):
 		"""
