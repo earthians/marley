@@ -62,8 +62,7 @@
    "in_list_view": 1,
    "label": "Code Value",
    "no_copy": 1,
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fetch_from": "code_system.uri",
@@ -76,7 +75,7 @@
   }
  ],
  "links": [],
- "modified": "2023-11-04 17:11:03.579052",
+ "modified": "2023-11-12 23:07:41.209432",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",
