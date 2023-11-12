@@ -1,15 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [develop, version-14-hotfix, version-14]
-    paths-ignore:
-      - "**.css"
-      - "**.js"
-      - "**.md"
-      - "**.html"
-      - "**.csv"
-
   pull_request:
     paths-ignore:
       - "**.css"
@@ -17,6 +8,8 @@ on:
       - "**.md"
       - "**.html"
       - "**.csv"
+    branches-ignore:
+      - version-**-beta
   schedule:
     # Run everday at midnight UTC / 5:30 IST
     - cron: "0 0 * * *"
@@ -30,7 +23,7 @@ concurrency:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
