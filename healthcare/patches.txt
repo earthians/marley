@@ -1,6 +1,8 @@
 [pre_model_sync]
 healthcare.patches.v0_0.setup_abdm_custom_fields
 healthcare.patches.v0_0.set_medical_code_from_field_to_codification_table
+healthcare.patches.v15_0.check_version_compatibility_with_frappe
+healthcare.patches.v15_0.set_fee_validity_status
 healthcare.patches.v15_0.create_custom_fields_in_sales_invoice_item
 healthcare.patches.v15_0.rename_automate_appointment_invoicing
 healthcare.patches.v15_0.rename_medical_code_standard_and_medical_code
