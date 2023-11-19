@@ -955,6 +955,79 @@ def get_patient_history_config():
 	}
 
 
+def setup_non_fhir_code_systems():
+	"""A set of external code systems as published in the FHIR R5 documentation
+	https://www.hl7.org/fhir/terminologies-systems.html#external
+
+	For a full set of external code systems, see
+	https://terminology.hl7.org/external_terminologies.html
+	"""
+	code_systems = [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://snomed.info/sct",
+			"code_system": _("SNOMED CT"),
+			"description": _(
+				"""Using SNOMED CT with HL7 Standards. https://terminology.hl7.org/SNOMEDCT.html\n
+				See also the SNOMED CT Usage Summary (link below) which summarizes the use of SNOMED CT in the base FHIR Specification.
+				https://www.hl7.org/fhir/snomedct-usage.html
+				"""
+			),
+			"oid": "2.16.840.1.113883.6.96",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://www.nlm.nih.gov/research/umls/rxnorm",
+			"code_system": _("RxNorm"),
+			"description": _("Using RxNorm with HL7 Standards. https://terminology.hl7.org/RxNorm.html"),
+			"oid": "2.16.840.1.113883.6.88",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://loinc.org",
+			"code_system": _("LOINC"),
+			"description": _("Using LOINC with HL7 Standards. https://terminology.hl7.org/LOINC.html"),
+			"oid": "2.16.840.1.113883.6.1",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://unitsofmeasure.org",
+			"code_system": _("pCLUCUMOCD"),
+			"description": _("Using UCUM with HL7 Standards. https://terminology.hl7.org/UCUM.html"),
+			"oid": "2.16.840.1.113883.6.8",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/sid/icd-9-cm",
+			"code_system": _("ICD-9-CM (clinical codes)"),
+			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
+			"oid": "2.16.840.1.113883.6.103",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/sid/icd-9-cm",
+			"code_system": _("ICD-9-CM (procedure codes)"),
+			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
+			"oid": "2.16.840.1.113883.6.104",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/sid/icd-10-cm",
+			"code_system": _("ICD-10-CM (United States)"),
+			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
+			"oid": "2.16.840.1.113883.6.90",
+		},
+	]
+	insert_record(code_systems)
+
+
 def delete_custom_records():
 	"""Delete custom records inserted by Health app"""
 	records = get_item_group_records()
