@@ -75,6 +75,15 @@ class Observation(Document):
 		# "result_period_to",
 
 		return False
+	
+	def component_has_result(self):
+		component_obs = frappe.get_all("Observation", {"parent_observation": self.name}, pluck="name")
+		for obs in component_obs:
+			obs_doc = frappe.get_doc("Observation", obs)
+			if not obs_doc.has_result():
+				return False
+
+		return True
 
 	def validate_input(self):
 		if self.permitted_data_type in ["Quantity", "Numeric"]:
@@ -152,8 +161,10 @@ def get_observation_details(docname):
 					or child.get("result_select") not in [None, "", "Null"]
 				):
 					has_result = True
-				if child.get("status")=="Approved":
-					obs_approved = True
+			if any(child.get("status") != "Approved" for child in child_observations):
+				obs_approved = False
+			else:
+				obs_approved = True
 			if len(child_observations) > 0:
 				obs_dict["has_component"] = True
 				obs_dict["observation"] = obs.get("name")
@@ -392,9 +403,14 @@ def get_observation_result_template(template_name, observation):
 
 
 @frappe.whitelist()
-def set_observation_status(observation, status, reason=None):
+def set_observation_status(observation, status, reason=None, parent_obs=None):
 	observation_doc = frappe.get_doc("Observation", observation)
-	if observation_doc.has_result():
+	if observation_doc.has_result() or observation_doc.has_component:
+		if observation_doc.has_component:
+			parent_obs = None
+			if not observation_doc.component_has_result():
+				frappe.throw(_("Please enter result for all components to Approve."))
+
 		observation_doc.status = status
 		if reason:
 			observation_doc.disapproval_reason = reason
@@ -403,8 +419,21 @@ def set_observation_status(observation, status, reason=None):
 		if status == "Disapproved":
 			new_doc = frappe.copy_doc(observation_doc)
 			new_doc.status = ""
+			new_doc.disapproval_reason = ""
+			if parent_obs:
+				new_doc.parent_observation = parent_obs
 			new_doc.insert()
 			observation_doc.cancel()
+			if observation_doc.has_component:
+				parent_obs = new_doc.name
+		if observation_doc.has_component:
+			if status == "Approved":
+				docstatus = 0
+			elif status == "Disapproved":
+				docstatus = 1
+			component_obs = frappe.get_all("Observation", {"parent_observation": observation, "docstatus":["=", docstatus]}, pluck="name")
+			for obs in component_obs:
+				set_observation_status(obs, status, reason, parent_obs)
 	else:
 		frappe.throw(_("Please enter result to Approve."))
 

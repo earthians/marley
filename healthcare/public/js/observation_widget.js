@@ -12,6 +12,12 @@ healthcare.ObservationWidget = class {
 			if (!me.wrapper.find(`.${me.data.observation}`).length==0) {
 				return
 			}
+			var btn_action = "";
+			if (me.data.obs_approved) {
+				btn_action = "Disapproved"
+			} else {
+				btn_action = "Approved"
+			}
 			let grouped_html = (
 				`<div class="${me.data.observation} grouped-obs"
 					style="
@@ -19,7 +25,7 @@ healthcare.ObservationWidget = class {
 						padding-right: 0;
 						font-size: 11px;
 						padding-left: 15px;
-						padding-top: 5px;
+						padding-top: 15px;
 						padding-bottom: 5px;
 						margin-bottom: 3px;
 						border-radius: 10px;
@@ -28,7 +34,12 @@ healthcare.ObservationWidget = class {
 						<a href="/app/observation/${me.data.observation}">
 							${me.data.display_name}
 						</a>
-						</b></div>`)
+						</b>
+						<div style="float:right; padding-right:5px; margin-top:-10px;">
+						<button class="btn btn-xs btn-secondary small obs-approve" id="authorise-observation-btn-${me.data.observation}">
+						<span style="font-size:10px;">${btn_action.slice(0, -1)}</span>
+						</button></div>
+						</div></div>`)
 			me.wrapper.append(grouped_html)
 			let component_wrapper = me.wrapper.find(`.${me.data.observation}`)
 			for(var j=0, k=me.data[me.data.observation].length; j<k; j++) {
@@ -84,6 +95,12 @@ healthcare.ObservationWidget = class {
 			}
 		}
 		me.$widget = me.wrapper.find(`.grouped-obs`)
+		var authbutton = document.getElementById(`authorise-observation-btn-${me.data.observation}`);
+		if (authbutton) {
+			authbutton.addEventListener("click", function() {
+				me.auth_observation(me.data.observation, btn_action)
+			});
+		}
 	}
 
 	init_field_group(obs_data, wrapper) {
@@ -261,31 +278,49 @@ healthcare.ObservationWidget = class {
 		reference_html += `</div>`
 		me[obs_data.name].get_field('reference').html(reference_html);
 
-		let auth_html = ""
+		// let auth_html = ""
+		// if (!['Approved'].includes(obs_data.status)) {
+		// 	auth_html += `<div style="float:right;">
+		// 		<button class="btn btn-xs btn-secondary small" id="authorise-observation-btn-${obs_data.name}">
+		// 		<span style="font-size:10px;">Approve</span>
+		// 		</button></div>
+		// 		</div>`
+		// 	me[obs_data.name].get_field('auth_btn').html(auth_html);
+		// 	var authbutton = document.getElementById(`authorise-observation-btn-${obs_data.name}`);
+		// 	authbutton.addEventListener("click", function() {
+		// 		me.auth_observation(obs_data.name, "Approved")
+		// 	});
+		// } else if (obs_data.status=='Approved') {
+		// 	auth_html += `<div style="float:right;">
+		// 		<button class="btn btn-xs btn-del btn-secondary small" id="unauthorise-observation-btn-${obs_data.name}">
+		// 		<span class="btn-observ" style="font-size:10px;">Disapprove</span>
+		// 		</button></div>
+		// 		</div>`
+		// 	me[obs_data.name].get_field('auth_btn').html(auth_html);
+		// 	var authbutton = document.getElementById(`unauthorise-observation-btn-${obs_data.name}`);
+		// 	authbutton.addEventListener("click", function() {
+		// 		me.auth_observation(obs_data.name, "Disapproved")
+		// 	});
+		// }
+
+		let action = "";
 		if (!['Approved'].includes(obs_data.status)) {
-			auth_html += `<div style="float:right;">
-				<button class="btn btn-xs btn-secondary small" id="authorise-observation-btn-${obs_data.name}">
-				<span style="font-size:10px;">Approve</span>
-				</button>`
-			auth_html += `</div></div>`
-			me[obs_data.name].get_field('auth_btn').html(auth_html);
-			var authbutton = document.getElementById(`authorise-observation-btn-${obs_data.name}`);
-			authbutton.addEventListener("click", function() {
-				me.auth_observation(obs_data.name, "Approved")
-			});
-		} else if (obs_data.status=='Approved') {
-			auth_html += `<div style="float:right;">
-				<button class="btn btn-xs btn-del btn-secondary small" id="unauthorise-observation-btn-${obs_data.name}">
-				<span class="btn-observ" style="font-size:10px;">Disapprove</span>
-				</button>`
-			auth_html += `</div></div>`
-			me[obs_data.name].get_field('auth_btn').html(auth_html);
-			var authbutton = document.getElementById(`unauthorise-observation-btn-${obs_data.name}`);
-			authbutton.addEventListener("click", function() {
-				me.auth_observation(obs_data.name, "Disapproved")
-			});
+			action = "Approved";
+		} else if (obs_data.status=="Approved") {
+			action = "Disapproved";
 		}
 
+		let auth_html = ""
+		auth_html += `<div style="float:right;">
+			<button class="btn btn-xs btn-secondary small" id="authorise-observation-btn-${obs_data.name}">
+			<span style="font-size:10px;">${action.slice(0, -1)}</span>
+			</button></div>
+			</div>`
+		me[obs_data.name].get_field('auth_btn').html(auth_html);
+		var authbutton = document.getElementById(`authorise-observation-btn-${obs_data.name}`);
+		authbutton.addEventListener("click", function() {
+			me.auth_observation(obs_data.name, action)
+		});
 
 		let note_html = `<div><span class="add-note-observation-btn btn btn-link"
 			id="add-note-observation-btn-${obs_data.name}">
