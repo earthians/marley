@@ -8,9 +8,11 @@ import frappe
 from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
 	get_terms_and_conditions,
 )
+
+from healthcare.healthcare.doctype.patient_history_settings.patient_history_settings import validate_medical_record_required
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, get_datetime
 from frappe.model.workflow import (get_workflow_name, get_workflow_state_field)
 
 
@@ -24,9 +26,13 @@ class Observation(Document):
 
 	def on_update(self):
 		set_diagnostic_report_status(self)
+		update_patient_medical_record(self)
 
 	def before_insert(self):
 		set_observation_idx(self)
+
+	def on_submit(self):
+		update_patient_medical_record(self)
 
 	def set_age(self):
 		patient_doc = frappe.get_doc("Patient", self.patient)
@@ -96,7 +102,7 @@ class Observation(Document):
 
 
 @frappe.whitelist()
-def get_observation_details(docname):
+def get_observation_details(docname, observation_status=None):
 	reference = frappe.get_value("Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True)
 	if reference.get("ref_doctype") == "Sales Invoice":
 		observation = frappe.get_list(
@@ -125,6 +131,9 @@ def get_observation_details(docname):
 		has_result = False
 		obs_approved = False
 		if not obs.get("has_component"):
+			if observation_status and obs.get("status") != observation_status:
+				continue
+
 			if obs.get("permitted_data_type"):
 				obs_length += 1
 			observation_data = {}
@@ -137,10 +146,14 @@ def get_observation_details(docname):
 				observation_data["observation"] = obs
 
 		else:
+			filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"], "docstatus":["!=", 2]}
+			if observation_status:
+				filters["status"] = observation_status
+
 			child_observations = frappe.get_list(
 				"Observation",
 				fields=["*"],
-				filters={"parent_observation": obs.get("name"), "status": ["!=", "Cancelled"], "docstatus":["!=", 2]},
+				filters=filters,
 				order_by="observation_idx",
 			)
 			obs_list = []
@@ -452,3 +465,85 @@ def set_diagnostic_report_status(doc):
 			if workflow_state_field:
 				set_value_dict[workflow_state_field] = set_status
 			frappe.db.set_value("Diagnostic Report", diagnostic_report.get("name"), set_value_dict, update_modified=False)
+
+
+def update_patient_medical_record(doc):
+	if doc.sales_invoice:
+		diagnostic_report = frappe.db.get_value("Diagnostic Report", {"docname": doc.sales_invoice}, "name")
+		if not diagnostic_report:
+			return
+
+		daig_doc = frappe.get_doc("Diagnostic Report", diagnostic_report)
+		medical_record_required = validate_medical_record_required(daig_doc)
+		if not medical_record_required:
+			return
+
+		if diagnostic_report:
+			daig_data = get_observation_details(diagnostic_report, observation_status="Approved")
+			if daig_data and daig_data[0] and len(daig_data[0])>0:
+				obs_html = set_observation_html(daig_data)
+				if obs_html:
+					exist = frappe.db.exists("Patient Medical Record", {"reference_name": diagnostic_report})
+					if exist:
+						frappe.db.set_value("Patient Medical Record", exist, "subject", obs_html)
+					else:
+						create_medical_record(daig_doc, obs_html)
+
+
+def set_observation_html(daig_data):
+	out_html = """
+				<table style="border-collapse: collapse; width: 100%;">
+				<tr style="background-color: #f2f2f2; border: 1px solid #dddddd;">
+					<td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Observation</td>
+					<td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Result</td>
+					<td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Reference</td>
+					<td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Result Entered On</td>
+				</tr>
+			"""
+	for diag in daig_data[0]:
+		if diag.get("has_component") and diag.get("observation"):
+			out_html += f"""
+						<tr>
+							<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'><b>{diag.get("display_name")}</b></td>
+							<td>&nbsp</td>
+							<td>&nbsp</td>
+							<td>&nbsp</td>
+						</tr>
+						"""
+			for comp_data in diag.get(diag.get("observation")):
+				comp_obs_data = comp_data.get("observation")
+				out_html += f"""
+					<tr>
+						<td style='border: 1px solid #dddddd; text-align: center; padding: 8px;'><a href="/app/observation/{comp_obs_data.get("name")}" title="{comp_obs_data.get("observation_template")}">{comp_obs_data.get("observation_template")}</a></td>
+						<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'>{comp_obs_data.get("result_text") or comp_obs_data.get("result_data") or comp_obs_data.get("result_select") or "-"} {comp_obs_data.get("permitted_unit") or ""}</td>
+						<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:10px;'>{comp_obs_data.get("reference") or "-"}</td>
+						<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:11px;'>{get_datetime(comp_obs_data.get("time_of_result")).strftime("%Y-%m-%d %H:%M") if comp_obs_data.get("time_of_result") else "-"}</td>
+					</tr>
+					"""
+		elif diag.get("observation"):
+			single_data = diag.get("observation")
+			out_html += f"""
+				<tr>
+					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'><a href="/app/observation/{single_data.get("name")}" title="{single_data.get("observation_template")}"><b>{single_data.get("observation_template")}</b></a></td>
+					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'>{single_data.get("result_text") or single_data.get("result_data") or single_data.get("result_select") or "-"} {single_data.get("permitted_unit") or ""}</td>
+					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:10px;'>{single_data.get("reference") or "-"}</td>
+					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:11px;'>{get_datetime(single_data.get("time_of_result")).strftime("%Y-%m-%d %H:%M") if single_data.get("time_of_result") else "-"}</td>
+				</tr>
+			"""
+	out_html += "</table>"
+	return out_html
+
+
+def create_medical_record(daig_doc, subject):
+	if frappe.db.exists("Patient Medical Record", {"reference_name": daig_doc.name}):
+		return
+
+	medical_record = frappe.new_doc("Patient Medical Record")
+	medical_record.patient = daig_doc.patient
+	medical_record.subject = subject
+	medical_record.status = "Open"
+	medical_record.communication_date = daig_doc.reference_posting_date
+	medical_record.reference_doctype = "Diagnostic Report"
+	medical_record.reference_name = daig_doc.name
+	medical_record.reference_owner = daig_doc.owner
+	medical_record.save(ignore_permissions=True)
