@@ -103,12 +103,12 @@ def get_observation_template_details(observation_template):
 		`tabObservation Component` as oc left join
 		`tabObservation Template` as ot on oc.observation_template=ot.name
 	where
-		oc.parent={frappe.db.escape(observation_template)}
+		oc.parent={frappe.db.escape(observation_template, percent=False)}
 	"""
+
 	data = frappe.db.sql(query, as_dict=True)
 	sample_reqd_component_obs = []
 	non_sample_reqd_component_obs = []
-
 	for d in data:
 		if d.get("no_sample_reqd"):
 			non_sample_reqd_component_obs.append(d.get("no_sample_reqd"))
