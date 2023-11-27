@@ -11,11 +11,17 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.model.document import Document
 from frappe.model.naming import set_name_by_naming_series
-from frappe.utils import cint, cstr, getdate
+from frappe.utils import cint, cstr, flt, getdate
 from frappe.utils.nestedset import get_root_of
 
+import erpnext
 from erpnext import get_default_currency
+from erpnext.accounts.doctype.journal_entry.journal_entry import (
+	get_account_balance_and_party_type,
+	get_party_account_and_balance,
+)
 from erpnext.accounts.party import get_dashboard_info
+from erpnext.accounts.utils import reconcile_against_document
 from erpnext.selling.doctype.customer.customer import make_address
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -292,6 +298,125 @@ class Patient(Document):
 			}
 		)
 		self.notify_update()
+
+	@frappe.whitelist()
+	def advance_refund(self, company, party, mode_of_payment, refund_amount):
+		new_je = self.create_journal_entry(company, party, mode_of_payment, refund_amount)
+
+		filters = {
+			"company": company,
+			"party": party,
+			"docstatus": ["!=", 2],
+			"unallocated_amount": [">", 0],
+		}
+
+		payment_entries = frappe.get_all("Payment Entry", filters=filters, pluck="name", order_by="creation ASC")
+		for pe in payment_entries:
+			get_pe = frappe.get_doc("Payment Entry", pe)
+
+			entry_list = []
+
+			payment_details, refund_amount = self.get_payment_details(company, party, new_je, get_pe, refund_amount)
+
+			entry_list.append(payment_details)
+
+			reconcile_against_document(entry_list, skip_ref_details_update_for_pe=False)
+
+		return {"message": "success"}
+
+	def create_journal_entry(self, company, party, mode_of_payment, refund_amount):
+
+		paid_to = frappe.get_cached_value(
+			"Mode of Payment Account", {"parent": mode_of_payment, "company": company}, "default_account"
+		)
+
+		paid_from = frappe.get_cached_value("Company", company, "default_receivable_account")
+
+		party_type = "Customer"
+
+		journal_entry = frappe.new_doc("Journal Entry")
+
+		journal_entry.voucher_type = "Journal Entry"
+		journal_entry.posting_date = frappe.utils.nowdate()
+
+		party_account = get_party_account_and_balance(company, party_type, party, cost_center=None)
+
+		journal_entry.append(
+			"accounts",
+			{
+				"account": paid_from,
+				"party_type": party_type,
+				"party": party,
+				"debit_in_account_currency": refund_amount,
+				"credit_in_account_currency": 0,
+				"balance": party_account["balance"],
+				"party_balance": party_account["party_balance"],
+			},
+		)
+
+		account_balance = get_account_balance_and_party_type(
+			account=paid_to, date=journal_entry.posting_date, company=company
+		)
+
+		journal_entry.append(
+			"accounts",
+			{
+				"account": paid_to,
+				"party_type": "",
+				"party": "",
+				"debit_in_account_currency": 0,
+				"credit_in_account_currency": refund_amount,
+				"balance": account_balance["balance"],
+			},
+		)
+
+		journal_entry.save()
+		journal_entry.submit()
+
+		return journal_entry
+
+	def get_payment_details(self, company, party, new_je, get_pe, refund_amount):
+
+		defaultAccount = frappe.get_cached_value("Company", company, "default_receivable_account")
+
+		dr_or_cr = (
+			"credit_in_account_currency"
+			if erpnext.get_party_account_type(get_pe.party_type) == "Receivable"
+			else "debit_in_account_currency"
+		)
+
+		if get_pe.unallocated_amount >= refund_amount:
+			allocated_amount = refund_amount
+		else:
+			allocated_amount = get_pe.unallocated_amount
+		refund_amount = refund_amount - allocated_amount
+
+		difference_account = frappe.get_cached_value("Company", company, "exchange_gain_loss_account")
+
+		payment_details = frappe._dict(
+			{
+				"voucher_type": "Payment Entry",
+				"voucher_no": get_pe.name,
+				"voucher_detail_no": None,
+				"against_voucher_type": "Journal Entry",
+				"against_voucher": new_je.name,
+				"account": defaultAccount,
+				"exchange_rate": 0,
+				"party_type": "Customer",
+				"party": party,
+				"is_advance": None,
+				"dr_or_cr": dr_or_cr,
+				"unreconciled_amount": flt(get_pe.unallocated_amount),
+				"unadjusted_amount": flt(get_pe.unallocated_amount),
+				"allocated_amount": flt(allocated_amount),
+				"difference_amount": 0.0,
+				"difference_account": difference_account,
+				"difference_posting_date": frappe.utils.nowdate(),
+				"cost_center": None,
+			}
+		)
+
+		return payment_details, refund_amount
 
 
 def create_customer(doc):

@@ -48,6 +48,9 @@ frappe.ui.form.on('Patient', {
 				}, __('Create'));
 				frm.toggle_enable(['customer'], 0);
 			}
+			frm.add_custom_button(__('Advance Refund'), function() {
+				get_advance_refund(frm);
+			}, __('Create'));
 			frappe.contacts.render_address_and_contact(frm);
 			erpnext.utils.set_party_dashboard_indicators(frm);
 		} else {
@@ -145,3 +148,105 @@ let invoice_registration = function (frm) {
 		}
 	});
 };
+
+
+let get_advance_refund = function (frm) {
+
+	const fields = [
+		{
+			label: 'Company',
+			fieldname: 'company',
+			fieldtype: 'Link',
+			options: 'Company',
+			default: frappe.defaults.get_user_default('Company')
+		},
+		{
+			label: 'Advance Amount',
+			fieldname: 'advance_amount',
+			fieldtype: 'Currency',
+			read_only: true,
+		},
+		{
+			label: 'Mode of Payment',
+			fieldname: 'mode_of_payment',
+			fieldtype: 'Link',
+			options: 'Mode of Payment',
+			reqd: 1
+		},
+		{
+			label: 'Refund Amount',
+			fieldname: 'refund_amount',
+			fieldtype: 'Currency',
+		}
+	];
+
+	let d = new frappe.ui.Dialog ({
+        title: "Advance Refund",
+        fields: fields,
+        primary_action_label: "Refund",
+        primary_action: function(values) {
+			if (values.refund_amount <= values.advance_amount) {
+				frappe.call({
+					doc: frm.doc,
+					method: 'advance_refund',
+					args: {
+						company: values.company,
+						party : frm.doc.customer,
+						mode_of_payment : values.mode_of_payment,
+						refund_amount : values.refund_amount
+					},
+					callback: function(response) {
+						if (response.message) {
+							frappe.msgprint(__("Advance refund successful"))
+						} else {
+							frappe.msgprint(__("Advance refund failed"))
+						}
+						d.hide();
+					}
+				})
+			} else {
+				frappe.throw(__("Refund amount cannot be greater than Advance amount"))
+			}
+		}
+    });
+
+	get_advance_amount(frm, d);
+
+	d.fields_dict['company'].df.onchange = () => {
+		get_advance_amount(frm, d)
+	}
+
+}
+
+let get_advance_amount = function(frm, d) {
+	let advanceAmount = 0;
+
+	frappe.db.get_list('Payment Entry', {
+		filters: {
+			'company' : d.get_value('company'),
+			'party': frm.doc.customer,
+			'docstatus' : ['!=', 2],
+			'unallocated_amount': ['>', 0]
+			},
+		fields: ['unallocated_amount']
+	}).then((res) => {
+		res.forEach((value) => {
+			advanceAmount += value.unallocated_amount;
+		});
+
+		d.set_values({
+			'advance_amount': advanceAmount
+		});
+
+		if (advanceAmount == 0) {
+			frappe.msgprint(__("There is no Advance amount to Refund"))
+		} else {
+			d.show();
+		}
+
+	})
+	.catch((error) => {
+        console.error(error);
+        frappe.msgprint(__('Error fetching data from Payment Entry'));
+    });
+}
