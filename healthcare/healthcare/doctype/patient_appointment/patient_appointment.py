@@ -352,17 +352,27 @@ class PatientAppointment(Document):
 				self.google_meet_link = event_doc.google_meet_link
 
 	def set_postition_in_queue(self):
+		from frappe.query_builder.functions import Max
+
 		if self.status == "Checked In" and not self.position_in_queue:
-			app_count = frappe.db.count(
-				"Patient Appointment",
-				{
-					"status": "Checked In",
-					"practitioner": self.practitioner,
-					"service_unit": self.service_unit,
-					"appointment_time": self.appointment_time,
-				},
-			)
-			self.position_in_queue = app_count + 1
+			appointment = frappe.qb.DocType("Patient Appointment")
+			position = (
+				frappe.qb.from_(appointment)
+				.select(
+					Max(appointment.position_in_queue).as_("max_position"),
+				)
+				.where(
+					(appointment.status == "Checked In")
+					& (appointment.practitioner == self.practitioner)
+					& (appointment.service_unit == self.service_unit)
+					& (appointment.appointment_time == self.appointment_time)
+				)
+			).run(as_dict=True)[0]
+			position_in_queue = 1
+			if position and position.get("max_position"):
+				position_in_queue = position.get("max_position") + 1
+
+			self.position_in_queue = position_in_queue
 
 
 @frappe.whitelist()
@@ -383,12 +393,11 @@ def check_payment_reqd(patient):
 
 
 @frappe.whitelist()
-def invoice_appointment(appointment_name):
+def invoice_appointment(appointment_name, discount_percentage=0, discount_amount=0):
 	appointment_doc = frappe.get_doc("Patient Appointment", appointment_name)
-	show_payment_popup = frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
-	free_follow_ups = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+	settings = frappe.get_single("Healthcare Settings")
 
-	if free_follow_ups:
+	if settings.enable_free_follow_ups:
 		fee_validity = check_fee_validity(appointment_doc)
 
 		if fee_validity and fee_validity.status != "Active":
@@ -399,12 +408,12 @@ def invoice_appointment(appointment_name):
 	else:
 		fee_validity = None
 
-	if show_payment_popup and not appointment_doc.invoiced and not fee_validity:
-		create_sales_invoice(appointment_doc)
+	if settings.show_payment_popup and not appointment_doc.invoiced and not fee_validity:
+		create_sales_invoice(appointment_doc, discount_percentage, discount_amount)
 	update_fee_validity(appointment_doc)
 
 
-def create_sales_invoice(appointment_doc):
+def create_sales_invoice(appointment_doc, discount_percentage=0, discount_amount=0):
 	sales_invoice = frappe.new_doc("Sales Invoice")
 	sales_invoice.patient = appointment_doc.patient
 	sales_invoice.customer = frappe.get_value("Patient", appointment_doc.patient, "customer")
@@ -416,12 +425,23 @@ def create_sales_invoice(appointment_doc):
 	item = sales_invoice.append("items", {})
 	item = get_appointment_item(appointment_doc, item)
 
+	paid_amount = flt(appointment_doc.paid_amount)
+	# Set discount amount and percentage if entered in payment popup
+	if flt(discount_percentage):
+		sales_invoice.additional_discount_percentage = flt(discount_percentage)
+		paid_amount = flt(appointment_doc.paid_amount) - (
+			flt(appointment_doc.paid_amount) * (flt(discount_percentage) / 100)
+		)
+	if flt(discount_amount):
+		sales_invoice.discount_amount = flt(discount_amount)
+		paid_amount = flt(appointment_doc.paid_amount) - flt(discount_amount)
+
 	# Add payments if payment details are supplied else proceed to create invoice as Unpaid
 	if appointment_doc.mode_of_payment and appointment_doc.paid_amount:
 		sales_invoice.is_pos = 1
 		payment = sales_invoice.append("payments", {})
 		payment.mode_of_payment = appointment_doc.mode_of_payment
-		payment.amount = appointment_doc.paid_amount
+		payment.amount = paid_amount
 
 	sales_invoice.set_missing_values(for_validate=True)
 	sales_invoice.flags.ignore_mandatory = True
@@ -434,10 +454,10 @@ def create_sales_invoice(appointment_doc):
 		{
 			"invoiced": 1,
 			"ref_sales_invoice": sales_invoice.name,
-			"paid_amount": appointment_doc.paid_amount,
+			"paid_amount": paid_amount,
 		},
 	)
-	appointment_doc.reload()
+	appointment_doc.notify_update()
 
 
 @frappe.whitelist()
