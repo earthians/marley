@@ -26,7 +26,6 @@ class Observation(Document):
 
 	def on_update(self):
 		set_diagnostic_report_status(self)
-		update_patient_medical_record(self)
 
 	def before_insert(self):
 		set_observation_idx(self)
@@ -104,6 +103,7 @@ class Observation(Document):
 @frappe.whitelist()
 def get_observation_details(docname, observation_status=None):
 	reference = frappe.get_value("Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True)
+	observation = []
 	if reference.get("ref_doctype") == "Sales Invoice":
 		observation = frappe.get_list(
 			"Observation",
@@ -490,7 +490,7 @@ def update_patient_medical_record(doc):
 						create_medical_record(daig_doc, obs_html)
 
 
-def set_observation_html(daig_data):
+def set_observation_html(daig_data, obs_as_link=True):
 	out_html = """
 				<table style="border-collapse: collapse; width: 100%;">
 				<tr style="background-color: #f2f2f2; border: 1px solid #dddddd;">
@@ -505,16 +505,20 @@ def set_observation_html(daig_data):
 			out_html += f"""
 						<tr>
 							<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'><b>{diag.get("display_name")}</b></td>
-							<td>&nbsp</td>
-							<td>&nbsp</td>
-							<td>&nbsp</td>
+							<td> </td>
+							<td> </td>
+							<td> </td>
 						</tr>
 						"""
 			for comp_data in diag.get(diag.get("observation")):
 				comp_obs_data = comp_data.get("observation")
+				if obs_as_link:
+					href = f"""<a href="/app/observation/{comp_obs_data.get("name")}{comp_obs_data.get("observation_template")}</a>"""
+				else:
+					href = comp_obs_data.get("observation_template")
 				out_html += f"""
 					<tr>
-						<td style='border: 1px solid #dddddd; text-align: center; padding: 8px;'><a href="/app/observation/{comp_obs_data.get("name")}" title="{comp_obs_data.get("observation_template")}">{comp_obs_data.get("observation_template")}</a></td>
+						<td style='border: 1px solid #dddddd; text-align: center; padding: 8px;'>{href}</td>
 						<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'>{comp_obs_data.get("result_text") or comp_obs_data.get("result_data") or comp_obs_data.get("result_select") or "-"} {comp_obs_data.get("permitted_unit") or ""}</td>
 						<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:10px;'>{comp_obs_data.get("reference") or "-"}</td>
 						<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:11px;'>{get_datetime(comp_obs_data.get("time_of_result")).strftime("%Y-%m-%d %H:%M") if comp_obs_data.get("time_of_result") else "-"}</td>
@@ -522,9 +526,13 @@ def set_observation_html(daig_data):
 					"""
 		elif diag.get("observation"):
 			single_data = diag.get("observation")
+			if obs_as_link:
+					href = f"""<a href="/app/observation/{single_data.get("name")} title="{single_data.get("observation_template")}"><b></b></a>"""
+			else:
+				href = single_data.get("observation_template")
 			out_html += f"""
 				<tr>
-					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'><a href="/app/observation/{single_data.get("name")}" title="{single_data.get("observation_template")}"><b>{single_data.get("observation_template")}</b></a></td>
+					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'>{href} </td>
 					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px;'>{single_data.get("result_text") or single_data.get("result_data") or single_data.get("result_select") or "-"} {single_data.get("permitted_unit") or ""}</td>
 					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:10px;'>{single_data.get("reference") or "-"}</td>
 					<td style='border: 1px solid #dddddd; text-align: left; padding: 8px; font-size:11px;'>{get_datetime(single_data.get("time_of_result")).strftime("%Y-%m-%d %H:%M") if single_data.get("time_of_result") else "-"}</td>

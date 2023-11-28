@@ -4,7 +4,6 @@ frappe.pages['patient_history'].on_page_load = function(wrapper) {
 		parent: wrapper,
 		title: __('Patient History')
 	});
-
 	let patient_history = new PatientHistory(wrapper);
 	$(wrapper).bind('show', ()=> {
 		patient_history.show();
@@ -39,6 +38,7 @@ class PatientHistory {
 						me.start = 0;
 						me.patient_id = patient.get_value();
 						me.make_patient_profile();
+						me.page.set_secondary_action('<svg class="icon  icon-sm" style=""><use class="" href="#icon-printer"></use></svg>', () => print_consolidated_data(me.patient_id))
 					}
 				}
 			}
@@ -453,3 +453,65 @@ class PatientHistory {
 		});
 	}
 }
+
+var print_consolidated_data = function(patient) {
+	const letterheads = get_letterhead_options();
+	const dialog = new frappe.ui.Dialog({
+		title: __(`Print ${patient}`),
+		fields: [
+			{
+				fieldtype: "Select",
+				label: __("Letter Head"),
+				fieldname: "letter_sel",
+				options: letterheads,
+				default: letterheads[0],
+			},
+		],
+	});
+
+dialog.set_primary_action(__("Print"), (args) => {
+	frappe.call({
+		"method": "healthcare.healthcare.page.patient_history.patient_history.get_patient_data",
+		"args": {
+			'patient': patient
+		},
+		callback: function (r) {
+			console.log(r.message)
+			if (r.message) {
+				frappe.render_pdf(r.message, {orientation:"Portrait"});
+			}
+			// let p_html = set_html(frm, r.message)
+			// frappe.render_pdf(p_html, {orientation:"Landscape"});
+		}
+	})
+});
+
+dialog.show();
+}
+
+var get_letterhead_options = () => {
+	const letterhead_options = [__("No Letterhead")];
+	frappe.call({
+		method: "frappe.client.get_list",
+		args: {
+			doctype: "Letter Head",
+			fields: ["name", "is_default"],
+			filters: { disabled: 0 },
+			limit_page_length: 0,
+		},
+		async: false,
+		callback(r) {
+			if (r.message) {
+				r.message.forEach((letterhead) => {
+				// 	if (letterhead.is_default) {
+				    if (letterhead.name === "DiagKare Report Letter Head") {
+						letterhead_options.unshift(letterhead.name);
+					} else {
+						letterhead_options.push(letterhead.name);
+					}
+				});
+			}
+		},
+	});
+	return letterhead_options;
+};

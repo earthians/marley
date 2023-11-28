@@ -48,7 +48,9 @@ class PatientHistorySettings(Document):
 	def get_doctype_fields(self, document_type, fields):
 		multicheck_fields = []
 		doc_fields = frappe.get_meta(document_type).fields
-
+		cus_fields = frappe.get_all("Custom Field")
+		# doc = frappe.get_doc(document_type)
+		# k = [d for d in doc.fields if getattr(d, "is_custom_field", False)]
 		for field in doc_fields:
 			if (
 				field.fieldtype not in frappe.model.no_value_fields
@@ -125,6 +127,8 @@ def set_subject_field(doc):
 	meta = frappe.get_meta(doc.doctype)
 	subject = ""
 	patient_history_fields = get_patient_history_fields(doc)
+	if doc.doctype == "Patient Encounter":
+		print("\n\njjjj", patient_history_fields)
 
 	for entry in patient_history_fields:
 		fieldname = entry.get("fieldname")
