@@ -746,19 +746,27 @@ def setup_service_request_masters():
 		{"doctype": "Patient Care Type", "patient_care_type": _("Diagnostic")},
 		{
 			"doctype": "Code System",
-			"uri": "http://hl7.org/fhir/ValueSet/request-intent",
+			"uri": "http://hl7.org/fhir/request-intent",
 			"is_fhir_defined": 1,
 			"code_system": _("Intent"),
 			"description": _(
 				"Codes indicating the degree of authority/intentionality associated with a request."
 			),
+			"oid": "2.16.840.1.113883.4.642.4.114",
+			"experimental": 1,
+			"immutable": 1,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
-			"uri": "http://hl7.org/fhir/ValueSet/request-priority",
+			"uri": "http://hl7.org/fhir/request-priority",
 			"is_fhir_defined": 1,
 			"code_system": _("Priority"),
 			"description": _("Identifies the level of importance to be assigned to actioning the request."),
+			"oid": "2.16.840.1.113883.4.642.4.116",
+			"experimental": 1,
+			"immutable": 1,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code Value",
@@ -767,6 +775,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents a request/demand and authorization for action by the requestor."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -775,6 +784,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request is a suggestion made by someone/something that does not have an intention to ensure it occurs and without providing an authorization to act."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -783,6 +793,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents an intention to ensure something occurs without providing an authorization for others to act."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -791,12 +802,14 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents a legally binding instruction authored by a Patient or RelatedPerson."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
 			"code_system": "Intent",
 			"code_value": _("Original Order"),
 			"definition": _("The request represents an original authorization for action."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -805,6 +818,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents an automatically generated supplemental authorization for action based on a parent authorization together with initial results of the action taken against that parent authorization."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -813,6 +827,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents the view of an authorization instantiated by a fulfilling system representing the details of the fulfiller's intention to act upon a submitted order."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -821,6 +836,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"An order created in fulfillment of a broader order that represents the authorization for a single activity occurrence. E.g. The administration of a single dose of a drug."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -829,18 +845,21 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents a component or option for a RequestOrchestration that establishes timing, conditionality and/or other constraints among a set of requests."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
 			"code_system": "Priority",
 			"code_value": _("Routine"),
 			"definition": _("The request has normal priority."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 		{
 			"doctype": "Code Value",
 			"code_system": "Priority",
 			"code_value": _("Urgent"),
 			"definition": _("The request should be actioned promptly - higher priority than routine."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 		{
 			"doctype": "Code Value",
@@ -849,6 +868,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request should be actioned as soon as possible - higher priority than urgent."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 		{
 			"doctype": "Code Value",
@@ -857,6 +877,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request should be actioned immediately - highest possible priority. E.g. an emergency."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 	]
 	insert_record(records)
@@ -956,7 +977,7 @@ def get_patient_history_config():
 
 
 def setup_non_fhir_code_systems():
-	"""A set of external code systems as published in the FHIR R5 documentation
+	"""A subset of external code systems as published in the FHIR R5 documentation
 	https://www.hl7.org/fhir/terminologies-systems.html#external
 
 	For a full set of external code systems, see
@@ -975,6 +996,9 @@ def setup_non_fhir_code_systems():
 				"""
 			),
 			"oid": "2.16.840.1.113883.6.96",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
@@ -983,6 +1007,9 @@ def setup_non_fhir_code_systems():
 			"code_system": _("RxNorm"),
 			"description": _("Using RxNorm with HL7 Standards. https://terminology.hl7.org/RxNorm.html"),
 			"oid": "2.16.840.1.113883.6.88",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
@@ -991,6 +1018,9 @@ def setup_non_fhir_code_systems():
 			"code_system": _("LOINC"),
 			"description": _("Using LOINC with HL7 Standards. https://terminology.hl7.org/LOINC.html"),
 			"oid": "2.16.840.1.113883.6.1",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
@@ -999,6 +1029,9 @@ def setup_non_fhir_code_systems():
 			"code_system": _("pCLUCUMOCD"),
 			"description": _("Using UCUM with HL7 Standards. https://terminology.hl7.org/UCUM.html"),
 			"oid": "2.16.840.1.113883.6.8",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
@@ -1007,6 +1040,9 @@ def setup_non_fhir_code_systems():
 			"code_system": _("ICD-9-CM (clinical codes)"),
 			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
 			"oid": "2.16.840.1.113883.6.103",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
@@ -1015,6 +1051,9 @@ def setup_non_fhir_code_systems():
 			"code_system": _("ICD-9-CM (procedure codes)"),
 			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
 			"oid": "2.16.840.1.113883.6.104",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
@@ -1023,9 +1062,115 @@ def setup_non_fhir_code_systems():
 			"code_system": _("ICD-10-CM (United States)"),
 			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
 			"oid": "2.16.840.1.113883.6.90",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
 		},
 	]
 	insert_record(code_systems)
+
+
+def setup_diagnostic_module_codes():
+	code_systems = get_diagnostic_module_code_systems()
+	insert_record(code_systems)
+
+	category_codes = get_observation_category_codes()
+	insert_record(category_codes)
+
+	# TODO: insert observation methods
+
+
+def get_diagnostic_module_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://terminology.hl7.org/CodeSystem/observation-category",
+			"code_system": _("Observation Category"),
+			"description": _("Observation Category codes."),
+			"oid": "2.16.840.1.113883.4.642.1.1125",
+			"experimental": 1,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_observation_category_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "social-history",
+			"display": _("Social History"),
+			"definition": _("Social History Observations define the patient's occupational, personal (e.g., lifestyle), social, familial, and environmental history and health risk factors that may impact the patient's health."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "vital-signs",
+			"display": _("Vital Signs"),
+			"definition": _("Clinical observations measure the body's basic functions such as blood pressure, heart rate, respiratory rate, height, weight, body mass index, head circumference, pulse oximetry, temperature, and body surface area."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "imaging",
+			"display": _("Imaging"),
+			"definition": _("Observations generated by imaging. The scope includes observations regarding plain x-ray, ultrasound, CT, MRI, angiography, echocardiography, and nuclear medicine."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "laboratory",
+			"display": _("Laboratory"),
+			"definition": _("The results of observations generated by laboratories. Laboratory results are typically generated by laboratories providing analytic services in areas such as chemistry, hematology, serology, histology, cytology, anatomic pathology (including digital pathology), microbiology, and/or virology. These observations are based on analysis of specimens obtained from the patient and submitted to the laboratory."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "procedure",
+			"display": _("Procedure"),
+			"definition": _("Observations generated by other procedures. This category includes observations resulting from interventional and non-interventional procedures excluding laboratory and imaging (e.g., cardiology catheterization, endoscopy, electrodiagnostics, etc.). Procedure results are typically generated by a clinician to provide more granular information about component observations made during a procedure. An example would be when a gastroenterologist reports the size of a polyp observed during a colonoscopy."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "survey",
+			"display": _("Survey"),
+			"definition": _("Assessment tool/survey instrument observations (e.g., Apgar Scores, Montreal Cognitive Assessment (MoCA))."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "exam",
+			"display": _("Exam"),
+			"definition": _("Observations generated by physical exam findings including direct observations made by a clinician and use of simple instruments and the result of simple maneuvers performed directly on the patient's body."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "therapy",
+			"display": _("Therapy"),
+			"definition": _("Observations generated by non-interventional treatment protocols (e.g. occupational, physical, radiation, nutritional and medication therapy)"),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "activity",
+			"display": _("Activity"),
+			"definition": _("Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data)"),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+	]
 
 
 def delete_custom_records():
