@@ -9,10 +9,14 @@
   "section_break_mygg",
   "code_system",
   "system_uri",
+  "experimental",
+  "immutable",
   "code_value",
   "display",
   "column_break_cmkw",
-  "definition"
+  "definition",
+  "official_url",
+  "custom"
  ],
  "fields": [
   {
@@ -30,11 +34,10 @@
   {
    "allow_in_quick_entry": 1,
    "fieldname": "display",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Display",
-   "no_copy": 1,
-   "search_index": 1
+   "no_copy": 1
   },
   {
    "fieldname": "column_break_cmkw",
@@ -62,7 +65,8 @@
    "in_list_view": 1,
    "label": "Code Value",
    "no_copy": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "code_system.uri",
@@ -72,10 +76,38 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "official_url",
+   "fieldtype": "Data",
+   "label": "Official URL"
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.experimental",
+   "fieldname": "experimental",
+   "fieldtype": "Check",
+   "label": "Experimental",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.custom",
+   "fieldname": "custom",
+   "fieldtype": "Check",
+   "label": "Custom"
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.immutable",
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2023-11-12 23:07:41.209432",
+ "modified": "2023-11-30 21:09:27.550234",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",
