@@ -171,9 +171,9 @@ healthcare.Orders = class Orders {
 		let cur_form_footer = this.form_wrapper.find('.form-footer');
 
 		frappe.call({
-			method: "get_encounter_details",
-			doc: me.frm.doc,
+			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_encounter_details",
 			args: {
+				"doc": me.frm.doc,
 			},
 			callback: (r) => {
 				if (!r.exc) {

@@ -620,6 +620,7 @@ frappe.ui.form.on('Drug Prescription', {
 		}
 	},
 	medication:function(frm, cdt, cdn) {
+		let child = locals[cdt][cdn];
 		frappe.call({
 			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications",
 			freeze: true,

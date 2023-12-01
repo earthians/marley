@@ -66,11 +66,15 @@ class SampleCollection(Document):
 	# 		frappe.throw(
 	# 			msg=_("Cannot Submit, not all samples are marked as 'Collected'."), title=_("Not Allowed")
 	# 		)
+	def on_submit(self):
+		if self.observation_sample_collection:
+			for obs in self.observation_sample_collection:
+				if obs.get("service_request"):
+					frappe.db.set_value("Service Request", obs.get("service_request"), "status", "Completed")
 
 
 @frappe.whitelist()
 def create_observation(selected, sample_collection, component_observations=None, child_name=None):
-	print("\n\n\n\n\n\n\n\njjjjjjjjj")
 	sample_col_doc = frappe.db.get_value(
 		"Sample Collection",
 		sample_collection,

@@ -17,6 +17,14 @@ frappe.ui.form.on("Treatment Plan Template", {
 				}
 			};
 		});
+
+		frm.set_query('drug_code', 'drugs', function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			return {
+				query: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications_query',
+				filters: { name: row.medication }
+			};
+		});
 	},
 });
 
@@ -24,13 +32,13 @@ frappe.ui.form.on('Treatment Plan Template Item', {
 	template: function(frm, cdt, cdn){
 		let child = locals[cdt][cdn];
 		if (child.type == "Medication") {
-		frappe.call({
-			"method": "frappe.client.get",
-			args: {
-				doctype: "Operation",
-				name: d.operation
-			},
-		})
-	}
-	}
+			frappe.call({
+				"method": "frappe.client.get",
+				args: {
+					doctype: "Operation",
+					name: d.operation
+				},
+			})
+		}
+	},
 })
