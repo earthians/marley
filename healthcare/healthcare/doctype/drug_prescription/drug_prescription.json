@@ -34,6 +34,7 @@
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "label": "Drug Code",
+   "mandatory_depends_on": "eval:doc.medication;",
    "options": "Item"
   },
   {

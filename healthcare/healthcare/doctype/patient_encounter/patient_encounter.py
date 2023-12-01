@@ -323,31 +323,6 @@ class PatientEncounter(Document):
 			["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
 		)
 
-	@frappe.whitelist()
-	def get_encounter_details(self):
-		medication_requests = []
-		service_requests = []
-		filters = {"patient": self.patient, "docstatus": 1}
-		medication_requests = frappe.get_all("Medication Request", filters, ["*"])
-		service_requests = frappe.get_all("Service Request", filters, ["*"])
-		for service_request in service_requests:
-			if service_request.template_dt == "Lab Test Template":
-				lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
-				if lab_test:
-					subject = frappe.db.get_value(
-						"Patient Medical Record", {"reference_name": lab_test}, "subject"
-					)
-					if subject:
-						service_request["lab_details"] = subject
-		clinical_notes = frappe.get_all(
-			"Clinical Note",
-			{
-				"patient": self.patient,
-			},
-			["posting_date", "note"],
-		)
-
-		return medication_requests, service_requests, clinical_notes
 
 
 @frappe.whitelist()
@@ -534,3 +509,25 @@ def create_service_request_from_widget(encounter, data, medication_request=False
 		order = encounter_doc.get_order_details(template, data)
 	order.insert(ignore_permissions=True, ignore_mandatory=True)
 	order.submit()
+
+
+@frappe.whitelist()
+def get_encounter_details(doc):
+	doc = json.loads(doc)
+	if doc.get("__islocal") == 0:
+		doc = frappe.get_doc(doc.doctype, doc.docname)
+	medication_requests = []
+	service_requests = []
+	filters = {"patient": doc.get("patient"), "docstatus":1}
+	medication_requests = frappe.get_all("Medication Request", filters, ["*"])
+	service_requests = frappe.get_all("Service Request", filters, ["*"])
+	for service_request in service_requests:
+		if service_request.template_dt == "Lab Test Template":
+			lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
+			if lab_test:
+				subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
+				if subject:
+					service_request["lab_details"] = subject
+	clinical_notes = frappe.get_all("Clinical Note", {"patient": doc.get("patient")}, ["posting_date", "note"])
+
+	return medication_requests, service_requests, clinical_notes
