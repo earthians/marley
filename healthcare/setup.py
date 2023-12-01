@@ -1071,13 +1071,14 @@ def setup_non_fhir_code_systems():
 
 
 def setup_diagnostic_module_codes():
-	code_systems = get_diagnostic_module_code_systems()
-	insert_record(code_systems)
+	records = []
 
-	category_codes = get_observation_category_codes()
-	insert_record(category_codes)
+	records.extend(get_diagnostic_module_code_systems())
+	records.extend(get_observation_category_codes())
+	records.extend(get_observation_status_codes())
 
 	# TODO: insert observation methods
+	insert_record(records)
 
 
 def get_diagnostic_module_code_systems():
@@ -1091,6 +1092,19 @@ def get_diagnostic_module_code_systems():
 			"oid": "2.16.840.1.113883.4.642.1.1125",
 			"experimental": 1,
 			"immutable": 0,
+			"custom": 0,
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 1,
+			"uri": "http://hl7.org/fhir/observation-status",
+			"code_system": _("Observation Status"),
+			"description": _("Codes providing the status of an observation."),
+			"version": "5.0.0",
+			"oid": "2.16.840.1.113883.4.642.4.401",
+			"experimental": 0,
+			"immutable": 0,
+			"complete": 1,
 			"custom": 0,
 		},
 	]
@@ -1169,6 +1183,84 @@ def get_observation_category_codes():
 			"display": _("Activity"),
 			"definition": _("Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data)"),
 			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+	]
+
+
+def get_observation_status_codes():
+	# TODO: Add field for canonical mapping to Resource Status
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "registered",
+			"display": _("Registered"),
+			"definition": _("Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data.)"),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "preliminary",
+			"display": _("Preliminary"),
+			"definition": _("This is an initial or interim observation: data may be incomplete or unverified."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "final",
+			"display": _("Final"),
+			"definition": _("The observation is complete and there are no further actions needed.)"),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "amended",
+			"display": _("Amended"),
+			"definition": _("Subsequent to being Final, the observation has been modified subsequent. This includes updates/new information and corrections."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "corrected",
+			"display": _("Corrected"),
+			"definition": _("Subsequent to being Final, the observation has been modified to correct an error in the test result."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "cancelled",
+			"display": _("Cancelled"),
+			"definition": _("The observation is unavailable because the measurement was not started or not completed (also sometimes called 'aborted')."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "entered-in-error",
+			"display": _("Entered in Error"),
+			"definition": _("The observation has been withdrawn following previous final release. This electronic record should never have existed, though it is possible that real-world decisions were based on it. (If real-world activity has occurred, the status should be 'cancelled' rather than 'entered-in-error'.)."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "unknown",
+			"display": _("Unknown"),
+			"definition": _("The authoring/source system does not know which of the status values currently applies for this observation. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
 		},
 	]
 

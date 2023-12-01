@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
+ "beta": 1,
  "creation": "2017-06-21 13:02:56.122897",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -11,11 +12,16 @@
   "system_uri",
   "experimental",
   "immutable",
+  "complete",
   "code_value",
   "display",
   "column_break_cmkw",
+  "status",
+  "version",
+  "level",
   "definition",
   "official_url",
+  "canonical_mapping",
   "custom"
  ],
  "fields": [
@@ -104,10 +110,46 @@
    "fieldtype": "Check",
    "label": "Immutable",
    "read_only": 1
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Link",
+   "label": "Version",
+   "options": "Code Value",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "label": "Status",
+   "options": "Code Value"
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.complete",
+   "fieldname": "complete",
+   "fieldtype": "Check",
+   "label": "Complete",
+   "read_only": 1
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Int",
+   "label": "Level",
+   "length": 10,
+   "non_negative": 1
+  },
+  {
+   "description": "Only applicable to status codes, all status codes are mapped to one of the codes defined as part of Resource Status (The master set of status codes used throughout FHIR)",
+   "fieldname": "canonical_mapping",
+   "fieldtype": "Link",
+   "label": "Canonical Mapping",
+   "options": "Code Value"
   }
  ],
  "links": [],
- "modified": "2023-11-30 21:09:27.550234",
+ "modified": "2023-12-04 00:15:17.284017",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",
@@ -162,7 +204,7 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
- "search_fields": "code_value, code_system, definition",
+ "search_fields": "code_value, code_system, level",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

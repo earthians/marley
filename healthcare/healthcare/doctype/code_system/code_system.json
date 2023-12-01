@@ -2,6 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "field:code_system",
+ "beta": 1,
  "creation": "2017-06-21 13:07:00.463176",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -14,10 +15,13 @@
   "uri",
   "description",
   "column_break_ijhv",
+  "status",
+  "version",
   "is_fhir_defined",
   "oid",
   "experimental",
   "immutable",
+  "complete",
   "custom"
  ],
  "fields": [
@@ -103,6 +107,26 @@
    "default": "1",
    "fieldname": "column_break_seaq",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Link",
+   "label": "Version",
+   "options": "Code Value",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "label": "Status",
+   "options": "Code Value"
+  },
+  {
+   "default": "0",
+   "fieldname": "complete",
+   "fieldtype": "Check",
+   "label": "Complete"
   }
  ],
  "links": [
@@ -111,7 +135,7 @@
    "link_fieldname": "code_system"
   }
  ],
- "modified": "2023-11-30 21:07:23.288897",
+ "modified": "2023-12-04 00:12:45.354578",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code System",
