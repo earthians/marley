@@ -3,6 +3,29 @@
 
 frappe.ui.form.on("Treatment Counselling", {
     refresh(frm) {
+		if (frm.doc.docstatus==1 && !frm.doc.inpatient_record) {
+			frm.add_custom_button(__('Schedule Admission'), function() {
+				frappe.confirm(__("Confirm to Schedule Admission"), function() {
+					schedule_inpatient(frm);
+				});
+			});
+		}
+
+		frm.set_query("type", "treatment_plan_template_items", function () {
+			return {
+				filters: {
+					"name": ["in", [
+						"Lab Test Template",
+						"Clinical Procedure Template",
+						"Therapy Type",
+						"Medication",
+						"Healthcare Service Unit",
+						"Observation Template"
+					]],
+				}
+			};
+		});
+
 		if (!frm.doc.__islocal) {
 			if (frm.doc.docstatus === 1) {
 				if (frm.doc.encounter_status == "Admission Scheduled" && frm.doc.status == "Active") {

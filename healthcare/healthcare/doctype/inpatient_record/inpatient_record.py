@@ -683,6 +683,9 @@ def set_total(self):
 
 
 def validate_incompleted_service_requestes(inpatient_record):
+	if not frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid"):
+		return
+
 	filters = {
 		"patient": inpatient_record.patient,
 		"inpatient_record": inpatient_record.name,

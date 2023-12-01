@@ -16,11 +16,17 @@ frappe.ui.form.on("Treatment Plan Template", {
 			};
 		});
 
-		frm.set_query("practitioners", function () {
-			if (frm.doc.medical_department) {
+		frm.set_query('drug_code', 'drugs', function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.medication) {
+				return {
+					query: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications_query',
+					filters: { name: row.medication }
+				};
+			} else {
 				return {
 					filters: {
-						"department": frm.doc.medical_department
+						is_stock_item: 1
 					}
 				};
 			}
