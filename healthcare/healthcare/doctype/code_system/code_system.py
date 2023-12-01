@@ -7,4 +7,5 @@ from frappe.model.document import Document
 
 
 class CodeSystem(Document):
-	pass
+	def autoname(self):
+		self.name = f"{self.code_system}-{self.version}"
