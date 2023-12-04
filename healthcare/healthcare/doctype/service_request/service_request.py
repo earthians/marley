@@ -87,6 +87,8 @@ class ServiceRequest(ServiceRequestController):
 			dt = "Clinical Procedure"
 		elif self.template_dt == "Therapy Type":
 			dt = "Therapy Session"
+		elif self.template_dt == "Observation Template":
+			dt = "Observation"
 		dt_name = frappe.db.get_value(dt, {"service_request": self.name})
 		frappe.db.set_value(dt, dt_name, "invoiced", invoiced)
 
