@@ -555,3 +555,10 @@ def create_medical_record(daig_doc, subject):
 	medical_record.reference_name = daig_doc.name
 	medical_record.reference_owner = daig_doc.owner
 	medical_record.save(ignore_permissions=True)
+
+
+@frappe.whitelist()
+def delta_check(observation):
+	obs_data = frappe.db.get_value("Observation", observation, ["patient", "observation_template"], as_dict=True)
+	previous_data = frappe.get_all("Observation", {"patient": obs_data.get("patient"), "observation_template": obs_data.get("observation_template"), "docstatus": 1, "name": ["!=", observation]}, "*", limit=3)
+	return previous_data

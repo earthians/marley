@@ -312,8 +312,11 @@ healthcare.ObservationWidget = class {
 
 		let auth_html = ""
 		auth_html += `<div style="float:right;">
+			<button class="btn btn-xs btn-secondary small" id="delta-search-${obs_data.name}" title="Delta Check">
+				<span style="font-size:10px;"><svg class="icon icon-sm"><use xlink:href="#icon-small-file"></use></svg></span>
+			</button>
 			<button class="btn btn-xs btn-secondary small" id="authorise-observation-btn-${obs_data.name}">
-			<span style="font-size:10px;">${action.slice(0, -1)}</span>
+				<span style="font-size:10px;">${action.slice(0, -1)}</span>
 			</button></div>
 			</div>`
 		me[obs_data.name].get_field('auth_btn').html(auth_html);
@@ -321,6 +324,11 @@ healthcare.ObservationWidget = class {
 		authbutton.addEventListener("click", function() {
 			me.auth_observation(obs_data.name, action)
 		});
+		var delta_search_button = document.getElementById(`delta-search-${obs_data.name}`);
+		delta_search_button.addEventListener("click", function() {
+			me.delta_search(obs_data.name)
+		});
+
 
 		let note_html = `<div><span class="add-note-observation-btn btn btn-link"
 			id="add-note-observation-btn-${obs_data.name}">
@@ -525,6 +533,111 @@ healthcare.ObservationWidget = class {
 			}
 			d.show();
 			d.get_close_btn().show();
+	}
+
+	delta_search (observation) {
+		let delta_data = [];
+		frappe.run_serially([
+			() =>frappe.call({
+			method: "healthcare.healthcare.doctype.observation.observation.delta_check",
+			args: {
+				observation: observation,
+				// reason: data.unauthorisation_reason,
+			},
+			freeze: true,
+			callback: function(r) {
+				if (!r.exc) {
+					delta_data = r.message;
+					// me.frm.reload_doc();
+				}
+			}
+		}),
+		() =>{
+			let ob_data = ""
+			var d = new frappe.ui.Dialog({
+			title: __("Delta Check"),
+			static: true,
+			fields: [
+				{
+					"label": "Past Observations",
+					"fieldname": "past_observations",
+					"fieldtype": "HTML",
+				}
+			],
+			});
+			if (delta_data && delta_data.length>0) {
+				delta_data.forEach(function(data) {
+					var dateTime = new Date(data.time_of_result);
+
+					var year = dateTime.getFullYear();
+					var month = dateTime.getMonth() + 1;
+					var day = dateTime.getDate();
+					var hours = dateTime.getHours();
+					var minutes = dateTime.getMinutes();
+					var seconds = dateTime.getSeconds();
+
+					var date = `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
+					var timestring = `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
+					var [hours, minutes] = timestring.split(':');
+					let formattedHours = parseInt(hours, 10);
+					var ampm = formattedHours >= 12 ? 'PM' : 'AM';
+					formattedHours = formattedHours % 12 || 12;
+					var time = `${formattedHours}:${minutes} ${ampm}`;
+					ob_data += `
+						<div class="observation-section" style="border: 1px solid var(--border-color);
+							padding-right: 0;
+							font-size: 11px;
+							padding-left: 15px;
+							margin-right: 15px;
+							padding-bottom: 15px;
+							padding-top: 15px;
+							margin-bottom: 3px;
+							border-radius: var(--border-radius-md);
+							background-color: var(--fg-color);
+							box-shadow: var(--card-shadow);">
+							<div class="observation single-obs" style="display: flex; word-break: break-all;">
+								<div class="observation-details" style="width: 100%; display: flex;">
+									<div class="obs-field" style="width: 20%;">
+										${data.time_of_result ? `
+											<div class="text-muted obs-second-line text-center">
+												${date}
+											</div>
+											<div class="text-muted obs-second-line text-center">
+												${time}
+											</div>` : ''}
+									</div>
+									<div class="obs-field" style="width: 30%;">
+										<div class="obs-first-line">
+											${data.preferred_display_name || data.observation_template}
+										</div>
+										${data.method ? `
+											<div class="text-muted obs-second-line">
+												${data.method}
+											</div>` : ''}
+									</div>
+									<div class="obs-field" style="width: 20%;">
+										<div class="obs-first-line text-center" style="text-align: center;">
+											${data.result_data || data.result_select || data.result_text || ''}
+										</div>
+									</div>
+									<div class="obs-field obs-first-line" style="width: 12%;">
+										${data.permitted_unit || ''}
+									</div>
+									<div class="obs-field obs-first-line" style="width: 18%;">
+										${data.reference || ''}
+									</div>
+								</div>
+							</div>
+						</div>`;
+				})
+			} else {
+				ob_data += `<div class="text-muted">No Previous Data</div>`
+			}
+			$(d.fields_dict.past_observations.$wrapper).html(ob_data)
+			d.show()
+			d.get_close_btn().show();
+		}
+	])
 	}
 
 }
