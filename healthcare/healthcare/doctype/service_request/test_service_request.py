@@ -18,6 +18,9 @@ from healthcare.healthcare.doctype.lab_test.test_lab_test import (
 	create_lab_test,
 	create_lab_test_template,
 )
+from healthcare.healthcare.doctype.observation_template.test_observation_template import (
+	create_observation_template,
+)
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_healthcare_docs,
 )
@@ -70,19 +73,35 @@ class TestServiceRequest(unittest.TestCase):
 			1,
 		)
 
+	def test_mark_observation_as_invoiced(self):
+		obs_template = create_observation_template("Total Cholesterol")
+		patient, practitioner = create_healthcare_docs()
+		encounter = create_encounter(
+			patient, practitioner, "lab_test_prescription", obs_template, submit=True, obs=True
+		)
+		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name}, "name")
+		if service_request:
+			service_request_doc = frappe.get_doc("Service Request", service_request)
+			observation = create_observation(patient, service_request, obs_template.name)
+			create_sales_invoice(patient, service_request_doc, obs_template, "observation")
+			self.assertEqual(frappe.db.get_value("Observation", observation.name, "invoiced"), 1)
 
-def create_encounter(patient, practitioner, type, template, submit=False):
+
+def create_encounter(patient, practitioner, type, template, submit=False, obs=False):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
 	patient_encounter.practitioner = practitioner
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
-	if type == "lab_test_prescription":
-		patient_encounter.append(
-			type, {"lab_test_code": template.item, "lab_test_name": template.lab_test_name}
-		)
-	elif type == "drug_prescription":
-		patient_encounter.append(type, {"medication": template.name})
+	if not obs:
+		if type == "lab_test_prescription":
+			patient_encounter.append(
+				type, {"lab_test_code": template.item, "lab_test_name": template.lab_test_name}
+			)
+		elif type == "drug_prescription":
+			patient_encounter.append(type, {"medication": template.name})
+	else:
+		patient_encounter.append(type, {"observation_template": template.name})
 	if submit:
 		patient_encounter.submit()
 	else:
@@ -131,7 +150,34 @@ def create_sales_invoice(patient, service_request, template, type):
 				"description": template.name,
 			},
 		)
+	elif type == "observation":
+		sales_invoice.append(
+			"items",
+			{
+				"qty": 1,
+				"uom": "Nos",
+				"conversion_factor": 1,
+				"income_account": get_income_account(None, "_Test Company"),
+				"rate": template.rate,
+				"amount": template.rate,
+				"reference_dt": service_request.doctype,
+				"reference_dn": service_request.name,
+				"cost_center": erpnext.get_default_cost_center("_Test Company"),
+				"item_code": template.item,
+				"item_name": template.item_code,
+				"description": template.description,
+			},
+		)
 	sales_invoice.set_missing_values()
 
 	sales_invoice.submit()
 	return sales_invoice
+
+
+def create_observation(patient, service_request, obs_template):
+	observation = frappe.new_doc("Observation")
+	observation.patient = patient
+	observation.service_request = service_request
+	observation.observation_template = obs_template
+	observation.insert()
+	return observation
