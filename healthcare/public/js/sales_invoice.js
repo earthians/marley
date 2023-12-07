@@ -220,7 +220,7 @@ var get_drugs_to_invoice = function(frm) {
 		title: __("Get Items from Medication Requests"),
 		fields:[
 			{ fieldtype: 'Link', options: 'Patient', label: 'Patient', fieldname: "patient", reqd: true },
-			{ fieldtype: 'Link', options: 'Patient Encounter', label: 'Patient Encounter', fieldname: "encounter", reqd: true,
+			{ fieldtype: 'Link', options: 'Patient Encounter', label: 'Patient Encounter', fieldname: "encounter",
 				description:'Quantity will be calculated only for items which has "Nos" as UoM. You may change as required for each invoice item.',
 				get_query: function(doc) {
 					return {
@@ -243,21 +243,25 @@ var get_drugs_to_invoice = function(frm) {
 		'patient': frm.doc.patient,
 		'encounter': ""
 	});
+	var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
+	var args = {"patient": frm.doc.patient};
+	var columns = (["drug_code", "quantity", "description", "reference_name"]);
 	dialog.fields_dict["encounter"].df.onchange = () => {
 		var encounter = dialog.fields_dict.encounter.input.value;
 		if(encounter && encounter!=selected_encounter){
 			selected_encounter = encounter;
-			var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
-			var args = {encounter: encounter};
-			var columns = (["drug_code", "quantity", "description"]);
+			args = {encounter: encounter};
 			get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);
 		}
 		else if(!encounter){
-			selected_encounter = '';
-			$results.empty();
-			$results.append($placeholder);
+			if (selected_encounter && !dialog.fields_dict.encounter.input.value) {
+				args = {"patient": frm.doc.patient};
+				get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);
+				selected_encounter = '';
+			}
 		}
 	}
+
 	$wrapper = dialog.fields_dict.results_area.$wrapper.append(`<div class="results"
 		style="border: 1px solid #d1d8dd; border-radius: 3px; height: 300px; overflow: auto;"></div>`);
 	$results = $wrapper.find('.results');
@@ -271,6 +275,7 @@ var get_drugs_to_invoice = function(frm) {
 		$results.find('.list-item-container .list-row-check')
 			.prop("checked", ($(e.target).is(':checked')));
 	});
+	get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);
 	set_primary_action(frm, dialog, $results, false);
 	dialog.show();
 };
