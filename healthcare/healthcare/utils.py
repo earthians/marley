@@ -387,7 +387,7 @@ def get_service_requests_to_invoice(patient, company):
 			"company": company,
 			"billing_status": "Pending",
 			"docstatus": 1,
-			"template_dt": ["!=", "Healthcare Activity"],
+			"template_dt": ["not in", ["Healthcare Activity", "Appointment Type"]],
 		},
 	)
 
@@ -744,6 +744,7 @@ def get_drugs_to_invoice(encounter=None, patient=None):
 					}
 				)
 		return orders_to_invoice
+
 
 
 @frappe.whitelist()
