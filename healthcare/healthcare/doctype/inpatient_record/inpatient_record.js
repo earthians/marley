@@ -104,9 +104,9 @@ frappe.ui.form.on('Inpatient Record', {
 				frm.add_custom_button(__("Treatment Counselling"), function() {
 					create_cancel_treatment_counselling(frm);
 				}, "Create");
-				frm.add_custom_button(__('Consume'), function() {
-					consume_items(frm);
-				})
+				// frm.add_custom_button(__('Consume'), function() {
+				// 	consume_items(frm);
+				// })
 			}
 		}
 
