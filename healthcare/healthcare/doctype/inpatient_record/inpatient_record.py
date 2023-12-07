@@ -12,7 +12,7 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import get_datetime, get_link_to_form, getdate, now_datetime, today, time_diff_in_hours, now
 
-from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.doctype.nursing_task.nursing_task import create_nursing_tasks_from_medication_request, NursingTask
 from healthcare.healthcare.utils import validate_nursing_tasks
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 
@@ -502,6 +502,9 @@ def admit_patient(inpatient_record, service_unit, check_in, expected_discharge=N
 		{"inpatient_status": "Admitted", "inpatient_record": inpatient_record.name},
 	)
 
+	medication_requests = frappe.db.get_all("Medication Request", {"inpatient_record": inpatient_record.name, "patient": inpatient_record.patient}, ["name"])
+	for medication_request in medication_requests:
+		create_nursing_tasks_from_medication_request(medication_request.name)
 
 def transfer_patient(inpatient_record, service_unit, check_in, txred=0):
 	if any((inpat_occup.service_unit == service_unit and inpat_occup.left==0) for inpat_occup in inpatient_record.inpatient_occupancies):

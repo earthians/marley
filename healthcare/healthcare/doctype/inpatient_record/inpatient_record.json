@@ -528,7 +528,7 @@
  "links": [
   {
    "link_doctype": "Nursing Task",
-   "link_fieldname": "reference_name"
+   "link_fieldname": "inpatient_record"
   },
   {
    "link_doctype": "Treatment Counselling",
@@ -539,7 +539,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-06-05 12:08:38.552699",
+ "modified": "2023-12-06 13:35:14.161620",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

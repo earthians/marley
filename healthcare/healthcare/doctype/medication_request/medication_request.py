@@ -11,6 +11,7 @@ from six import string_types
 from frappe.utils import now_datetime
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
+from healthcare.healthcare.doctype.nursing_task.nursing_task import create_nursing_tasks_from_medication_request
 
 
 class MedicationRequest(ServiceRequestController):
@@ -28,6 +29,10 @@ class MedicationRequest(ServiceRequestController):
 
 		if self.amended_from:
 			frappe.db.set_value("Medication Request", self.amended_from, "status", "Replaced")
+
+	def after_insert(self):
+		if self.inpatient_record and frappe.db.get_value("Inpatient Record", self.inpatient_record, "status") == "Admitted":
+			create_nursing_tasks_from_medication_request(self.name)
 
 	def set_order_details(self):
 		if not self.medication:

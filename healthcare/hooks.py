@@ -141,6 +141,7 @@ scheduler_events = {
 	"daily": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",
         "healthcare.healthcare.doctype.inpatient_record.inpatient_record.add_occupied_service_unit_in_ip_to_billables",
+        "healthcare.healthcare.doctype.nursing_task.nursing_task.create_nursing_task_for_inpatient_record",
 	],
 }
 

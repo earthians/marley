@@ -20,9 +20,12 @@
   "max_visits",
   "valid_days",
   "inpatient_settings_section",
+  "default_medication_activity",
+  "default_pharmacy_warehouse",
   "allow_discharge_despite_unbilled_services",
   "do_not_bill_inpatient_encounters",
   "column_break_cikp",
+  "default_service_unit_warehouse",
   "automatically_generate_billable",
   "laboratory_tab",
   "sb_lab_settings",
@@ -382,11 +385,30 @@
    "fieldname": "process_service_request_only_if_paid",
    "fieldtype": "Check",
    "label": "Process Service Request If Billing Status Is Paid"
+  },
+  {
+   "fieldname": "default_medication_activity",
+   "fieldtype": "Link",
+   "label": "Default Medication Activity",
+   "options": "Healthcare Activity"
+  },
+  {
+   "description": "Used when auto creating stock entry for nursing task",
+   "fieldname": "default_pharmacy_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Pharmacy Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "default_service_unit_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Service Unit Warehouse",
+   "options": "Warehouse"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-06-06 07:52:39.803780",
+ "modified": "2023-12-07 08:51:47.886272",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
