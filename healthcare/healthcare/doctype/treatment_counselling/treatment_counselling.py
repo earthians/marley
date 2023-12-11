@@ -161,23 +161,6 @@ def create_ip_from_treatment_counselling(admission_order, treatment_counselling)
 	frappe.db.set_value(
 		"Treatment Counselling", treatment_counselling, {"status": "Completed", "inpatient_record": ip_name}
 	)
-	if ip_name:
-		doc = frappe.get_doc("Treatment Counselling", treatment_counselling)
-		for item in doc.treatment_plan_template_items:
-			if not item.service_request:
-				if item.get("type") == "Medication":
-					medication = frappe.get_doc("Medication", item.get("template"))
-					order = get_order_details(doc, medication, item, ip_name, True)
-					order.insert(ignore_permissions=True, ignore_mandatory=True)
-					order.submit()
-					item.service_request = order.name
-				elif item.get("type") in ["Observation Template", "Lab Test Template", "Therapy Type", "Clinical Procedure Template"]:
-					lab_template = frappe.get_doc(item.get("type"), item.get("template"))
-					order = get_order_details(doc, lab_template, item, ip_name)
-					order.insert(ignore_permissions=True, ignore_mandatory=True)
-					order.submit()
-					item.service_request = order.name
-		doc.save("Update")
 
 
 @frappe.whitelist()
@@ -242,76 +225,3 @@ def get_encounter_items(encounter):
 				"medication_request": drug.get("medication_request"),
 			})
 	return item_list
-
-
-def get_order_details(doc, template_doc, line_item, ip_name, medication_request=False):
-	order = frappe.get_doc(
-		{
-			"doctype": "Medication Request" if medication_request else "Service Request",
-			"order_date": frappe.utils.nowdate(),
-			"order_time": frappe.utils.nowtime(),
-			"company": doc.company,
-			"status": "Draft",
-			"patient": doc.get("patient"),
-			"practitioner": doc.primary_practitioner,
-			"source_doc": "Inpatient Record",
-			"order_group": ip_name,
-			"sequence": line_item.get("sequence"),
-			"patient_care_type": template_doc.get("patient_care_type"),
-			"intent": line_item.get("intent"),
-			"priority": line_item.get("priority"),
-			"quantity": line_item.get_quantity() if line_item.get("doctype") == "Drug Prescription" else 1,
-			"dosage": line_item.get("dosage"),
-			"dosage_form": line_item.get("dosage_form"),
-			"period": line_item.get("period"),
-			"expected_date": line_item.get("expected_date"),
-			"as_needed": line_item.get("as_needed"),
-			"staff_role": template_doc.get("staff_role"),
-			"note": line_item.get("note"),
-			"patient_instruction": line_item.get("patient_instruction"),
-			"medical_code": template_doc.get("medical_code"),
-			"medical_code_standard": template_doc.get("medical_code_standard"),
-		}
-	)
-
-	if not line_item.get("description"):
-		if template_doc.doctype == "Lab Test Template":
-			description = template_doc.get("lab_test_description")
-		else:
-			description = template_doc.get("description")
-	else:
-		description = line_item.get("description")
-
-	if template_doc.doctype == "Clinical Procedure Template":
-		order.update(
-			{
-			"referred_to_practitioner": line_item.get("practitioner"),
-			"ordered_for": line_item.get("date"),
-			}
-		)
-	elif template_doc.doctype == "Healthcare Activity":
-		order.update(
-			{
-			"repeat_in_every": line_item.get("repeat_in_every"),
-			}
-		)
-	if medication_request:
-		order.update(
-			{
-				"source_dt": "Inpatient Record",
-				"medication": template_doc.name,
-				"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
-				"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
-				"healthcare_activity": line_item.get("healthcare_activity") if line_item.get("healthcare_activity") else "",
-			}
-		)
-	else:
-		order.update(
-			{
-				"template_dt": template_doc.doctype,
-				"template_dn": template_doc.name
-			}
-		)
-
-	order.update({"order_description": description})
-	return order
