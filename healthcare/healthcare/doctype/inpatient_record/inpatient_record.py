@@ -103,6 +103,7 @@ class InpatientRecord(Document):
 	@frappe.whitelist()
 	def admit(self, service_unit, check_in, expected_discharge=None, currency=None, price_list=None):
 		admit_patient(self, service_unit, check_in, expected_discharge, currency, price_list)
+		create_orders_from_treatment_counselling(self)
 
 	@frappe.whitelist()
 	def discharge(self):
@@ -733,3 +734,105 @@ def insert_pending_service_request(doc):
 				)
 				order.insert(ignore_permissions=True, ignore_mandatory=True)
 				order.submit()
+
+
+def create_orders_from_treatment_counselling(doc):
+	treatment_councelling = frappe.db.get_value("Treatment Counselling", {"inpatient_record": doc.name, "status": "Completed"}, "name")
+	tc_doc = frappe.get_doc("Treatment Counselling", treatment_councelling)
+	create_orders = False
+	for item in tc_doc.treatment_plan_template_items:
+		if not item.service_request:
+			if item.get("type") == "Medication":
+				medication = frappe.get_doc("Medication", item.get("template"))
+				order = get_order_details(tc_doc, medication, item, doc.name, True)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
+				item.service_request = order.name
+				create_orders = True
+			elif item.get("type") in ["Observation Template", "Lab Test Template", "Therapy Type", "Clinical Procedure Template"]:
+				lab_template = frappe.get_doc(item.get("type"), item.get("template"))
+				order = get_order_details(tc_doc, lab_template, item, doc.name)
+				order.insert(ignore_permissions=True, ignore_mandatory=True)
+				order.submit()
+				item.service_request = order.name
+				create_orders = True
+	tc_doc.save("Update")
+
+	if create_orders:
+		frappe.msgprint(
+			_("Orders Created from Treatment Counselling"),
+			alert=True,
+			)
+
+
+def get_order_details(doc, template_doc, line_item, ip_name, medication_request=False):
+	order = frappe.get_doc(
+		{
+			"doctype": "Medication Request" if medication_request else "Service Request",
+			"order_date": frappe.utils.nowdate(),
+			"order_time": frappe.utils.nowtime(),
+			"company": doc.company,
+			"status": "Draft",
+			"patient": doc.get("patient"),
+			"practitioner": doc.primary_practitioner,
+			"source_doc": "Inpatient Record",
+			"order_group": ip_name,
+			"sequence": line_item.get("sequence"),
+			"patient_care_type": template_doc.get("patient_care_type"),
+			"intent": line_item.get("intent"),
+			"priority": line_item.get("priority"),
+			"quantity": line_item.get_quantity() if line_item.get("doctype") == "Drug Prescription" else 1,
+			"dosage": line_item.get("dosage"),
+			"dosage_form": line_item.get("dosage_form"),
+			"period": line_item.get("period"),
+			"expected_date": line_item.get("expected_date"),
+			"as_needed": line_item.get("as_needed"),
+			"staff_role": template_doc.get("staff_role"),
+			"note": line_item.get("note"),
+			"patient_instruction": line_item.get("patient_instruction"),
+			"medical_code": template_doc.get("medical_code"),
+			"medical_code_standard": template_doc.get("medical_code_standard"),
+		}
+	)
+
+	if not line_item.get("description"):
+		if template_doc.doctype == "Lab Test Template":
+			description = template_doc.get("lab_test_description")
+		else:
+			description = template_doc.get("description")
+	else:
+		description = line_item.get("description")
+
+	if template_doc.doctype == "Clinical Procedure Template":
+		order.update(
+			{
+			"referred_to_practitioner": line_item.get("practitioner"),
+			"ordered_for": line_item.get("date"),
+			}
+		)
+	elif template_doc.doctype == "Healthcare Activity":
+		order.update(
+			{
+			"repeat_in_every": line_item.get("repeat_in_every"),
+			}
+		)
+	if medication_request:
+		order.update(
+			{
+				"source_dt": "Inpatient Record",
+				"medication": template_doc.name,
+				"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
+				"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
+				"healthcare_activity": line_item.get("healthcare_activity") if line_item.get("healthcare_activity") else "",
+			}
+		)
+	else:
+		order.update(
+			{
+				"template_dt": template_doc.doctype,
+				"template_dn": template_doc.name
+			}
+		)
+
+	order.update({"order_description": description})
+	return order
