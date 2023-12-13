@@ -14,9 +14,14 @@ from six import string_types
 from frappe.utils import now_datetime, time_diff_in_hours, get_time, getdate, now
 
 from healthcare.healthcare.doctype.observation.observation import add_observation
-from healthcare.healthcare.doctype.observation_template.observation_template import get_observation_template_details
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
+from healthcare.healthcare.doctype.observation_template.observation_template import (
+	get_observation_template_details,
+)
+from healthcare.healthcare.doctype.sample_collection.sample_collection import (
+	set_component_observation_data,
+)
 
 
 class ServiceRequest(ServiceRequestController):
@@ -279,10 +284,8 @@ def make_observation(service_request):
 
 		if len(sample_reqd_component_obs) > 0:
 			save_sample_collection = True
-			obs_template = frappe.get_doc(
-				"Observation Template", service_request.template_dn
-			)
-
+			obs_template = frappe.get_doc("Observation Template", service_request.template_dn)
+			data = set_component_observation_data(service_request.template_dn)
 			# append parent template
 			sample_collection.append(
 				"observation_sample_collection",
@@ -295,6 +298,7 @@ def make_observation(service_request):
 						service_request.template_dn,
 						"container_closure_color",
 					),
+					"component_observations": json.dumps(data),
 					"uom": obs_template.uom,
 					"status": "Open",
 					"sample_qty": obs_template.sample_qty,
