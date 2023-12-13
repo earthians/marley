@@ -85,6 +85,7 @@ def create_observation(selected, sample_collection, component_observations=None,
 					invoice=sample_col_doc.get("reference_name"),
 					practitioner=sample_col_doc.get("referring_practitioner"),
 					child=obs.get("reference_child") if obs.get("reference_child") else "",
+					service_request=obs.get("service_request"),
 				)
 				if observation:
 					frappe.db.set_value(
@@ -102,8 +103,8 @@ def create_observation(selected, sample_collection, component_observations=None,
 					component_observations = json.loads(obs.get("component_observations"))
 					for j, comp in enumerate(component_observations):
 						observation = add_observation(
-							sample_col_doc.get("patient"),
-							comp.get("observation_template"),
+							patient=sample_col_doc.get("patient"),
+							template=comp.get("observation_template"),
 							doc="Sample Collection",
 							docname=sample_collection,
 							parent=obs.get("component_observation_parent"),
@@ -111,6 +112,7 @@ def create_observation(selected, sample_collection, component_observations=None,
 							invoice=sample_col_doc.get("reference_name"),
 							practitioner=sample_col_doc.get("referring_practitioner"),
 							child=obs.get("reference_child") if obs.get("reference_child") else "",
+							service_request=obs.get("service_request"),
 						)
 						if observation:
 							comp["status"] = "Collected"
