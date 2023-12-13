@@ -20,33 +20,15 @@ class SampleCollection(Document):
 		if self.observation_sample_collection:
 			for obs in self.observation_sample_collection:
 				if obs.get("has_component"):
-					sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
-						obs.get("observation_template")
-					)
-					data = []
-					for d in sample_reqd_component_obs:
-						obs_temp = frappe.get_value(
-							"Observation Template",
-							d,
-							[
-								"sample_type",
-								"sample",
-								"medical_department",
-								"container_closure_color",
-								"name as observation_template",
-								"sample_qty",
-							],
-							as_dict=True,
+					data = set_component_observation_data(obs.get("observation_template"))
+					if data and len(data) > 0:
+						frappe.db.set_value(
+							"Observation Sample Collection",
+							obs.get("name"),
+							{
+								"component_observations": json.dumps(data),
+							},
 						)
-						obs_temp["status"] = "Open"
-						data.append(obs_temp)
-					frappe.db.set_value(
-						"Observation Sample Collection",
-						obs.get("name"),
-						{
-							"component_observations": json.dumps(data),
-						},
-					)
 
 	def validate(self):
 		if self.observation_sample_collection:
@@ -189,14 +171,19 @@ def create_specimen(patient, selected, component_observations):
 			else:
 				groups[key] = [sel]
 		else:
-			comp_observations = json.loads(sel.get("component_observations"))
-			for comp in comp_observations:
-				comp["name"] = sel.get("name")
-				key = (comp.get("medical_department"), comp.get("sample"), comp.get("container_closure_color"))
-				if key in groups:
-					groups[key].append(comp)
-				else:
-					groups[key] = [comp]
+			if sel.get("component_observations"):
+				comp_observations = json.loads(sel.get("component_observations"))
+				for comp in comp_observations:
+					comp["name"] = sel.get("name")
+					key = (
+						comp.get("medical_department"),
+						comp.get("sample"),
+						comp.get("container_closure_color"),
+					)
+					if key in groups:
+						groups[key].append(comp)
+					else:
+						groups[key] = [comp]
 	obs_ref = {}
 	for gr in groups:
 		specimen = frappe.new_doc("Specimen")
@@ -211,3 +198,27 @@ def create_specimen(patient, selected, component_observations):
 				obs_ref[sub_grp.get("name")] = specimen.name
 
 	return obs_ref
+
+
+def set_component_observation_data(observation_template):
+	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
+		observation_template
+	)
+	data = []
+	for d in sample_reqd_component_obs:
+		obs_temp = frappe.get_value(
+			"Observation Template",
+			d,
+			[
+				"sample_type",
+				"sample",
+				"medical_department",
+				"container_closure_color",
+				"name as observation_template",
+				"sample_qty",
+			],
+			as_dict=True,
+		)
+		obs_temp["status"] = "Open"
+		data.append(obs_temp)
+	return data
