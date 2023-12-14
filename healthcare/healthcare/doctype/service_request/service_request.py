@@ -233,7 +233,12 @@ def make_observation(service_request):
 		return name_ref_in_child[0], name_ref_in_child[1], "New"
 	else:
 		exist_sample_collection = frappe.db.exists(
-			"Sample Collection", {"reference_name": service_request.order_group}
+			"Sample Collection",
+			{
+				"reference_name": service_request.order_group,
+				"docstatus": 0,
+				"patient": service_request.patient,
+			},
 		)
 
 	if template.has_component:
