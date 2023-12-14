@@ -2,11 +2,20 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Sample Collection', {
+	onload: function(frm) {
+		frappe.realtime.on("observation_creation_progress", (status) => {
+			if (status == "Completed") {
+				frm.reload_doc();
+				frappe.dom.unfreeze();
+			}
+		})
+	},
 	refresh: function(frm) {
 		frm.fields_dict.observation_sample_collection.grid.add_custom_button(__("Mark Collected"), () => {
 			selected_child = frm.fields_dict.observation_sample_collection.grid.get_selected_children()
 			if (selected_child.length > 0) {
 				frappe.confirm(__("Are you sure you want to mark selected samples as Collected"), function () {
+					frappe.dom.freeze(__('Creating Observations! Please Wait...'));
 					frappe.call({
 						"method": "healthcare.healthcare.doctype.sample_collection.sample_collection.create_observation",
 						args: {
@@ -224,6 +233,7 @@ frappe.ui.form.on("Observation Sample Collection", {
 				let selected_row = d.fields_dict.items.grid.get_selected_children();
 				if (selected_row.length > 0) {
 					frappe.confirm(__("Are you sure you want to mark selected samples as Collected"), function () {
+						frappe.dom.freeze(__('Creating Observations! Please Wait...'));
 						frappe.call({
 							"method": "healthcare.healthcare.doctype.sample_collection.sample_collection.create_observation",
 							args: {
