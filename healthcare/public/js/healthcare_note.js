@@ -241,6 +241,7 @@ healthcare.Orders = class Orders {
 								"Therapy Type",
 								"Lab Test Template",
 								"Clinical Procedure Template",
+								"Observation Template",
 							];
 							return {
 								filters: {
@@ -300,7 +301,7 @@ healthcare.Orders = class Orders {
 				primary_action: function() {
 					var data = d.get_values();
 					frappe.call({
-						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request",
+						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request_from_widget",
 						args: {
 							encounter: me.frm.doc.name,
 							data: data,
@@ -472,7 +473,7 @@ healthcare.Orders = class Orders {
 				primary_action: function() {
 					var data = d.get_values();
 					frappe.call({
-						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request",
+						method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.create_service_request_from_widget",
 						args: {
 							encounter: me.frm.doc.name,
 							data: data,

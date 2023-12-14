@@ -11,7 +11,6 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_days, getdate
 
-
 from healthcare.healthcare.utils import get_medical_codes
 
 
@@ -272,9 +271,9 @@ class PatientEncounter(Document):
 				{
 					"template_dt": template_doc.doctype,
 					"template_dn": template_doc.name,
-					"patient_care_type": line_item.patient_care_type
-					if line_item.patient_care_type
-					else template_doc.get("patient_care_type"),
+					# "patient_care_type": line_item.patient_care_type
+					# if line_item.patient_care_type
+					# else template_doc.get("patient_care_type"),
 				}
 			)
 
@@ -513,7 +512,7 @@ def cancel_request(doctype, request):
 
 
 @frappe.whitelist()
-def create_service_request(encounter, data, medication_request=False):
+def create_service_request_from_widget(encounter, data, medication_request=False):
 	data = json.loads(data)
 	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
 	if medication_request:

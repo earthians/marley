@@ -45,9 +45,8 @@
 								<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary order-btn">
 									{%= service_requests[i].status %}
 								</button>
-								<ul class="dropdown-menu dropdown-menu-right" 
-
-									style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);" 
+								<ul class="dropdown-menu dropdown-menu-right"
+									style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);"
 									x-placement="bottom-end">
 									{% if(service_requests[i].status == "Active") { %}
 									<li><a class="dropdown-item service-request-onhold" data-action="on-hold">{{ __("On Hold") }}</a></li>
@@ -130,9 +129,8 @@
 								<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary order-btn">
 									{%= medication_requests[i].status %}
 									</button>
-									<ul class="dropdown-menu dropdown-menu-right" 
-
-									style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);" 
+									<ul class="dropdown-menu dropdown-menu-right"
+									style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);"
 									x-placement="bottom-end">
 									{% if(medication_requests[i].status == "Active") { %}
 									<li><a class="dropdown-item service-request-onhold" data-action="on-hold">{{ __("On Hold") }}</a></li>
