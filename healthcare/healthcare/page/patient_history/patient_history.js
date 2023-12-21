@@ -43,6 +43,7 @@ class PatientHistory {
 				}
 			}
 		});
+		patient.df.change();
 		patient.refresh();
 
 		if (frappe.route_options && !this.patient_id) {
