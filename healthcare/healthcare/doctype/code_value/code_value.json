@@ -153,11 +153,11 @@
    "fieldname": "value_set",
    "fieldtype": "Link",
    "label": "Value Set",
-   "options": "Value Set"
+   "options": "Code Value Set"
   }
  ],
  "links": [],
- "modified": "2023-12-29 18:51:15.687377",
+ "modified": "2024-01-01 14:23:52.088388",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",

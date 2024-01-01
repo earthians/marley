@@ -60,7 +60,7 @@
  "modified": "2023-12-29 18:58:14.304840",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Value Set",
+ "name": "Code Value Set",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
