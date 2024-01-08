@@ -110,7 +110,6 @@
    "fieldtype": "Link",
    "label": "Version",
    "options": "Code Value",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -157,7 +156,7 @@
   }
  ],
  "links": [],
- "modified": "2024-01-01 14:23:52.088388",
+ "modified": "2024-01-08 16:26:43.951525",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",

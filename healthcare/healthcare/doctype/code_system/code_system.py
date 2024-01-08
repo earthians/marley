@@ -8,4 +8,4 @@ from frappe.model.document import Document
 
 class CodeSystem(Document):
 	def autoname(self):
-		self.name = f"{self.code_system}-{self.version}"
+		self.name = f"{self.code_system}-{self.version}" if self.version else self.code_system

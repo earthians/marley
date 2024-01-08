@@ -976,6 +976,32 @@ def get_patient_history_config():
 	}
 
 
+def setup_code_sysem_for_version():
+	records = [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/ValueSet/version-algorithm",
+			"code_system": _("FHIRVersion"),
+			"description": _(
+				"""
+				Indicates the mechanism used to compare versions to determine which is more current.
+				"""
+			),
+			"oid": "2.16.840.1.113883.4.642.3.3103",
+			"experimental": 1,
+			"immutable": 1,
+			"custom": 0,
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("FHIRVersion"),
+			"code_value": "5.0.0",
+			"display": _("5.0.0"),
+		},
+	]
+	insert_record(records)
+
 def setup_non_fhir_code_systems():
 	"""A subset of external code systems as published in the FHIR R5 documentation
 	https://www.hl7.org/fhir/terminologies-systems.html#external
@@ -999,6 +1025,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1010,6 +1037,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1021,6 +1049,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1032,6 +1061,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1043,6 +1073,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1054,6 +1085,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1065,6 +1097,7 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
 		},
 	]
 	insert_record(code_systems)
@@ -1128,7 +1161,7 @@ def get_diagnostic_module_code_systems():
 			"uri": "http://hl7.org/fhir/observation-status",
 			"code_system": _("ObservationStatus"),
 			"description": _("Codes providing the status of an observation."),
-			"version": "5.0.0",
+			"version": "5.0.0-FHIRVersion",
 			"oid": "2.16.840.1.113883.4.642.4.401",
 			"experimental": 0,
 			"immutable": 0,

@@ -8,4 +8,4 @@ from frappe.model.document import Document
 
 class CodeValue(Document):
 	def autoname(self):
-		self.name = f"{self.code_value}-{self.version}-{self.code_system}"
+		self.name = f"{self.code_value}{'-' + self.version if self.version else ''}{self.code_system}"
