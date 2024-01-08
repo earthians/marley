@@ -113,7 +113,6 @@
    "fieldtype": "Link",
    "label": "Version",
    "options": "Code Value",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -135,7 +134,7 @@
    "link_fieldname": "code_system"
   }
  ],
- "modified": "2023-12-04 00:12:45.354578",
+ "modified": "2024-01-08 16:44:38.512275",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code System",
