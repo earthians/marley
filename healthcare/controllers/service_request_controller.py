@@ -15,11 +15,23 @@ class ServiceRequestController(Document):
 		self.set_title()
 
 	def before_submit(self):
-		if self.status not in ["Active", "On Hold", "Unknown"]:
-			self.status = "Active"
+		if self.doctype == "Service Request":
+			if self.status not in [
+				"active-Request Status",
+				"on-hold-Request Status",
+				"unknown-Request Status",
+			]:
+				self.status = "active-Request Status"
+		elif self.doctype == "Medication Request":
+			if self.status not in [
+				"active-Medication Request Status",
+				"on-hold-Medication Request Status",
+				"unknown-Medication Request Status",
+			]:
+				self.status = "active-Medication Request Status"
 
 	def before_cancel(self):
-		not_allowed = ["Scheduled", "In Progress", "Completed", "On Hold"]
+		not_allowed = ["completed-Medication Request Status", "on-hold-Medication Request Status"]
 		if self.status in not_allowed:
 			frappe.throw(
 				_("You cannot Cancel Service Request in {} status").format(", ".join(not_allowed)),
@@ -27,8 +39,12 @@ class ServiceRequestController(Document):
 			)
 
 	def on_cancel(self):
-		if self.status == "Active":
-			self.db_set("status", "Cancelled")
+		if self.doctype == "Service Request":
+			if self.status == "active-Request Status":
+				self.db_set("status", "revoked-Request Status")
+		elif self.doctype == "Medication Request":
+			if self.status == "active-Medication Request Status":
+				self.db_set("status", "cancelled-Medication Request Status")
 
 	def set_patient_age(self):
 		patient = frappe.get_doc("Patient", self.patient)

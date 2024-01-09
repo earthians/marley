@@ -205,6 +205,7 @@ def create_custom_records():
 	create_sensitivity()
 	setup_patient_history_settings()
 	setup_service_request_masters()
+	setup_order_status_codes()
 
 
 def create_medical_departments():
@@ -984,9 +985,7 @@ def setup_code_sysem_for_version():
 			"uri": "http://hl7.org/fhir/ValueSet/version-algorithm",
 			"code_system": _("FHIRVersion"),
 			"description": _(
-				"""
-				Indicates the mechanism used to compare versions to determine which is more current.
-				"""
+				"""Indicates the mechanism used to compare versions to determine which is more current."""
 			),
 			"oid": "2.16.840.1.113883.4.642.3.3103",
 			"experimental": 1,
@@ -1002,6 +1001,7 @@ def setup_code_sysem_for_version():
 	]
 	insert_record(records)
 
+
 def setup_non_fhir_code_systems():
 	"""A subset of external code systems as published in the FHIR R5 documentation
 	https://www.hl7.org/fhir/terminologies-systems.html#external
@@ -1016,10 +1016,9 @@ def setup_non_fhir_code_systems():
 			"uri": "http://snomed.info/sct",
 			"code_system": _("SNOMED CT"),
 			"description": _(
-				"""Using SNOMED CT with HL7 Standards. https://terminology.hl7.org/SNOMEDCT.html\n
+				"""Using SNOMED CT with HL7 Standards. https://terminology.hl7.org/SNOMEDCT.html
 				See also the SNOMED CT Usage Summary (link below) which summarizes the use of SNOMED CT in the base FHIR Specification.
-				https://www.hl7.org/fhir/snomedct-usage.html
-				"""
+				https://www.hl7.org/fhir/snomedct-usage.html"""
 			),
 			"oid": "2.16.840.1.113883.6.96",
 			"experimental": 0,
@@ -1354,6 +1353,212 @@ def get_observation_status_codes():
 			),
 			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
 			"version": "6.0.0-cibuild",
+		},
+	]
+
+
+def setup_order_status_codes():
+	sr_code_systems = get_service_request_code_systems()
+	insert_record(sr_code_systems)
+	service_request_codes = get_service_request_codes()
+	insert_record(service_request_codes)
+
+	mr_code_systems = get_medication_request_code_systems()
+	insert_record(mr_code_systems)
+	medication_request_codes = get_medication_request_codes()
+	insert_record(medication_request_codes)
+
+
+def get_service_request_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/request-status",
+			"code_system": _("Request Status"),
+			"description": _("Request Status Codes."),
+			"oid": "2.16.840.1.113883.4.642.4.112",
+			"experimental": 1,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_medication_request_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/CodeSystem/medicationrequest-status",
+			"code_system": _("Medication Request Status"),
+			"description": _("Medication Request Status Codes."),
+			"oid": "2.16.840.1.113883.4.642.4.1377",
+			"experimental": 1,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_service_request_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "draft",
+			"display": _("Draft"),
+			"definition": _("The request has been created but is not yet complete or ready for action."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "active",
+			"display": _("Active"),
+			"definition": _("The request is in force and ready to be acted upon."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "on-hold",
+			"display": _("On Hold"),
+			"definition": _(
+				"The request (and any implicit authorization to act) has been temporarily withdrawn but is expected to resume in the future."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "revoked",
+			"display": _("Revoked"),
+			"definition": _(
+				"The request (and any implicit authorization to act) has been terminated prior to the known full completion of the intended actions. No further activity should occur."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "completed",
+			"display": _("Completed"),
+			"definition": _(
+				"The activity described by the request has been fully performed. No further activity will occur."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "entered-in-error",
+			"display": _("Entered in Error"),
+			"definition": _(
+				"This request should never have existed and should be considered 'void'. (It is possible that real-world decisions were based on it. If real-world activity has occurred, the status should be 'revoked' rather than 'entered-in-error'.)."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "unknown",
+			"display": _("Unknown"),
+			"definition": _(
+				"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+	]
+
+
+def get_medication_request_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "active",
+			"display": _("Active"),
+			"definition": _(
+				"The request is 'actionable', but not all actions that are implied by it have occurred yet."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "on-hold",
+			"display": _("On Hold"),
+			"definition": _(
+				"Actions implied by the request are to be temporarily halted. The request might or might not be resumed. May also be called 'suspended'."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "ended",
+			"display": _("Ended"),
+			"definition": _(
+				"The request is no longer active and the subject should no longer be taking the medication."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "stopped",
+			"display": _("Stopped"),
+			"definition": _(
+				"Actions implied by the request are to be permanently halted, before all of the administrations occurred. This should not be used if the original order was entered in error"
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "completed",
+			"display": _("Completed"),
+			"definition": _("All actions that are implied by the request have occurred."),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "cancelled",
+			"display": _("Cancelled"),
+			"definition": _("The request has been withdrawn before any administrations have occurred"),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "entered-in-error",
+			"display": _("Entered in Error"),
+			"definition": _(
+				"The request was recorded against the wrong patient or for some reason should not have been recorded (e.g. wrong medication, wrong dose, etc.). Some of the actions that are implied by the medication request may have occurred. For example, the medication may have been dispensed and the patient may have taken some of the medication."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "draft",
+			"display": _("Draft"),
+			"definition": _(
+				"The request is not yet 'actionable', e.g. it is a work in progress, requires sign-off, verification or needs to be run through decision support process."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "unknown",
+			"display": _("Unknown"),
+			"definition": _(
+				"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
 		},
 	]
 

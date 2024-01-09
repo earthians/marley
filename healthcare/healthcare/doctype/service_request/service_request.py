@@ -36,10 +36,10 @@ class ServiceRequest(ServiceRequestController):
 		self.title = f"{self.patient_name} - {self.template_dn}"
 
 	def before_insert(self):
-		self.status = "Draft"
+		self.status = "draft-Request Status"
 
 		if self.amended_from:
-			frappe.db.set_value("Service Request", self.amended_from, "status", "Replaced")
+			frappe.db.set_value("Service Request", self.amended_from, "status", "revoked-Request Status")
 
 		if self.template_dt == "Observation Template" and self.template_dn:
 			self.sample_collection_required = frappe.db.get_value(
@@ -98,7 +98,7 @@ class ServiceRequest(ServiceRequestController):
 
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
 	# TODO: fix status updates from linked docs
-	set_service_request_status(service_request, "Scheduled")
+	set_service_request_status(service_request, status)
 
 
 @frappe.whitelist()
@@ -386,7 +386,11 @@ def insert_diagnostic_report(doc, sample_collection=None):
 def check_observation_sample_exist(service_request):
 	name_ref_in_child = frappe.db.get_value(
 		"Observation Sample Collection",
-		{"service_request": service_request.name, "parenttype": "Sample Collection"},
+		{
+			"service_request": service_request.name,
+			"parenttype": "Sample Collection",
+			"docstatus": ["!=", 2],
+		},
 		"parent",
 	)
 	if name_ref_in_child:
@@ -397,6 +401,7 @@ def check_observation_sample_exist(service_request):
 			{
 				"service_request": service_request.name,
 				"parent_observation": "",
+				"docstatus": ["!=", 2],
 			},
 		)
 		if exist_observation:

@@ -28,12 +28,14 @@ class LabTest(Document):
 		self.db_set("status", "Completed")
 
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Active")
+			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
 		self.reload()
 
 	def on_update(self):
@@ -165,7 +167,7 @@ def create_lab_test_from_encounter(encounter):
 			"Service Request",
 			filters={
 				"order_group": encounter.name,
-				"status": ["!=", "Completed"],
+				"status": ["!=", "completed-Request Status"],
 				"template_dt": "Lab Test Template",
 			},
 			fields=["name"],
@@ -184,7 +186,7 @@ def create_lab_test_from_encounter(encounter):
 					)
 					lab_test.service_request = service_request_doc.name
 					lab_test.save(ignore_permissions=True)
-					frappe.db.set_value("Service Request", service_request_doc.name, "status", "Scheduled")
+					# frappe.db.set_value("Service Request", service_request_doc.name, "status", "Scheduled")
 					if not lab_test_created:
 						lab_test_created = lab_test.name
 					else:
@@ -418,7 +420,9 @@ def load_result_format(lab_test, template, prescription, invoice):
 		if prescription:
 			lab_test.prescription = prescription
 			if invoice:
-				frappe.db.set_value("Service Request", lab_test.service_request, "status", "Completed")
+				frappe.db.set_value(
+					"Service Request", lab_test.service_request, "status", "completed-Request Status"
+				)
 		lab_test.save(ignore_permissions=True)  # Insert the result
 		return lab_test
 
@@ -440,7 +444,7 @@ def get_lab_test_prescribed(patient):
 			hso.template_dn, hso.order_group, hso.invoiced, hso.practitioner, hso.order_date, hso.name
 		)
 		.where(hso.patient == patient)
-		.where(hso.status != "Completed")
+		.where(hso.status != "completed-Request Status")
 		.where(hso.template_dt == "Lab Test Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
