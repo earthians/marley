@@ -14,3 +14,4 @@ healthcare.patches.v15_0.set_default_dynamic_link_dt_for_appointment_type_servic
 healthcare.patches.v15_0.set_allow_booking_for_in_appointment_type
 healthcare.patches.v15_0.setup_basic_code_systems
 healthcare.patches.v15_0.setup_diagnostic_module_codes
+healthcare.patches.v15_0.setup_order_status_codes

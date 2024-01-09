@@ -222,7 +222,7 @@ class PatientEncounter(Document):
 				"order_date": self.encounter_date,
 				"order_time": self.encounter_time,
 				"company": self.company,
-				"status": "Draft",
+				"status": "draft-Medication Request Status" if medication_request else "draft-Request Status",
 				"patient": self.get("patient"),
 				"practitioner": self.practitioner,
 				"source_doc": "Patient Encounter",
@@ -445,7 +445,7 @@ def create_service_request(encounter):
 				frappe.db.set_value(
 					"Service Request",
 					{"order_group": encounter, "template_dn": lab_presc.lab_test_code},
-					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+					{"docstatus": 1, "invoiced": 1, "status": "active-Request Status"},
 				)
 
 		for proc_presc in encounter_doc.procedure_prescription:
@@ -453,7 +453,7 @@ def create_service_request(encounter):
 				frappe.db.set_value(
 					"Service Request",
 					{"order_group": encounter, "template_dn": proc_presc.procedure},
-					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+					{"docstatus": 1, "invoiced": 1, "status": "active-Request Status"},
 				)
 
 

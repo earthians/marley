@@ -53,11 +53,13 @@ class ClinicalProcedure(Document):
 
 	def on_cancel(self):
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Active")
+			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
 
 	def after_insert(self):
 		if self.service_request:
-			update_service_request_status(self.service_request, self.doctype, self.name)
+			update_service_request_status(
+				self.service_request, self.doctype, self.name, "completed-Request Status"
+			)
 
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
@@ -166,7 +168,9 @@ class ClinicalProcedure(Document):
 		self.db_set("status", "Completed")
 
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
 
 		# post op nursing tasks
 		if self.procedure_template:
@@ -355,7 +359,7 @@ def get_procedure_prescribed(patient, encounter=False):
 			hso.template_dn, hso.order_group, hso.invoiced, hso.practitioner, hso.order_date, hso.name
 		)
 		.where(hso.patient == patient)
-		.where(hso.status != "Completed")
+		.where(hso.status != "completed-Request Status")
 		.where(hso.template_dt == "Clinical Procedure Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()

@@ -1,7 +1,7 @@
 from healthcare.setup import (
-    setup_fhir_code_systems,
-    setup_non_fhir_code_systems,
-    setup_code_sysem_for_version,
+	setup_code_sysem_for_version,
+	setup_fhir_code_systems,
+	setup_non_fhir_code_systems,
 )
 
 

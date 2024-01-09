@@ -19,6 +19,14 @@ frappe.ui.form.on('Service Request', {
 			};
 		});
 
+		frm.set_query("status", function () {
+			return {
+				"filters": {
+					"code_system": "Request Status",
+				}
+			};
+		});
+
 		frm.trigger('setup_create_buttons');
 	},
 

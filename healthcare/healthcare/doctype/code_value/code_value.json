@@ -141,22 +141,22 @@
    "options": "Code Value"
   },
   {
-   "allow_in_quick_entry": 1,
-   "fieldname": "display",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "label": "DIsplay",
-   "no_copy": 1
-  },
-  {
    "fieldname": "value_set",
    "fieldtype": "Link",
    "label": "Value Set",
    "options": "Code Value Set"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "display",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Display",
+   "no_copy": 1
   }
  ],
  "links": [],
- "modified": "2024-01-08 16:26:43.951525",
+ "modified": "2024-02-05 14:35:20.896155",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",
@@ -212,6 +212,7 @@
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
  "search_fields": "code_value, code_system, level",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

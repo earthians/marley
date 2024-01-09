@@ -29,6 +29,16 @@ class Observation(Document):
 	def before_insert(self):
 		set_observation_idx(self)
 
+	def on_submit(self):
+		if self.service_request:
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
+
+	def on_cancel(self):
+		if self.service_request:
+			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
+
 	def set_age(self):
 		patient_doc = frappe.get_doc("Patient", self.patient)
 		if patient_doc.dob:
@@ -111,7 +121,7 @@ def get_observation_details(docname):
 			filters={
 				"source_doc": reference.get("ref_doctype"),
 				"order_group": reference.get("docname"),
-				"status": ["!=", "Cancelled"],
+				"status": ["!=", "revoked-Request Status"],
 				"docstatus": ["!=", 2],
 			},
 			order_by="creation",
