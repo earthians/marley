@@ -73,7 +73,7 @@ def create_item_from_template(doc):
 	item = frappe.get_doc(
 		{
 			"doctype": "Item",
-			"item_code": doc.template,
+			"item_code": doc.item_code,
 			"item_name": doc.template,
 			"item_group": doc.item_group,
 			"description": doc.description,
