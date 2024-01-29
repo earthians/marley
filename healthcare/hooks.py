@@ -252,25 +252,25 @@ domains = {
 # nosemgrep
 standard_portal_menu_items = [
 	{
-		"title": _("Personal Details"),
+		"title": "Personal Details",
 		"route": "/personal-details",
 		"reference_doctype": "Patient",
 		"role": "Patient",
 	},
 	{
-		"title": _("Lab Test"),
+		"title": "Lab Test",
 		"route": "/lab-test",
 		"reference_doctype": "Lab Test",
 		"role": "Patient",
 	},
 	{
-		"title": _("Prescription"),
+		"title": "Prescription",
 		"route": "/prescription",
 		"reference_doctype": "Patient Encounter",
 		"role": "Patient",
 	},
 	{
-		"title": _("Patient Appointment"),
+		"title": "Patient Appointment",
 		"route": "/patient-appointments",
 		"reference_doctype": "Patient Appointment",
 		"role": "Patient",
