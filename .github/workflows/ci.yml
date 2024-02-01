@@ -94,7 +94,6 @@ jobs:
         run: |
           bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
           cd ~/frappe-bench/ && source env/bin/activate
-          cd apps/healthcare && pip install -r dev-requirements.txt
         env:
           BRANCH_TO_CLONE: ${{ env.FH_BRANCH }}
 
