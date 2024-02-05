@@ -1,5 +1,3 @@
-from frappe import _
-
 from . import __version__ as app_version  # noqa
 
 app_name = "healthcare"
