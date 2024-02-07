@@ -134,7 +134,6 @@ def make_clinical_procedure(service_request):
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.medical_department = service_request.medical_department
-	doc.medical_code = service_request.medical_code
 
 	return doc
 
@@ -170,7 +169,6 @@ def make_lab_test(service_request):
 	doc.date = service_request.occurrence_date
 	doc.time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
-	doc.medical_code = service_request.medical_code
 
 	return doc
 
@@ -203,7 +201,6 @@ def make_therapy_session(service_request):
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
-	doc.medical_code = service_request.medical_code
 
 	return doc
 
