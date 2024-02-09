@@ -25,7 +25,7 @@ jobs:
           repo: health
           title: |-
             "chore: release v${{ matrix.version }}"
-          body: "Automated beta release."
+          body: "Automated release."
           base: version-${{ matrix.version }}
           head: version-${{ matrix.version }}-hotfix
         env:
