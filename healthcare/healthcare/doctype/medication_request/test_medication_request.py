@@ -5,6 +5,8 @@ import unittest
 
 import frappe
 
+from erpnext.stock.doctype.item.test_item import create_item
+
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_healthcare_docs,
 )
@@ -20,7 +22,7 @@ class TestMedicationRequest(unittest.TestCase):
 
 	def test_medication_request(self):
 		patient, practitioner = create_healthcare_docs()
-		medication = create_medcation()
+		medication = create_medication()
 		encounter = create_encounter(patient, practitioner, "drug_prescription", medication, submit=True)
 		self.assertTrue(frappe.db.exists("Medication Request", {"order_group": encounter.name}))
 		medication_request = frappe.db.get_value(
@@ -39,7 +41,7 @@ class TestMedicationRequest(unittest.TestCase):
 			)
 
 
-def create_medcation():
+def create_medication():
 	if not frappe.db.exists("Medication", "_Test Medication"):
 		if not frappe.db.exists("Medication Class", "Tablet"):
 			try:
@@ -52,6 +54,8 @@ def create_medcation():
 			except frappe.DuplicateEntryError:
 				pass
 		try:
+			item_name = "_Test PL Item"
+			item = create_item(item_code=item_name, is_stock_item=0)
 			medication = frappe.get_doc(
 				{
 					"doctype": "Medication",
@@ -60,13 +64,12 @@ def create_medcation():
 					"abbr": "Test",
 					"strength": 500,
 					"strength_uom": "Unit",
-					"item_code": "_Test",
-					"item_group": "Drug",
 					"dosage_form": "Capsule",
 					"default_prescription_dosage": "0-1-0",
 					"default_prescription_duration": "1 Hour",
 					"is_billable": 1,
 					"rate": 800,
+					"linked_items": [{"item": item.item_code, "item_code": item.item_name, "item_group": "Drug"}],
 				}
 			).insert(ignore_permissions=True, ignore_mandatory=True)
 			return medication
