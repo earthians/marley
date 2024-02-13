@@ -130,7 +130,9 @@ def create_encounter(
 				type, {"lab_test_code": template.item, "lab_test_name": template.lab_test_name}
 			)
 		elif type == "drug_prescription":
-			patient_encounter.append(type, {"medication": template.name})
+			patient_encounter.append(
+				type, {"medication": template.name, "drug_code": template.linked_items[0].get("item")}
+			)
 	else:
 		patient_encounter.append(type, {"observation_template": template.name})
 

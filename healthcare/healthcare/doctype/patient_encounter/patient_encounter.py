@@ -141,10 +141,17 @@ class PatientEncounter(Document):
 			return
 
 		for item in self.drug_prescription:
-			if not item.medication and not item.drug_code:
-				frappe.throw(
-					_("Row #{0} (Drug Prescription): Medication or Item Code is mandatory").format(item.idx)
-				)
+			if not item.drug_code:
+				frappe.throw(_("Row #{0} (Drug Prescription): Drug Code is mandatory").format(item.idx))
+			else:
+				if not item.medication:
+					medication = frappe.db.get_value(
+						"Medication Linked Item",
+						{"item": item.drug_code},
+						"parent",
+					)
+					if medication:
+						item.medication = medication
 
 	def validate_therapies(self):
 		if not self.therapies:
