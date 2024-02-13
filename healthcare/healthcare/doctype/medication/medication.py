@@ -20,6 +20,21 @@ class Medication(Document):
 		if self.linked_items:
 			self.update_item_and_item_price()
 
+	def validate(self):
+		if self.linked_items:
+			for item in self.linked_items:
+				exist_medication = frappe.db.get_value(
+					"Medication Linked Item",
+					{"item": item.item_code, "parent": ("!=", self.name)},
+					"parent",
+				)
+				if exist_medication:
+					frappe.throw(
+						_(
+							"Item <b>{}</b> has been already used in <b><a href='/app/medication/{}'>Medication</a></b>"
+						).format(item.item_code, exist_medication)
+					)
+
 	def update_item_and_item_price(self):
 		for item in self.linked_items:
 			if not item.item:
