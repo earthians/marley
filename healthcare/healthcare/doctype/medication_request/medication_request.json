@@ -11,7 +11,7 @@
   "title",
   "naming_series",
   "medication",
-  "medicaiton_item",
+  "medication_item",
   "order_date",
   "expected_date",
   "order_time",
@@ -414,7 +414,6 @@
    "fieldtype": "Link",
    "label": "Medication",
    "options": "Medication",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -448,22 +447,23 @@
    "read_only": 1
   },
   {
-   "fieldname": "medicaiton_item",
-   "fieldtype": "Link",
-   "label": "Medicaiton Item",
-   "options": "Item"
-  },
-  {
    "fetch_from": "practitioner.user_id",
    "fieldname": "practitioner_email",
    "fieldtype": "Data",
    "label": "Practitioner Email"
+  },
+  {
+   "fieldname": "medication_item",
+   "fieldtype": "Link",
+   "label": "Medication Item",
+   "options": "Item",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-09 14:01:37.695631",
+ "modified": "2024-02-13 12:58:48.827434",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
