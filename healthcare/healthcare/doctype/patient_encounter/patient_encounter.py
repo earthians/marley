@@ -208,8 +208,10 @@ class PatientEncounter(Document):
 		if self.drug_prescription:
 			# make_medication_request
 			for drug in self.drug_prescription:
-				if drug.medication and not drug.medication_request:
-					medication = frappe.get_doc("Medication", drug.medication)
+				if (drug.medication or drug.drug_code) and not drug.medication_request:
+					medication = ""
+					if drug.medication:
+						medication = frappe.get_doc("Medication", drug.medication)
 					order = self.get_order_details(medication, drug, True)
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
@@ -236,21 +238,23 @@ class PatientEncounter(Document):
 				"period": line_item.get("period"),
 				"expected_date": line_item.get("expected_date"),
 				"as_needed": line_item.get("as_needed"),
-				"staff_role": template_doc.get("staff_role"),
+				"staff_role": template_doc.get("staff_role") if template_doc else "",
 				"note": line_item.get("note"),
 				"patient_instruction": line_item.get("patient_instruction"),
 			}
 		)
 
+		description = ""
 		if not line_item.get("description"):
-			if template_doc.doctype == "Lab Test Template":
-				description = template_doc.get("lab_test_description")
-			else:
-				description = template_doc.get("description")
+			if template_doc:
+				if template_doc.get("doctype") == "Lab Test Template":
+					description = template_doc.get("lab_test_description")
+				else:
+					description = template_doc.get("description")
 		else:
 			description = line_item.get("description")
 
-		if template_doc.doctype == "Clinical Procedure Template":
+		if template_doc and template_doc.get("doctype") == "Clinical Procedure Template":
 			order.update(
 				{
 					"referred_to_practitioner": line_item.get("practitioner"),
@@ -261,16 +265,16 @@ class PatientEncounter(Document):
 		if medication_request:
 			order.update(
 				{
-					"medication": template_doc.name,
+					"medication": template_doc.get("name") if template_doc else "",
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
-					"medicaiton_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
+					"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
 				}
 			)
 		else:
 			order.update(
 				{
-					"template_dt": template_doc.doctype,
-					"template_dn": template_doc.name,
+					"template_dt": template_doc.get("doctype"),
+					"template_dn": template_doc.get("name"),
 					# "patient_care_type": line_item.patient_care_type
 					# if line_item.patient_care_type
 					# else template_doc.get("patient_care_type"),
