@@ -1,7 +1,21 @@
-## Frappe Health
+<div align="center">
+<a href="https://frappehealth.com">
+    <img src="https://raw.githubusercontent.com/frappe/healthcare/develop/healthcare/public/images/healthcare.svg" height="128" alt="Frappe Health Logo">
+  </a>
+  <h2>Frappe Health</h2>
+  <p align="center">
+    <p>Open source & easy-to-use hospital information system(HIS) for all healthcare organisations.</p>
+  </p>
 
-Open source & easy-to-use hospital information system(HIS) for all healthcare organisations.
+  [Frappe Health](https://frappehealth.com)
 
+ <div align="center" style="max-height: 40px;">
+    <a href="https://frappecloud.com/healthcare/signup">
+        <img src=".github/try-on-f-cloud-button.svg" height="40">
+    </a>
+ </div>
+
+</div>
 
 ### Introduction
 
