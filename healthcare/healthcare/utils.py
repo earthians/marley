@@ -76,6 +76,9 @@ def get_appointments_to_invoice(patient, company):
 						"reference_type": "Patient Appointment",
 						"reference_name": appointment.name,
 						"service": appointment.procedure_template,
+						"item": frappe.db.get_value(
+							"Clinical Procedure Template", appointment.procedure_template, "item_code"
+						),
 					}
 				)
 		# Consultation Appointments, should check fee validity
