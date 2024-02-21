@@ -279,7 +279,7 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 	if(invoice_healthcare_services){
 		head ? $row.addClass('list-item--head')
 			: $row = $(`<div class="list-item-container"
-				data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.service}"
+				data-dn= "${result.reference_name}" data-dt= "${result.reference_type}" data-item= "${result.item}"
 				data-rate = ${result.rate}
 				data-income-account = "${result.income_account}"
 				data-qty = ${result.qty}
