@@ -1215,14 +1215,15 @@ def create_sample_collection(doc, patient):
 	return sample_collection
 
 def insert_diagnostic_report(doc, patient, sample_collection=None):
-	diagnostic_report = frappe.new_doc("Diagnostic Report")
-	diagnostic_report.company = doc.company
-	diagnostic_report.patient = patient
-	diagnostic_report.ref_doctype = doc.doctype
-	diagnostic_report.docname = doc.name
-	diagnostic_report.practitioner = doc.ref_practitioner
-	diagnostic_report.sample_collection = sample_collection
-	diagnostic_report.save(ignore_permissions=True)
+	if not frappe.db.exists("Diagnostic Report", {"docname": doc.name}):
+		diagnostic_report = frappe.new_doc("Diagnostic Report")
+		diagnostic_report.company = doc.company
+		diagnostic_report.patient = patient
+		diagnostic_report.ref_doctype = doc.doctype
+		diagnostic_report.docname = doc.name
+		diagnostic_report.practitioner = doc.ref_practitioner
+		diagnostic_report.sample_collection = sample_collection
+		diagnostic_report.save(ignore_permissions=True)
 
 def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child = None):
 	diag_report_required = False
