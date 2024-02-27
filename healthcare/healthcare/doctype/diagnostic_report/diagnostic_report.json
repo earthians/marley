@@ -97,7 +97,8 @@
    "fieldtype": "Link",
    "hidden": 1,
    "label": "Sample Collection",
-   "options": "Sample Collection"
+   "options": "Sample Collection",
+   "search_index": 1
   },
   {
    "fieldname": "amended_from",
@@ -118,6 +119,7 @@
   {
    "fieldname": "sales_invoice_status",
    "fieldtype": "Data",
+   "is_virtual": 1,
    "label": "Sales Invoice Status",
    "read_only": 1
   },
@@ -169,7 +171,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-10-16 17:53:14.702170",
+ "modified": "2024-02-19 18:41:30.142285",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
