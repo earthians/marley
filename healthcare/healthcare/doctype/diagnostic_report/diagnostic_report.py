@@ -30,9 +30,11 @@ class DiagnosticReport(Document):
 
 	def set_reference_details(self):
 		if self.ref_doctype == "Sales Invoice" and self.docname:
-			self.sales_invoice_status, self.reference_posting_date = frappe.db.get_value(
-				"Sales Invoice", self.docname, ["status", "posting_date"]
-			)
+			self.reference_posting_date = frappe.db.get_value("Sales Invoice", self.docname, "posting_date")
+
+	@property
+	def sales_invoice_status(self):
+		return frappe.db.get_value(self.ref_doctype, self.docname, "status")
 
 
 def diagnostic_report_print(diagnostic_report):
