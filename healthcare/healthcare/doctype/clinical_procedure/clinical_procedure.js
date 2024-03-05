@@ -492,7 +492,7 @@ let show_procedure_templates = function(frm, result){
 			frm.doc.service_request = $(this).attr('data-name');
 			frm.doc.practitioner = $(this).attr("data-practitioner");
 			frm.doc.invoiced = 0;
-			if ($(this).attr('data-invoiced') === 1) {
+			if ($(this).attr('data-invoiced') === "Invoiced") {
 				frm.doc.invoiced = 1;
 			}
 			frm.refresh_field("procedure_template");
