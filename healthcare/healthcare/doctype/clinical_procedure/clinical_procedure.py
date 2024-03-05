@@ -356,7 +356,7 @@ def get_procedure_prescribed(patient, encounter=False):
 	return (
 		frappe.qb.from_(hso)
 		.select(
-			hso.template_dn, hso.order_group, hso.invoiced, hso.practitioner, hso.order_date, hso.name
+			hso.template_dn, hso.order_group, hso.billing_status, hso.practitioner, hso.order_date, hso.name
 		)
 		.where(hso.patient == patient)
 		.where(hso.status != "completed-Request Status")
