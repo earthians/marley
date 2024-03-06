@@ -259,8 +259,12 @@ frappe.ui.form.on('Clinical Procedure', {
 					frm.set_value('consume_stock', data.message.consume_stock);
 					frm.events.set_warehouse(frm);
 					frm.events.set_procedure_consumables(frm);
+					frm.events.set_medical_codes(frm);
 				}
 			});
+		} else {
+			frm.clear_table("codification_table")
+			frm.refresh_field("codification_table");
 		}
 	},
 
@@ -341,39 +345,31 @@ frappe.ui.form.on('Clinical Procedure', {
 		});
 	},
 
-	procedure_template: function(frm) {
-		if (frm.doc.procedure_template) {
-			frappe.call({
-				"method": "healthcare.healthcare.utils.get_medical_codes",
-				args: {
-					template_dt: "Clinical Procedure Template",
-					template_dn: frm.doc.procedure_template,
-				},
-				callback: function(r) {
-					if (!r.exc && r.message) {
-						frm.doc.codification_table = []
-						$.each(r.message, function(k, val) {
-							if (val.code_value) {
-								var child = cur_frm.add_child("codification_table");
-								child.code_value = val.code_value
-								child.code_system = val.code_system
-								child.code = val.code
-								child.description = val.description
-								child.system = val.system
-							}
-						});
-						frm.refresh_field("codification_table");
-					} else {
-						frm.clear_table("codification_table")
-						frm.refresh_field("codification_table");
-					}
+	set_medical_codes: function(frm) {
+		frappe.call({
+			"method": "healthcare.healthcare.utils.get_medical_codes",
+			args: {
+				template_dt: "Clinical Procedure Template",
+				template_dn: frm.doc.procedure_template,
+			},
+			callback: function(r) {
+				if (!r.exc && r.message) {
+					frm.doc.codification_table = []
+					$.each(r.message, function(k, val) {
+						if (val.code_value) {
+							var child = cur_frm.add_child("codification_table");
+							child.code_value = val.code_value
+							child.code_system = val.code_system
+							child.code = val.code
+							child.description = val.description
+							child.system = val.system
+						}
+					});
+					frm.refresh_field("codification_table");
 				}
-			})
-		} else {
-			frm.clear_table("codification_table")
-			frm.refresh_field("codification_table");
-		}
-	}
+			}
+		})
+	},
 
 });
 
