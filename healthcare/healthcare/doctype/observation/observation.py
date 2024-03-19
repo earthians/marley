@@ -12,7 +12,7 @@ from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
 from healthcare.healthcare.doctype.patient_history_settings.patient_history_settings import validate_medical_record_required
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now_datetime, get_datetime
+from frappe.utils import flt, get_link_to_form, now_datetime
 from frappe.model.workflow import (get_workflow_name, get_workflow_state_field)
 
 
@@ -26,6 +26,8 @@ class Observation(Document):
 
 	def on_update(self):
 		set_diagnostic_report_status(self)
+		if self.parent_observation and self.result_data and self.permitted_data_type in ["Quantity", "Numeric"]:
+			set_calculated_result(self)
 
 	def before_insert(self):
 		set_observation_idx(self)
@@ -551,3 +553,102 @@ def delta_check(observation):
 	obs_data = frappe.db.get_value("Observation", observation, ["patient", "observation_template"], as_dict=True)
 	previous_data = frappe.get_all("Observation", {"patient": obs_data.get("patient"), "observation_template": obs_data.get("observation_template"), "docstatus": 1, "name": ["!=", observation]}, "*", limit=3)
 	return previous_data
+
+
+def set_calculated_result(doc):
+	if doc.parent_observation:
+		parent_template = frappe.db.get_value(
+			"Observation", doc.parent_observation, "observation_template"
+		)
+		parent_template_doc = frappe.get_cached_doc(
+			"Observation Template", parent_template
+		)
+
+		data = frappe._dict()
+		patient_doc = frappe.get_cached_doc("Patient", doc.patient).as_dict()
+		settings = frappe.get_cached_doc("Healthcare Settings").as_dict()
+
+		data.update(doc.as_dict())
+		data.update(parent_template_doc.as_dict())
+		data.update(patient_doc)
+		data.update(settings)
+
+		for component in parent_template_doc.observation_component:
+			"""
+			Data retrieval from observations has been moved into the loop
+			to accommodate component observations, which may contain formulas
+			utilizing results from previous iterations.
+
+			"""
+			if component.based_on_formula and component.formula:
+				data = get_data(doc, parent_template_doc, data)
+
+			if data and len(data)>0:
+				result = eval_formula(component, data)
+				if not result:
+					continue
+
+				result_observation_name, result_data = frappe.db.get_value(
+					"Observation",
+					{
+						"parent_observation": doc.parent_observation,
+						"observation_template": component.get(
+							"observation_template"
+						),
+					},
+					["name", "result_data"],
+				)
+				if result_observation_name and result_data != str(result):
+					frappe.db.set_value(
+						"Observation",
+						result_observation_name,
+						"result_data",
+						str(result),
+					)
+
+
+def get_data(doc, parent_template_doc, data):
+	observation_details = frappe.get_all(
+		"Observation",
+		{"parent_observation": doc.parent_observation},
+		["observation_template", "result_data"],
+	)
+
+	# to get all result_data to map against abbs of all table rows
+	for component in parent_template_doc.observation_component:
+		result = [
+			d["result_data"]
+			for d in observation_details
+			if (
+				d["observation_template"] == component.get("observation_template")
+				and d["result_data"]
+			)
+		]
+		data[component.get("abbr")] = (
+			flt(result[0]) if (result and len(result) > 0 and result[0]) else 0
+		)
+	return data
+
+
+def eval_formula(d, data):
+	try:
+		if d.based_on_formula:
+			amount = None
+			formula = d.formula.strip().replace("\n", " ") if d.formula else None
+
+			abbrs = list(set(re.findall(r"\b[A-Za-z]+\b", formula)))
+			# check the formula abbrs has result value
+			abbrs_present = all(abbr in data and data[abbr] != 0 for abbr in abbrs)
+			if formula and abbrs_present:
+				amount = flt(frappe.safe_eval(formula, {}, data))
+
+		return amount
+
+	except Exception as err:
+		description = _("This error can be due to invalid formula.")
+		message = _(
+			f"""Error while evaluating the {d.parenttype} {get_link_to_form(d.parenttype, d.parent)}
+			at row {d.idx}. <br><br> <b>Error:</b> {err} <br><br> <b>Hint:</b> {description}"""
+		)
+
+		frappe.throw(message, title=_("Error in formula"))
