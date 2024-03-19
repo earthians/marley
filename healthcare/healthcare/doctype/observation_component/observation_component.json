@@ -8,9 +8,11 @@
  "field_order": [
   "observation_template",
   "abbr",
+  "condition",
   "column_break_seht",
   "based_on_formula",
-  "formula"
+  "formula",
+  "note"
  ],
  "fields": [
   {
@@ -30,7 +32,7 @@
    "fieldname": "based_on_formula",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Based On Formula"
+   "label": "Based on Condition and Formula"
   },
   {
    "depends_on": "based_on_formula",
@@ -47,12 +49,24 @@
    "in_list_view": 1,
    "label": "Abbr",
    "read_only": 1
+  },
+  {
+   "depends_on": "based_on_formula",
+   "fieldname": "condition",
+   "fieldtype": "Code",
+   "label": "Condition"
+  },
+  {
+   "depends_on": "based_on_formula",
+   "fieldname": "note",
+   "fieldtype": "HTML",
+   "options": "<p>Notes:</p>\n\n<ol>\n<li>Keywords Available : \n<code>age</code></li>\n<li>Tables Available : <code>Patient, Healthcare Settings, Observation, Observation Template</code></li>\n</ol>"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-07-16 19:13:13.918443",
+ "modified": "2024-04-09 11:52:55.556596",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Component",
