@@ -241,6 +241,9 @@ frappe.ui.form.on("Observation Sample Collection", {
 			d.fields_dict.items.grid.add_custom_button(__("Mark Collected"), () => {
 				let selected_row = d.fields_dict.items.grid.get_selected_children();
 				if (selected_row.length > 0) {
+					selected_row.forEach(selected => {
+						selected["service_request"] = row.service_request;
+					});
 					frappe.confirm(__("Are you sure you want to mark selected samples as Collected"), function () {
 						frappe.dom.freeze(__('Creating Observations! Please Wait...'));
 						frappe.call({

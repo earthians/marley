@@ -256,38 +256,27 @@ def edit_observation(observation, data_type, result):
 
 
 @frappe.whitelist()
-def add_observation(
-	patient,
-	template,
-	data_type=None,
-	result=None,
-	doc=None,
-	docname=None,
-	parent=None,
-	specimen=None,
-	invoice="",
-	practitioner=None,
-	child = None,
-):
+def add_observation(**args):
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
-	observation_doc.patient = patient
-	observation_doc.observation_template = template
-	observation_doc.permitted_data_type = data_type
-	observation_doc.reference_doctype = doc
-	observation_doc.reference_docname = docname
-	observation_doc.sales_invoice = invoice
-	observation_doc.healthcare_practitioner = practitioner
-	observation_doc.specimen = specimen
-	if data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
-		observation_doc.result_data = result
+	observation_doc.patient = args.get("patient")
+	observation_doc.observation_template = args.get("template")
+	observation_doc.permitted_data_type = args.get("data_type")
+	observation_doc.reference_doctype = args.get("doc")
+	observation_doc.reference_docname = args.get("docname")
+	observation_doc.sales_invoice = args.get("invoice")
+	observation_doc.healthcare_practitioner = args.get("practitioner")
+	observation_doc.specimen = args.get("specimen")
+	observation_doc.service_request = args.get("service_request")
+	if args.get("data_type") in ["Range", "Ratio", "Quantity", "Numeric"]:
+		observation_doc.result_data = args.get("result")
 	# elif data_type in ["Quantity", "Numeric"]:
 	# 	observation_doc.result_float = result
-	elif data_type == "Text":
-		observation_doc.result_text = result
-	if parent:
-		observation_doc.parent_observation = parent
-	observation_doc.sales_invoice_item = child if child else ""
+	elif args.get("data_type") == "Text":
+		observation_doc.result_text = args.get("result")
+	if args.get("parent"):
+		observation_doc.parent_observation = args.get("parent")
+	observation_doc.sales_invoice_item = args.get("child") if args.get("child") else ""
 	observation_doc.insert(ignore_permissions=True)
 	return observation_doc.name
 
@@ -482,7 +471,6 @@ def update_patient_medical_record(doc):
 			daig_data = get_observation_details(diagnostic_report, observation_status="Approved")
 			if daig_data and daig_data[0] and len(daig_data[0])>0:
 				obs_html = set_observation_html(daig_data)
-				print(obs_html)
 				if obs_html:
 					exist = frappe.db.exists("Patient Medical Record", {"reference_name": diagnostic_report})
 					if exist:

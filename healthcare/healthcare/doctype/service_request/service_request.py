@@ -278,13 +278,11 @@ def make_observation(service_request):
 		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
 				add_observation(
-					service_request.patient,
-					comp,
-					"",
-					"",
-					"Patient Encounter",
-					service_request.order_group,
-					observation.name,
+					patient=service_request.patient,
+					template=comp,
+					doc="Patient Encounter",
+					docname=service_request.order_group,
+					parent=observation.name,
 				)
 
 		if len(sample_reqd_component_obs) > 0:

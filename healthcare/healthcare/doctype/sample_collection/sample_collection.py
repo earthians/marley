@@ -85,7 +85,6 @@ def insert_observation(selected, sample_collection, component_observations=None,
 				parent_observation = frappe.db.get_value(
 					"Observation Sample Collection", child_name, "component_observation_parent"
 				)
-
 			if obs.get("status") == "Open":
 				# non has_component templates
 				if not obs.get("has_component") or obs.get("has_component") == 0:
@@ -118,33 +117,34 @@ def insert_observation(selected, sample_collection, component_observations=None,
 					if obs.get("component_observations"):
 						component_observations = json.loads(obs.get("component_observations"))
 						for j, comp in enumerate(component_observations):
-							observation = add_observation(
-								patient=sample_col_doc.get("patient"),
-								template=comp.get("observation_template"),
-								doc="Sample Collection",
-								docname=sample_collection,
-								parent=obs.get("component_observation_parent"),
-								specimen=comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
-								invoice=sample_col_doc.get("reference_name"),
-								practitioner=sample_col_doc.get("referring_practitioner"),
-								child=obs.get("reference_child") if obs.get("reference_child") else "",
-								service_request=obs.get("service_request"),
-							)
-							if observation:
-								comp["status"] = "Collected"
-								comp["collection_date_time"] = now_datetime()
-								comp["specimen"] = comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name"))
+							if comp["status"] == "Open":
+								observation = add_observation(
+									patient=sample_col_doc.get("patient"),
+									template=comp.get("observation_template"),
+									doc="Sample Collection",
+									docname=sample_collection,
+									parent=obs.get("component_observation_parent"),
+									specimen=comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
+									invoice=sample_col_doc.get("reference_name"),
+									practitioner=sample_col_doc.get("referring_practitioner"),
+									child=obs.get("reference_child") if obs.get("reference_child") else "",
+									service_request=obs.get("service_request"),
+								)
+								if observation:
+									comp["status"] = "Collected"
+									comp["collection_date_time"] = now_datetime()
+									comp["specimen"] = comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name"))
 
-						frappe.db.set_value(
-							"Observation Sample Collection",
-							obs.get("name"),
-							{
-								"collection_date_time": now_datetime(),
-								"component_observations": json.dumps(component_observations, default=str),
-								"status": "Collected",
-								"specimen": comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
-							},
-						)
+							frappe.db.set_value(
+								"Observation Sample Collection",
+								obs.get("name"),
+								{
+									"collection_date_time": now_datetime(),
+									"component_observations": json.dumps(component_observations, default=str),
+									"status": "Collected",
+									"specimen": comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
+								},
+							)
 			# to deal individually checked from component dialog
 			if component_observations:
 				for j, comp in enumerate(component_observations):
