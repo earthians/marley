@@ -1231,11 +1231,11 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 		diag_report_required = True
 		# parent observation
 		parent_observation = add_observation(
-				patient,
-				grp.get("name"),
+				patient=patient,
+				template=grp.get("name"),
 				practitioner=doc.ref_practitioner,
 				invoice=doc.name,
-				child = child if child else "",
+				child=child if child else "",
 			)
 
 		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(grp.get("name"))
@@ -1244,12 +1244,12 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 		if len(non_sample_reqd_component_obs)>0:
 			for comp in non_sample_reqd_component_obs:
 				add_observation(
-					patient,
-					comp,
+					patient=patient,
+					template=comp,
 					practitioner=doc.ref_practitioner,
 					parent=parent_observation,
 					invoice=doc.name,
-					child = child if child else "",
+					child=child if child else "",
 				)
 		# create sample_colleciton child row for  sample_collection_reqd grouped templates
 		if len(sample_reqd_component_obs)>0:
@@ -1270,11 +1270,11 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 		# create observation for non sample_collection_reqd individual templates
 		if not grp.get("sample_collection_required"):
 			add_observation(
-				patient,
-				grp.get("name"),
+				patient=patient,
+				template=grp.get("name"),
 				practitioner=doc.ref_practitioner,
 				invoice=doc.name,
-				child = child if child else "",
+				child=child if child else "",
 			)
 		else:
 			# create sample_colleciton child row for  sample_collection_reqd individual templates

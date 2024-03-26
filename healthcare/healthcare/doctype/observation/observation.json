@@ -345,7 +345,7 @@
    "label": "Medical Department",
    "options": "Medical Department",
    "read_only_depends_on": "observation_template",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "time_of_result",
