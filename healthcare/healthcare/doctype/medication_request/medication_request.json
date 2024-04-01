@@ -11,7 +11,7 @@
   "title",
   "naming_series",
   "medication",
-  "medicaiton_item",
+  "medication_item",
   "order_date",
   "expected_date",
   "order_time",
@@ -124,12 +124,12 @@
    "default": "Draft",
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "status",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nActive\nScheduled\nIn Progress\nOn Hold\nCompleted\nCancelled\nReplaced\nEntered in Error\nUnknown",
+   "options": "Code Value",
    "reqd": 1,
    "search_index": 1
   },
@@ -414,7 +414,6 @@
    "fieldtype": "Link",
    "label": "Medication",
    "options": "Medication",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -448,22 +447,23 @@
    "read_only": 1
   },
   {
-   "fieldname": "medicaiton_item",
-   "fieldtype": "Link",
-   "label": "Medicaiton Item",
-   "options": "Item"
-  },
-  {
    "fetch_from": "practitioner.user_id",
    "fieldname": "practitioner_email",
    "fieldtype": "Data",
    "label": "Practitioner Email"
+  },
+  {
+   "fieldname": "medication_item",
+   "fieldtype": "Link",
+   "label": "Medication Item",
+   "options": "Item",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-31 16:23:55.717811",
+ "modified": "2024-02-13 12:58:48.827434",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",

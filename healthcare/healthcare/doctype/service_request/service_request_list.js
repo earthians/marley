@@ -4,14 +4,14 @@ frappe.listview_settings['Service Request'] = {
 	has_indicator_for_cancelled: 1,
 	get_indicator: function (doc) {
 		return [__(doc.status), {
-			'Scheduled': 'orange',
-			'Active': 'blue',
-			'On Hold': 'yellow',
-			'Completed': 'green',
-			'Revoked': 'grey',
-			'Replaced': 'grey',
-			'Unknown': 'grey',
-			'Entered in Error': 'red'
+			'draft-Request Status': 'orange',
+			'active-Request Status': 'green',
+			'on-hold-Request Status': 'yellow',
+			'completed-Request Status': 'blue',
+			'revoked-Request Status': 'grey',
+			'replaced-Request Status': 'grey',
+			'unknown-Request Status': 'grey',
+			'entered-in-error-Request Status': 'red',
 		}[doc.status], 'status,=,' + doc.status];
 	}
 };

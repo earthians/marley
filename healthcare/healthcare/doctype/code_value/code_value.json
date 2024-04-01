@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
+ "beta": 1,
  "creation": "2017-06-21 13:02:56.122897",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -9,14 +10,25 @@
   "section_break_mygg",
   "code_system",
   "system_uri",
+  "experimental",
+  "immutable",
+  "complete",
   "code_value",
+  "value_set",
   "display",
   "column_break_cmkw",
-  "definition"
+  "status",
+  "version",
+  "level",
+  "definition",
+  "official_url",
+  "canonical_mapping",
+  "custom"
  ],
  "fields": [
   {
    "allow_in_quick_entry": 1,
+   "fetch_from": "value_set.code_system",
    "fieldname": "code_system",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -25,15 +37,6 @@
    "label": "Code System",
    "options": "Code System",
    "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "fieldname": "display",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Display",
-   "no_copy": 1,
    "search_index": 1
   },
   {
@@ -63,7 +66,7 @@
    "label": "Code Value",
    "no_copy": 1,
    "reqd": 1,
-   "unique": 1
+   "search_index": 1
   },
   {
    "fetch_from": "code_system.uri",
@@ -73,10 +76,87 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "official_url",
+   "fieldtype": "Data",
+   "label": "Official URL"
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.experimental",
+   "fieldname": "experimental",
+   "fieldtype": "Check",
+   "label": "Experimental",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.custom",
+   "fieldname": "custom",
+   "fieldtype": "Check",
+   "label": "Custom"
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.immutable",
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Link",
+   "label": "Version",
+   "options": "Code Value",
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "label": "Status",
+   "options": "Code Value"
+  },
+  {
+   "default": "0",
+   "fetch_from": "code_system.complete",
+   "fieldname": "complete",
+   "fieldtype": "Check",
+   "label": "Complete",
+   "read_only": 1
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Int",
+   "label": "Level",
+   "length": 10,
+   "non_negative": 1
+  },
+  {
+   "description": "Only applicable to status codes, all status codes are mapped to one of the codes defined as part of Resource Status (The master set of status codes used throughout FHIR)",
+   "fieldname": "canonical_mapping",
+   "fieldtype": "Link",
+   "label": "Canonical Mapping",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "value_set",
+   "fieldtype": "Link",
+   "label": "Value Set",
+   "options": "Code Value Set"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "display",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Display",
+   "no_copy": 1
   }
  ],
  "links": [],
- "modified": "2023-11-04 17:11:03.579052",
+ "modified": "2024-02-05 14:35:20.896155",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",
@@ -131,7 +211,8 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
- "search_fields": "code_value, code_system, definition",
+ "search_fields": "code_value, code_system, level",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

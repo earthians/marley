@@ -79,10 +79,9 @@ class Patient(Document):
 			self.set_onload("dashboard_info", info)
 
 	def set_full_name(self):
-		if self.last_name:
-			self.patient_name = " ".join(filter(None, [self.first_name, self.last_name]))
-		else:
-			self.patient_name = self.first_name
+		self.patient_name = " ".join(
+			[name for name in [self.first_name, self.middle_name, self.last_name] if name]
+		)
 
 	def set_missing_customer_details(self):
 		if not self.customer_group:

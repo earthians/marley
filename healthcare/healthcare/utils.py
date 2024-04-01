@@ -684,15 +684,20 @@ def get_drugs_to_invoice(encounter):
 					},
 				)
 				for medication_request in medication_requests:
-					is_billable = frappe.get_cached_value(
-						"Medication", medication_request.medication, ["is_billable"]
-					)
+					if medication_request.medication:
+						is_billable = frappe.get_cached_value(
+							"Medication", medication_request.medication, ["is_billable"]
+						)
+					else:
+						is_billable = frappe.db.exists(
+							"Item", {"name": medication_request.medication_item, "disabled": False}
+						)
 
 					description = ""
 					if medication_request.dosage and medication_request.period:
 						description = _("{0} for {1}").format(medication_request.dosage, medication_request.period)
 
-					if medication_request.medicaiton_item and is_billable:
+					if medication_request.medication_item and is_billable:
 						billable_order_qty = medication_request.get("quantity", 1) - medication_request.get(
 							"qty_invoiced", 0
 						)
@@ -711,7 +716,7 @@ def get_drugs_to_invoice(encounter):
 							{
 								"reference_type": "Medication Request",
 								"reference_name": medication_request.name,
-								"drug_code": medication_request.medicaiton_item,
+								"drug_code": medication_request.medication_item,
 								"quantity": billable_order_qty,
 								"description": description,
 							}
@@ -1178,14 +1183,15 @@ def create_sample_collection(doc, patient):
 
 
 def insert_diagnostic_report(doc, patient, sample_collection=None):
-	diagnostic_report = frappe.new_doc("Diagnostic Report")
-	diagnostic_report.company = doc.company
-	diagnostic_report.patient = patient
-	diagnostic_report.ref_doctype = doc.doctype
-	diagnostic_report.docname = doc.name
-	diagnostic_report.practitioner = doc.ref_practitioner
-	diagnostic_report.sample_collection = sample_collection
-	diagnostic_report.save(ignore_permissions=True)
+	if not frappe.db.exists("Diagnostic Report", {"docname": doc.name}):
+		diagnostic_report = frappe.new_doc("Diagnostic Report")
+		diagnostic_report.company = doc.company
+		diagnostic_report.patient = patient
+		diagnostic_report.ref_doctype = doc.doctype
+		diagnostic_report.docname = doc.name
+		diagnostic_report.practitioner = doc.ref_practitioner
+		diagnostic_report.sample_collection = sample_collection
+		diagnostic_report.save(ignore_permissions=True)
 
 
 def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child=None):

@@ -141,10 +141,17 @@ class PatientEncounter(Document):
 			return
 
 		for item in self.drug_prescription:
-			if not item.medication and not item.drug_code:
-				frappe.throw(
-					_("Row #{0} (Drug Prescription): Medication or Item Code is mandatory").format(item.idx)
-				)
+			if not item.drug_code:
+				frappe.throw(_("Row #{0} (Drug Prescription): Drug Code is mandatory").format(item.idx))
+			else:
+				if not item.medication:
+					medication = frappe.db.get_value(
+						"Medication Linked Item",
+						{"item": item.drug_code},
+						"parent",
+					)
+					if medication:
+						item.medication = medication
 
 	def validate_therapies(self):
 		if not self.therapies:
@@ -208,8 +215,10 @@ class PatientEncounter(Document):
 		if self.drug_prescription:
 			# make_medication_request
 			for drug in self.drug_prescription:
-				if drug.medication and not drug.medication_request:
-					medication = frappe.get_doc("Medication", drug.medication)
+				if (drug.medication or drug.drug_code) and not drug.medication_request:
+					medication = ""
+					if drug.medication:
+						medication = frappe.get_doc("Medication", drug.medication)
 					order = self.get_order_details(medication, drug, True)
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
@@ -222,7 +231,7 @@ class PatientEncounter(Document):
 				"order_date": self.encounter_date,
 				"order_time": self.encounter_time,
 				"company": self.company,
-				"status": "Draft",
+				"status": "draft-Medication Request Status" if medication_request else "draft-Request Status",
 				"patient": self.get("patient"),
 				"practitioner": self.practitioner,
 				"source_doc": "Patient Encounter",
@@ -236,21 +245,23 @@ class PatientEncounter(Document):
 				"period": line_item.get("period"),
 				"expected_date": line_item.get("expected_date"),
 				"as_needed": line_item.get("as_needed"),
-				"staff_role": template_doc.get("staff_role"),
+				"staff_role": template_doc.get("staff_role") if template_doc else "",
 				"note": line_item.get("note"),
 				"patient_instruction": line_item.get("patient_instruction"),
 			}
 		)
 
+		description = ""
 		if not line_item.get("description"):
-			if template_doc.doctype == "Lab Test Template":
-				description = template_doc.get("lab_test_description")
-			else:
-				description = template_doc.get("description")
+			if template_doc:
+				if template_doc.get("doctype") == "Lab Test Template":
+					description = template_doc.get("lab_test_description")
+				else:
+					description = template_doc.get("description")
 		else:
 			description = line_item.get("description")
 
-		if template_doc.doctype == "Clinical Procedure Template":
+		if template_doc and template_doc.get("doctype") == "Clinical Procedure Template":
 			order.update(
 				{
 					"referred_to_practitioner": line_item.get("practitioner"),
@@ -261,16 +272,16 @@ class PatientEncounter(Document):
 		if medication_request:
 			order.update(
 				{
-					"medication": template_doc.name,
+					"medication": template_doc.get("name") if template_doc else "",
 					"number_of_repeats_allowed": line_item.get("number_of_repeats_allowed"),
-					"medicaiton_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
+					"medication_item": line_item.get("drug_code") if line_item.get("drug_code") else "",
 				}
 			)
 		else:
 			order.update(
 				{
-					"template_dt": template_doc.doctype,
-					"template_dn": template_doc.name,
+					"template_dt": template_doc.get("doctype"),
+					"template_dn": template_doc.get("name"),
 					# "patient_care_type": line_item.patient_care_type
 					# if line_item.patient_care_type
 					# else template_doc.get("patient_care_type"),
@@ -445,7 +456,7 @@ def create_service_request(encounter):
 				frappe.db.set_value(
 					"Service Request",
 					{"order_group": encounter, "template_dn": lab_presc.lab_test_code},
-					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+					{"docstatus": 1, "invoiced": 1, "status": "active-Request Status"},
 				)
 
 		for proc_presc in encounter_doc.procedure_prescription:
@@ -453,7 +464,7 @@ def create_service_request(encounter):
 				frappe.db.set_value(
 					"Service Request",
 					{"order_group": encounter, "template_dn": proc_presc.procedure},
-					{"docstatus": 1, "invoiced": 1, "status": "Active"},
+					{"docstatus": 1, "invoiced": 1, "status": "active-Request Status"},
 				)
 
 

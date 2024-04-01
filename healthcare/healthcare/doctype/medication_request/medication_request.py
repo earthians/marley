@@ -16,27 +16,25 @@ class MedicationRequest(ServiceRequestController):
 	def set_title(self):
 		if frappe.flags.in_import and self.title:
 			return
-		self.title = f"{self.patient_name} - {self.medication}"
+		self.title = f"{self.patient_name} - {self.medication or self.medication_item}"
 
 	def before_insert(self):
 		self.calculate_total_dispensable_quantity()
-		self.status = "Draft"
+		self.status = "draft-Medication Request Status"
 
 		if self.amended_from:
-			frappe.db.set_value("Medication Request", self.amended_from, "status", "Replaced")
-
-	def set_order_details(self):
-		if not self.medication:
-			frappe.throw(
-				_("Medication is mandatory to create Medication Request"), title=_("Missing Mandatory Fields")
+			frappe.db.set_value(
+				"Medication Request", self.amended_from, "status", "stopped-Medication Request Status"
 			)
 
-		medication = frappe.get_doc("Medication", self.medication)
-		# set item code
-		self.item_code = medication.get("item")
+	def set_order_details(self):
+		if self.medication:
+			medication = frappe.get_doc("Medication", self.medication)
+			# set item code
+			self.item_code = medication.get("item")
 
-		if not self.staff_role and medication.get("staff_role"):
-			self.staff_role = medication.staff_role
+			if not self.staff_role and medication.get("staff_role"):
+				self.staff_role = medication.staff_role
 
 		if not self.intent:
 			self.intent = frappe.db.get_single_value("Healthcare Settings", "default_intent")

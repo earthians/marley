@@ -162,13 +162,12 @@
   },
   {
    "allow_on_submit": 1,
-   "default": "Draft",
    "fieldname": "status",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Active\nOn Hold\nCompleted\nRevoked\nReplaced\nEntered in Error\nUnknown\nDraft\nSubmitted\nCancelled",
+   "options": "Code Value",
    "reqd": 1
   },
   {
@@ -545,7 +544,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-10-31 15:25:52.596645",
+ "modified": "2024-01-09 13:03:51.377653",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
