@@ -104,11 +104,10 @@ let create_medical_record = function (frm) {
 };
 
 let get_age = function (birth) {
-	let ageMS = Date.parse(Date()) - Date.parse(birth);
-	let age = new Date();
-	age.setTime(ageMS);
-	let years = age.getFullYear() - 1970;
-	return years + ' Year(s) ' + age.getMonth() + ' Month(s) ' + age.getDate() + ' Day(s)';
+	let birth_moment = moment(birth);
+	let current_moment = moment(Date());
+	let diff = moment.duration(current_moment.diff(birth_moment));
+	return `${diff.years()} ${__('Year(s)')} ${diff.months()} ${__('Month(s)')} ${diff.days()} ${__('Day(s)')}`
 };
 
 let create_vital_signs = function (frm) {
