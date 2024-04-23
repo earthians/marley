@@ -136,7 +136,7 @@ data = {
 				"insert_after": "payment_order",
 				"read_only": True,
 			},
-		]
+		],
 	},
 	"on_setup": "healthcare.setup.setup_healthcare",
 }

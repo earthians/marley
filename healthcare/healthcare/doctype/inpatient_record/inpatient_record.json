@@ -39,8 +39,7 @@
   "chief_complaint",
   "column_break_29",
   "diagnosis",
-  "consumables_section",
-  "items",
+  "prescriptions_tab",
   "medication_section",
   "drug_prescription",
   "investigations_section",
@@ -318,7 +317,7 @@
   {
    "depends_on": "eval:(doc.status != \"Admission Scheduled\")",
    "fieldname": "sb_inpatient_occupancy",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Inpatient Occupancy"
   },
   {
@@ -390,7 +389,7 @@
    "collapsible": 1,
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_details",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Discharge Details"
   },
   {
@@ -445,12 +444,6 @@
    "fieldtype": "Link",
    "label": "Admission Nursing Checklist Template",
    "options": "Nursing Checklist Template"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "consumables_section",
-   "fieldtype": "Section Break",
-   "label": "Consumables"
   },
   {
    "fieldname": "items",
@@ -534,7 +527,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-06-05 12:08:38.552699",
+ "modified": "2024-04-30 12:33:23.396599",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
