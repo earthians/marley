@@ -54,19 +54,16 @@ frappe.ui.form.on('Inpatient Record', {
 		if (!frm.doc.__islocal) {
 			if (frm.doc.status == 'Admitted') {
 				frm.add_custom_button(__('Schedule Discharge'), function() {
-					schedule_discharge(frm);
+					frappe.run_serially([
+						()=>schedule_discharge(frm),
+						()=>generate_billables(frm),
+					]);
 				});
 				frm.add_custom_button(__("Normal"), function() {
 					transfer_patient_dialog(frm);
 				},__('Transfer'));
 				frm.add_custom_button(__("Generate Billables"), function() {
-					frappe.call({
-						doc: frm.doc,
-						method: 'add_service_unit_rent_to_billable_items',
-						callback: function() {
-							frm.refresh();
-						}
-					})
+					generate_billables(frm);
 				});
 				if (!frm.doc.inpatient_occupancies.some(
 					e => e.transferred_for_procedure == 1 && e.left != 1)) {
@@ -90,14 +87,20 @@ frappe.ui.form.on('Inpatient Record', {
 						}, "Create");
 					}
 				})
-				frappe.db.get_value('Discharge Summary', {'docstatus': 1, 'inpatient_record': frm.doc.name}, 'name')
-				.then(r => {
-					if (r.message.name) {
-						frm.add_custom_button(__('Discharge'), function() {
-							discharge_patient(frm);
-						} );
-					}
-				})
+				frm.add_custom_button(__('Discharge'), function() {
+					frappe.db.get_value('Discharge Summary', {'docstatus': 1, 'inpatient_record': frm.doc.name}, 'name')
+					.then(r => {
+						if (r.message.name) {
+								discharge_patient(frm);
+						} else {
+							frappe.msgprint({
+								title: __("Discharge Summary Required"),
+								message: __("Discharge Summary is Required to Discharge"),
+								indicator: 'red'
+							});
+						}
+					})
+				});
 			}
 
 			if (!["Discharge Scheduled", "Cancelled", "Discharged"].includes(frm.doc.status)) {
@@ -620,7 +623,7 @@ var create_treatment_counselling = function(frm, args) {
 	frappe.call({
 		method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.create_treatment_counselling",
 		args: {
-			args: args
+			ip_order: args
 		},
 		freeze: true,
 		freeze_message: __("Creating Treatment Counselling"),
@@ -630,4 +633,14 @@ var create_treatment_counselling = function(frm, args) {
 			}
 		},
 	});
+}
+
+var generate_billables = function(frm) {
+	frappe.call({
+		doc: frm.doc,
+		method: 'add_service_unit_rent_to_billable_items',
+		callback: function() {
+			frm.refresh();
+		}
+	})
 }

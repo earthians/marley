@@ -324,7 +324,6 @@ class PatientEncounter(Document):
 		)
 
 
-
 @frappe.whitelist()
 def make_ip_medication_order(source_name, target_doc=None):
 	def set_missing_values(source, target):
@@ -518,16 +517,20 @@ def get_encounter_details(doc):
 		doc = frappe.get_doc(doc.doctype, doc.docname)
 	medication_requests = []
 	service_requests = []
-	filters = {"patient": doc.get("patient"), "docstatus":1}
+	filters = {"patient": doc.get("patient"), "docstatus": 1}
 	medication_requests = frappe.get_all("Medication Request", filters, ["*"])
 	service_requests = frappe.get_all("Service Request", filters, ["*"])
 	for service_request in service_requests:
 		if service_request.template_dt == "Lab Test Template":
 			lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
 			if lab_test:
-				subject = frappe.db.get_value("Patient Medical Record", {"reference_name": lab_test}, "subject")
+				subject = frappe.db.get_value(
+					"Patient Medical Record", {"reference_name": lab_test}, "subject"
+				)
 				if subject:
 					service_request["lab_details"] = subject
-	clinical_notes = frappe.get_all("Clinical Note", {"patient": doc.get("patient")}, ["posting_date", "note"])
+	clinical_notes = frappe.get_all(
+		"Clinical Note", {"patient": doc.get("patient")}, ["posting_date", "note"]
+	)
 
 	return medication_requests, service_requests, clinical_notes

@@ -335,6 +335,7 @@ class TestPatientAppointment(FrappeTestCase):
 			mark_invoiced_inpatient_occupancy,
 		)
 
+		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 1)
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		patient = create_patient()
 		practitioner = create_practitioner()
@@ -347,7 +348,9 @@ class TestPatientAppointment(FrappeTestCase):
 		service_unit = get_healthcare_service_unit("_Test Service Unit Ip Occupancy")
 		admit_patient(ip_record, service_unit, now_datetime())
 
-		appointment = create_appointment(patient, practitioner, nowdate(), service_unit=service_unit)
+		appointment = create_appointment(
+			patient, practitioner, nowdate(), service_unit=service_unit, invoice=1
+		)
 		self.assertEqual(appointment.service_unit, service_unit)
 
 		# Discharge

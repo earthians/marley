@@ -306,30 +306,27 @@ def get_inpatient_services_to_invoice(patient, company):
 			for item in inpatient_record_doc.items:
 				if item.stock_entry and not item.invoiced:
 					services_to_invoice.append(
-					{
-						"reference_type": "Inpatient Record Item",
-						"reference_name": item.name,
-						"service": item.item_code,
-						"qty": item.quantity,
-					}
-				)
+						{
+							"reference_type": "Inpatient Record Item",
+							"reference_name": item.name,
+							"service": item.item_code,
+							"qty": item.quantity,
+						}
+					)
 
 	else:
-		inpatient_services = frappe.db.sql(
-			"""
-				SELECT
-					iri.*
-				FROM
-					`tabInpatient Record` ip, `tabInpatient Record Item` iri
-				WHERE
-					ip.patient=%s
-					and ip.company=%s
-					and iri.parent=ip.name
-					and iri.invoiced=0
-			""",
-			(patient.name, company),
-			as_dict=1,
+		ip = frappe.qb.DocType("Inpatient Record")
+		iri = frappe.qb.DocType("Inpatient Record Item")
+
+		query = (
+			frappe.qb.from_(iri)
+			.select(iri.name, iri.item_code, iri.quantity)
+			.join(ip)
+			.on(iri.parent == ip.name)
+			.where((ip.patient == patient.name) & (ip.company == company) & (iri.invoiced == 0))
 		)
+
+		inpatient_services = query.run(as_dict=True)
 
 		for inpatient_occupancy in inpatient_services:
 			services_to_invoice.append(

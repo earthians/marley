@@ -355,7 +355,7 @@ var schedule_inpatient = function(frm) {
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_inpatient',
 				args: {
-					args: args
+					admission_order: args
 				},
 				callback: function(data) {
 					if (!data.exc) {
