@@ -326,6 +326,7 @@ frappe.ui.form.on('Patient Encounter', {
 });
 
 var schedule_inpatient = function(frm) {
+	let service_unit_type = "";
 	var dialog = new frappe.ui.Dialog({
 		title: 'Patient Admission',
 		fields: [
@@ -386,6 +387,22 @@ var schedule_inpatient = function(frm) {
 				'allow_appointments': 0
 			}
 		};
+	};
+
+	dialog.fields_dict["service_unit_type"].df.onchange = () => {
+		if (dialog.get_value("service_unit_type") && dialog.get_value("service_unit_type") != service_unit_type) {
+			service_unit_type = dialog.get_value("service_unit_type");
+			frappe.db.get_value("Healthcare Service Unit Type", {name: dialog.get_value("service_unit_type")}, ["is_billable", "item"])
+			.then(r => {
+				if (r.message.is_billable && !r.message.item) {
+					frappe.msgprint({
+						message: __("Selected service unit type doesn't have any item linked"),
+						title: __("Warning"),
+						indicator: "orange",
+					});
+				}
+			})
+		}
 	};
 
 	dialog.show();
