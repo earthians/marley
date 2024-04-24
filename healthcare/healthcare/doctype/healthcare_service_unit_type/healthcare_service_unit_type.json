@@ -96,6 +96,7 @@
    "read_only": 1
   },
   {
+   "fetch_from": "item.item_name",
    "fieldname": "item_code",
    "fieldtype": "Data",
    "hide_days": 1,
@@ -153,6 +154,7 @@
    "no_copy": 1
   },
   {
+   "fetch_from": "item.description",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "hide_days": 1,
@@ -170,7 +172,7 @@
   }
  ],
  "links": [],
- "modified": "2021-08-19 17:52:30.266667",
+ "modified": "2024-04-29 18:59:16.479821",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
@@ -192,5 +194,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "service_unit_type"
 }

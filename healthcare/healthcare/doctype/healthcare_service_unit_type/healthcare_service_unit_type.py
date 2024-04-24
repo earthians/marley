@@ -39,9 +39,8 @@ class HealthcareServiceUnitType(Document):
 			else:
 				frappe.db.set_value("Item", self.item, "disabled", 0)
 
-	def after_insert(self):
-		if self.inpatient_occupancy and self.is_billable:
-			create_item(self)
+		if self.inpatient_occupancy and self.is_billable and not self.item:
+			self.create_service_unit_item()
 
 	def on_trash(self):
 		if self.item:
@@ -72,10 +71,14 @@ class HealthcareServiceUnitType(Document):
 			frappe.db.set_value("Item", self.item, "disabled", 1)
 		self.reload()
 
+	@frappe.whitelist()
+	def create_service_unit_item(self):
+		create_item(self)
+
 
 def item_price_exists(doc):
 	item_price = frappe.db.exists({"doctype": "Item Price", "item_code": doc.item_code})
-	if len(item_price):
+	if item_price and len(item_price):
 		return item_price[0][0]
 	return False
 
