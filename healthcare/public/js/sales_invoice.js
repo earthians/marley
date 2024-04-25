@@ -77,7 +77,7 @@ var get_healthcare_services_to_invoice = function(frm) {
 		'patient': frm.doc.patient
 	});
 	dialog.fields_dict["patient"].df.onchange = () => {
-		var patient = dialog.fields_dict.patient.input.value;
+		var patient = dialog.get_value("patient");
 		if(patient && patient!=selected_patient){
 			selected_patient = patient;
 			var method = "healthcare.healthcare.utils.get_healthcare_services_to_invoice";
