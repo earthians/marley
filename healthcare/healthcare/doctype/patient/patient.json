@@ -131,7 +131,7 @@
    "in_preview": 1,
    "label": "Blood Group",
    "no_copy": 1,
-   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative"
+   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative\nRH Postive\nRH Negative"
   },
   {
    "bold": 1,
@@ -489,7 +489,7 @@
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2023-01-13 17:48:59.069268",
+ "modified": "2024-05-05 20:06:59.038263",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
