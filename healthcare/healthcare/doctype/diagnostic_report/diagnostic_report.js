@@ -11,7 +11,7 @@ frappe.ui.form.on("Diagnostic Report", {
 		}
 	},
 	before_save: function(frm) {
-		if (!frm.doc.is_new() && frm.is_dirty()) {
+		if (!frm.is_new() && frm.is_dirty()) {
 			this.diagnostic_report.save_action("save")
 		}
 	},
