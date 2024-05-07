@@ -62,7 +62,9 @@ class NursingTask(Document):
 
 		if not self.requested_end_time:
 			if not self.duration:
-				self.duration = frappe.db.get_value("Healthcare Activity", self.activity, "duration")
+				self.duration = (
+					frappe.db.get_value("Healthcare Activity", self.activity, "activity_duration") or 0
+				)
 			self.requested_end_time = add_to_date(self.requested_start_time, seconds=self.duration)
 
 		# set date based on requested_start_time
