@@ -20,7 +20,6 @@ class MedicationRequest(ServiceRequestController):
 
 	def before_insert(self):
 		self.calculate_total_dispensable_quantity()
-		self.status = "draft-Medication Request Status"
 
 		if self.amended_from:
 			frappe.db.set_value(
