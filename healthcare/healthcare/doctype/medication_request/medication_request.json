@@ -121,7 +121,7 @@
   },
   {
    "allow_on_submit": 1,
-   "default": "Draft",
+   "default": "draft-Medication Request Status",
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "status",
    "fieldtype": "Link",
@@ -463,7 +463,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-02-13 12:58:48.827434",
+ "modified": "2024-05-08 10:12:52.606084",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
