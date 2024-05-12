@@ -2,14 +2,6 @@ pull_request_rules:
   - name: Auto-close PRs on stable branch
     conditions:
       - and:
-<<<<<<< HEAD
-        - and:
-          - author!=akashkrishna619
-          - author!=akurungadam
-          - author!=frappe-pr-bot
-          - author!=mergify[bot]
-          - base=version-14
-=======
         - author!=Sajinsr
         - author!=akashkrishna619
         - author!=akurungadam
@@ -20,7 +12,6 @@ pull_request_rules:
         - base=version-16
         - base=version-15
         - base=version-14
->>>>>>> d23da9e (chore: update code owners)
     actions:
       close:
       comment:
