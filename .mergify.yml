@@ -15,6 +15,7 @@ pull_request_rules:
         - author!=akurungadam
         - author!=frappe-pr-bot
         - author!=mergify[bot]
+        - author!=github-actions[bot]
       - or:
         - base=version-16
         - base=version-15
