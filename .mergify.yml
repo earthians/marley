@@ -2,10 +2,12 @@ pull_request_rules:
   - name: Auto-close PRs on stable branch
     conditions:
       - and:
+        - author!=Sajinsr
         - author!=akashkrishna619
         - author!=akurungadam
         - author!=frappe-pr-bot
         - author!=mergify[bot]
+        - author!=github-actions[bot]
       - or:
         - base=version-16
         - base=version-15
