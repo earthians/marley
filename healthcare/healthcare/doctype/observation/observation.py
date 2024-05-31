@@ -108,6 +108,7 @@ def get_observation_details(docname):
 	reference = frappe.get_value(
 		"Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True
 	)
+	observation = []
 
 	if reference.get("ref_doctype") == "Sales Invoice":
 		observation = frappe.get_list(
