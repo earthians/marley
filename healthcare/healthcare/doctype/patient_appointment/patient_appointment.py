@@ -348,7 +348,6 @@ class PatientAppointment(Document):
 				event_doc.starts_on = starts_on
 				event_doc.ends_on = ends_on
 				event_doc.add_video_conferencing = self.add_video_conferencing
-				event_doc.save()
 				event_doc.save(ignore_permissions=True)
 				event_doc.reload()
 				self.google_meet_link = event_doc.google_meet_link
