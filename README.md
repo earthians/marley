@@ -1,11 +1,25 @@
-## Frappe Health
+<div align="center">
+<a href="https://frappehealth.com/home">
+    <img src="https://raw.githubusercontent.com/frappe/healthcare/develop/healthcare/public/images/healthcare.svg" height="128" alt="Marley Health Logo">
+  </a>
+  <h2>Marley Health</h2>
+  <p align="center">
+    <p>Open source & easy-to-use hospital information system(HIS) for all healthcare organisations.</p>
+  </p>
 
-Open source & easy-to-use hospital information system(HIS) for all healthcare organisations.
+  [Marley Health](https://frappehealth.com/home)
 
+ <div align="center" style="max-height: 40px;">
+    <a href="https://frappecloud.com/marley/signup">
+        <img src=".github/try-on-f-cloud-button.svg" height="40">
+    </a>
+ </div>
+
+</div>
 
 ### Introduction
 
-Frappe Health enables the health domain in ERPNext and has various features that will help healthcare practitioners, clinics and hospitals to leverage the power of Frappe and ERPNext. It is built on Frappe, a full-stack, meta-data driven, web framework, and integrates seamlessly with ERPNext, the most agile ERP software. Frappe Health helps to manage healthcare workflows efficiently and most of the design is based on HL7 FHIR (Fast Health Interoperability Resources).
+Marley Health enables the health domain in ERPNext and has various features that will help healthcare practitioners, clinics and hospitals to leverage the power of Frappe and ERPNext. It is built on Frappe, a full-stack, meta-data driven, web framework, and integrates seamlessly with ERPNext, the most agile ERP software. Marley Health helps to manage healthcare workflows efficiently and most of the design is based on HL7 FHIR (Fast Health Interoperability Resources).
 
 
 ### Key Features
@@ -36,14 +50,14 @@ $ bench --site demo.com install-app healthcare
 
 ### Documentation
 
-Complete documentation for Frappe Health is available at https://frappehealth.com/docs
+Complete documentation for Marley Health is available at https://frappehealth.com/docs
 
 
 ### License
 
-GNU GPL V3. See [license.txt](https://github.com/frappe/health/blob/develop/license.txt) for more information.
+GNU GPL V3. See [license.txt](https://github.com/earthians/marley/blob/develop/license.txt) for more information.
 
 
 ### Credits
 
-Frappe Health module is initially developed by Earthians. Currently, it is developed & maintained by Frappe Team and community contributors.
+Marley Health module is developed & maintained by Earthians and community contributors.
