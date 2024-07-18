@@ -126,6 +126,7 @@
   {
    "fieldname": "observation_reference_range",
    "fieldtype": "Table",
+   "label": "References",
    "options": "Observation Reference Range"
   },
   {
@@ -400,7 +401,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-06 14:40:08.511353",
+ "modified": "2024-07-17 13:19:00.913922",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
