@@ -21,8 +21,8 @@ jobs:
       - uses: octokit/request-action@v2.x
         with:
           route: POST /repos/{owner}/{repo}/pulls
-          owner: frappe
-          repo: health
+          owner: earthians
+          repo: marley
           title: |-
             "chore: release v${{ matrix.version }}"
           body: "Automated release."
