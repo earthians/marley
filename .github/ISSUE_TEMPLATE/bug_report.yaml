@@ -1,15 +1,15 @@
 ---
 name: Bug Report
-description: Report a bug encountered while using Frappe Health
+description: Report a bug encountered while using Marley Health
 labels: ["bug"]
 
 body:
   - type: markdown
     attributes:
       value: |
-        Welcome to Frappe Health issue tracker! Before creating an issue, please consider the following:
+        Welcome to Marley Health issue tracker! Before creating an issue, please consider the following:
 
-        1. This tracker should only be used to report bugs and request features / enhancements to Frappe Health
+        1. This tracker should only be used to report bugs and request features / enhancements to Marley Health
             - For questions and general support, checkout the [documentation](https://frappehealth.com/docs) or use the [forum](https://discuss.frappe.io/c/healthcare/58) to get inputs from the open source community.
             - For documentation issues, propose edit on the [documentation site](https://frappehealth.com/docs) directly.
         2. When making a bug report, make sure you provide all required information. The easier it is for
@@ -29,7 +29,7 @@ body:
     id: module
     attributes:
       label: Module
-      description: Select the affected module of Frappe Health.
+      description: Select the affected module of Marley Health.
       multiple: true
       options:
         - Outpatient Module
@@ -48,11 +48,11 @@ body:
     id: exact-version
     attributes:
       label: Version
-      description: Share exact version number of Frappe, ERPNext and Frappe Health you are using.
+      description: Share exact version number of Frappe, ERPNext and Marley Health you are using.
       placeholder: |
         Frappe version -
         ERPNext version -
-        Frappe Health version -
+        Marley Health version -
     validations:
       required: true
 
