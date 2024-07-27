@@ -245,10 +245,10 @@ def create_medical_departments():
 		"Urology",
 	]
 	for department in departments:
-		mediacal_department = frappe.new_doc("Medical Department")
-		mediacal_department.department = _(department)
+		medical_department = frappe.new_doc("Medical Department")
+		medical_department.department = _(department)
 		try:
-			mediacal_department.save()
+			medical_department.save()
 		except frappe.DuplicateEntryError:
 			pass
 
