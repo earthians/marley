@@ -5,6 +5,7 @@ frappe.treeview_settings['Healthcare Service Unit'] = {
 	title: __('Service Unit Tree'),
 	get_tree_root: false,
 	get_tree_nodes: 'healthcare.healthcare.utils.get_children',
+	add_tree_node: 'healthcare.healthcare.utils.add_node',
 	filters: [{
 		fieldname: 'company',
 		fieldtype: 'Select',
@@ -24,7 +25,7 @@ frappe.treeview_settings['Healthcare Service Unit'] = {
 		{
 			fieldtype: 'Link', fieldname: 'service_unit_type', label: __('Service Unit Type'),
 			options: 'Healthcare Service Unit Type', description: __('Type of the new Service Unit'),
-			depends_on: 'eval:!doc.is_group', default: '',
+			depends_on: 'eval:!doc.is_group', default: '', mandatory_depends_on: 'eval:!doc.is_group',
 			onchange: () => {
 				if (cur_dialog) {
 					if (cur_dialog.fields_dict.service_unit_type.value) {
