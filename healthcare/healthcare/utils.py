@@ -9,7 +9,7 @@ import math
 
 import frappe
 from frappe import _
-from frappe.utils import cstr, flt, get_link_to_form, rounded, time_diff_in_hours
+from frappe.utils import cint, cstr, flt, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
 
 from erpnext.setup.utils import insert_record
@@ -1290,3 +1290,15 @@ def generate_barcodes(in_val):
 	stream.close()
 
 	return barcode_base64
+
+
+@frappe.whitelist()
+def add_node():
+	from frappe.desk.treeview import make_tree_args
+
+	args = make_tree_args(**frappe.form_dict)
+
+	if cint(args.is_root):
+		args.parent_healthcare_service_unit = None
+
+	frappe.get_doc(args).insert()
