@@ -103,7 +103,7 @@ def add_multiple_service_units(parent, data):
 
 	service_unit = {
 		"doctype": "Healthcare Service Unit",
-		"parent_healthcare_service_unit": parent,
+		"parent_healthcare_service_unit": parent if parent != company else None,
 		"service_unit_type": data.get("service_unit_type") or None,
 		"service_unit_capacity": capacity if capacity > 0 else 1,
 		"warehouse": data.get("warehouse") or None,
