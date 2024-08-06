@@ -5,6 +5,7 @@ frappe.treeview_settings['Healthcare Service Unit'] = {
 	title: __('Service Unit Tree'),
 	get_tree_root: false,
 	get_tree_nodes: 'healthcare.healthcare.utils.get_children',
+	add_tree_node: 'healthcare.healthcare.utils.add_node',
 	filters: [{
 		fieldname: 'company',
 		fieldtype: 'Select',
