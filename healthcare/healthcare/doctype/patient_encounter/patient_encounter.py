@@ -478,19 +478,24 @@ def create_medication_request(encounter):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
-	medication_name = filters.get("name")
+	medication_name = filters.get("medication")
+
 	medication_child = frappe.qb.DocType("Medication Linked Item")
 	medication = frappe.qb.DocType("Medication")
 	item = frappe.qb.DocType("Item")
-	data = (
+	query = (
 		frappe.qb.select(medication_child.brand, medication_child.manufacturer, medication_child.item)
 		.from_(medication_child)
 		.left_join(medication)
 		.on(medication.name == medication_child.parent)
 		.left_join(item)
 		.on(item.name == medication_child.item)
-		.where((medication.name == medication_name) & (item.disabled == 0))
-	).run(as_dict=True)
+		.where(item.disabled == 0)
+	)
+	if medication_name:
+		query = query.where(medication.name == medication_name)
+
+	data = query.run(as_dict=True)
 	data_list = []
 	for d in data:
 		display_list = []
@@ -503,9 +508,9 @@ def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
 		default_warehouse = frappe.get_cached_value("Stock Settings", None, "default_warehouse")
 		if default_warehouse:
 			actual_qty = frappe.db.get_value(
-				"Bin", {"warehouse": default_warehouse, "item_code": d.get("name")}, "actual_qty"
+				"Bin", {"warehouse": default_warehouse, "item_code": d.get("item")}, "actual_qty"
 			)
-			display_list.append("Qty:" + str(actual_qty) if actual_qty else "0")
+			display_list.append("<br>Actual Qty : " + (str(actual_qty) if actual_qty else "0"))
 		data_list.append(display_list)
 	res = tuple(tuple(sub) for sub in data_list)
 	return res
