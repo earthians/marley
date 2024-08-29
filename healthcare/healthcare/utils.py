@@ -9,6 +9,7 @@ import math
 
 import frappe
 from frappe import _
+from frappe.query_builder import DocType
 from frappe.utils import cint, cstr, flt, get_link_to_form, rounded, time_diff_in_hours
 from frappe.utils.formatters import format_value
 
@@ -257,21 +258,19 @@ def get_clinical_procedures_to_invoice(patient, company):
 def get_inpatient_services_to_invoice(patient, company):
 	services_to_invoice = []
 	if not frappe.db.get_single_value("Healthcare Settings", "automatically_generate_billable"):
-		inpatient_services = frappe.db.sql(
-			"""
-				SELECT
-					io.*
-				FROM
-					`tabInpatient Record` ip, `tabInpatient Occupancy` io
-				WHERE
-					ip.patient=%s
-					and ip.company=%s
-					and io.parent=ip.name
-					and io.left=1
-					and io.invoiced=0
-			""",
-			(patient.name, company),
-			as_dict=1,
+		ip_record = DocType("Inpatient Record")
+		ip_occupancy = DocType("Inpatient Occupancy")
+
+		inpatient_services = (
+			frappe.qb.from_(ip_occupancy)
+			.on(ip_occupancy.parent == ip_record.name)
+			.select(ip_occupancy.star)
+			.where(
+				(ip_record.patient == patient.name)
+				& (ip_record.company == company)
+				& (ip_occupancy.invoiced == 0)
+			)
+			.run(as_dict=True)
 		)
 
 		for inpatient_occupancy in inpatient_services:
