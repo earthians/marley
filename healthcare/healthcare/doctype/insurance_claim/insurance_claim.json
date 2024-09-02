@@ -1,5 +1,4 @@
 {
- "_liked_by": "[\"Administrator\"]",
  "actions": [],
  "autoname": "naming_series:",
  "beta": 1,
@@ -138,8 +137,7 @@
    "fieldname": "payment_account",
    "fieldtype": "Read Only",
    "label": "Payment Account",
-   "options": "Account",
-   "reqd": 1
+   "options": "Account"
   },
   {
    "fieldname": "patient_and_policy_details_section",
@@ -280,7 +278,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-14 11:18:30.991751",
+ "modified": "2024-08-29 16:04:21.467025",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",
@@ -342,7 +340,6 @@
    "read": 1,
    "report": 1,
    "role": "Healthcare Administrator",
-   "set_user_permissions": 1,
    "share": 1,
    "submit": 1,
    "write": 1

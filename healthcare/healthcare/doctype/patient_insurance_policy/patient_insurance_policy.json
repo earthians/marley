@@ -1,5 +1,4 @@
 {
- "_liked_by": "[\"Administrator\"]",
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
@@ -126,9 +125,9 @@
   },
   {
    "depends_on": "patient",
-   "fetch_from": "patient.country",
    "fieldname": "country",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Country",
    "options": "Country",
    "read_only": 1
@@ -194,11 +193,10 @@
    "link_fieldname": "insurance_policy"
   }
  ],
- "modified": "2023-03-14 11:19:21.409521",
+ "modified": "2024-08-26 16:58:49.644556",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Policy",
- "name_case": "Title Case",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

@@ -2,7 +2,6 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 0,
  "creation": "2017-05-04 11:52:40.941507",
  "doctype": "DocType",
  "document_type": "Document",
@@ -28,7 +27,7 @@
   "appointment_date",
   "appointment_time",
   "appointment_datetime",
-  "column_break_17",
+  "column_break_3",
   "service_request",
   "procedure_template",
   "get_procedure_from_encounter",
@@ -37,9 +36,6 @@
   "therapy_type",
   "get_prescribed_therapies",
   "column_break_17",
-  "appointment_date",
-  "appointment_time",
-  "appointment_datetime",
   "event",
   "add_video_conferencing",
   "google_meet_link",
@@ -59,7 +55,8 @@
   "referring_practitioner",
   "reminded",
   "column_break_36",
-  "notes"
+  "notes",
+  "coverage_status"
  ],
  "fields": [
   {
@@ -379,56 +376,60 @@
    "read_only": 1
   },
   {
-    "fieldname": "service_request",
-    "fieldtype": "Link",
-    "label": "Service Request",
-    "options": "Service Request",
-    "read_only": 1,
-    "search_index": 1
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1,
+   "search_index": 1
   },
   {
-    "depends_on": "patient",
-    "fieldname": "insurance_section",
-    "fieldtype": "Section Break",
-    "label": "Insurance "
-   },
-   {
-    "fieldname": "column_break_49",
-    "fieldtype": "Column Break"
-   },
-   {
-    "fetch_from": "insurance_policy.insurance_payor",
-    "fieldname": "insurance_payor",
-    "fieldtype": "Link",
-    "label": "Insurance Payor",
-    "options": "Insurance Payor",
-    "read_only": 1
-   },
-   {
-    "fieldname": "insurance_policy",
-    "fieldtype": "Link",
-    "label": "Insurance Policy",
-    "options": "Patient Insurance Policy",
-    "read_only_depends_on": "eval:doc.insurance_coverage"
-   },
-   {
-    "fieldname": "insurance_coverage",
-    "fieldtype": "Link",
-    "label": "Insurance Coverage",
-    "options": "Patient Insurance Coverage",
-    "read_only": 1
-   },
-   {
-    "fetch_from": "insurance_coverage.status",
-    "fetch_if_empty": 1,
-    "fieldname": "coverage_status",
-    "fieldtype": "Data",
-    "label": "Claim Status",
-    "read_only": 1
-   }
+   "depends_on": "patient",
+   "fieldname": "insurance_section",
+   "fieldtype": "Section Break",
+   "label": "Insurance "
+  },
+  {
+   "fieldname": "column_break_49",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "insurance_policy.insurance_payor",
+   "fieldname": "insurance_payor",
+   "fieldtype": "Link",
+   "label": "Insurance Payor",
+   "options": "Insurance Payor",
+   "read_only": 1
+  },
+  {
+   "fieldname": "insurance_policy",
+   "fieldtype": "Link",
+   "label": "Insurance Policy",
+   "options": "Patient Insurance Policy",
+   "read_only_depends_on": "eval:doc.insurance_coverage"
+  },
+  {
+   "fieldname": "insurance_coverage",
+   "fieldtype": "Link",
+   "label": "Insurance Coverage",
+   "options": "Patient Insurance Coverage",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "insurance_coverage.status",
+   "fetch_if_empty": 1,
+   "fieldname": "coverage_status",
+   "fieldtype": "Data",
+   "label": "Claim Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  }
  ],
  "links": [],
- "modified": "2022-08-16 19:11:10.528001",
+ "modified": "2024-08-27 11:38:47.599391",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

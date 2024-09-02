@@ -347,13 +347,13 @@
    "read_only": 1
   },
   {
-   "depends_on": "appointment_type",
+   "depends_on": "patient",
    "fieldname": "insurance_section",
    "fieldtype": "Section Break",
    "label": "Insurance"
   },
   {
-   "depends_on": "appointment_type",
+   "depends_on": "patient",
    "fieldname": "insurance_policy",
    "fieldtype": "Link",
    "label": "Insurance Policy",
@@ -387,7 +387,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-14 12:54:56.263474",
+ "modified": "2024-08-29 14:55:45.599690",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
