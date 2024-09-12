@@ -242,7 +242,7 @@ def get_inpatient_services_to_invoice(patient, company):
 	inpatient_services = frappe.db.sql(
 		"""
 			SELECT
-				io.*, ip.insurance_coverage
+				io.*,ip.insurance_coverage
 			FROM
 				`tabInpatient Record` ip, `tabInpatient Occupancy` io
 			WHERE

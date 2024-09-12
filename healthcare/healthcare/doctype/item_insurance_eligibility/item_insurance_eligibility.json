@@ -1,5 +1,4 @@
 {
- "_liked_by": "[\"Administrator\"]",
  "actions": [],
  "allow_import": 1,
  "beta": 1,
@@ -26,7 +25,8 @@
   "valid_from",
   "valid_till",
   "eligibility_applicable_for_section",
-  "insurance_plan"
+  "insurance_plan",
+  "insurance_plan_name"
  ],
  "fields": [
   {
@@ -144,7 +144,6 @@
    "default": "Today",
    "fieldname": "valid_from",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Valid From",
    "search_index": 1
@@ -168,15 +167,25 @@
    "description": "Optional, set this <i>only</i> if you want to restrict this coverage to Patients subscribed to an Insurance Plan (Insurance Policy for the Patient should have the Coverage Plan selected).",
    "fieldname": "insurance_plan",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Insurance Payor Eligibility Plan",
    "options": "Insurance Payor Eligibility Plan",
    "search_index": 1
+  },
+  {
+   "fetch_from": "insurance_plan.insurance_plan_name",
+   "fieldname": "insurance_plan_name",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Insurance Plan Name",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-03-14 11:20:01.102782",
+ "modified": "2024-09-05 18:43:11.746879",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Item Insurance Eligibility",

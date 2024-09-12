@@ -22,7 +22,6 @@ class ServiceRequest(ServiceRequestController):
 		if self.amended_from:
 			frappe.db.set_value('Service Request', self.amended_from, 'status', 'Replaced')
 
-
 	def set_order_details(self):
 		if not self.template_dt and not self.template_dn:
 			frappe.throw(_('Order Template Type and Order Template are mandatory to create Service Request'),
