@@ -10,7 +10,15 @@ from frappe import _
 from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import get_datetime, get_link_to_form, getdate, now, now_datetime, today
+from frappe.utils import (
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	now,
+	now_datetime,
+	time_diff_in_hours,
+	today,
+)
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
@@ -118,31 +126,51 @@ class InpatientRecord(Document):
 	@frappe.whitelist()
 	def add_service_unit_rent_to_billable_items(self):
 		try:
-			query = frappe.db.sql(
-				f"""
-				SELECT
-					sum(TIMESTAMPDIFF(minute, io.check_in, now())) as now_difference,
-					sum(TIMESTAMPDIFF(minute, io.check_in, io.check_out)) as time_difference,
-					io.`left`,
+			io = frappe.qb.DocType("Inpatient Occupancy")
+			su = frappe.qb.DocType("Healthcare Service Unit")
+			sut = frappe.qb.DocType("Healthcare Service Unit Type")
+
+			query = (
+				frappe.qb.from_(io)
+				.left_join(su)
+				.on(io.service_unit == su.name)
+				.left_join(sut)
+				.on(su.service_unit_type == sut.name)
+				.select(
+					io.check_in,
+					io.check_out,
+					io.left,
 					io.parent,
 					io.name,
 					sut.item,
 					sut.uom,
 					sut.rate,
 					sut.no_of_hours,
-					sut.minimum_billable_qty
-				FROM
-					`tabInpatient Occupancy` as io left join
-					`tabHealthcare Service Unit` as su on io.service_unit=su.name left join
-					`tabHealthcare Service Unit Type` as sut on su.service_unit_type=sut.name
-				WHERE
-					io.parent={frappe.db.escape(self.name)}
-				GROUP BY
-					sut.item
-			""",
-				as_dict=True,
+					sut.minimum_billable_qty,
+				)
+				.where(io.parent == self.name)
 			)
-			for inpatient in query:
+
+			inpatient_details = query.run(as_dict=True)
+			item_hours = {}
+
+			# Calculate total hours for each item
+			for record in inpatient_details:
+				check_in = get_datetime(record["check_in"])
+				check_out = get_datetime(record["check_out"]) if record["check_out"] else get_datetime()
+
+				hours_diff = time_diff_in_hours(check_out, check_in)
+				item = record.get("item")
+
+				if item not in item_hours:
+					record["total_hours"] = 0
+					item_hours[item] = record
+
+				item_hours[item]["total_hours"] += hours_diff
+
+			ip_records = list(item_hours.values())
+
+			for inpatient in ip_records:
 				item_name, stock_uom = frappe.db.get_value(
 					"Item", inpatient.get("item"), ["item_name", "stock_uom"]
 				)
@@ -150,23 +178,16 @@ class InpatientRecord(Document):
 					"Inpatient Record Item",
 					{"item_code": inpatient.get("item"), "parent": self.name},
 					["name", "quantity", "invoiced"],
+					order_by="idx DESC",
 					as_dict=True,
 				)
-				uom = 60
-				if inpatient.get("uom") == "Hour":
-					uom = 60
-				elif inpatient.get("uom") == "Day":
-					uom = 1440
+
 				minimum_billable_qty = inpatient.get("minimum_billable_qty")
-				quantity = 1
-				if inpatient.get("left") == 1:
-					quantity = inpatient.get("time_difference") / uom
-				else:
-					quantity = inpatient.get("now_difference") / uom
-				if minimum_billable_qty and quantity < minimum_billable_qty:
-					quantity = minimum_billable_qty
+				quantity = max(inpatient.get("total_hours", 0.5), minimum_billable_qty or 0.5)
+
+				# Add or update item row based on existing data
 				if not item_row:
-					# to add item child first time
+					# Add new item row if none exists
 					se_child = self.append("items")
 					se_child.item_code = inpatient.get("item")
 					se_child.item_name = item_name
@@ -176,7 +197,7 @@ class InpatientRecord(Document):
 					se_child.rate = inpatient.rate / inpatient.get("no_of_hours")
 				else:
 					if item_row.get("invoiced"):
-						# if invoiced add another row
+						# Add new row if invoiced and additional quantity exists
 						if item_row.get("quantity") and quantity and quantity > item_row.get("quantity"):
 							se_child = self.append("items")
 							se_child.item_code = inpatient.get("item")
@@ -186,17 +207,19 @@ class InpatientRecord(Document):
 							se_child.quantity = quantity - item_row.get("quantity")
 							se_child.rate = inpatient.rate / inpatient.get("no_of_hours")
 					else:
-						# update existing row in item line if not invoiced
+						# Update existing non-invoiced item row
 						if quantity != item_row.get("quantity"):
 							for item in self.items:
 								if item.name == item_row.get("name"):
 									item.quantity = quantity
 
+			# Update inpatient occupancy billing time
 			for test in self.inpatient_occupancies:
 				if test.name == inpatient.get("name"):
 					test.scheduled_billing_time = now()
 
 			self.save()
+
 		except Exception as e:
 			frappe.log_error(message=e, title="Can't bill Service Unit occupancy")
 
