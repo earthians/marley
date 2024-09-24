@@ -9,10 +9,21 @@ app_color = "grey"
 app_email = "info@earthianslive.com"
 app_license = "GNU GPL V3"
 required_apps = ["erpnext"]
+app_logo_url = '/assets/healthcare/images/healthcare.svg'
+app_home = "/app/healthcare"
+
+add_to_apps_screen = [
+	{
+		"name": "Marley Health",
+		"logo": "/assets/healthcare/images/healthcare.svg",
+		"title": "Marley Health",
+		"route": "/app/healthcare",
+		"has_permission": "erpnext.check_app_permission",
+	}
+]
 
 # Includes in <head>
 # ------------------
-
 # include js, css files in header of desk.html
 # app_include_css = "/assets/healthcare/css/healthcare.css"
 app_include_js = "healthcare.bundle.js"
