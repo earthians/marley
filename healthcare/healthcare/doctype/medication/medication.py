@@ -126,3 +126,43 @@ def change_item_code_from_medication(item_code, doc):
 		rename_doc("Item", doc.item_code, item_code, ignore_permissions=True)
 		frappe.db.set_value("Medication", doc.name, "item_code", item_code)
 	return
+
+
+@frappe.whitelist()
+def get_children(parent=None, is_root=False, **filters):
+	if not parent or parent == "Medication":
+		frappe.msgprint(_("Please select a Medication"))
+		return
+
+	if parent:
+		frappe.form_dict.parent = parent
+
+	if frappe.form_dict.parent:
+		medication_doc = frappe.get_cached_doc("Medication", frappe.form_dict.parent)
+		frappe.has_permission("Medication", doc=medication_doc, throw=True)
+
+		medication_items = frappe.get_all(
+			"Medication Linked Item",
+			fields=["item as item_code", "rate"],
+			filters=[["parent", "=", frappe.form_dict.parent]],
+			order_by="idx",
+		)
+
+		item_names = tuple(d.get("item_code") for d in medication_items)
+
+		items = frappe.get_list(
+			"Item",
+			fields=["image", "description", "name", "stock_uom", "item_name"],
+			filters=[["name", "in", item_names]],
+		)  # to get only required item dicts
+
+		for medication_item in medication_items:
+			# extend medication_item dict with respective item dict
+			medication_item.update(
+				# returns an item dict from items list which matches with item_code
+				next(item for item in items if item.get("name") == medication_item.get("item_code"))
+			)
+			medication_item.image = frappe.db.escape(medication_item.image)
+			medication_item.currency = frappe.db.get_single_value("Global Defaults", "default_currency")
+
+		return medication_items

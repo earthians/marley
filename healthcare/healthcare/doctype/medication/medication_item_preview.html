@@ -1,0 +1,43 @@
+<div style="padding: 15px;">
+	<div class="row mb-5">
+		<div class="col-md-4" style="max-height: 500px">
+			{% if data.image && !["undefined", "''"].includes(data.image) %}
+				<div class="border image-field " style="overflow: hidden;border-color:#e6e6e6">
+					<img class="responsive" src={{ data.image }}>
+				</div>
+			{% endif %}
+		</div>
+		<div class="col-md-8 h-500">
+			{% if data.value && data.value != "Medication" %}
+			<h4>
+				{{ __("Medication Details") }}
+			</h4>
+			<div style="padding-top: 10px;">
+				<p>Class : {{ data.medication_class ? data.medication_class : "" }}</p>
+				<p>Strength : {{ data.strength ? data.strength : "" }}</p>
+				<p>UOM : {{ data.uom ? data.uom : "" }}</p>
+			</div>
+			{% endif %}
+			{% if data.item_code %}
+			<h4>
+				{{ __("Description") }}
+			</h4>
+			<div style="padding-top: 10px;">
+				<p>{{ data.description }}</p>
+				<p>Rate: {{ format_currency(data.rate, data.currency) }}</p>
+			</div>
+			{% endif %}
+			<hr style="margin: 15px -15px;">
+			<p>
+				{% if data.value && data.value != "Medication" %}
+				<a style="margin-right: 7px; margin-bottom: 7px" class="btn btn-default btn-xs" href="/app/medication/{{ data.value }}">
+					{{ __("Open Medication {0}", [data.value.bold()]) }}</a>
+				{% endif %}
+				{% if data.item_code %}
+				<a style="margin-right: 7px; margin-bottom: 7px"  class="btn btn-default btn-xs" href="/app/item/{{ data.item_code }}">
+					{{ __("Open Item {0}", [data.item_code.bold()]) }}</a>
+				{% endif %}
+			</p>
+		</div>
+	</div>
+</div>
