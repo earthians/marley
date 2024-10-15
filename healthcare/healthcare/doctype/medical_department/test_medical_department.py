@@ -5,8 +5,6 @@
 
 from frappe.tests import IntegrationTestCase
 
-# test_records = frappe.get_test_records('Medical Department')
-
 
 class TestMedicalDepartment(IntegrationTestCase):
 	pass

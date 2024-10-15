@@ -34,12 +34,12 @@ from healthcare.healthcare.doctype.therapy_type.test_therapy_type import create_
 
 class TestNursingTask(IntegrationTestCase):
 	def setUp(self) -> None:
-		nursing_checklist_templates = frappe.get_test_records("Nursing Checklist Template")
-
-		self.activity = frappe.get_doc(nursing_checklist_templates[0]).insert(ignore_if_duplicate=True)
-		self.nc_template = frappe.get_doc(nursing_checklist_templates[1]).insert(
+		self.activity = frappe.get_doc(self.globalTestRecords["Nursing Checklist Template"][0]).insert(
 			ignore_if_duplicate=True
 		)
+		self.nc_template = frappe.get_doc(
+			self.globalTestRecords["Nursing Checklist Template"][1]
+		).insert(ignore_if_duplicate=True)
 
 		self.settings = frappe.get_single("Healthcare Settings")
 		self.settings.validate_nursing_checklists = 1
