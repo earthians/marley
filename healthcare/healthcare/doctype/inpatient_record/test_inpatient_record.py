@@ -4,7 +4,7 @@
 
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime, today
 from frappe.utils.make_random import get_random
 
@@ -17,7 +17,7 @@ from healthcare.healthcare.doctype.lab_test.test_lab_test import create_patient_
 from healthcare.healthcare.utils import get_encounters_to_invoice
 
 
-class TestInpatientRecord(FrappeTestCase):
+class TestInpatientRecord(IntegrationTestCase):
 	def test_admit_and_discharge(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		patient = create_patient()

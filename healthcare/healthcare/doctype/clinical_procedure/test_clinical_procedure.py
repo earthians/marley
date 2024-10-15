@@ -4,7 +4,7 @@
 
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_clinical_procedure_template,
@@ -14,7 +14,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 test_dependencies = ["Item"]
 
 
-class TestClinicalProcedure(FrappeTestCase):
+class TestClinicalProcedure(IntegrationTestCase):
 	def test_procedure_template_item(self):
 		patient, practitioner = create_healthcare_docs()
 		procedure_template = create_clinical_procedure_template()

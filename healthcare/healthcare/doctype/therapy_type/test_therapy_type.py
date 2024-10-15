@@ -4,10 +4,10 @@
 
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 
 
-class TestTherapyType(FrappeTestCase):
+class TestTherapyType(IntegrationTestCase):
 	def test_therapy_type_item(self):
 		therapy_type = create_therapy_type()
 		self.assertTrue(frappe.db.exists("Item", therapy_type.item))

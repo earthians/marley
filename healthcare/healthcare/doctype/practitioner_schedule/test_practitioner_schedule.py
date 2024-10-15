@@ -3,8 +3,8 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 
 
-class TestPractitionerSchedule(FrappeTestCase):
+class TestPractitionerSchedule(IntegrationTestCase):
 	pass

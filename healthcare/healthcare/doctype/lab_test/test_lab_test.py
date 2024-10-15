@@ -4,7 +4,7 @@
 
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 from frappe.utils import getdate, nowtime
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -20,7 +20,7 @@ from healthcare.healthcare.doctype.patient_medical_record.test_patient_medical_r
 )
 
 
-class TestLabTest(FrappeTestCase):
+class TestLabTest(IntegrationTestCase):
 	def test_lab_test_item(self):
 		lab_template = create_lab_test_template()
 		self.assertTrue(frappe.db.exists("Item", lab_template.item))
