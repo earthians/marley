@@ -5,8 +5,6 @@
 
 from frappe.tests import IntegrationTestCase
 
-# test_records = frappe.get_test_records('Lab Test UOM')
-
 
 class TestLabTestUOM(IntegrationTestCase):
 	pass
