@@ -2,10 +2,10 @@
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 
 
-class TestHealthcareServiceUnit(FrappeTestCase):
+class TestHealthcareServiceUnit(IntegrationTestCase):
 	def test_create_company_should_create_root_service_unit(self):
 		company = frappe.get_doc(
 			{
