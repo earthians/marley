@@ -257,14 +257,23 @@ healthcare.Orders = class Orders {
 						"options": "order_template_type",
 						"depends_on": "eval:doc.order_template_type;",
 						"reqd": 1,
+						onchange: function(frm) {
+							let field_name = (d.get_value("order_template_type") == "Lab Test Template") ? "department" : "medical_department";
+							frappe.db.get_value(d.get_value("order_template_type"), d.get_value("order_template"), field_name)
+							.then(r => {
+							  if (r.message) {
+								d.set_value("department", r.message[field_name]);
+							  }
+							});
+						}
 					},
 					{
-						"fetch_from": "order_template.medical_department",
 						"fieldname": "department",
 						"fieldtype": "Link",
 						"label": "Department",
 						"options": "Medical Department",
-						"depends_on": "eval:doc.order_template_type=='Clinical Procedure Template';",
+						"depends_on": "eval: doc.order_template",
+						"read_only": 1,
 					},
 					{
 						"fieldname": "column_break_4",
