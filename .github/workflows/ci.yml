@@ -31,8 +31,8 @@ jobs:
     strategy:
       fail-fast: false
 
-    matrix:
-      container: [1]
+      matrix:
+        container: [1]
 
     name: Server Tests
 
