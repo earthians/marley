@@ -14,7 +14,7 @@ on:
     # Run everday at midnight UTC / 5:30 IST
     - cron: "0 0 * * *"
 env:
-    FH_BRANCH: ${{ github.base_ref || github.ref_name }}
+    MARLEY_BRANCH: ${{ github.base_ref || github.ref_name }}
 
 concurrency:
   group: develop-${{ github.event.number }}
@@ -24,11 +24,17 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NODE_ENV: "production"
+      WITH_COVERAGE: ${{ github.event_name != 'pull_request' }}
 
     strategy:
       fail-fast: false
 
-    name: Server
+    matrix:
+      container: [1]
+
+    name: Server Tests
 
     services:
       mysql:
@@ -40,7 +46,7 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
 
     steps:
-      - name: Checkout Code Repository
+      - name: Clone
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -54,6 +60,14 @@ jobs:
           node-version: 20
           check-latest: true
 
+      - name: Check for valid Python & Merge Conflicts
+        run: |
+          python -m compileall -f "${GITHUB_WORKSPACE}"
+          if grep -lr --exclude-dir=node_modules "^<<<<<<< " "${GITHUB_WORKSPACE}"
+              then echo "Found merge conflicts"
+              exit 1
+          fi
+
       - name: Add to Hosts
         run: echo "127.0.0.1 test_site" | sudo tee -a /etc/hosts
 
@@ -61,7 +75,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
@@ -93,11 +107,38 @@ jobs:
       - name: Install
         run: |
           bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
-          cd ~/frappe-bench/ && source env/bin/activate
         env:
-          BRANCH_TO_CLONE: ${{ env.FH_BRANCH }}
+          FRAPPE_USER: ${{ github.event.inputs.user }}
+          FRAPPE_BRANCH: ${{ github.event.inputs.branch }}
 
       - name: Run Tests
-        run: cd ~/frappe-bench/ && bench --site test_site run-tests --app healthcare
+        run: cd ~/frappe-bench/ && bench --site test_site run-parallel-tests --app healthcare --total-builds ${{ strategy.job-total }} --build-number ${{ matrix.container }}
         env:
           TYPE: server
+          CAPTURE_COVERAGE: ${{ github.event_name != 'pull_request' }}
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          name: coverage-${{ matrix.container }}
+          path: /home/runner/frappe-bench/sites/coverage.xml
+
+  coverage:
+    name: Coverage Wrap Up
+    needs: tests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          verbose: true
