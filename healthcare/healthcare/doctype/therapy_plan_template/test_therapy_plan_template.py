@@ -4,8 +4,8 @@
 
 
 # import frappe
-from frappe.tests import IntegrationTestCase
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestTherapyPlanTemplate(IntegrationTestCase):
+class TestTherapyPlanTemplate(FrappeTestCase):
 	pass

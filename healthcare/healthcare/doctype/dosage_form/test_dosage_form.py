@@ -3,8 +3,8 @@
 # See license.txt
 
 
-from frappe.tests import IntegrationTestCase
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestDosageForm(IntegrationTestCase):
+class TestDosageForm(FrappeTestCase):
 	pass

@@ -4,8 +4,8 @@
 
 
 # import frappe
-from frappe.tests import IntegrationTestCase
+from frappe.tests.utils import FrappeTestCase
 
 
-class TestExerciseType(IntegrationTestCase):
+class TestExerciseType(FrappeTestCase):
 	pass

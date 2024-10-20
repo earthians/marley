@@ -4,12 +4,12 @@
 
 
 import frappe
-from frappe.tests import IntegrationTestCase
+from frappe.tests.utils import FrappeTestCase
 
 from healthcare.healthcare.doctype.patient_encounter.patient_encounter import PatientEncounter
 
 
-class TestPatientEncounter(IntegrationTestCase):
+class TestPatientEncounter(FrappeTestCase):
 	def setUp(self):
 		try:
 			gender_m = frappe.get_doc({"doctype": "Gender", "gender": "MALE"}).insert()

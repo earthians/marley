@@ -1,12 +1,12 @@
 import responses
 
 import frappe
-from frappe.tests import IntegrationTestCase
+from frappe.tests.utils import FrappeTestCase
 
 from healthcare.regional.india.abdm.utils import abdm_request
 
 
-class TestPatient(IntegrationTestCase):
+class TestPatient(FrappeTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
