@@ -11,7 +11,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 	create_healthcare_docs,
 )
 
-EXTRA_TEST_RECORD_DEPENDENCIES = ["Item"]
+test_dependencies = ["Item"]
 
 
 class TestClinicalProcedure(IntegrationTestCase):

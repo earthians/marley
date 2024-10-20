@@ -16,7 +16,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 	update_status,
 )
 
-EXTRA_TEST_RECORD_DEPENDENCIES = ["Company"]
+test_dependencies = ["Company"]
 
 
 class TestFeeValidity(IntegrationTestCase):
