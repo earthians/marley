@@ -5,6 +5,8 @@
 
 from frappe.tests import IntegrationTestCase
 
+# test_records = frappe.get_test_records('Sensitivity')
+
 
 class TestSensitivity(IntegrationTestCase):
 	pass
