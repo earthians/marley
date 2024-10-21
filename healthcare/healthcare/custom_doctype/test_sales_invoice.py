@@ -4,7 +4,7 @@ from frappe.tests import IntegrationTestCase
 
 class TestSalesInvoice(IntegrationTestCase):
 	def test_set_healthcare_services_should_preserve_state(self):
-		invoice = frappe.copy_doc(frappe.get_test_records("Sales Invoice")[0])  # FIXME: test records
+		invoice = frappe.copy_doc(self.globalTestRecords["Sales Invoice"][0])
 
 		count = len(invoice.items)
 		item = invoice.items[0]
