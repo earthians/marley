@@ -837,7 +837,8 @@ def get_events(start, end, filters=None):
 		`tabPatient Appointment`.practitioner, `tabPatient Appointment`.status,
 		`tabPatient Appointment`.duration,
 		timestamp(`tabPatient Appointment`.appointment_date, `tabPatient Appointment`.appointment_time) as 'start',
-		`tabAppointment Type`.color
+		`tabAppointment Type`.color,
+		CONCAT(COALESCE(`tabPatient Appointment`.practitioner_name,' '),'\n',COALESCE(`tabPatient Appointment`.patient_name,' '),'\n',COALESCE(`tabPatient Appointment`.procedure_template,' ')) c_title
 		from
 		`tabPatient Appointment`
 		left join `tabAppointment Type` on `tabPatient Appointment`.appointment_type=`tabAppointment Type`.name
