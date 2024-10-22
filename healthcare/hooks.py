@@ -136,7 +136,8 @@ doc_events = {
 		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
 	},
 	"Payment Entry": {
-		"on_submit": "healthcare.healthcare.custom_doctype.payment_entry.set_paid_amount_in_treatment_counselling"
+		"on_submit": "healthcare.healthcare.custom_doctype.payment_entry.set_paid_amount_in_treatment_counselling",
+		"on_cancel": "healthcare.healthcare.custom_doctype.payment_entry.set_paid_amount_in_treatment_counselling",
 	},
 }
 

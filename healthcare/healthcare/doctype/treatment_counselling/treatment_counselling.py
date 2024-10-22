@@ -139,7 +139,12 @@ def set_treatment_plan_template_items(doc):
 			if su_item and su_rate:
 				doc.append(
 					"treatment_plan_template_items",
-					{"type": "Item", "template": su_item, "qty": doc.expected_length_of_stay, "amount": su_rate},
+					{
+						"type": "Item",
+						"template": su_item,
+						"qty": (doc.expected_length_of_stay or 1),
+						"amount": su_rate,
+					},
 				)
 
 
@@ -147,7 +152,7 @@ def set_total_amount(doc):
 	total_price = 0
 	for item in doc.treatment_plan_template_items:
 		if item.amount:
-			total_price += item.amount
+			total_price += item.qty * item.amount
 
 	doc.amount = total_price
 
@@ -164,11 +169,6 @@ def create_ip_from_treatment_counselling(admission_order, treatment_counselling)
 
 @frappe.whitelist()
 def create_payment_entry(treatment_counselling):
-	payment_entry = frappe.db.exists(
-		"Payment Entry", {"treatment_counselling": treatment_counselling, "docstatus": ["!=", 2]}
-	)
-	if payment_entry:
-		return payment_entry
 	treatment_counselling_doc = frappe.get_doc("Treatment Counselling", treatment_counselling)
 	payment_entry_doc = frappe.new_doc("Payment Entry")
 	payment_entry_doc.update(
