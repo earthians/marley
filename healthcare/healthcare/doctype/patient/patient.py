@@ -73,10 +73,9 @@ class Patient(Document):
 			self.set_onload("dashboard_info", info)
 
 	def set_full_name(self):
-		if self.last_name:
-			self.patient_name = " ".join(filter(None, [self.first_name, self.last_name]))
-		else:
-			self.patient_name = self.first_name
+		self.patient_name = " ".join(
+			[name for name in [self.first_name, self.middle_name, self.last_name] if name]
+		)
 
 	def set_missing_customer_details(self):
 		if not self.customer_group:
@@ -353,33 +352,3 @@ def get_patient_detail(patient):
 		vital_sign[0].pop("inpatient_record")
 		details.update(vital_sign[0])
 	return details
-
-
-def get_timeline_data(doctype, name):
-	"""
-	Return Patient's timeline data from medical records
-	Also include the associated Customer timeline data
-	"""
-	patient_timeline_data = dict(
-		frappe.db.sql(
-			"""
-		SELECT
-			unix_timestamp(communication_date), count(*)
-		FROM
-			`tabPatient Medical Record`
-		WHERE
-			patient=%s
-			and `communication_date` > date_sub(curdate(), interval 1 year)
-		GROUP BY communication_date""",
-			name,
-		)
-	)
-
-	customer = frappe.db.get_value(doctype, name, "customer")
-	if customer:
-		from erpnext.accounts.party import get_timeline_data
-
-		customer_timeline_data = get_timeline_data("Customer", customer)
-		patient_timeline_data.update(customer_timeline_data)
-
-	return patient_timeline_data

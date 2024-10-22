@@ -15,11 +15,14 @@
   "inpatient_occupancy",
   "is_billable",
   "item_details",
+  "items",
+  "section_break_va83",
   "item",
   "item_code",
   "item_group",
   "uom",
   "no_of_hours",
+  "minimum_billable_qty",
   "column_break_11",
   "rate",
   "description",
@@ -81,6 +84,7 @@
    "depends_on": "is_billable",
    "fieldname": "item_details",
    "fieldtype": "Section Break",
+   "hide_border": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Item Details"
@@ -96,6 +100,7 @@
    "read_only": 1
   },
   {
+   "fetch_from": "item.item_name",
    "fieldname": "item_code",
    "fieldtype": "Data",
    "hide_days": 1,
@@ -153,6 +158,7 @@
    "no_copy": 1
   },
   {
+   "fetch_from": "item.description",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "hide_days": 1,
@@ -167,13 +173,43 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Change in Item"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Service Unit Type Item"
+  },
+  {
+   "depends_on": "is_billable",
+   "fieldname": "section_break_va83",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_ot",
+   "fieldtype": "Check",
+   "label": "Is OT"
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "fieldname": "minimum_billable_qty",
+   "fieldtype": "Int",
+   "label": "Minimum Billable Quantity"
   }
  ],
  "links": [],
- "modified": "2021-08-19 17:52:30.266667",
+ "modified": "2024-04-29 18:59:16.479821",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -192,5 +228,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "service_unit_type"
 }

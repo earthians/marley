@@ -1,5 +1,4 @@
 import frappe
-from frappe import DuplicateEntryError
 
 
 def create_encounter(patient, practitioner, submit=False):
@@ -10,3 +9,6 @@ def create_encounter(patient, practitioner, submit=False):
 	if submit:
 		encounter.submit()
 	return encounter
+
+
+# TODO: move other test utility functions here

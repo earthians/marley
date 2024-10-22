@@ -22,6 +22,8 @@ frappe.ui.form.on('Patient Encounter', {
 						}
 				})
 		}
+		show_clinical_notes(frm);
+		show_orders(frm);
 	},
 
 	setup: function(frm) {
@@ -43,12 +45,13 @@ frappe.ui.form.on('Patient Encounter', {
 	},
 
 	refresh: function(frm) {
+
 		refresh_field('drug_prescription');
 		refresh_field('lab_test_prescription');
 
 		if (!frm.doc.__islocal) {
 			if (frm.doc.docstatus === 1) {
-				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted'].includes(frm.doc.inpatient_status)) {
+				if(!['Discharge Scheduled', 'Admission Scheduled', 'Admitted', 'Treatment Counselling Created'].includes(frm.doc.inpatient_status)) {
 					frm.add_custom_button(__('Schedule Admission'), function() {
 						schedule_inpatient(frm);
 					});
@@ -92,6 +95,17 @@ frappe.ui.form.on('Patient Encounter', {
 				create_procedure(frm);
 			},__('Create'));
 
+			frm.add_custom_button(__("Clinical Note"), function() {
+				frappe.route_options = {
+					"patient": frm.doc.patient,
+					"reference_doc": "Patient Encounter",
+					"reference_name": frm.doc.name,
+					"practitioner": frm.doc.practitioner
+				}
+				frappe.new_doc("Clinical Note");
+			},__('Create'));
+
+
 			if (frm.doc.drug_prescription && frm.doc.inpatient_record && frm.doc.inpatient_status === "Admitted") {
 				frm.add_custom_button(__('Inpatient Medication Order'), function() {
 					frappe.model.open_mapped_doc({
@@ -109,14 +123,6 @@ frappe.ui.form.on('Patient Encounter', {
 		frm.set_query('patient', function() {
 			return {
 				filters: {'status': 'Active'}
-			};
-		});
-
-		frm.set_query('drug_code', 'drug_prescription', function() {
-			return {
-				filters: {
-					is_stock_item: 1
-				}
 			};
 		});
 
@@ -168,9 +174,13 @@ frappe.ui.form.on('Patient Encounter', {
 		if (frappe.meta.get_docfield('Drug Prescription', 'medication').in_list_view === 1) {
 			frm.set_query('drug_code', 'drug_prescription', function(doc, cdt, cdn) {
 				let row = frappe.get_doc(cdt, cdn);
+				let filters = { is_stock_item: 1 };
+				if (row.medication) {
+					filters.medication = row.medication;
+				}
 				return {
 					query: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications_query',
-					filters: { name: row.medication }
+					filters: filters
 				};
 			});
 		}
@@ -230,8 +240,9 @@ frappe.ui.form.on('Patient Encounter', {
 		}
 	},
 
-	set_patient_info: function(frm) {
+	set_patient_info: async function(frm) {
 		if (frm.doc.patient) {
+			let me = frm
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 				args: {
@@ -249,7 +260,12 @@ frappe.ui.form.on('Patient Encounter', {
 						'inpatient_record': data.message.inpatient_record,
 						'inpatient_status': data.message.inpatient_status
 					};
-					frm.set_value(values);
+
+					frappe.run_serially([
+						()=>frm.set_value(values),
+						()=>show_clinical_notes(frm),
+						()=>show_orders(frm),
+					]);
 				}
 			});
 		} else {
@@ -299,6 +315,7 @@ frappe.ui.form.on('Patient Encounter', {
 });
 
 var schedule_inpatient = function(frm) {
+	let service_unit_type = "";
 	var dialog = new frappe.ui.Dialog({
 		title: 'Patient Admission',
 		fields: [
@@ -310,6 +327,7 @@ var schedule_inpatient = function(frm) {
 			{fieldtype: 'Date', label: 'Admission Ordered For', fieldname: 'admission_ordered_for', default: 'Today'},
 			{fieldtype: 'Link', label: 'Service Unit Type', fieldname: 'service_unit_type', options: 'Healthcare Service Unit Type'},
 			{fieldtype: 'Int', label: 'Expected Length of Stay', fieldname: 'expected_length_of_stay'},
+			{fieldtype: 'Link', label: 'Treatment Plan Template', fieldname: 'treatment_plan_template', options: 'Treatment Plan Template'},
 			{fieldtype: 'Section Break'},
 			{fieldtype: 'Long Text', label: 'Admission Instructions', fieldname: 'admission_instruction'}
 		],
@@ -325,14 +343,15 @@ var schedule_inpatient = function(frm) {
 				secondary_practitioner: dialog.get_value('secondary_practitioner'),
 				admission_ordered_for: dialog.get_value('admission_ordered_for'),
 				admission_service_unit_type: dialog.get_value('service_unit_type'),
+				treatment_plan_template: dialog.get_value('treatment_plan_template'),
 				expected_length_of_stay: dialog.get_value('expected_length_of_stay'),
 				admission_instruction: dialog.get_value('admission_instruction'),
-				admission_nursing_checklist_template: dialog.get_value('admission_nursing_checklist_template')
+				admission_nursing_checklist_template: dialog.get_value('admission_nursing_checklist_template'),
 			}
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_inpatient',
 				args: {
-					args: args
+					admission_order: args
 				},
 				callback: function(data) {
 					if (!data.exc) {
@@ -359,6 +378,22 @@ var schedule_inpatient = function(frm) {
 				'allow_appointments': 0
 			}
 		};
+	};
+
+	dialog.fields_dict["service_unit_type"].df.onchange = () => {
+		if (dialog.get_value("service_unit_type") && dialog.get_value("service_unit_type") != service_unit_type) {
+			service_unit_type = dialog.get_value("service_unit_type");
+			frappe.db.get_value("Healthcare Service Unit Type", {name: dialog.get_value("service_unit_type")}, ["is_billable", "item"])
+			.then(r => {
+				if (r.message.is_billable && !r.message.item) {
+					frappe.msgprint({
+						message: __("Selected service unit type doesn't have any item linked"),
+						title: __("Warning"),
+						indicator: "orange",
+					});
+				}
+			})
+		}
 	};
 
 	dialog.show();
@@ -640,4 +675,26 @@ var apply_code_sm_filter_to_child = function(frm, field, table_list, code_system
 			};
 		});
 	});
+};
+
+var show_clinical_notes = async function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		const clinical_notes = new healthcare.ClinicalNotes({
+			frm: frm,
+			notes_wrapper: $(frm.fields_dict.clinical_notes.wrapper),
+		});
+		clinical_notes.refresh();
+	}
+}
+
+var show_orders = async function(frm) {
+	if (frm.doc.docstatus == 0 && frm.doc.patient) {
+		const orders = new healthcare.Orders({
+			frm: frm,
+			open_activities_wrapper: $(frm.fields_dict.order_history_html.wrapper),
+			form_wrapper: $(frm.wrapper),
+			create_orders: true,
+		});
+		orders.refresh();
+	}
 }

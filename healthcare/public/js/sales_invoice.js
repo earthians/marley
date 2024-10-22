@@ -3,10 +3,39 @@ frappe.ui.form.on('Sales Invoice', {
 	refresh(frm) {
 		if (frm.doc.docstatus === 0 && !frm.doc.is_return) {
 			frm.add_custom_button(__('Healthcare Services'), function() {
-				get_healthcare_services_to_invoice(frm);
+				frappe.db.get_value("Patient", frm.doc.patient, "customer")
+				.then(r => {
+					let link_customer = null;
+					let msg = "Patient is not linked to a customer. Do you want to link the selected customer to the patient permanently?";
+					if (r.message.customer){
+						get_healthcare_services_to_invoice(frm, link_customer);
+					} else {
+						frappe.confirm(msg,
+							() => {
+								link_customer = true;
+								get_healthcare_services_to_invoice(frm, link_customer);
+							}, () => {
+								get_healthcare_services_to_invoice(frm, link_customer);
+						})
+					}
+				})
 			},__('Get Items From'));
 			frm.add_custom_button(__('Prescriptions'), function() {
-				get_drugs_to_invoice(frm);
+				frappe.db.get_value("Patient", frm.doc.patient, "customer")
+				.then(r => {
+					let link_customer = null;
+					if (r.message.customer){
+						get_drugs_to_invoice(frm, link_customer);
+					} else {
+						frappe.confirm(msg,
+							() => {
+								link_customer = true;
+								get_drugs_to_invoice(frm, link_customer);
+							}, () => {
+								get_drugs_to_invoice(frm, link_customer);
+						})
+					}
+				})
 			},__('Get Items From'));
 		}
 	},
@@ -53,7 +82,7 @@ var set_service_unit = function (frm) {
 	}
 };
 
-var get_healthcare_services_to_invoice = function(frm) {
+var get_healthcare_services_to_invoice = function(frm, link_customer) {
 	var me = this;
 	let selected_patient = '';
 	var dialog = new frappe.ui.Dialog({
@@ -66,7 +95,7 @@ var get_healthcare_services_to_invoice = function(frm) {
 				fieldname: "patient",
 				reqd: true
 			},
-			{ fieldtype: 'Section Break'	},
+			{ fieldtype: 'Section Break' },
 			{ fieldtype: 'HTML', fieldname: 'results_area' }
 		]
 	});
@@ -77,11 +106,11 @@ var get_healthcare_services_to_invoice = function(frm) {
 		'patient': frm.doc.patient
 	});
 	dialog.fields_dict["patient"].df.onchange = () => {
-		var patient = dialog.fields_dict.patient.input.value;
+		var patient = dialog.get_value("patient");
 		if(patient && patient!=selected_patient){
 			selected_patient = patient;
 			var method = "healthcare.healthcare.utils.get_healthcare_services_to_invoice";
-			var args = {patient: patient, company: frm.doc.company};
+			var args = {patient: patient, customer: frm.doc.customer, company: frm.doc.company, link_customer: link_customer};
 			var columns = (["service", "reference_name", "reference_type"]);
 			get_healthcare_items(frm, true, $results, $placeholder, method, args, columns);
 		}
@@ -213,7 +242,7 @@ var get_checked_values= function($results) {
 	}).get();
 };
 
-var get_drugs_to_invoice = function(frm) {
+var get_drugs_to_invoice = function(frm, link_customer) {
 	var me = this;
 	let selected_encounter = '';
 	var dialog = new frappe.ui.Dialog({
@@ -248,7 +277,7 @@ var get_drugs_to_invoice = function(frm) {
 		if(encounter && encounter!=selected_encounter){
 			selected_encounter = encounter;
 			var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
-			var args = {encounter: encounter};
+			var args = {encounter: encounter, customer: frm.doc.customer, link_customer: link_customer};
 			var columns = (["drug_code", "quantity", "description"]);
 			get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);
 		}

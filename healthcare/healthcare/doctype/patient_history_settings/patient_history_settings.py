@@ -104,7 +104,7 @@ def update_medical_record(doc, method=None):
 
 	if medical_record_id:
 		subject = set_subject_field(doc)
-		frappe.db.set_value("Patient Medical Record", medical_record_id[0][0], "subject", subject)
+		frappe.db.set_value("Patient Medical Record", medical_record_id, "subject", subject)
 	else:
 		create_medical_record(doc)
 

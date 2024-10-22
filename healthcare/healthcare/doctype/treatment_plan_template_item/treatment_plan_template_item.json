@@ -8,6 +8,23 @@
   "type",
   "template",
   "qty",
+  "amount",
+  "column_break_x5li",
+  "service_request",
+  "section_break_whtf",
+  "drug_code",
+  "drug_name",
+  "strength",
+  "strength_uom",
+  "dosage_form",
+  "column_break_yoh4",
+  "dosage_by_interval",
+  "dosage",
+  "interval",
+  "interval_uom",
+  "period",
+  "number_of_repeats_allowed",
+  "section_break_avye",
   "instructions"
  ],
  "fields": [
@@ -38,12 +55,109 @@
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Instructions"
+  },
+  {
+   "fieldname": "drug_name",
+   "fieldtype": "Data",
+   "label": "Drug Name / Description"
+  },
+  {
+   "fieldname": "strength",
+   "fieldtype": "Float",
+   "label": "Strength"
+  },
+  {
+   "fieldname": "strength_uom",
+   "fieldtype": "Link",
+   "label": "Strength UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "dosage_form",
+   "fieldtype": "Link",
+   "label": "Dosage Form",
+   "options": "Dosage Form"
+  },
+  {
+   "default": "0",
+   "fieldname": "dosage_by_interval",
+   "fieldtype": "Check",
+   "label": "Dosage by Time Interval"
+  },
+  {
+   "depends_on": "eval:doc.dosage_by_interval;",
+   "fieldname": "dosage",
+   "fieldtype": "Link",
+   "label": "Dosage",
+   "options": "Prescription Dosage"
+  },
+  {
+   "depends_on": "eval:doc.dosage_by_interval;",
+   "fieldname": "interval",
+   "fieldtype": "Int",
+   "label": "Interval"
+  },
+  {
+   "depends_on": "eval:doc.dosage_by_interval;",
+   "fieldname": "interval_uom",
+   "fieldtype": "Select",
+   "label": "Interval UOM",
+   "options": "\nHour\nDay"
+  },
+  {
+   "fieldname": "period",
+   "fieldtype": "Link",
+   "label": "Period",
+   "options": "Prescription Duration"
+  },
+  {
+   "fieldname": "number_of_repeats_allowed",
+   "fieldtype": "Float",
+   "label": "Number Of Repeats Allowed"
+  },
+  {
+   "depends_on": "eval:doc.type==\"Medication\";",
+   "fieldname": "section_break_whtf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_yoh4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_avye",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "drug_code",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "Drug Code",
+   "options": "Item"
+  },
+  {
+   "depends_on": "eval:doc.parenttype== \"Treatment Counselling\";",
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_x5li",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "service_request",
+   "fieldtype": "Data",
+   "label": "Orders",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-08-17 11:19:03.515441",
+ "modified": "2023-12-07 07:31:51.798292",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Treatment Plan Template Item",
@@ -51,5 +165,6 @@
  "permissions": [],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

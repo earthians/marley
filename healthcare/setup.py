@@ -127,6 +127,16 @@ data = {
 				"read_only": True,
 			},
 		],
+		"Payment Entry": [
+			{
+				"fieldname": "treatment_counselling",
+				"label": "Treatment Counselling",
+				"fieldtype": "Link",
+				"options": "Treatment Counselling",
+				"insert_after": "payment_order",
+				"read_only": True,
+			},
+		],
 	},
 	"on_setup": "healthcare.setup.setup_healthcare",
 }
@@ -205,6 +215,7 @@ def create_custom_records():
 	create_sensitivity()
 	setup_patient_history_settings()
 	setup_service_request_masters()
+	setup_order_status_codes()
 
 
 def create_medical_departments():
@@ -746,19 +757,27 @@ def setup_service_request_masters():
 		{"doctype": "Patient Care Type", "patient_care_type": _("Diagnostic")},
 		{
 			"doctype": "Code System",
-			"uri": "http://hl7.org/fhir/ValueSet/request-intent",
+			"uri": "http://hl7.org/fhir/request-intent",
 			"is_fhir_defined": 1,
 			"code_system": _("Intent"),
 			"description": _(
 				"Codes indicating the degree of authority/intentionality associated with a request."
 			),
+			"oid": "2.16.840.1.113883.4.642.4.114",
+			"experimental": 1,
+			"immutable": 1,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code System",
-			"uri": "http://hl7.org/fhir/ValueSet/request-priority",
+			"uri": "http://hl7.org/fhir/request-priority",
 			"is_fhir_defined": 1,
 			"code_system": _("Priority"),
 			"description": _("Identifies the level of importance to be assigned to actioning the request."),
+			"oid": "2.16.840.1.113883.4.642.4.116",
+			"experimental": 1,
+			"immutable": 1,
+			"custom": 0,
 		},
 		{
 			"doctype": "Code Value",
@@ -767,6 +786,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents a request/demand and authorization for action by the requestor."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -775,6 +795,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request is a suggestion made by someone/something that does not have an intention to ensure it occurs and without providing an authorization to act."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -783,6 +804,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents an intention to ensure something occurs without providing an authorization for others to act."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -791,12 +813,14 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents a legally binding instruction authored by a Patient or RelatedPerson."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
 			"code_system": "Intent",
 			"code_value": _("Original Order"),
 			"definition": _("The request represents an original authorization for action."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -805,6 +829,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents an automatically generated supplemental authorization for action based on a parent authorization together with initial results of the action taken against that parent authorization."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -813,6 +838,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents the view of an authorization instantiated by a fulfilling system representing the details of the fulfiller's intention to act upon a submitted order."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -821,6 +847,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"An order created in fulfillment of a broader order that represents the authorization for a single activity occurrence. E.g. The administration of a single dose of a drug."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
@@ -829,18 +856,21 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request represents a component or option for a RequestOrchestration that establishes timing, conditionality and/or other constraints among a set of requests."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-intent",
 		},
 		{
 			"doctype": "Code Value",
 			"code_system": "Priority",
 			"code_value": _("Routine"),
 			"definition": _("The request has normal priority."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 		{
 			"doctype": "Code Value",
 			"code_system": "Priority",
 			"code_value": _("Urgent"),
 			"definition": _("The request should be actioned promptly - higher priority than routine."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 		{
 			"doctype": "Code Value",
@@ -849,6 +879,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request should be actioned as soon as possible - higher priority than urgent."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 		{
 			"doctype": "Code Value",
@@ -857,6 +888,7 @@ def setup_service_request_masters():
 			"definition": _(
 				"The request should be actioned immediately - highest possible priority. E.g. an emergency."
 			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-priority",
 		},
 	]
 	insert_record(records)
@@ -953,6 +985,592 @@ def get_patient_history_config():
 			],
 		),
 	}
+
+
+def setup_code_sysem_for_version():
+	records = [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/ValueSet/version-algorithm",
+			"code_system": _("FHIRVersion"),
+			"description": _(
+				"""Indicates the mechanism used to compare versions to determine which is more current."""
+			),
+			"oid": "2.16.840.1.113883.4.642.3.3103",
+			"experimental": 1,
+			"immutable": 1,
+			"custom": 0,
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("FHIRVersion"),
+			"code_value": "5.0.0",
+			"display": _("5.0.0"),
+		},
+	]
+	insert_record(records)
+
+
+def setup_non_fhir_code_systems():
+	"""A subset of external code systems as published in the FHIR R5 documentation
+	https://www.hl7.org/fhir/terminologies-systems.html#external
+
+	For a full set of external code systems, see
+	https://terminology.hl7.org/external_terminologies.html
+	"""
+	code_systems = [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://snomed.info/sct",
+			"code_system": _("SNOMED CT"),
+			"description": _(
+				"""Using SNOMED CT with HL7 Standards. https://terminology.hl7.org/SNOMEDCT.html
+				See also the SNOMED CT Usage Summary (link below) which summarizes the use of SNOMED CT in the base FHIR Specification.
+				https://www.hl7.org/fhir/snomedct-usage.html"""
+			),
+			"oid": "2.16.840.1.113883.6.96",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://www.nlm.nih.gov/research/umls/rxnorm",
+			"code_system": _("RxNorm"),
+			"description": _("Using RxNorm with HL7 Standards. https://terminology.hl7.org/RxNorm.html"),
+			"oid": "2.16.840.1.113883.6.88",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://loinc.org",
+			"code_system": _("LOINC"),
+			"description": _("Using LOINC with HL7 Standards. https://terminology.hl7.org/LOINC.html"),
+			"oid": "2.16.840.1.113883.6.1",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://unitsofmeasure.org",
+			"code_system": _("pCLUCUMOCD"),
+			"description": _("Using UCUM with HL7 Standards. https://terminology.hl7.org/UCUM.html"),
+			"oid": "2.16.840.1.113883.6.8",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/sid/icd-9-cm",
+			"code_system": _("ICD-9-CM (clinical codes)"),
+			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
+			"oid": "2.16.840.1.113883.6.103",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/sid/icd-9-cm",
+			"code_system": _("ICD-9-CM (procedure codes)"),
+			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
+			"oid": "2.16.840.1.113883.6.104",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/sid/icd-10-cm",
+			"code_system": _("ICD-10-CM (United States)"),
+			"description": _("Using ICD-[x] with HL7 Standards. https://terminology.hl7.org/ICD.html"),
+			"oid": "2.16.840.1.113883.6.90",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+			"version": "5.0.0-FHIRVersion",
+		},
+	]
+	insert_record(code_systems)
+
+
+def setup_fhir_code_systems():
+	code_systems = [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 1,
+			"uri": "http://hl7.org/fhir/FHIR-version",
+			"code_system": _("FHIRVersion"),
+			"description": _("All published FHIR Versions."),
+			"oid": "2.16.840.1.113883.4.642.4.1310",
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 1,
+			"uri": "http://hl7.org/fhir/publication-status",
+			"code_system": _("PublicationStatus"),
+			"description": _("The lifecycle status of an artifact."),
+			"oid": "22.16.840.1.113883.4.642.3.3",
+			"experimental": 0,
+			"immutable": 1,
+			"custom": 0,
+		},
+	]
+	insert_record(code_systems)
+
+
+def setup_diagnostic_module_codes():
+	records = []
+
+	records.extend(get_diagnostic_module_code_systems())
+	records.extend(get_observation_category_codes())
+	records.extend(get_observation_status_codes())
+
+	# TODO: insert observation methods
+	insert_record(records)
+
+
+def get_diagnostic_module_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://terminology.hl7.org/CodeSystem/observation-category",
+			"code_system": _("ObservationCategory"),
+			"description": _("Observation Category codes."),
+			"oid": "2.16.840.1.113883.4.642.1.1125",
+			"experimental": 1,
+			"immutable": 0,
+			"custom": 0,
+		},
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 1,
+			"uri": "http://hl7.org/fhir/observation-status",
+			"code_system": _("ObservationStatus"),
+			"description": _("Codes providing the status of an observation."),
+			"version": "5.0.0-FHIRVersion",
+			"oid": "2.16.840.1.113883.4.642.4.401",
+			"experimental": 0,
+			"immutable": 0,
+			"complete": 1,
+			"custom": 0,
+		},
+	]
+
+
+def get_observation_category_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "social-history",
+			"display": _("Social History"),
+			"definition": _(
+				"Social History Observations define the patient's occupational, personal (e.g., lifestyle), social, familial, and environmental history and health risk factors that may impact the patient's health."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "vital-signs",
+			"display": _("Vital Signs"),
+			"definition": _(
+				"Clinical observations measure the body's basic functions such as blood pressure, heart rate, respiratory rate, height, weight, body mass index, head circumference, pulse oximetry, temperature, and body surface area."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "imaging",
+			"display": _("Imaging"),
+			"definition": _(
+				"Observations generated by imaging. The scope includes observations regarding plain x-ray, ultrasound, CT, MRI, angiography, echocardiography, and nuclear medicine."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "laboratory",
+			"display": _("Laboratory"),
+			"definition": _(
+				"The results of observations generated by laboratories. Laboratory results are typically generated by laboratories providing analytic services in areas such as chemistry, hematology, serology, histology, cytology, anatomic pathology (including digital pathology), microbiology, and/or virology. These observations are based on analysis of specimens obtained from the patient and submitted to the laboratory."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "procedure",
+			"display": _("Procedure"),
+			"definition": _(
+				"Observations generated by other procedures. This category includes observations resulting from interventional and non-interventional procedures excluding laboratory and imaging (e.g., cardiology catheterization, endoscopy, electrodiagnostics, etc.). Procedure results are typically generated by a clinician to provide more granular information about component observations made during a procedure. An example would be when a gastroenterologist reports the size of a polyp observed during a colonoscopy."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "survey",
+			"display": _("Survey"),
+			"definition": _(
+				"Assessment tool/survey instrument observations (e.g., Apgar Scores, Montreal Cognitive Assessment (MoCA))."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "exam",
+			"display": _("Exam"),
+			"definition": _(
+				"Observations generated by physical exam findings including direct observations made by a clinician and use of simple instruments and the result of simple maneuvers performed directly on the patient's body."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "therapy",
+			"display": _("Therapy"),
+			"definition": _(
+				"Observations generated by non-interventional treatment protocols (e.g. occupational, physical, radiation, nutritional and medication therapy)"
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Category"),
+			"code_value": "activity",
+			"display": _("Activity"),
+			"definition": _(
+				"Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data)"
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-category",
+		},
+	]
+
+
+def get_observation_status_codes():
+	# TODO: Add field for canonical mapping to Resource Status
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "registered",
+			"display": _("Registered"),
+			"definition": _(
+				"Observations that measure or record any bodily activity that enhances or maintains physical fitness and overall health and wellness. Not under direct supervision of practitioner such as a physical therapist. (e.g., laps swum, steps, sleep data.)"
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "preliminary",
+			"display": _("Preliminary"),
+			"definition": _(
+				"This is an initial or interim observation: data may be incomplete or unverified."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "final",
+			"display": _("Final"),
+			"definition": _("The observation is complete and there are no further actions needed.)"),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "amended",
+			"display": _("Amended"),
+			"definition": _(
+				"Subsequent to being Final, the observation has been modified subsequent. This includes updates/new information and corrections."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "corrected",
+			"display": _("Corrected"),
+			"definition": _(
+				"Subsequent to being Final, the observation has been modified to correct an error in the test result."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "cancelled",
+			"display": _("Cancelled"),
+			"definition": _(
+				"The observation is unavailable because the measurement was not started or not completed (also sometimes called 'aborted')."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "entered-in-error",
+			"display": _("Entered in Error"),
+			"definition": _(
+				"The observation has been withdrawn following previous final release. This electronic record should never have existed, though it is possible that real-world decisions were based on it. (If real-world activity has occurred, the status should be 'cancelled' rather than 'entered-in-error'.)."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Observation Status"),
+			"code_value": "unknown",
+			"display": _("Unknown"),
+			"definition": _(
+				"The authoring/source system does not know which of the status values currently applies for this observation. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/observation-status",
+			"version": "6.0.0-cibuild",
+		},
+	]
+
+
+def setup_order_status_codes():
+	sr_code_systems = get_service_request_code_systems()
+	insert_record(sr_code_systems)
+	service_request_codes = get_service_request_codes()
+	insert_record(service_request_codes)
+
+	mr_code_systems = get_medication_request_code_systems()
+	insert_record(mr_code_systems)
+	medication_request_codes = get_medication_request_codes()
+	insert_record(medication_request_codes)
+
+
+def get_service_request_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/request-status",
+			"code_system": _("Request Status"),
+			"description": _("Request Status Codes."),
+			"oid": "2.16.840.1.113883.4.642.4.112",
+			"experimental": 1,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_medication_request_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 0,
+			"uri": "http://hl7.org/fhir/CodeSystem/medicationrequest-status",
+			"code_system": _("Medication Request Status"),
+			"description": _("Medication Request Status Codes."),
+			"oid": "2.16.840.1.113883.4.642.4.1377",
+			"experimental": 1,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_service_request_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "draft",
+			"display": _("Draft"),
+			"definition": _("The request has been created but is not yet complete or ready for action."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "active",
+			"display": _("Active"),
+			"definition": _("The request is in force and ready to be acted upon."),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "on-hold",
+			"display": _("On Hold"),
+			"definition": _(
+				"The request (and any implicit authorization to act) has been temporarily withdrawn but is expected to resume in the future."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "revoked",
+			"display": _("Revoked"),
+			"definition": _(
+				"The request (and any implicit authorization to act) has been terminated prior to the known full completion of the intended actions. No further activity should occur."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "completed",
+			"display": _("Completed"),
+			"definition": _(
+				"The activity described by the request has been fully performed. No further activity will occur."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "entered-in-error",
+			"display": _("Entered in Error"),
+			"definition": _(
+				"This request should never have existed and should be considered 'void'. (It is possible that real-world decisions were based on it. If real-world activity has occurred, the status should be 'revoked' rather than 'entered-in-error'.)."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Request Status"),
+			"code_value": "unknown",
+			"display": _("Unknown"),
+			"definition": _(
+				"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/request-status",
+		},
+	]
+
+
+def get_medication_request_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "active",
+			"display": _("Active"),
+			"definition": _(
+				"The request is 'actionable', but not all actions that are implied by it have occurred yet."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "on-hold",
+			"display": _("On Hold"),
+			"definition": _(
+				"Actions implied by the request are to be temporarily halted. The request might or might not be resumed. May also be called 'suspended'."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "ended",
+			"display": _("Ended"),
+			"definition": _(
+				"The request is no longer active and the subject should no longer be taking the medication."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "stopped",
+			"display": _("Stopped"),
+			"definition": _(
+				"Actions implied by the request are to be permanently halted, before all of the administrations occurred. This should not be used if the original order was entered in error"
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "completed",
+			"display": _("Completed"),
+			"definition": _("All actions that are implied by the request have occurred."),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "cancelled",
+			"display": _("Cancelled"),
+			"definition": _("The request has been withdrawn before any administrations have occurred"),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "entered-in-error",
+			"display": _("Entered in Error"),
+			"definition": _(
+				"The request was recorded against the wrong patient or for some reason should not have been recorded (e.g. wrong medication, wrong dose, etc.). Some of the actions that are implied by the medication request may have occurred. For example, the medication may have been dispensed and the patient may have taken some of the medication."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "draft",
+			"display": _("Draft"),
+			"definition": _(
+				"The request is not yet 'actionable', e.g. it is a work in progress, requires sign-off, verification or needs to be run through decision support process."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Medication Request Status"),
+			"code_value": "unknown",
+			"display": _("Unknown"),
+			"definition": _(
+				"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+	]
 
 
 def delete_custom_records():

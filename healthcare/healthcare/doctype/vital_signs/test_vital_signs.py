@@ -3,10 +3,8 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
-
-# test_records = frappe.get_test_records('Vital Signs')
+from frappe.tests import IntegrationTestCase
 
 
-class TestVitalSigns(FrappeTestCase):
+class TestVitalSigns(IntegrationTestCase):
 	pass

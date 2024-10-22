@@ -13,6 +13,18 @@ frappe.ui.form.on('Medication', {
 				}
 			};
 		});
+
+		if (!frm.is_new()) {
+			frm.add_custom_button(
+				__("Browse Medication"),
+				function () {
+					frappe.route_options = {
+						medication: frm.doc.name,
+					};
+					frappe.set_route("Tree", "Medication");
+				},
+			);
+		}
 	}
 });
 

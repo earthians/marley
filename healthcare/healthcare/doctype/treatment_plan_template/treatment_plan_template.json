@@ -26,7 +26,13 @@
   "medications_section",
   "drugs",
   "plan_items_section",
-  "items"
+  "items",
+  "ip",
+  "is_inpatient",
+  "treatment_counselling_required_for_ip",
+  "healthcare_service_unit_type",
+  "column_break_no4w",
+  "expected_length_of_stay"
  ],
  "fields": [
   {
@@ -147,11 +153,46 @@
    "fieldname": "ivestigation_procedures_tab",
    "fieldtype": "Tab Break",
    "label": "Plan"
+  },
+  {
+   "fieldname": "ip",
+   "fieldtype": "Tab Break",
+   "label": "Inpatient"
+  },
+  {
+   "depends_on": "is_inpatient",
+   "fieldname": "healthcare_service_unit_type",
+   "fieldtype": "Link",
+   "label": "Healthcare Service Unit Type",
+   "options": "Healthcare Service Unit Type"
+  },
+  {
+   "fieldname": "column_break_no4w",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "is_inpatient",
+   "fieldname": "expected_length_of_stay",
+   "fieldtype": "Int",
+   "label": "Expected Length of Stay"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_inpatient",
+   "fieldtype": "Check",
+   "label": "Is Inpatient"
+  },
+  {
+   "default": "0",
+   "depends_on": "is_inpatient",
+   "fieldname": "treatment_counselling_required_for_ip",
+   "fieldtype": "Check",
+   "label": "Treatment Counselling Required for IP"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-01-13 19:58:52.567460",
+ "modified": "2023-04-09 16:34:42.204826",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Treatment Plan Template",

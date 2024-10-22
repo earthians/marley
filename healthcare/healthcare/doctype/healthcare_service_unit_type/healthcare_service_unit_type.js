@@ -4,9 +4,14 @@
 frappe.ui.form.on('Healthcare Service Unit Type', {
 	refresh: function(frm) {
 		frm.set_df_property('item_code', 'read_only', frm.doc.__islocal ? 0 : 1);
-		if (!frm.doc.__islocal && frm.doc.is_billable) {
+		if (!frm.doc.__islocal && frm.doc.is_billable && frm.doc.item) {
 			frm.add_custom_button(__('Change Item Code'), function() {
 				change_item_code(cur_frm, frm.doc);
+			});
+		}
+		if (!frm.doc.__islocal && frm.doc.is_billable && !frm.doc.item) {
+			frm.add_custom_button(__("Create/Link Item"), function() {
+				create_item(frm);
 			});
 		}
 	},
@@ -77,6 +82,58 @@ let change_item_code = function(frm, doc) {
 			d.hide();
 		},
 		primary_action_label: __("Change Template Code")
+	});
+
+	d.show();
+	d.set_values({
+		'Item Code': frm.doc.item_code
+	});
+};
+
+let create_item = function(frm) {
+	let d = new frappe.ui.Dialog({
+		title: __("Create/Link Item"),
+		fields: [
+			{
+				"fieldtype": "Link",
+				"label": "Item",
+				"fieldname": "item",
+				"options": "Item",
+				"mandatory_depends_on": "eval:doc.link_existing_item==1",
+				"depends_on": "eval:doc.link_existing_item==1"
+			},
+			{
+				"fieldtype": "Data",
+				"label": "Item Code",
+				"fieldname": "item_code",
+				"default": frm.doc.item_code,
+				"mandatory_depends_on": "eval:doc.link_existing_item==0",
+				"read_only": 1,
+				"depends_on": "eval:doc.link_existing_item==0"
+			},
+			{
+				"fieldtype": "Check",
+				"label": "Link Existing Item",
+				"fieldname": "link_existing_item",
+				"default": 0
+			}
+		],
+		primary_action: function() {
+			if (d.get_value("link_existing_item") && d.get_value("item")) {
+				frm.set_value("item", d.get_value("item"));
+				frm.save();
+			} else if (!d.get_value("link_existing_item") && d.get_value("item_code")) {
+				frappe.call({
+					"method": "create_service_unit_item",
+					"doc": frm.doc,
+					callback: function() {
+						frm.reload_doc();
+					}
+				});
+			}
+			d.hide();
+		},
+		primary_action_label: __("Create/Link Code")
 	});
 
 	d.show();

@@ -30,7 +30,9 @@ class TherapySession(Document):
 
 	def after_insert(self):
 		if self.service_request:
-			update_service_request_status(self.service_request, self.doctype, self.name)
+			update_service_request_status(
+				self.service_request, self.doctype, self.name, "completed-Request Status"
+			)
 
 		self.create_nursing_tasks(post_event=False)
 
@@ -42,7 +44,7 @@ class TherapySession(Document):
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Active")
+			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
 
 		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 

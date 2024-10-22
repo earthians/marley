@@ -1,0 +1,323 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-04-04 16:01:22.823644",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "patient",
+  "patient_name",
+  "customer",
+  "column_break_qes0",
+  "company",
+  "status",
+  "gender",
+  "patient_age",
+  "section_break_0xpf",
+  "treatment_plan_template",
+  "column_break_qwkn",
+  "price_list",
+  "section_break_7np4",
+  "treatment_plan_template_items",
+  "section_break_cbcs",
+  "amount",
+  "outstanding_amount",
+  "column_break_1la5",
+  "paid_amount",
+  "inpatient_details_section",
+  "encounter_status",
+  "medical_department",
+  "primary_practitioner",
+  "secondary_practitioner",
+  "admission_nursing_checklist_template",
+  "admission_instruction",
+  "column_break_ezce",
+  "admission_ordered_for",
+  "admission_service_unit_type",
+  "expected_length_of_stay",
+  "admission_encounter",
+  "referring_practitioner",
+  "inpatient_record",
+  "section_break_xqtx",
+  "tc_name",
+  "terms",
+  "more_information_section",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HLC-AC-.YYYY.-",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.customer",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qes0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nActive\nCompleted\nClosed",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_age",
+   "fieldtype": "Data",
+   "label": "Patient Age",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_0xpf",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "treatment_plan_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Treatment Plan Template",
+   "options": "Treatment Plan Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_qwkn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_7np4",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "treatment_plan_template_items",
+   "fieldtype": "Table",
+   "label": "Treatment Plan Template Items",
+   "options": "Treatment Plan Template Item"
+  },
+  {
+   "fieldname": "section_break_cbcs",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "outstanding_amount",
+   "fieldtype": "Currency",
+   "label": "Outstanding Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1la5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid Amount",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "inpatient_details_section",
+   "fieldtype": "Section Break",
+   "label": "Inpatient Details"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "encounter_status",
+   "fieldtype": "Data",
+   "label": "Encounter Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "primary_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner (Primary)",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fieldname": "secondary_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner (Secondary)",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fieldname": "admission_nursing_checklist_template",
+   "fieldtype": "Link",
+   "label": "Nursing Checklist Template",
+   "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "admission_instruction",
+   "fieldtype": "Small Text",
+   "label": "Admission Instructions"
+  },
+  {
+   "fieldname": "column_break_ezce",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "admission_ordered_for",
+   "fieldtype": "Date",
+   "label": "Admission Ordered For",
+   "read_only": 1
+  },
+  {
+   "fieldname": "admission_service_unit_type",
+   "fieldtype": "Link",
+   "label": "Service Unit Type",
+   "options": "Healthcare Service Unit Type"
+  },
+  {
+   "fieldname": "expected_length_of_stay",
+   "fieldtype": "Int",
+   "label": "Expected Length of Stay"
+  },
+  {
+   "fieldname": "admission_encounter",
+   "fieldtype": "Link",
+   "label": "Admission Encounter",
+   "options": "Patient Encounter",
+   "read_only": 1
+  },
+  {
+   "fieldname": "referring_practitioner",
+   "fieldtype": "Link",
+   "label": "Referring Practitioner",
+   "options": "Healthcare Practitioner",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_xqtx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "Terms",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions Details"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Treatment Counselling",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-04-27 15:42:25.885636",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Treatment Counselling",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

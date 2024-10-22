@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.workflow import get_workflow_name, get_workflow_state_field
-from frappe.utils import now_datetime
+from frappe.utils import flt, get_link_to_form, getdate, now_datetime, nowdate
 
 from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
 	get_terms_and_conditions,
@@ -25,9 +25,25 @@ class Observation(Document):
 
 	def on_update(self):
 		set_diagnostic_report_status(self)
+		if (
+			self.parent_observation
+			and self.result_data
+			and self.permitted_data_type in ["Quantity", "Numeric"]
+		):
+			set_calculated_result(self)
 
 	def before_insert(self):
 		set_observation_idx(self)
+
+	def on_submit(self):
+		if self.service_request:
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
+
+	def on_cancel(self):
+		if self.service_request:
+			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
 
 	def set_age(self):
 		patient_doc = frappe.get_doc("Patient", self.patient)
@@ -92,6 +108,7 @@ def get_observation_details(docname):
 	reference = frappe.get_value(
 		"Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True
 	)
+	observation = []
 
 	if reference.get("ref_doctype") == "Sales Invoice":
 		observation = frappe.get_list(
@@ -111,7 +128,7 @@ def get_observation_details(docname):
 			filters={
 				"source_doc": reference.get("ref_doctype"),
 				"order_group": reference.get("docname"),
-				"status": ["!=", "Cancelled"],
+				"status": ["!=", "revoked-Request Status"],
 				"docstatus": ["!=", 2],
 			},
 			order_by="creation",
@@ -472,3 +489,116 @@ def set_diagnostic_report_status(doc):
 			frappe.db.set_value(
 				"Diagnostic Report", diagnostic_report.get("name"), set_value_dict, update_modified=False
 			)
+
+
+def set_calculated_result(doc):
+	if doc.parent_observation:
+		parent_template = frappe.db.get_value(
+			"Observation", doc.parent_observation, "observation_template"
+		)
+		parent_template_doc = frappe.get_cached_doc("Observation Template", parent_template)
+
+		data = frappe._dict()
+		patient_doc = frappe.get_cached_doc("Patient", doc.patient).as_dict()
+		settings = frappe.get_cached_doc("Healthcare Settings").as_dict()
+
+		data.update(doc.as_dict())
+		data.update(parent_template_doc.as_dict())
+		data.update(patient_doc)
+		data.update(settings)
+
+		for component in parent_template_doc.observation_component:
+			"""
+			Data retrieval from observations has been moved into the loop
+			to accommodate component observations, which may contain formulas
+			utilizing results from previous iterations.
+
+			"""
+			if component.based_on_formula and component.formula:
+				obs_data = get_data(doc, parent_template_doc)
+			else:
+				continue
+
+			if obs_data and len(obs_data) > 0:
+				data.update(obs_data)
+				result = eval_condition_and_formula(component, data)
+				if not result:
+					continue
+
+				result_observation_name, result_data = frappe.db.get_value(
+					"Observation",
+					{
+						"parent_observation": doc.parent_observation,
+						"observation_template": component.get("observation_template"),
+					},
+					["name", "result_data"],
+				)
+				if result_observation_name and result_data != str(result):
+					frappe.db.set_value(
+						"Observation",
+						result_observation_name,
+						"result_data",
+						str(result),
+					)
+
+
+def get_data(doc, parent_template_doc):
+	data = frappe._dict()
+	observation_details = frappe.get_all(
+		"Observation",
+		{"parent_observation": doc.parent_observation},
+		["observation_template", "result_data"],
+	)
+
+	# to get all result_data to map against abbs of all table rows
+	for component in parent_template_doc.observation_component:
+		result = [
+			d["result_data"]
+			for d in observation_details
+			if (d["observation_template"] == component.get("observation_template") and d["result_data"])
+		]
+		data[component.get("abbr")] = flt(result[0]) if (result and len(result) > 0 and result[0]) else 0
+	return data
+
+
+def eval_condition_and_formula(d, data):
+	try:
+		if d.get("condition"):
+			cond = d.get("condition")
+			parts = cond.strip().splitlines()
+			condition = " ".join(parts)
+			if condition:
+				if not frappe.safe_eval(condition, data):
+					return None
+
+		if d.based_on_formula:
+			amount = None
+			formula = d.formula.strip().replace("\n", " ") if d.formula else None
+			operands = re.split(r"\W+", formula)
+			abbrs = [operand for operand in operands if re.search(r"[a-zA-Z]", operand)]
+			if "age" in abbrs and data.get("dob"):
+				age = (
+					getdate(nowdate()).year
+					- data.get("dob").year
+					- (
+						(getdate(nowdate()).month, getdate(nowdate()).day)
+						< (data.get("dob").month, data.get("dob").day)
+					)
+				)
+				if age > 0:
+					data["age"] = age
+
+			# check the formula abbrs has result value
+			abbrs_present = all(abbr in data and data[abbr] != 0 for abbr in abbrs)
+			if formula and abbrs_present:
+				amount = flt(frappe.safe_eval(formula, {}, data))
+
+		return amount
+
+	except Exception as err:
+		description = _("This error can be due to invalid formula.")
+		message = _(
+			"""Error while evaluating the {0} {1} at row {2}. <br><br> <b>Error:</b> {3}
+			<br><br> <b>Hint:</b> {4}"""
+		).format(d.parenttype, get_link_to_form(d.parenttype, d.parent), d.idx, err, description)
+		frappe.throw(message, title=_("Error in formula"))

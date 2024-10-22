@@ -17,6 +17,9 @@ from healthcare.healthcare.doctype.observation.observation import add_observatio
 from healthcare.healthcare.doctype.observation_template.observation_template import (
 	get_observation_template_details,
 )
+from healthcare.healthcare.doctype.sample_collection.sample_collection import (
+	set_component_observation_data,
+)
 
 
 class ServiceRequest(ServiceRequestController):
@@ -33,10 +36,10 @@ class ServiceRequest(ServiceRequestController):
 		self.title = f"{self.patient_name} - {self.template_dn}"
 
 	def before_insert(self):
-		self.status = "Draft"
+		self.status = "draft-Request Status"
 
 		if self.amended_from:
-			frappe.db.set_value("Service Request", self.amended_from, "status", "Replaced")
+			frappe.db.set_value("Service Request", self.amended_from, "status", "revoked-Request Status")
 
 		if self.template_dt == "Observation Template" and self.template_dn:
 			self.sample_collection_required = frappe.db.get_value(
@@ -87,13 +90,15 @@ class ServiceRequest(ServiceRequestController):
 			dt = "Clinical Procedure"
 		elif self.template_dt == "Therapy Type":
 			dt = "Therapy Session"
+		elif self.template_dt == "Observation Template":
+			dt = "Observation"
 		dt_name = frappe.db.get_value(dt, {"service_request": self.name})
 		frappe.db.set_value(dt, dt_name, "invoiced", invoiced)
 
 
 def update_service_request_status(service_request, service_dt, service_dn, status=None, qty=1):
 	# TODO: fix status updates from linked docs
-	set_service_request_status(service_request, "Scheduled")
+	set_service_request_status(service_request, status)
 
 
 @frappe.whitelist()
@@ -129,7 +134,6 @@ def make_clinical_procedure(service_request):
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.medical_department = service_request.medical_department
-	doc.medical_code = service_request.medical_code
 
 	return doc
 
@@ -165,7 +169,6 @@ def make_lab_test(service_request):
 	doc.date = service_request.occurrence_date
 	doc.time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
-	doc.medical_code = service_request.medical_code
 
 	return doc
 
@@ -198,7 +201,6 @@ def make_therapy_session(service_request):
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
-	doc.medical_code = service_request.medical_code
 
 	return doc
 
@@ -228,7 +230,12 @@ def make_observation(service_request):
 		return name_ref_in_child[0], name_ref_in_child[1], "New"
 	else:
 		exist_sample_collection = frappe.db.exists(
-			"Sample Collection", {"reference_name": service_request.order_group}
+			"Sample Collection",
+			{
+				"reference_name": service_request.order_group,
+				"docstatus": 0,
+				"patient": service_request.patient,
+			},
 		)
 
 	if template.has_component:
@@ -258,7 +265,7 @@ def make_observation(service_request):
 		if len(sample_reqd_component_obs) > 0:
 			save_sample_collection = True
 			obs_template = frappe.get_doc("Observation Template", service_request.template_dn)
-
+			data = set_component_observation_data(service_request.template_dn)
 			# append parent template
 			sample_collection.append(
 				"observation_sample_collection",
@@ -271,6 +278,7 @@ def make_observation(service_request):
 						service_request.template_dn,
 						"container_closure_color",
 					),
+					"component_observations": json.dumps(data),
 					"uom": obs_template.uom,
 					"status": "Open",
 					"sample_qty": obs_template.sample_qty,
@@ -375,7 +383,11 @@ def insert_diagnostic_report(doc, sample_collection=None):
 def check_observation_sample_exist(service_request):
 	name_ref_in_child = frappe.db.get_value(
 		"Observation Sample Collection",
-		{"service_request": service_request.name, "parenttype": "Sample Collection"},
+		{
+			"service_request": service_request.name,
+			"parenttype": "Sample Collection",
+			"docstatus": ["!=", 2],
+		},
 		"parent",
 	)
 	if name_ref_in_child:
@@ -386,6 +398,7 @@ def check_observation_sample_exist(service_request):
 			{
 				"service_request": service_request.name,
 				"parent_observation": "",
+				"docstatus": ["!=", 2],
 			},
 		)
 		if exist_observation:

@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:value_set",
+ "beta": 1,
+ "creation": "2023-12-28 16:17:20.877603",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "code_system",
+  "system_uri",
+  "value_set",
+  "description",
+  "column_break_ufln",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "value_set",
+   "fieldtype": "Data",
+   "label": "Value Set",
+   "unique": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_ufln",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "code_system",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Code System",
+   "options": "Code System"
+  },
+  {
+   "fetch_from": "code_system.uri",
+   "fieldname": "system_uri",
+   "fieldtype": "Data",
+   "label": "System URI",
+   "unique": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-12-29 18:58:14.304840",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Code Value Set",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

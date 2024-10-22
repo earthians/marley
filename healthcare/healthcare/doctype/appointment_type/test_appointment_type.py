@@ -3,10 +3,8 @@
 # See license.txt
 
 
-from frappe.tests.utils import FrappeTestCase
-
-# test_records = frappe.get_test_records('Appointment Type')
+from frappe.tests import IntegrationTestCase
 
 
-class TestAppointmentType(FrappeTestCase):
+class TestAppointmentType(IntegrationTestCase):
 	pass

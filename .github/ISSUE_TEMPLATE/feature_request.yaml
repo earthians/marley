@@ -1,15 +1,15 @@
 ---
 name: Feature Request
-description: Suggest an idea to improve Frappe Health
+description: Suggest an idea to improve Marley Health
 labels: ["feature-request"]
 
 body:
   - type: markdown
     attributes:
       value: |
-        Welcome to Frappe Health issue tracker! Before submitting a request, please consider the following:
+        Welcome to Marley Health issue tracker! Before submitting a request, please consider the following:
 
-        1. This tracker should only be used to report bugs and request features / enhancements to Frappe Health
+        1. This tracker should only be used to report bugs and request features / enhancements to Marley Health
             - For questions and general support, checkout the [documentation](https://frappehealth.com/docs) or use the [forum](https://discuss.frappe.io/c/healthcare/58) to get inputs from the open source community.
         2. Use the search function before creating a new issue. Duplicates will be closed and directed to
           the original discussion.
@@ -22,7 +22,7 @@ body:
         1. Certified Frappe partners: https://frappe.io/partners
         2. Healthcare Category on Frappe forum: https://discuss.frappe.io/c/healthcare/58
         2. Developer community on Frappe forum: https://discuss.frappe.io/c/developers/5
-        3. Telegram group for Frappe Health development work: https://t.me/frappehealth
+        3. Telegram group for Marley Health development work: https://t.me/frappehealth
 
   - type: textarea
     id: problem-info

@@ -31,6 +31,7 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_email",
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
@@ -160,13 +161,13 @@
    "options": "Patient Care Type"
   },
   {
-   "default": "Draft",
+   "allow_on_submit": 1,
    "fieldname": "status",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Active\nOn Hold\nCompleted\nRevoked\nReplaced\nEntered in Error\nUnknown\nDraft\nSubmitted\nCancelled",
+   "options": "Code Value",
    "reqd": 1
   },
   {
@@ -518,6 +519,13 @@
    "fieldtype": "Check",
    "label": "Sample Collection Required",
    "read_only": 1
+  },
+  {
+   "fetch_from": "practitioner.user_id",
+   "fieldname": "practitioner_email",
+   "fieldtype": "Data",
+   "label": "Practitioner Email",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -536,7 +544,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2023-10-31 15:25:52.596645",
+ "modified": "2024-01-09 13:03:51.377653",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

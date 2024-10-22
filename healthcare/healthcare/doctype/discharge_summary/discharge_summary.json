@@ -1,0 +1,312 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-06-01 17:22:45.111536",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "inpatient_record",
+  "patient",
+  "patient_name",
+  "gender",
+  "date_of_birth",
+  "discharge_practitioner",
+  "column_break_kzuc",
+  "posting_date",
+  "company",
+  "status",
+  "followup_date",
+  "review_date",
+  "admission_order_tab",
+  "admission_encounter",
+  "admission_practitioner",
+  "medical_department",
+  "scheduled_date",
+  "admitted_datetime",
+  "column_break_fw9m",
+  "primary_practitioner",
+  "secondary_practitioner",
+  "section_break_ookd",
+  "chief_complaint",
+  "column_break_fl3m",
+  "diagnosis",
+  "order_details_tab",
+  "orders_html",
+  "discharge_details_tab",
+  "physical_examination",
+  "treatment_done",
+  "advice_on_discharge",
+  "diet_adviced",
+  "current_issues",
+  "instructions",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "HLC-DS-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Series",
+   "options": "HLC-DS-.YYYY.-",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "inpatient_record.patient",
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_kzuc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nApproved\nCancelled\nRejected"
+  },
+  {
+   "fetch_from": "inpatient_record.medical_department",
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fw9m",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_ookd",
+   "fieldtype": "Tab Break",
+   "label": "Encounter Impression"
+  },
+  {
+   "fieldname": "chief_complaint",
+   "fieldtype": "Table MultiSelect",
+   "label": "Chief Complaint",
+   "options": "Patient Encounter Symptom"
+  },
+  {
+   "fieldname": "column_break_fl3m",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "diagnosis",
+   "fieldtype": "Table MultiSelect",
+   "label": "Diagnosis",
+   "options": "Patient Encounter Diagnosis"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Discharge Summary",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "inpatient_record.followup_date",
+   "fieldname": "followup_date",
+   "fieldtype": "Date",
+   "label": "Followup Date"
+  },
+  {
+   "fieldname": "review_date",
+   "fieldtype": "Date",
+   "label": "Review Date"
+  },
+  {
+   "fieldname": "admission_order_tab",
+   "fieldtype": "Tab Break",
+   "label": "Admission Order"
+  },
+  {
+   "fieldname": "discharge_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Discharge Details"
+  },
+  {
+   "fieldname": "physical_examination",
+   "fieldtype": "Text Editor",
+   "label": "Physical Examination"
+  },
+  {
+   "fieldname": "treatment_done",
+   "fieldtype": "Text Editor",
+   "label": "Treatment Done"
+  },
+  {
+   "fieldname": "advice_on_discharge",
+   "fieldtype": "Text Editor",
+   "label": "Advice on Discharge"
+  },
+  {
+   "fieldname": "diet_adviced",
+   "fieldtype": "Text Editor",
+   "label": "Diet Adviced"
+  },
+  {
+   "fieldname": "current_issues",
+   "fieldtype": "Text Editor",
+   "label": "Current Issues"
+  },
+  {
+   "description": "About when and how to obtain urgent work care",
+   "fieldname": "instructions",
+   "fieldtype": "Text Editor",
+   "label": "Instructions"
+  },
+  {
+   "fetch_from": "inpatient_record.admission_encounter",
+   "fieldname": "admission_encounter",
+   "fieldtype": "Link",
+   "label": "Patient Encounter",
+   "options": "Patient Encounter",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "inpatient_record.admission_practitioner",
+   "fieldname": "admission_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner",
+   "options": "Healthcare Practitioner",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "inpatient_record.primary_practitioner",
+   "fieldname": "primary_practitioner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Healthcare Practitioner (Primary)",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fetch_from": "inpatient_record.secondary_practitioner",
+   "fieldname": "secondary_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner (Secondary)",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fetch_from": "inpatient_record.discharge_practitioner",
+   "fieldname": "discharge_practitioner",
+   "fieldtype": "Link",
+   "label": "Discharging Practitioner",
+   "options": "Healthcare Practitioner",
+   "reqd": 1
+  },
+  {
+   "fieldname": "order_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Order Details"
+  },
+  {
+   "fieldname": "orders_html",
+   "fieldtype": "HTML",
+   "label": "Orders Html"
+  },
+  {
+   "fetch_from": "inpatient_record.scheduled_date",
+   "fieldname": "scheduled_date",
+   "fieldtype": "Date",
+   "label": "Admission Schedule Date",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "inpatient_record.admitted_datetime",
+   "fieldname": "admitted_datetime",
+   "fieldtype": "Datetime",
+   "label": "Admitted Datetime",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-06-07 17:50:46.487858",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Discharge Summary",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

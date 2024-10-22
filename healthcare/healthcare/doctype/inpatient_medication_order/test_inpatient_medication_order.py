@@ -4,7 +4,7 @@
 
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, getdate, now_datetime
 
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
@@ -20,7 +20,7 @@ from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import
 )
 
 
-class TestInpatientMedicationOrder(FrappeTestCase):
+class TestInpatientMedicationOrder(IntegrationTestCase):
 	def setUp(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		self.patient = create_patient()

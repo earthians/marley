@@ -2,19 +2,27 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "field:code_system",
+ "beta": 1,
  "creation": "2017-06-21 13:07:00.463176",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "column_break_seaq",
   "disabled",
   "section_break_zyqx",
   "code_system",
   "uri",
   "description",
   "column_break_ijhv",
+  "status",
+  "version",
   "is_fhir_defined",
-  "oid"
+  "oid",
+  "experimental",
+  "immutable",
+  "complete",
+  "custom"
  ],
  "fields": [
   {
@@ -24,15 +32,12 @@
    "in_list_view": 1,
    "label": "URI",
    "no_copy": 1,
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
-   "depends_on": "eval:!doc.is_fhir_defined",
    "fieldname": "oid",
    "fieldtype": "Data",
    "label": "OID",
-   "mandatory_depends_on": "eval:!doc.is_fhir_defined",
    "no_copy": 1,
    "read_only_depends_on": "eval:doc.is_fhir_defined",
    "unique": 1
@@ -77,6 +82,50 @@
    "in_list_view": 1,
    "label": "Is FHIR Defined",
    "no_copy": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "experimental",
+   "fieldtype": "Check",
+   "label": "Experimental ",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "custom",
+   "fieldtype": "Check",
+   "label": "Custom",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable "
+  },
+  {
+   "default": "1",
+   "fieldname": "column_break_seaq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Link",
+   "label": "Version",
+   "options": "Code Value",
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "label": "Status",
+   "options": "Code Value"
+  },
+  {
+   "default": "0",
+   "fieldname": "complete",
+   "fieldtype": "Check",
+   "label": "Complete"
   }
  ],
  "links": [
@@ -85,7 +134,7 @@
    "link_fieldname": "code_system"
   }
  ],
- "modified": "2023-11-04 15:05:21.980203",
+ "modified": "2024-01-08 16:44:38.512275",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code System",

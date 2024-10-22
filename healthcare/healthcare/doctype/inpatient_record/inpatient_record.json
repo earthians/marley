@@ -39,6 +39,7 @@
   "chief_complaint",
   "column_break_29",
   "diagnosis",
+  "prescriptions_tab",
   "medication_section",
   "drug_prescription",
   "investigations_section",
@@ -48,6 +49,16 @@
   "rehabilitation_section",
   "therapy_plan",
   "therapies",
+  "inpatient_billables_tab",
+  "currency",
+  "column_break_xdfm",
+  "price_list",
+  "section_break_dy9z",
+  "items",
+  "section_break_5ttb",
+  "total",
+  "column_break_kpdk",
+  "paid_amount",
   "sb_inpatient_occupancy",
   "inpatient_occupancies",
   "btn_transfer",
@@ -61,8 +72,7 @@
   "followup_date",
   "sb_discharge_note",
   "discharge_note",
-  "cancellation_details_section",
-  "reason_for_cancellation"
+  "connections_tab"
  ],
  "fields": [
   {
@@ -210,8 +220,8 @@
   {
    "collapsible": 1,
    "fieldname": "references",
-   "fieldtype": "Section Break",
-   "label": "Admission Order Details"
+   "fieldtype": "Tab Break",
+   "label": "Admission Order"
   },
   {
    "fieldname": "cb_admission",
@@ -307,7 +317,7 @@
   {
    "depends_on": "eval:(doc.status != \"Admission Scheduled\")",
    "fieldname": "sb_inpatient_occupancy",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Inpatient Occupancy"
   },
   {
@@ -334,11 +344,12 @@
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_note",
    "fieldtype": "Section Break",
-   "label": "Discharge Notes"
+   "label": "Discharge"
   },
   {
    "fieldname": "discharge_note",
    "fieldtype": "Text Editor",
+   "label": "Discharge Notes",
    "permlevel": 1
   },
   {
@@ -378,7 +389,7 @@
    "collapsible": 1,
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_details",
-   "fieldtype": "Section Break",
+   "fieldtype": "Tab Break",
    "label": "Discharge Details"
   },
   {
@@ -433,61 +444,90 @@
    "fieldtype": "Link",
    "label": "Admission Nursing Checklist Template",
    "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Billables",
+   "options": "Inpatient Record Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prescriptions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Prescriptions"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "column_break_xdfm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "section_break_dy9z",
+   "fieldtype": "Section Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "inpatient_billables_tab",
+   "fieldtype": "Tab Break",
+   "label": "Inpatient Billables"
+  },
+  {
+   "fieldname": "section_break_5ttb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_kpdk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [
   {
-   "group": "Appointments",
-   "link_doctype": "Patient Appointment",
-   "link_fieldname": "inpatient_record"
-  },
-  {
-   "group": "Clinical",
-   "link_doctype": "Patient Encounter",
-   "link_fieldname": "inpatient_record"
-  },
-  {
-   "group": "Clinical",
-   "link_doctype": "Clinical Procedure",
-   "link_fieldname": "inpatient_record"
-  },
-  {
-   "group": "Laboratory",
-   "link_doctype": "Sample Collection",
-   "link_fieldname": "inpatient_record"
-  },
-  {
-   "group": "Laboratory",
-   "link_doctype": "Lab Test",
-   "link_fieldname": "inpatient_record"
-  },
-  {
-   "group": "Nursing",
    "link_doctype": "Nursing Task",
    "link_fieldname": "reference_name"
   },
   {
-   "group": "Nursing",
-   "link_doctype": "Vital Signs",
+   "link_doctype": "Treatment Counselling",
    "link_fieldname": "inpatient_record"
   },
   {
-   "collapsible": 1,
-   "fieldname": "cancellation_details_section",
-   "fieldtype": "Section Break",
-   "label": "Cancellation Details"
-  },
-  {
-   "fieldname": "reason_for_cancellation",
-   "fieldtype": "Small Text",
-   "label": "Reason for Cancellation",
-   "read_only": 1
+   "link_doctype": "Discharge Summary",
+   "link_fieldname": "inpatient_record"
   }
  ],
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2022-04-28 17:26:28.973945",
+ "modified": "2024-04-30 12:33:23.396599",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
@@ -572,12 +612,6 @@
    "report": 1,
    "role": "Nursing User",
    "share": 1
-  }
- ],
- "links": [
-  {
-   "link_doctype": "Nursing Task",
-   "link_fieldname": "reference_name"
   }
  ],
  "restrict_to_domain": "Healthcare",

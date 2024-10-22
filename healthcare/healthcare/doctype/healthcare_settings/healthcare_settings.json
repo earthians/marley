@@ -21,6 +21,9 @@
   "valid_days",
   "inpatient_settings_section",
   "allow_discharge_despite_unbilled_services",
+  "allow_discharge_despite_pending_healthcare_services",
+  "column_break_bkvx",
+  "automatically_generate_billable",
   "do_not_bill_inpatient_encounters",
   "orders_tab",
   "default_intent",
@@ -401,11 +404,28 @@
    "fieldname": "orders_tab",
    "fieldtype": "Tab Break",
    "label": "Orders"
+  },
+  {
+   "default": "0",
+   "description": "Nightly generate billable from Inpatient Occupancy",
+   "fieldname": "automatically_generate_billable",
+   "fieldtype": "Check",
+   "label": "Automatically Generate Billable"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_discharge_despite_pending_healthcare_services",
+   "fieldtype": "Check",
+   "label": "Allow Discharge Despite Pending Healthcare Services"
+  },
+  {
+   "fieldname": "column_break_bkvx",
+   "fieldtype": "Column Break"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2023-11-06 14:20:22.424895",
+ "modified": "2024-04-30 14:09:19.163643",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

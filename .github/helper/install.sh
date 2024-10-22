@@ -10,7 +10,9 @@ sudo apt install libcups2-dev redis-server mariadb-client-10.6
 
 pip install frappe-bench
 
-git clone https://github.com/frappe/frappe --branch "$BRANCH_TO_CLONE" --depth 1
+branchtoclone=${GITHUB_BASE_REF:-${GITHUB_REF##*/}}
+
+git clone https://github.com/frappe/frappe --branch "${branchtoclone}" --depth 1
 bench init --skip-assets --frappe-path ~/frappe --python "$(which python)" frappe-bench
 
 mkdir ~/frappe-bench/sites/test_site
@@ -40,14 +42,17 @@ sed -i 's/schedule:/# schedule:/g' Procfile
 sed -i 's/socketio:/# socketio:/g' Procfile
 sed -i 's/redis_socketio:/# redis_socketio:/g' Procfile
 
-bench get-app payments --resolve-deps
-bench get-app https://github.com/frappe/erpnext --branch "$BRANCH_TO_CLONE" --resolve-deps
+bench get-app payments
+bench get-app https://github.com/frappe/erpnext --branch "${branchtoclone}"
+bench get-app healthcare "${GITHUB_WORKSPACE}"
+
 bench setup requirements --dev
+CI=Yes bench build --app frappe &
 
 bench start &> bench_run_logs.txt &
-CI=Yes bench build --app frappe &
+
 bench --site test_site reinstall --yes
 
-bench get-app healthcare "${GITHUB_WORKSPACE}"
 bench --verbose --site test_site install-app healthcare
-bench setup requirements --dev
+
+
