@@ -195,3 +195,11 @@ frappe.ui.form.on('Therapy Session', {
 		}
 	}
 });
+
+let calculate_age = function(birth) {
+	let ageMS = Date.parse(Date()) - Date.parse(birth);
+	let age = new Date();
+	age.setTime(ageMS);
+	let years =  age.getFullYear() - 1970;
+	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
+};
