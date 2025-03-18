@@ -9,7 +9,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "patient_care_type"
+  "patient_care_type",
+  "description"
  ],
  "fields": [
   {
@@ -19,13 +20,21 @@
    "label": "Patient Care Type",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2021-03-14 18:40:14.533239",
+ "modified": "2025-03-18 11:43:42.528491",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Care Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -73,7 +82,9 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }
