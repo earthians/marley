@@ -37,7 +37,8 @@
   "section_break_put4",
   "service_request",
   "reference_doc",
-  "reference_name"
+  "reference_name",
+  "amended_from"
  ],
  "fields": [
   {
@@ -286,6 +287,16 @@
    "label": "Referring Practitioner",
    "options": "Healthcare Practitioner",
    "read_only_depends_on": "referring_practitioner"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Sample Collection",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "is_submittable": 1,
@@ -295,7 +306,7 @@
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2023-10-13 06:57:29.989715",
+ "modified": "2025-03-26 19:00:19.286785",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
