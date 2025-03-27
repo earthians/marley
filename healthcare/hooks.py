@@ -305,3 +305,7 @@ standard_queries = {
 treeviews = [
 	"Healthcare Service Unit",
 ]
+
+company_data_to_be_ignored = [
+	"Healthcare Service Unit",
+]
