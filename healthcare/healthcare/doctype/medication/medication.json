@@ -19,6 +19,7 @@
   "combinations_section",
   "combinations",
   "item_details",
+  "price_list",
   "linked_items",
   "defaults_section",
   "default_prescription_dosage",
@@ -207,10 +208,17 @@
    "collapsible": 1,
    "fieldname": "section_break_sbkz",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List"
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2024-06-10 14:14:55.849697",
+ "modified": "2025-03-28 11:43:56.469499",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
@@ -242,6 +250,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "search_fields": "abbr, national_drug_code, generic_name",
  "sort_field": "modified",
  "sort_order": "DESC",
