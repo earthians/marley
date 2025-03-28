@@ -13,6 +13,13 @@ frappe.ui.form.on('Medication', {
 				}
 			};
 		});
+		frm.set_query("price_list", function() {
+			return {
+				filters: {
+					selling: true
+				}
+			};
+		});
 
 		if (!frm.is_new()) {
 			frm.add_custom_button(
@@ -24,6 +31,22 @@ frappe.ui.form.on('Medication', {
 					frappe.set_route("Tree", "Medication");
 				},
 			);
+		}
+	},
+	onload: function (frm) {
+		if (frm.is_new() && !frm.doc.price_list) {
+			frappe.db.get_single_value("Selling Settings", "selling_price_list").then((price_list) => {
+				if (price_list) {
+					frm.set_value("price_list", price_list);
+				}
+			});
+		}
+	},
+	price_list: function (frm) {
+		if (!frm.is_new() && frm.doc.price_list && frm.doc.linked_items) {
+			frm.doc.linked_items.forEach((row) => {
+				mark_change_in_item(frm, row.doctype, row.name);
+			});
 		}
 	}
 });

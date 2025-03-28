@@ -10,6 +10,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
+from frappe.utils import get_link_to_form
 
 
 class Medication(Document):
@@ -21,6 +22,17 @@ class Medication(Document):
 			self.update_item_and_item_price()
 
 	def validate(self):
+		if not self.price_list and self.linked_items:
+			price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
+			if price_list:
+				self.price_list = price_list
+			else:
+				frappe.throw(
+					_(
+						f"Please select a Price List for adding Item Price or set the Default Selling Price List in {get_link_to_form('Selling Settings', 'Selling Settings')}"
+					)
+				)
+
 		if self.linked_items:
 			for item in self.linked_items:
 				exist_medication = frappe.db.get_value(
@@ -52,13 +64,17 @@ class Medication(Document):
 						item_doc.disabled = 0
 						item_doc.save(ignore_permissions=True)
 						if item.rate:
-							if not frappe.db.exists("Item Price", {"item_code": item.item_code}):
+							item_price = frappe.db.exists(
+								"Item Price", {"item_code": item.item_code, "price_list": self.price_list}
+							)
+							if not item_price:
 								if item.item_code:
-									make_item_price(item.item_code, item.rate)
+									make_item_price(item.item_code, item.rate, self.price_list)
 							else:
-								item_price = frappe.get_doc("Item Price", {"item_code": item.item_code})
+								item_price = frappe.get_doc("Item Price", item_price)
 								item_price.item_name = item.item_code
 								item_price.price_list_rate = item.rate
+								item_price.price_list = self.price_list
 								item_price.save()
 
 				else:
@@ -100,16 +116,15 @@ def insert_item(doc, item):
 		item_doc.item_name = item.item_code  # also update the name and description of existing item
 		item_doc.description = item.description
 
-	make_item_price(item_doc.name, item.rate)
+	make_item_price(item_doc.name, item.rate, doc.price_list)
 	frappe.db.set_value("Medication Linked Item", item.name, "item", item.item_code)
 
 
-def make_item_price(item, item_price):
-	price_list_name = frappe.db.get_value("Price List", {"selling": 1})
+def make_item_price(item, item_price, price_list):
 	frappe.get_doc(
 		{
 			"doctype": "Item Price",
-			"price_list": price_list_name,
+			"price_list": price_list,
 			"item_code": item,
 			"price_list_rate": item_price,
 		}
