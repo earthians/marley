@@ -15,7 +15,9 @@
   "color",
   "billing_tab",
   "price_list",
-  "items"
+  "items",
+  "medical_codes_tab",
+  "codification_table"
  ],
  "fields": [
   {
@@ -75,10 +77,22 @@
    "label": "Allow Booking For",
    "options": "Practitioner\nDepartment\nService Unit",
    "reqd": 1
+  },
+  {
+   "fieldname": "medical_codes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Medical Codes"
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Code",
+   "options": "Codification Table"
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2023-06-10 13:43:27.137414",
+ "modified": "2025-03-31 17:31:51.709349",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Appointment Type",
@@ -112,6 +126,7 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "appointment_type",
  "sort_field": "modified",
  "sort_order": "DESC",

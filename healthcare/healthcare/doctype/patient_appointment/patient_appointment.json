@@ -28,6 +28,8 @@
   "patient_age",
   "section_break_12",
   "duration",
+  "reference_doctype",
+  "reference_docname",
   "service_request",
   "procedure_template",
   "get_procedure_from_encounter",
@@ -106,9 +108,9 @@
    "in_filter": 1,
    "in_list_view": 1,
    "label": "Status",
+   "no_copy": 1,
    "options": "\nScheduled\nOpen\nConfirmed\nChecked In\nChecked Out\nClosed\nCancelled\nNo Show",
    "read_only": 1,
-   "no_copy": 1,
    "search_index": 1
   },
   {
@@ -423,10 +425,25 @@
    "options": "Service Request",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Docname",
+   "options": "reference_doctype",
+   "read_only": 1
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2024-11-20 08:21:29.729408",
+ "modified": "2025-04-01 12:45:08.615248",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
@@ -471,6 +488,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient, practitioner, department, appointment_date, appointment_time",
  "show_name_in_global_search": 1,
  "sort_field": "modified",

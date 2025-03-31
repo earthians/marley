@@ -544,3 +544,32 @@ def get_encounter_details(doc):
 	)
 
 	return medication_requests, service_requests, clinical_notes
+
+
+@frappe.whitelist()
+def create_patient_referral(encounter, references):
+	if isinstance(references, str):
+		references = json.loads(references)
+
+	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
+	for ref in references:
+		order = frappe.get_doc(
+			{
+				"doctype": "Service Request",
+				"order_date": encounter_doc.get("encounter_date"),
+				"order_time": encounter_doc.get("encounter_time"),
+				"company": encounter_doc.get("company"),
+				"status": "draft-Request Status",
+				"source_doc": "Patient Encounter",
+				"order_group": encounter,
+				"patient": encounter_doc.get("patient"),
+				"practitioner": encounter_doc.get("practitioner"),
+				"template_dt": "Appointment Type",
+				"template_dn": ref.get("appointment_type"),
+				"quantity": 1,
+				"order_description": ref.get("referral_note"),
+				"referred_to_practitioner": ref.get("refer_to"),
+			}
+		)
+		order.insert(ignore_permissions=True, ignore_mandatory=True)
+		order.submit()

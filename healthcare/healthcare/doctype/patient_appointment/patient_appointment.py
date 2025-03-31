@@ -60,6 +60,11 @@ class PatientAppointment(Document):
 		send_confirmation_msg(self)
 		self.insert_calendar_event()
 
+		if self.service_request:
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
+
 	def set_title(self):
 		if self.practitioner:
 			self.title = _("{0} with {1}").format(
@@ -508,6 +513,11 @@ def get_appointment_item(appointment_doc, item):
 
 def cancel_appointment(appointment_id):
 	appointment = frappe.get_doc("Patient Appointment", appointment_id)
+	if appointment.service_request:
+		frappe.db.set_value(
+			"Service Request", appointment.service_request, "status", "active-Request Status"
+		)
+
 	if appointment.invoiced:
 		sales_invoice = check_sales_invoice_exists(appointment)
 		if sales_invoice and cancel_sales_invoice(sales_invoice):
