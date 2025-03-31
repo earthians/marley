@@ -25,8 +25,14 @@ from healthcare.healthcare.doctype.observation_template.test_observation_templat
 	create_observation_template,
 )
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment_type,
 	create_clinical_procedure_template,
 	create_healthcare_docs,
+	create_patient,
+	create_practitioner,
+)
+from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
+	create_patient_referral,
 )
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
 from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import (
@@ -127,6 +133,42 @@ class TestServiceRequest(unittest.TestCase):
 			observation = create_observation(patient, service_request, obs_template.name)
 			create_sales_invoice(patient, service_request_doc, obs_template, "observation")
 			self.assertEqual(frappe.db.get_value("Observation", observation.name, "invoiced"), 1)
+
+	def test_patient_referral(self):
+		patient = create_patient()
+		practitioner_1 = create_practitioner(id=1)
+		practitioner_2 = create_practitioner(id=2)
+		obs_template = create_observation_template("Total Cholesterol")
+		encounter = create_encounter(
+			patient, practitioner_1, "lab_test_prescription", obs_template, submit=True, obs=True
+		)
+
+		appointment_type = create_appointment_type()
+		refer_to_practitioner(encounter, practitioner_2, appointment_type.name)
+
+		self.assertTrue(
+			frappe.db.exists(
+				"Service Request",
+				{
+					"order_group": encounter.name,
+					"template_dt": "Appointment Type",
+					"template_dn": appointment_type.name,
+				},
+			)
+		)
+
+		self.assertEqual(
+			frappe.db.get_value(
+				"Service Request",
+				{
+					"order_group": encounter.name,
+					"template_dt": "Appointment Type",
+					"template_dn": appointment_type.name,
+				},
+				"referred_to_practitioner",
+			),
+			practitioner_2,
+		)
 
 
 def create_encounter(
@@ -282,3 +324,21 @@ def make_therapy_session(service_request):
 	therapy_session.save()
 
 	return therapy_session
+
+
+def refer_to_practitioner(encounter, practitioner=None, appointment_type=None):
+	if not practitioner:
+		return
+
+	if not appointment_type:
+		return
+
+	references = [
+		{
+			"refer_to": practitioner,
+			"appointment_type": appointment_type,
+			"referral_note": f"Patient {encounter.patient} referred to practitioner {practitioner}",
+		}
+	]
+
+	create_patient_referral(encounter.name, references)
