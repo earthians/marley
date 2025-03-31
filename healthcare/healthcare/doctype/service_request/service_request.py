@@ -10,6 +10,7 @@ from six import string_types
 
 import frappe
 from frappe import _
+from frappe.model.mapper import get_mapped_doc
 from frappe.utils import now_datetime
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
@@ -403,3 +404,37 @@ def check_observation_sample_exist(service_request):
 		)
 		if exist_observation:
 			return exist_observation, "Observation"
+
+
+@frappe.whitelist()
+def make_appointment(source_name, target_doc=None, ignore_permissions=False):
+	def postprocess(source, target):
+		set_missing_values(source, target)
+
+	def set_missing_values(source, target):
+		target.department = frappe.db.get_value(
+			"Healthcare Practitioner", source.referred_to_practitioner, "department"
+		)
+
+	doclist = get_mapped_doc(
+		"Service Request",
+		source_name,
+		{
+			"Service Request": {
+				"doctype": "Patient Appointment",
+				"field_map": {
+					"name": "service_request",
+					"referred_to_practitioner": "practitioner",
+					"template_dn": "appointment_type",
+					"source_doc": "reference_doctype",
+					"order_group": "reference_docname",
+				},
+				"field_no_map": ["naming_series", "status"],
+			},
+		},
+		target_doc,
+		postprocess,
+		ignore_permissions=ignore_permissions,
+	)
+
+	return doclist
