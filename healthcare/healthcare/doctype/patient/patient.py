@@ -10,7 +10,7 @@ from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.contacts.doctype.contact.contact import get_default_contact
 from frappe.model.document import Document
-from frappe.model.naming import set_name_by_naming_series
+from frappe.model.naming import set_name_by_naming_series, set_name_from_naming_options
 from frappe.utils import cint, cstr, getdate
 from frappe.utils.nestedset import get_root_of
 
@@ -139,8 +139,10 @@ class Patient(Document):
 		patient_name_by = frappe.db.get_single_value("Healthcare Settings", "patient_name_by")
 		if patient_name_by == "Patient Name":
 			self.name = self.get_patient_name()
-		else:
+		elif patient_name_by == "Naming Series":
 			set_name_by_naming_series(self)
+		else:
+			set_name_from_naming_options(frappe.get_meta(self.doctype).autoname, self)
 
 	def get_patient_name(self):
 		self.set_full_name()
