@@ -10,7 +10,7 @@ def uri_validator(x):
 
 def docs_link_exists(body):
 	for line in body.splitlines():
-		for word in line.split("["):
+		for word in line.split("("):
 			if word.startswith("http") and uri_validator(word):
 				parsed_url = urlparse(word)
 				if any(loc == parsed_url.netloc for loc in NETLOC_LIST) and "/wiki" in parsed_url.path:
