@@ -2,16 +2,18 @@ import requests
 import sys
 from urllib.parse import urlparse
 
+NETLOC_LIST = ["marley.frappe.cloud", "marleyhealth.io", ]
+
 def uri_validator(x):
 	result = urlparse(x)
 	return all([result.scheme, result.netloc, result.path])
 
 def docs_link_exists(body):
 	for line in body.splitlines():
-		for word in line.split():
+		for word in line.split("["):
 			if word.startswith("http") and uri_validator(word):
 				parsed_url = urlparse(word)
-				if parsed_url.netloc == "marley.frappe.cloud" and parsed_url.path.startswith("/wiki"):
+				if any(loc == parsed_url.netloc for loc in NETLOC_LIST) and "/wiki" in parsed_url.path:
 					return True
 
 if __name__ == "__main__":
@@ -37,4 +39,4 @@ if __name__ == "__main__":
 				sys.exit(1)
 
 		else:
-			print("Skipping documentation checks... 🏃")
+			print("Skipping documentation checks... 🏃‍➡️")
