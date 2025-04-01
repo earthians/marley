@@ -265,24 +265,6 @@ def create_observation(patient, service_request, obs_template):
 	observation.observation_template = obs_template
 	observation.insert()
 	return observation
-<<<<<<< HEAD
-=======
-
-
-def make_therapy_session(service_request):
-	plan = create_therapy_plan()
-
-	start_date = nowdate()
-	therapy_session = frappe.new_doc("Therapy Session")
-	therapy_session.patient = plan.patient
-	therapy_session.therapy_type = "Basic Rehab"
-	therapy_session.therapy_plan = plan.name
-	therapy_session.duration = 1
-	therapy_session.start_date = start_date
-	therapy_session.service_request = service_request
-	therapy_session.save()
-
-	return therapy_session
 
 
 def refer_to_practitioner(encounter, practitioner=None, appointment_type=None):
@@ -301,4 +283,3 @@ def refer_to_practitioner(encounter, practitioner=None, appointment_type=None):
 	]
 
 	create_patient_referral(encounter.name, references)
->>>>>>> 3ff38c4 (test: Service Request)
