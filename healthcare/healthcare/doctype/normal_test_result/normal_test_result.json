@@ -1,7 +1,6 @@
 {
  "actions": [],
  "allow_copy": 1,
- "beta": 0,
  "creation": "2016-02-22 15:06:08.295224",
  "doctype": "DocType",
  "document_type": "Document",
@@ -19,6 +18,7 @@
   "allow_blank",
   "normal_range",
   "lab_test_comment",
+  "bold_result",
   "bold",
   "italic",
   "underline",
@@ -170,11 +170,17 @@
    "print_hide": 1,
    "read_only": 1,
    "report_hide": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "bold_result",
+   "fieldtype": "Check",
+   "label": "Bold"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2020-07-08 16:03:17.522893",
+ "modified": "2025-04-02 16:13:06.846003",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Normal Test Result",
@@ -182,5 +188,6 @@
  "permissions": [],
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }
