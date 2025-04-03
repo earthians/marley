@@ -42,6 +42,16 @@ frappe.ui.form.on("Inpatient Record", {
       frm.set_value("status", "Admission Scheduled");
     }
 
+    frm.add_custom_button("Add Pain Rating Score",
+      function() {
+        frappe.route_options = {
+          patient: frm.doc.patient,
+          reference_doc: "Inpatient Record",
+          reference_name: frm.doc.name,
+        };
+        frappe.new_doc("Pain Rating Score");
+      });
+      
     frm.add_custom_button(
       __("Clinical Note"),
       function () {
