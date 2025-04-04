@@ -13,10 +13,11 @@ frappe.ui.form.on("Lab Test", {
   setup: function (frm) {
     frm.get_field("normal_test_items").grid.editable_fields = [
       { fieldname: "lab_test_name", columns: 3 },
-      { fieldname: "lab_test_event", columns: 2 },
+      { fieldname: "lab_test_event", columns: 1 },
       { fieldname: "result_value", columns: 2 },
       { fieldname: "lab_test_uom", columns: 1 },
       { fieldname: "normal_range", columns: 2 },
+      { fieldname: "bold_result", columns: 1 },
     ];
     frm.get_field("descriptive_test_items").grid.editable_fields = [
       { fieldname: "lab_test_particulars", columns: 3 },
