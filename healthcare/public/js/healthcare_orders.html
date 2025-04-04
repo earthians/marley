@@ -43,7 +43,7 @@
 									</div>
 								{% } %}
 								<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary order-btn">
-									{%= service_requests[i].status %}
+									{%= status_code_map[service_requests[i].status] %}
 								</button>
 								<ul class="dropdown-menu dropdown-menu-right"
 									style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);"
@@ -127,7 +127,7 @@
 									</div>
 								{% } %}
 								<button data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" class="btn btn-xs btn-secondary order-btn">
-									{%= medication_requests[i].status %}
+									{%= status_code_map[service_requests[i].status] %}
 									</button>
 									<ul class="dropdown-menu dropdown-menu-right"
 									style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(-172px, 26px, 0px);"
