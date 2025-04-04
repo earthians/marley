@@ -171,15 +171,16 @@ healthcare.Orders = class Orders {
 		let cur_form_footer = this.form_wrapper.find('.form-footer');
 
 		frappe.call({
-			method: "get_encounter_details",
-			doc: me.frm.doc,
+			method: "healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_encounter_details",
 			args: {
+				"doc": me.frm.doc,
 			},
 			callback: (r) => {
 				if (!r.exc) {
 					var activities_html = frappe.render_template('healthcare_orders', {
 						service_requests: r.message[1],
 						medication_requests: r.message[0],
+						status_code_map: r.message[3],
 						create_orders: me.create_orders,
 						show_encounter: this.show_encounter
 				});
