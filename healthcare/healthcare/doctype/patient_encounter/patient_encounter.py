@@ -530,6 +530,15 @@ def get_encounter_details(doc):
 	filters = {"patient": doc.get("patient"), "docstatus": 1}
 	medication_requests = frappe.get_all("Medication Request", filters, ["*"])
 	service_requests = frappe.get_all("Service Request", filters, ["*"])
+	status_codes = frappe.db.get_all(
+		"Code Value",
+		filters={
+			"code_system": ["in", ["Request Status", "Medication Request Status"]],
+		},
+		fields=["name", "code_value", "display"],
+	)
+	status_code_map = get_value_map(status_codes)
+
 	for service_request in service_requests:
 		if service_request.template_dt == "Lab Test Template":
 			lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
@@ -543,7 +552,18 @@ def get_encounter_details(doc):
 		"Clinical Note", {"patient": doc.get("patient")}, ["posting_date", "note"]
 	)
 
-	return medication_requests, service_requests, clinical_notes
+	return medication_requests, service_requests, clinical_notes, status_code_map
+
+
+def get_value_map(status_codes):
+	"""return a map, for example, {"name": "x", "code_value": "", "display": "1"} to {"x": "1"}"""
+	status_code_map = {
+		list(d.values())[0]: list(d.values())[2]  # display is preferred over code_value
+		if list(d.values())[2]
+		else list(d.values())[1]
+		for d in status_codes
+	}
+	return dict(status_code_map)
 
 
 @frappe.whitelist()

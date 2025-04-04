@@ -180,6 +180,7 @@ healthcare.Orders = class Orders {
 					var activities_html = frappe.render_template('healthcare_orders', {
 						service_requests: r.message[1],
 						medication_requests: r.message[0],
+						status_code_map: r.message[3],
 						create_orders: me.create_orders,
 						show_encounter: this.show_encounter
 				});
