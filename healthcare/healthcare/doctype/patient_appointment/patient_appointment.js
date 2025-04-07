@@ -787,15 +787,16 @@ let check_and_set_availability = function (frm) {
                 }
               }
               // Deal with 0 duration appointments
-              if (
-                booked_moment.isSame(slot_start_time) ||
-                booked_moment.isBetween(slot_start_time, slot_end_time)
-              ) {
-                if (booked.duration == 0) {
-                  disabled = true;
-                  return false;
-                }
-              }
+              // if (
+              //   booked_moment.isSame(slot_start_time) ||
+              //   booked_moment.isBetween(slot_start_time, slot_end_time)
+              // ) {
+              //   if (booked.duration == 0) {
+              //     disabled = true;
+              //     console.log("idx 2", booked);
+              //     return false;
+              //   }
+              // }
 
               // Check for overlaps considering appointment duration
               if (slot_info.allow_overlap != 1) {
