@@ -61,6 +61,21 @@ frappe.ui.form.on('Patient', {
 		} else {
 			$(frm.fields_dict['age_html'].wrapper).html('');
 		}
+	},
+
+	patient_name: function (frm) {
+		frappe.call({
+			method: "healthcare.healthcare.doctype.patient.patient.update_patient_customer_name",
+			args:{
+				patient_name:frm.doc.patient_name
+			},
+			callback: function(r){
+				if(!r.exc)
+				{
+					frm.msgprint('Not Updated')
+				}
+			}
+		})
 	}
 });
 

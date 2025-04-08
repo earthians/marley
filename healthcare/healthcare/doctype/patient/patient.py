@@ -352,3 +352,26 @@ def get_patient_detail(patient):
 		vital_sign[0].pop("inpatient_record")
 		details.update(vital_sign[0])
 	return details
+
+@frappe.whitelist()
+def update_patient_customer_name(patient_name):
+	try:
+		result = frappe.db.get_value("Customer", 
+								{'customer_name': patient_name}, 
+								['name', 'customer_name'])
+		if not result:
+			frappe.msgprint(_("No customer found with this patient name"), alert=True)
+			return
+
+		name, cust_name = result
+		frappe.db.set_value("Customer", name, "name", patient_name)
+		frappe.db.commit()
+		frappe.msgprint(_("Customer name updated"), alert=True)
+		
+		return 'valid'
+	
+	except Exception as e:
+		frappe.log_error(f"Failed to update customer name: {str(e)}")
+		frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
+
+		return 'invalid'
