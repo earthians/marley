@@ -4,7 +4,7 @@
 
 
 import dateutil
-
+import frappe.model.rename_doc as rd
 import frappe
 from frappe import _
 from frappe.contacts.address_and_contact import load_address_and_contact
@@ -66,6 +66,8 @@ class Patient(Document):
 
 		if not self.user_id and self.email and self.invite_user:
 			self.create_website_user()
+
+		self.update_patient_customer_name()
 
 	def load_dashboard_info(self):
 		if self.customer:
@@ -154,6 +156,8 @@ class Patient(Document):
 			)[0][0]
 			count = cint(count) + 1
 			return "{0} - {1}".format(name, cstr(count))
+		
+		self.update_patient_customer_name()
 
 		return name
 
@@ -292,6 +296,29 @@ class Patient(Document):
 		)
 		self.notify_update()
 
+	@frappe.whitelist()
+	def update_patient_customer_name(self):
+		try:
+			result = frappe.db.get_value("Customer", 
+									{'customer_name': self.patient_name}, 
+									['name', 'customer_name'])
+			if not result:
+				frappe.msgprint(_("No customer found with this patient name"), alert=True)
+				return 'invalid'
+
+			name, cust_name = result
+
+			
+			frappe.rename_doc("Customer", name, cust_name)
+			frappe.msgprint(_("Customer name updated"), alert=True)
+			
+			return 'valid'
+		
+		except Exception as e:
+			frappe.log_error(f"Failed to update customer name: {str(e)}")
+			frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
+
+			return 'invalid'
 
 def create_customer(doc):
 	customer = frappe.get_doc(
@@ -352,26 +379,3 @@ def get_patient_detail(patient):
 		vital_sign[0].pop("inpatient_record")
 		details.update(vital_sign[0])
 	return details
-
-@frappe.whitelist()
-def update_patient_customer_name(patient_name):
-	try:
-		result = frappe.db.get_value("Customer", 
-								{'customer_name': patient_name}, 
-								['name', 'customer_name'])
-		if not result:
-			frappe.msgprint(_("No customer found with this patient name"), alert=True)
-			return
-
-		name, cust_name = result
-		frappe.db.set_value("Customer", name, "name", patient_name)
-		frappe.db.commit()
-		frappe.msgprint(_("Customer name updated"), alert=True)
-		
-		return 'valid'
-	
-	except Exception as e:
-		frappe.log_error(f"Failed to update customer name: {str(e)}")
-		frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
-
-		return 'invalid'

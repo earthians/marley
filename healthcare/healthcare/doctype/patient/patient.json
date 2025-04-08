@@ -184,8 +184,7 @@
    "ignore_user_permissions": 1,
    "label": "Customer",
    "no_copy": 1,
-   "options": "Customer",
-   "set_only_once": 1
+   "options": "Customer"
   },
   {
    "fieldname": "report_preference",
@@ -506,7 +505,7 @@
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2025-02-21 09:09:28.432907",
+ "modified": "2025-04-08 13:57:14.129197",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
