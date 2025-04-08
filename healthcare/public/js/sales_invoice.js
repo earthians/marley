@@ -40,6 +40,13 @@ frappe.ui.form.on('Sales Invoice', {
 		}
 	},
 
+	onload_post_render(frm) {
+		if (frm.doc.items && frm.doc.items.length === 1 && !frm.doc.items[0].item_code) {
+			frm.clear_table('items');
+			frm.refresh_field('items');  // Ensure UI updates
+		}
+	},
+
 	patient(frm) {
 		if (frm.doc.patient) {
 			frappe.db.get_value("Patient", frm.doc.patient, "customer")
@@ -186,7 +193,7 @@ var make_list_row= function(columns, invoice_healthcare_services, result={}) {
 var set_primary_action= function(frm, dialog, $results, invoice_healthcare_services) {
 	var me = this;
 	dialog.set_primary_action(__('Add'), function() {
-		frm.clear_table('items');
+//		frm.clear_table('items');
 		let checked_values = get_checked_values($results);
 		if(checked_values.length > 0){
 			if(invoice_healthcare_services) {
