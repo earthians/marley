@@ -298,6 +298,11 @@ class Patient(Document):
 
 	@frappe.whitelist()
 	def update_patient_customer_name(self):
+		"""
+		Update customer name on patient name changes
+
+		Document is renamed with latest patient name
+		"""
 		try:
 			result = frappe.db.get_value("Customer", 
 									{'customer_name': self.patient_name}, 
@@ -313,7 +318,7 @@ class Patient(Document):
 			frappe.msgprint(_("Customer name updated"), alert=True)
 			
 			self.customer = cust_name
-			
+
 			return 'valid'
 		
 		except Exception as e:
