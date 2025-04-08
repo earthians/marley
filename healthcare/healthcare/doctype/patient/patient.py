@@ -312,6 +312,8 @@ class Patient(Document):
 			frappe.rename_doc("Customer", name, cust_name)
 			frappe.msgprint(_("Customer name updated"), alert=True)
 			
+			self.customer = cust_name
+			
 			return 'valid'
 		
 		except Exception as e:
@@ -319,6 +321,7 @@ class Patient(Document):
 			frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
 
 			return 'invalid'
+		
 
 def create_customer(doc):
 	customer = frappe.get_doc(
