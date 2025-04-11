@@ -60,7 +60,10 @@
   "discharge_instructions",
   "followup_date",
   "sb_discharge_note",
-  "discharge_note"
+  "discharge_note",
+  "vital_signs_tab",
+  "table_vitals",
+  "vitals"
  ],
  "fields": [
   {
@@ -431,6 +434,21 @@
    "fieldtype": "Link",
    "label": "Admission Nursing Checklist Template",
    "options": "Nursing Checklist Template"
+  },
+  {
+   "fieldname": "vital_signs_tab",
+   "fieldtype": "Tab Break",
+   "label": "Vital Signs"
+  },
+  {
+   "fieldname": "table_vitals",
+   "fieldtype": "Table",
+   "options": "Vital Sign Entry"
+  },
+  {
+   "fieldname": "vitals",
+   "fieldtype": "HTML",
+   "label": "Vitals"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -440,7 +458,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-02-24 15:40:24.143620",
+ "modified": "2025-04-11 17:17:23.933412",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
