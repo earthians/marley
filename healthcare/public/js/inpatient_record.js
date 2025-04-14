@@ -29,7 +29,62 @@ frappe.ui.form.on("Inpatient Record", {
                 },
                 __("Create"))
                 .addClass("inner-group-button");
-            } 
+            }
+        });
+
+        frappe.db
+        .get_value(
+            "Insurance MR",
+            {patient: frm.doc.name},
+            "name"
+        )
+        .then(({message})=>{
+            if(message.name){
+                frm.page
+                .add_inner_button(__("Insurance MR"), function(){
+                    frappe.set_route(
+                        "Form", 
+                        "Insurance MR",
+                        message.name
+                    );
+                })
+                .addClass("inner-group-button");
+            } else {
+                frm.page
+                .add_inner_button(__("Add Insurance MR"), function(){
+                    frappe.new_doc("Insurance MR");
+                })
+                .addClass("inner-group-button");
+            }
+        });
+
+        frappe.db
+        .get_value(
+            "Fluid Intake Output Chart",
+            {patient: frm.doc.name},
+            "name"
+        )
+        .then(({message})=>{
+            if(message.name){
+                frm.page
+                .add_inner_button(__("Fluid Intake Output Chart"), function(){
+                    frappe.set_route(
+                        "Form", 
+                        "Fluid Intake Output Chart",
+                        message.name
+                    );
+                })
+                .addClass("inner-group-button");
+            } else {
+                frm.page
+                .add_inner_button(__("Fluid Intake Output Chart"), function(){
+                    frappe.new_doc("Fluid Intake Output Chart", {
+                        patient: frm.doc.patient
+                    });
+                },
+            __("Create"))
+                .addClass("inner-group-button");
+            }
         });
 
         frm.add_custom_button(__("Vital Signs"), function(){
@@ -38,6 +93,42 @@ frappe.ui.form.on("Inpatient Record", {
             })
         },
         __("Create"));
+
+        frm.add_custom_button(__("Medical Record"), function(){
+            frappe.new_doc("Patient Medical Record", {
+                patient: frm.doc.patient,
+                reference_doctype: "Inpatient Record",
+                reference_docname: frm.doc.name
+            })
+        },
+        __("Create"));
+
+        // frm.add_custom_button(__("Fluid Intake Output Chart"), function(){
+        //     frappe.new_doc("Fluid Intake Output Chart",{
+        //         patient: frm.doc.patient
+        //     })
+        // }, 
+        // __("Create"));
+
+        frm.add_custom_button(__("Consent Form Admission"), function(){
+            frappe.new_doc("Consent Form Admission",{
+                patient: frm.doc.patient
+            }) 
+        }, 
+        __("Create"));
+
+        frm.add_custom_button(__("Diabetic Chart"), function(){
+            frappe.new_doc("Diabetic Chart",{
+                patient: frm.doc.patient
+            }) 
+        },
+        __("Create"));
+
+        frm.add_custom_button(__("Insurance MR"), function(){
+            frappe.new_doc("Insurance MR",{
+                patient: frm.doc.patient,
+            })
+        });
     },
 
     create_pain_rating_score(frm){
