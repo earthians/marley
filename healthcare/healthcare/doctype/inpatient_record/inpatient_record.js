@@ -41,7 +41,7 @@ frappe.ui.form.on("Inpatient Record", {
     } else {
       frm.set_value("status", "Admission Scheduled");
     }
-    
+
     frm.add_custom_button(
       __("Clinical Note"),
       function () {
