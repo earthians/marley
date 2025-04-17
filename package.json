@@ -5,6 +5,7 @@
   "author": "Terence Zama <terence.zama@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "frappe-charts": "^1.6.2",
     "vue-cal": "^4.9.0"
   }
 }

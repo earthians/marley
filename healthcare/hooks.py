@@ -17,6 +17,7 @@ required_apps = ["erpnext"]
 # app_include_css = "/assets/healthcare/css/healthcare.css"
 app_include_js = "healthcare.bundle.js"
 
+
 # include js, css files in header of web template
 # web_include_css = "/assets/healthcare/css/healthcare.css"
 # web_include_js = "/assets/healthcare/js/healthcare.js"
@@ -33,6 +34,8 @@ app_include_js = "healthcare.bundle.js"
 
 # include js in doctype views
 doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
+
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -59,10 +62,10 @@ doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
 
 # add methods and filters to jinja environment
 jinja = {
-	"methods": [
-		"healthcare.healthcare.doctype.diagnostic_report.diagnostic_report.diagnostic_report_print",
-		"healthcare.healthcare.utils.generate_barcodes",
-	]
+    "methods": [
+        "healthcare.healthcare.doctype.diagnostic_report.diagnostic_report.diagnostic_report_print",
+        "healthcare.healthcare.utils.generate_barcodes",
+    ]
 }
 
 # Installation
@@ -100,7 +103,7 @@ after_uninstall = "healthcare.uninstall.after_uninstall"
 # Override standard doctype classes
 
 override_doctype_class = {
-	"Sales Invoice": "healthcare.healthcare.custom_doctype.sales_invoice.HealthcareSalesInvoice",
+    "Sales Invoice": "healthcare.healthcare.custom_doctype.sales_invoice.HealthcareSalesInvoice",
 }
 
 # Document Events
@@ -108,33 +111,33 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-	"*": {
-		"on_submit": "healthcare.healthcare.doctype.patient_history_settings.patient_history_settings.create_medical_record",
-		"on_cancel": "healthcare.healthcare.doctype.patient_history_settings.patient_history_settings.delete_medical_record",
-		"on_update_after_submit": "healthcare.healthcare.doctype.patient_history_settings.patient_history_settings.update_medical_record",
-	},
-	"Sales Invoice": {
-		"on_submit": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
-		"on_cancel": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
-		"validate": "healthcare.healthcare.utils.manage_invoice_validate",
-	},
-	"Company": {
-		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root",
-		"on_trash": "healthcare.healthcare.utils.company_on_trash",
-	},
-	"Patient": {
-		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
-	},
+    "*": {
+        "on_submit": "healthcare.healthcare.doctype.patient_history_settings.patient_history_settings.create_medical_record",
+        "on_cancel": "healthcare.healthcare.doctype.patient_history_settings.patient_history_settings.delete_medical_record",
+        "on_update_after_submit": "healthcare.healthcare.doctype.patient_history_settings.patient_history_settings.update_medical_record",
+    },
+    "Sales Invoice": {
+        "on_submit": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
+        "on_cancel": "healthcare.healthcare.utils.manage_invoice_submit_cancel",
+        "validate": "healthcare.healthcare.utils.manage_invoice_validate",
+    },
+    "Company": {
+        "after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root",
+        "on_trash": "healthcare.healthcare.utils.company_on_trash",
+    },
+    "Patient": {
+        "after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
+    },
 }
 
 scheduler_events = {
-	"all": [
-		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.send_appointment_reminder",
-	],
-	"daily": [
-		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",
-		"healthcare.healthcare.doctype.fee_validity.fee_validity.update_validity_status",
-	],
+    "all": [
+        "healthcare.healthcare.doctype.patient_appointment.patient_appointment.send_appointment_reminder",
+    ],
+    "daily": [
+        "healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",
+        "healthcare.healthcare.doctype.fee_validity.fee_validity.update_validity_status",
+    ],
 }
 
 # Scheduled Tasks
@@ -180,7 +183,7 @@ before_tests = "healthcare.healthcare.utils.before_tests"
 # exempt linked doctypes from being automatically cancelled
 #
 auto_cancel_exempted_doctypes = [
-	"Inpatient Medication Entry",
+    "Inpatient Medication Entry",
 ]
 
 # User Data Protection
@@ -215,82 +218,82 @@ auto_cancel_exempted_doctypes = [
 # ]
 
 global_search_doctypes = {
-	"Healthcare": [
-		{"doctype": "Patient", "index": 1},
-		{"doctype": "Medical Department", "index": 2},
-		{"doctype": "Vital Signs", "index": 3},
-		{"doctype": "Healthcare Practitioner", "index": 4},
-		{"doctype": "Patient Appointment", "index": 5},
-		{"doctype": "Healthcare Service Unit", "index": 6},
-		{"doctype": "Patient Encounter", "index": 7},
-		{"doctype": "Antibiotic", "index": 8},
-		{"doctype": "Diagnosis", "index": 9},
-		{"doctype": "Lab Test", "index": 10},
-		{"doctype": "Clinical Procedure", "index": 11},
-		{"doctype": "Inpatient Record", "index": 12},
-		{"doctype": "Sample Collection", "index": 13},
-		{"doctype": "Patient Medical Record", "index": 14},
-		{"doctype": "Appointment Type", "index": 15},
-		{"doctype": "Fee Validity", "index": 16},
-		{"doctype": "Practitioner Schedule", "index": 17},
-		{"doctype": "Dosage Form", "index": 18},
-		{"doctype": "Lab Test Sample", "index": 19},
-		{"doctype": "Prescription Duration", "index": 20},
-		{"doctype": "Prescription Dosage", "index": 21},
-		{"doctype": "Sensitivity", "index": 22},
-		{"doctype": "Complaint", "index": 23},
-		{"doctype": "Medical Code", "index": 24},
-	]
+    "Healthcare": [
+        {"doctype": "Patient", "index": 1},
+        {"doctype": "Medical Department", "index": 2},
+        {"doctype": "Vital Signs", "index": 3},
+        {"doctype": "Healthcare Practitioner", "index": 4},
+        {"doctype": "Patient Appointment", "index": 5},
+        {"doctype": "Healthcare Service Unit", "index": 6},
+        {"doctype": "Patient Encounter", "index": 7},
+        {"doctype": "Antibiotic", "index": 8},
+        {"doctype": "Diagnosis", "index": 9},
+        {"doctype": "Lab Test", "index": 10},
+        {"doctype": "Clinical Procedure", "index": 11},
+        {"doctype": "Inpatient Record", "index": 12},
+        {"doctype": "Sample Collection", "index": 13},
+        {"doctype": "Patient Medical Record", "index": 14},
+        {"doctype": "Appointment Type", "index": 15},
+        {"doctype": "Fee Validity", "index": 16},
+        {"doctype": "Practitioner Schedule", "index": 17},
+        {"doctype": "Dosage Form", "index": 18},
+        {"doctype": "Lab Test Sample", "index": 19},
+        {"doctype": "Prescription Duration", "index": 20},
+        {"doctype": "Prescription Dosage", "index": 21},
+        {"doctype": "Sensitivity", "index": 22},
+        {"doctype": "Complaint", "index": 23},
+        {"doctype": "Medical Code", "index": 24},
+    ]
 }
 
 domains = {
-	"Healthcare": "healthcare.setup",
+    "Healthcare": "healthcare.setup",
 }
 
 # nosemgrep
 standard_portal_menu_items = [
-	{
-		"title": "Personal Details",
-		"route": "/personal-details",
-		"reference_doctype": "Patient",
-		"role": "Patient",
-	},
-	{
-		"title": "Lab Test",
-		"route": "/lab-test",
-		"reference_doctype": "Lab Test",
-		"role": "Patient",
-	},
-	{
-		"title": "Prescription",
-		"route": "/prescription",
-		"reference_doctype": "Patient Encounter",
-		"role": "Patient",
-	},
-	{
-		"title": "Patient Appointment",
-		"route": "/patient-appointments",
-		"reference_doctype": "Patient Appointment",
-		"role": "Patient",
-	},
+    {
+        "title": "Personal Details",
+        "route": "/personal-details",
+        "reference_doctype": "Patient",
+        "role": "Patient",
+    },
+    {
+        "title": "Lab Test",
+        "route": "/lab-test",
+        "reference_doctype": "Lab Test",
+        "role": "Patient",
+    },
+    {
+        "title": "Prescription",
+        "route": "/prescription",
+        "reference_doctype": "Patient Encounter",
+        "role": "Patient",
+    },
+    {
+        "title": "Patient Appointment",
+        "route": "/patient-appointments",
+        "reference_doctype": "Patient Appointment",
+        "role": "Patient",
+    },
 ]
 
 has_website_permission = {
-	"Lab Test": "healthcare.healthcare.web_form.lab_test.lab_test.has_website_permission",
-	"Patient Encounter": "healthcare.healthcare.web_form.prescription.prescription.has_website_permission",
-	"Patient Appointment": "healthcare.healthcare.web_form.patient_appointments.patient_appointments.has_website_permission",
-	"Patient": "healthcare.healthcare.web_form.personal_details.personal_details.has_website_permission",
+    "Lab Test": "healthcare.healthcare.web_form.lab_test.lab_test.has_website_permission",
+    "Patient Encounter": "healthcare.healthcare.web_form.prescription.prescription.has_website_permission",
+    "Patient Appointment": "healthcare.healthcare.web_form.patient_appointments.patient_appointments.has_website_permission",
+    "Patient": "healthcare.healthcare.web_form.personal_details.personal_details.has_website_permission",
 }
 
 standard_queries = {
-	"Healthcare Practitioner": "healthcare.healthcare.doctype.healthcare_practitioner.healthcare_practitioner.get_practitioner_list"
+    "Healthcare Practitioner": "healthcare.healthcare.doctype.healthcare_practitioner.healthcare_practitioner.get_practitioner_list"
 }
 
 treeviews = [
-	"Healthcare Service Unit",
+    "Healthcare Service Unit",
 ]
 
 
 fixtures = [
-    { 'dt': 'Medication Route', 'filters': [['name', 'like', '%']] },
+    {'dt': 'Medication Route', 'filters': [['name', 'like', '%']]},
 ]

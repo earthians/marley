@@ -30,6 +30,7 @@
   "bp_systolic",
   "bp_diastolic",
   "bp",
+  "spo2",
   "vital_signs_note",
   "sb_nutrition_values",
   "height",
@@ -252,11 +253,17 @@
    "no_copy": 1,
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "description": "Most adults have a normal SpO2 range of 95% to 100%. SpO2 readings below 90% are considered hypoxemic, and readings below 85% can be dangerous and may require supplemental oxygen",
+   "fieldname": "spo2",
+   "fieldtype": "Percent",
+   "label": "SpO2 / Oxygen Saturation"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-07 12:14:26.166928",
+ "modified": "2025-04-15 15:25:43.250306",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Vital Signs",
