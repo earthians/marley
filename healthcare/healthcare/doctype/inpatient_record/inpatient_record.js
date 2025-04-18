@@ -11,7 +11,23 @@ frappe.ui.form.on("Inpatient Record", {
       { fieldname: "dosage_form", columns: 2 },
     ];
   },
+  prescription_json: function (frm) {
+    frm.prescription_renderer.prescription_json();
+  },
   refresh: function (frm) {
+    if (!frm.doc.__islocal) {
+      frappe.require("pcareui.bundle.js").then(() => {
+        frm.prescription_renderer = new pcare.ui.UIPrescriptionRender(
+          frm,
+          frm.doc.patient,
+          frm.doc.name,
+          "Inpatient Record",
+          frm.doc.name
+        );
+        frm.prescription_renderer.display_prescription();
+      });
+    }
+
     frm.set_query("admission_service_unit_type", function () {
       return {
         filters: {
