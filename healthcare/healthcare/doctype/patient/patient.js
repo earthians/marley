@@ -61,7 +61,7 @@ frappe.ui.form.on('Patient', {
 		} else {
 			$(frm.fields_dict['age_html'].wrapper).html('');
 		}
-	}
+	},
 });
 
 frappe.ui.form.on('Patient', 'dob', function(frm) {

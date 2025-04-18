@@ -187,8 +187,7 @@
    "ignore_user_permissions": 1,
    "label": "Customer",
    "no_copy": 1,
-   "options": "Customer",
-   "set_only_once": 1
+   "options": "Customer"
   },
   {
    "fieldname": "report_preference",
