@@ -44,6 +44,9 @@
   "language",
   "more_info",
   "patient_details",
+  "files_tab",
+  "files_section",
+  "files",
   "dashboard_tab",
   "address_and_contact_tab",
   "address_contacts",
@@ -500,13 +503,28 @@
    "label": "Title",
    "options": "Mr\nMrs\nMaster\nMiss",
    "reqd": 1
+  },
+  {
+   "fieldname": "files_tab",
+   "fieldtype": "Tab Break",
+   "label": "Files"
+  },
+  {
+   "fieldname": "files_section",
+   "fieldtype": "Section Break",
+   "label": "Files"
+  },
+  {
+   "fieldname": "files",
+   "fieldtype": "Table",
+   "options": "Patient Files"
   }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2025-02-21 09:09:28.432907",
+ "modified": "2025-04-09 15:42:11.630512",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",

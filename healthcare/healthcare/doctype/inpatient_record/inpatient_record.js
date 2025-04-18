@@ -71,6 +71,13 @@ frappe.ui.form.on("Inpatient Record", {
       __("Create")
     );
   },
+
+  onload: function (frm) {
+    if (frm.doc.patient) {
+      renderVitalSignsCharts(frm);
+    }
+  },
+
   btn_transfer: function (frm) {
     transfer_patient_dialog(frm);
   },
@@ -396,3 +403,25 @@ let cancel_ip_order = function (frm) {
     __("Submit")
   );
 };
+
+function renderVitalSignsCharts(frm) {
+  let $wrapper = $(frm.fields_dict.vital_signs.wrapper).empty();
+
+  frappe
+    .require("vital_signs_charts.bundle.js")
+    .then(() => {
+      frappe.vital_signs_charts = new frappe.ui.VitalSignsCharts({
+        wrapper: $wrapper,
+        patientId: frm.doc.patient,
+        inpatientRecordId: frm.doc.name,
+      });
+    })
+    .catch((err) => {
+      console.error("Error loading vital signs charts bundle:", err);
+      $wrapper.html(`
+            <div class="alert alert-danger">
+                <p>Error loading vital signs charts. Please check console for details.</p>
+            </div>
+        `);
+    });
+}
