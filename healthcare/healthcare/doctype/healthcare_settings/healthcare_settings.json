@@ -1,25 +1,44 @@
 {
  "actions": [],
- "beta": 1,
  "creation": "2017-05-09 11:26:22.337760",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "op_ip_settings",
   "sb_op_settings",
   "patient_name_by",
   "link_customer_to_patient",
-  "default_medical_code_standard",
+  "default_code_system",
+  "validate_nursing_checklists",
+  "default_google_calendar",
   "column_break_9",
   "collect_registration_fee",
   "registration_fee",
-  "automate_appointment_invoicing",
+  "show_payment_popup",
   "enable_free_follow_ups",
   "max_visits",
   "valid_days",
   "inpatient_settings_section",
   "allow_discharge_despite_unbilled_services",
+  "allow_discharge_despite_pending_healthcare_services",
+  "column_break_bkvx",
+  "automatically_generate_billable",
   "do_not_bill_inpatient_encounters",
+  "orders_tab",
+  "default_intent",
+  "column_break_1oy0",
+  "default_priority",
+  "laboratory_tab",
+  "sb_lab_settings",
+  "create_lab_test_on_si_submit",
+  "create_observation_on_si_submit",
+  "create_sample_collection_for_lab_test",
+  "column_break_34",
+  "lab_test_approval_required",
+  "employee_name_and_designation_in_print",
+  "custom_signature_in_print",
+  "billing_accounts",
   "healthcare_service_items",
   "inpatient_visit_charge_item",
   "op_consulting_charge_item",
@@ -29,6 +48,9 @@
   "income_account",
   "receivable_account",
   "naming_series_for_journal_entry",
+  "order_details_section",
+  "process_service_request_only_if_paid",
+  "alerts_tab",
   "out_patient_sms_alerts",
   "send_registration_msg",
   "registration_msg",
@@ -39,13 +61,6 @@
   "send_appointment_reminder",
   "appointment_reminder_msg",
   "remind_before",
-  "sb_lab_settings",
-  "create_lab_test_on_si_submit",
-  "create_sample_collection_for_lab_test",
-  "column_break_34",
-  "lab_test_approval_required",
-  "employee_name_and_designation_in_print",
-  "custom_signature_in_print",
   "laboratory_sms_alerts",
   "sms_printed",
   "column_break_28",
@@ -55,13 +70,7 @@
   {
    "fieldname": "sb_op_settings",
    "fieldtype": "Section Break",
-   "label": "Out Patient Settings"
-  },
-  {
-   "fieldname": "default_medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Default Medical Code Standard",
-   "options": "Medical Code Standard"
+   "label": "Outpatient Settings"
   },
   {
    "fieldname": "column_break_9",
@@ -80,6 +89,7 @@
    "fieldtype": "Currency",
    "label": "Registration Fee",
    "mandatory_depends_on": "eval:doc.collect_registration_fee == 1",
+   "non_negative": 1,
    "options": "Currency"
   },
   {
@@ -91,7 +101,6 @@
    "mandatory_depends_on": "eval:doc.enable_free_follow_ups == 1"
   },
   {
-   "collapsible": 1,
    "description": "You can configure default Items for billing consultation charges, procedure consumption items and inpatient visits",
    "fieldname": "healthcare_service_items",
    "fieldtype": "Section Break",
@@ -120,7 +129,6 @@
    "options": "Item"
   },
   {
-   "collapsible": 1,
    "fieldname": "out_patient_sms_alerts",
    "fieldtype": "Section Break",
    "label": "Out Patient SMS Alerts"
@@ -130,10 +138,9 @@
    "fieldtype": "Column Break"
   },
   {
-   "collapsible": 1,
    "fieldname": "sb_in_ac",
    "fieldtype": "Section Break",
-   "label": "Accounting Settings"
+   "label": "Default Accounts"
   },
   {
    "description": "Default income accounts to be used if not set in Healthcare Practitioner to book Appointment charges.",
@@ -150,7 +157,6 @@
    "options": "Party Account"
   },
   {
-   "collapsible": 1,
    "fieldname": "sb_lab_settings",
    "fieldtype": "Section Break",
    "label": "Laboratory Settings"
@@ -173,7 +179,6 @@
    "label": "Custom Signature in Print"
   },
   {
-   "collapsible": 1,
    "fieldname": "laboratory_sms_alerts",
    "fieldtype": "Section Break",
    "label": "Laboratory SMS Alerts"
@@ -228,14 +233,14 @@
    "fieldname": "patient_name_by",
    "fieldtype": "Select",
    "label": "Patient Name By",
-   "options": "Patient Name\nNaming Series"
+   "options": "Patient Name\nNaming Series\nAuto Name"
   },
   {
    "default": "0",
-   "description": "Manage Appointment Invoice submit and cancel automatically for Patient Encounter",
-   "fieldname": "automate_appointment_invoicing",
+   "description": "Checking this option will prompt for Appointment invoicing and payment",
+   "fieldname": "show_payment_popup",
    "fieldtype": "Check",
-   "label": "Automate Appointment Invoicing"
+   "label": "Show Payment Prompt in Appointment"
   },
   {
    "default": "0",
@@ -325,6 +330,101 @@
    "label": "Do Not Bill Patient Encounters for Inpatients"
   },
   {
+   "default": "0",
+   "description": "Validates all mandatory tasks in nursing checklist to be Completed before a Patient transactional event.",
+   "fieldname": "validate_nursing_checklists",
+   "fieldtype": "Check",
+   "label": "Validate Nursing Checklists"
+  },
+  {
+   "fieldname": "op_ip_settings",
+   "fieldtype": "Tab Break",
+   "label": "OP & IP"
+  },
+  {
+   "fieldname": "laboratory_tab",
+   "fieldtype": "Tab Break",
+   "label": "Laboratory"
+  },
+  {
+   "fieldname": "billing_accounts",
+   "fieldtype": "Tab Break",
+   "label": "Billing & Accounts"
+  },
+  {
+   "fieldname": "alerts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Alerts"
+  },
+  {
+   "description": "For use while scheduling tele-consultations via Google Meet",
+   "fieldname": "default_google_calendar",
+   "fieldtype": "Link",
+   "label": "Default Google Calendar",
+   "options": "Google Calendar"
+  },
+  {
+   "fieldname": "order_details_section",
+   "fieldtype": "Section Break",
+   "label": "Order Details"
+  },
+  {
+   "default": "0",
+   "fieldname": "process_service_request_only_if_paid",
+   "fieldtype": "Check",
+   "label": "Process Service Request If Billing Status Is Paid"
+  },
+  {
+   "default": "0",
+   "fieldname": "create_observation_on_si_submit",
+   "fieldtype": "Check",
+   "label": "Create Observation(s) on Sales Invoice Submission"
+  },
+  {
+   "fieldname": "default_code_system",
+   "fieldtype": "Link",
+   "label": "Default Code System",
+   "options": "Code System"
+  },
+  {
+   "fieldname": "default_intent",
+   "fieldtype": "Link",
+   "label": "Default Intent",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "column_break_1oy0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_priority",
+   "fieldtype": "Link",
+   "label": "Default Priority",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "orders_tab",
+   "fieldtype": "Tab Break",
+   "label": "Orders"
+  },
+  {
+   "default": "0",
+   "description": "Nightly generate billable from Inpatient Occupancy",
+   "fieldname": "automatically_generate_billable",
+   "fieldtype": "Check",
+   "label": "Automatically Generate Billable"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_discharge_despite_pending_healthcare_services",
+   "fieldtype": "Check",
+   "label": "Allow Discharge Despite Pending Healthcare Services"
+  },
+  {
+   "fieldname": "column_break_bkvx",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "naming_series_for_journal_entry",
    "fieldtype": "Select",
    "label": "Naming Series for Insurance Coverage Journal Entry"
@@ -332,7 +432,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2021-12-13 16:58:39.973700",
+ "modified": "2025-04-22 11:13:12.299816",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
@@ -351,7 +451,9 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

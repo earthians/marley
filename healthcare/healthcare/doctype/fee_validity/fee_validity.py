@@ -2,8 +2,6 @@
 # Copyright (c) 2015, ESS LLP and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
-
 import datetime
 import json
 
@@ -17,14 +15,16 @@ class FeeValidity(Document):
 		self.update_status()
 
 	def update_status(self):
-		if self.visited >= self.max_visits:
+		if getdate(self.valid_till) < getdate():
+			self.status = "Expired"
+		elif self.visited == self.max_visits:
 			self.status = "Completed"
 		else:
-			self.status = "Pending"
+			self.status = "Active"
 
 
 def create_fee_validity(appointment):
-	if not check_is_new_patient(appointment):
+	if patient_has_validity(appointment):
 		return
 
 	settings = frappe.get_single("Healthcare Settings")
@@ -50,31 +50,24 @@ def create_fee_validity(appointment):
 	)
 	fee_validity.max_visits = max_visits or 1
 	fee_validity.visited = 0
+	fee_validity.start_date = getdate(appointment.appointment_date)
 	fee_validity.valid_till = getdate(appointment.appointment_date) + datetime.timedelta(
 		days=int(valid_days or 1)
 	)
-	# fee_validity.append('ref_appointments', {
-	# 	'appointment': appointment.name
-	# })
 	fee_validity.save(ignore_permissions=True)
 
 	return fee_validity
 
 
-def check_is_new_patient(appointment):
+def patient_has_validity(appointment):
 	validity_exists = frappe.db.exists(
-		"Fee Validity", {"practitioner": appointment.practitioner, "patient": appointment.patient}
-	)
-	if validity_exists:
-		return False
-
-	appointment_exists = frappe.db.get_all(
-		"Patient Appointment",
+		"Fee Validity",
 		{
-			"name": ("!=", appointment.name),
-			"status": ("!=", "Cancelled"),
-			"patient": appointment.patient,
 			"practitioner": appointment.practitioner,
+			"patient": appointment.patient,
+			"status": "Active",
+			"valid_till": [">=", appointment.appointment_date],
+			"start_date": ["<=", appointment.appointment_date],
 		},
 	)
 

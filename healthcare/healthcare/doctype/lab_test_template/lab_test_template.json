@@ -1,449 +1,450 @@
-P{
- "actions": [],
- "allow_copy": 1,
- "allow_import": 1,
- "allow_rename": 1,
- "autoname": "field:lab_test_name",
- "creation": "2016-03-29 17:35:36.761223",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "lab_test_name",
-  "department",
-  "disabled",
-  "nursing_checklist_template",
-  "billing_section",
-  "column_break_hih3",
-  "link_existing_item",
-  "item",
-  "lab_test_code",
-  "lab_test_group",
-  "column_break_buub",
-  "is_billable",
-  "lab_test_rate",
-  "section_break_description",
-  "lab_test_description",
-  "result_format_tab",
-  "result_format_section",
-  "lab_test_template_type",
-  "section_break_descriptive_result",
-  "descriptive_result",
-  "section_break_normal",
-  "lab_test_uom",
-  "secondary_uom",
-  "conversion_factor",
-  "column_break_10",
-  "lab_test_normal_range",
-  "section_break_compound",
-  "normal_test_templates",
-  "section_break_special",
-  "sensitivity",
-  "descriptive_test_templates",
-  "section_break_group",
-  "lab_test_groups",
-  "sample_collection_tab",
-  "sb_sample_collection",
-  "sample",
-  "sample_uom",
-  "sample_qty",
-  "column_break_33",
-  "sample_details",
-  "codification",
-  "codification_table",
-  "worksheet_legend_tab",
-  "worksheet_section",
-  "worksheet_instructions",
-  "result_legend_section",
-  "legend_print_position",
-  "result_legend",
-  "service_request_defaults_section",
-  "patient_care_type",
-  "staff_role",
-  "column_break_34",
-  "change_in_item"
- ],
- "fields": [
-  {
-   "fieldname": "lab_test_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Test Name",
-   "no_copy": 1,
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "depends_on": "eval: !doc.__islocal || doc.link_existing_item",
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "label": "Item",
-   "mandatory_depends_on": "eval:doc.link_existing_item",
-   "no_copy": 1,
-   "options": "Item",
-   "read_only_depends_on": "eval: !doc.__islocal",
-   "search_index": 1
-  },
-  {
-   "fieldname": "lab_test_code",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Item Code",
-   "mandatory_depends_on": "eval:!doc.link_existing_item",
-   "no_copy": 1,
-   "read_only_depends_on": "eval:!doc.__islocal"
-  },
-  {
-   "fieldname": "lab_test_group",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "in_standard_filter": 1,
-   "label": "Item Group",
-   "options": "Item Group",
-   "read_only_depends_on": "eval:doc.link_existing_item",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "department",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "in_standard_filter": 1,
-   "label": "Department",
-   "options": "Medical Department",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "description": "<b>Single</b>: Results which require only a single input.\n<br>\n<b>Compound</b>: Results which require multiple event inputs.\n<br>\n<b>Descriptive</b>: Tests which have multiple result components with manual result entry.\n<br>\n<b>Grouped</b>: Test templates which are a group of other test templates.\n<br>\n<b>No Result</b>: Tests with no results, can be ordered and billed but no Lab Test will be created. e.g.. Sub Tests for Grouped results",
-   "fieldname": "lab_test_template_type",
-   "fieldtype": "Select",
-   "in_standard_filter": 1,
-   "label": "Result Format",
-   "options": "\nSingle\nCompound\nDescriptive\nGrouped\nImaging\nNo Result"
-  },
-  {
-   "default": "1",
-   "depends_on": "eval:doc.lab_test_template_type != 'Grouped' && (!doc.link_existing_item || !doc.__islocal);",
-   "description": "If unchecked, the item will not be available in Sales Invoices for billing but can be used in group test creation. ",
-   "fieldname": "is_billable",
-   "fieldtype": "Check",
-   "label": "Is Billable",
-   "search_index": 1
-  },
-  {
-   "depends_on": "eval:doc.is_billable && (!doc.link_existing_item || !doc.__islocal)",
-   "description": "This value is updated in the Default Sales Price List.",
-   "fieldname": "lab_test_rate",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Rate",
-   "mandatory_depends_on": "eval:doc.is_billable && !doc.link_existing_item"
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type == 'Single'",
-   "fieldname": "section_break_normal",
-   "fieldtype": "Section Break",
-   "label": "Lab Routine"
-  },
-  {
-   "fieldname": "lab_test_uom",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "in_list_view": 1,
-   "label": "UOM",
-   "options": "Lab Test UOM"
-  },
-  {
-   "fieldname": "lab_test_normal_range",
-   "fieldtype": "Long Text",
-   "ignore_xss_filter": 1,
-   "label": "Normal Range"
-  },
-  {
-   "fieldname": "column_break_10",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type == 'Compound'",
-   "fieldname": "section_break_compound",
-   "fieldtype": "Section Break",
-   "label": "Compound"
-  },
-  {
-   "fieldname": "normal_test_templates",
-   "fieldtype": "Table",
-   "options": "Normal Test Template"
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type == 'Descriptive'",
-   "fieldname": "section_break_special",
-   "fieldtype": "Section Break",
-   "label": "Descriptive Test"
-  },
-  {
-   "default": "0",
-   "fieldname": "sensitivity",
-   "fieldtype": "Check",
-   "label": "Sensitivity"
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type == 'Grouped'",
-   "fieldname": "section_break_group",
-   "fieldtype": "Section Break",
-   "label": "Group Tests"
-  },
-  {
-   "fieldname": "lab_test_groups",
-   "fieldtype": "Table",
-   "options": "Lab Test Group Template"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "section_break_description",
-   "fieldtype": "Section Break",
-   "label": "Description "
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
-   "fieldname": "lab_test_description",
-   "fieldtype": "Text Editor",
-   "ignore_xss_filter": 1,
-   "label": "Description",
-   "no_copy": 1
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "sb_sample_collection",
-   "fieldtype": "Section Break",
-   "label": "Sample Collection"
-  },
-  {
-   "fieldname": "sample",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Sample",
-   "options": "Lab Test Sample"
-  },
-  {
-   "fetch_from": "sample.sample_uom",
-   "fieldname": "sample_uom",
-   "fieldtype": "Data",
-   "label": "UOM",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "change_in_item",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Change In Item",
-   "no_copy": 1,
-   "print_hide": 1,
-   "report_hide": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "disabled",
-   "fieldtype": "Check",
-   "label": "Disabled"
-  },
-  {
-   "default": "0",
-   "fieldname": "sample_qty",
-   "fieldtype": "Float",
-   "label": "Quantity"
-  },
-  {
-   "fieldname": "sample_details",
-   "fieldtype": "Small Text",
-   "ignore_xss_filter": 1,
-   "label": "Collection Details"
-  },
-  {
-   "collapsible": 1,
-   "description": "Information to help easily interpret the test report, will be printed as part of the Lab Test result.",
-   "fieldname": "result_legend_section",
-   "fieldtype": "Section Break",
-   "label": "Result Legend Print"
-  },
-  {
-   "fieldname": "result_legend",
-   "fieldtype": "Text Editor",
-   "label": "Result Legend"
-  },
-  {
-   "fieldname": "legend_print_position",
-   "fieldtype": "Select",
-   "label": "Print Position",
-   "options": "Bottom\nTop\nBoth"
-  },
-  {
-   "fieldname": "secondary_uom",
-   "fieldtype": "Link",
-   "label": "Secondary UOM",
-   "options": "Lab Test UOM"
-  },
-  {
-   "depends_on": "secondary_uom",
-   "fieldname": "conversion_factor",
-   "fieldtype": "Float",
-   "label": "Conversion Factor",
-   "mandatory_depends_on": "secondary_uom"
-  },
-  {
-   "description": "Instructions to be printed on the worksheet",
-   "fieldname": "worksheet_instructions",
-   "fieldtype": "Text Editor",
-   "label": "Worksheet Instructions"
-  },
-  {
-   "fieldname": "worksheet_section",
-   "fieldtype": "Section Break",
-   "label": "Worksheet Print"
-  },
-  {
-   "fieldname": "descriptive_test_templates",
-   "fieldtype": "Table",
-   "options": "Descriptive Test Template"
-  },
-  {
-   "fieldname": "column_break_33",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "codification_table",
-   "fieldtype": "Table",
-   "label": "Medical Codes",
-   "options": "Codification Table"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "codification",
-   "fieldtype": "Tab Break",
-   "label": "Medical Coding"
-  },
-  {
-   "fieldname": "nursing_checklist_template",
-   "fieldtype": "Link",
-   "label": "Nursing Checklist Template",
-   "options": "Nursing Checklist Template"
-  },
-  {
-   "fieldname": "descriptive_result",
-   "fieldtype": "Text Editor",
-   "label": "Descriptive Result"
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
-   "fieldname": "section_break_descriptive_result",
-   "fieldtype": "Section Break",
-   "label": "Descriptive Result"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.__islocal",
-   "fieldname": "link_existing_item",
-   "fieldtype": "Check",
-   "label": "Link existing Item"
-  },
-  {
-   "fieldname": "worksheet_legend_tab",
-   "fieldtype": "Tab Break",
-   "label": "Worksheet & Legend"
-  },
-  {
-   "fieldname": "result_format_section",
-   "fieldtype": "Section Break",
-   "label": "Result Format"
-  },
-  {
-   "fieldname": "result_format_tab",
-   "fieldtype": "Tab Break",
-   "label": "Result Format"
-  },
-  {
-   "depends_on": "eval:doc.lab_test_template_type != 'Imaging'",
-   "fieldname": "sample_collection_tab",
-   "fieldtype": "Tab Break",
-   "label": "Sample Collection"
-  },
-  {
-   "fieldname": "billing_section",
-   "fieldtype": "Section Break",
-   "label": "Billing"
-  },
-  {
-   "fieldname": "column_break_hih3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "service_request_defaults_section",
-   "fieldtype": "Section Break",
-   "label": "Service Request Defaults"
-  },
-  {
-   "fetch_from": "service_request_category.patient_care_type",
-   "fetch_if_empty": 1,
-   "fieldname": "patient_care_type",
-   "fieldtype": "Link",
-   "label": "Patient Care Type",
-   "options": "Patient Care Type"
-  },
-  {
-   "fieldname": "staff_role",
-   "fieldtype": "Link",
-   "label": "Staff Role",
-   "options": "Role"
-  },
-  {
-   "fieldname": "column_break_34",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_buub",
-   "fieldtype": "Column Break"
-  }
- ],
- "links": [],
- "modified": "2023-11-03 15:28:05.801812",
- "modified_by": "Administrator",
- "module": "Healthcare",
- "name": "Lab Test Template",
- "naming_rule": "By fieldname",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Healthcare Administrator",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Laboratory User",
-   "share": 1
-  }
- ],
- "restrict_to_domain": "Healthcare",
- "search_fields": "lab_test_code,lab_test_name,lab_test_template_type",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "title_field": "lab_test_name",
- "track_changes": 1
+{
+  "actions": [],
+  "allow_copy": 1,
+  "allow_import": 1,
+  "allow_rename": 1,
+  "autoname": "field:lab_test_name",
+  "creation": "2016-03-29 17:35:36.761223",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "lab_test_name",
+    "department",
+    "column_break_3",
+    "disabled",
+    "nursing_checklist_template",
+    "billing_section",
+    "column_break_hih3",
+    "link_existing_item",
+    "item",
+    "lab_test_code",
+    "lab_test_group",
+    "column_break_buub",
+    "is_billable",
+    "lab_test_rate",
+    "section_break_description",
+    "lab_test_description",
+    "result_format_tab",
+    "result_format_section",
+    "lab_test_template_type",
+    "section_break_descriptive_result",
+    "descriptive_result",
+    "section_break_normal",
+    "lab_test_uom",
+    "secondary_uom",
+    "conversion_factor",
+    "column_break_10",
+    "lab_test_normal_range",
+    "section_break_compound",
+    "normal_test_templates",
+    "section_break_special",
+    "sensitivity",
+    "descriptive_test_templates",
+    "section_break_group",
+    "lab_test_groups",
+    "sample_collection_tab",
+    "sb_sample_collection",
+    "sample",
+    "sample_uom",
+    "sample_qty",
+    "column_break_33",
+    "sample_details",
+    "codification",
+    "codification_table",
+    "worksheet_legend_tab",
+    "worksheet_section",
+    "worksheet_instructions",
+    "result_legend_section",
+    "legend_print_position",
+    "result_legend",
+    "service_request_defaults_section",
+    "patient_care_type",
+    "staff_role",
+    "column_break_34",
+    "change_in_item"
+  ],
+  "fields": [
+    {
+      "fieldname": "lab_test_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Test Name",
+      "no_copy": 1,
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "depends_on": "eval: !doc.__islocal || doc.link_existing_item",
+      "fieldname": "item",
+      "fieldtype": "Link",
+      "label": "Item",
+      "mandatory_depends_on": "eval:doc.link_existing_item",
+      "no_copy": 1,
+      "options": "Item",
+      "read_only_depends_on": "eval: !doc.__islocal",
+      "search_index": 1
+    },
+    {
+      "fieldname": "lab_test_code",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Item Code",
+      "mandatory_depends_on": "eval:!doc.link_existing_item",
+      "no_copy": 1,
+      "read_only_depends_on": "eval:!doc.__islocal"
+    },
+    {
+      "fieldname": "lab_test_group",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "in_standard_filter": 1,
+      "label": "Item Group",
+      "options": "Item Group",
+      "read_only_depends_on": "eval:doc.link_existing_item",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "department",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "in_standard_filter": 1,
+      "label": "Department",
+      "options": "Medical Department",
+      "reqd": 1
+    },
+    {
+      "fieldname": "column_break_3",
+      "fieldtype": "Column Break"
+    },
+    {
+      "description": "<b>Single</b>: Results which require only a single input.\n<br>\n<b>Compound</b>: Results which require multiple event inputs.\n<br>\n<b>Descriptive</b>: Tests which have multiple result components with manual result entry.\n<br>\n<b>Grouped</b>: Test templates which are a group of other test templates.\n<br>\n<b>No Result</b>: Tests with no results, can be ordered and billed but no Lab Test will be created. e.g.. Sub Tests for Grouped results",
+      "fieldname": "lab_test_template_type",
+      "fieldtype": "Select",
+      "in_standard_filter": 1,
+      "label": "Result Format",
+      "options": "\nSingle\nCompound\nDescriptive\nGrouped\nImaging\nNo Result"
+    },
+    {
+      "default": "1",
+      "depends_on": "eval:doc.lab_test_template_type != 'Grouped' && (!doc.link_existing_item || !doc.__islocal);",
+      "description": "If unchecked, the item will not be available in Sales Invoices for billing but can be used in group test creation. ",
+      "fieldname": "is_billable",
+      "fieldtype": "Check",
+      "label": "Is Billable",
+      "search_index": 1
+    },
+    {
+      "depends_on": "eval:doc.is_billable && (!doc.link_existing_item || !doc.__islocal)",
+      "description": "This value is updated in the Default Sales Price List.",
+      "fieldname": "lab_test_rate",
+      "fieldtype": "Currency",
+      "in_list_view": 1,
+      "label": "Rate",
+      "mandatory_depends_on": "eval:doc.is_billable && !doc.link_existing_item"
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type == 'Single'",
+      "fieldname": "section_break_normal",
+      "fieldtype": "Section Break",
+      "label": "Lab Routine"
+    },
+    {
+      "fieldname": "lab_test_uom",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "in_list_view": 1,
+      "label": "UOM",
+      "options": "Lab Test UOM"
+    },
+    {
+      "fieldname": "lab_test_normal_range",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "label": "Normal Range"
+    },
+    {
+      "fieldname": "column_break_10",
+      "fieldtype": "Column Break"
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type == 'Compound'",
+      "fieldname": "section_break_compound",
+      "fieldtype": "Section Break",
+      "label": "Compound"
+    },
+    {
+      "fieldname": "normal_test_templates",
+      "fieldtype": "Table",
+      "options": "Normal Test Template"
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type == 'Descriptive'",
+      "fieldname": "section_break_special",
+      "fieldtype": "Section Break",
+      "label": "Descriptive Test"
+    },
+    {
+      "default": "0",
+      "fieldname": "sensitivity",
+      "fieldtype": "Check",
+      "label": "Sensitivity"
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type == 'Grouped'",
+      "fieldname": "section_break_group",
+      "fieldtype": "Section Break",
+      "label": "Group Tests"
+    },
+    {
+      "fieldname": "lab_test_groups",
+      "fieldtype": "Table",
+      "options": "Lab Test Group Template"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "section_break_description",
+      "fieldtype": "Section Break",
+      "label": "Description "
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
+      "fieldname": "lab_test_description",
+      "fieldtype": "Text Editor",
+      "ignore_xss_filter": 1,
+      "label": "Description",
+      "no_copy": 1
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "sb_sample_collection",
+      "fieldtype": "Section Break",
+      "label": "Sample Collection"
+    },
+    {
+      "fieldname": "sample",
+      "fieldtype": "Link",
+      "ignore_user_permissions": 1,
+      "label": "Sample",
+      "options": "Lab Test Sample"
+    },
+    {
+      "fetch_from": "sample.sample_uom",
+      "fieldname": "sample_uom",
+      "fieldtype": "Data",
+      "label": "UOM",
+      "read_only": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "change_in_item",
+      "fieldtype": "Check",
+      "hidden": 1,
+      "label": "Change In Item",
+      "no_copy": 1,
+      "print_hide": 1,
+      "report_hide": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "disabled",
+      "fieldtype": "Check",
+      "label": "Disabled"
+    },
+    {
+      "default": "0",
+      "fieldname": "sample_qty",
+      "fieldtype": "Float",
+      "label": "Quantity"
+    },
+    {
+      "fieldname": "sample_details",
+      "fieldtype": "Small Text",
+      "ignore_xss_filter": 1,
+      "label": "Collection Details"
+    },
+    {
+      "collapsible": 1,
+      "description": "Information to help easily interpret the test report, will be printed as part of the Lab Test result.",
+      "fieldname": "result_legend_section",
+      "fieldtype": "Section Break",
+      "label": "Result Legend Print"
+    },
+    {
+      "fieldname": "result_legend",
+      "fieldtype": "Text Editor",
+      "label": "Result Legend"
+    },
+    {
+      "fieldname": "legend_print_position",
+      "fieldtype": "Select",
+      "label": "Print Position",
+      "options": "Bottom\nTop\nBoth"
+    },
+    {
+      "fieldname": "secondary_uom",
+      "fieldtype": "Link",
+      "label": "Secondary UOM",
+      "options": "Lab Test UOM"
+    },
+    {
+      "depends_on": "secondary_uom",
+      "fieldname": "conversion_factor",
+      "fieldtype": "Float",
+      "label": "Conversion Factor",
+      "mandatory_depends_on": "secondary_uom"
+    },
+    {
+      "description": "Instructions to be printed on the worksheet",
+      "fieldname": "worksheet_instructions",
+      "fieldtype": "Text Editor",
+      "label": "Worksheet Instructions"
+    },
+    {
+      "fieldname": "worksheet_section",
+      "fieldtype": "Section Break",
+      "label": "Worksheet Print"
+    },
+    {
+      "fieldname": "descriptive_test_templates",
+      "fieldtype": "Table",
+      "options": "Descriptive Test Template"
+    },
+    {
+      "fieldname": "column_break_33",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "codification_table",
+      "fieldtype": "Table",
+      "label": "Medical Codes",
+      "options": "Codification Table"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "codification",
+      "fieldtype": "Tab Break",
+      "label": "Medical Coding"
+    },
+    {
+      "fieldname": "nursing_checklist_template",
+      "fieldtype": "Link",
+      "label": "Nursing Checklist Template",
+      "options": "Nursing Checklist Template"
+    },
+    {
+      "fieldname": "descriptive_result",
+      "fieldtype": "Text Editor",
+      "label": "Descriptive Result"
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type == 'Imaging'",
+      "fieldname": "section_break_descriptive_result",
+      "fieldtype": "Section Break",
+      "label": "Descriptive Result"
+    },
+    {
+      "default": "0",
+      "depends_on": "eval: doc.__islocal",
+      "fieldname": "link_existing_item",
+      "fieldtype": "Check",
+      "label": "Link existing Item"
+    },
+    {
+      "fieldname": "worksheet_legend_tab",
+      "fieldtype": "Tab Break",
+      "label": "Worksheet & Legend"
+    },
+    {
+      "fieldname": "result_format_section",
+      "fieldtype": "Section Break",
+      "label": "Result Format"
+    },
+    {
+      "fieldname": "result_format_tab",
+      "fieldtype": "Tab Break",
+      "label": "Result Format"
+    },
+    {
+      "depends_on": "eval:doc.lab_test_template_type != 'Imaging'",
+      "fieldname": "sample_collection_tab",
+      "fieldtype": "Tab Break",
+      "label": "Sample Collection"
+    },
+    {
+      "fieldname": "billing_section",
+      "fieldtype": "Section Break",
+      "label": "Billing"
+    },
+    {
+      "fieldname": "column_break_hih3",
+      "fieldtype": "Column Break"
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "service_request_defaults_section",
+      "fieldtype": "Section Break",
+      "label": "Service Request Defaults"
+    },
+    {
+      "fetch_from": "service_request_category.patient_care_type",
+      "fetch_if_empty": 1,
+      "fieldname": "patient_care_type",
+      "fieldtype": "Link",
+      "label": "Patient Care Type",
+      "options": "Patient Care Type"
+    },
+    {
+      "fieldname": "staff_role",
+      "fieldtype": "Link",
+      "label": "Staff Role",
+      "options": "Role"
+    },
+    {
+      "fieldname": "column_break_34",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "column_break_buub",
+      "fieldtype": "Column Break"
+    }
+  ],
+  "links": [],
+  "modified": "2023-11-03 15:28:05.801812",
+  "modified_by": "Administrator",
+  "module": "Healthcare",
+  "name": "Lab Test Template",
+  "naming_rule": "By fieldname",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Healthcare Administrator",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Laboratory User",
+      "share": 1
+    }
+  ],
+  "restrict_to_domain": "Healthcare",
+  "search_fields": "lab_test_code,lab_test_name,lab_test_template_type",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "lab_test_name",
+  "track_changes": 1
 }

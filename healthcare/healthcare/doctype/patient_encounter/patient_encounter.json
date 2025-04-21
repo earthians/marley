@@ -3,7 +3,6 @@
  "allow_copy": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 1,
  "creation": "2016-04-21 10:53:44.637684",
  "doctype": "DocType",
  "document_type": "Document",
@@ -22,13 +21,15 @@
   "inpatient_status",
   "column_break_6",
   "company",
+  "status",
   "encounter_date",
   "encounter_time",
   "practitioner",
   "practitioner_name",
   "medical_department",
-  "amended_from",
+  "google_meet_link",
   "invoiced",
+  "submit_orders_on_save",
   "sb_symptoms",
   "symptoms",
   "symptoms_in_print",
@@ -58,7 +59,14 @@
   "therapy_plan",
   "therapies",
   "section_break_33",
-  "encounter_comment"
+  "encounter_comment",
+  "sb_refs",
+  "amended_from",
+  "encounter_details_tab",
+  "order_history_html",
+  "encounter_details",
+  "notes_tab",
+  "clinical_notes"
  ],
  "fields": [
   {
@@ -142,6 +150,7 @@
    "reqd": 1
   },
   {
+   "default": "Now",
    "fieldname": "encounter_time",
    "fieldtype": "Time",
    "label": "Encounter Time",
@@ -314,6 +323,10 @@
    "read_only": 1
   },
   {
+   "fieldname": "sb_refs",
+   "fieldtype": "Section Break"
+  },
+  {
    "fetch_from": "practitioner.practitioner_name",
    "fieldname": "practitioner_name",
    "fieldtype": "Data",
@@ -399,16 +412,74 @@
    "fetch_if_empty": 1,
    "fieldname": "coverage_status",
    "fieldtype": "Data",
-   "label": "Claim Status",
+   "label": "Coverage Status",
    "read_only": 1
+  },
+  {
+   "fetch_from": "appointment.google_meet_link",
+   "fieldname": "google_meet_link",
+   "fieldtype": "Data",
+   "label": "Google Meet Link",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal && doc.docstatus == 0;",
+   "fieldname": "encounter_details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Encounter Details"
+  },
+  {
+   "fieldname": "encounter_details",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nOpen\nOrdered\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.__islocal;",
+   "fieldname": "submit_orders_on_save",
+   "fieldtype": "Check",
+   "label": "Submit Orders on Save"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal && doc.docstatus == 0;",
+   "fieldname": "notes_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "clinical_notes",
+   "fieldtype": "HTML",
+   "label": "Clinical Notes"
+  },
+  {
+   "fieldname": "order_history_html",
+   "fieldtype": "HTML",
+   "label": "Order History"
   }
  ],
  "is_submittable": 1,
- "links": [],
- "modified": "2021-12-03 13:32:42.689400",
+ "links": [
+  {
+   "link_doctype": "Clinical Note",
+   "link_fieldname": "reference_name"
+  },
+  {
+   "link_doctype": "Treatment Counselling",
+   "link_fieldname": "admission_encounter"
+  }
+ ],
+ "modified": "2023-11-07 18:03:13.793649",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -432,6 +503,20 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Ordered"
+  },
+  {
+   "color": "Blue",
+   "title": "Completed"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1

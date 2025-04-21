@@ -1,9 +1,7 @@
 {
  "actions": [],
- "allow_copy": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "beta": 1,
  "creation": "2017-05-04 11:52:40.941507",
  "doctype": "DocType",
  "document_type": "Document",
@@ -12,41 +10,50 @@
   "naming_series",
   "title",
   "status",
-  "patient",
-  "patient_name",
-  "patient_sex",
-  "patient_age",
-  "inpatient_record",
+  "appointment_type",
+  "appointment_for",
   "column_break_1",
   "company",
   "practitioner",
   "practitioner_name",
   "department",
   "service_unit",
-  "section_break_12",
-  "appointment_type",
-  "duration",
   "appointment_date",
-  "appointment_time",
-  "appointment_datetime",
-  "column_break_17",
-  "service_request",
-  "procedure_template",
-  "get_procedure_from_encounter",
-  "procedure_prescription",
-  "therapy_plan",
-  "therapy_type",
-  "get_prescribed_therapies",
-  "sb_source",
-  "source",
-  "column_break_30",
-  "referring_practitioner",
+  "section_patient_details",
+  "patient",
+  "patient_name",
+  "inpatient_record",
+  "column_break_4pp7",
+  "patient_sex",
+  "patient_age",
   "insurance_section",
   "insurance_policy",
   "insurance_payor",
   "column_break_49",
   "insurance_coverage",
   "coverage_status",
+  "source_section",
+  "column_break_xmkt",
+  "source",
+  "referring_practitioner",
+  "column_break_gdcb",
+  "service_request",
+  "reference_doctype",
+  "reference_docname",
+  "section_break_12",
+  "duration",
+  "procedure_template",
+  "get_procedure_from_encounter",
+  "procedure_prescription",
+  "therapy_plan",
+  "therapy_type",
+  "get_prescribed_therapies",
+  "column_break_17",
+  "appointment_time",
+  "appointment_datetime",
+  "add_video_conferencing",
+  "event",
+  "google_meet_link",
   "section_break_16",
   "mode_of_payment",
   "billing_item",
@@ -55,15 +62,12 @@
   "paid_amount",
   "ref_sales_invoice",
   "section_break_3",
+  "appointment_based_on_check_in",
+  "position_in_queue",
+  "column_break_wicc",
   "reminded",
-  "column_break_36",
-  "notes",
-  "section_break_19",
-  "column_break_23",
-  "column_break_27",
-  "emergency_section",
-  "column_break_3",
-  "section_break_5"
+  "appointment_notes_section",
+  "notes"
  ],
  "fields": [
   {
@@ -115,12 +119,13 @@
    "in_filter": 1,
    "in_list_view": 1,
    "label": "Status",
-   "options": "\nScheduled\nOpen\nClosed\nCancelled",
+   "no_copy": 1,
+   "options": "\nScheduled\nOpen\nConfirmed\nChecked In\nChecked Out\nClosed\nCancelled\nNo Show",
    "read_only": 1,
    "search_index": 1
   },
   {
-   "depends_on": "eval:doc.patient;",
+   "depends_on": "eval:doc.patient",
    "fieldname": "procedure_template",
    "fieldtype": "Link",
    "label": "Clinical Procedure Template",
@@ -147,34 +152,39 @@
    "fieldname": "service_unit",
    "fieldtype": "Link",
    "label": "Service Unit",
+   "mandatory_depends_on": "eval:doc.appointment_for==\"Service Unit\"",
    "options": "Healthcare Service Unit",
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.appointment_for!=\"Service Unit\""
   },
   {
-   "depends_on": "eval:doc.practitioner;",
+   "depends_on": "eval:!doc.__is_local",
    "fieldname": "section_break_12",
    "fieldtype": "Section Break",
    "label": "Appointment Details"
   },
   {
+   "depends_on": "eval:doc.appointment_for==\"Practitioner\"",
    "fieldname": "practitioner",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Healthcare Practitioner",
    "options": "Healthcare Practitioner",
-   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
   {
    "fetch_from": "practitioner.department",
+   "fetch_if_empty": 1,
    "fieldname": "department",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Department",
+   "mandatory_depends_on": "eval:doc.appointment_for==\"Department\"",
    "options": "Medical Department",
+   "read_only_depends_on": "eval:doc.appointment_for!=\"Department\"",
    "search_index": 1,
    "set_only_once": 1
   },
@@ -189,16 +199,18 @@
    "in_standard_filter": 1,
    "label": "Date",
    "read_only": 1,
+   "read_only_depends_on": "eval:doc.appointment_for==\"Practitioner\"",
    "reqd": 1,
    "search_index": 1
   },
   {
+   "depends_on": "eval: doc.appointment_for == \"Practitioner\"",
    "fieldname": "appointment_time",
    "fieldtype": "Time",
    "in_list_view": 1,
    "label": "Time",
-   "read_only": 1,
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.appointment_based_on_check_in == false && doc.appointment_for == \"Practitioner\";",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_16",
@@ -286,7 +298,6 @@
    "label": "Notes"
   },
   {
-   "depends_on": "eval:doc.source!='Direct'",
    "fieldname": "referring_practitioner",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -346,10 +357,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_36",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -366,46 +373,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "sb_source",
-   "fieldtype": "Section Break",
-   "label": "Source"
-  },
-  {
    "fieldname": "source",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Source",
-   "options": "Direct\nReferral\nExternal Referral",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_30",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.patient",
-   "fieldname": "section_break_19",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_23",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_27",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "emergency_section",
-   "fieldtype": "Section Break",
-   "label": "Emergency"
-  },
-  {
-   "fieldname": "column_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_5",
-   "fieldtype": "Section Break"
+   "options": "UTM Source"
   },
   {
    "depends_on": "patient",
@@ -448,19 +419,112 @@
    "read_only": 1
   },
   {
+   "fieldname": "google_meet_link",
+   "fieldtype": "Data",
+   "label": "Google Meet Link",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.appointment_for == \"Practitioner\"",
+   "fieldname": "add_video_conferencing",
+   "fieldtype": "Check",
+   "label": "Add Video Conferencing"
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Link",
+   "label": "Event",
+   "options": "Event",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Fetched from Practitioner Schedule if \"Create Slots\" is disabled",
+   "fieldname": "appointment_based_on_check_in",
+   "fieldtype": "Check",
+   "label": "Appointment Based On Check In",
+   "read_only": 1
+  },
+  {
+   "description": "Position In Queue after \"Check In\"",
+   "fieldname": "position_in_queue",
+   "fieldtype": "Int",
+   "label": "Position In Queue",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "appointment_type.allow_booking_for",
+   "fieldname": "appointment_for",
+   "fieldtype": "Select",
+   "label": "Appointment For",
+   "options": "\nPractitioner\nDepartment\nService Unit",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_patient_details",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "fieldname": "column_break_4pp7",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "service_request",
    "fieldtype": "Link",
    "label": "Service Request",
    "options": "Service Request",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Docname",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_wicc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "appointment_notes_section",
+   "fieldtype": "Section Break",
+   "label": "Appointment Notes"
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "column_break_xmkt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_gdcb",
+   "fieldtype": "Column Break"
   }
  ],
+ "grid_page_length": 50,
  "links": [],
- "modified": "2021-12-23 07:15:51.745812",
+ "modified": "2025-04-22 14:44:17.881699",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -501,10 +565,12 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient, practitioner, department, appointment_date, appointment_time",
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1
