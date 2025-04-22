@@ -4,6 +4,7 @@
 
 
 import json
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -32,13 +33,27 @@ class PatientEncounter(Document):
 	def on_submit(self):
 		if self.therapies:
 			create_therapy_plan(self)
+		self.make_service_request()
+		self.make_medication_request()
+		# to save service_request name in prescription
+		self.save("Update")
+		self.db_set("status", "Completed")
+
+	def before_cancel(self):
+		orders = frappe.get_all("Service Request", {"order_group": self.name})
+		for order in orders:
+			order_doc = frappe.get_doc("Service Request", order.name)
+			if order_doc.docstatus == 1:
+				order_doc.cancel()
 
 	def on_cancel(self):
+		self.db_set("status", "Cancelled")
+
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
 
 		if self.inpatient_record and self.drug_prescription:
-			delete_ip_medication_order(self)
+			delete_ip_medication_order(self)  # TODO: delete?
 
 	def set_title(self):
 		self.title = _("{0} with {1}").format(
@@ -69,7 +84,7 @@ class PatientEncounter(Document):
 				["diagnosis", "in", diagnosis],
 				["parenttype", "=", "Treatment Plan Template"],
 			]
-			diagnosis = frappe.get_list("Patient Encounter Diagnosis", filters=filters, fields="*")
+			diagnosis = frappe.db.get_all("Patient Encounter Diagnosis", filters=filters, fields="*")
 			plan_names = [_diagnosis["parent"] for _diagnosis in diagnosis]
 			plan_filters["name"][1].extend(plan_names)
 
@@ -80,7 +95,7 @@ class PatientEncounter(Document):
 				["complaint", "in", symptoms],
 				["parenttype", "=", "Treatment Plan Template"],
 			]
-			symptoms = frappe.get_list("Patient Encounter Symptom", filters=filters, fields="*")
+			symptoms = frappe.db.get_all("Patient Encounter Symptom", filters=filters, fields="*")
 			plan_names = [symptom["parent"] for symptom in symptoms]
 			plan_filters["name"][1].extend(plan_names)
 
@@ -97,17 +112,13 @@ class PatientEncounter(Document):
 			self.set_treatment_plan(treatment_plan)
 
 	def set_treatment_plan(self, plan):
-		plan_items = frappe.get_list(
-			"Treatment Plan Template Item", filters={"parent": plan}, fields="*"
-		)
-		for plan_item in plan_items:
+		plan_doc = frappe.get_doc("Treatment Plan Template", plan)
+
+		for plan_item in plan_doc.items:
 			self.set_treatment_plan_item(plan_item)
 
-		drugs = frappe.get_list("Drug Prescription", filters={"parent": plan}, fields="*")
-		for drug in drugs:
-			self.append("drug_prescription", drug)
-
-		self.save()
+		for drug in plan_doc.drugs:
+			self.append("drug_prescription", (frappe.copy_doc(drug)).as_dict())
 
 	def set_treatment_plan_item(self, plan_item):
 		if plan_item.type == "Clinical Procedure Template":
