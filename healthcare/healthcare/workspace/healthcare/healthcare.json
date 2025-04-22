@@ -261,9 +261,9 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Medical Code Standard",
+   "label": "Code System",
    "link_count": 0,
-   "link_to": "Medical Code Standard",
+   "link_to": "Code System",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -272,9 +272,9 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Medical Code",
+   "label": "Code Value",
    "link_count": 0,
-   "link_to": "Medical Code",
+   "link_to": "Code Value",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"

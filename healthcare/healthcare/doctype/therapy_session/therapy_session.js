@@ -46,12 +46,12 @@ frappe.ui.form.on('Therapy Session', {
 			frm.trigger('filter_therapy_types');
 		}
 
-		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.medical_code_standard) {
+			if (row.code_system) {
 				return {
 					filters: {
-						medical_code_standard: row.medical_code_standard
+						code_system: row.code_system
 					}
 				};
 			}
@@ -187,10 +187,10 @@ frappe.ui.form.on('Therapy Session', {
 					});
 					frm.clear_table("codification_table")
 					$.each(data.message.codification_table, function(k, val) {
-						if (val.medical_code) {
+						if (val.code_value) {
 							let mcode = frm.add_child("codification_table");
-							mcode.medical_code = val.medical_code
-							mcode.medical_code_standard = val.medical_code_standard
+							mcode.code_value = val.code_value
+							mcode.code_system = val.code_system
 							mcode.code = val.code
 							mcode.description = val.description
 							mcode.system = val.system

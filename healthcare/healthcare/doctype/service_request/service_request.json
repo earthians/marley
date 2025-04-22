@@ -70,8 +70,7 @@
   "insurance_coverage",
   "coverage_status",
   "medical_code_section",
-  "medical_code_standard",
-  "medical_code"
+  "codification_table"
  ],
  "fields": [
   {
@@ -166,20 +165,13 @@
    "collapsible": 1,
    "fieldname": "medical_code_section",
    "fieldtype": "Section Break",
-   "label": "Medical Code"
+   "label": "Code Value"
   },
   {
-   "fieldname": "medical_code_standard",
+   "fieldname": "codification_table",
    "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
-   "depends_on": "medical_code_standard",
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code"
+   "label": "Codification",
+   "options": "Codification Table"
   },
   {
    "default": "1",

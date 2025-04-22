@@ -14,8 +14,8 @@
   "template_dn",
   "column_break_3",
   "item_code",
-  "medical_code_standard",
-  "medical_code",
+  "code_system",
+  "code_value",
   "eligibility_details_section",
   "mode_of_approval",
   "coverage",
@@ -74,21 +74,21 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval:doc.eligibility_for==='Medical Code'",
-   "fieldname": "medical_code_standard",
+   "depends_on": "eval:doc.eligibility_for==='Code Value'",
+   "fieldname": "code_system",
    "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "mandatory_depends_on": "eval:doc.eligibility_for==='Medical Code'",
-   "options": "Medical Code Standard",
+   "label": "Code System",
+   "mandatory_depends_on": "eval:doc.eligibility_for==='Code Value'",
+   "options": "Code System",
    "search_index": 1
   },
   {
-   "depends_on": "eval:doc.eligibility_for ==='Medical Code'",
-   "fieldname": "medical_code",
+   "depends_on": "eval:doc.eligibility_for ==='Code Value'",
+   "fieldname": "code_value",
    "fieldtype": "Link",
-   "label": "Medical Code",
-   "mandatory_depends_on": "eval:doc.eligibility_for==='Medical Code'",
-   "options": "Medical Code",
+   "label": "Code Value",
+   "mandatory_depends_on": "eval:doc.eligibility_for==='Code Value'",
+   "options": "Code Value",
    "search_index": 1
   },
   {

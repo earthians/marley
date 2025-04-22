@@ -409,7 +409,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "medical_code.description",
+   "fetch_from": "code_value.description",
    "fieldname": "code_description",
    "fieldtype": "Small Text",
    "label": "Code Description",

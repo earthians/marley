@@ -3,12 +3,12 @@
 
 frappe.ui.form.on('Diagnosis', {
     refresh : function(frm) {
-		frm.set_query("medical_code", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
-			if (row.medical_code_standard) {
+			if (row.code_system) {
 				return {
 					filters: {
-						medical_code_standard: row.medical_code_standard
+						code_system: row.code_system
 					}
 				};
 			}

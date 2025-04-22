@@ -47,8 +47,8 @@
   "template_dt",
   "template_dn",
   "column_break_15",
-  "medical_code_standard",
-  "medical_code",
+  "code_system",
+  "code_value",
   "medical_code_description"
  ],
  "fields": [
@@ -143,33 +143,33 @@
    "read_only": 1
   },
   {
-   "fieldname": "medical_code_standard",
+   "fieldname": "code_system",
    "fieldtype": "Link",
-   "label": "Medical Code Standard",
+   "label": "Code System",
    "no_copy": 1,
-   "options": "Medical Code Standard",
-   "read_only_depends_on": "eval:doc.medical_code"
+   "options": "Code System",
+   "read_only_depends_on": "eval:doc.code_value"
   },
   {
-   "fieldname": "medical_code",
+   "fieldname": "code_value",
    "fieldtype": "Link",
-   "label": "Medical Code",
+   "label": "Code Value",
    "no_copy": 1,
-   "options": "Medical Code",
-   "read_only_depends_on": "eval:doc.medical_code"
+   "options": "Code Value",
+   "read_only_depends_on": "eval:doc.code_value"
   },
   {
    "fieldname": "column_break_15",
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "medical_code.description",
+   "fetch_from": "code_value.description",
    "fetch_if_empty": 1,
    "fieldname": "medical_code_description",
    "fieldtype": "Small Text",
-   "label": "Medical Code Description",
+   "label": "Code Value Description",
    "no_copy": 1,
-   "read_only_depends_on": "eval:doc.medical_code"
+   "read_only_depends_on": "eval:doc.code_value"
   },
   {
    "fieldname": "insurance_coverage_posting_date",

@@ -10,7 +10,7 @@
   "naming_series",
   "insurance_payor",
   "customer",
-  "medical_code_standard",
+  "code_system",
   "column_break_4",
   "company",
   "posting_date",
@@ -193,12 +193,12 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "insurance_payor.medical_code_standard",
+   "fetch_from": "insurance_payor.code_system",
    "fetch_if_empty": 1,
-   "fieldname": "medical_code_standard",
+   "fieldname": "code_system",
    "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
+   "label": "Code System",
+   "options": "Code System"
   },
   {
    "fieldname": "mode_of_payment",

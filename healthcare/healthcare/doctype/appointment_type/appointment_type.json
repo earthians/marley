@@ -86,7 +86,7 @@
   {
    "fieldname": "codification_table",
    "fieldtype": "Table",
-   "label": "Medical Code",
+   "label": "Codification Table",
    "options": "Codification Table"
   }
  ],
