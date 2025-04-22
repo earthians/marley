@@ -18,21 +18,21 @@
   "posting_date",
   "status",
   "amended_from",
-  "policy_details_section",
-  "insurance_policy",
-  "insurance_payor",
-  "column_break_10",
-  "policy_number",
-  "policy_expiry_date",
   "service_details_section",
   "template_dt",
   "template_dn",
   "qty",
   "column_break_22",
   "item_code",
-  "medical_code_standard",
-  "medical_code",
-  "medical_code_description",
+  "code_system",
+  "code_value",
+  "code_description",
+  "policy_details_section",
+  "insurance_policy",
+  "insurance_payor",
+  "column_break_10",
+  "policy_number",
+  "policy_expiry_date",
   "coverage_details_section",
   "mode_of_approval",
   "coverage_validity_end_date",
@@ -91,7 +91,8 @@
    "fieldtype": "Link",
    "label": "Insurance Policy",
    "options": "Patient Insurance Policy",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fetch_from": "insurance_policy.insurance_payor",
@@ -101,12 +102,13 @@
    "label": "Insurance Payor",
    "options": "Insurance Payor",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "policy_details_section",
    "fieldtype": "Section Break",
-   "label": "Patient Insurance Policy Details"
+   "label": "Insurance Policy Details"
   },
   {
    "fieldname": "column_break_10",
@@ -118,17 +120,10 @@
    "label": "Service"
   },
   {
-   "fieldname": "medical_code",
-   "fieldtype": "Link",
-   "label": "Medical Code",
-   "options": "Medical Code",
-   "read_only": 1
-  },
-  {
    "depends_on": "eval:doc.status != 'Rejected'",
    "fieldname": "coverage_details_section",
    "fieldtype": "Section Break",
-   "label": "Insurance Coverage Details"
+   "label": "Coverage"
   },
   {
    "fieldname": "price_list_rate",
@@ -243,7 +238,8 @@
    "label": "Insurance Eligibility Plan",
    "no_copy": 1,
    "options": "Insurance Payor Eligibility Plan",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "default": "Manual",
@@ -360,20 +356,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "medical_code.description",
-   "fieldname": "medical_code_description",
-   "fieldtype": "Small Text",
-   "label": "Medical Code Description",
-   "read_only": 1
-  },
-  {
    "default": "0",
    "fieldname": "approved_amount",
    "fieldtype": "Currency",
@@ -409,13 +391,35 @@
    "label": "Item Insurance Eligibility",
    "no_copy": 1,
    "options": "Item Insurance Eligibility",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "code_system",
+   "fieldtype": "Link",
+   "label": "Code System",
+   "options": "Code System",
+   "read_only": 1
+  },
+  {
+   "fieldname": "code_value",
+   "fieldtype": "Link",
+   "label": "Code Value",
+   "options": "Code Value",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "medical_code.description",
+   "fieldname": "code_description",
+   "fieldtype": "Small Text",
+   "label": "Code Description",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-28 19:37:55.589721",
+ "modified": "2025-04-21 21:51:27.488097",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Coverage",
@@ -486,8 +490,10 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1
 }

@@ -35,15 +35,19 @@
   {
    "fieldname": "insurance_payor",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Insurance Payor",
    "options": "Insurance Payor",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "default_price_list",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Default Price List",
-   "options": "Price List"
+   "options": "Price List",
+   "search_index": 1
   },
   {
    "fieldname": "column_break_6",
@@ -86,7 +90,8 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "default": "Today",
@@ -107,11 +112,10 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-21 20:11:16.609311",
+ "modified": "2025-04-21 22:13:06.501443",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor Contract",
- "name_case": "Title Case",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
@@ -159,8 +163,10 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "insurance_payor",
  "track_changes": 1
 }

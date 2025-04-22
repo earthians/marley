@@ -16,7 +16,7 @@
   "insurance_claim_credit_days",
   "column_break_3",
   "disabled",
-  "medical_code_standard",
+  "code_system",
   "image",
   "address_and_contacts_section",
   "address_html",
@@ -114,16 +114,16 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Default Medical Code Standard to be used when creating Insurance Claim",
-   "fieldname": "medical_code_standard",
-   "fieldtype": "Link",
-   "label": "Medical Code Standard",
-   "options": "Medical Code Standard"
-  },
-  {
    "fieldname": "insurance_claim_credit_days",
    "fieldtype": "Int",
    "label": "Insurance Claim Credit Days"
+  },
+  {
+   "description": "Default Code System to be used when creating Insurance Claim",
+   "fieldname": "code_system",
+   "fieldtype": "Link",
+   "label": "Code System",
+   "options": "Code System"
   }
  ],
  "image_field": "image",
@@ -141,11 +141,10 @@
    "link_fieldname": "insurance_payor"
   }
  ],
- "modified": "2021-12-23 06:15:11.421826",
+ "modified": "2025-04-21 22:00:24.197738",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor",
- "name_case": "Title Case",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
@@ -186,9 +185,11 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "insurance_payor_name",
  "sort_field": "modified",
  "sort_order": "ASC",
+ "states": [],
  "title_field": "insurance_payor_name",
  "track_changes": 1
 }
