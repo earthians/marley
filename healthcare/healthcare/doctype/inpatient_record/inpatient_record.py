@@ -107,6 +107,37 @@ class InpatientRecord(Document):
 		if service_unit:
 			transfer_patient(self, service_unit, check_in)
 
+	@frappe.whitelist()
+	def get_clinical_notes(self, patient, note_type=None):
+		return frappe.get_all(
+			"Clinical Note",
+			{
+				"patient": patient,
+				"clinical_note_type": note_type,
+			},
+			["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
+		)
+	@frappe.whitelist()
+	def add_clinical_note(self, note, note_type=None):
+		clinical_note_doc = frappe.new_doc("Clinical Note")
+		clinical_note_doc.patient = self.patient
+		clinical_note_doc.reference_doc = "Inpatient Record"
+		clinical_note_doc.reference_name = self.name
+		clinical_note_doc.note = note
+		clinical_note_doc.clinical_note_type = note_type
+		# clinical_note_doc.practitioner = self.practitioner
+		clinical_note_doc.insert()
+
+	@frappe.whitelist()
+	def edit_clinical_note(self, note, note_name):
+		clinical_note_doc = frappe.get_doc("Clinical Note", note_name)
+		clinical_note_doc.note = note
+		clinical_note_doc.save()
+
+	@frappe.whitelist()
+	def delete_clinical_note(self, note_name):
+		if frappe.db.exists("Clinical Note", note_name):
+			frappe.delete_doc("Clinical Note", note_name)
 
 @frappe.whitelist()
 def schedule_inpatient(args):

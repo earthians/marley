@@ -3,7 +3,17 @@ frappe.ui.form.on("Inpatient Record", {
 
   // Add custom button for pain rating
   refresh: function (frm) {
-    console.log("Pain Rating Button Test");
+    if (frm.doc.initial_encounter_json) {
+      const initialEncounter = JSON.parse(frm.doc.initial_encounter_json);
+      const allergies = initialEncounter.allergies;
+      if (allergies) {
+        frappe.msgprint({
+          title: __("Allergies"),
+          message: __(allergies),
+          indicator: "red",
+        });
+      }
+    }
     frappe.db
       .get_value(
         "Pain Rating Score",
@@ -128,12 +138,6 @@ frappe.ui.form.on("Inpatient Record", {
       },
       __("Create")
     );
-
-    frm.add_custom_button(__("Insurance MR"), function () {
-      frappe.new_doc("Insurance MR", {
-        patient: frm.doc.patient,
-      });
-    });
   },
 
   create_pain_rating_score(frm) {

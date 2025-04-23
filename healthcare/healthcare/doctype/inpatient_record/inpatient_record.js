@@ -25,6 +25,38 @@ frappe.ui.form.on("Inpatient Record", {
           frm.doc.name
         );
         frm.prescription_renderer.display_prescription();
+        frm.encounter_renderer = new pcare.ui.UIEncounterRender(
+          frm,
+          frm.doc.patient,
+          frm.doc.name,
+          "Inpatient Record",
+          frm.doc.name,
+          "initial_encounter_json",
+          "initial_encounter_html"
+        );
+        frm.encounter_renderer.display_encounter();
+
+        new pcare.ui.UIEncounterRender(
+          frm,
+          frm.doc.patient,
+          frm.doc.name,
+          "Inpatient Record",
+          frm.doc.name,
+          "discharge_summary_json",
+          "discharge_summary_html"
+        ).display_encounter();
+
+        new pcare.ui.ClinicalNotes({
+          frm: frm,
+          notes_wrapper: $(frm.fields_dict.progress_notes_html.wrapper),
+          note_type: "Doctors Encounter",
+        }).refresh();
+
+        new pcare.ui.ClinicalNotes({
+          frm: frm,
+          notes_wrapper: $(frm.fields_dict.nurses_notes_html.wrapper),
+          note_type: "Nurses Note",
+        }).refresh();
       });
     }
 
@@ -323,23 +355,23 @@ var schedule_discharge = function (frm) {
         label: "Followup Date",
         fieldname: "followup_date",
       },
-      {
-        fieldtype: "Column Break",
-      },
-      {
-        fieldtype: "Small Text",
-        label: "Discharge Instructions",
-        fieldname: "discharge_instructions",
-      },
-      {
-        fieldtype: "Section Break",
-        label: "Discharge Summary",
-      },
-      {
-        fieldtype: "Long Text",
-        label: "Discharge Note",
-        fieldname: "discharge_note",
-      },
+      // {
+      //   fieldtype: "Column Break",
+      // },
+      // {
+      //   fieldtype: "Small Text",
+      //   label: "Discharge Instructions",
+      //   fieldname: "discharge_instructions",
+      // },
+      // {
+      //   fieldtype: "Section Break",
+      //   label: "Discharge Summary",
+      // },
+      // {
+      //   fieldtype: "Long Text",
+      //   label: "Discharge Note",
+      //   fieldname: "discharge_note",
+      // },
     ],
     primary_action_label: __("Order Discharge"),
     primary_action: function () {
