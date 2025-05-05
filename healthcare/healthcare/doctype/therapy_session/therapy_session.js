@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Therapy Session', {
-	setup: function(frm) {
+	onload_post_render: function(frm) {
 		frm.get_field('exercises').grid.editable_fields = [
 			{fieldname: 'exercise_type', columns: 7},
 			{fieldname: 'counts_target', columns: 1},
