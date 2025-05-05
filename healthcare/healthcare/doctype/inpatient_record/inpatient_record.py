@@ -513,6 +513,16 @@ def transfer_patient(inpatient_record, service_unit, check_in, txred=0):
 	):
 		return
 
+	if (
+		frappe.get_cached_value("Healthcare Service Unit", service_unit, "occupancy_status") != "Vacant"
+	):
+		frappe.throw(
+			_(
+				"The selected Service Unit <strong>{0}</strong> is already occupied. Please choose a vacant Service Unit."
+			).format(service_unit),
+			title=_("Service Unit Occupied"),
+		)
+
 	item_line = inpatient_record.append("inpatient_occupancies", {})
 	item_line.service_unit = service_unit
 	item_line.check_in = check_in
