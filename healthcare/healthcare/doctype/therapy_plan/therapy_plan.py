@@ -48,7 +48,11 @@ class TherapyPlan(Document):
 		for data in therapy_plan_template.therapy_types:
 			self.append(
 				"therapy_plan_details",
-				{"therapy_type": data.therapy_type, "no_of_sessions": data.no_of_sessions},
+				{
+					"therapy_type": data.therapy_type,
+					"no_of_sessions": data.no_of_sessions,
+					"interval": data.interval,
+				},
 			)
 		return self
 

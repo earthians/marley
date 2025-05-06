@@ -26,17 +26,18 @@ frappe.ui.form.on('Patient Encounter', {
 		show_orders(frm);
 	},
 
-	setup: function(frm) {
+	onload_post_render: function(frm) {
 		frm.get_field('therapies').grid.editable_fields = [
-			{fieldname: 'therapy_type', columns: 8},
-			{fieldname: 'no_of_sessions', columns: 2}
+			{fieldname: 'therapy_type', columns: 6},
+			{fieldname: 'no_of_sessions', columns: 2},
+			{fieldname: 'interval', columns: 2},
 		];
 		frm.get_field('drug_prescription').grid.editable_fields = [
 			{fieldname: 'drug_code', columns: 2},
 			{fieldname: 'drug_name', columns: 2},
 			{fieldname: 'dosage', columns: 2},
 			{fieldname: 'period', columns: 2},
-			{fieldname: 'dosage_form', columns: 2}
+			{fieldname: 'dosage_form', columns: 2},
 		];
 		if (frappe.meta.get_docfield('Drug Prescription', 'medication').in_list_view === 1) {
 			frm.get_field('drug_prescription').grid.editable_fields.splice(0, 0, {fieldname: 'medication', columns: 3});

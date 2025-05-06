@@ -7,6 +7,8 @@
  "field_order": [
   "therapy_type",
   "no_of_sessions",
+  "interval",
+  "column_break_ddjj",
   "sessions_completed",
   "service_request",
   "section_break_hywn",
@@ -28,15 +30,18 @@
    "fieldname": "no_of_sessions",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "No of Sessions"
+   "label": "No of Sessions",
+   "non_negative": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "depends_on": "eval:doc.parenttype=='Therapy Plan';",
    "fieldname": "sessions_completed",
    "fieldtype": "Int",
    "label": "Sessions Completed",
    "no_copy": 1,
+   "non_negative": 1,
    "read_only": 1
   },
   {
@@ -72,17 +77,29 @@
    "label": "Service Request",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "interval",
+   "fieldtype": "Duration",
+   "hide_seconds": 1,
+   "in_list_view": 1,
+   "label": "Interval"
+  },
+  {
+   "fieldname": "column_break_ddjj",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2023-11-01 23:10:20.015399",
+ "modified": "2025-05-06 21:09:22.143848",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Plan Detail",
  "owner": "Administrator",
  "permissions": [],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

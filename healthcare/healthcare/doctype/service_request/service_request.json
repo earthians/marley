@@ -53,6 +53,7 @@
   "period",
   "occurrence_date",
   "occurrence_time",
+  "interval",
   "healthcare_service_unit_type",
   "column_break_91",
   "order_description",
@@ -526,6 +527,12 @@
    "fieldtype": "Data",
    "label": "Practitioner Email",
    "read_only": 1
+  },
+  {
+   "fieldname": "interval",
+   "fieldtype": "Duration",
+   "hide_seconds": 1,
+   "label": "Interval"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -544,7 +551,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2024-01-09 13:03:51.377653",
+ "modified": "2025-05-06 20:22:29.027236",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
@@ -597,6 +604,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient, order_group",
  "sort_field": "modified",
  "sort_order": "DESC",

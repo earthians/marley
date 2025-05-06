@@ -130,7 +130,11 @@ class PatientEncounter(Document):
 		if plan_item.type == "Therapy Type":
 			self.append(
 				"therapies",
-				{"therapy_type": plan_item.template, "no_of_sessions": plan_item.qty},
+				{
+					"therapy_type": plan_item.template,
+					"no_of_sessions": plan_item.qty,
+					"interval": plan_item.interval,
+				},
 			)
 
 		if plan_item.type == "Observation Template":
@@ -248,6 +252,7 @@ class PatientEncounter(Document):
 				"dosage": line_item.get("dosage"),
 				"dosage_form": line_item.get("dosage_form"),
 				"period": line_item.get("period"),
+				"interval": line_item.get("interval"),
 				"expected_date": line_item.get("expected_date"),
 				"as_needed": line_item.get("as_needed"),
 				"staff_role": template_doc.get("staff_role") if template_doc else "",
@@ -390,7 +395,11 @@ def create_therapy_plan(encounter):
 		for entry in encounter.therapies:
 			doc.append(
 				"therapy_plan_details",
-				{"therapy_type": entry.therapy_type, "no_of_sessions": entry.no_of_sessions},
+				{
+					"therapy_type": entry.therapy_type,
+					"no_of_sessions": entry.no_of_sessions,
+					"interval": entry.interval,
+				},
 			)
 		doc.save(ignore_permissions=True)
 		if doc.get("name"):
