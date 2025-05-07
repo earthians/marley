@@ -460,47 +460,106 @@ function renderVitalSignsCharts(frm) {
 }
 
 function fetch_and_render_notes(frm, note_type, target_field, editable = false) {
+  let currentPage = 1; // Track the current page
+  const notesPerPage = 5; // Number of notes to display per page
+  let allNotes = []; // Store all notes
+
+  // Fetch all notes from the backend
   frappe.call({
-      method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.get_clinical_notes",
-      args: { patient: frm.doc.patient, note_type },
-      callback: function (response) {
-          let html = "";
-          if (response.message && response.message.length > 0) {
-              html += `<h4>Existing ${note_type}</h4><ul>`;
-              response.message.forEach(note => {
-                  html += `
-                      <li class="border rounded p-3 mb-3">
-                          <strong>Date</strong> - ${frappe.datetime.str_to_user(note.posting_date)}<br>
-                          <div class="mb-1"><strong>Practitioner:</strong> ${note.practitioner || "N/A"}<br></div>
-                          <div class="mb-2 border rounded p-3 mb-3">${note.note ? stripHtml(note.note) : "<em>No content</em>"}<br></div>
-                          ${editable ? `
-                              <button class="btn btn-secondary btn-sm edit-note" data-name="${note.name}" data-note="${note.note}" data-practitioner="${note.practitioner}">Edit</button>
-                              <button class="btn btn-danger btn-sm delete-note" data-name="${note.name}"> <i class="bi bi-trash"></i> Delete</button>` : ""}
-                      </li>`;
-              });
-              html += `</ul>`;
-          } else {
-              html = "<p>No clinical notes found for this patient.</p>";
-          }
-          $(frm.fields_dict[target_field].wrapper).html(html);
-
-          if (editable) {
-              $(frm.fields_dict[target_field].wrapper)
-                  .find(".edit-note")
-                  .on("click", function () {
-                      open_edit_note_dialog(frm, $(this).data("name"), $(this).data("note"), $(this).data("practitioner"));
-                  });
-
-              $(frm.fields_dict[target_field].wrapper)
-                  .find(".delete-note")
-                  .on("click", function () {
-                      delete_clinical_note(frm, $(this).data("name"));
-                  });
-          }
-      },
+    method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.get_clinical_notes",
+    args: { patient: frm.doc.patient, note_type },
+    callback: function (response) {
+      if (response.message && response.message.length > 0) {
+        allNotes = response.message; // Store all notes
+        renderNotes(); // Render the first page
+      } else {
+        $(frm.fields_dict[target_field].wrapper).html("<p>No clinical notes found for this patient.</p>");
+      }
+    },
   });
-}
 
+  // Function to render notes for the current page
+  function renderNotes() {
+    let html = `<h4>Existing ${note_type}</h4><ul>`;
+    const start = (currentPage - 1) * notesPerPage;
+    const end = Math.min(start + notesPerPage, allNotes.length);
+    // Render notes for the current page
+    for (let i = start; i < end; i++) {
+      const note = allNotes[i];
+      console.log(note.employee)
+      html += `
+        <li class="border rounded p-3 mb-3">
+          <strong>Date</strong> - ${frappe.datetime.str_to_user(note.posting_date)}<br>
+              <div class="mb-1"><strong>Practitioner:</strong> ${note.practitioner || " "}<br></div>
+              
+          
+          <div class="mb-1"><strong>Employee:</strong> ${note.employee || "N/A"}<br></div>
+          <div class="mb-2 border rounded p-3 mb-3">${note.note ? stripHtml(note.note) : "<em>No content</em>"}<br></div>
+          ${
+            editable
+              ? `
+                <div class="text-end">
+                  <button class="btn btn-secondary btn-sm edit-note" data-name="${note.name}" data-note="${note.note}" data-practitioner="${note.practitioner}">Edit</button>
+                  <button class="btn btn-danger btn-sm delete-note" data-name="${note.name}">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                </div>`
+              : ""
+          }
+        </li>`;
+    }
+    html += `</ul>`;
+
+    // Add pagination controls
+    html += `
+      <div class="text-center">
+        <button class="btn btn-sm btn-primary prev-page" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+        <button class="btn btn-sm btn-primary next-page" ${end >= allNotes.length ? "disabled" : ""}>Next</button>
+      </div>
+    `;
+
+    $(frm.fields_dict[target_field].wrapper).html(html);
+
+    // Attach event listeners for Edit and Delete buttons
+    if (editable) {
+      $(frm.fields_dict[target_field].wrapper)
+        .find(".edit-note")
+        .on("click", function () {
+          open_edit_note_dialog(
+            frm,
+            $(this).data("name"),
+            $(this).data("note"),
+            $(this).data("practitioner")
+          );
+        });
+
+      $(frm.fields_dict[target_field].wrapper)
+        .find(".delete-note")
+        .on("click", function () {
+          delete_clinical_note(frm, $(this).data("name"));
+        });
+    }
+
+    // Attach event listeners for pagination buttons
+    $(frm.fields_dict[target_field].wrapper)
+      .find(".prev-page")
+      .on("click", function () {
+        if (currentPage > 1) {
+          currentPage--;
+          renderNotes();
+        }
+      });
+
+    $(frm.fields_dict[target_field].wrapper)
+      .find(".next-page")
+      .on("click", function () {
+        if (end < allNotes.length) {
+          currentPage++;
+          renderNotes();
+        }
+      });
+  }
+}
 
 function stripHtml(html) {
   let div = document.createElement("div");
@@ -525,6 +584,12 @@ function open_clinical_note_dialog(frm, note_type) {
               label: "Practitioner",
               fieldname: "practitioner",
               options: "Healthcare Practitioner",
+            },
+            {
+              fieldtype: "Link",
+              label: "Employee",
+              fieldname: "employee",
+              options: "Employee",
               reqd: 1,
             },
             {
@@ -549,6 +614,7 @@ function open_clinical_note_dialog(frm, note_type) {
                     note_type: note_type,
                     patient: frm.doc.patient,
                     practitioner: data.practitioner,
+                    employee: data.employee,
                     reference_doc: "Inpatient Record",
                     reference_name: frm.doc.name,
                 },
@@ -570,7 +636,7 @@ function open_clinical_note_dialog(frm, note_type) {
     dialog.show();
 }
 
-function open_edit_note_dialog(frm, noteName, noteContent, practitioner) {
+function open_edit_note_dialog(frm, noteName, noteContent, practitioner, employee) {
   let dialog = new frappe.ui.Dialog({
       title: "Edit Clinical Note",
       fields: [
@@ -580,7 +646,14 @@ function open_edit_note_dialog(frm, noteName, noteContent, practitioner) {
               fieldname: "practitioner",
               options: "Healthcare Practitioner",
               default: practitioner,
-              reqd: 1,
+          },
+          {
+            fieldtype: "Link",
+            label: "Employee",
+            fieldname: "employee",
+            options: "Employee",
+            default: employee,
+            reqd: 1,
           },
           {
               fieldtype: "Small Text",
@@ -604,6 +677,7 @@ function open_edit_note_dialog(frm, noteName, noteContent, practitioner) {
                   name: noteName,
                   note: data.note,
                   practitioner: data.practitioner,
+                  employee: data.employee,
               },
               callback: function (response) {
                   if (!response.exc) {

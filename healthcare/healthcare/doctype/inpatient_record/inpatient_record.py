@@ -119,19 +119,19 @@ def get_clinical_notes(patient, note_type=None):
     return frappe.get_all(
         "Clinical Note",
         filters=filters,
-        fields=["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
-        order_by="posting_date desc",
-        limit_page_length=5,  # Fetch the latest 5 notes
+        fields=["posting_date", "note", "name", "practitioner", "employee", "clinical_note_type"],
+        order_by="posting_date desc",  # Fetch the latest 5 notes
     )
 
 @frappe.whitelist()
-def add_clinical_note(note, note_type, patient, practitioner, reference_doc, reference_name):
+def add_clinical_note(note, note_type, patient, practitioner, employee, reference_doc, reference_name):
 	if not note or not patient:
 		frappe.throw(_("Note and Patient are required"))
 
 	clinical_note_doc = frappe.new_doc("Clinical Note")
 	clinical_note_doc.patient = patient
 	clinical_note_doc.practioner = practitioner
+	clinical_note_doc.employee = employee
 	clinical_note_doc.reference_doc = reference_doc
 	clinical_note_doc.reference_name = reference_name
 	clinical_note_doc.note = note
@@ -140,13 +140,14 @@ def add_clinical_note(note, note_type, patient, practitioner, reference_doc, ref
 	return clinical_note_doc.name
 
 @frappe.whitelist()
-def update_clinical_note(name, note, practitioner):
+def update_clinical_note(name, note, practitioner, employee):
     if not name or not note:
         frappe.throw(_("Note and Name are required"))
 
     clinical_note = frappe.get_doc("Clinical Note", name)
     clinical_note.note = note
     clinical_note.practitioner = practitioner
+    clinical_note.employee = employee
     clinical_note.save()
     return clinical_note.name
 

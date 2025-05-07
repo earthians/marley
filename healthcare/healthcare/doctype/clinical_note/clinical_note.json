@@ -17,6 +17,7 @@
   "posting_date",
   "practitioner",
   "user",
+  "employee",
   "note_section",
   "note",
   "reference_section",
@@ -115,11 +116,17 @@
    "fieldtype": "Link",
    "label": "Terms and Conditions",
    "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-07 11:39:36.661181",
+ "modified": "2025-05-07 13:02:02.958763",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Note",
