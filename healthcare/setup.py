@@ -993,6 +993,47 @@ def get_patient_history_config():
 				{"label": "Time of Result", "fieldname": "time_of_result", "fieldtype": "Datetime"},
 			],
 		),
+		"Discharge Summary": (
+			"posting_date",
+			[
+				{
+					"label": "Chief Complaint",
+					"fieldname": "chief_complaint",
+					"fieldtype": "Table MultiSelect",
+				},
+				{"label": "Current Issues", "fieldname": "current_issues", "fieldtype": "Text Editor"},
+				{"label": "Diagnosis", "fieldname": "diagnosis", "fieldtype": "Table MultiSelect"},
+				{"label": "Diet Adviced", "fieldname": "diet_adviced", "fieldtype": "Text Editor"},
+				{"label": "Instructions", "fieldname": "instructions", "fieldtype": "Text Editor"},
+				{
+					"label": "Healthcare Practitioner (Primary)",
+					"fieldname": "primary_practitioner",
+					"fieldtype": "Link",
+				},
+				{
+					"label": "Healthcare Practitioner (Secondary)",
+					"fieldname": "secondary_practitioner",
+					"fieldtype": "Link",
+				},
+				{
+					"label": "Advice on Discharge",
+					"fieldname": "advice_on_discharge",
+					"fieldtype": "Text Editor",
+				},
+				{
+					"label": "Physical Examination",
+					"fieldname": "physical_examination",
+					"fieldtype": "Text Editor",
+				},
+				{"label": "Review Date", "fieldname": "review_date", "fieldtype": "Date"},
+				{
+					"label": "Discharging Practitioner",
+					"fieldname": "discharge_practitioner",
+					"fieldtype": "Link",
+				},
+				{"label": "Followup Date", "fieldname": "followup_date", "fieldtype": "Date"},
+			],
+		),
 	}
 
 
