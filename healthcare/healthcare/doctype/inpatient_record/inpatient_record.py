@@ -107,16 +107,7 @@ class InpatientRecord(Document):
 		if service_unit:
 			transfer_patient(self, service_unit, check_in)
 
-	@frappe.whitelist()
-	def get_clinical_notes(self, patient, note_type=None):
-		return frappe.get_all(
-			"Clinical Note",
-			{
-				"patient": patient,
-				"clinical_note_type": note_type,
-			},
-			["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
-		)
+	
 	@frappe.whitelist()
 	def add_clinical_note(self, note, note_type=None):
 		clinical_note_doc = frappe.new_doc("Clinical Note")
@@ -139,6 +130,22 @@ class InpatientRecord(Document):
 		if frappe.db.exists("Clinical Note", note_name):
 			frappe.delete_doc("Clinical Note", note_name)
 
+@frappe.whitelist()
+def get_clinical_notes(patient, note_type=None):
+    if not patient:
+        frappe.throw(_("Patient is required"))
+
+    filters = {"patient": patient}
+    if note_type:
+        filters["clinical_note_type"] = note_type
+
+    return frappe.get_all(
+        "Clinical Note",
+        filters=filters,
+        fields=["posting_date", "note", "name", "practitioner", "user", "clinical_note_type"],
+        order_by="posting_date desc",
+        limit_page_length=5,  # Fetch the latest 5 notes
+    )
 @frappe.whitelist()
 def schedule_inpatient(args):
 	admission_order = json.loads(args)  # admission order via Encounter

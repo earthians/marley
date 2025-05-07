@@ -77,8 +77,12 @@
   "patient_history_tab",
   "patient_history_html",
   "progress_notes",
+  "progress_notes_btn",
+  "section_break_kcuk",
   "progress_notes_html",
   "notes_tab",
+  "nurses_notes_btn",
+  "section_break_vurj",
   "nurses_notes_html",
   "discharge_summary_tab",
   "discharge_summary_html"
@@ -557,6 +561,24 @@
   {
    "fieldname": "nurses_notes_html",
    "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "progress_notes_btn",
+   "fieldtype": "HTML",
+   "label": "Add Doctors Encounter"
+  },
+  {
+   "fieldname": "section_break_kcuk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "nurses_notes_btn",
+   "fieldtype": "HTML",
+   "label": "Add Nurses Notes"
+  },
+  {
+   "fieldname": "section_break_vurj",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -566,7 +588,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-04-23 08:06:08.854421",
+ "modified": "2025-05-06 15:47:34.095395",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

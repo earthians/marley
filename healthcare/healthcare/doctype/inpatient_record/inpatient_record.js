@@ -46,17 +46,37 @@ frappe.ui.form.on("Inpatient Record", {
           "discharge_summary_html"
         ).display_encounter();
 
-        new pcare.ui.ClinicalNotes({
-          frm: frm,
-          notes_wrapper: $(frm.fields_dict.progress_notes_html.wrapper),
-          note_type: "Doctors Encounter",
-        }).refresh();
-
-        new pcare.ui.ClinicalNotes({
-          frm: frm,
-          notes_wrapper: $(frm.fields_dict.nurses_notes_html.wrapper),
-          note_type: "Nurses Note",
-        }).refresh();
+        $(frm.fields_dict.progress_notes_btn.wrapper).html(`
+          <button class="btn btn-primary btn-doctors-note">Create Doctors Note</button>
+        `);
+        $(frm.fields_dict.nurses_notes_btn.wrapper).html(`
+          <button class="btn btn-secondary btn-nurses-note">Create Nurses Note</button>
+        `);
+        
+        $(frm.fields_dict.progress_notes_btn.wrapper)
+          .find(".btn-doctors-note")
+          .on("click", function () {
+            frappe.route_options = {
+              patient: frm.doc.patient,
+              reference_doc: "Inpatient Record",
+              reference_name: frm.doc.name,
+              clinical_note_type: "Doctors Encounter",
+            };
+            frappe.new_doc("Clinical Note");
+          });
+        
+        $(frm.fields_dict.nurses_notes_btn.wrapper)
+          .find(".btn-nurses-note")
+          .on("click", function () {
+            frappe.route_options = {
+              patient: frm.doc.patient,
+              reference_doc: "Inpatient Record",
+              reference_name: frm.doc.name,
+              note_type: "Nurses Note",
+            };
+            frappe.new_doc("Clinical Note");
+          });
+        
       });
     }
 
@@ -90,18 +110,71 @@ frappe.ui.form.on("Inpatient Record", {
       frm.set_value("status", "Admission Scheduled");
     }
 
-    frm.add_custom_button(
-      __("Clinical Note"),
-      function () {
-        frappe.route_options = {
-          patient: frm.doc.patient,
-          reference_doc: "Inpatient Record",
-          reference_name: frm.doc.name,
-        };
-        frappe.new_doc("Clinical Note");
-      },
-      __("Create")
-    );
+    if (!frm.doc.__islocal) {
+        frappe.call({
+            method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.get_clinical_notes",
+            args: {
+                patient: frm.doc.patient,
+                note_type: "Doctors Encounter", 
+            },
+            callback: function (response) {
+                if (response.message && response.message.length > 0) {
+                    let notes = response.message;
+                    let html = `<h4>Existing Clinical Notes</h4><ul>`;
+                    notes.forEach((note) => {
+                        html += `
+                            <li>
+                                <strong>${note.clinical_note_type}</strong> - ${frappe.datetime.str_to_user(note.posting_date)}
+                                <br>
+                                ${note.note ? stripHtml(note.note) : "<em>No content</em>"}
+                                <br>
+                                <strong>Practitioner:</strong> ${note.practitioner || "N/A"}
+                                <br>
+                                <a href="/app/clinical-note/${note.name}" target="_blank">View Note</a>
+                            </li>
+                        `;
+                    });
+                    html += `</ul>`;
+                    $(frm.fields_dict.progress_notes_html.wrapper).html(html);
+                } else {
+                    $(frm.fields_dict.progress_notes_html.wrapper).html("<p>No clinical notes found for this patient.</p>");
+                }
+            },
+        });
+    }
+
+    if (!frm.doc.__islocal) {
+      frappe.call({
+          method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.get_clinical_notes",
+          args: {
+              patient: frm.doc.patient,
+              note_type: "Nurses Note", 
+          },
+          callback: function (response) {
+              if (response.message && response.message.length > 0) {
+                  let notes = response.message;
+                  let html = `<h4>Existing Clinical Notes</h4><ul>`;
+                  notes.forEach((note) => {
+                      html += `
+                          <li>
+                              <strong>${note.clinical_note_type}</strong> - ${frappe.datetime.str_to_user(note.posting_date)}
+                              <br>
+                              ${note.note ? stripHtml(note.note) : "<em>No content</em>"}
+                              <br>
+                              <strong>Practitioner:</strong> ${note.practitioner || "N/A"}
+                              <br>
+                              <a href="/app/clinical-note/${note.name}" target="_blank">View Note</a>
+                          </li>
+                      `;
+                  });
+                  html += `</ul>`;
+                  $(frm.fields_dict.nurses_notes_html.wrapper).html(html);
+              } else {
+                  $(frm.fields_dict.nurses_notes_html.wrapper).html("<p>No clinical notes found for this patient.</p>");
+              }
+          },
+      });
+    }
   },
 
   onload: function (frm) {
@@ -456,4 +529,10 @@ function renderVitalSignsCharts(frm) {
             </div>
         `);
     });
+}
+
+function stripHtml(html) {
+  let div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
 }
