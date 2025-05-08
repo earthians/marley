@@ -513,6 +513,10 @@ def get_appointment_item(appointment_doc, item):
 
 def cancel_appointment(appointment_id):
 	appointment = frappe.get_doc("Patient Appointment", appointment_id)
+
+	if not appointment.practitioner:
+		return
+
 	if appointment.service_request:
 		frappe.db.set_value(
 			"Service Request", appointment.service_request, "status", "active-Request Status"
