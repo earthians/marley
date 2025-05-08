@@ -45,7 +45,7 @@ class PatientAppointment(Document):
 		self.set_status()
 		self.set_title()
 		self.update_event()
-		self.set_postition_in_queue()
+		self.set_position_in_queue()
 
 	def on_update(self):
 		if (
@@ -356,7 +356,7 @@ class PatientAppointment(Document):
 				event_doc.reload()
 				self.google_meet_link = event_doc.google_meet_link
 
-	def set_postition_in_queue(self):
+	def set_position_in_queue(self):
 		from frappe.query_builder.functions import Max
 
 		if self.status == "Checked In" and not self.position_in_queue:
