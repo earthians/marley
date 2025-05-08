@@ -753,7 +753,7 @@ let show_procedure_templates = function(frm, result) {
 	let html_field = d.fields_dict.procedure_template.$wrapper;
 	html_field.empty();
 	$.each(result, function(x, y) {
-		let row = $(repl('<div class="col-xs-12" style="padding-top:12px; text-align:center;" >\
+		let row = $(repl('<div class="col-xs-12" style="padding-top:12px; text-align:center; display:flex;" >\
 		<div class="col-xs-5"> %(encounter)s <br> %(consulting_practitioner)s <br> %(encounter_date)s </div>\
 		<div class="col-xs-5"> %(procedure_template)s <br>%(practitioner)s  <br> %(date)s</div>\
 		<div class="col-xs-2">\
@@ -761,7 +761,7 @@ let show_procedure_templates = function(frm, result) {
 		data-encounter="%(encounter)s" data-practitioner="%(practitioner)s"\
 		data-date="%(date)s"  data-department="%(department)s">\
 		<button class="btn btn-default btn-xs">Add\
-		</button></a></div></div><div class="col-xs-12"><hr/><div/>', {
+		</button></a></div></div><hr/>', {
 			name: y[0], procedure_template: y[1],
 			encounter: y[2], consulting_practitioner: y[3], encounter_date: y[4],
 			practitioner: y[5] ? y[5] : '', date: y[6] ? y[6] : '', department: y[7] ? y[7] : ''
@@ -798,8 +798,9 @@ let show_therapy_types = function(frm, result) {
 		]
 	});
 	var html_field = d.fields_dict.therapy_type.$wrapper;
+
 	$.each(result, function(x, y) {
-		var row = $(repl('<div class="col-xs-12" style="padding-top:12px; text-align:center;" >\
+		var row = $(repl('<div class="col-xs-12" style="padding-top:12px; text-align:center; display:flex;" >\
 		<div class="col-xs-5"> %(encounter)s <br> %(practitioner)s <br> %(date)s </div>\
 		<div class="col-xs-5"> %(therapy)s </div>\
 		<div class="col-xs-2">\
@@ -807,7 +808,7 @@ let show_therapy_types = function(frm, result) {
 		data-encounter="%(encounter)s" data-practitioner="%(practitioner)s"\
 		data-date="%(date)s"  data-department="%(department)s">\
 		<button class="btn btn-default btn-xs">Add\
-		</button></a></div></div><div class="col-xs-12"><hr/><div/>', {
+		</button></a></div></div><hr/>', {
 			therapy: y[0],
 			name: y[1], encounter: y[2], practitioner: y[3], date: y[4],
 			department: y[6] ? y[6] : '', therapy_plan: y[5]
