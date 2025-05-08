@@ -323,6 +323,26 @@ class TestPatientAppointment(IntegrationTestCase):
 		)
 		self.assertEqual(frappe.db.get_value("Sales Invoice", sales_invoice_name, "status"), "Cancelled")
 
+	def test_department_appointment_cancel_with_fee_validity_setting_on(self):
+		patient, practitioner = create_healthcare_docs()
+		frappe.db.set_single_value("Healthcare Settings", "enable_free_follow_ups", 1)
+		appointment_type = create_appointment_type(
+			{
+				"name": "Department Appointment Type",
+				"allow_booking_for": "Department",
+			}
+		)
+		appointment = create_appointment(
+			patient=patient,
+			department=create_medical_department(),
+			appointment_for="Department",
+			appointment_type=appointment_type.name,
+		)
+
+		update_status(appointment.name, "Cancelled")
+		appointment.reload()
+		self.assertTrue(appointment.status, "Cancelled")
+
 	def test_appointment_booking_for_admission_service_unit(self):
 		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 			admit_patient,
@@ -644,13 +664,14 @@ def create_encounter(appointment):
 
 def create_appointment(
 	patient,
-	practitioner,
-	appointment_date,
+	practitioner=None,
+	appointment_date=None,
 	invoice=0,
 	procedure_template=0,
 	service_unit=None,
 	appointment_type=None,
 	save=1,
+	appointment_for=None,
 	department=None,
 	appointment_based_on_check_in=None,
 	appointment_time=None,
@@ -663,8 +684,9 @@ def create_appointment(
 	appointment = frappe.new_doc("Patient Appointment")
 	appointment.patient = patient
 	appointment.practitioner = practitioner
+	appointment.appointment_for = appointment_for or "Practitioner"
 	appointment.department = department or create_medical_department()
-	appointment.appointment_date = appointment_date
+	appointment.appointment_date = appointment_date or nowdate()
 	appointment.company = "_Test Company"
 	appointment.duration = 15
 	appointment.appointment_type = appointment_type or create_appointment_type().name
