@@ -112,6 +112,7 @@ class TestInpatientRecord(IntegrationTestCase):
 
 	def test_validate_overlap_admission(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.sql("""delete from `tabHealthcare Service Unit` where company='_Test Company'""")
 		patient = create_patient()
 
 		ip_record = create_inpatient(patient)
@@ -125,6 +126,28 @@ class TestInpatientRecord(IntegrationTestCase):
 		admit_patient(ip_record, service_unit, now_datetime())
 		ip_record_new = create_inpatient(patient)
 		self.assertRaises(frappe.ValidationError, ip_record_new.save)
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+
+	def test_validate_admission_on_vacant_service_unit(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.sql("""delete from `tabHealthcare Service Unit` where company='_Test Company'""")
+		patient_1 = create_patient("_Test IPD Patient-01")
+		patient_2 = create_patient("_Test IPD Patient-02")
+
+		ip_record_1 = create_inpatient(patient_1)
+		ip_record_1.expected_length_of_stay = 0
+		ip_record_1.save(ignore_permissions=True)
+
+		ip_record_2 = create_inpatient(patient_2)
+		ip_record_2.expected_length_of_stay = 0
+		ip_record_2.save(ignore_permissions=True)
+
+		# # Admit
+		service_unit = get_healthcare_service_unit()
+		admit_patient(ip_record_1, service_unit, now_datetime())
+
+		with self.assertRaises(frappe.ValidationError):
+			admit_patient(ip_record_2, service_unit, now_datetime())
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 
 
@@ -169,6 +192,19 @@ def get_healthcare_service_unit(unit_name=None):
 		)
 
 	if not service_unit:
+		if unit_name:
+			unit_exists = frappe.db.exists(
+				"Healthcare Service Unit", {"healthcare_service_unit_name": unit_name}
+			)
+			if unit_exists:
+				return unit_exists
+		else:
+			su_exists = frappe.db.exists(
+				"Healthcare Service Unit", {"healthcare_service_unit_name": "_Test Service Unit Ip Occupancy"}
+			)
+			if su_exists:
+				return su_exists
+
 		service_unit = frappe.new_doc("Healthcare Service Unit")
 		service_unit.healthcare_service_unit_name = unit_name or "_Test Service Unit Ip Occupancy"
 		service_unit.company = "_Test Company"
@@ -208,11 +244,13 @@ def get_service_unit_type():
 	return service_unit_type
 
 
-def create_patient():
-	patient = frappe.db.exists("Patient", "_Test IPD Patient")
+def create_patient(patient_name=None):
+	if not patient_name:
+		patient_name = "_Test IPD Patient"
+	patient = frappe.db.exists("Patient", patient_name)
 	if not patient:
 		patient = frappe.new_doc("Patient")
-		patient.first_name = "_Test IPD Patient"
+		patient.first_name = patient_name
 		patient.sex = "Female"
 		patient.save(ignore_permissions=True)
 		patient = patient.name
