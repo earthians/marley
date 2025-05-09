@@ -326,7 +326,7 @@ frappe.ui.form.on('Patient Appointment', {
 	toggle_payment_fields: function(frm) {
 		frappe.call({
 			method: 'healthcare.healthcare.doctype.patient_appointment.patient_appointment.check_payment_reqd',
-			args: { 'patient': frm.doc.patient },
+			args: { 'patient': frm.doc.patient, 'practitioner': frm.doc.practitoner },
 			callback: function(data) {
 				if (data.message.fee_validity) {
 					// if fee validity exists and show payment popup is enabled,
@@ -441,7 +441,10 @@ let check_and_set_availability = function(frm) {
 								} else {
 									frappe.call({
 										method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_fee_validity",
-										args: { "appointment": frm.doc }
+										args: { "appointment": frm.doc },
+										callback: (r) => {
+											frm.reload_doc();
+										}
 									});
 								}
 							}

@@ -381,16 +381,30 @@ class PatientAppointment(Document):
 
 
 @frappe.whitelist()
-def check_payment_reqd(patient):
+def check_payment_reqd(patient, practitioner=None):
 	"""
 	return True if patient need to be invoiced when show_payment_popup enabled or have no fee validity
 	return False show_payment_popup is disabled
 	"""
 	show_payment_popup = frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
-	free_follow_ups = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+	settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+	pract_enabled = False
+	free_follow_ups = True
+	filters = {"patient": patient, "status": "Active"}
+	if practitioner:
+		filters["practitioner"] = practitioner
+		pract_enabled = frappe.db.get_value(
+			"Healthcare Practitioner", practitioner, "enable_free_follow_ups"
+		)
+		if not pract_enabled:
+			if not settings_enabled:
+				free_follow_ups = False
+	else:
+		free_follow_ups = settings_enabled
+
 	if show_payment_popup:
 		if free_follow_ups:
-			fee_validity = frappe.db.exists("Fee Validity", {"patient": patient, "status": "Active"})
+			fee_validity = frappe.db.exists("Fee Validity", filters)
 			if fee_validity:
 				return {"fee_validity": fee_validity}
 		return True
@@ -471,12 +485,6 @@ def update_fee_validity(appointment):
 		appointment = json.loads(appointment)
 		appointment = frappe.get_doc(appointment)
 
-	if (
-		not frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
-		or not appointment.practitioner
-	):
-		return
-
 	fee_validity = manage_fee_validity(appointment)
 	if fee_validity:
 		frappe.msgprint(
@@ -532,10 +540,9 @@ def cancel_appointment(appointment_id):
 			msg = _("Appointment Cancelled. Please review and cancel the invoice {0}").format(
 				sales_invoice.name
 			)
-		if frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups"):
-			fee_validity = frappe.db.get_value("Fee Validity", {"patient_appointment": appointment.name})
-			if fee_validity:
-				frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
+		fee_validity = frappe.db.get_value("Fee Validity", {"patient_appointment": appointment.name})
+		if fee_validity:
+			frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
 
 	else:
 		fee_validity = manage_fee_validity(appointment)
@@ -606,14 +613,25 @@ def get_availability_data(date, practitioner, appointment):
 		)
 
 	if isinstance(appointment, str):
-		appointment = json.loads(appointment)
-		appointment = frappe.get_doc(appointment)
+		appointment = frappe.get_doc(json.loads(appointment))
 
 	fee_validity = "Disabled"
-	if frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups"):
+	free_follow_ups = False
+
+	settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+	pract_enabled = frappe.db.get_value(
+		"Healthcare Practitioner", practitioner, "enable_free_follow_ups"
+	)
+
+	if practitioner and (pract_enabled or settings_enabled):
+		free_follow_ups = True
+
+	if free_follow_ups:
 		fee_validity = check_fee_validity(appointment, date, practitioner)
 		if not fee_validity and not appointment.get("__islocal"):
-			fee_validity = get_fee_validity(appointment.get("name"), date) or None
+			validity_details = get_fee_validity(appointment.get("name"), date, ignore_status=True)
+			if validity_details:
+				fee_validity = validity_details[0]
 
 	if appointment.invoiced:
 		fee_validity = "Disabled"

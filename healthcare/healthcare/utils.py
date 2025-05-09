@@ -14,6 +14,10 @@ from frappe.utils.formatters import format_value
 
 from erpnext.setup.utils import insert_record
 
+from healthcare.healthcare.doctype.fee_validity.fee_validity import (
+	get_fee_validity,
+	manage_fee_validity,
+)
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 )
@@ -87,10 +91,16 @@ def get_appointments_to_invoice(patient, company):
 				)
 		# Consultation Appointments, should check fee validity
 		else:
-			if frappe.db.get_single_value(
-				"Healthcare Settings", "enable_free_follow_ups"
-			) and frappe.db.exists("Fee Validity Reference", {"appointment": appointment.name}):
-				continue  # Skip invoicing, fee validty present
+			if appointment.practitioner:
+				pract_enabled = frappe.get_cached_value(
+					"Healthcare Practitioner", appointment.practitioner, "enable_free_follow_ups"
+				)
+				settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+
+				if pract_enabled or settings_enabled:
+					if get_fee_validity(appointment.name, appointment.appointment_date, ignore_status=True):
+						continue  # Skip invoicing, fee validity exists
+
 			practitioner_charge = 0
 			income_account = None
 			service_item = None
@@ -575,6 +585,10 @@ def manage_invoice_submit_cancel(doc, method):
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
 
+				# update Fee validity with Sales Invoice Reference if exists
+				if item.reference_dt == "Patient Appointment":
+					manage_fee_validity(frappe.get_doc("Patient Appointment", item.reference_dn))
+
 		if method == "on_submit" and frappe.db.get_single_value(
 			"Healthcare Settings", "create_observation_on_si_submit"
 		):
@@ -583,17 +597,6 @@ def manage_invoice_submit_cancel(doc, method):
 	if method == "on_submit":
 		if frappe.db.get_single_value("Healthcare Settings", "create_lab_test_on_si_submit"):
 			create_multiple("Sales Invoice", doc.name)
-
-		if (
-			not frappe.db.get_single_value("Healthcare Settings", "show_payment_popup")
-			and frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
-			and doc.items
-		):
-			for item in doc.items:
-				if item.reference_dt == "Patient Appointment":
-					fee_validity = frappe.db.exists("Fee Validity", {"patient_appointment": item.reference_dn})
-					if fee_validity:
-						frappe.db.set_value("Fee Validity", fee_validity, "sales_invoice_ref", doc.name)
 
 	if method == "on_cancel":
 		if doc.items and (doc.additional_discount_percentage or doc.discount_amount):
@@ -637,6 +640,7 @@ def set_invoiced(item, method, ref_invoice=None):
 		else:
 			dt_from_appointment = "Patient Encounter"
 		manage_doc_for_appointment(dt_from_appointment, item.reference_dn, invoiced)
+		frappe.db.set_value("Patient Appointment", item.reference_dn, "ref_sales_invoice", ref_invoice)
 
 	elif item.reference_dt == "Lab Prescription":
 		manage_prescriptions(
