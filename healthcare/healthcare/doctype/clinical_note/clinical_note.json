@@ -94,8 +94,7 @@
    "fieldname": "practitioner",
    "fieldtype": "Link",
    "label": "Practitioner",
-   "options": "Healthcare Practitioner",
-   "read_only": 1
+   "options": "Healthcare Practitioner"
   },
   {
    "fetch_from": "practitioner.user_id",
@@ -120,7 +119,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-05-16 18:47:54.650316",
+ "modified": "2025-05-07 11:39:36.661181",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Note",
