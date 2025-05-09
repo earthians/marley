@@ -5,7 +5,7 @@
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, date_diff, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 
@@ -83,3 +83,37 @@ class TestFeeValidity(IntegrationTestCase):
 		# For first appointment cancel should cancel fee validity
 		update_status(appointment.name, "Cancelled")
 		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
+
+	def test_practitioner_fee_validity(self):
+		self.setUp()
+		item = create_healthcare_service_items()
+		healthcare_settings = frappe.get_single("Healthcare Settings")
+		healthcare_settings.enable_free_follow_ups = 1
+		healthcare_settings.max_visits = 1
+		healthcare_settings.valid_days = 7
+		healthcare_settings.show_payment_popup = 1
+		healthcare_settings.op_consulting_charge_item = item
+		healthcare_settings.save(ignore_permissions=True)
+		patient, practitioner = create_healthcare_docs()
+		frappe.db.set_value(
+			"Healthcare Practitioner",
+			practitioner,
+			{"enable_free_follow_ups": 1, "max_visits": 2, "valid_days": 5},
+		)
+
+		# For first appointment, invoice is generated. First appointment not considered in fee validity
+		appointment = create_appointment(patient, practitioner, nowdate())
+		fee_validity = frappe.db.exists(
+			"Fee Validity",
+			{"patient": patient, "practitioner": practitioner, "patient_appointment": appointment.name},
+		)
+		invoiced = frappe.db.get_value("Patient Appointment", appointment.name, "invoiced")
+		self.assertEqual(invoiced, 1)
+		self.assertTrue(fee_validity)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Active")
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "max_visits"), 2)
+
+		start_date, valid_till = frappe.db.get_value(
+			"Fee Validity", fee_validity, ["start_date", "valid_till"]
+		)
+		self.assertEqual(date_diff(valid_till, start_date), 5)
