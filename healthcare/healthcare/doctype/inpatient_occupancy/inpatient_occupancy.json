@@ -9,10 +9,14 @@
   "check_in",
   "left",
   "check_out",
-  "invoiced"
+  "invoiced",
+  "day_ward",
+  "half_day",
+  "hdu"
  ],
  "fields": [
   {
+   "columns": 2,
    "fieldname": "service_unit",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -21,6 +25,7 @@
    "reqd": 1
   },
   {
+   "columns": 2,
    "fieldname": "check_in",
    "fieldtype": "Datetime",
    "in_list_view": 1,
@@ -45,12 +50,38 @@
    "fieldtype": "Check",
    "label": "Invoiced",
    "read_only": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "columns": 1,
+   "default": "0",
+   "fieldname": "half_day",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Half Day"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "hdu",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "HDU"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "columns": 1,
+   "default": "0",
+   "fieldname": "day_ward",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Day Ward"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-03-18 15:08:54.634132",
+ "modified": "2025-05-08 08:12:50.519160",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Occupancy",
@@ -60,5 +91,6 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

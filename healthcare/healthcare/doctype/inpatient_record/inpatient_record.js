@@ -52,11 +52,11 @@ frappe.ui.form.on("Inpatient Record", {
           note_type: "Doctors Encounter",
         }).refresh();
 
-        new pcare.ui.ClinicalNotes({
-          frm: frm,
-          notes_wrapper: $(frm.fields_dict.nurses_notes_html.wrapper),
-          note_type: "Nurses Note",
-        }).refresh();
+        // new pcare.ui.ClinicalNotes({
+        //   frm: frm,
+        //   notes_wrapper: $(frm.fields_dict.nurses_notes_html.wrapper),
+        //   note_type: "Nurses Note",
+        // }).refresh();
       });
     }
 

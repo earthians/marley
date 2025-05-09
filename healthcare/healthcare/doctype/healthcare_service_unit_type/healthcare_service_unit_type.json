@@ -14,6 +14,7 @@
   "overlap_appointments",
   "inpatient_occupancy",
   "is_billable",
+  "legacy_tab",
   "item_details",
   "item",
   "item_code",
@@ -115,6 +116,7 @@
    "options": "Item Group"
   },
   {
+   "default": "Day",
    "fieldname": "uom",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -126,6 +128,7 @@
   {
    "fieldname": "no_of_hours",
    "fieldtype": "Int",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "UOM Conversion in Hours",
@@ -169,13 +172,19 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Change in Item"
+  },
+  {
+   "fieldname": "legacy_tab",
+   "fieldtype": "Tab Break",
+   "label": "Legacy"
   }
  ],
  "links": [],
- "modified": "2024-04-29 18:59:16.479821",
+ "modified": "2025-05-08 08:16:45.882060",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
