@@ -135,11 +135,7 @@ frappe.ui.form.on('Service Request', {
 
 	set_status: function(frm, status) {
 		frappe.call({
-<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.set_service_order_status',
-========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.set_service_request_status',
->>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			async: false,
 			freeze: true,
 			args: {
@@ -180,13 +176,8 @@ frappe.ui.form.on('Service Request', {
 
 	make_clinical_procedure: function(frm) {
 		frappe.call({
-<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_clinical_procedure',
-			args: { service_order: frm.doc },
-========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_clinical_procedure',
 			args: { service_request: frm.doc },
->>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -197,13 +188,8 @@ frappe.ui.form.on('Service Request', {
 
 	make_lab_test: function(frm) {
 		frappe.call({
-<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_lab_test',
-			args: { service_order: frm.doc },
-========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_lab_test',
 			args: { service_request: frm.doc },
->>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -214,13 +200,8 @@ frappe.ui.form.on('Service Request', {
 
 	make_therapy_session: function(frm) {
 		frappe.call({
-<<<<<<<< HEAD:healthcare/healthcare/doctype/healthcare_service_order/healthcare_service_order.js
-			method: 'erpnext.healthcare.doctype.healthcare_service_order.healthcare_service_order.make_therapy_session',
-			args: { service_order: frm.doc },
-========
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_therapy_session',
 			args: { service_request: frm.doc },
->>>>>>>> f17dbf57 (rename doctypes):healthcare/healthcare/doctype/service_request/service_request.js
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
