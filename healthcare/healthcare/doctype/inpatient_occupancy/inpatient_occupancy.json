@@ -63,7 +63,7 @@
   {
    "fieldname": "coverage_status",
    "fieldtype": "Select",
-   "label": "Claim Status",
+   "label": "Coverage Status",
    "options": "\nPending\nApproved\nRejected\nInvoiced",
    "read_only": 1
   }

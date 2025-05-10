@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, nowdate, nowtime
 
-from erpnext.stock.get_item_details import get_item_details
+from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
@@ -80,18 +80,20 @@ class ClinicalProcedure(Document):
 						price_list, price_list_currency = frappe.db.get_values(
 							"Price List", {"selling": 1}, ["name", "currency"]
 						)[0]
-						args = {
-							"doctype": "Sales Invoice",
-							"item_code": item.item_code,
-							"company": self.company,
-							"warehouse": self.warehouse,
-							"customer": customer,
-							"selling_price_list": price_list,
-							"price_list_currency": price_list_currency,
-							"plc_conversion_rate": 1.0,
-							"conversion_rate": 1.0,
-						}
-						item_details = get_item_details(args)
+						ctx: ItemDetailsCtx = ItemDetailsCtx(
+							{
+								"doctype": "Sales Invoice",
+								"item_code": item.item_code,
+								"company": self.company,
+								"warehouse": self.warehouse,
+								"customer": customer,
+								"selling_price_list": price_list,
+								"price_list_currency": price_list_currency,
+								"plc_conversion_rate": 1.0,
+								"conversion_rate": 1.0,
+							}
+						)
+						item_details = get_item_details(ctx)
 						item_price = item_details.price_list_rate * item.qty
 						item_consumption_details = (
 							item_details.item_name + " " + str(item.qty) + " " + item.uom + " " + str(item_price)

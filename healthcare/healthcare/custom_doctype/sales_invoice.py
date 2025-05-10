@@ -2,6 +2,7 @@ import frappe
 from frappe.utils import flt
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 
 
 class HealthcareSalesInvoice(SalesInvoice):
@@ -13,24 +14,25 @@ class HealthcareSalesInvoice(SalesInvoice):
 	def set_healthcare_services(self, checked_values):
 
 		self.set("items", [])
-		from erpnext.stock.get_item_details import get_item_details
 
 		for checked_item in checked_values:
 			item_line = self.append("items", {})
 			price_list, price_list_currency = frappe.db.get_values(
 				"Price List", {"selling": 1}, ["name", "currency"]
 			)[0]
-			args = {
-				"doctype": "Sales Invoice",
-				"item_code": checked_item["item"],
-				"company": self.company,
-				"customer": frappe.db.get_value("Patient", self.patient, "customer"),
-				"selling_price_list": price_list,
-				"price_list_currency": price_list_currency,
-				"plc_conversion_rate": 1.0,
-				"conversion_rate": 1.0,
-			}
-			item_details = get_item_details(args)
+			ctx: ItemDetailsCtx = ItemDetailsCtx(
+				{
+					"doctype": "Sales Invoice",
+					"item_code": checked_item["item"],
+					"company": self.company,
+					"customer": frappe.db.get_value("Patient", self.patient, "customer"),
+					"selling_price_list": price_list,
+					"price_list_currency": price_list_currency,
+					"plc_conversion_rate": 1.0,
+					"conversion_rate": 1.0,
+				}
+			)
+			item_details = get_item_details(ctx)
 			item_line.item_code = checked_item["item"]
 			item_line.qty = 1
 

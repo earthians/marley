@@ -415,7 +415,7 @@
    "fetch_if_empty": 1,
    "fieldname": "coverage_status",
    "fieldtype": "Data",
-   "label": "Claim Status",
+   "label": "Coverage Status",
    "read_only": 1
   },
   {

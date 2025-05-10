@@ -67,6 +67,10 @@ class PatientAppointment(Document):
 		):
 			update_fee_validity(self)
 
+		doc_before_save = self.get_doc_before_save()
+		if not doc_before_save.insurance_policy == self.insurance_policy:
+			self.make_insurance_coverage()
+
 	def after_insert(self):
 		self.update_prescription_details()
 		self.set_payment_details()

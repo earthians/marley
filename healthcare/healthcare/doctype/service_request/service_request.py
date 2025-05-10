@@ -112,7 +112,7 @@ class ServiceRequest(Document):
 
 	def update_invoice_details(self, qty):
 		"""
-		updates qty_invoiced and set  billing status
+		updates qty_invoiced and set billing status
 		"""
 		qty_invoiced = self.qty_invoiced + qty
 

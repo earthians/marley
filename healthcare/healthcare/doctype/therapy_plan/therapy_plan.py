@@ -7,6 +7,8 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import flt, today
 
+from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
+
 from healthcare.healthcare.utils import validate_nursing_tasks
 
 
@@ -83,8 +85,6 @@ def make_therapy_session(therapy_plan, patient, therapy_type, company, appointme
 
 @frappe.whitelist()
 def make_sales_invoice(reference_name, patient, company, therapy_plan_template):
-	from erpnext.stock.get_item_details import get_item_details
-
 	si = frappe.new_doc("Sales Invoice")
 	si.company = company
 	si.patient = patient
@@ -94,19 +94,21 @@ def make_sales_invoice(reference_name, patient, company, therapy_plan_template):
 	price_list, price_list_currency = frappe.db.get_values(
 		"Price List", {"selling": 1}, ["name", "currency"]
 	)[0]
-	args = {
-		"doctype": "Sales Invoice",
-		"item_code": item,
-		"company": company,
-		"customer": si.customer,
-		"selling_price_list": price_list,
-		"price_list_currency": price_list_currency,
-		"plc_conversion_rate": 1.0,
-		"conversion_rate": 1.0,
-	}
+	ctx: ItemDetailsCtx = ItemDetailsCtx(
+		{
+			"doctype": "Sales Invoice",
+			"item_code": item,
+			"company": company,
+			"customer": si.customer,
+			"selling_price_list": price_list,
+			"price_list_currency": price_list_currency,
+			"plc_conversion_rate": 1.0,
+			"conversion_rate": 1.0,
+		}
+	)
 
 	item_line = si.append("items", {})
-	item_details = get_item_details(args)
+	item_details = get_item_details(ctx)
 	item_line.item_code = item
 	item_line.qty = 1
 	item_line.rate = item_details.price_list_rate

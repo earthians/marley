@@ -23,6 +23,8 @@ from frappe.utils import (
 	today,
 )
 
+from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
+
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
@@ -724,25 +726,25 @@ def create_stock_entry(items, inpatient_record):
 
 
 def set_item_rate(doc):
-	from erpnext.stock.get_item_details import get_item_details
-
 	price_list, price_list_currency = frappe.db.get_values(
 		"Price List", {"selling": 1}, ["name", "currency"]
 	)[0]
 	total_amount = 0
 	for item in doc.items:
 		if not item.rate:
-			args = {
-				"doctype": "Sales Invoice",
-				"item_code": item.get("item_code"),
-				"company": doc.company,
-				"customer": frappe.db.get_value("Patient", doc.patient, "customer"),
-				"selling_price_list": doc.price_list or price_list,
-				"price_list_currency": doc.currency or price_list_currency,
-				"plc_conversion_rate": 1.0,
-				"conversion_rate": 1.0,
-			}
-			item_details = get_item_details(args)
+			ctx: ItemDetailsCtx = ItemDetailsCtx(
+				{
+					"doctype": "Sales Invoice",
+					"item_code": item.get("item_code"),
+					"company": doc.company,
+					"customer": frappe.db.get_value("Patient", doc.patient, "customer"),
+					"selling_price_list": doc.price_list or price_list,
+					"price_list_currency": doc.currency or price_list_currency,
+					"plc_conversion_rate": 1.0,
+					"conversion_rate": 1.0,
+				}
+			)
+			item_details = get_item_details(ctx)
 			item.rate = item_details.get("price_list_rate")
 			item.amount = item.rate * item.quantity
 

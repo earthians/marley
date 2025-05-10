@@ -466,7 +466,7 @@
    "fetch_from": "insurance_coverage.status",
    "fieldname": "coverage_status",
    "fieldtype": "Data",
-   "label": "Claim Status",
+   "label": "Coverage Status",
    "no_copy": 1,
    "read_only": 1
   },
