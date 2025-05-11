@@ -46,24 +46,7 @@ frappe.ui.form.on("Inpatient Record", {
           "discharge_summary_html"
         ).display_encounter();
 
-        $(frm.fields_dict.progress_notes_btn.wrapper).html(`
-          <button class="btn btn-secondary btn-doctors-note">Create Doctors Note</button>
-        `);
-        $(frm.fields_dict.nurses_notes_btn.wrapper).html(`
-          <button class="btn btn-secondary btn-nurses-note">Create Nurses Note</button>
-        `);
-
-        $(frm.fields_dict.progress_notes_btn.wrapper)
-          .find(".btn-doctors-note")
-          .on("click", function () {
-            open_clinical_note_dialog(frm, "Doctors Encounter");
-          });
-
-        $(frm.fields_dict.nurses_notes_btn.wrapper)
-          .find(".btn-nurses-note")
-          .on("click", function () {
-            open_clinical_note_dialog(frm, "Nurses Notes");
-          });
+        frm.trigger("add_notes");
       });
     }
 
@@ -96,16 +79,6 @@ frappe.ui.form.on("Inpatient Record", {
     } else {
       frm.set_value("status", "Admission Scheduled");
     }
-
-    if (!frm.doc.__islocal) {
-      fetch_and_render_notes(
-        frm,
-        "Doctors Encounter",
-        "progress_notes_html",
-        true
-      );
-      fetch_and_render_notes(frm, "Nurses Notes", "nurses_notes_html", true);
-    }
   },
 
   onload: function (frm) {
@@ -116,6 +89,152 @@ frappe.ui.form.on("Inpatient Record", {
 
   btn_transfer: function (frm) {
     transfer_patient_dialog(frm);
+  },
+
+  add_notes: function (frm) {
+    const content = `
+    <div class="row">
+  <div class="col-3">
+    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+      <button class="nav-link active" id="v-pills-important-tab" data-toggle="pill" data-target="#v-pills-important" type="button" role="tab" aria-controls="v-pills-important" aria-selected="true">Important</button>
+      <button class="nav-link" id="v-pills-doctors-tab" data-toggle="pill" data-target="#v-pills-doctors" type="button" role="tab" aria-controls="v-pills-doctors" aria-selected="false">Doctor's Note</button>
+      <button class="nav-link" id="v-pills-nurses-tab" data-toggle="pill" data-target="#v-pills-nurses" type="button" role="tab" aria-controls="v-pills-nurses" aria-selected="false">Nurse's Note</button>
+    </div>
+  </div>
+  <div class="col-9">
+    <div class="tab-content" id="v-pills-tabContent">
+      <div class="tab-pane fade show active" id="v-pills-important" role="tabpanel" aria-labelledby="v-pills-important-tab"></div>
+      <div class="tab-pane fade" id="v-pills-doctors" role="tabpanel" aria-labelledby="v-pills-doctors-tab"></div>
+      <div class="tab-pane fade" id="v-pills-nurses" role="tabpanel" aria-labelledby="v-pills-nurses-tab"></div>
+    </div>
+  </div>
+</div>
+`;
+    const $wrapper = $(frm.fields_dict["notes_html"].wrapper).empty();
+    $wrapper.append(content);
+    frm.trigger("add_important_notes");
+    frm.trigger("add_doctors_notes");
+    frm.trigger("add_nurses_notes");
+  },
+
+  add_important_notes: function (frm) {
+    const fields = [
+      {
+        fieldtype: "Link",
+        label: "Patient",
+        fieldname: "patient",
+        options: "Patient",
+        default: frm.doc.patient,
+        read_only: 1,
+        reqd: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Patient Name",
+        fieldname: "patient_name",
+        options: "Patient",
+        default: frm.doc.patient_name,
+        read_only: 1,
+      },
+      {
+        fieldtype: "Text Editor",
+        label: "Note",
+        fieldname: "note",
+        reqd: 1,
+      },
+    ];
+    new pcare.ui.UIPCForm(
+      frm,
+      $("#v-pills-important"),
+      "Inpatient Record",
+      frm.doc.name,
+      fields,
+      "Important Notes"
+    ).render_list();
+  },
+  add_doctors_notes: function (frm) {
+    const fields = [
+      {
+        fieldtype: "Link",
+        label: "Patient",
+        fieldname: "patient",
+        options: "Patient",
+        default: frm.doc.patient,
+        read_only: 1,
+        reqd: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Patient Name",
+        fieldname: "patient_name",
+        options: "Patient",
+        default: frm.doc.patient_name,
+        read_only: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Reference Doctor",
+        fieldname: "practitioner",
+        options: "Healthcare Practitioner",
+        // reqd: 1,
+      },
+      {
+        fieldtype: "Text Editor",
+        label: "Note",
+        fieldname: "note",
+        reqd: 1,
+      },
+    ];
+    new pcare.ui.UIPCForm(
+      frm,
+      $("#v-pills-doctors"),
+      "Inpatient Record",
+      frm.doc.name,
+      fields,
+      "Doctors Encounter"
+    ).render_list();
+  },
+  add_nurses_notes: function (frm) {
+    const fields = [
+      {
+        fieldtype: "Link",
+        label: "Patient",
+        fieldname: "patient",
+        options: "Patient",
+        default: frm.doc.patient,
+        read_only: 1,
+        reqd: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Patient Name",
+        fieldname: "patient_name",
+        options: "Patient",
+        default: frm.doc.patient_name,
+        read_only: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Reference Doctor",
+        fieldname: "practitioner",
+        options: "Healthcare Practitioner",
+        // reqd: 1,
+      },
+      {
+        fieldtype: "Text Editor",
+        label: "Note",
+        fieldname: "note",
+        reqd: 1,
+      },
+    ];
+    new pcare.ui.UIPCForm(
+      frm,
+      $("#v-pills-nurses"),
+      "Inpatient Record",
+      frm.doc.name,
+      fields,
+      "Nurses Notes"
+    ).render_list();
   },
 });
 
@@ -462,215 +581,8 @@ function renderVitalSignsCharts(frm) {
     });
 }
 
-function fetch_and_render_notes(
-  frm,
-  note_type,
-  target_field,
-  editable = false
-) {
-  frappe.call({
-    method:
-      "healthcare.healthcare.doctype.inpatient_record.inpatient_record.get_clinical_notes",
-    args: { patient: frm.doc.patient, note_type },
-    callback: function (response) {
-      let html = "";
-      if (response.message && response.message.length > 0) {
-        html += `<h4>Existing ${note_type}</h4><ul>`;
-        response.message.forEach((note) => {
-          html += `
-                      <li class="border rounded p-3 mb-3">
-                          <strong>Date</strong> - ${frappe.datetime.str_to_user(
-                            note.posting_date
-                          )}<br>
-                          <div class="mb-1"><strong>Practitioner:</strong> ${
-                            note.practitioner || "N/A"
-                          }<br></div>
-                          <div class="mb-2 border rounded p-3 mb-3">${
-                            note.note
-                              ? stripHtml(note.note)
-                              : "<em>No content</em>"
-                          }<br></div>
-                          ${
-                            editable
-                              ? `
-                              <button class="btn btn-secondary btn-sm edit-note" data-name="${note.name}" data-note="${note.note}" data-practitioner="${note.practitioner}">Edit</button>
-                              <button class="btn btn-danger btn-sm delete-note" data-name="${note.name}"> <i class="bi bi-trash"></i> Delete</button>`
-                              : ""
-                          }
-                      </li>`;
-        });
-        html += `</ul>`;
-      } else {
-        html = "<p>No clinical notes found for this patient.</p>";
-      }
-      $(frm.fields_dict[target_field].wrapper).html(html);
-
-      if (editable) {
-        $(frm.fields_dict[target_field].wrapper)
-          .find(".edit-note")
-          .on("click", function () {
-            open_edit_note_dialog(
-              frm,
-              $(this).data("name"),
-              $(this).data("note"),
-              $(this).data("practitioner")
-            );
-          });
-
-        $(frm.fields_dict[target_field].wrapper)
-          .find(".delete-note")
-          .on("click", function () {
-            delete_clinical_note(frm, $(this).data("name"));
-          });
-      }
-    },
-  });
-}
-
 function stripHtml(html) {
   let div = document.createElement("div");
   div.innerHTML = html;
   return div.textContent || div.innerText || "";
-}
-
-function open_clinical_note_dialog(frm, note_type) {
-  let dialog = new frappe.ui.Dialog({
-    title: `Add ${note_type}`,
-    fields: [
-      {
-        fieldtype: "Link",
-        label: "Patient",
-        fieldname: "patient",
-        options: "Patient",
-        default: frm.doc.patient,
-        read_only: 1,
-      },
-      {
-        fieldtype: "Link",
-        label: "Practitioner",
-        fieldname: "practitioner",
-        options: "Healthcare Practitioner",
-        reqd: 1,
-      },
-      {
-        fieldtype: "Small Text",
-        label: "Note",
-        fieldname: "note",
-        reqd: 1,
-      },
-    ],
-    primary_action_label: "Save",
-    primary_action: function (data) {
-      if (!data.note) {
-        frappe.msgprint(__("Please enter a note."));
-        return;
-      }
-
-      // Save the clinical note using frappe.call
-      frappe.call({
-        method:
-          "healthcare.healthcare.doctype.inpatient_record.inpatient_record.add_clinical_note",
-        args: {
-          note: data.note,
-          note_type: note_type,
-          patient: frm.doc.patient,
-          practitioner: data.practitioner,
-          reference_doc: "Inpatient Record",
-          reference_name: frm.doc.name,
-        },
-        callback: function (response) {
-          if (!response.exc) {
-            frappe.msgprint(__("Clinical Note added successfully."));
-            dialog.hide();
-
-            // Refresh the notes section
-            frm.reload_doc();
-          }
-        },
-        freeze: true,
-        freeze_message: __("Saving Clinical Note..."),
-      });
-    },
-  });
-
-  dialog.show();
-}
-
-function open_edit_note_dialog(frm, noteName, noteContent, practitioner) {
-  let dialog = new frappe.ui.Dialog({
-    title: "Edit Clinical Note",
-    fields: [
-      {
-        fieldtype: "Link",
-        label: "Practitioner",
-        fieldname: "practitioner",
-        options: "Healthcare Practitioner",
-        default: practitioner,
-        reqd: 1,
-      },
-      {
-        fieldtype: "Small Text",
-        label: "Note",
-        fieldname: "note",
-        default: noteContent,
-        reqd: 1,
-      },
-    ],
-    primary_action_label: "Save",
-    primary_action: function (data) {
-      if (!data.note) {
-        frappe.msgprint(__("Please enter a note."));
-        return;
-      }
-
-      // Update the clinical note using frappe.call
-      frappe.call({
-        method:
-          "healthcare.healthcare.doctype.inpatient_record.inpatient_record.update_clinical_note",
-        args: {
-          name: noteName,
-          note: data.note,
-          practitioner: data.practitioner,
-        },
-        callback: function (response) {
-          if (!response.exc) {
-            frappe.msgprint(__("Clinical Note updated successfully."));
-            dialog.hide();
-
-            // Refresh the notes section
-            frm.reload_doc();
-          }
-        },
-        freeze: true,
-        freeze_message: __("Updating Clinical Note..."),
-      });
-    },
-  });
-
-  dialog.show();
-}
-
-function delete_clinical_note(frm, noteName) {
-  frappe.confirm(
-    __("Are you sure you want to delete this clinical note?"),
-    function () {
-      frappe.call({
-        method:
-          "healthcare.healthcare.doctype.inpatient_record.inpatient_record.delete_clinical_note",
-        args: {
-          name: noteName,
-        },
-        callback: function (response) {
-          if (!response.exc) {
-            frappe.msgprint(__("Clinical Note deleted successfully."));
-
-            // Refresh the notes section
-            frm.reload_doc();
-          }
-        },
-        freeze: true,
-        freeze_message: __("Deleting Clinical Note..."),
-      });
-    }
-  );
 }
