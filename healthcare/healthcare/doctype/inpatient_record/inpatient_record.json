@@ -480,6 +480,7 @@
   {
    "fieldname": "tab_3_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Tab 3"
   },
   {
@@ -556,7 +557,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-05-11 23:18:17.352684",
+ "modified": "2025-05-12 00:12:04.578143",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
