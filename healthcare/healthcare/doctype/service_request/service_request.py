@@ -152,6 +152,8 @@ def make_clinical_procedure(service_request):
 			title=_("Payment Required"),
 		)
 
+	procedure_template = frappe.get_doc("Clinical Procedure Template", service_request.template_dn)
+
 	doc = frappe.new_doc("Clinical Procedure")
 	doc.procedure_template = service_request.template_dn
 	doc.service_request = service_request.name
@@ -169,6 +171,22 @@ def make_clinical_procedure(service_request):
 	doc.insurance_payor = service_request.insurance_payor
 	doc.insurance_coverage = service_request.insurance_coverage
 	doc.coverage_status = service_request.coverage_status
+	doc.consume_stock = procedure_template.consume_stock
+	doc.warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+
+	if not doc.codification_table and procedure_template.codification_table:
+		for code in procedure_template.codification_table:
+			doc.append(
+				"codification_table",
+				(frappe.copy_doc(code)).as_dict(),
+			)
+
+	if not doc.items and procedure_template.items:
+		for item in procedure_template.items:
+			doc.append(
+				"items",
+				(frappe.copy_doc(item)).as_dict(),
+			)
 
 	return doc
 
