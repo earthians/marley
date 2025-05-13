@@ -46,7 +46,6 @@
   "sb_procedures",
   "procedure_prescription",
   "rehabilitation_section",
-  "therapy_plan",
   "therapies",
   "section_break_33",
   "encounter_comment",
@@ -277,14 +276,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "therapy_plan",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Therapy Plan",
-   "options": "Therapy Plan",
-   "read_only": 1
-  },
-  {
    "fieldname": "appointment_type",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -389,6 +380,7 @@
    "label": "Order History"
   }
  ],
+ "grid_page_length": 50,
  "is_submittable": 1,
  "links": [
   {
@@ -432,7 +424,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-09-28 12:18:20.535746",
+ "modified": "2025-05-13 18:25:05.874428",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
