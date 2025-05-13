@@ -46,25 +46,7 @@ frappe.ui.form.on("Inpatient Record", {
           "discharge_summary_html"
         ).display_encounter();
 
-        $(frm.fields_dict.progress_notes_btn.wrapper).html(`
-          <button class="btn btn-secondary btn-doctors-note">Create Doctors Note</button>
-        `);
-        $(frm.fields_dict.nurses_notes_btn.wrapper).html(`
-          <button class="btn btn-secondary btn-nurses-note">Create Nurses Note</button>
-        `);
-        
-        $(frm.fields_dict.progress_notes_btn.wrapper)
-          .find(".btn-doctors-note")
-          .on("click", function () {
-            open_clinical_note_dialog(frm, "Doctors Encounter");
-          });
-        
-        $(frm.fields_dict.nurses_notes_btn.wrapper)
-          .find(".btn-nurses-note")
-          .on("click", function () {
-            open_clinical_note_dialog(frm, "Nurses Notes");
-          });
-        
+        frm.trigger("add_notes");
       });
     }
 
@@ -97,12 +79,6 @@ frappe.ui.form.on("Inpatient Record", {
     } else {
       frm.set_value("status", "Admission Scheduled");
     }
-
-    if (!frm.doc.__islocal) {
-      fetch_and_render_notes(frm, "Doctors Encounter", "progress_notes_html",true);
-      fetch_and_render_notes(frm, "Nurses Notes", "nurses_notes_html", true);
-    }
-
   },
 
   onload: function (frm) {
@@ -113,6 +89,152 @@ frappe.ui.form.on("Inpatient Record", {
 
   btn_transfer: function (frm) {
     transfer_patient_dialog(frm);
+  },
+
+  add_notes: function (frm) {
+    const content = `
+    <div class="row">
+  <div class="col-3">
+    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+      <button class="nav-link active" id="v-pills-important-tab" data-toggle="pill" data-target="#v-pills-important" type="button" role="tab" aria-controls="v-pills-important" aria-selected="true">Important</button>
+      <button class="nav-link" id="v-pills-doctors-tab" data-toggle="pill" data-target="#v-pills-doctors" type="button" role="tab" aria-controls="v-pills-doctors" aria-selected="false">Doctor's Note</button>
+      <button class="nav-link" id="v-pills-nurses-tab" data-toggle="pill" data-target="#v-pills-nurses" type="button" role="tab" aria-controls="v-pills-nurses" aria-selected="false">Nurse's Note</button>
+    </div>
+  </div>
+  <div class="col-9">
+    <div class="tab-content" id="v-pills-tabContent">
+      <div class="tab-pane fade show active" id="v-pills-important" role="tabpanel" aria-labelledby="v-pills-important-tab"></div>
+      <div class="tab-pane fade" id="v-pills-doctors" role="tabpanel" aria-labelledby="v-pills-doctors-tab"></div>
+      <div class="tab-pane fade" id="v-pills-nurses" role="tabpanel" aria-labelledby="v-pills-nurses-tab"></div>
+    </div>
+  </div>
+</div>
+`;
+    const $wrapper = $(frm.fields_dict["notes_html"].wrapper).empty();
+    $wrapper.append(content);
+    frm.trigger("add_important_notes");
+    frm.trigger("add_doctors_notes");
+    frm.trigger("add_nurses_notes");
+  },
+
+  add_important_notes: function (frm) {
+    const fields = [
+      {
+        fieldtype: "Link",
+        label: "Patient",
+        fieldname: "patient",
+        options: "Patient",
+        default: frm.doc.patient,
+        read_only: 1,
+        reqd: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Patient Name",
+        fieldname: "patient_name",
+        options: "Patient",
+        default: frm.doc.patient_name,
+        read_only: 1,
+      },
+      {
+        fieldtype: "Text Editor",
+        label: "Note",
+        fieldname: "note",
+        reqd: 1,
+      },
+    ];
+    new pcare.ui.UIPCForm(
+      frm,
+      $("#v-pills-important"),
+      "Inpatient Record",
+      frm.doc.name,
+      fields,
+      "Important Notes"
+    ).render_list();
+  },
+  add_doctors_notes: function (frm) {
+    const fields = [
+      {
+        fieldtype: "Link",
+        label: "Patient",
+        fieldname: "patient",
+        options: "Patient",
+        default: frm.doc.patient,
+        read_only: 1,
+        reqd: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Patient Name",
+        fieldname: "patient_name",
+        options: "Patient",
+        default: frm.doc.patient_name,
+        read_only: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Reference Doctor",
+        fieldname: "practitioner",
+        options: "Healthcare Practitioner",
+        // reqd: 1,
+      },
+      {
+        fieldtype: "Text Editor",
+        label: "Note",
+        fieldname: "note",
+        reqd: 1,
+      },
+    ];
+    new pcare.ui.UIPCForm(
+      frm,
+      $("#v-pills-doctors"),
+      "Inpatient Record",
+      frm.doc.name,
+      fields,
+      "Doctors Encounter"
+    ).render_list();
+  },
+  add_nurses_notes: function (frm) {
+    const fields = [
+      {
+        fieldtype: "Link",
+        label: "Patient",
+        fieldname: "patient",
+        options: "Patient",
+        default: frm.doc.patient,
+        read_only: 1,
+        reqd: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Patient Name",
+        fieldname: "patient_name",
+        options: "Patient",
+        default: frm.doc.patient_name,
+        read_only: 1,
+      },
+      {
+        fieldtype: "Link",
+        label: "Reference Doctor",
+        fieldname: "practitioner",
+        options: "Healthcare Practitioner",
+        // reqd: 1,
+      },
+      {
+        fieldtype: "Text Editor",
+        label: "Note",
+        fieldname: "note",
+        reqd: 1,
+      },
+    ];
+    new pcare.ui.UIPCForm(
+      frm,
+      $("#v-pills-nurses"),
+      "Inpatient Record",
+      frm.doc.name,
+      fields,
+      "Nurses Notes"
+    ).render_list();
   },
 });
 

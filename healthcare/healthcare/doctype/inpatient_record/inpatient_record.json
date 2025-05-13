@@ -77,13 +77,7 @@
   "patient_history_tab",
   "patient_history_html",
   "progress_notes",
-  "progress_notes_btn",
-  "section_break_kcuk",
-  "progress_notes_html",
-  "notes_tab",
-  "nurses_notes_btn",
-  "section_break_vurj",
-  "nurses_notes_html",
+  "notes_html",
   "discharge_summary_tab",
   "discharge_summary_html"
  ],
@@ -360,6 +354,7 @@
    "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
    "fieldname": "sb_discharge_note",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Discharge Notes"
   },
   {
@@ -485,6 +480,7 @@
   {
    "fieldname": "tab_3_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Tab 3"
   },
   {
@@ -530,11 +526,6 @@
    "fieldtype": "HTML"
   },
   {
-   "fieldname": "notes_tab",
-   "fieldtype": "Tab Break",
-   "label": "Nurses Notes"
-  },
-  {
    "fieldname": "discharge_summary_json",
    "fieldtype": "JSON",
    "label": "discharge_summary_json"
@@ -551,34 +542,12 @@
   {
    "fieldname": "progress_notes",
    "fieldtype": "Tab Break",
-   "label": "Doctors Encounter"
+   "label": "Notes"
   },
   {
-   "fieldname": "progress_notes_html",
+   "fieldname": "notes_html",
    "fieldtype": "HTML",
-   "label": "progress_notes_html"
-  },
-  {
-   "fieldname": "nurses_notes_html",
-   "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "progress_notes_btn",
-   "fieldtype": "HTML",
-   "label": "Add Doctors Encounter"
-  },
-  {
-   "fieldname": "section_break_kcuk",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "nurses_notes_btn",
-   "fieldtype": "HTML",
-   "label": "Add Nurses Notes"
-  },
-  {
-   "fieldname": "section_break_vurj",
-   "fieldtype": "Section Break"
+   "label": "notes_html"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -588,7 +557,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-05-06 15:47:34.095395",
+ "modified": "2025-05-12 00:12:04.578143",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",

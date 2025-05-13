@@ -100,17 +100,17 @@ frappe.ui.form.on("Inpatient Record", {
       __("Create")
     );
 
-    frm.add_custom_button(
-      __("Medical Record"),
-      function () {
-        frappe.new_doc("Patient Medical Record", {
-          patient: frm.doc.patient,
-          reference_doctype: "Inpatient Record",
-          reference_docname: frm.doc.name,
-        });
-      },
-      __("Create")
-    );
+    // frm.add_custom_button(
+    //   __("Medical Record"),
+    //   function () {
+    //     frappe.new_doc("Patient Medical Record", {
+    //       patient: frm.doc.patient,
+    //       reference_doctype: "Inpatient Record",
+    //       reference_docname: frm.doc.name,
+    //     });
+    //   },
+    //   __("Create")
+    // );
 
     // frm.add_custom_button(__("Fluid Intake Output Chart"), function(){
     //     frappe.new_doc("Fluid Intake Output Chart",{
@@ -134,6 +134,16 @@ frappe.ui.form.on("Inpatient Record", {
       function () {
         frappe.new_doc("Diabetic Chart", {
           patient: frm.doc.patient,
+          inpatient_record: frm.doc.name,
+        });
+      },
+      __("Create")
+    );
+    frm.add_custom_button(
+      __("Drug Administration"),
+      function () {
+        frappe.new_doc("Drug Administration", {
+          inpatient_record: frm.doc.name,
         });
       },
       __("Create")
