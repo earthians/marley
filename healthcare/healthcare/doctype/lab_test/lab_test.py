@@ -320,7 +320,11 @@ def create_sample_doc(template, patient, invoice, company=None):
 			sample_collection = frappe.get_doc("Sample Collection", sample_exists)
 			quantity = int(sample_collection.sample_qty) + int(template.sample_qty)
 			if template.sample_details:
-				sample_details = sample_collection.sample_details + "\n-\n" + _("Test :")
+				sample_details = (
+					(sample_collection.sample_details + "\n-\n")
+					if sample_collection.sample_details
+					else "" + _("Test :")
+				)
 				sample_details += (template.get("lab_test_name") or template.get("template")) + "\n"
 				sample_details += _("Collection Details:") + "\n\t" + template.sample_details
 				frappe.db.set_value(

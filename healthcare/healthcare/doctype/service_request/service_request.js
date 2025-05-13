@@ -226,8 +226,13 @@ frappe.ui.form.on('Service Request', {
 
 	make_therapy_session: function(frm) {
 		frappe.call({
-			method: 'healthcare.healthcare.doctype.service_request.service_request.make_therapy_session',
-			args: { service_request: frm.doc },
+			method: 'healthcare.healthcare.doctype.therapy_plan.therapy_plan.make_therapy_session',
+			args: {
+				patient: frm.doc.patient,
+				therapy_type: frm.doc.template_dn,
+				company: frm.doc.company,
+				service_request: frm.doc.name
+			},
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);

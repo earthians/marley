@@ -4,6 +4,7 @@
 
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, today
 
@@ -60,7 +61,33 @@ class TherapyPlan(Document):
 
 
 @frappe.whitelist()
-def make_therapy_session(therapy_plan, patient, therapy_type, company, appointment=None):
+def make_therapy_session(
+	patient, therapy_type, company, therapy_plan=None, appointment=None, service_request=None
+):
+	sr_doc = None
+	if service_request:
+		if (
+			frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
+			and frappe.get_cached_value("Service Request", service_request, "billing_status") != "Invoiced"
+		):
+			frappe.throw(
+				_("Service Request need to be invoiced before proceeding"),
+				title=_("Payment Required"),
+			)
+
+		sr_doc = frappe.get_cached_doc("Service Request", service_request)
+
+	if not therapy_plan and sr_doc:
+		therapy_plan = frappe.db.exists(
+			"Therapy Plan", {"source_doc": sr_doc.source_doc, "order_group": sr_doc.order_group}
+		)
+
+	if not therapy_plan:
+		frappe.throw(
+			_("Therapy Plan is required to create Therapy Session"),
+			title=_("Therapy Plan Required"),
+		)
+
 	therapy_type = frappe.get_doc("Therapy Type", therapy_type)
 
 	therapy_session = frappe.new_doc("Therapy Session")
@@ -76,7 +103,20 @@ def make_therapy_session(therapy_plan, patient, therapy_type, company, appointme
 				"exercises",
 				(frappe.copy_doc(exercise)).as_dict(),
 			)
+	if not therapy_session.codification_table and therapy_type.codification_table:
+		for code in therapy_type.codification_table:
+			therapy_session.append(
+				"codification_table",
+				(frappe.copy_doc(code)).as_dict(),
+			)
 	therapy_session.appointment = appointment
+	therapy_session.service_request = service_request
+	if sr_doc:
+		therapy_session.invoiced = 1 if sr_doc.billing_status == "Invoiced" else 0
+		therapy_session.insurance_policy = sr_doc.insurance_policy
+		therapy_session.insurance_payor = sr_doc.insurance_payor
+		therapy_session.insurance_coverage = sr_doc.insurance_coverage
+		therapy_session.coverage_status = sr_doc.coverage_status
 
 	if frappe.flags.in_test:
 		therapy_session.start_date = today()

@@ -26,7 +26,11 @@ class TestTherapyPlan(IntegrationTestCase):
 		patient, practitioner = create_healthcare_docs()
 		medical_department = create_medical_department()
 		encounter = create_encounter(patient, medical_department, practitioner)
-		self.assertTrue(frappe.db.exists("Therapy Plan", encounter.therapy_plan))
+		self.assertTrue(
+			frappe.db.exists(
+				"Therapy Plan", {"source_doc": "Patient Encounter", "order_group": encounter.name}
+			)
+		)
 
 	def test_status(self):
 		plan = create_therapy_plan()

@@ -9,7 +9,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import add_days, getdate
+from frappe.utils import add_days, get_link_to_form, getdate
 
 from healthcare.healthcare.utils import get_medical_codes
 
@@ -51,6 +51,19 @@ class PatientEncounter(Document):
 
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
+
+		therapy_plan = frappe.db.exists(
+			"Therapy Plan", {"source_doc": self.doctype, "order_group": self.name}
+		)
+		if therapy_plan:
+			therapy_status = frappe.get_cached_value("Therapy Plan", therapy_plan, "status")
+			if therapy_status in ["In Progress", "Completed"]:
+				frappe.throw(
+					_(
+						f"Cannot cancel encounter with {therapy_status} therapy plan {get_link_to_form('Therapy Plan', therapy_plan)}"
+					)
+				)
+			frappe.db.set_value("Therapy Plan", therapy_plan, "status", "Cancelled")
 
 		if self.inpatient_record and self.drug_prescription:
 			delete_ip_medication_order(self)  # TODO: delete?
@@ -394,6 +407,8 @@ def create_therapy_plan(encounter):
 		doc = frappe.new_doc("Therapy Plan")
 		doc.patient = encounter.patient
 		doc.start_date = encounter.encounter_date
+		doc.source_doc = encounter.doctype
+		doc.order_group = encounter.name
 		for entry in encounter.therapies:
 			doc.append(
 				"therapy_plan_details",
@@ -405,7 +420,6 @@ def create_therapy_plan(encounter):
 			)
 		doc.save(ignore_permissions=True)
 		if doc.get("name"):
-			encounter.db_set("therapy_plan", doc.name)
 			frappe.msgprint(
 				_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True
 			)

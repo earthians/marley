@@ -213,42 +213,6 @@ def make_lab_test(service_request):
 
 
 @frappe.whitelist()
-def make_therapy_session(service_request):
-	if isinstance(service_request, string_types):
-		service_request = json.loads(service_request)
-		service_request = frappe._dict(service_request)
-
-	if (
-		frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
-		and service_request.billing_status != "Invoiced"
-	):
-		frappe.throw(
-			_("Service Request need to be invoiced before proceeding"),
-			title=_("Payment Required"),
-		)
-
-	doc = frappe.new_doc("Therapy Session")
-	doc.therapy_type = service_request.template_dn
-	doc.service_request = service_request.name
-	doc.company = service_request.company
-	doc.patient = service_request.patient
-	doc.patient_name = service_request.patient_name
-	doc.gender = service_request.patient_gender
-	doc.patient_age = service_request.patient_age_data
-	doc.practitioner = service_request.practitioner
-	doc.department = service_request.medical_department
-	doc.start_date = service_request.occurrence_date
-	doc.start_time = service_request.occurrence_time
-	doc.invoiced = service_request.invoiced
-	doc.insurance_policy = service_request.insurance_policy
-	doc.insurance_payor = service_request.insurance_payor
-	doc.insurance_coverage = service_request.insurance_coverage
-	doc.coverage_status = service_request.coverage_status
-
-	return doc
-
-
-@frappe.whitelist()
 def make_observation(service_request):
 	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
