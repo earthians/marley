@@ -3,6 +3,9 @@ frappe.ui.form.on('Sales Invoice', {
 	refresh(frm) {
 		if (frm.doc.docstatus === 0 && !frm.doc.is_return) {
 			frm.add_custom_button(__('Healthcare Services'), function() {
+				if (!frm.doc.patient) {
+					frappe.throw(__('Please select a Patient to be invoiced'));
+				}
 				frappe.db.get_value("Patient", frm.doc.patient, "customer")
 				.then(r => {
 					let link_customer = null;
@@ -21,6 +24,9 @@ frappe.ui.form.on('Sales Invoice', {
 				})
 			},__('Get Items From'));
 			frm.add_custom_button(__('Prescriptions'), function() {
+				if (!frm.doc.patient) {
+					frappe.throw(__('Please select a Patient to be invoiced'));
+				}
 				frappe.db.get_value("Patient", frm.doc.patient, "customer")
 				.then(r => {
 					let link_customer = null;
