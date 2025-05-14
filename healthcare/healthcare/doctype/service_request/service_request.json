@@ -10,15 +10,12 @@
  "field_order": [
   "title",
   "naming_series",
-  "template_dt",
-  "template_dn",
-  "expected_date",
-  "column_break_4",
-  "company",
   "order_date",
   "order_time",
+  "column_break_4",
   "status",
-  "color",
+  "company",
+  "expected_date",
   "patient_detail_section",
   "patient",
   "patient_name",
@@ -34,15 +31,14 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_email",
   "medical_department",
   "referred_to_practitioner",
   "column_break_10",
-  "reason_reference_doctype",
-  "reason_reference",
-  "amended_from",
+  "source_doc",
   "order_group",
   "sequence",
-  "service_details_section",
+  "order_details",
   "staff_role",
   "item_code",
   "patient_care_type",
@@ -58,9 +54,26 @@
   "occurrence_date",
   "occurrence_time",
   "interval",
+  "healthcare_service_unit_type",
   "column_break_91",
   "order_description",
   "patient_instructions",
+  "medical_code_section",
+  "codification_table",
+  "origin_section",
+  "order_reference_doctype",
+  "order_reference_name",
+  "column_break_9",
+  "source",
+  "referring_practitioner",
+  "reason_reference_doctype",
+  "reason_reference",
+  "order_group_doctype",
+  "amended_from",
+  "service_details_section",
+  "template_dt",
+  "template_dn",
+  "sample_collection_required",
   "billing_and_insurance_section",
   "billing_status",
   "qty_invoiced",
@@ -68,9 +81,7 @@
   "insurance_policy",
   "insurance_payor",
   "insurance_coverage",
-  "coverage_status",
-  "medical_code_section",
-  "codification_table"
+  "coverage_status"
  ],
  "fields": [
   {
@@ -100,11 +111,34 @@
    "reqd": 1
   },
   {
+   "collapsible": 1,
+   "fieldname": "origin_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Order Group Reference",
+   "read_only": 1
+  },
+  {
    "fieldname": "order_group",
+   "fieldtype": "Dynamic Link",
+   "label": "Order Group",
+   "options": "source_doc"
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "order_reference_doctype",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Order Group (Encounter)",
-   "options": "Patient Encounter"
+   "label": "Order Reference DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "order_reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Order Reference Name",
+   "options": "order_reference_doctype"
   },
   {
    "fieldname": "column_break_91",
@@ -136,42 +170,34 @@
    "search_index": 1
   },
   {
-   "default": "Draft",
-   "depends_on": "eval:!doc.__islocal",
+   "allow_on_submit": 1,
    "fieldname": "status",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nActive\nScheduled\nIn Progress\nOn Hold\nCompleted\nCancelled\nReplaced\nEntered in Error\nUnknown",
-   "reqd": 1,
-   "search_index": 1
+   "options": "Code Value",
+   "reqd": 1
   },
   {
    "fieldname": "intent",
    "fieldtype": "Link",
    "label": "Intent",
-   "options": "Service Request Intent"
+   "options": "Code Value"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Priority",
-   "options": "Service Request Priority"
+   "options": "Code Value"
   },
   {
    "collapsible": 1,
    "fieldname": "medical_code_section",
    "fieldtype": "Section Break",
-   "label": "Code Value"
-  },
-  {
-   "fieldname": "codification_table",
-   "fieldtype": "Link",
-   "label": "Codification",
-   "options": "Codification Table"
+   "label": "Medical Coding"
   },
   {
    "default": "1",
@@ -185,6 +211,12 @@
    "fieldname": "as_needed",
    "fieldtype": "Check",
    "label": "Occurrence As Needed"
+  },
+  {
+   "fieldname": "healthcare_service_unit_type",
+   "fieldtype": "Link",
+   "label": "Healthcare Service Unit Type",
+   "options": "Healthcare Service Unit Type"
   },
   {
    "fieldname": "reason_reference_doctype",
@@ -237,6 +269,20 @@
    "reqd": 1
   },
   {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Direct\nReferral\nExternal Referral",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "referring_practitioner",
+   "fieldtype": "Link",
+   "label": "Referring Practitioner",
+   "options": "Healthcare Practitioner",
+   "set_only_once": 1
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -279,13 +325,6 @@
    "hidden": 1,
    "label": "Age",
    "read_only": 1
-  },
-  {
-   "fetch_from": "priority.color",
-   "fieldname": "color",
-   "fieldtype": "Color",
-   "hidden": 1,
-   "label": "Color"
   },
   {
    "depends_on": "eval:doc.order_doctype===\"Medication\";",
@@ -339,6 +378,13 @@
    "label": "Patient Instructions"
   },
   {
+   "default": "Patient Encounter",
+   "fieldname": "order_group_doctype",
+   "fieldtype": "Link",
+   "label": "Order Group Type",
+   "options": "DocType"
+  },
+  {
    "fieldname": "order_time",
    "fieldtype": "Time",
    "label": "Order Time",
@@ -385,6 +431,11 @@
    "hidden": 1,
    "label": "Birth Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "order_details",
+   "fieldtype": "Section Break",
+   "label": "Order Details"
   },
   {
    "fieldname": "patient_detail_section",
@@ -509,7 +560,33 @@
    "fieldname": "billing_status",
    "fieldtype": "Select",
    "label": "Billing Status",
-   "options": "Pending\nPartially Invoiced\nInvoiced",
+   "options": "Pending\nPartly Invoiced\nInvoiced",
+   "read_only": 1
+  },
+  {
+   "fieldname": "codification_table",
+   "fieldtype": "Table",
+   "label": "Medical Codes",
+   "options": "Codification Table"
+  },
+  {
+   "fieldname": "source_doc",
+   "fieldtype": "Link",
+   "label": "Source Doc",
+   "options": "DocType"
+  },
+  {
+   "default": "0",
+   "fieldname": "sample_collection_required",
+   "fieldtype": "Check",
+   "label": "Sample Collection Required",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "practitioner.user_id",
+   "fieldname": "practitioner_email",
+   "fieldtype": "Data",
+   "label": "Practitioner Email",
    "read_only": 1
   },
   {
@@ -535,7 +612,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2025-05-06 20:22:29.027236",
+ "modified": "2025-05-15 12:58:58.427869",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",

@@ -9,10 +9,9 @@ from frappe.model.document import Document
 from frappe.utils import get_link_to_form, getdate, now_datetime
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-
-# from healthcare.healthcare.doctype.service_request.service_request import (
-# 	update_service_request_status,
-# )
+from healthcare.healthcare.doctype.service_request.service_request import (
+	set_service_request_status,
+)
 
 
 class LabTest(Document):
@@ -29,14 +28,12 @@ class LabTest(Document):
 		self.db_set("status", "Completed")
 
 		if self.service_request:
-			frappe.db.set_value(
-				"Service Request", self.service_request, "status", "completed-Request Status"
-			)
+			set_service_request_status(self.service_request, "completed-Request Status")
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "active-Request Status")
+			set_service_request_status(self.service_request, "active-Request Status")
 		self.reload()
 
 	def on_update(self):
@@ -47,10 +44,9 @@ class LabTest(Document):
 			self.sensitivity_test_items = sensitivity
 
 	def after_insert(self):
-		if self.service_request:
-			billing_status = frappe.db.get_value("Service Request", self.service_request, "billing_status")
-			if billing_status == "Invoiced":
-				self.db_set("invoiced", True)
+		billing_status = frappe.db.get_value("Service Request", self.service_request, "billing_status")
+		if billing_status == "Invoiced":
+			self.db_set("invoiced", True)
 
 		if self.template:
 			self.load_test_from_template()

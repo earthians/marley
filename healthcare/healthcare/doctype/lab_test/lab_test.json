@@ -16,13 +16,15 @@
   "column_break_26",
   "company",
   "status",
-  "submitted_date",
-  "result_date",
-  "approved_date",
+  "invoiced",
   "expected_result_date",
   "expected_result_time",
+  "section_break_exow",
+  "submitted_date",
+  "approved_date",
+  "column_break_upii",
+  "result_date",
   "printed_on",
-  "invoiced",
   "sb_first",
   "patient",
   "patient_name",
@@ -33,6 +35,7 @@
   "email",
   "mobile",
   "c_b",
+  "service_request",
   "practitioner",
   "practitioner_name",
   "requesting_department",
@@ -483,7 +486,7 @@
    "fetch_from": "practitioner.practitioner_name",
    "fieldname": "practitioner_name",
    "fieldtype": "Data",
-   "label": "Requesting Practitioner",
+   "label": "Requesting Practitioner Name",
    "read_only": 1
   },
   {
@@ -579,6 +582,22 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "fieldname": "section_break_exow",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_upii",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "is_submittable": 1,
@@ -588,7 +607,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:56:38.766501",
+ "modified": "2025-05-13 19:13:49.551531",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
@@ -644,6 +663,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient,practitioner,lab_test_name,sample",
  "show_name_in_global_search": 1,
  "sort_field": "modified",

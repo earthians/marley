@@ -26,7 +26,6 @@
   "service_unit",
   "start_date",
   "start_time",
-  "invoiced",
   "exercises_section",
   "exercises",
   "section_break_23",
@@ -35,6 +34,9 @@
   "total_counts_completed",
   "medical_coding_section",
   "codification_table",
+  "more_information_section",
+  "service_request",
+  "invoiced",
   "amended_from"
  ],
  "fields": [
@@ -226,6 +228,20 @@
    "fieldtype": "Table",
    "label": "Medical Codes",
    "options": "Codification Table"
+  },
+  {
+   "fieldname": "service_request",
+   "fieldtype": "Link",
+   "label": "Service Request",
+   "options": "Service Request",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
   }
  ],
  "is_submittable": 1,
@@ -235,7 +251,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-02-23 18:57:02.131012",
+ "modified": "2025-05-15 19:53:08.028456",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",
@@ -269,6 +285,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "search_fields": "patient,appointment,therapy_plan,therapy_type",
  "sort_field": "modified",
  "sort_order": "DESC",

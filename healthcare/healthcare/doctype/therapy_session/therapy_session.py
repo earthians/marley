@@ -17,7 +17,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.service_request.service_request import (
-	update_service_request_status,
+	set_service_request_status,
 )
 
 
@@ -26,15 +26,19 @@ class TherapySession(Document):
 		self.validate_duplicate()
 		self.set_total_counts()
 
-	def after_insert(self):
-		if self.service_request:
-			update_service_request_status(self.service_request, self.doctype, self.name)
-
 	def on_submit(self):
 		self.update_sessions_count_in_therapy_plan()
 
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
+			requested_qty = frappe.get_cached_value("Service Request", self.service_request, "quantity")
+			completed_sessions = frappe.db.count(
+				"Therapy Session", {"service_request": self.service_request, "docstatus": 1}
+			)
+
+			if requested_qty == completed_sessions:
+				set_service_request_status(self.service_request, "completed-Request Status")
+			else:
+				set_service_request_status(self.service_request, "active-Request Status")
 
 	def on_update(self):
 		if self.appointment:
@@ -43,6 +47,9 @@ class TherapySession(Document):
 	def on_cancel(self):
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Open")
+
+		if self.service_request:
+			set_service_request_status(self.service_request, "active-Request Status")
 
 		self.update_sessions_count_in_therapy_plan(on_cancel=True)
 

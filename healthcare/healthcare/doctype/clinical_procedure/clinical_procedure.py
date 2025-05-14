@@ -16,7 +16,7 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.service_request.service_request import (
-	update_service_request_status,
+	set_service_request_status,
 )
 
 
@@ -37,10 +37,11 @@ class ClinicalProcedure(Document):
 		if self.consume_stock:
 			self.set_actual_qty()
 
-	def after_insert(self):
+	def on_cancel(self):
 		if self.service_request:
-			update_service_request_status(self.service_request, self.doctype, self.name)
+			set_service_request_status(self.service_request, "active-Request Status")
 
+	def after_insert(self):
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
@@ -118,7 +119,10 @@ class ClinicalProcedure(Document):
 
 		self.db_set("status", "Completed")
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
+			set_service_request_status(self.service_request, "completed-Request Status")
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
 
 		if self.consume_stock and self.items:
 			return stock_entry
@@ -298,15 +302,15 @@ def get_procedure_prescribed(patient, encounter=False):
 		.select(
 			hso.template_dn,
 			hso.order_group,
-			hso.invoiced,
+			hso.billing_status,
 			hso.practitioner,
 			hso.order_date,
 			hso.name,
-			hso.insurance_subscription,
-			hso.insurance_company,
+			hso.insurance_policy,
+			hso.insurance_payor,
 		)
 		.where(hso.patient == patient)
-		.where(hso.status != "Completed")
+		.where(hso.status != "completed-Request Status")
 		.where(hso.template_dt == "Clinical Procedure Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
