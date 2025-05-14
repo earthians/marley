@@ -581,8 +581,264 @@ function renderVitalSignsCharts(frm) {
     });
 }
 
+function fetch_and_render_notes(frm, note_type, target_field, editable = false) {
+  let currentPage = 1; // Track the current page
+  const notesPerPage = 5; // Number of notes to display per page
+  let allNotes = []; // Store all notes
+
+  // Fetch all notes from the backend
+  frappe.call({
+    method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.get_clinical_notes",
+    args: { patient: frm.doc.patient, note_type },
+    callback: function (response) {
+      if (response.message && response.message.length > 0) {
+        allNotes = response.message; // Store all notes
+        renderNotes(); // Render the first page
+      } else {
+        $(frm.fields_dict[target_field].wrapper).html("<p>No clinical notes found for this patient.</p>");
+      }
+    },
+  });
+
+  // Function to render notes for the current page
+  function renderNotes() {
+    let html = `<h4>Existing ${note_type}</h4><ul>`;
+    const start = (currentPage - 1) * notesPerPage;
+    const end = Math.min(start + notesPerPage, allNotes.length);
+    // Render notes for the current page
+    for (let i = start; i < end; i++) {
+      const note = allNotes[i];
+      console.log(note.employee)
+      html += `
+        <li class="border rounded p-3 mb-3">
+          <strong>Date</strong> - ${frappe.datetime.str_to_user(note.posting_date)}<br>
+              <div class="mb-1"><strong>Practitioner:</strong> ${note.practitioner || " "}<br></div>
+              
+          
+          <div class="mb-1"><strong>Employee:</strong> ${note.employee || "N/A"}<br></div>
+          <div class="mb-2 border rounded p-3 mb-3">${note.note ? stripHtml(note.note) : "<em>No content</em>"}<br></div>
+          ${
+            editable
+              ? `
+                <div class="text-end">
+                  <button class="btn btn-secondary btn-sm edit-note" data-name="${note.name}" data-note="${note.note}" data-practitioner="${note.practitioner}">Edit</button>
+                  <button class="btn btn-danger btn-sm delete-note" data-name="${note.name}">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                </div>`
+              : ""
+          }
+        </li>`;
+    }
+    html += `</ul>`;
+
+    // Add pagination controls
+    html += `
+      <div class="text-center">
+        <button class="btn btn-sm btn-primary prev-page" ${currentPage === 1 ? "disabled" : ""}>Previous</button>
+        <button class="btn btn-sm btn-primary next-page" ${end >= allNotes.length ? "disabled" : ""}>Next</button>
+      </div>
+    `;
+
+    $(frm.fields_dict[target_field].wrapper).html(html);
+
+    // Attach event listeners for Edit and Delete buttons
+    if (editable) {
+      $(frm.fields_dict[target_field].wrapper)
+        .find(".edit-note")
+        .on("click", function () {
+          open_edit_note_dialog(
+            frm,
+            $(this).data("name"),
+            $(this).data("note"),
+            $(this).data("practitioner")
+          );
+        });
+
+      $(frm.fields_dict[target_field].wrapper)
+        .find(".delete-note")
+        .on("click", function () {
+          delete_clinical_note(frm, $(this).data("name"));
+        });
+    }
+
+    // Attach event listeners for pagination buttons
+    $(frm.fields_dict[target_field].wrapper)
+      .find(".prev-page")
+      .on("click", function () {
+        if (currentPage > 1) {
+          currentPage--;
+          renderNotes();
+        }
+      });
+
+    $(frm.fields_dict[target_field].wrapper)
+      .find(".next-page")
+      .on("click", function () {
+        if (end < allNotes.length) {
+          currentPage++;
+          renderNotes();
+        }
+      });
+  }
+}
+
 function stripHtml(html) {
   let div = document.createElement("div");
   div.innerHTML = html;
   return div.textContent || div.innerText || "";
+}
+
+function open_clinical_note_dialog(frm, note_type) {
+    let dialog = new frappe.ui.Dialog({
+        title: `Add ${note_type}`,
+        fields: [
+            {
+              fieldtype: "Link",
+              label: "Patient",
+              fieldname: "patient",
+              options: "Patient",
+              default: frm.doc.patient,
+              read_only: 1,
+            },
+            {
+              fieldtype: "Link",
+              label: "Practitioner",
+              fieldname: "practitioner",
+              options: "Healthcare Practitioner",
+            },
+            {
+              fieldtype: "Link",
+              label: "Employee",
+              fieldname: "employee",
+              options: "Employee",
+              reqd: 1,
+            },
+            {
+                fieldtype: "Small Text",
+                label: "Note",
+                fieldname: "note",
+                reqd: 1,
+            },
+        ],
+        primary_action_label: "Save",
+        primary_action: function (data) {
+            if (!data.note) {
+                frappe.msgprint(__("Please enter a note."));
+                return;
+            }
+
+            // Save the clinical note using frappe.call
+            frappe.call({
+                method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.add_clinical_note",
+                args: {
+                    note: data.note,
+                    note_type: note_type,
+                    patient: frm.doc.patient,
+                    practitioner: data.practitioner,
+                    employee: data.employee,
+                    reference_doc: "Inpatient Record",
+                    reference_name: frm.doc.name,
+                },
+                callback: function (response) {
+                    if (!response.exc) {
+                        frappe.msgprint(__("Clinical Note added successfully."));
+                        dialog.hide();
+
+                        // Refresh the notes section
+                        frm.reload_doc();
+                    }
+                },
+                freeze: true,
+                freeze_message: __("Saving Clinical Note..."),
+            });
+        },
+    });
+
+    dialog.show();
+}
+
+function open_edit_note_dialog(frm, noteName, noteContent, practitioner, employee) {
+  let dialog = new frappe.ui.Dialog({
+      title: "Edit Clinical Note",
+      fields: [
+          {
+              fieldtype: "Link",
+              label: "Practitioner",
+              fieldname: "practitioner",
+              options: "Healthcare Practitioner",
+              default: practitioner,
+          },
+          {
+            fieldtype: "Link",
+            label: "Employee",
+            fieldname: "employee",
+            options: "Employee",
+            default: employee,
+            reqd: 1,
+          },
+          {
+              fieldtype: "Small Text",
+              label: "Note",
+              fieldname: "note",
+              default: noteContent,
+              reqd: 1,
+          },
+      ],
+      primary_action_label: "Save",
+      primary_action: function (data) {
+          if (!data.note) {
+              frappe.msgprint(__("Please enter a note."));
+              return;
+          }
+
+          // Update the clinical note using frappe.call
+          frappe.call({
+              method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.update_clinical_note",
+              args: {
+                  name: noteName,
+                  note: data.note,
+                  practitioner: data.practitioner,
+                  employee: data.employee,
+              },
+              callback: function (response) {
+                  if (!response.exc) {
+                      frappe.msgprint(__("Clinical Note updated successfully."));
+                      dialog.hide();
+
+                      // Refresh the notes section
+                      frm.reload_doc();
+                  }
+              },
+              freeze: true,
+              freeze_message: __("Updating Clinical Note..."),
+          });
+      },
+  });
+
+  dialog.show();
+}
+
+function delete_clinical_note(frm, noteName) {
+  frappe.confirm(
+      __("Are you sure you want to delete this clinical note?"),
+      function () {
+          frappe.call({
+              method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.delete_clinical_note",
+              args: {
+                  name: noteName,
+              },
+              callback: function (response) {
+                  if (!response.exc) {
+                      frappe.msgprint(__("Clinical Note deleted successfully."));
+
+                      // Refresh the notes section
+                      frm.reload_doc();
+                  }
+              },
+              freeze: true,
+              freeze_message: __("Deleting Clinical Note..."),
+          });
+      }
+  );
 }
