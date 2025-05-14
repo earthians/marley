@@ -67,7 +67,6 @@ class Patient(Document):
 		if not self.user_id and self.email and self.invite_user:
 			self.create_website_user()
 
-		self.update_patient_customer_name()
 
 	def load_dashboard_info(self):
 		if self.customer:
@@ -157,7 +156,7 @@ class Patient(Document):
 			count = cint(count) + 1
 			return "{0} - {1}".format(name, cstr(count))
 		
-		self.update_patient_customer_name()
+		# self.update_patient_customer_name()
 
 		return name
 
