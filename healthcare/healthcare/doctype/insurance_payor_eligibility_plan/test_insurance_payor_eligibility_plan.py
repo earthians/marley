@@ -4,8 +4,8 @@
 from __future__ import unicode_literals
 
 # import frappe
-import unittest
+from frappe.tests import IntegrationTestCase
 
 
-class TestInsurancePayorEligibilityPlan(unittest.TestCase):
+class TestInsurancePayorEligibilityPlan(IntegrationTestCase):
 	pass

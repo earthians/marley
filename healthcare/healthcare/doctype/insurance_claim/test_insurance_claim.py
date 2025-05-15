@@ -3,9 +3,8 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
+from frappe.tests import IntegrationTestCase
 from frappe.utils import add_years, today
 
 from erpnext.accounts.utils import get_balance_on
@@ -16,7 +15,7 @@ from healthcare.healthcare.doctype.patient_insurance_coverage.test_patient_insur
 )
 
 
-class TestInsuranceClaim(unittest.TestCase):
+class TestInsuranceClaim(IntegrationTestCase):
 	def test_insurance_claim(self):
 		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
 		frappe.db.sql(

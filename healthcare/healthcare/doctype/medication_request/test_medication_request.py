@@ -1,9 +1,8 @@
 # Copyright (c) 2022, healthcare and Contributors
 # See license.txt
 
-import unittest
-
 import frappe
+from frappe.tests import IntegrationTestCase
 
 from erpnext.stock.doctype.item.test_item import create_item
 
@@ -16,7 +15,7 @@ from healthcare.healthcare.doctype.service_request.test_service_request import (
 )
 
 
-class TestMedicationRequest(unittest.TestCase):
+class TestMedicationRequest(IntegrationTestCase):
 	def setup(self):
 		frappe.db.sql("""delete from `tabMedication` where name = '_Test Medication'""")
 

@@ -2,8 +2,8 @@
 # See license.txt
 
 # import frappe
-import unittest
+from frappe.tests import IntegrationTestCase
 
 
-class TestHealthcareActivity(unittest.TestCase):
+class TestHealthcareActivity(IntegrationTestCase):
 	pass

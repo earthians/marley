@@ -3,9 +3,8 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
+from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, add_years, getdate, today
 
 from healthcare.healthcare.doctype.insurance_payor_contract.insurance_payor_contract import (
@@ -13,7 +12,7 @@ from healthcare.healthcare.doctype.insurance_payor_contract.insurance_payor_cont
 )
 
 
-class TestInsurancePayorContract(unittest.TestCase):
+class TestInsurancePayorContract(IntegrationTestCase):
 	def test_overlap(self):
 		create_insurance_payor()
 		frappe.db.sql(

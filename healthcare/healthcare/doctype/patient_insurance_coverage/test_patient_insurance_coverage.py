@@ -4,9 +4,9 @@
 from __future__ import unicode_literals
 
 import json
-import unittest
 
 import frappe
+from frappe.tests import IntegrationTestCase
 from frappe.utils import add_years, flt, getdate, nowdate, today
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -30,7 +30,7 @@ from healthcare.healthcare.doctype.patient_insurance_policy.test_patient_insuran
 from healthcare.healthcare.utils import get_appointments_to_invoice
 
 
-class TestPatientInsuranceCoverage(unittest.TestCase):
+class TestPatientInsuranceCoverage(IntegrationTestCase):
 	def test_insurance_coverage(self):
 		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
 		frappe.db.sql(

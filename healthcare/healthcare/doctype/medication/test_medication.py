@@ -3,12 +3,11 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
+from frappe.tests import IntegrationTestCase
 
 
-class TestMedication(unittest.TestCase):
+class TestMedication(IntegrationTestCase):
 	def test_medication_item(self):
 		price_list = get_price_list()
 		frappe.db.set_single_value("Selling Settings", "selling_price_list", price_list)

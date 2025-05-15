@@ -3,9 +3,8 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
+from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, today
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
@@ -16,7 +15,7 @@ from healthcare.healthcare.doctype.patient_insurance_policy.patient_insurance_po
 )
 
 
-class TestPatientInsurancePolicy(unittest.TestCase):
+class TestPatientInsurancePolicy(IntegrationTestCase):
 	def test_policy(self):
 		patient = create_patient()
 		insurance_policy = get_new_insurance_policy(patient)

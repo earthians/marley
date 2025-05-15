@@ -4,8 +4,8 @@
 from __future__ import unicode_literals
 
 # import frappe
-import unittest
+from frappe.tests import IntegrationTestCase
 
 
-class TestAllergy(unittest.TestCase):
+class TestAllergy(IntegrationTestCase):
 	pass
