@@ -124,7 +124,7 @@ var get_healthcare_services_to_invoice = function(frm, link_customer) {
 		if (patient && patient != selected_patient) {
 			selected_patient = patient;
 			var method = "healthcare.healthcare.utils.get_healthcare_services_to_invoice";
-			var args = { patient: patient, company: frm.doc.company };
+			var args = {patient: patient, customer: frm.doc.customer, company: frm.doc.company, link_customer: link_customer};
 			var columns = (["service", "reference_name", "reference_type"]);
 			get_healthcare_items(frm, true, $results, $placeholder, method, args, columns);
 		}
@@ -214,7 +214,7 @@ var set_primary_action = function(frm, dialog, $results, invoice_healthcare_serv
 				frappe.msgprint(__("Please select Healthcare Service"));
 			}
 			else {
-				frappe.msgprint(__("Please select Medication"));
+				frappe.msgprint(__("Please select Drug"));
 			}
 		}
 	});
@@ -300,7 +300,7 @@ var get_checked_values = function($results) {
 };
 
 
-var get_drugs_to_invoice = function(frm) {
+var get_drugs_to_invoice = function(frm, link_customer) {
 	var me = this;
 	let selected_encounter = '';
 	var dialog = new frappe.ui.Dialog({
@@ -335,8 +335,8 @@ var get_drugs_to_invoice = function(frm) {
 		var encounter = dialog.fields_dict.encounter.input.value;
 		if (encounter && encounter != selected_encounter) {
 			selected_encounter = encounter;
-			var method = "erpnext.healthcare.utils.get_drugs_to_invoice";
-			var args = { encounter: encounter };
+			var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
+			var args = {encounter: encounter, customer: frm.doc.customer, link_customer: link_customer};
 			var columns = (["drug_code", "quantity", "description"]);
 			get_healthcare_items(frm, false, $results, $placeholder, method, args, columns);
 		}
@@ -386,6 +386,9 @@ var list_row_data_items = function(head, $row, result, invoice_healthcare_servic
 			: $row = $(`<div class="list-item-container"
 				data-item= "${result.drug_code}"
 				data-qty = ${result.quantity}
+				data-dn= "${result.reference_name}"
+				data-dt= "${result.reference_type}"
+				data-rate = ${result.rate}
 				data-description = "${result.description}">
 				</div>`).append($row);
 	}
@@ -411,6 +414,8 @@ var add_to_item_line = function(frm, checked_values, invoice_healthcare_services
 			var si_item = frappe.model.add_child(frm.doc, 'Sales Invoice Item', 'items');
 			frappe.model.set_value(si_item.doctype, si_item.name, 'item_code', checked_values[i]['item']);
 			frappe.model.set_value(si_item.doctype, si_item.name, 'qty', 1);
+			frappe.model.set_value(si_item.doctype, si_item.name, 'reference_dn', checked_values[i]['dn']);
+			frappe.model.set_value(si_item.doctype, si_item.name, 'reference_dt', checked_values[i]['dt']);
 			if (checked_values[i]['qty'] > 1) {
 				frappe.model.set_value(si_item.doctype, si_item.name, 'qty', parseFloat(checked_values[i]['qty']));
 			}

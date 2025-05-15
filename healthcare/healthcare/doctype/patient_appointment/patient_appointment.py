@@ -14,9 +14,6 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, format_date, get_link_to_form, get_time, getdate
 
 from erpnext.setup.doctype.employee.employee import is_holiday
-from frappe.utils import flt, format_date, get_link_to_form, get_time, getdate
-
-from erpnext.setup.doctype.employee.employee import is_holiday
 
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
@@ -27,13 +24,6 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.doctype.fee_validity.fee_validity import (
-	check_fee_validity,
-	get_fee_validity,
-	manage_fee_validity,
-)
-from healthcare.healthcare.utils import get_appointment_billing_item_and_rate
-
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
 	make_insurance_coverage,
 )
@@ -68,7 +58,7 @@ class PatientAppointment(Document):
 			update_fee_validity(self)
 
 		doc_before_save = self.get_doc_before_save()
-		if not doc_before_save.insurance_policy == self.insurance_policy:
+		if doc_before_save and not doc_before_save.insurance_policy == self.insurance_policy:
 			self.make_insurance_coverage()
 
 	def after_insert(self):
@@ -291,7 +281,7 @@ class PatientAppointment(Document):
 		)
 
 	def set_payment_details(self):
-		if frappe.db.get_single_value("Healthcare Settings", "automate_appointment_invoicing"):
+		if frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):
 			details = get_appointment_billing_item_and_rate(self)
 			self.db_set("billing_item", details.get("service_item"))
 			if not self.paid_amount:

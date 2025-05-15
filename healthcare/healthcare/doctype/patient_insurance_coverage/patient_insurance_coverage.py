@@ -270,8 +270,7 @@ class PatientInsuranceCoverage(Document):
 		if self.coverage_amount <= 0:
 			frappe.msgprint(
 				_(
-					"Error calculating Coverage for Insurance Coverage {}. \
-				Please verify Coverage for Item and then try saving Insurance Coverage again"
+					"Error calculating Coverage for Insurance Coverage {}. Please verify Coverage for Item and then try saving Insurance Coverage again"
 				).format(self.name),
 				alert=True,
 				indicator="error",

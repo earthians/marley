@@ -457,7 +457,7 @@ let get_procedure_prescribed = function(frm){
 		});
 	}
 	else{
-		frappe.msgprint("Please select Patient to get prescribed procedure");
+		frappe.msgprint(__("Please select Patient to get prescribed procedure"));
 	}
 };
 
@@ -480,12 +480,12 @@ let show_procedure_templates = function(frm, result){
 				<div class="col-xs-1">\
 				<a data-name="%(name)s" data-procedure-template="%(procedure_template)s"\
 					data-encounter="%(encounter)s" data-practitioner="%(practitioner)s"\
-					data-invoiced="%(invoiced)s" data-source="%(source)s"\
+					data-billing_status="%(billing_status)s" data-source="%(source)s"\
 					data-insurance-payor="%(insurance_payor)s" data-insurance-policy="%(insurance_policy)s"\
 					href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 				</div>\
 			</div><hr>',
-			{ procedure_template: y[0], encounter: y[1], invoiced: y[2], practitioner: y[3], date: y[4],
+			{ procedure_template: y[0], encounter: y[1], billing_status: y[2], practitioner: y[3], date: y[4],
 				name: y[5], insurance_policy:(y[6]?y[6]:''), insurance_payor:y[7]})
 			).appendTo(html_field);
 			row.find("a").click(function() {
@@ -498,7 +498,7 @@ let show_procedure_templates = function(frm, result){
 				frm.set_df_property("insurance_policy", "read_only", 1);
 			}
 			frm.doc.invoiced = 0;
-			if ($(this).attr('data-invoiced') === 1) {
+			if ($(this).attr('data-invoiced') === "Invoiced") {
 				frm.doc.invoiced = 1;
 			}
 			frm.refresh_field("procedure_template");

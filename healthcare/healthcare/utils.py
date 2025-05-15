@@ -189,8 +189,8 @@ def get_encounters_to_invoice(patient, company):
 		for encounter in encounters:
 			if not encounter.appointment:  # TODO: make if not
 				practitioner_charge = 0
-				service_item = None
 				income_account = None
+				service_item = None
 				if encounter.practitioner:  # TODO:???
 					if encounter.inpatient_record and frappe.db.get_single_value(
 						"Healthcare Settings",
@@ -260,7 +260,6 @@ def get_encounters_to_invoice(patient, company):
 							"income_account": income_account,
 						}
 					)
-					# no insurance
 
 	return encounters_to_invoice
 
@@ -429,6 +428,7 @@ def get_clinical_procedures_to_invoice(patient, company):
 					"description": procedure.consumption_details,
 				}
 			)
+	return clinical_procedures_to_invoice
 
 
 def get_observations_to_invoice(patient, company):
@@ -769,15 +769,15 @@ def get_service_requests_to_invoice(patient, company):
 				else:
 					# order qty fully billed
 					continue
-		else:
-			orders_to_invoice.append(
-				{
-					"reference_type": "Service Request",
-					"reference_name": service_request.name,
-					"service": item,
-					"qty": service_request.quantity if service_request.quantity else 1,
-				}
-			)
+			else:
+				orders_to_invoice.append(
+					{
+						"reference_type": "Service Request",
+						"reference_name": service_request.name,
+						"service": item,
+						"qty": service_request.quantity if service_request.quantity else 1,
+					}
+				)
 	return orders_to_invoice
 
 
@@ -924,16 +924,10 @@ def manage_invoice_submit_cancel(doc, method):
 				if item.reference_dt == "Patient Appointment":
 					manage_fee_validity(frappe.get_doc("Patient Appointment", item.reference_dn))
 
-	# handle insurance
-	if method == "on_submit":
-		post_transfer_journal_entry_and_update_coverage(doc)
-	else:
-		update_insurance_coverage(doc)
-
-	if method == "on_submit" and frappe.db.get_single_value(
-		"Healthcare Settings", "create_lab_test_on_si_submit"
-	):
-		from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
+		if method == "on_submit" and frappe.db.get_single_value(
+			"Healthcare Settings", "create_observation_on_si_submit"
+		):
+			create_sample_collection_and_observation(doc)
 
 	if method == "on_submit":
 		if frappe.db.get_single_value("Healthcare Settings", "create_lab_test_on_si_submit"):

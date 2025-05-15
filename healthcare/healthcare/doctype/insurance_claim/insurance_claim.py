@@ -292,13 +292,13 @@ def update_insurance_coverage_status(coverage):
 	coverage_doc.notify_update()
 
 
-def validate_payment_entry_and_set_claim_fields(pe):
+def validate_payment_entry_and_set_claim_fields(doc, method):
 	"""
 	hook Payment Entry validate
 	if reference_doctype is journal entry and journal_entry has insurance_coverage link validate an approved claim is present
 	if approved claim is available, set links in Payment Entry Reference
 	"""
-	for pe_ref in pe.get("references"):
+	for pe_ref in doc.get("references"):
 		if pe_ref.get("reference_doctype") == "Journal Entry":
 			insurance_coverage = frappe.db.get_value(
 				"Journal Entry", pe_ref.get("reference_name"), "insurance_coverage"
@@ -413,7 +413,7 @@ def create_payment_entry(doc):
 	if references:
 		pe.update({"references": references})
 	else:
-		frappe.throw("No Insurance Claim Coverages in Approved status to create Payment Entry")
+		frappe.throw(_("No Insurance Claim Coverages in Approved status to create Payment Entry"))
 
 	pe.remarks = _("Payment Entry against Insurance Coverages {} via Insurance Claim {}").format(
 		", ".join(coverage_names), doc.name

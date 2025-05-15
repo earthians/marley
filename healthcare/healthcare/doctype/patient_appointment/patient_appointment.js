@@ -170,7 +170,7 @@ frappe.ui.form.on("Patient Appointment", {
 	},
 
 	appointment_for: function(frm) {
-		if (frm.doc.appointment_for == 'Practitioner') {
+		if (frm.doc.appointment_for == "Practitioner") {
 			if (!frm.doc.practitioner) {
 				frm.set_value('department', '');
 			}
@@ -622,10 +622,10 @@ let check_and_set_availability = function(frm) {
 
 			slot_html += `
 				<span><b>
-				${__("Practitioner Schedule: ")} </b> ${slot_info.slot_name}
+				${__("Practitioner Schedule:")}</b> ${slot_info.slot_name}
 					${slot_info.tele_conf && !slot_info.allow_overlap ? "<i class='fa fa-video-camera fa-1x' aria-hidden='true'></i>" : ""}
 				</span><br>
-				<span><b> ${__("Service Unit: ")} </b> ${slot_info.service_unit}</span>`;
+				<span><b>${__("Service Unit:")}</b> ${slot_info.service_unit}</span>`;
 				if (slot_info.service_unit_capacity) {
 					slot_html += `<br><span> <b> ${__("Maximum Capacity:")} </b> ${slot_info.service_unit_capacity} </span>`;
 				}
@@ -801,10 +801,7 @@ let show_procedure_templates = function(frm, result) {
 			return false;
 		});
 	});
-	if (!result) {
-		let msg = __("There are no procedures prescribed for ") + frm.doc.patient;
-		$(repl(`<div class="col-xs-12" style="padding-top:20px;" >%(msg)s</div></div>`, { msg: msg })).appendTo(html_field);
-	}
+
 	d.show();
 };
 

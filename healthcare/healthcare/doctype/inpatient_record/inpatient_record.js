@@ -665,7 +665,6 @@ var create_treatment_counselling = function(frm, args) {
 	});
 }
 
-
 var generate_billables = function(frm) {
 	frappe.call({
 		doc: frm.doc,
@@ -675,7 +674,6 @@ var generate_billables = function(frm) {
 		}
 	})
 }
-
 
 let create_insurance_coverage = function(frm) {
 	frappe.call({

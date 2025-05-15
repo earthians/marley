@@ -111,8 +111,8 @@ def create_item_insurance_eligibility(eligibility_for, template_dt, template_dn,
 
 def create_appointment(patient, practitioner, appointment_date, appointment_type, policy=None):
 	item = create_healthcare_service_items()
-	frappe.db.set_value("Healthcare Settings", None, "inpatient_visit_charge_item", item)
-	frappe.db.set_value("Healthcare Settings", None, "op_consulting_charge_item", item)
+	frappe.db.set_single_value("Healthcare Settings", "inpatient_visit_charge_item", item)
+	frappe.db.set_single_value("Healthcare Settings", "op_consulting_charge_item", item)
 	appointment = frappe.new_doc("Patient Appointment")
 	appointment.patient = patient
 	appointment.practitioner = practitioner

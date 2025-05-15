@@ -22,7 +22,6 @@ def get_data():
 					"Medication Request",
 				],
 			},
-			{"label": _("Orders"), "items": ["Inpatient Medication Order", "Service Request"]},
 		],
 		"disable_create_buttons": ["Inpatient Medication Order"],
 	}
