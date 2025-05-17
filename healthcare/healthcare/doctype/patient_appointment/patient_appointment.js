@@ -142,7 +142,7 @@ frappe.ui.form.on('Patient Appointment', {
 					"healthcare.healthcare.doctype.fee_validity.fee_validity.get_fee_validity",
 					{ "appointment_name": frm.doc.name, "date": frm.doc.appointment_date , "ignore_status": true })).message;
 
-				if (val && !fee_validity.length) {
+				if (val && !fee_validity?.length) {
 					frm.add_custom_button(__("Make Payment"), function () {
 						make_payment(frm, val);
 					});
