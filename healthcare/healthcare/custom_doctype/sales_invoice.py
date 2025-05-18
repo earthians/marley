@@ -13,8 +13,6 @@ class HealthcareSalesInvoice(SalesInvoice):
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
 
-		self.set("items", [])
-
 		for checked_item in checked_values:
 			item_line = self.append("items", {})
 			price_list, price_list_currency = frappe.db.get_values(
@@ -23,7 +21,7 @@ class HealthcareSalesInvoice(SalesInvoice):
 			ctx: ItemDetailsCtx = ItemDetailsCtx(
 				{
 					"doctype": "Sales Invoice",
-					"item_code": checked_item["item"],
+					"item_code": checked_item.get("item"),
 					"company": self.company,
 					"customer": frappe.db.get_value("Patient", self.patient, "customer"),
 					"selling_price_list": price_list,
@@ -33,59 +31,59 @@ class HealthcareSalesInvoice(SalesInvoice):
 				}
 			)
 			item_details = get_item_details(ctx)
-			item_line.item_code = checked_item["item"]
+			item_line.item_code = checked_item.get("item")
 			item_line.qty = 1
 
-			if checked_item["qty"]:
-				item_line.qty = checked_item["qty"]
+			if checked_item.get("qty"):
+				item_line.qty = checked_item.get("qty")
 
-			if checked_item["rate"]:
-				item_line.rate = checked_item["rate"]
+			if checked_item.get("rate"):
+				item_line.rate = checked_item.get("rate")
 			else:
 				item_line.rate = item_details.price_list_rate
 
-			if checked_item["income_account"]:
-				item_line.income_account = checked_item["income_account"]
+			if checked_item.get("income_account"):
+				item_line.income_account = checked_item.get("income_account")
 
-			if checked_item["dt"]:
-				item_line.reference_dt = checked_item["dt"]
+			if checked_item.get("dt"):
+				item_line.reference_dt = checked_item.get("dt")
 
-			if checked_item["dn"]:
-				item_line.reference_dn = checked_item["dn"]
+			if checked_item.get("dn"):
+				item_line.reference_dn = checked_item.get("dn")
 
-			if checked_item["description"]:
-				item_line.description = checked_item["description"]
+			if checked_item.get("description"):
+				item_line.description = checked_item.get("description")
 
-			if checked_item["discount_percentage"]:
-				item_line.discount_percentage = checked_item["discount_percentage"]
+			if checked_item.get("discount_percentage"):
+				item_line.discount_percentage = checked_item.get("discount_percentage", 0)
 
-			if checked_item["insurance_coverage"]:
-				item_line.insurance_coverage = checked_item["insurance_coverage"]
+			if checked_item.get("insurance_coverage"):
+				item_line.insurance_coverage = checked_item.get("insurance_coverage")
 
-			if checked_item["patient_insurance_policy"]:
-				item_line.patient_insurance_policy = checked_item["patient_insurance_policy"]
+			if checked_item.get("patient_insurance_policy"):
+				item_line.patient_insurance_policy = checked_item.get("patient_insurance_policy")
 
-			if checked_item["coverage_percentage"]:
-				item_line.coverage_percentage = checked_item["coverage_percentage"]
+			if checked_item.get("coverage_percentage"):
+				item_line.coverage_percentage = checked_item.get("coverage_percentage", 0)
 
-			if checked_item["insurance_payor"]:
-				item_line.insurance_payor = checked_item["insurance_payor"]
+			if checked_item.get("insurance_payor"):
+				item_line.insurance_payor = checked_item.get("insurance_payor")
 
-			if checked_item["coverage_rate"]:
-				item_line.coverage_rate = checked_item["coverage_rate"]
+			if checked_item.get("coverage_rate"):
+				item_line.coverage_rate = checked_item.get("coverage_rate", 0)
 
-			if checked_item["coverage_qty"]:
-				item_line.coverage_qty = checked_item["coverage_qty"]
+			if checked_item.get("coverage_qty"):
+				item_line.coverage_qty = checked_item.get("coverage_qty", 0)
 
-			if item_line.discount_percentage:
-				item_line.discount_amount = flt(item_line.rate) * flt(item_line.discount_percentage) * 0.01
+			if item_line.get("discount_percentage"):
+				item_line.discount_amount = flt(item_line.rate) * flt(item_line.discount_percentage, 0) * 0.01
 				item_line.rate = flt(item_line.rate) - flt(item_line.discount_amount)
 
 			item_line.amount = flt(item_line.rate) * flt(item_line.qty)
 
-			if item_line.insurance_coverage:
+			if item_line.get("insurance_coverage"):
 				item_line.insurance_coverage_amount = (
-					flt(item_line.amount) * 0.01 * flt(item_line.coverage_percentage)
+					flt(item_line.amount) * 0.01 * flt(item_line.get("coverage_percentage", 0))
 				)
 
 		super(SalesInvoice, self).calculate_taxes_and_totals()
