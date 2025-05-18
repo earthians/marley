@@ -16,6 +16,7 @@ from healthcare.healthcare.doctype.observation_template.test_observation_templat
 	create_observation_template,
 )
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment_type,
 	create_patient,
 )
 
@@ -228,6 +229,7 @@ def create_patient_encounter(patient, observation_template):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
 	patient_encounter.practitioner = create_practitioner()
+	patient_encounter.appointment_type = create_appointment_type().name
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
 

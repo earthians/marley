@@ -538,7 +538,7 @@ class TestPatientAppointment(IntegrationTestCase):
 		)
 		self.assertRaises(MaximumCapacityError, appointment.save)
 
-	def test_teleconsultation(self):
+	def test_tele_consultation(self):
 		patient, practitioner = create_healthcare_docs()
 		appointment = create_appointment(patient, practitioner, nowdate())
 		self.assertTrue(appointment.event)
@@ -587,7 +587,7 @@ class TestPatientAppointment(IntegrationTestCase):
 			appointment_based_on_check_in=True,
 			appointment_time="09:00",
 		)
-		# different pracititoner can have multiple same time and date appointments for different patients
+		# different practitioner can have multiple same time and date appointments for different patients
 		self.assertTrue(appointment_2.name)
 
 
@@ -651,6 +651,7 @@ def create_encounter(appointment):
 	if appointment:
 		encounter = frappe.new_doc("Patient Encounter")
 		encounter.appointment = appointment.name
+		encounter.appointment_type = appointment.appointment_type
 		encounter.patient = appointment.patient
 		encounter.practitioner = appointment.practitioner
 		encounter.encounter_date = appointment.appointment_date

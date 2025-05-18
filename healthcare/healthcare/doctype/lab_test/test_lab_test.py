@@ -13,6 +13,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 )
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment_type,
 	create_patient,
 )
 from healthcare.healthcare.doctype.patient_medical_record.test_patient_medical_record import (
@@ -207,6 +208,7 @@ def create_patient_encounter():
 	blood_test_template = create_blood_test_template(medical_department)
 
 	patient_encounter = frappe.new_doc("Patient Encounter")
+	patient_encounter.appointment_type = create_appointment_type().name
 	patient_encounter.patient = patient
 	patient_encounter.practitioner = create_practitioner()
 	patient_encounter.encounter_date = getdate()

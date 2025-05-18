@@ -9,6 +9,7 @@ from frappe.utils import flt, getdate, nowdate
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
+	create_appointment_type,
 	create_healthcare_docs,
 	create_medical_department,
 	create_patient,
@@ -93,6 +94,8 @@ def create_encounter(patient, medical_department, practitioner):
 	encounter.patient = patient
 	encounter.practitioner = practitioner
 	encounter.medical_department = medical_department
+	encounter.appointment_type = create_appointment_type().name
+	encounter.source = "Direct"
 	therapy_type = create_therapy_type()
 	encounter.append("therapies", {"therapy_type": therapy_type.name, "no_of_sessions": 2})
 	encounter.save()

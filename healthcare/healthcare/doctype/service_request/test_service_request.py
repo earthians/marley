@@ -171,13 +171,15 @@ def create_encounter(
 	practitioner,
 	type,
 	template,
-	procedure_template=False,
-	therapy_type=False,
-	submit=False,
+	appointment_type=None,
+	procedure_template=None,
+	therapy_type=None,
 	obs=False,
+	submit=False,
 ):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
+	patient_encounter.appointment_type = appointment_type or create_appointment_type().name
 	patient_encounter.practitioner = practitioner
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
@@ -196,7 +198,7 @@ def create_encounter(
 	if procedure_template:
 		patient_encounter.append(
 			"procedure_prescription",
-			{"procedure": procedure_template.template, "procedure_name": procedure_template.item_code},
+			{"procedure": procedure_template.name, "procedure_name": procedure_template.item_code},
 		)
 	if therapy_type:
 		patient_encounter.append(

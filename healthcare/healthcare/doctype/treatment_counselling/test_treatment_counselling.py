@@ -8,12 +8,13 @@ from frappe.utils.data import getdate, nowtime
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import schedule_inpatient
 from healthcare.healthcare.doctype.lab_test.test_lab_test import create_practitioner
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment_type,
 	create_patient,
 )
 
 
 class TestTreatmentCounselling(IntegrationTestCase):
-	def test_insert_treatement_counselling(self):
+	def test_insert_treatment_counselling(self):
 		frappe.db.sql("""delete from `tabTreatment Counselling`""")
 		frappe.db.sql(
 			"""delete from `tabObservation Template` where `tabObservation Template`.name='Covid RT PCR'"""
@@ -23,7 +24,7 @@ class TestTreatmentCounselling(IntegrationTestCase):
 
 		obs_name = "Covid RT PCR"
 		obs_template = create_observation_template(obs_name)
-		treatment_plan_template = create_treatement_plan_template("Covid-19", obs_template.name)
+		treatment_plan_template = create_treatment_plan_template("Covid-19", obs_template.name)
 		patient = create_patient()
 		encounter = create_patient_encounter(patient)
 		admission_order = {
@@ -64,7 +65,7 @@ class TestTreatmentCounselling(IntegrationTestCase):
 		)
 
 
-def create_treatement_plan_template(plan_name, obs_template):
+def create_treatment_plan_template(plan_name, obs_template):
 	if frappe.db.exists("Treatment Plan Template", plan_name):
 		return frappe.get_doc("Treatment Plan Template", plan_name)
 
@@ -101,6 +102,7 @@ def create_observation_template(obs_name):
 
 def create_patient_encounter(patient):
 	patient_encounter = frappe.new_doc("Patient Encounter")
+	patient_encounter.appointment_type = create_appointment_type().name
 	patient_encounter.patient = patient
 	patient_encounter.practitioner = create_practitioner()
 	patient_encounter.encounter_date = getdate()

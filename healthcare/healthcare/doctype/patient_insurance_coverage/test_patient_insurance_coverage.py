@@ -20,6 +20,7 @@ from healthcare.healthcare.doctype.patient_appointment.patient_appointment impor
 	get_appointment_item,
 )
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment_type,
 	create_healthcare_docs,
 	create_healthcare_service_items,
 	create_medical_department,
@@ -61,7 +62,10 @@ def create_insurance_test_docs():
 	insurance_policy = get_new_insurance_policy(patient, eligibility_plan)
 	insurance_policy.submit()
 	medical_department = create_medical_department()
-	appointment_type = create_appointment_type(medical_department)
+	args = {
+		"medical_department": medical_department,
+	}
+	appointment_type = create_appointment_type(args).name
 	create_item_insurance_eligibility(
 		"Service", "Appointment Type", appointment_type, eligibility_plan
 	)
@@ -203,25 +207,3 @@ def create_sales_invoice(appointment_doc, appointments_to_invoice):
 	sales_invoice.save(ignore_permissions=True)
 	sales_invoice.submit()
 	return sales_invoice.name
-
-
-def create_appointment_type(medical_department):
-	item = create_healthcare_service_items()
-	items = [
-		{
-			"medical_department": medical_department,
-			"op_consulting_charge_item": item,
-			"op_consulting_charge": 500,
-		}
-	]
-	appoint_type_doc = frappe.get_doc(
-		{
-			"doctype": "Appointment Type",
-			"appointment_type": "_Test Appointment",
-			"default_duration": 30,
-			"color": "#7575ff",
-			"price_list": frappe.db.get_value("Price List", {"selling": 1}),
-			"items": items,
-		}
-	).insert()
-	return appoint_type_doc.name
