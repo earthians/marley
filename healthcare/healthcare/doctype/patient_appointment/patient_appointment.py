@@ -65,6 +65,7 @@ class PatientAppointment(Document):
 		self.update_prescription_details()
 		self.set_payment_details()
 		send_confirmation_msg(self)
+		self.insert_calendar_event()
 
 		if self.insurance_policy and self.appointment_type and not check_fee_validity(self):
 			if frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):
