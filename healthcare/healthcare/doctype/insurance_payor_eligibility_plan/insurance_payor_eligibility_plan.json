@@ -5,7 +5,7 @@
  "autoname": "field:insurance_plan_name",
  "beta": 1,
  "creation": "2020-10-16 09:54:50.763071",
- "description": "Healthcare Insurance Plan",
+ "description": "Insurance Payor Eligibility Plan",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",

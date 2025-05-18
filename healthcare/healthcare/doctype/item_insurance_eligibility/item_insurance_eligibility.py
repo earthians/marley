@@ -164,7 +164,7 @@ def get_insurance_eligibility(
 		SELECT
 			name,
 			template_dt,
-			medical_code,
+			code_value,
 			item_code,
 			mode_of_approval,
 			coverage,

@@ -89,7 +89,9 @@ def get_insurance_price_lists(insurance_policy, company):
 		"Patient Insurance Policy", insurance_policy, ["insurance_plan", "insurance_payor"]
 	)
 	if insurance_plan:
-		plan_price_list = frappe.db.get_value("Healthcare Insurance Plan", insurance_plan, "price_list")
+		plan_price_list = frappe.db.get_value(
+			"Insurance Payor Eligibility Plan", insurance_plan, "price_list"
+		)
 		if plan_price_list:
 			price_lists.update({"plan_price_list": plan_price_list})
 
