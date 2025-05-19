@@ -7,6 +7,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_years, today
 
+from erpnext.accounts.party import get_dashboard_info
 from erpnext.accounts.utils import get_balance_on
 
 from healthcare.healthcare.doctype.insurance_claim.insurance_claim import create_payment_entry
@@ -27,25 +28,21 @@ class TestInsuranceClaim(IntegrationTestCase):
 		test_docs = create_insurance_test_docs()
 
 		# Patient balance should be 20% of 400
-		balance = get_balance_on(
-			party_type="Customer", party=test_docs["Patient"], company="_Test Company"
-		)
+		info = get_dashboard_info("Customer", test_docs["customer"], None)
+		balance = next(item["total_unpaid"] for item in info if item["company"] == "_Test Company")
+
 		self.assertEqual(balance, 80)
 
 		# Create Insurance Claim
 		claim_name, claim_doc = create_insurance_claim(
 			test_docs["Patient"], test_docs["Insurance Policy"]
 		)
-		claim_dict = frappe.db.get_value(
-			"Insurance Claim",
-			claim_name,
-			["insurance_claim_amount", "approved_amount", "outstanding_amount", "paid_amount"],
-			as_dict=1,
-		)
-		self.assertEqual(claim_dict.insurance_claim_amount, 320)
-		self.assertEqual(claim_dict.approved_amount, 320)
-		self.assertEqual(claim_dict.outstanding_amount, 320)
-		self.assertEqual(claim_dict.paid_amount, 0)
+		# print(claim_name, claim_doc.as_dict())
+
+		self.assertEqual(claim_doc.insurance_claim_amount, 320)
+		self.assertEqual(claim_doc.approved_amount, 320)
+		self.assertEqual(claim_doc.outstanding_amount, 320)
+		self.assertEqual(claim_doc.paid_amount, 0)
 
 		# Create Payment Entry of the Insurance Claim
 		payment_entry_dict = create_payment_entry(claim_doc)

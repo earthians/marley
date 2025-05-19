@@ -1,11 +1,15 @@
 import frappe
 
+from healthcare.healthcare.doctype.insurance_claim.insurance_claim import update_claim_paid_amount
+
 
 @frappe.whitelist()
-def set_paid_amount_in_treatment_counselling(doc, method):
+def manage_payment_entry_submit_cancel(doc, method):
 	if doc.treatment_counselling and doc.paid_amount:
 		on_cancel = True if method == "on_cancel" else False
 		validate_treatment_counselling(doc, on_cancel)
+
+	update_claim_paid_amount(doc, method)
 
 
 def validate_treatment_counselling(doc, on_cancel=False):

@@ -81,6 +81,7 @@ def create_insurance_test_docs():
 	sales_invoice = create_sales_invoice(appointment, appointments_to_invoice)
 	test_docs = {
 		"Patient": patient,
+		"customer": frappe.get_cached_value("Patient", patient, "customer"),
 		"Practitioner": practitioner,
 		"Eligibility Plan": eligibility_plan,
 		"Contract": contract.name,
