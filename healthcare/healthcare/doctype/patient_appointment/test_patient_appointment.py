@@ -754,7 +754,8 @@ def create_appointment_type(args=None):  # nosemgrep
 		item = create_healthcare_service_items()
 		items = [
 			{
-				"medical_department": args.get("medical_department") or "_Test Medical Department",
+				"dt": "Medical Department",
+				"dn": args.get("medical_department") or "_Test Medical Department",
 				"op_consulting_charge_item": item,
 				"op_consulting_charge": args.get("op_consulting_charge", 200),
 			}

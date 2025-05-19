@@ -127,6 +127,7 @@ def create_appointment(patient, practitioner, appointment_date, appointment_type
 	appointment.duration = 30
 	appointment.insurance_policy = policy
 	appointment.save(ignore_permissions=True)
+	appointment.reload()
 	return appointment
 
 

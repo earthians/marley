@@ -48,11 +48,11 @@ def create_insurance_payor():
 			}
 		)
 		insurance_payor.append(
-			"claims_receivable_accounts", {"company": "_Test Company", "reference_name": "Debtors - _TC"}
+			"claims_receivable_accounts", {"company": "_Test Company", "account": "Debtors - _TC"}
 		)
 		insurance_payor.append(
 			"rejected_claims_expense_accounts",
-			{"company": "_Test Company", "reference_name": "Debtors - _TC"},
+			{"company": "_Test Company", "account": "Debtors - _TC"},
 		)
 		insurance_payor.insert()
 

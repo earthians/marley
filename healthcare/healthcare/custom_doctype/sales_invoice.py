@@ -94,7 +94,7 @@ class HealthcareSalesInvoice(SalesInvoice):
 		total_coverage_amount = 0.0
 
 		for item in self.items:
-			if item.amount and item.insurance_coverage:
+			if item.amount and item.get("insurance_coverage"):
 				item.insurance_coverage_amount = item.amount * 0.01 * flt(item.coverage_percentage)
 
 			if item.insurance_coverage_amount and flt(item.insurance_coverage_amount) > 0:
