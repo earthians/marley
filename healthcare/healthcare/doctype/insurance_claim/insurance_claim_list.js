@@ -4,7 +4,7 @@ frappe.listview_settings['Insurance Claim'] = {
 		return [__(doc.status), {
 			'Draft': 'light-blue',
 			'Submitted': 'blue',
-            'Completed': 'green',
+			'Completed': 'green',
 			'Cancelled': 'darkgrey',
 			'Error': 'red',
 		}[doc.status], 'status,=,' + doc.status];

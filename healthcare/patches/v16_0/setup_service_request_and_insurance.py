@@ -9,8 +9,6 @@ from healthcare.healthcare.setup import create_customer_groups, setup_service_re
 
 def execute():
 	frappe.reload_doc("healthcare", "doctype", "Patient Care Type")
-	frappe.reload_doc("healthcare", "doctype", "Service Request Intent")
-	frappe.reload_doc("healthcare", "doctype", "Service Request Priority")
 
 	setup_service_request_masters()
 	create_customer_groups()

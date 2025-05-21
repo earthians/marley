@@ -7,9 +7,9 @@ def get_data():
 		"non_standard_fieldnames": {
 			"Patient Medical Record": "reference_name",
 			"Inpatient Medication Order": "patient_encounter",
+			"Nursing Task": "reference_name",
 			"Service Request": "order_group",
 			"Medication Request": "order_group",
-			"Nursing Task": "reference_name",
 		},
 		"transactions": [
 			{"label": _("Records"), "items": ["Vital Signs", "Patient Medical Record"]},

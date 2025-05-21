@@ -34,8 +34,8 @@ class TestDiagnosisTrends(IntegrationTestCase):
 			patient=patient.name,
 			medical_department=medical_department,
 			practitioner=practitioner_name,
+			submit=False,
 		)
-		encounter = frappe.get_list("Patient Encounter", filters={"docstatus": 0})[0]
 
 		try:
 			cls.diagnosis = frappe.get_doc(
@@ -59,7 +59,7 @@ class TestDiagnosisTrends(IntegrationTestCase):
 		except DuplicateEntryError:
 			pass
 
-		encounter = frappe.get_doc("Patient Encounter", encounter["name"])
+		encounter = frappe.get_doc("Patient Encounter", encounter_cardiology.name)
 		encounter.append(
 			"diagnosis",
 			{

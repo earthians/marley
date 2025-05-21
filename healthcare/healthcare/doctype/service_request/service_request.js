@@ -46,8 +46,13 @@ frappe.ui.form.on('Service Request', {
 		});
 
 		frm.set_query('template_dt', function() {
-			let order_template_doctypes = ['Medication', 'Therapy Type', 'Lab Test Template',
-				'Clinical Procedure Template'];
+			let order_template_doctypes = [
+				"Therapy Type",
+				"Lab Test Template",
+				"Clinical Procedure Template",
+				"Appointment Type",
+				"Observation Template",
+				"Healthcare Activity"];
 			return {
 				filters: {
 					name: ['in', order_template_doctypes]

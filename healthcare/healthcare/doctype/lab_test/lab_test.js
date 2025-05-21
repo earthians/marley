@@ -22,6 +22,17 @@ frappe.ui.form.on('Lab Test', {
 			{ fieldname: 'lab_test_particulars', columns: 3 },
 			{ fieldname: 'result_value', columns: 7 }
 		];
+
+		frm.set_query('service_request', function() {
+			return {
+				filters: {
+					'patient': frm.doc.patient,
+					'status': 'active-Request Status',
+					'docstatus': 1,
+					'template_dt': 'Lab Test template'
+				}
+			};
+		});
 	},
 
 	refresh: function (frm) {
@@ -191,7 +202,7 @@ var show_lab_tests = function (frm, lab_test_list) {
 		var row = $(repl(
 			'<div class="col-xs-12" style="padding-top:12px;">\
 				<div class="col-xs-3"> %(lab_test)s </div>\
-				<div class="col-xs-4"> %(practitioner_name)s<br>%(encounter)s</div>\
+				<div class="col-xs-4"> %(practitioner)s<br>%(encounter)s</div>\
 				<div class="col-xs-3"> %(date)s </div>\
 				<div class="col-xs-1">\
 					<a data-name="%(name)s" data-lab-test="%(lab_test)s"\
@@ -199,22 +210,23 @@ var show_lab_tests = function (frm, lab_test_list) {
 					data-invoiced="%(invoiced)s" href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 				</div>\
 			</div><hr>',
-			{ name: y[0], lab_test: y[1], encounter: y[2], invoiced: y[3], practitioner: y[4], practitioner_name: y[5], date: y[6] })
+			{ lab_test: y[0], encounter: y[1], invoiced: y[2], practitioner: y[3], date: y[4], name: y[5]  })
 		).appendTo(html_field);
 
 		row.find("a").click(function () {
 			frm.doc.template = $(this).attr('data-lab-test');
-			frm.doc.prescription = $(this).attr('data-name');
+			frm.doc.service_request = $(this).attr('data-name');
 			frm.doc.practitioner = $(this).attr('data-practitioner');
 			frm.set_df_property('template', 'read_only', 1);
 			frm.set_df_property('patient', 'read_only', 1);
 			frm.set_df_property('practitioner', 'read_only', 1);
 			frm.doc.invoiced = 0;
-			if ($(this).attr('data-invoiced') === 1) {
+			if ($(this).attr('data-invoiced') === "Invoiced") {
 				frm.doc.invoiced = 1;
 			}
 			refresh_field('invoiced');
 			refresh_field('template');
+			frm.refresh_field('service_request');
 			d.hide();
 			return false;
 		});

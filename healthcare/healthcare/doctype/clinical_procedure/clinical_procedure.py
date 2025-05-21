@@ -2,22 +2,22 @@
 # Copyright (c) 2017, ESS LLP and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
-
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, nowdate, nowtime
+from frappe.utils import flt, get_link_to_form, now_datetime, nowdate, nowtime
 
 from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
+from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.service_request.service_request import (
 	set_service_request_status,
 )
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class ClinicalProcedure(Document):
@@ -37,6 +37,20 @@ class ClinicalProcedure(Document):
 		if self.consume_stock:
 			self.set_actual_qty()
 
+		if self.service_request:
+			has_proceedure = frappe.db.exists(
+				"Clinical Procedure",
+				{"service_request": self.service_request, "docstatus": ["!=", 2]},
+			)
+			if has_proceedure:
+				frappe.throw(
+					_("Clinical Procedure {0} already created from service request {1}").format(
+						frappe.bold(get_link_to_form("Clinical Procedure", has_proceedure)),
+						frappe.bold(get_link_to_form("Service Request", self.service_request)),
+					),
+					title=_("Already Exist"),
+				)
+
 	def on_cancel(self):
 		if self.service_request:
 			set_service_request_status(self.service_request, "active-Request Status")
@@ -45,10 +59,45 @@ class ClinicalProcedure(Document):
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
-		template = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
-		if template.sample:
+		if self.procedure_template:
+			template = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
+			if template.sample:
+				patient = frappe.get_doc("Patient", self.patient)
+				sample_collection = create_sample_doc(template, patient, None, self.company)
+				self.db_set("sample", sample_collection.name)
+
+		self.reload()
+
+	def on_submit(self):
+		self.create_nursing_tasks(post_event=False)
+		if self.service_request:
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
+
+	def create_nursing_tasks(self, post_event=True):
+		if post_event:
+			template = frappe.db.get_value(
+				"Clinical Procedure Template", self.procedure_template, "post_op_nursing_checklist_template"
+			)
+			start_time = now_datetime()
+
+		else:
+			template = frappe.db.get_value(
+				"Clinical Procedure Template", self.procedure_template, "pre_op_nursing_checklist_template"
+			)
+			# pre op tasks to be created on Clinical Procedure submit, use scheduled date
+			start_time = frappe.utils.get_datetime(f"{self.start_date} {self.start_time}")
+
+		if template:
+			NursingTask.create_nursing_tasks_from_template(
+				template, self, start_time=start_time, post_event=post_event
+			)
+
+		template_doc = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
+		if template_doc.sample:
 			patient = frappe.get_doc("Patient", self.patient)
-			sample_collection = create_sample_doc(template, patient, None, self.company)
+			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
 			self.db_set("sample", sample_collection.name)
 			self.reload()
 
@@ -118,11 +167,13 @@ class ClinicalProcedure(Document):
 				)
 
 		self.db_set("status", "Completed")
+
 		if self.service_request:
 			set_service_request_status(self.service_request, "completed-Request Status")
-			frappe.db.set_value(
-				"Service Request", self.service_request, "status", "completed-Request Status"
-			)
+
+		# post op nursing tasks
+		if self.procedure_template:
+			self.create_nursing_tasks()
 
 		if self.consume_stock and self.items:
 			return stock_entry
@@ -130,9 +181,13 @@ class ClinicalProcedure(Document):
 	@frappe.whitelist()
 	def start_procedure(self):
 		allow_start = self.set_actual_qty()
+
 		if allow_start:
+			validate_nursing_tasks(self)
+
 			self.db_set("status", "In Progress")
 			return "success"
+
 		return "insufficient stock"
 
 	def set_actual_qty(self):
@@ -314,23 +369,3 @@ def get_procedure_prescribed(patient, encounter=False):
 		.where(hso.template_dt == "Clinical Procedure Template")
 		.orderby(hso.creation, order=frappe.qb.desc)
 	).run()
-	# return frappe.db.sql(
-	# 	"""
-	# 		select
-	# 			hso.template_dn as procedure_template,
-	# 			hso.order_group,
-	# 			hso.invoiced,
-	# 			hso.practitioner as practitioner,
-	# 			hso.order_date as encounter_date,
-	# 			hso.name,
-	# 			hso.insurance_policy,
-	# 			hso.insurance_payor
-	# 		from
-	# 			`tabService Request` hso
-	# 		where
-	# 			hso.patient=%s
-	# 			and hso.status!=%s
-	# 			and hso.template_dt=%s
-	# 		order by
-	# 			hso.creation desc
-	# 	""", (patient, "Completed", "Clinical Procedure Template"))

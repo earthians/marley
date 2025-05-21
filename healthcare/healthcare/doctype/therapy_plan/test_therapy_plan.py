@@ -89,7 +89,7 @@ def create_therapy_plan(template=None, patient=None):
 	return plan
 
 
-def create_encounter(patient, medical_department, practitioner):
+def create_encounter(patient, medical_department, practitioner, submit=True):
 	encounter = frappe.new_doc("Patient Encounter")
 	encounter.patient = patient
 	encounter.practitioner = practitioner
@@ -99,7 +99,8 @@ def create_encounter(patient, medical_department, practitioner):
 	therapy_type = create_therapy_type()
 	encounter.append("therapies", {"therapy_type": therapy_type.name, "no_of_sessions": 2})
 	encounter.save()
-	encounter.submit()
+	if submit:
+		encounter.submit()
 	return encounter
 
 

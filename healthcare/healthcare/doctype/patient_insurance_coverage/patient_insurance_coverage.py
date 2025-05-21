@@ -238,7 +238,7 @@ class PatientInsuranceCoverage(Document):
 			if price_list:
 				price_list_rate = get_item_price_list_rate(self.item_code, price_list, self.qty, self.company)
 
-		if price_list_rate:
+		if price_list_rate and not self.price_list_rate:
 			self.price_list_rate = price_list_rate
 			self.price_list = price_list
 		else:
@@ -278,7 +278,7 @@ class PatientInsuranceCoverage(Document):
 
 
 def make_insurance_coverage(
-	patient, policy, company, template_dt=None, template_dn=None, item_code=None, qty=1
+	patient, policy, company, template_dt=None, template_dn=None, item_code=None, qty=1, rate=0
 ):
 	"""
 	Inserts a new Insurance Coverage for the service
@@ -317,6 +317,8 @@ def make_insurance_coverage(
 		item_code if item_code else frappe.db.get_value(template_dt, template_dn, "item")
 	)  # TODO: verify fieldname item
 	coverage.qty = qty
+	if rate:
+		coverage.price_list_rate = rate
 
 	coverage.insurance_policy = policy
 

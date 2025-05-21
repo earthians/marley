@@ -326,15 +326,17 @@ class TestPatientAppointment(IntegrationTestCase):
 	def test_department_appointment_cancel_with_fee_validity_setting_on(self):
 		patient, practitioner = create_healthcare_docs()
 		frappe.db.set_single_value("Healthcare Settings", "enable_free_follow_ups", 1)
+		depatment = create_medical_department(123)
 		appointment_type = create_appointment_type(
 			{
 				"name": "Department Appointment Type",
 				"allow_booking_for": "Department",
+				"medical_department": depatment,
 			}
 		)
 		appointment = create_appointment(
 			patient=patient,
-			department=create_medical_department(),
+			department=depatment,
 			appointment_for="Department",
 			appointment_type=appointment_type.name,
 		)
@@ -755,7 +757,7 @@ def create_appointment_type(args=None):  # nosemgrep
 		items = [
 			{
 				"dt": "Medical Department",
-				"dn": args.get("medical_department") or "_Test Medical Department",
+				"dn": args.get("medical_department") or create_medical_department(),
 				"op_consulting_charge_item": item,
 				"op_consulting_charge": args.get("op_consulting_charge", 200),
 			}

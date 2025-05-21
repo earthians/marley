@@ -47,11 +47,6 @@ frappe.ui.form.on("Medication", {
 			frm.doc.linked_items.forEach((row) => {
 				mark_change_in_item(frm, row.doctype, row.name);
 			});
-			frm.set_df_property('item_code', 'hidden', true);
-			frm.set_df_property('stock_uom', 'read_only', true);
-			if (frm.doc.is_billable && frm.doc.rate > 0) {
-				frm.set_df_property('rate', 'read_only', true);
-			}
 		}
 	}
 });

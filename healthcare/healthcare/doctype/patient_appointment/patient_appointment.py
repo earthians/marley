@@ -95,6 +95,7 @@ class PatientAppointment(Document):
 			template_dn=self.appointment_type,
 			item_code=billing_detail.get("service_item"),
 			qty=1,
+			rate=billing_detail.get("practitioner_charge"),
 		)
 
 		if coverage and coverage.get("coverage"):

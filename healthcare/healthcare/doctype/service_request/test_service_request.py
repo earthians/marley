@@ -49,8 +49,8 @@ class TestServiceRequest(IntegrationTestCase):
 			practitioner,
 			"lab_test_prescription",
 			insulin_resistance_template,
-			procedure_template,
-			therapy_type,
+			procedure_template=procedure_template,
+			therapy_type=therapy_type,
 			submit=True,
 		)
 		self.assertTrue(frappe.db.exists("Service Request", {"order_group": encounter.name}))

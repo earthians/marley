@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:patient_care_type",
- "beta": 0,
+ "beta": 1,
  "creation": "2018-11-18 14:18:25.167468",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -14,23 +14,23 @@
  ],
  "fields": [
   {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "label": "Description"
-  },
-  {
    "fieldname": "patient_care_type",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Patient Care Type",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description"
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-05-16 17:50:55.356041",
+ "modified": "2025-03-18 11:43:42.528491",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Care Type",

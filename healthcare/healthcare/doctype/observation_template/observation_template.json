@@ -143,7 +143,7 @@
   {
    "fieldname": "codification_table",
    "fieldtype": "Table",
-   "label": "Code Value",
+   "label": "Medical Value",
    "options": "Codification Table"
   },
   {

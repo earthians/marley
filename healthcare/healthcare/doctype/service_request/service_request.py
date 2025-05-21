@@ -139,7 +139,7 @@ def set_service_request_status(service_request, status):
 
 @frappe.whitelist()
 def make_clinical_procedure(service_request):
-	if isinstance(service_request, str):
+	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -165,7 +165,6 @@ def make_clinical_procedure(service_request):
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.medical_department = service_request.medical_department
-	doc.medical_code = service_request.medical_code
 	doc.insurance_policy = service_request.insurance_policy
 	doc.insurance_payor = service_request.insurance_payor
 	doc.insurance_coverage = service_request.insurance_coverage
@@ -176,7 +175,7 @@ def make_clinical_procedure(service_request):
 
 @frappe.whitelist()
 def make_lab_test(service_request):
-	if isinstance(service_request, str):
+	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -205,7 +204,6 @@ def make_lab_test(service_request):
 	doc.date = service_request.occurrence_date
 	doc.time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
-	doc.medical_code = service_request.medical_code
 	doc.insurance_policy = service_request.insurance_policy
 	doc.insurance_payor = service_request.insurance_payor
 	doc.insurance_coverage = service_request.insurance_coverage
@@ -216,7 +214,7 @@ def make_lab_test(service_request):
 
 @frappe.whitelist()
 def make_therapy_session(service_request):
-	if isinstance(service_request, str):
+	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
 
@@ -242,7 +240,6 @@ def make_therapy_session(service_request):
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.invoiced = service_request.invoiced
-	doc.medical_code = service_request.medical_code
 	doc.insurance_policy = service_request.insurance_policy
 	doc.insurance_payor = service_request.insurance_payor
 	doc.insurance_coverage = service_request.insurance_coverage

@@ -16,14 +16,13 @@
   "column_break_26",
   "company",
   "status",
-  "invoiced",
+  "date",
+  "time",
+  "submitted_date",
+  "result_date",
+  "approved_date",
   "expected_result_date",
   "expected_result_time",
-  "section_break_exow",
-  "submitted_date",
-  "approved_date",
-  "column_break_upii",
-  "result_date",
   "printed_on",
   "sb_first",
   "patient",
@@ -35,7 +34,7 @@
   "email",
   "mobile",
   "c_b",
-  "service_request",
+  "service_unit",
   "practitioner",
   "practitioner_name",
   "requesting_department",
@@ -66,6 +65,9 @@
   "result_legend_section",
   "legend_print_position",
   "result_legend",
+  "more_information_section",
+  "service_request",
+  "invoiced",
   "section_break_50",
   "email_sent",
   "sms_sent",
@@ -572,6 +574,28 @@
    "report_hide": 1
   },
   {
+   "allow_in_quick_entry": 1,
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Time"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
    "collapsible": 1,
    "fieldname": "medical_coding_section",
    "fieldtype": "Section Break",
@@ -584,18 +608,19 @@
    "options": "Codification Table"
   },
   {
-   "fieldname": "section_break_exow",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_upii",
-   "fieldtype": "Column Break"
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
   },
   {
    "fieldname": "service_request",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Service Request",
+   "no_copy": 1,
    "options": "Service Request",
+   "print_hide": 1,
    "read_only": 1,
    "search_index": 1
   }
@@ -607,7 +632,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-05-13 19:13:49.551531",
+ "modified": "2023-06-21 00:31:52.282467",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
@@ -663,7 +688,6 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
- "row_format": "Dynamic",
  "search_fields": "patient,practitioner,lab_test_name,sample",
  "show_name_in_global_search": 1,
  "sort_field": "modified",

@@ -11,6 +11,9 @@ from erpnext.accounts.party import get_dashboard_info
 from erpnext.accounts.utils import get_balance_on
 
 from healthcare.healthcare.doctype.insurance_claim.insurance_claim import create_payment_entry
+from healthcare.healthcare.doctype.insurance_payor_contract.test_insurance_payor_contract import (
+	create_insurance_payor,
+)
 from healthcare.healthcare.doctype.patient_insurance_coverage.test_patient_insurance_coverage import (
 	create_insurance_test_docs,
 )
@@ -37,7 +40,6 @@ class TestInsuranceClaim(IntegrationTestCase):
 		claim_name, claim_doc = create_insurance_claim(
 			test_docs["Patient"], test_docs["Insurance Policy"]
 		)
-		# print(claim_name, claim_doc.as_dict())
 
 		self.assertEqual(claim_doc.insurance_claim_amount, 320)
 		self.assertEqual(claim_doc.approved_amount, 320)
@@ -60,6 +62,7 @@ class TestInsuranceClaim(IntegrationTestCase):
 
 
 def create_insurance_claim(patient, insurance_policy):
+	create_insurance_payor()
 	claim = frappe.new_doc("Insurance Claim")
 	claim.insurance_payor = "_Test Insurance Payor"
 	claim.mode_of_payment = "Cash"

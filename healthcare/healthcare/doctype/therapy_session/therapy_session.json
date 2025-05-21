@@ -44,7 +44,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-THP-.YYYY.-"
+   "options": "HLC-THS-.YYYY.-"
   },
   {
    "fieldname": "appointment",
@@ -232,8 +232,11 @@
   {
    "fieldname": "service_request",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Service Request",
+   "no_copy": 1,
    "options": "Service Request",
+   "print_hide": 1,
    "read_only": 1,
    "search_index": 1
   },
@@ -251,7 +254,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-05-15 19:53:08.028456",
+ "modified": "2025-04-06 19:15:28.739455",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",

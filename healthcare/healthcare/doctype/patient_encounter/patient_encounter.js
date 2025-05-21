@@ -148,7 +148,43 @@ frappe.ui.form.on('Patient Encounter', {
 			};
 		});
 
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.code_system) {
+				return {
+					filters: {
+						code_system: row.code_system
+					}
+				};
+			}
+		});
+
+		frm.set_query("medication", "drug_prescription", function() {
+			return {
+				filters: {
+					disabled: false
+				}
+			};
+		})
+
 		frm.set_df_property('patient', 'read_only', frm.doc.appointment ? 1 : 0);
+
+		if (frappe.meta.get_docfield('Drug Prescription', 'medication').in_list_view === 1) {
+			frm.set_query('drug_code', 'drug_prescription', function(doc, cdt, cdn) {
+				let row = frappe.get_doc(cdt, cdn);
+				let filters = { is_stock_item: 1 };
+				if (row.medication) {
+					filters.medication = row.medication;
+				}
+				return {
+					query: 'healthcare.healthcare.doctype.patient_encounter.patient_encounter.get_medications_query',
+					filters: filters
+				};
+			});
+		}
+		var table_list =  ["drug_prescription", "lab_test_prescription", "procedure_prescription", "therapies"]
+		apply_code_sm_filter_to_child(frm, "priority", table_list, "Priority")
+		apply_code_sm_filter_to_child(frm, "intent", table_list, "Intent")
 
 		frm.set_query('insurance_policy', function() {
 			return {
@@ -219,7 +255,6 @@ frappe.ui.form.on('Patient Encounter', {
 
 	set_patient_info: async function(frm) {
 		if (frm.doc.patient) {
-			let me = frm
 			frappe.call({
 				method: 'healthcare.healthcare.doctype.patient.patient.get_patient_detail',
 				args: {
@@ -239,9 +274,9 @@ frappe.ui.form.on('Patient Encounter', {
 					};
 
 					frappe.run_serially([
-						()=>me.set_value(values),
-						()=>show_clinical_notes(me),
-						()=>show_orders(me),
+						()=>frm.set_value(values),
+						()=>show_clinical_notes(frm),
+						()=>show_orders(frm),
 					]);
 				}
 			});
@@ -283,12 +318,9 @@ frappe.ui.form.on('Patient Encounter', {
 						cur_dialog.hide();
 					}
 				});
-
-
 			}
 		});
 	},
-
 });
 
 

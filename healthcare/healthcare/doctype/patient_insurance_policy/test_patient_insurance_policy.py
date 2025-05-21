@@ -7,6 +7,9 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, today
 
+from healthcare.healthcare.doctype.insurance_payor_contract.test_insurance_payor_contract import (
+	create_insurance_payor,
+)
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_patient,
 )
@@ -27,6 +30,7 @@ class TestPatientInsurancePolicy(IntegrationTestCase):
 
 
 def get_new_insurance_policy(patient, eligibility_plan=None):
+	create_insurance_payor()
 	insurance_policy = frappe.new_doc("Patient Insurance Policy")
 	insurance_policy.insurance_payor = "_Test Insurance Payor"
 	insurance_policy.patient = patient

@@ -167,6 +167,13 @@ frappe.ui.form.on('Clinical Procedure', {
 			});
 		}
 
+		frm.add_custom_button(__("Clinical Note"), function() {
+			frappe.route_options = {
+				"patient": frm.doc.patient,
+				"reference_doc": "Clinical Procedure",
+				"reference_name": frm.doc.name}
+					frappe.new_doc("Clinical Note");
+		},__('Create'));
 	},
 
 	onload: function(frm) {
@@ -249,18 +256,34 @@ frappe.ui.form.on('Clinical Procedure', {
 	procedure_template: function(frm) {
 		if (frm.doc.procedure_template) {
 			frappe.call({
-				'method': 'frappe.client.get',
+				"method": "healthcare.healthcare.utils.get_medical_codes",
 				args: {
-					doctype: 'Clinical Procedure Template',
-					name: frm.doc.procedure_template
+					template_dt: "Clinical Procedure Template",
+					template_dn: frm.doc.procedure_template,
 				},
-				callback: function (data) {
-					frm.set_value('medical_department', data.message.medical_department);
-					frm.set_value('consume_stock', data.message.consume_stock);
-					frm.events.set_warehouse(frm);
-					frm.events.set_procedure_consumables(frm);
+				callback: function(r) {
+					if (!r.exc && r.message) {
+						frm.doc.codification_table = []
+						$.each(r.message, function(k, val) {
+							if (val.code_value) {
+								var child = frm.add_child("codification_table");
+								child.code_value = val.code_value
+								child.code_system = val.code_system
+								child.code = val.code
+								child.description = val.description
+								child.system = val.system
+							}
+						});
+						frm.refresh_field("codification_table");
+					} else {
+						frm.clear_table("codification_table")
+						frm.refresh_field("codification_table");
+					}
 				}
-			});
+			})
+		} else {
+			frm.clear_table("codification_table")
+			frm.refresh_field("codification_table");
 		}
 	},
 
@@ -341,40 +364,31 @@ frappe.ui.form.on('Clinical Procedure', {
 		});
 	},
 
-	procedure_template: function(frm) {
-		if (frm.doc.procedure_template) {
-			frappe.call({
-				"method": "healthcare.healthcare.utils.get_medical_codes",
-				args: {
-					template_dt: "Clinical Procedure Template",
-					template_dn: frm.doc.procedure_template,
-				},
-				callback: function(r) {
-					if (!r.exc && r.message) {
-						frm.doc.codification_table = []
-						$.each(r.message, function(k, val) {
-							if (val.code_value) {
-								var child = cur_frm.add_child("codification_table");
-								child.code_value = val.code_value
-								child.code_system = val.code_system
-								child.code = val.code
-								child.description = val.description
-								child.system = val.system
-							}
-						});
-						frm.refresh_field("codification_table");
-					} else {
-						frm.clear_table("codification_table")
-						frm.refresh_field("codification_table");
-					}
+	set_medical_codes: function(frm) {
+		frappe.call({
+			"method": "healthcare.healthcare.utils.get_medical_codes",
+			args: {
+				template_dt: "Clinical Procedure Template",
+				template_dn: frm.doc.procedure_template,
+			},
+			callback: function(r) {
+				if (!r.exc && r.message) {
+					frm.doc.codification_table = []
+					$.each(r.message, function(k, val) {
+						if (val.code_value) {
+							var child = frm.add_child("codification_table");
+							child.code_value = val.code_value
+							child.code_system = val.code_system
+							child.code = val.code
+							child.description = val.description
+							child.system = val.system
+						}
+					});
+					frm.refresh_field("codification_table");
 				}
-			})
-		} else {
-			frm.clear_table("codification_table")
-			frm.refresh_field("codification_table");
-		}
-	}
-
+			}
+		})
+	},
 });
 
 frappe.ui.form.on('Clinical Procedure Item', {
@@ -480,12 +494,12 @@ let show_procedure_templates = function(frm, result){
 				<div class="col-xs-1">\
 				<a data-name="%(name)s" data-procedure-template="%(procedure_template)s"\
 					data-encounter="%(encounter)s" data-practitioner="%(practitioner)s"\
-					data-billing_status="%(billing_status)s" data-source="%(source)s"\
+					data-invoiced="%(invoiced)s" data-source="%(source)s"\
 					data-insurance-payor="%(insurance_payor)s" data-insurance-policy="%(insurance_policy)s"\
 					href="#"><button class="btn btn-default btn-xs">Get</button></a>\
 				</div>\
 			</div><hr>',
-			{ procedure_template: y[0], encounter: y[1], billing_status: y[2], practitioner: y[3], date: y[4],
+			{ procedure_template: y[0], encounter: y[1], invoiced: y[2], practitioner: y[3], date: y[4],
 				name: y[5], insurance_policy:(y[6]?y[6]:''), insurance_payor:y[7]})
 			).appendTo(html_field);
 			row.find("a").click(function() {

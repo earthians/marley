@@ -27,6 +27,14 @@ frappe.ui.form.on('Therapy Type', {
 					}
 				};
 			}
+		})
+
+		frm.set_query('staff_role', function () {
+			return {
+				filters: {
+					'restrict_to_domain': 'Healthcare'
+				}
+			};
 		});
 	},
 

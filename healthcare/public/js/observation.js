@@ -38,10 +38,6 @@ healthcare.Observation = class Observation {
 				$(".observations").find(".result-text").change(function() {
 					me.frm.dirty()
 				})
-				// $('#result-text').change(function() {
-				// 	console.log("UUUUUUUUUUU")
-				// })
-
 			}
 		])
 	}

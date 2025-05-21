@@ -40,6 +40,8 @@ class TestPatientInsuranceCoverage(IntegrationTestCase):
 		frappe.db.sql(
 			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
 		)
+		frappe.db.set_single_value("Healthcare Settings", "enable_free_follow_ups", 0)
+		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
 		test_docs = create_insurance_test_docs()
 		invoice_dict = frappe.db.get_value(
 			"Sales Invoice",
@@ -122,7 +124,7 @@ def create_appointment(patient, practitioner, appointment_date, appointment_type
 	appointment.patient = patient
 	appointment.practitioner = practitioner
 	appointment.appointment_type = appointment_type
-	appointment.department = "_Test Medical Department"
+	appointment.department = create_medical_department()
 	appointment.appointment_date = appointment_date
 	appointment.company = "_Test Company"
 	appointment.duration = 30
@@ -168,6 +170,7 @@ def create_sales_invoice(appointment_doc, appointments_to_invoice):
 		],
 		as_dict=True,
 	)
+
 	sales_invoice = frappe.new_doc("Sales Invoice")
 	sales_invoice.patient = appointment_doc.patient
 	sales_invoice.customer = frappe.get_value("Patient", appointment_doc.patient, "customer")
