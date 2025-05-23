@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.query_builder import Order
+from frappe.query_builder.functions import Coalesce
 from frappe.utils import flt, get_link_to_form, getdate
 
 
@@ -44,68 +46,62 @@ class ItemInsuranceEligibility(Document):
 				frappe.throw(_("<b>Valid From</b> date cannot be after <b>Valid Till</b> date"))
 
 	def validate_overlaps(self):
-		conditions = """is_active=1 AND
-			name!={name} AND
-			COALESCE(insurance_plan, '')={plan}
-		""".format(
-			name=frappe.db.escape(self.name), plan=frappe.db.escape(self.insurance_plan)
+		item_eligibility = frappe.qb.DocType("Item Insurance Eligibility")
+
+		query = (
+			frappe.qb.from_(item_eligibility)
+			.select(item_eligibility.name)
+			.where(
+				(item_eligibility.name != self.name)
+				& (item_eligibility.is_active == 1)
+				& (
+					frappe.qb.terms.Case()
+					.when(item_eligibility.insurance_plan.isnull(), "")
+					.else_(item_eligibility.insurance_plan)
+					== (self.insurance_plan or "")
+				)
+				& (
+					frappe.qb.terms.Case()
+					.when(item_eligibility.item_code.isnull(), "")
+					.else_(item_eligibility.item_code)
+					== (self.item_code or "")
+				)
+				& (
+					frappe.qb.terms.Case()
+					.when(item_eligibility.template_dt.isnull(), "")
+					.else_(item_eligibility.template_dt)
+					== (self.template_dt or "")
+				)
+				& (
+					frappe.qb.terms.Case()
+					.when(item_eligibility.template_dn.isnull(), "")
+					.else_(item_eligibility.template_dn)
+					== (self.template_dn or "")
+				)
+			)
 		)
 
-		if self.valid_from and self.valid_till:
-			conditions += """ AND
-				((valid_from > {valid_from} AND valid_from < {valid_till}) OR
-				(valid_till > {valid_from} AND valid_till < {valid_till}) OR
-				({valid_from} > valid_from AND {valid_from} < valid_till) OR
-				({valid_from} = valid_from AND {valid_till} = valid_till))
-			""".format(
-				valid_from=frappe.db.escape(self.valid_from), valid_till=frappe.db.escape(self.valid_till)
+		if self.valid_till:
+			query = query.where(
+				(item_eligibility.valid_till.isnotnull())
+				& (
+					(item_eligibility.valid_from >= self.valid_from)
+					& (item_eligibility.valid_from <= self.valid_till)
+					| (item_eligibility.valid_till >= self.valid_from)
+					& (item_eligibility.valid_till <= self.valid_till)
+				)
 			)
+		else:
+			query = query.where((item_eligibility.valid_from == self.valid_from))
 
-		elif self.valid_from and not self.valid_till:
-			conditions += """ AND
-				(valid_till>={valid_from}
-				OR
-				valid_from={valid_from})
-			""".format(
-				valid_from=frappe.db.escape(self.valid_from)
-			)
-
-		elif not self.valid_from and self.valid_till:
-			conditions += """ AND
-				(valid_from <= {valid_till}
-				OR
-				valid_till={valid_till}
-			""".format(
-				valid_till=frappe.db.escape(self.valid_till)
-			)
-
-		conditions += """ AND COALESCE(item_code, '')={item_code} AND
-			COALESCE(template_dt, '')={dt} AND
-			COALESCE(template_dn, '')={dn}
-		""".format(
-			item_code=frappe.db.escape(self.item_code),
-			dt=frappe.db.escape(self.template_dt),
-			dn=frappe.db.escape(self.template_dn),
-		)
-
-		overlap = frappe.db.sql(
-			"""
-			SELECT name
-			FROM `tabItem Insurance Eligibility`
-			WHERE {conditions}
-		""".format(
-				conditions=conditions
-			),
-			as_dict=1,
-		)
+		overlap = query.run(as_dict=True)
 
 		if overlap:
 			frappe.throw(
 				_("Item Eligibility overlaps with {eligibility}").format(
-					eligibility=get_link_to_form(self.doctype, overlap[0].name)
+					eligibility=get_link_to_form(self.doctype, overlap[0]["name"])
 				),
 				CoverageOverlapError,
-				title=_("Not Allowed"),
 			)
 
 	def set_service_item(self):
@@ -133,53 +129,50 @@ def get_insurance_eligibility(
 	Returns the eligibility for item_code / template_dn
 	"""
 
-	conditions = """COALESCE(is_active, 0)=1 AND (
-		COALESCE(insurance_plan, '')={plan}
-		OR
-		COALESCE(insurance_plan, '')=''
+	on_date = getdate(on_date) or getdate()
+
+	def get_query(include_null_till):
+		Eligibility = frappe.qb.DocType("Item Insurance Eligibility")
+		query = (
+			frappe.qb.from_(Eligibility)
+			.select(
+				Eligibility.name,
+				Eligibility.template_dt,
+				Eligibility.code_value,
+				Eligibility.item_code,
+				Eligibility.mode_of_approval,
+				Eligibility.coverage,
+				Eligibility.discount,
+				Eligibility.valid_from,
+				Eligibility.valid_till,
+				Eligibility.insurance_plan,
+			)
+			.where(
+				(Eligibility.is_active == 1)
+				& (Coalesce(Eligibility.insurance_plan, "") == (insurance_plan or ""))
+				& (
+					(Coalesce(Eligibility.item_code, "") == item_code)
+					| (
+						(Coalesce(Eligibility.template_dt, "") == (template_dt or ""))
+						& (Coalesce(Eligibility.template_dn, "") == (template_dn or ""))
+					)
+				)
+				& (Eligibility.valid_from <= on_date)
+			)
+			.orderby(Eligibility.valid_from, order=Order.desc)
+			.limit(1)
 		)
-	""".format(
-		plan=frappe.db.escape(insurance_plan or "")
-	)
+		if include_null_till:
+			query = query.where((Eligibility.valid_till.isnull()))
+		else:
+			query = query.where((Eligibility.valid_till.isnotnull()) & (Eligibility.valid_till >= on_date))
+		return query
 
-	conditions += """ AND ({on_date} BETWEEN
-		COALESCE(valid_from, '2000-01-01') AND COALESCE(valid_till, '2500-12-31'))
-	""".format(
-		on_date=frappe.db.escape(getdate(on_date) or getdate())
-	)
+	# First try with a valid_till date
+	coverage = get_query(include_null_till=False).run(as_dict=True)
 
-	conditions += """ AND (
-		(COALESCE(item_code, '')={item_code})
-		OR
-		(COALESCE(template_dt, '')={dt} and COALESCE(template_dn, '')={dn})
-		)
-	""".format(
-		item_code=frappe.db.escape(item_code or ""),
-		dt=frappe.db.escape(template_dt),
-		dn=frappe.db.escape(template_dn),
-	)
-
-	coverage = frappe.db.sql(
-		"""
-		SELECT
-			name,
-			template_dt,
-			code_value,
-			item_code,
-			mode_of_approval,
-			coverage,
-			discount,
-			valid_from,
-			valid_till,
-			insurance_plan
-		FROM `tabItem Insurance Eligibility`
-		WHERE {conditions}
-		ORDER BY valid_from DESC
-		LIMIT 1
-	""".format(
-			conditions=conditions
-		),
-		as_dict=1,
-	)
+	# Fallback: try eligibility without a valid_till
+	if not coverage:
+		coverage = get_query(include_null_till=True).run(as_dict=True)
 
 	return coverage[0] if coverage else None

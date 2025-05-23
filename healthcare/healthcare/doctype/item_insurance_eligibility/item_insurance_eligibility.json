@@ -107,6 +107,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Valid From",
+   "reqd": 1,
    "search_index": 1
   },
   {
@@ -175,7 +176,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-12-21 19:14:59.524178",
+ "modified": "2025-05-22 15:03:14.213657",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Item Insurance Eligibility",
@@ -207,8 +208,10 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1
 }
