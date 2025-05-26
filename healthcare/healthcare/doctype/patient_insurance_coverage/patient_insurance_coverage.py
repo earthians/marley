@@ -121,7 +121,7 @@ class PatientInsuranceCoverage(Document):
 
 		if qty_invoiced == 0:
 			status = "Approved"
-		if qty_invoiced < self.qty:
+		elif qty_invoiced < self.qty:
 			status = "Partly Invoiced"
 		else:
 			status = "Invoiced"
