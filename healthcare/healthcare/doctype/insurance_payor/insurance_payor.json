@@ -23,9 +23,11 @@
   "website",
   "column_break_9",
   "contact_html",
+  "accounts_tab",
   "accounts_section",
   "claims_receivable_accounts",
-  "rejected_claims_expense_accounts"
+  "rejected_claims_expense_accounts",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -46,7 +48,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "depends_on": "eval:!doc.__islocal",
    "fieldname": "address_and_contacts_section",
    "fieldtype": "Section Break",
@@ -124,6 +125,17 @@
    "fieldtype": "Link",
    "label": "Code System",
    "options": "Code System"
+  },
+  {
+   "fieldname": "accounts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Accounts"
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "image_field": "image",
@@ -141,7 +153,7 @@
    "link_fieldname": "insurance_payor"
   }
  ],
- "modified": "2025-04-21 22:00:24.197738",
+ "modified": "2025-05-23 15:18:08.290031",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Payor",

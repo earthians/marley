@@ -28,7 +28,8 @@
   "policy_expiry_date",
   "column_break_15",
   "policy_number",
-  "insurance_plan"
+  "insurance_plan",
+  "connections_tab"
  ],
  "fields": [
   {
@@ -178,6 +179,12 @@
    "label": "Policy Number",
    "no_copy": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
   }
  ],
  "is_submittable": 1,
@@ -193,11 +200,10 @@
    "link_fieldname": "insurance_policy"
   }
  ],
- "modified": "2021-12-23 07:25:32.809112",
+ "modified": "2025-05-23 15:20:01.588986",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Insurance Policy",
- "name_case": "Title Case",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
@@ -286,9 +292,11 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "title,patient,patient_name,policy_number,insurance_plan,insurance_payor",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1
 }
