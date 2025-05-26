@@ -935,6 +935,8 @@ def manage_invoice_submit_cancel(doc, method):
 
 		# handle insurance
 		post_transfer_journal_entry_and_update_coverage(doc)
+		doc.reload()
+
 	elif method == "on_cancel":
 		if doc.items and (doc.additional_discount_percentage or doc.discount_amount):
 			for item in doc.items:
