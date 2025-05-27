@@ -47,15 +47,16 @@ class DischargeSummary(Document):
 		self.db_set("status", "Cancelled")
 
 	def validate_encounter_impression(self):
-		encounter = frappe.get_last_doc(
-			"Patient Encounter", filters={"inpatient_record": self.inpatient_record}
-		)
-		if encounter:
-			if encounter.diagnosis:
-				self.diagnosis = []
-				for d in encounter.diagnosis:
-					self.append("diagnosis", (frappe.copy_doc(d)).as_dict())
-			if encounter.symptoms:
-				self.chief_complaint = []
-				for symptom in encounter.symptoms:
-					self.append("chief_complaint", (frappe.copy_doc(symptom)).as_dict())
+		if frappe.db.exists("Patient Encounter", {"inpatient_record": self.inpatient_record}):
+			encounter = frappe.get_last_doc(
+				"Patient Encounter", filters={"inpatient_record": self.inpatient_record}
+			)
+			if encounter:
+				if encounter.diagnosis:
+					self.diagnosis = []
+					for d in encounter.diagnosis:
+						self.append("diagnosis", (frappe.copy_doc(d)).as_dict())
+				if encounter.symptoms:
+					self.chief_complaint = []
+					for symptom in encounter.symptoms:
+						self.append("chief_complaint", (frappe.copy_doc(symptom)).as_dict())
