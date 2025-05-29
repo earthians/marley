@@ -438,7 +438,7 @@ def validate_incompleted_service_requests(inpatient_record):
 		"patient": inpatient_record.patient,
 		"inpatient_record": inpatient_record.name,
 		"docstatus": 1,
-		"status": ["not in", ["Completed"]],
+		"status": ["not in", ["completed-Request Status"]],
 	}
 
 	service_requests = frappe.db.get_list("Service Request", filters=filters, pluck="name")

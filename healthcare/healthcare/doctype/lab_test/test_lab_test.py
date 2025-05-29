@@ -87,7 +87,7 @@ class TestLabTest(FrappeTestCase):
 			"Service Request",
 			filters={
 				"order_group": patient_encounter.name,
-				"status": ["!=", "Completed"],
+				"status": ["!=", "completed-Request Status"],
 				"template_dt": "Lab Test Template",
 			},
 			fields=["name"],
