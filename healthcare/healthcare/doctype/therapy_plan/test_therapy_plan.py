@@ -36,11 +36,11 @@ class TestTherapyPlan(IntegrationTestCase):
 		plan = create_therapy_plan()
 		self.assertEqual(plan.status, "Not Started")
 
-		session = make_therapy_session(plan.name, plan.patient, "Basic Rehab", "_Test Company")
+		session = make_therapy_session(plan.patient, "Basic Rehab", "_Test Company", plan.name)
 		frappe.get_doc(session).submit()
 		self.assertEqual(frappe.db.get_value("Therapy Plan", plan.name, "status"), "In Progress")
 
-		session = make_therapy_session(plan.name, plan.patient, "Basic Rehab", "_Test Company")
+		session = make_therapy_session(plan.patient, "Basic Rehab", "_Test Company", plan.name)
 		frappe.get_doc(session).submit()
 		self.assertEqual(frappe.db.get_value("Therapy Plan", plan.name, "status"), "Completed")
 
@@ -48,7 +48,7 @@ class TestTherapyPlan(IntegrationTestCase):
 		appointment = create_appointment(patient, practitioner, nowdate())
 
 		session = make_therapy_session(
-			plan.name, plan.patient, "Basic Rehab", "_Test Company", appointment.name
+			plan.patient, "Basic Rehab", "_Test Company", plan.name, appointment.name
 		)
 		session = frappe.get_doc(session)
 		session.submit()
