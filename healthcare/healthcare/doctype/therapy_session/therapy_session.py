@@ -90,7 +90,9 @@ class TherapySession(Document):
 		self.update_sessions_count_in_therapy_plan()
 
 		if self.service_request:
-			frappe.db.set_value("Service Request", self.service_request, "status", "Completed")
+			frappe.db.set_value(
+				"Service Request", self.service_request, "status", "completed-Request Status"
+			)
 
 	def create_nursing_tasks(self, post_event=True):
 		template = frappe.db.get_value("Therapy Type", self.therapy_type, "nursing_checklist_template")
