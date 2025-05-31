@@ -1,4 +1,5 @@
 [pre_model_sync]
+healthcare.patches.v16_0.check_v16_compatibility_with_frappe
 healthcare.patches.v0_0.setup_abdm_custom_fields
 healthcare.patches.v0_0.set_medical_code_from_field_to_codification_table
 healthcare.patches.v15_0.check_version_compatibility_with_frappe
