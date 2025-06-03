@@ -143,7 +143,8 @@ frappe.ui.form.on("Inpatient Record", {
       __("Drug Administration"),
       function () {
         frappe.new_doc("Drug Administration", {
-          inpatient_record: frm.doc.name,
+          ref_dn: frm.doc.name,
+          ref_dt: "Inpatient Record",
         });
       },
       __("Create")
