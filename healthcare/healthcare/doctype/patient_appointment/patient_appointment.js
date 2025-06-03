@@ -285,12 +285,14 @@ frappe.ui.form.on("Patient Appointment", {
 	department: function(frm) {
 		if (frm.doc.department && frm.doc.appointment_for == "Department") {
 			frm.events.set_payment_details(frm);
+			frm.set_value("appointment_based_on_check_in", 1);
 		}
 	},
 
 	service_unit: function(frm) {
 		if (frm.doc.service_unit && frm.doc.appointment_for == "Service Unit") {
 			frm.events.set_payment_details(frm);
+			frm.set_value("appointment_based_on_check_in", 1);
 		}
 	},
 

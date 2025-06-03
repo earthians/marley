@@ -253,6 +253,8 @@ class PatientAppointment(Document):
 					),
 					frappe.DuplicateEntryError,
 				)
+			if not self.appointment_based_on_check_in:
+				self.appointment_based_on_check_in = True
 
 	def validate_service_unit(self):
 		if self.inpatient_record and self.service_unit:
@@ -400,25 +402,35 @@ class PatientAppointment(Document):
 	def set_position_in_queue(self):
 		from frappe.query_builder.functions import Max
 
-		if self.status == "Checked In" and not self.position_in_queue:
-			appointment = frappe.qb.DocType("Patient Appointment")
-			position = (
-				frappe.qb.from_(appointment)
-				.select(
-					Max(appointment.position_in_queue).as_("max_position"),
-				)
-				.where(
-					(appointment.status == "Checked In")
-					& (appointment.practitioner == self.practitioner)
-					& (appointment.service_unit == self.service_unit)
-					& (appointment.appointment_time == self.appointment_time)
-				)
-			).run(as_dict=True)[0]
-			position_in_queue = 1
-			if position and position.get("max_position"):
-				position_in_queue = position.get("max_position") + 1
+		if self.status != "Checked In" or self.position_in_queue:
+			return
 
-			self.position_in_queue = position_in_queue
+		appointment = frappe.qb.DocType("Patient Appointment")
+		query = (
+			frappe.qb.from_(appointment)
+			.select(
+				Max(appointment.position_in_queue).as_("max_position"),
+			)
+			.where((appointment.status == "Checked In") & (appointment.name != self.name))
+		)
+
+		if self.appointment_for == "Practitioner":
+			query = query.where(
+				(appointment.practitioner == self.practitioner)
+				& (appointment.appointment_time == self.appointment_time)
+				& (appointment.service_unit == self.service_unit)
+			)
+		else:
+			query = query.where(appointment.appointment_date == self.appointment_date)
+			if self.service_unit:
+				query = query.where(appointment.service_unit == self.service_unit)
+			if self.department:
+				query = query.where(appointment.department == self.department)
+
+		position = query.run(as_dict=True)
+		max_position = position[0]["max_position"] if position and position[0].get("max_position") else 0
+
+		self.position_in_queue = max_position + 1
 
 
 @frappe.whitelist()
