@@ -567,6 +567,76 @@ class TestPatientAppointment(FrappeTestCase):
 		# different pracititoner can have multiple same time and date appointments for different patients
 		self.assertTrue(appointment_2.name)
 
+		# appointment booked for department
+		appointment_type = create_appointment_type(
+			args={
+				"name": "_Test Department",
+				"allow_booking_for": "Department",
+				"duration": 15,
+			}
+		)
+		medical_department = create_medical_department(id=2)
+		dept_appointment = create_appointment(
+			patient,
+			None,
+			nowdate(),
+			appointment_type=appointment_type,
+			appointment_for="Department",
+			department=medical_department,
+		)
+		self.assertTrue(dept_appointment.appointment_based_on_check_in)
+		dept_appointment.status = "Checked In"
+		dept_appointment.save()
+		self.assertEqual(dept_appointment.position_in_queue, 1)
+
+		dept_appointment_1 = create_appointment(
+			patient_1,
+			None,
+			nowdate(),
+			appointment_type=appointment_type,
+			appointment_for="Department",
+			department=medical_department,
+		)
+		self.assertTrue(dept_appointment_1.appointment_based_on_check_in)
+		dept_appointment_1.status = "Checked In"
+		dept_appointment_1.save()
+		self.assertEqual(dept_appointment_1.position_in_queue, 2)
+
+		# appointment booked for service unit
+		service_unit = create_service_unit(id=2)
+		appointment_type = create_appointment_type(
+			args={
+				"name": "_Test Service Unit",
+				"allow_booking_for": "Service Unit",
+				"duration": 15,
+			}
+		)
+		su_appointment = create_appointment(
+			patient,
+			None,
+			nowdate(),
+			appointment_type=appointment_type,
+			appointment_for="Service Unit",
+			service_unit=service_unit,
+		)
+		self.assertTrue(su_appointment.appointment_based_on_check_in)
+		su_appointment.status = "Checked In"
+		su_appointment.save()
+		self.assertEqual(su_appointment.position_in_queue, 1)
+
+		su_appointment_1 = create_appointment(
+			patient_1,
+			None,
+			nowdate(),
+			appointment_type=appointment_type,
+			appointment_for="Service Unit",
+			service_unit=service_unit,
+		)
+		self.assertTrue(su_appointment_1.appointment_based_on_check_in)
+		su_appointment_1.status = "Checked In"
+		su_appointment_1.save()
+		self.assertEqual(su_appointment_1.position_in_queue, 2)
+
 
 def create_healthcare_docs(id=0):
 	patient = create_patient(id)
@@ -641,13 +711,14 @@ def create_encounter(appointment):
 
 def create_appointment(
 	patient,
-	practitioner,
-	appointment_date,
+	practitioner=None,
+	appointment_date=None,
 	invoice=0,
 	procedure_template=0,
 	service_unit=None,
 	appointment_type=None,
 	save=1,
+	appointment_for=None,
 	department=None,
 	appointment_based_on_check_in=None,
 	appointment_time=None,
@@ -660,8 +731,9 @@ def create_appointment(
 	appointment = frappe.new_doc("Patient Appointment")
 	appointment.patient = patient
 	appointment.practitioner = practitioner
+	appointment.appointment_for = appointment_for or "Practitioner"
 	appointment.department = department or create_medical_department()
-	appointment.appointment_date = appointment_date
+	appointment.appointment_date = appointment_date or nowdate()
 	appointment.company = "_Test Company"
 	appointment.duration = 15
 	appointment.appointment_type = appointment_type or create_appointment_type().name
