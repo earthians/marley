@@ -85,8 +85,12 @@ frappe.ui.form.on('Patient Appointment', {
 			frm.add_custom_button(__('Cancel'), function() {
 				update_status(frm, 'Cancelled');
 			});
-			frm.add_custom_button(__('Reschedule'), function() {
-				check_and_set_availability(frm);
+			frm.add_custom_button(__("Reschedule"), function() {
+				if (frm.doc.appointment_for == "Practitioner") {
+					check_and_set_availability(frm);
+				} else{
+					reschedule_dept_or_su(frm);
+				}
 			});
 
 			if (frm.doc.procedure_template) {
@@ -715,6 +719,49 @@ let check_and_set_availability = function(frm) {
 
 		return slot_html;
 	}
+};
+
+let reschedule_dept_or_su = function(frm) {
+	const is_department = frm.doc.appointment_for === "Department";
+
+	const field_config = {
+		fieldtype: "Link",
+		reqd: 1,
+		options: is_department ? "Medical Department" : "Healthcare Service Unit",
+		fieldname: is_department ? "department" : "service_unit",
+		label: is_department ? "Medical Department" : "Service Unit"
+	};
+
+	if (!is_department) {
+		field_config.get_query = function () {
+			return {
+				filters: { company: frm.doc.company }
+			};
+		};
+	}
+
+	let d = new frappe.ui.Dialog({
+		title: __("Reschedule Appointment"),
+		fields: [
+			field_config,
+			{ fieldtype: "Date", reqd: 1, fieldname: "appointment_date", label: "Date", min_date: new Date(frappe.datetime.get_today()) },
+		],
+		primary_action_label: __("Book"),
+		primary_action: function() {
+			const values = d.get_values();
+			if (values) {
+				frm.set_value(field_config.fieldname, values[field_config.fieldname]);
+				frm.set_value("appointment_date", values.appointment_date);
+			}
+
+			d.hide();
+			frm.enable_save();
+			frm.save();
+		}
+	});
+	d.set_value("appointment_date", frm.doc.appointment_date);
+	d.set_value(field_config.fieldname, frm.doc[field_config.fieldname]);
+	d.show();
 };
 
 let get_prescribed_procedure = function(frm) {
