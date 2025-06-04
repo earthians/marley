@@ -517,7 +517,7 @@
   },
   {
    "fieldname": "sales_invoice",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Sales Invoice",
    "options": "Sales Invoice"
   },
@@ -602,7 +602,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-02-04 14:29:16.947366",
+ "modified": "2025-06-04 15:12:43.013297",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
