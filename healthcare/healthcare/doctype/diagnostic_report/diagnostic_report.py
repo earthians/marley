@@ -87,19 +87,19 @@ def set_observation_status(docname):
 				"sales_invoice": doc.docname,
 				"docstatus": ["!=", 2],
 				"has_component": False,
-				"status": ["not in", ["Cancelled", "Approved", "Disapproved"]],
+				"status": ["not in", ["Cancelled", "Approved", "Rejected"]],
 			},
 			pluck="name",
 		)
 		if observations:
 			for obs in observations:
-				if doc.status in ["Approved", "Disapproved"]:
+				if doc.status in ["Approved", "Rejected"]:
 					observation_doc = frappe.get_doc("Observation", obs)
 					if observation_doc.has_result():
-						if doc.status == "Approved" and not observation_doc.status in ["Approved", "Disapproved"]:
+						if doc.status == "Approved" and not observation_doc.status in ["Approved", "Rejected"]:
 							observation_doc.status = doc.status
 							observation_doc.save().submit()
-						if doc.status == "Disapproved" and observation_doc.status == "Approved":
+						if doc.status == "Rejected" and observation_doc.status == "Approved":
 							new_doc = frappe.copy_doc(observation_doc)
 							new_doc.status = ""
 							new_doc.insert()
