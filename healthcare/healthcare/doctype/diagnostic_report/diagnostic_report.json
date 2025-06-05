@@ -165,13 +165,13 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nPending Review\nPartially Approved\nApproved\nDisapproved",
+   "options": "Open\nPending Review\nPartially Approved\nApproved\nRejected",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-19 18:41:30.142285",
+ "modified": "2025-06-04 18:41:30.142285",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostic Report",
