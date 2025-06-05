@@ -107,7 +107,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Registered\nPreliminary\nFinal\nAmended\nCorrected\nCancelled\nEntered in Error\nUnknown\nApproved\nDisapproved",
+   "options": "Registered\nPreliminary\nFinal\nAmended\nCorrected\nCancelled\nEntered in Error\nUnknown\nApproved\nRejected",
    "read_only_depends_on": "eval:doc.docstatus==1;"
   },
   {
@@ -569,7 +569,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-25 06:00:59.016090",
+ "modified": "2025-06-05 10:43:53.244291",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",
@@ -577,6 +577,7 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -590,6 +591,7 @@
    "write": 1
   },
   {
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -599,9 +601,11 @@
    "report": 1,
    "role": "Healthcare Administrator",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

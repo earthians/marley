@@ -52,7 +52,7 @@ class Observation(Document):
 			self.days = patient_doc.calculate_age().get("age_in_days")
 
 	def set_status(self):
-		if self.status not in ["Approved", "Disapproved"]:
+		if self.status not in ["Approved", "Rejected"]:
 			if self.has_result() and self.status != "Final":
 				self.status = "Preliminary"
 			elif self.amended_from and self.status not in ["Amended", "Corrected"]:
@@ -92,6 +92,15 @@ class Observation(Document):
 		# "result_period_to",
 
 		return False
+
+	def component_has_result(self):
+		component_obs = frappe.db.get_all("Observation", {"parent_observation": self.name}, pluck="name")
+		for obs in component_obs:
+			obs_doc = frappe.get_doc("Observation", obs)
+			if not obs_doc.has_result():
+				return False
+
+		return True
 
 	def validate_input(self):
 		if self.permitted_data_type in ["Quantity", "Numeric"]:
@@ -442,25 +451,50 @@ def get_observation_result_template(template_name, observation):
 
 
 @frappe.whitelist()
-def set_observation_status(observation, status, reason=None):
+def set_observation_status(observation, status, reason=None, parent_obs=None):
 	observation_doc = frappe.get_doc("Observation", observation)
-	if observation_doc.has_result():
-		observation_doc.status = status
-		if reason:
-			observation_doc.disapproval_reason = reason
-		if status == "Approved":
-			observation_doc.submit()
-		if status == "Disapproved":
-			new_doc = frappe.copy_doc(observation_doc)
-			new_doc.status = ""
-			new_doc.insert()
-			observation_doc.cancel()
-	else:
+
+	if not (observation_doc.has_result() or observation_doc.has_component):
 		frappe.throw(_("Please enter result to Approve."))
+
+	if observation_doc.has_component and not observation_doc.component_has_result():
+		frappe.throw(_("Please enter result for all components to Approve."))
+
+	observation_doc.status = status
+	if reason:
+		observation_doc.disapproval_reason = reason
+
+	if status == "Approved":
+		observation_doc.submit()
+	elif status == "Rejected":
+		new_doc = frappe.copy_doc(observation_doc)
+		new_doc.status = ""
+		new_doc.disapproval_reason = ""
+		if parent_obs:
+			new_doc.parent_observation = parent_obs
+		new_doc.insert()
+		if observation_doc.has_component:
+			parent_obs = new_doc.name
+		else:
+			observation_doc.cancel()
+
+	if observation_doc.has_component:
+		docstatus_filter = 0 if status == "Approved" else 1
+
+		component_obs = frappe.db.get_all(
+			"Observation",
+			filters={"parent_observation": observation, "docstatus": docstatus_filter},
+			pluck="name",
+		)
+
+		for obs in component_obs:
+			set_observation_status(obs, status, reason, parent_obs)
+		if status == "Rejected" and observation_doc.docstatus == 1:
+			observation_doc.cancel()
 
 
 def set_diagnostic_report_status(doc):
-	if doc.has_result() and doc.sales_invoice and not doc.has_component and doc.sales_invoice:
+	if doc.sales_invoice and not doc.has_component:
 		observations = frappe.db.get_all(
 			"Observation",
 			{
