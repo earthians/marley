@@ -113,18 +113,17 @@ frappe.ui.form.on("Inpatient Record", {
 					}
 				})
 				frm.add_custom_button(__("Discharge"), function() {
-					frappe.db.get_value("Discharge Summary", {"docstatus": 1, "inpatient_record": frm.doc.name}, "name")
-					.then(r => {
-						if (r.message.name) {
+					frappe.call ({
+						method: "healthcare.healthcare.doctype.discharge_summary.discharge_summary.has_discharge_summary",
+						args: {
+							inpatient_record: frm.doc.name
+						},
+						callback: function(r) {
+							if(r){
 								discharge_patient(frm);
-						} else {
-							frappe.msgprint({
-								title: __("Discharge Summary Required"),
-								message: __("Discharge Summary is Required to Discharge"),
-								indicator: "red"
-							});
-						}
-					})
+							}
+						},
+					});
 				});
 				if (frm.doc.insurance_policy) {
 					frm.add_custom_button(__("Create Insurance Coverage"), function() {
