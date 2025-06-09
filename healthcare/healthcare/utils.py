@@ -187,6 +187,8 @@ def get_observations_to_invoice(patient, company):
 			"invoiced": False,
 			"docstatus": 1,
 			"service_request": "",
+			"sales_invoice": None,
+			"parent_observation": None,
 		},
 	)
 	for observation in observations:
@@ -1103,10 +1105,12 @@ def create_sample_collection_and_observation(doc):
 
 		# ignore if already created from service request
 		if item.get("reference_dt") == "Service Request" and item.get("reference_dn"):
-			if frappe.db.exists(
-				"Observation Sample Collection", {"service_request": item.get("reference_dn")}
-			) or frappe.db.exists(
-				"Sample Collection", {"service_request": item.get("reference_dn")}
+			if (
+				frappe.db.exists(
+					"Observation Sample Collection", {"service_request": item.get("reference_dn")}
+				)
+				or frappe.db.exists("Sample Collection", {"service_request": item.get("reference_dn")})
+				or frappe.db.exists("Observation", {"service_request": item.get("reference_dn")})
 			):
 				continue
 
