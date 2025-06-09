@@ -1,0 +1,329 @@
+{
+ "app": "healthcare",
+ "charts": [
+  {
+   "chart_name": "Inpatient Occupancy",
+   "label": "Occupancy"
+  },
+  {
+   "chart_name": "Service Unit Type wise Status",
+   "label": "Admission Status"
+  }
+ ],
+ "content": "[{\"id\":\"pxdw7O75CN\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Admission Status\",\"col\":6}},{\"id\":\"VWjKYFWgug\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Occupancy\",\"col\":6}},{\"id\":\"C53FVzk5H7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"-8cLwG57tE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total IP Records\",\"col\":3}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Admitted Patients\",\"col\":3}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending IP Medications\",\"col\":3}},{\"id\":\"nAL4q8j3LC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In-Process IP Orders\",\"col\":3}},{\"id\":\"vjMnjTr0FO\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"BtngFAzJ0X\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"IP Record\",\"col\":3}},{\"id\":\"7vvONujQ2W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Order\",\"col\":3}},{\"id\":\"-qLrAm9jo8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Entry\",\"col\":3}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}},{\"id\":\"8f6nnf9wz7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"b_uixk5e--\",\"type\":\"card\",\"data\":{\"card_name\":\"Inpatient\",\"col\":4}},{\"id\":\"kGUukhVOL4\",\"type\":\"card\",\"data\":{\"card_name\":\"Orders\",\"col\":4}},{\"id\":\"QbxiOFmIBz\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"uNtHmHGyPe\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Unit\",\"col\":4}},{\"id\":\"3RBhVSSL8r\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports and Pages\",\"col\":4}}]",
+ "creation": "2025-05-30 17:56:22.153991",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "change",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Inpatient",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports and Pages",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient Appointment Analytics",
+   "link_count": 0,
+   "link_to": "Patient Appointment Analytics",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Patient Appointment",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient History",
+   "link_count": 0,
+   "link_to": "patient_history",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient Progress",
+   "link_count": 0,
+   "link_to": "patient-progress",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient",
+   "link_count": 0,
+   "link_to": "Patient",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Practitioner",
+   "link_count": 0,
+   "link_to": "Healthcare Practitioner",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Practitioner Schedule",
+   "link_count": 0,
+   "link_to": "Practitioner Schedule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Medical Department",
+   "link_count": 0,
+   "link_to": "Medical Department",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Medication",
+   "link_count": 0,
+   "link_to": "Medication",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Unit",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Unit",
+   "link_count": 0,
+   "link_to": "Healthcare Service Unit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Unit Type",
+   "link_count": 0,
+   "link_to": "Healthcare Service Unit Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inpatient",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inpatient Record",
+   "link_count": 0,
+   "link_to": "Inpatient Record",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Encounter",
+   "link_count": 0,
+   "link_to": "Patient Encounter",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vital Signs",
+   "link_count": 0,
+   "link_to": "Vital Signs",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Medication Order",
+   "link_count": 0,
+   "link_to": "Inpatient Medication Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Medication Entry",
+   "link_count": 0,
+   "link_to": "Inpatient Medication Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Orders",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inpatient Medication Order",
+   "link_count": 0,
+   "link_to": "Inpatient Medication Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inpatient Medication Entry",
+   "link_count": 0,
+   "link_to": "Inpatient Medication Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Request",
+   "link_count": 0,
+   "link_to": "Service Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Medication Request",
+   "link_count": 0,
+   "link_to": "Medication Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-06-06 13:41:23.512804",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Inpatient",
+ "number_cards": [
+  {
+   "label": "Admitted Patients",
+   "number_card_name": "Total Admitted Patients"
+  },
+  {
+   "label": "Pending IP Medications",
+   "number_card_name": "Pending IP Medications"
+  },
+  {
+   "label": "In-Process IP Orders",
+   "number_card_name": "In-Process IP Orders"
+  },
+  {
+   "label": "Total IP Records",
+   "number_card_name": "Total IP Records"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "Healthcare",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 24.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "format": "{} Admitted",
+   "label": "IP Record",
+   "link_to": "Inpatient Record",
+   "stats_filter": "[[\"Inpatient Record\",\"status\",\"=\",\"Admitted\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Medication Order",
+   "link_to": "Inpatient Medication Order",
+   "stats_filter": "[[\"Inpatient Medication Order\",\"status\",\"=\",\"Pending\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Medication Entry",
+   "link_to": "Inpatient Medication Entry",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Patient History",
+   "link_to": "patient_history",
+   "type": "Page"
+  }
+ ],
+ "title": "Inpatient",
+ "type": "Workspace"
+}

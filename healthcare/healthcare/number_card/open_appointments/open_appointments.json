@@ -1,4 +1,6 @@
 {
+ "background_color": "",
+ "color": "",
  "creation": "2020-07-14 18:17:54.771092",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -10,11 +12,12 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Open Appointments",
- "modified": "2020-07-22 13:27:09.542122",
+ "modified": "2025-06-09 12:11:50.439733",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Open Appointments",
  "owner": "Administrator",
+ "show_full_number": 0,
  "show_percentage_stats": 1,
  "stats_time_interval": "Daily",
  "type": "Document Type"

@@ -1,0 +1,209 @@
+{
+ "app": "healthcare",
+ "charts": [
+  {
+   "chart_name": "Insurance Claim Status",
+   "label": "Insurance Claim Status"
+  }
+ ],
+ "content": "[{\"id\":\"xD5yV5M01A\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Insurance Claim Status\",\"col\":12}},{\"id\":\"QPKJARhNlP\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"7R5geM0eiC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims\",\"col\":3}},{\"id\":\"7tV1Skv4y5\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims Value\",\"col\":3}},{\"id\":\"wJURP86-v3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims\",\"col\":3}},{\"id\":\"-b4MdATviZ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims Value\",\"col\":3}},{\"id\":\"4cQDF7WK7s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"X5YMfgIhuK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Insurance Claim\",\"col\":3}},{\"id\":\"U6WaTxAcSl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Coverage\",\"col\":3}},{\"id\":\"rTiJyM7gp6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Eligibility Plan\",\"col\":3}},{\"id\":\"ZlXP-idVZh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"Q5Rn2qsmAk\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PnwFws27dZ\",\"type\":\"card\",\"data\":{\"card_name\":\"Insurance\",\"col\":4}},{\"id\":\"TKIu6RFgSI\",\"type\":\"card\",\"data\":{\"card_name\":\"Eligibility\",\"col\":4}},{\"id\":\"4LdIDU-094\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}}]",
+ "creation": "2025-05-30 17:40:59.886349",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "organization",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Insurance",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient",
+   "link_count": 0,
+   "link_to": "Patient",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Insurance Payor",
+   "link_count": 0,
+   "link_to": "Insurance Payor",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Insurance",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Insurance Claim",
+   "link_count": 0,
+   "link_to": "Insurance Claim",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Insurance Coverage",
+   "link_count": 0,
+   "link_to": "Patient Insurance Coverage",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Payor Contract",
+   "link_count": 0,
+   "link_to": "Insurance Payor Contract",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient Insurance Policy",
+   "link_count": 0,
+   "link_to": "Patient Insurance Policy",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Eligibility",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Insurance Payor Eligibility Plan",
+   "link_count": 0,
+   "link_to": "Insurance Payor Eligibility Plan",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item Insurance Eligibility",
+   "link_count": 0,
+   "link_to": "Item Insurance Eligibility",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-06-06 10:53:41.159676",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Insurance",
+ "number_cards": [
+  {
+   "label": "Outstanding Claims Value",
+   "number_card_name": "Outstanding Claims Value"
+  },
+  {
+   "label": "Paid Claims Value",
+   "number_card_name": "Paid Claims Value"
+  },
+  {
+   "label": "Paid Claims",
+   "number_card_name": "Paid Claims"
+  },
+  {
+   "label": "Outstanding Claims",
+   "number_card_name": "Outstanding Claims"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "Healthcare",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 27.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Eligibility Plan",
+   "link_to": "Insurance Payor Eligibility Plan",
+   "stats_filter": "[[\"Insurance Payor Eligibility Plan\",\"is_active\",\"=\",1,false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Insurance Claim",
+   "link_to": "Insurance Claim",
+   "stats_filter": "[[\"Insurance Claim\",\"status\",\"in\",[\"Draft\",\"Submitted\",null],false],[\"Insurance Claim\",\"docstatus\",\"=\",\"1\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Coverage",
+   "link_to": "Patient Insurance Coverage",
+   "stats_filter": "[[\"Patient Insurance Coverage\",\"docstatus\",\"=\",\"1\",false],[\"Patient Insurance Coverage\",\"status\",\"in\",[\"Draft\",\"Approved\",\"Partly Invoiced\",null],false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Sales Invoice",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[[\"Sales Invoice\",\"docstatus\",\"=\",\"1\",false],[\"Sales Invoice\",\"total_insurance_coverage_amount\",\"is\",\"set\",false]]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Insurance",
+ "type": "Workspace"
+}

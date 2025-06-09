@@ -1,0 +1,13 @@
+{
+ "creation": "2025-06-04 10:51:23.112494",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2025-06-04 10:51:23.112494",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Service Unit Type wise Admission Status",
+ "owner": "Administrator",
+ "source_name": "Service Unit Type wise Admission Status",
+ "timeseries": 0
+}

@@ -141,6 +141,7 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Insurance Claim Amount",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -153,6 +154,7 @@
    "fieldname": "approved_amount",
    "fieldtype": "Currency",
    "label": "Approved Amount",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -160,6 +162,7 @@
    "fieldname": "rejected_amount",
    "fieldtype": "Currency",
    "label": "Rejected Amount",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -171,6 +174,7 @@
    "fieldname": "paid_amount",
    "fieldtype": "Currency",
    "label": "Paid Amount",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -178,6 +182,7 @@
    "fieldname": "outstanding_amount",
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
+   "options": "Company:company:default_currency",
    "read_only": 1
   },
   {
@@ -288,7 +293,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-28 19:29:30.660655",
+ "modified": "2025-06-04 15:08:15.453351",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",
@@ -350,15 +355,16 @@
    "read": 1,
    "report": 1,
    "role": "Healthcare Administrator",
-   "set_user_permissions": 1,
    "share": 1,
    "submit": 1,
    "write": 1
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1,
  "track_seen": 1
 }

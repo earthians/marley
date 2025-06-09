@@ -1,0 +1,236 @@
+{
+ "app": "healthcare",
+ "charts": [
+  {
+   "chart_name": "Observations",
+   "label": "Observations"
+  }
+ ],
+ "content": "[{\"id\":\"HSlLOJpmAY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Observations\",\"col\":12}},{\"id\":\"svg8yn8WQc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Diagnostic Reports\",\"col\":3}},{\"id\":\"3qxtkG85zc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Draft Observations\",\"col\":3}},{\"id\":\"IP9QdvUaX3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Service Requests\",\"col\":3}},{\"id\":\"DDv2Arm_nd\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Sample Collection\",\"col\":3}},{\"id\":\"RUdamDpLck\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"Y4JXpBH8b0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Diagnostic Report\",\"col\":3}},{\"id\":\"LfY6HIGIwx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"NSI3pNuG0c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sample Collection\",\"col\":3}},{\"id\":\"tlxVe5EZak\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}},{\"id\":\"4N74yTs9zO\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PUWZT8q5FH\",\"type\":\"card\",\"data\":{\"card_name\":\"Diagnostics\",\"col\":4}},{\"id\":\"XfHhwhQN77\",\"type\":\"card\",\"data\":{\"card_name\":\"Templates\",\"col\":4}},{\"id\":\"tt2GYYSfpi\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"BbrX_1Ak2X\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Unit\",\"col\":4}}]",
+ "creation": "2025-05-30 17:38:48.052912",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "file-large",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Diagnostics",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Patient",
+   "link_count": 0,
+   "link_to": "Patient",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Practitioner",
+   "link_count": 0,
+   "link_to": "Healthcare Practitioner",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Specimen",
+   "link_count": 0,
+   "link_to": "Specimen",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Unit",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Unit",
+   "link_count": 0,
+   "link_to": "Healthcare Service Unit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Healthcare Service Unit Type",
+   "link_count": 0,
+   "link_to": "Healthcare Service Unit Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Templates",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Observation Template",
+   "link_count": 0,
+   "link_to": "Observation Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Diagnostics",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Diagnostic Report",
+   "link_count": 0,
+   "link_to": "Diagnostic Report",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sample Collection",
+   "link_count": 0,
+   "link_to": "Sample Collection",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Observation",
+   "link_count": 0,
+   "link_to": "Observation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Sales Invoice",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Service Request",
+   "link_count": 0,
+   "link_to": "Service Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-06-06 13:42:05.853655",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Diagnostics",
+ "number_cards": [
+  {
+   "label": "Open Diagnostic Reports",
+   "number_card_name": "Total Diagnostic Reports"
+  },
+  {
+   "label": "Active Service Requests",
+   "number_card_name": "Active Service Requests"
+  },
+  {
+   "label": "Pending Sample Collection",
+   "number_card_name": "Pending Sample Collection"
+  },
+  {
+   "label": "Draft Observations",
+   "number_card_name": "Total Observations"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "Healthcare",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 26.0,
+ "shortcuts": [
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Diagnostic Report",
+   "link_to": "Diagnostic Report",
+   "stats_filter": "[[\"Diagnostic Report\",\"status\",\"=\",\"Open\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Observation",
+   "link_to": "Observation",
+   "stats_filter": "[[\"Observation\",\"docstatus\",\"=\",\"0\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Sample Collection",
+   "link_to": "Sample Collection",
+   "stats_filter": "[[\"Sample Collection\",\"status\",\"!=\",\"Collected\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Patient History",
+   "link_to": "patient_history",
+   "type": "Page"
+  }
+ ],
+ "title": "Diagnostics",
+ "type": "Workspace"
+}
