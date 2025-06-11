@@ -59,7 +59,10 @@ frappe.ui.form.on("Inpatient Record", {
           "Inpatient Record",
           frm.doc.name,
           "initial_encounter_json",
-          "initial_encounter_html"
+          "initial_encounter_html",
+          {
+            show_prescription: false,
+          }
         );
         frm.encounter_renderer.display_encounter();
 
@@ -651,7 +654,6 @@ function fetch_and_render_notes(
     // Render notes for the current page
     for (let i = start; i < end; i++) {
       const note = allNotes[i];
-      console.log(note.employee);
       html += `
         <li class="border rounded p-3 mb-3">
           <strong>Date</strong> - ${frappe.datetime.str_to_user(
