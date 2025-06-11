@@ -12,7 +12,6 @@ healthcare.ObservationWidget = class {
 			if (!me.wrapper.find(`.${me.data.observation}`).length==0) {
 				return
 			}
-			console.log(me.data.obs_approved)
 			const is_approved = me.data.obs_approved;
 			var btn_action = is_approved ? "Rejected" : "Approved";
 			var btn_label = is_approved ? "Reject" : "Approve";
