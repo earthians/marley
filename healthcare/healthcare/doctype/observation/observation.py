@@ -165,7 +165,6 @@ def aggregate_and_return_observation_data(observations):
 	obs_length = 0
 
 	for obs in observations:
-
 		if not obs.get("has_component"):
 			if obs.get("permitted_data_type"):
 				obs_length += 1
@@ -180,7 +179,9 @@ def aggregate_and_return_observation_data(observations):
 
 		else:
 			child_observations = get_child_observations(obs)
-			obs_dict = return_child_observation_data_as_dict(child_observations, obs, obs_length)
+			obs_dict, obs_length = return_child_observation_data_as_dict(
+				child_observations, obs, obs_length
+			)
 
 			if len(obs_dict) > 0:
 				out_data.append(obs_dict)
@@ -237,7 +238,7 @@ def return_child_observation_data_as_dict(child_observations, obs, obs_length=0)
 		"obs_approved": obs_approved,
 	}
 
-	return obs_dict
+	return obs_dict, obs_length
 
 
 def get_observation_reference(doc):
@@ -467,6 +468,8 @@ def set_observation_status(observation, status, reason=None, parent_obs=None):
 	if status == "Approved":
 		observation_doc.submit()
 	elif status == "Rejected":
+		if not observation_doc.has_component:
+			observation_doc.cancel()
 		new_doc = frappe.copy_doc(observation_doc)
 		new_doc.status = ""
 		new_doc.disapproval_reason = ""
@@ -475,8 +478,6 @@ def set_observation_status(observation, status, reason=None, parent_obs=None):
 		new_doc.insert()
 		if observation_doc.has_component:
 			parent_obs = new_doc.name
-		else:
-			observation_doc.cancel()
 
 	if observation_doc.has_component:
 		docstatus_filter = 0 if status == "Approved" else 1
@@ -494,35 +495,52 @@ def set_observation_status(observation, status, reason=None, parent_obs=None):
 
 
 def set_diagnostic_report_status(doc):
-	if doc.sales_invoice and not doc.has_component:
-		observations = frappe.db.get_all(
-			"Observation",
-			{
-				"sales_invoice": doc.sales_invoice,
-				"docstatus": 0,
-				"status": ["!=", "Approved"],
-				"has_component": 0,
-			},
-		)
+	if not doc.has_component:
+		ref_doctype = "Sales Invoice" if doc.sales_invoice else doc.reference_doctype
+		ref_docname = doc.sales_invoice if doc.sales_invoice else doc.reference_docname
+
+		if doc.reference_doctype == "Sample Collection" and doc.reference_docname:
+			ref_doctype, ref_docname = frappe.get_cached_value(
+				"Sample Collection", doc.reference_docname, ["reference_doc", "reference_name"]
+			)
+
 		diagnostic_report = frappe.db.get_value(
-			"Diagnostic Report",
-			{"ref_doctype": "Sales Invoice", "docname": doc.sales_invoice},
-			["name"],
-			as_dict=True,
+			"Diagnostic Report", {"ref_doctype": ref_doctype, "docname": ref_docname}, "name"
 		)
+
 		if diagnostic_report:
+			out_data, obs_length = get_observation_details(diagnostic_report)
+			approved_observations = get_approved_observations(out_data)
+
 			workflow_name = get_workflow_name("Diagnostic Report")
 			workflow_state_field = get_workflow_state_field(workflow_name)
-			if observations and len(observations) > 0:
+			if obs_length == len(approved_observations):
+				set_status = "Approved"
+			elif len(approved_observations) > 0:
 				set_status = "Partially Approved"
 			else:
-				set_status = "Approved"
+				set_status = "Open"
+
 			set_value_dict = {"status": set_status}
 			if workflow_state_field:
 				set_value_dict[workflow_state_field] = set_status
 			frappe.db.set_value(
-				"Diagnostic Report", diagnostic_report.get("name"), set_value_dict, update_modified=False
+				"Diagnostic Report", diagnostic_report, set_value_dict, update_modified=False
 			)
+
+
+def get_approved_observations(data):
+	approved_observations = []
+
+	for item in data:
+		obs = item.get("observation")
+		if isinstance(obs, dict):
+			if obs.get("docstatus") == 1 and obs.get("status") == "Approved":
+				approved_observations.append(obs)
+		else:
+			approved_observations += get_approved_observations(item.get(obs))
+
+	return approved_observations
 
 
 def set_calculated_result(doc):
@@ -663,7 +681,7 @@ def get_observations_for_medical_record(observation, parent_observation=None):
 
 	else:
 		child_observations = get_child_observations(obs_doc)
-		obs_dict = return_child_observation_data_as_dict(child_observations, obs_doc)
+		obs_dict, obs_length = return_child_observation_data_as_dict(child_observations, obs_doc)
 
 		if len(obs_dict) > 0:
 			out_data.append(obs_dict)
