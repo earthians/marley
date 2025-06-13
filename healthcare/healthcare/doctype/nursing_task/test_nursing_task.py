@@ -155,7 +155,7 @@ def complete_nursing_tasks(document):
 	for task_name in tasks:
 		task = frappe.get_doc("Nursing Task", task_name)
 		task.status = "Completed"
-		task.task_document_name = create_vital_signs(document.patient)
+		task.task_document_name = create_vital_signs(document.patient).name
 		task.save()
 
 

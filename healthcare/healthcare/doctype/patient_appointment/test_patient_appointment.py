@@ -605,7 +605,7 @@ class TestPatientAppointment(IntegrationTestCase):
 			patient,
 			None,
 			nowdate(),
-			appointment_type=appointment_type,
+			appointment_type=appointment_type.name,
 			appointment_for="Department",
 			department=medical_department,
 		)
@@ -618,7 +618,7 @@ class TestPatientAppointment(IntegrationTestCase):
 			patient_1,
 			None,
 			nowdate(),
-			appointment_type=appointment_type,
+			appointment_type=appointment_type.name,
 			appointment_for="Department",
 			department=medical_department,
 		)
@@ -640,7 +640,7 @@ class TestPatientAppointment(IntegrationTestCase):
 			patient,
 			None,
 			nowdate(),
-			appointment_type=appointment_type,
+			appointment_type=appointment_type.name,
 			appointment_for="Service Unit",
 			service_unit=service_unit,
 		)
@@ -653,7 +653,7 @@ class TestPatientAppointment(IntegrationTestCase):
 			patient_1,
 			None,
 			nowdate(),
-			appointment_type=appointment_type,
+			appointment_type=appointment_type.name,
 			appointment_for="Service Unit",
 			service_unit=service_unit,
 		)

@@ -85,8 +85,8 @@ class NursingTask(Document):
 				doc.get("department") if doc.get("department") else doc.get("medical_department")
 			)
 			if doc.get("doctype") == "Inpatient Record":
-				service_unit = (
-					frappe.db.get_value("Inpatient Occupancy", {"parent": doc.name, "left": 0}, "service_unit"),
+				service_unit = frappe.db.get_value(
+					"Inpatient Occupancy", {"parent": doc.name, "left": 0}, "service_unit"
 				)
 			else:
 				service_unit = (

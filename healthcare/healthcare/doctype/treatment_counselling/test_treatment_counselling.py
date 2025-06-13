@@ -35,7 +35,7 @@ class TestTreatmentCounselling(IntegrationTestCase):
 			"medical_department": encounter.medical_department,
 			"primary_practitioner": encounter.practitioner,
 			"admission_ordered_for": getdate(),
-			"treatment_plan_template": treatment_plan_template,
+			"treatment_plan_template": treatment_plan_template.get("name"),
 		}
 		schedule_inpatient(admission_order)
 
