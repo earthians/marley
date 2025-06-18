@@ -107,6 +107,58 @@ class InpatientRecord(Document):
 		if service_unit:
 			transfer_patient(self, service_unit, check_in)
 
+@frappe.whitelist()
+def get_clinical_notes(patient, note_type=None):
+    if not patient:
+        frappe.throw(_("Patient is required"))
+
+    filters = {"patient": patient}
+    if note_type:
+        filters["clinical_note_type"] = note_type
+
+    return frappe.get_all(
+        "Clinical Note",
+        filters=filters,
+        fields=["posting_date", "note", "name", "practitioner", "employee", "clinical_note_type"],
+        order_by="posting_date desc",  # Fetch the latest 5 notes
+    )
+
+@frappe.whitelist()
+def add_clinical_note(note, note_type, patient, practitioner, employee, reference_doc, reference_name):
+	if not note or not patient:
+		frappe.throw(_("Note and Patient are required"))
+
+	clinical_note_doc = frappe.new_doc("Clinical Note")
+	clinical_note_doc.patient = patient
+	clinical_note_doc.practioner = practitioner
+	clinical_note_doc.employee = employee
+	clinical_note_doc.reference_doc = reference_doc
+	clinical_note_doc.reference_name = reference_name
+	clinical_note_doc.note = note
+	clinical_note_doc.clinical_note_type = note_type
+	clinical_note_doc.insert()
+	return clinical_note_doc.name
+
+@frappe.whitelist()
+def update_clinical_note(name, note, practitioner, employee):
+    if not name or not note:
+        frappe.throw(_("Note and Name are required"))
+
+    clinical_note = frappe.get_doc("Clinical Note", name)
+    clinical_note.note = note
+    clinical_note.practitioner = practitioner
+    clinical_note.employee = employee
+    clinical_note.save()
+    return clinical_note.name
+
+@frappe.whitelist()
+def delete_clinical_note(name):
+    if not name:
+        frappe.throw(_("Name is required"))
+
+    frappe.delete_doc("Clinical Note", name)
+    return {"status": "success"}
+
 
 @frappe.whitelist()
 def schedule_inpatient(args):

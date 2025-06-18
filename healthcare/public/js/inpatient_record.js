@@ -2,8 +2,20 @@ frappe.ui.form.on("Inpatient Record", {
   // console.log("Inpatient Record >>>>");
 
   // Add custom button for pain rating
+  onload: function (frm) {
+    if (frm.doc.initial_encounter_json) {
+      const initialEncounter = JSON.parse(frm.doc.initial_encounter_json);
+      const allergies = initialEncounter.allergies;
+      if (allergies) {
+        frappe.msgprint({
+          title: __("Allergies"),
+          message: __(allergies),
+          indicator: "red",
+        });
+      }
+    }
+  },
   refresh: function (frm) {
-    console.log("Pain Rating Button Test");
     frappe.db
       .get_value(
         "Pain Rating Score",
@@ -90,17 +102,17 @@ frappe.ui.form.on("Inpatient Record", {
       __("Create")
     );
 
-    frm.add_custom_button(
-      __("Medical Record"),
-      function () {
-        frappe.new_doc("Patient Medical Record", {
-          patient: frm.doc.patient,
-          reference_doctype: "Inpatient Record",
-          reference_docname: frm.doc.name,
-        });
-      },
-      __("Create")
-    );
+    // frm.add_custom_button(
+    //   __("Medical Record"),
+    //   function () {
+    //     frappe.new_doc("Patient Medical Record", {
+    //       patient: frm.doc.patient,
+    //       reference_doctype: "Inpatient Record",
+    //       reference_docname: frm.doc.name,
+    //     });
+    //   },
+    //   __("Create")
+    // );
 
     // frm.add_custom_button(__("Fluid Intake Output Chart"), function(){
     //     frappe.new_doc("Fluid Intake Output Chart",{
@@ -124,16 +136,21 @@ frappe.ui.form.on("Inpatient Record", {
       function () {
         frappe.new_doc("Diabetic Chart", {
           patient: frm.doc.patient,
+          inpatient_record: frm.doc.name,
         });
       },
       __("Create")
     );
-
-    frm.add_custom_button(__("Insurance MR"), function () {
-      frappe.new_doc("Insurance MR", {
-        patient: frm.doc.patient,
-      });
-    });
+    frm.add_custom_button(
+      __("Drug Administration"),
+      function () {
+        frappe.new_doc("Drug Administration", {
+          ref_dn: frm.doc.name,
+          ref_dt: "Inpatient Record",
+        });
+      },
+      __("Create")
+    );
   },
 
   create_pain_rating_score(frm) {
