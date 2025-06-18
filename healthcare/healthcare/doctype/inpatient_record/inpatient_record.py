@@ -101,6 +101,9 @@ class InpatientRecord(Document):
 		discharge_patient(self)
 
 	@frappe.whitelist()
+	def readmit(self):
+		readmit(self)
+	@frappe.whitelist()
 	def transfer(self, service_unit, check_in, leave_from):
 		if leave_from:
 			patient_leave_service_unit(self, check_in, leave_from)
@@ -284,6 +287,15 @@ def discharge_patient(inpatient_record):
 
 	inpatient_record.save(ignore_permissions=True)
 
+def readmit(inpatient_record):
+	inpatient_record.discharge_datetime = None
+	inpatient_record.expected_discharge = None
+
+	frappe.db.sql("""
+        UPDATE `tabInpatient Record`
+        SET name = %s, status = %s
+        WHERE patient = %s
+    """, (inpatient_record.name, "Admitted", inpatient_record.patient))
 
 def validate_inpatient_invoicing(inpatient_record):
 	if frappe.db.get_single_value("Healthcare Settings", "allow_discharge_despite_unbilled_services"):
