@@ -159,6 +159,29 @@ class Patient(Document):
 		# self.update_patient_customer_name()
 
 		return name
+	
+	@frappe.whitelist()
+	def update_patient_customer_name(self):
+		try:
+			result = frappe.db.get_value("Customer", 
+									{'customer_name': self.patient_name}, 
+									['name', 'customer_name'])
+			if not result:
+				frappe.msgprint(_("No customer found with this patient name"), alert=True)
+				return 'invalid'
+
+			name, cust_name = result
+
+			
+			frappe.rename_doc("Customer", name, cust_name)
+			frappe.msgprint(_("Customer name updated"), alert=True)
+			
+			return 'valid'
+		except Exception as e:
+			frappe.log_error(f"Failed to update customer name: {str(e)}")
+			frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
+
+			return 'invalid'
 
 	@property
 	def age(self):
