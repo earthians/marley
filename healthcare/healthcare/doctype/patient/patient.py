@@ -176,10 +176,6 @@ class Patient(Document):
 				return 'invalid'	
 
 			frappe.rename_doc("Customer", self.name, self.patient_name, show_alert=True)
-			frappe.db.set_value("Customer", self.name, "customer_name", self.patient_name, debug=True)
-			frappe.db.set_value("Sales Invoice", {"patient":self.name}, "patient_name",self.patient_name, debug=True)	
-			frappe.db.set_value("Sales Invoice", {"patient":self.name}, "customer",self.patient_name, debug=True)
-			frappe.db.set_value("Sales Invoice", {"patient":self.name}, "customer_name",self.patient_name, debug=True)
 			frappe.msgprint(_("Customer name updated"), alert=True)
 			
 			return 'valid'
