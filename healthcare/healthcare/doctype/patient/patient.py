@@ -163,17 +163,17 @@ class Patient(Document):
 	@frappe.whitelist()
 	def update_patient_customer_name(self):
 		try:
-
+			result = frappe.db.get_value("Customer", 
+									{'customer_name': self.patient_name}, 
+									['name'])
 			
 			sales = frappe.db.get_value("Sales Invoice",
 							   {'customer', self.patient_name},
 							   ['name'])
-							   
+
 			if not result:
 				frappe.msgprint(_("No customer found with this patient name"), alert=True)
-				return 'invalid'
-
-			invoice = sales
+				return 'invalid'	
 
 			frappe.rename_doc("Customer", self.name, self.patient_name, show_alert=True)
 			frappe.db.set_value("Customer", self.name, "customer_name", self.patient_name, debug=True)
