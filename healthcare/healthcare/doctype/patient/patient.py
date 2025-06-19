@@ -167,9 +167,6 @@ class Patient(Document):
 									{'customer_name': self.patient_name}, 
 									['name'])
 			
-			sales = frappe.db.get_value("Sales Invoice",
-							   {'customer', self.patient_name},
-							   ['name'])
 
 			if not result:
 				frappe.msgprint(_("No customer found with this patient name"), alert=True)
