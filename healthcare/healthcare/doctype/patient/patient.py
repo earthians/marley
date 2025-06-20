@@ -159,28 +159,6 @@ class Patient(Document):
 		# self.update_patient_customer_name()
 
 		return name
-	
-	@frappe.whitelist()
-	def update_patient_customer_name(self):
-		try:
-			result = frappe.db.get_value("Customer", 
-									{'customer_name': self.patient_name}, 
-									['name'])
-			
-
-			if not result:
-				frappe.msgprint(_("No customer found with this patient name"), alert=True)
-				return 'invalid'	
-
-			frappe.rename_doc("Customer", self.name, self.patient_name, show_alert=True)
-			frappe.msgprint(_("Customer name updated"), alert=True)
-			
-			return 'valid'
-		except Exception as e:
-			frappe.log_error(f"Failed to update customer name: {str(e)}")
-			frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
-
-			return 'invalid'
 
 	@property
 	def age(self):
@@ -317,37 +295,58 @@ class Patient(Document):
 		)
 		self.notify_update()
 
-	@frappe.whitelist()
-	def update_patient_customer_name(self):
-		"""
-		Update customer name on patient name changes
+def update_patient_customer_name(doc, method=None):
+	"""
+	Update customer name on patient name changes
 
-		Document is renamed with latest patient name
+	Document is renamed with latest patient name
+	"""
+	try:
+		update_check_query = f"""
+		SELECT tSI.patient_name, tSI.customer FROM `tabSales Invoice` tSI, tabPatient tP, tabCustomer tC
+		WHERE tSI.patient = {doc.name}
 		"""
-		try:
-			result = frappe.db.get_value("Customer", 
-									{'customer_name': self.patient_name}, 
-									['name', 'customer_name'])
-			if not result:
+		valid = frappe.db.sql(update_check_query)
+		customer_name = frappe.db.get_value("Patient", doc.name, "customer")
+		
+		if(valid and valid[0][0] != doc.patient_name):
+			customer_update_query = f"""
+				UPDATE tabCustomer
+				SET tC.customer_name = '{doc.patient_name}'
+				FROM tabCustomer tC
+				WHERE tC.customer_name = '{doc.customer}'
+			"""
+
+			sales_invoice_update_query = f"""
+				UPDATE `tabSales Invoice`
+				SET tSI.customer = tC.customer_name,
+				tSI.customer_name = tC.customer_name,
+				tSI.patient_name = '{doc.patient_name}',
+				FROM `tabSales Invoice` tSI, tabCustomer tC
+				WHERE tSI.patient = '{doc.name}';			
+			"""
+			
+			
+			frappe.rename_doc("Customer", customer_name, doc.patient_name)
+			
+			customer_result = frappe.db.sql(customer_update_query, as_dict=True)
+			sales_invoice_result = frappe.db.sql(sales_invoice_update_query, as_dict=True)
+
+			if (not customer_result and not sales_invoice_result):
 				frappe.msgprint(_("No customer found with this patient name"), alert=True)
 				return 'invalid'
 
-			name, cust_name = result
-
-			
-			frappe.rename_doc("Customer", name, cust_name)
 			frappe.msgprint(_("Customer name updated"), alert=True)
-			
-			self.customer = cust_name
-
+			frappe.db.commit()
+		
 			return 'valid'
-		
-		except Exception as e:
-			frappe.log_error(f"Failed to update customer name: {str(e)}")
-			frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
 
-			return 'invalid'
-		
+	except Exception as e:
+		frappe.log_error(f"Failed to update customer name: {str(e)}")
+		frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
+
+		return 'invalid'
+	
 
 def create_customer(doc):
 	customer = frappe.get_doc(

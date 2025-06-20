@@ -126,7 +126,8 @@ doc_events = {
 		"on_trash": "healthcare.healthcare.utils.company_on_trash",
 	},
 	"Patient": {
-		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
+		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details",
+        "validate": "healthcare.healthcare.doctype.patient.patient.update_patient_customer_name"
 	},
 }
 
