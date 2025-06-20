@@ -63,17 +63,6 @@ frappe.ui.form.on('Patient', {
 		}
 	},
 	
-	patient_name: function (frm){
-		frappe.call({
-			doc: frm.doc,
-			method: 'update_patient_customer_name',
-			callback: function(data) {
-				if (!data.exc) {
-					frm.refresh();
-				}
-			}
-		})
-	}
 });
 
 frappe.ui.form.on('Patient', 'dob', function(frm) {
