@@ -113,6 +113,10 @@ frappe.ui.form.on("Inpatient Record", {
         frm.add_custom_button(__("Discharge"), function () {
           discharge_patient(frm);
         });
+      } else if (frm.doc.status == "Discharged"){
+        frm.add_custom_button(__("Re-Admission"), function () {
+          readmit_patient(frm);
+        });
       }
     } else {
       frm.set_value("status", "Admission Scheduled");
@@ -287,6 +291,20 @@ let discharge_patient = function (frm) {
     },
     freeze: true,
     freeze_message: __("Processing Inpatient Discharge"),
+  });
+};
+
+let readmit_patient = function (frm) {
+  frappe.call({
+    doc: frm.doc,
+    method: "readmit",
+    callback: function (data) {
+      if (!data.exc) {
+        frm.reload_doc();
+      }
+    },
+    freeze: true,
+    freeze_message: __("Processing Inpatient Readmission"),
   });
 };
 
