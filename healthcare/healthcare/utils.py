@@ -1544,6 +1544,7 @@ def get_medical_codes(template_dt, template_dn, code_standard=None):
 			"code_value",
 			"code",
 			"system",
+			"display",
 			"definition",
 			"code_system",
 		],

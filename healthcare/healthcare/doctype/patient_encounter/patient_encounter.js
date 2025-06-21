@@ -801,3 +801,62 @@ let create_patient_referral = function(frm) {
 
 	dialog.show();
 };
+
+
+async function get_medical_codes(dn, dt="Diagnosis") {
+	const { message } = await frappe.call({
+		method: "healthcare.healthcare.utils.get_medical_codes",
+		args: {
+			template_dt: dt,
+			template_dn: dn,
+		},
+	});
+
+	return message || [];
+}
+
+
+async function add_codes(frm, cdt, cdn) {
+	row = frappe.get_doc(cdt, cdn);
+	const codes = await get_medical_codes(row.diagnosis);
+
+	codes.forEach(code => {
+		if (!frm.doc.codification_table.some(c => c["code"] === code.code)) {
+			let c = frm.add_child("codification_table");
+			c.code_value = code.code_value
+			c.code_system = code.code_system
+			c.code = code.code
+			c.display = code.display
+			c.description = code.description
+			c.system = code.system
+		}
+	});
+
+	frm.refresh_field("codification_table");
+}
+
+
+async function remove_codes(frm, cdt, cdn) {
+	row = frappe.get_doc(cdt, cdn);
+	const codes = await get_medical_codes(row.diagnosis);
+
+	codes.forEach(code => {
+		let c = frm.doc.codification_table.find(c => c["code"] === code.code)
+		if (c) {
+			frappe.model.clear_doc(c.doctype, c.name);
+		}
+	});
+
+	frm.refresh_field("codification_table");
+}
+
+
+frappe.ui.form.on("Patient Encounter Diagnosis", {
+	diagnosis_add: function (frm, cdt, cdn) {
+		add_codes(frm, cdt, cdn);
+	},
+
+	before_diagnosis_remove: function (frm, cdt, cdn) {
+		remove_codes(frm, cdt, cdn);
+	},
+});
