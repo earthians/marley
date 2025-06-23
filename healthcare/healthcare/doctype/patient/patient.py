@@ -280,6 +280,14 @@ class Patient(Document):
 		customer.ignore_mandatory = True
 		customer.save(ignore_permissions=True)
 
+		frappe.rename_doc(
+			doctype="Customer",
+			old_name=customer.name,
+			new_name=self.patient_name,
+			ignore_permissions=True,
+			force=True,
+		)
+
 		frappe.msgprint(_("Customer {0} updated").format(customer.name), alert=True)
 
 	def update_patient_based_on_existing_customer(self):
@@ -295,7 +303,7 @@ class Patient(Document):
 		)
 		self.notify_update()
 
-def update_patient_customer_name(doc, method=None):
+def update_sales_invoice(doc, method=None):
 	"""
 	Update customer name on patient name changes
 
@@ -308,31 +316,21 @@ def update_patient_customer_name(doc, method=None):
 		"""
 		valid = frappe.db.sql(update_check_query)
 
-		if(valid and valid[0][0] != doc.patient_name):
-			customer_update_query = f"""
-				UPDATE tabCustomer
-				SET tC.customer_name = '{doc.patient_name}',
-				tC.name = '{doc.patient_name}'
-				FROM tabCustomer tC
-				WHERE tC.customer_name = '{doc.customer}'
-			"""
+		if(valid and valid[0][0] != doc.patient_name and valid[0][1] != doc.patient_name and valid[0][2] != doc.patient_name):
 
 			sales_invoice_update_query = f"""
 				UPDATE `tabSales Invoice`
-				SET tSI.customer = tC.customer_name,
+				SET tSI.customer = tC.customer,
 				tSI.customer_name = '{doc.patient_name}',
 				tSI.patient_name = '{doc.patient_name}',
 				FROM `tabSales Invoice` tSI, tabCustomer tC
-				WHERE tSI.patient = '{doc.name}' AND tSI.status IN ('Draft', 'Unpaid', 'Overdue')			
+				WHERE tSI.patient = '{doc.name}' AND tSI.status IN ('Draft', 'Unpaid', 'Overdue')
+				AND tC.customer_name = '{doc.patient_name}'			
 			"""
 
-			# customer_name = frappe.db.get_value("Patient", doc.name, "customer")
-			# frappe.rename_doc("Customer", customer_name, doc.patient_name)
-			
-			customer_result = frappe.db.sql(customer_update_query, as_dict=True)
 			sales_invoice_result = frappe.db.sql(sales_invoice_update_query, as_dict=True)
 
-			if (not customer_result and not sales_invoice_result):
+			if (not sales_invoice_result):
 				frappe.msgprint(_("No customer found with this patient name"), alert=True)
 				return 'invalid'
 
@@ -340,7 +338,7 @@ def update_patient_customer_name(doc, method=None):
 		
 			return 'valid'
 	except Exception as e:
-		# frappe.log_error(f"{str(e)}")
+		frappe.log_error(f"{str(e)}")
 		return 'invalid'
 	
 
