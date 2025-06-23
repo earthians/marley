@@ -127,7 +127,7 @@ doc_events = {
 	},
 	"Patient": {
 		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details",
-        "validate": "healthcare.healthcare.doctype.patient.patient.update_patient_customer_name"
+        "validate": "healthcare.healthcare.doctype.patient.patient.update_sales_invoice"
 	},
 }
 

@@ -280,14 +280,6 @@ class Patient(Document):
 		customer.ignore_mandatory = True
 		customer.save(ignore_permissions=True)
 
-		frappe.rename_doc(
-			doctype="Customer",
-			old_name=customer.name,
-			new_name=self.patient_name,
-			ignore_permissions=True,
-			force=True,
-		)
-
 		frappe.msgprint(_("Customer {0} updated").format(customer.name), alert=True)
 
 	def update_patient_based_on_existing_customer(self):
