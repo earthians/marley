@@ -110,11 +110,19 @@ frappe.ui.form.on("Inpatient Record", {
           admit_patient_dialog(frm);
         });
       } else if (frm.doc.status == "Discharge Scheduled") {
-        frm.add_custom_button(__("Discharge"), function () {
-          discharge_patient(frm);
-        });
+        if (
+          frappe.user.has_role("Administrator") ||
+          frappe.user.has_role("Billing Role")
+        ) {
+          frm.add_custom_button(__("Discharge"), function () {
+            discharge_patient(frm);
+          });
+        }
       } else if (frm.doc.status == "Discharged") {
-        if (frappe.user.has_role("Administrator")) {
+        if (
+          frappe.user.has_role("Administrator") ||
+          frappe.user.has_role("Billing Role")
+        ) {
           frm.add_custom_button(__("Re-Admission"), function () {
             readmit_patient(frm);
           });

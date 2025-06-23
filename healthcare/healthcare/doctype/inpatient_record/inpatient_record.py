@@ -293,9 +293,16 @@ def readmit(inpatient_record):
 
 	frappe.db.sql("""
         UPDATE `tabInpatient Record`
-        SET name = %s, status = %s
-        WHERE patient = %s
-    """, (inpatient_record.name, "Admitted", inpatient_record.patient))
+        SET  status = %s
+        WHERE name = %s
+    """, ( "Admitted", inpatient_record.name))
+
+	frappe.db.sql(f"""
+			   update `tabInpatient Occupancy` io set `left` = 0 where parent = "{inpatient_record.name}" order by creation limit 1;
+			   """)
+	frappe.db.sql(f"""
+			   update `tabPatient` set inpatient_record = "{inpatient_record.name}", inpatient_status = "Admitted" where name = "{inpatient_record.patient}";
+			   """)
 
 def validate_inpatient_invoicing(inpatient_record):
 	if frappe.db.get_single_value("Healthcare Settings", "allow_discharge_despite_unbilled_services"):
