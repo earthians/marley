@@ -303,16 +303,16 @@ def update_patient_customer_name(doc, method=None):
 	"""
 	try:
 		update_check_query = f"""
-		SELECT tSI.patient_name, tSI.customer FROM `tabSales Invoice` tSI, tabPatient tP, tabCustomer tC
+		SELECT tSI.patient_name, tSI.customer, tC.customer_name FROM `tabSales Invoice` tSI, tabPatient tP, tabCustomer tC
 		WHERE tSI.patient = {doc.name}
 		"""
 		valid = frappe.db.sql(update_check_query)
-		customer_name = frappe.db.get_value("Patient", doc.name, "customer")
-		
+
 		if(valid and valid[0][0] != doc.patient_name):
 			customer_update_query = f"""
 				UPDATE tabCustomer
-				SET tC.customer_name = '{doc.patient_name}'
+				SET tC.customer_name = '{doc.patient_name}',
+				tC.name = '{doc.patient_name}'
 				FROM tabCustomer tC
 				WHERE tC.customer_name = '{doc.customer}'
 			"""
@@ -320,14 +320,14 @@ def update_patient_customer_name(doc, method=None):
 			sales_invoice_update_query = f"""
 				UPDATE `tabSales Invoice`
 				SET tSI.customer = tC.customer_name,
-				tSI.customer_name = tC.customer_name,
+				tSI.customer_name = '{doc.patient_name}',
 				tSI.patient_name = '{doc.patient_name}',
 				FROM `tabSales Invoice` tSI, tabCustomer tC
-				WHERE tSI.patient = '{doc.name}';			
+				WHERE tSI.patient = '{doc.name}' AND tSI.status IN ('Draft', 'Unpaid', 'Overdue')			
 			"""
-			
-			
-			frappe.rename_doc("Customer", customer_name, doc.patient_name)
+
+			# customer_name = frappe.db.get_value("Patient", doc.name, "customer")
+			# frappe.rename_doc("Customer", customer_name, doc.patient_name)
 			
 			customer_result = frappe.db.sql(customer_update_query, as_dict=True)
 			sales_invoice_result = frappe.db.sql(sales_invoice_update_query, as_dict=True)
@@ -336,15 +336,11 @@ def update_patient_customer_name(doc, method=None):
 				frappe.msgprint(_("No customer found with this patient name"), alert=True)
 				return 'invalid'
 
-			frappe.msgprint(_("Customer name updated"), alert=True)
 			frappe.db.commit()
 		
 			return 'valid'
-
 	except Exception as e:
-		frappe.log_error(f"Failed to update customer name: {str(e)}")
-		frappe.msgprint(_("Failed to update customer name. See error log for details."), alert=True)
-
+		# frappe.log_error(f"{str(e)}")
 		return 'invalid'
 	
 
