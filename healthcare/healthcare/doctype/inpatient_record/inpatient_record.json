@@ -480,6 +480,7 @@
   {
    "fieldname": "tab_3_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Tab 3",
    "read_only_depends_on": "eval: frappe.user.has_role(\"Administrator\")"
   },
@@ -557,7 +558,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-05-31 09:52:25.495084",
+ "modified": "2025-06-24 15:56:10.851139",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
