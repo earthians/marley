@@ -302,31 +302,19 @@ def update_sales_invoice(doc, method=None):
 	Document is renamed with latest patient name
 	"""
 	try:
-		update_check_query = f"""
-		SELECT name FROM `tabSales Invoice`
-		WHERE patient = '{doc.name}' 
-		AND patient_name != '{doc.patient_name}' 
-		AND customer != '{doc.patient_name}' 
-		AND customer_name != '{doc.patient_name}' 
-		AND tSI.status IN ('Draft', 'Unpaid', 'Overdue')
-		"""
+		update_check_query = f"""SELECT name FROM `tabSales Invoice`WHERE patient = '{doc.name}' AND patient_name != '{doc.patient_name}' AND customer != '{doc.patient_name}' AND customer_name != '{doc.patient_name}' """
+
+		update_check_query = f"""SELECT name FROM `tabSales Invoice` where patient = '{doc.name}' AND patient_name != '{doc.patient_name}' and customer != '{doc.patient_name}' and customer_name != '{doc.patient_name}' AND status IN ('Draft', 'Unpaid', 'Overdue')"""
 		valid = frappe.db.sql(update_check_query)
 
 		if(valid):
 			for row in valid:
-				sales_invoice_update_query = f"""
-					UPDATE `tabSales Invoice` SET customer = '{doc.patient_name}',
-					customer_name = '{doc.patient_name}',
-					patient_name = '{doc.patient_name}'
-					WHERE name = '{row[0]}'	
-				"""
+				sales_invoice_update_query = f"""UPDATE `tabSales Invoice` SET patient_name = '{doc.patient_name}', customer = '{doc.patient_name}', customer_name = '{doc.patient_name}' WHERE name  = '{row[0]}'"""
 
-				sales_invoice_result = frappe.db.sql(sales_invoice_update_query, as_dict=True)
-
-				if (not sales_invoice_result):
-					frappe.msgprint(_(f"Sales Invoice {row[0]} not updated"), alert=True)
-
-			frappe.db.commit()
+				sales_invoice_result = frappe.db.sql(sales_invoice_update_query)
+				frappe.db.commit()
+			 	
+				
 			frappe.msgprint(_("Sales Invoice updated successfully"), alert=True)
 		
 			return 'valid'
