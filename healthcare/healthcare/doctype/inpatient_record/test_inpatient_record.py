@@ -5,7 +5,7 @@
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import now_datetime, today
+from frappe.utils import add_to_date, flt, now_datetime, today
 from frappe.utils.make_random import get_random
 
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
@@ -149,6 +149,51 @@ class TestInpatientRecord(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			admit_patient(ip_record_2, service_unit, now_datetime())
 		frappe.db.sql("""delete from `tabInpatient Record`""")
+
+	def test_validate_billables(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.sql(
+			"""delete from `tabHealthcare Service Unit` where healthcare_service_unit_name='_Test IPD Service Unit'"""
+		)
+
+		# Setup test patient and inpatient record
+		patient = create_patient()
+		ip_record = create_inpatient(patient)
+		ip_record.expected_length_of_stay = 0
+		ip_record.save(ignore_permissions=True)
+
+		# Setup service unit and mark as billable
+		service_unit = get_healthcare_service_unit("_Test IPD Service Unit")
+		service_unit_type = frappe.get_cached_value(
+			"Healthcare Service Unit", service_unit, "service_unit_type"
+		)
+		service_unit_type_doc = frappe.get_doc("Healthcare Service Unit Type", service_unit_type)
+		service_unit_type_doc.update(
+			{
+				"is_billable": 1,
+				"item_code": service_unit_type,
+				"item_group": "Services",
+				"uom": "Day",
+				"no_of_hours": 24,
+				"minimum_billable_qty": 0,
+				"rate": 1000,
+			}
+		)
+		service_unit_type_doc.save()
+
+		# Admit patient with backdated timestamp (12 hours ago)
+		checkin = add_to_date(now_datetime(), hours=-12)
+		admit_patient(ip_record, service_unit, checkin)
+
+		# Generate Billables
+		ip_record.add_service_unit_rent_to_billable_items()
+		ip_record.reload()
+
+		self.assertTrue(frappe.db.exists("Inpatient Record Item", {"parent": ip_record.name}))
+		self.assertEqual(1000, ip_record.items[0].get("rate"))
+		self.assertEqual("Day", ip_record.items[0].get("uom"))
+		self.assertEqual(0.5, flt(ip_record.items[0].get("quantity"), 2))
+		self.assertEqual(500, flt(ip_record.items[0].get("amount"), 2))
 
 
 def mark_invoiced_inpatient_occupancy(ip_record):
