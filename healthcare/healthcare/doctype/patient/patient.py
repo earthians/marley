@@ -272,7 +272,7 @@ class Patient(Document):
 			customer.customer_group = self.customer_group
 		if self.territory:
 			customer.territory = self.territory
-		# old_customer_name = customer.customer_name
+		old_customer_name = customer.customer_name
 		customer.customer_name = self.patient_name
 		customer.default_price_list = self.default_price_list
 		customer.default_currency = self.default_currency
@@ -281,7 +281,7 @@ class Patient(Document):
 		customer.ignore_mandatory = True
 		customer.save(ignore_permissions=True)
 
-		# frappe.rename_doc("Customer", old_customer_name, self.patient_name, force=True)
+		frappe.rename_doc("Customer", old_customer_name, self.patient_name, force=True)
 
 		frappe.msgprint(_("Customer {0} updated").format(customer.name), alert=True)
 
