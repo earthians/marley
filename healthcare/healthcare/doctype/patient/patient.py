@@ -303,8 +303,6 @@ def update_sales_invoice(doc, method=None):
 	Document is renamed with latest patient name
 	"""
 	try:
-		update_check_query = f"""SELECT name FROM `tabSales Invoice`WHERE patient = '{doc.name}' AND patient_name != '{doc.patient_name}' AND customer != '{doc.patient_name}' AND customer_name != '{doc.patient_name}' """
-
 		update_check_query = f"""SELECT name FROM `tabSales Invoice` where patient = '{doc.name}' AND patient_name != '{doc.patient_name}' and customer != '{doc.patient_name}' and customer_name != '{doc.patient_name}' AND status IN ('Draft', 'Unpaid', 'Overdue')"""
 		valid = frappe.db.sql(update_check_query)
 
