@@ -192,9 +192,30 @@ class InpatientRecord(Document):
 					order_by="idx DESC",
 					as_dict=True,
 				)
+				price_list, price_list_currency = frappe.db.get_values(
+					"Price List", {"selling": 1}, ["name", "currency"]
+				)[0]
+				ctx: ItemDetailsCtx = ItemDetailsCtx(
+					{
+						"doctype": "Sales Invoice",
+						"item_code": inpatient.get("item"),
+						"company": self.company,
+						"customer": frappe.db.get_value("Patient", self.patient, "customer"),
+						"selling_price_list": self.price_list or price_list,
+						"price_list_currency": self.currency or price_list_currency,
+						"plc_conversion_rate": 1.0,
+						"conversion_rate": 1.0,
+					}
+				)
+				item_details = get_item_details(ctx)
 
 				minimum_billable_qty = inpatient.get("minimum_billable_qty")
-				quantity = max(inpatient.get("total_hours", 0.5), minimum_billable_qty or 0.5)
+				total_qty = (
+					(inpatient.get("total_hours") / inpatient.get("no_of_hours"))
+					if inpatient.get("total_hours")
+					else 0
+				)
+				quantity = max(total_qty, minimum_billable_qty)
 
 				# Add or update item row based on existing data
 				if not item_row:
@@ -205,7 +226,7 @@ class InpatientRecord(Document):
 					se_child.stock_uom = stock_uom
 					se_child.uom = inpatient.get("uom")
 					se_child.quantity = quantity
-					se_child.rate = inpatient.rate / inpatient.get("no_of_hours")
+					se_child.rate = item_details.get("price_list_rate")
 				else:
 					if item_row.get("invoiced"):
 						# Add new row if invoiced and additional quantity exists
@@ -216,13 +237,15 @@ class InpatientRecord(Document):
 							se_child.stock_uom = stock_uom
 							se_child.uom = inpatient.get("uom")
 							se_child.quantity = quantity - item_row.get("quantity")
-							se_child.rate = inpatient.rate / inpatient.get("no_of_hours")
+							se_child.rate = item_details.get("price_list_rate")
 					else:
 						# Update existing non-invoiced item row
 						if quantity != item_row.get("quantity"):
 							for item in self.items:
 								if item.name == item_row.get("name"):
+									item.uom = inpatient.get("uom")
 									item.quantity = quantity
+									item.rate = item_details.get("price_list_rate")
 
 			# Update inpatient occupancy billing time
 			for test in self.inpatient_occupancies:
