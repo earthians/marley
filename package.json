@@ -5,6 +5,9 @@
   "author": "Terence Zama <terence.zama@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "vue-cal": "^4.9.0"
+    "pinia": "^2.3.1",
+    "vue": "^3.5.17",
+    "vue-cal": "^4.9.0",
+    "vue-router": "^4.5.1"
   }
 }

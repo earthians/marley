@@ -99,6 +99,9 @@ frappe.ui.form.on("Inpatient Record", {
 
     if (!frm.doc.__islocal) {
       if (frm.doc.status == "Admitted") {
+        frm.add_custom_button(__("Create Medical Certificate"), function () {
+          create_medical_certificate(frm);
+        });
         frm.add_custom_button(__("Schedule Discharge"), function () {
           schedule_discharge(frm);
         });
@@ -936,3 +939,132 @@ function delete_clinical_note(frm, noteName) {
     }
   );
 }
+
+function create_medical_certificate(frm) {
+  // Get patient information
+  let patient_data = {
+    name: frm.doc.patient, // Patient ID from the link field
+    patient_name: frm.doc.patient_name, // Patient display name
+    sex: frm.doc.gender || 'Male',
+    gender: frm.doc.gender || 'Male',
+    encounter_name: frm.doc.name // Pass inpatient record as encounter reference
+  };
+
+  // Load the medical certificate bundle and create dialog
+  frappe.require("medical_certificate.bundle.js").then(() => {
+    if (window.createMedicalCertificateDialog) {
+      window.createMedicalCertificateDialog(patient_data);
+    } else {
+      frappe.msgprint(__("Medical Certificate component not loaded properly."));
+    }
+  }).catch((error) => {
+    console.error("Error loading medical certificate bundle:", error);
+    
+    // Fallback to simple form
+    create_simple_medical_certificate_dialog(patient_data);
+  });
+}
+
+// Fallback function for simple medical certificate
+function create_simple_medical_certificate_dialog(patient_data) {
+  let dialog = new frappe.ui.Dialog({
+    title: __("Create Medical Certificate"),
+    fields: [
+      {
+        fieldtype: "HTML",
+        fieldname: "patient_info",
+        options: `<p><strong>Patient:</strong> ${patient_data.name}</p><p><strong>Gender:</strong> ${patient_data.sex}</p><hr>`
+      },
+      {
+        fieldtype: "Check",
+        fieldname: "for_leave",
+        label: __("For leave purposes")
+      },
+      {
+        fieldtype: "Data",
+        fieldname: "suffering",
+        label: __("Suffering from"),
+        reqd: 1
+      },
+      {
+        fieldtype: "Data",
+        fieldname: "present",
+        label: __("Present condition"),
+        depends_on: "eval:!doc.for_leave"
+      },
+      {
+        fieldtype: "Data",
+        fieldname: "opinion",
+        label: __("Medical opinion"),
+        reqd: 1
+      },
+      {
+        fieldtype: "Date",
+        fieldname: "as_from",
+        label: __("As from"),
+        default: frappe.datetime.nowdate(),
+        depends_on: "eval:doc.for_leave"
+      }
+    ],
+    primary_action_label: __("Generate & Print"),
+    primary_action: function(values) {
+      generate_simple_certificate(patient_data, values);
+      dialog.hide();
+    }
+  });
+  
+  dialog.show();
+}
+
+function generate_simple_certificate(patient_data, values) {
+  const title = patient_data.sex === 'Male' ? 'Mr.' : 'Mrs.';
+  const pronoun = patient_data.sex === 'Male' ? 'he' : 'she';
+  const possessive = patient_data.sex === 'Male' ? 'his' : 'her';
+  
+  const top = `This is to certify that I have examined <strong>${title} ${patient_data.name}</strong> and found that ${pronoun} is ill, suffering from <strong>${values.suffering}</strong>.<br><br>`;
+  
+  let bottom;
+  if (values.for_leave) {
+    bottom = `<span style="text-transform: capitalize;">${pronoun}</span> is at present unfit to resume work/school and requires in my opinion <strong>${values.opinion}</strong> as from <strong>${values.as_from}</strong> of rest/treatment to recover from ${possessive} health.`;
+  } else {
+    bottom = `<span style="text-transform: capitalize;">${pronoun}</span> is at present <strong>${values.present}</strong> and in my opinion <strong>${values.opinion}</strong>.`;
+  }
+  
+  const certificateHTML = `
+    <div style="padding: 30px; font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="color: #333; margin-bottom: 10px;">MEDICAL CERTIFICATE</h2>
+        <p><strong>Date:</strong> ${frappe.datetime.str_to_user(frappe.datetime.nowdate())}</p>
+      </div>
+      
+      <div style="line-height: 1.8; margin-bottom: 50px;">
+        ${top}${bottom}
+      </div>
+      
+      <div style="margin-top: 60px;">
+        <p>Doctor's Signature: _________________</p>
+        <p>Date: ${frappe.datetime.str_to_user(frappe.datetime.nowdate())}</p>
+      </div>
+    </div>
+  `;
+  
+  // Open print window
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Medical Certificate - ${patient_data.name}</title>
+        <style>
+          body { margin: 0; padding: 20px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        ${certificateHTML}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
