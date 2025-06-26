@@ -280,6 +280,9 @@ class Patient(Document):
 		customer.image = self.image
 		customer.ignore_mandatory = True
 		customer.save(ignore_permissions=True)
+		
+		self.db_set("customer", self.patient_name)
+		frappe.db.set_value("Customer", customer.name, "name", self.patient_name)
 
 		frappe.msgprint(_("Customer {0} updated").format(customer.name), alert=True)
 
@@ -308,7 +311,7 @@ def update_sales_invoice(doc, method=None):
 
 		if(valid):
 			for row in valid:
-				sales_invoice_update_query = f"""UPDATE `tabSales Invoice` SET patient_name = '{doc.patient_name}', customer = '{doc.patient_name}', customer_name = '{doc.patient_name}' WHERE name  = '{row[0]}'"""
+				sales_invoice_update_query = f"""UPDATE `tabSales Invoice` SET patient_name = '{doc.patient_name}', customer = '{doc.patient_name}', customer_name = '{doc.patient_name}' WHERE name = '{row[0]}'"""
 
 				sales_invoice_result = frappe.db.sql(sales_invoice_update_query)
 				frappe.db.commit()
