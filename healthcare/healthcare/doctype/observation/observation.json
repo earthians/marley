@@ -13,6 +13,7 @@
   "naming_series",
   "observation_template",
   "observation_category",
+  "appointment",
   "column_break_7xu5",
   "company",
   "posting_date",
@@ -564,12 +565,18 @@
    "fieldtype": "Check",
    "label": "Invoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "appointment",
+   "fieldtype": "Link",
+   "label": "Appointment",
+   "options": "Patient Appointment"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-05 10:43:53.244291",
+ "modified": "2025-06-29 23:04:47.368632",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

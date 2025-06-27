@@ -125,6 +125,59 @@ frappe.ui.form.on("Patient Appointment", {
 						frm: frm,
 					})
 				}, "Create");
+			} else if (frm.doc.template_dt == "Therapy Type") {
+				frm.add_custom_button(__("Therapy Session"), function() {
+					frappe.db.get_list("Therapy Session", {
+						filters: {
+							"service_request": frm.doc.service_request,
+							"docstatus":["!=", 2],
+							"therapy_type": frm.doc.template_dn
+						},
+						fields: ["name"]
+					}).then(response => {
+						if (response.length == frm.doc.quantity) {
+							frappe.set_route("List", "Therapy Session", {
+								service_request: frm.doc.name,
+							});
+						} else {
+							frappe.db.get_value("Therapy Session", {"service_request": frm.doc.service_request, "docstatus": 0}, "name")
+							.then(r => {
+								if (Object.keys(r.message).length == 0) {
+									frm.trigger('make_therapy_session');
+								} else {
+									if (r.message && r.message.name) {
+										frappe.set_route("Form", "Therapy Session", r.message.name);
+										frappe.show_alert({
+											message: __(`Therapy Session is already created`),
+											indicator: "info",
+										});
+									}
+								}
+							})
+						}
+					})
+				}, "Create");
+			} else if (frm.doc.template_dt == "Clinical Procedure Template") {
+				frm.add_custom_button(__("Clinical Procedure"), function() {
+					frappe.db.get_value("Clinical Procedure", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
+					.then(r => {
+						if (Object.keys(r.message).length == 0) {
+							frm.trigger('make_clinical_procedure');
+						} else {
+							if (r.message && r.message.name) {
+								frappe.set_route("Form", "Clinical Procedure", r.message.name);
+								frappe.show_alert({
+									message: __(`Clinical Procedure is already created`),
+									indicator: "info",
+								});
+							}
+						}
+					})
+				}, "Create");
+			} else if (frm.doc.template_dt == "Observation Template") {
+				frm.add_custom_button(__("Observation"), function() {
+					frm.trigger('make_observation');
+				}, "Create");
 			} else {
 				frm.add_custom_button(__("Patient Encounter"), function() {
 					frappe.model.open_mapped_doc({
@@ -170,7 +223,7 @@ frappe.ui.form.on("Patient Appointment", {
 					});
 				}
 			});
-        }
+		}
 	},
 
 	appointment_for: function(frm) {
@@ -396,7 +449,164 @@ frappe.ui.form.on("Patient Appointment", {
 				}
 			});
 		}
-	}
+	},
+
+	get_orders: function (frm) {
+		if (!frm.doc.patient) {
+			frappe.throw(__("Please select a patient first"));
+		}
+
+		const d = new frappe.ui.Dialog({
+			title: 'Select a Service Request',
+			fields: [
+				{
+					fieldname: 'service_html',
+					fieldtype: 'HTML',
+					options: `
+						<div id="service-request-list"
+							style="max-height: 420px; overflow-y: auto; padding-right: 5px;">
+							No active orders found for selected Patient
+						</div>
+					`
+				}
+			],
+			primary_action_label: 'Select',
+			primary_action() {
+				const selected = d.$wrapper.find('.service-row[data-selected="true"]')[0];
+				if (!selected) {
+					frappe.msgprint("Please select a service request.");
+					return;
+				}
+				const selected_id = selected.dataset.name;
+				frm.set_value("service_request", selected_id);
+				frappe.db.get_value("Service Request", selected_id, ["template_dt", "template_dn"]).then(r => {
+					frm.set_value({
+						"template_dt": r.message.template_dt,
+						"template_dn": r.message.template_dn
+					})
+				})
+				d.hide();
+			}
+		});
+
+		d.show();
+
+		frappe.db.get_list("Service Request", {
+			fields: [
+				"name",
+				"order_group",
+				"practitioner",
+				"template_dt",
+				"template_dn",
+				"status",
+				"coverage_status",
+			],
+			filters: {
+				"patient": frm.doc.patient,
+				"status": "active-Request Status",
+			},
+		}).then(r => {
+			const data = r || [];
+
+			if (data.length) {
+				const html = get_service_request_list_html(data);
+				const wrapper = d.fields_dict.service_html.$wrapper;
+				wrapper.html(html);
+
+				wrapper.find('.service-row').each(function () {
+					const row = this;
+
+					row.addEventListener('mouseenter', function () {
+						if (row.dataset.selected !== 'true') {
+							row.style.backgroundColor = '#fafafa';
+						}
+					});
+
+					row.addEventListener('mouseleave', function () {
+						if (row.dataset.selected !== 'true') {
+							row.style.backgroundColor = '';
+						}
+					});
+
+					row.addEventListener('click', function () {
+						wrapper.find('.service-row').each(function () {
+							this.dataset.selected = 'false';
+							this.style.border = '1px solid #dddaaa';
+							this.style.backgroundColor = '';
+						});
+
+						row.dataset.selected = 'true';
+						row.style.border = '2px solid #afafaf';
+						row.style.backgroundColor = '#f3f3f3';
+					});
+				});
+			} else {
+				d.$wrapper.find('.modal-footer .btn-primary').hide();
+			}
+		});
+	},
+
+	make_therapy_session: function(frm) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.therapy_plan.therapy_plan.make_therapy_session',
+			args: {
+				patient: frm.doc.patient,
+				practitioner: frm.doc.practitioner,
+				therapy_type: frm.doc.template_dn,
+				company: frm.doc.company,
+				service_request: frm.doc.service_request,
+				appointment: frm.doc.name,
+			},
+			freeze: true,
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_clinical_procedure: function(frm) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_clinical_procedure',
+			args: {
+				service_request: frm.doc.service_request,
+				appointment: frm.doc.name,
+			},
+			freeze: true,
+			callback: function(r) {
+				var doclist = frappe.model.sync(r.message);
+				frappe.set_route('Form', doclist[0].doctype, doclist[0].name);
+			}
+		});
+	},
+
+	make_observation: function(frm) {
+		frappe.call({
+			method: 'healthcare.healthcare.doctype.service_request.service_request.make_observation',
+			args: {
+				service_request: frm.doc.service_request,
+				appointment: frm.doc.name,
+			},
+			freeze: true,
+			callback: function(r) {
+				if (r.message) {
+					var title = "";
+					var indicator =  "info";
+					if (r.message[2]) {
+						title = `${r.message[0]} is already created`
+					} else {
+						title = `${r.message[0]} is created`
+						indicator = "green"
+					}
+					frappe.show_alert({
+						message: __("{0}", [title]),
+						indicator: indicator,
+					});
+					frappe.set_route('Form', r.message[1], r.message[0]);
+				}
+			}
+		});
+	},
 });
 
 let check_and_set_availability = function(frm) {
@@ -901,6 +1111,8 @@ let show_therapy_types = function(frm, result) {
 	d.show();
 };
 
+
+
 let create_vital_signs = function(frm) {
 	if (!frm.doc.patient) {
 		frappe.throw(__("Please select patient"));
@@ -1147,4 +1359,54 @@ let show_message = function(d, message, field) {
 	field.df.description = `<div style="color:red;
 		padding:5px 5px 5px 5px">${message}</div>`
 	field.refresh();
+};
+
+
+let get_service_request_list_html = function (data) {
+	let html = `
+		<div style="max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 5px;">
+	`;
+
+	data.forEach(row => {
+		// trimming the last part of template_dt (Template, Type etc)
+		const service_type = (row.template_dt || '').trim().split(' ').pop();
+
+		const coverage_status = (row.coverage_status || '').toLowerCase();
+		const status_clr = coverage_status.includes('approved')
+			? 'green'
+			: (coverage_status.includes('pending') || coverage_status.includes('requested'))
+				? 'orange'
+				: 'gray';
+		const status_txt = row.coverage_status || 'NA';
+
+		html += `
+			<div class="service-row"
+				 data-name="${row.name}"
+				 data-selected="false"
+				 style="
+					border: 1px solid #dddaaa;
+					border-radius: 6px;
+					padding: 12px;
+					cursor: pointer;
+					transition: all 0.2s ease-in-out;
+				 ">
+				<!-- Top row: ServiceType: <b>ServiceName</b> + Badge -->
+				<div style="display: flex; justify-content: space-between; align-items: center;">
+					<div style="font-size: 1rem;">
+						${service_type}: <b>${row.template_dn || ''}</b>
+					</div>
+					<span class="indicator ${status_clr}">${status_txt}</span>
+				</div>
+
+				<!-- Second row: order_group and practitioner -->
+				<div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.875rem; color: #4b4b4b;">
+					<div>${row.order_group || ''}</div>
+					<div>${row.practitioner || ''}</div>
+				</div>
+			</div>
+		`;
+	});
+
+	html += '</div>';
+	return html;
 };

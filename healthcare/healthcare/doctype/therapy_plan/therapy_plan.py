@@ -62,7 +62,13 @@ class TherapyPlan(Document):
 
 @frappe.whitelist()
 def make_therapy_session(
-	patient, therapy_type, company, therapy_plan=None, appointment=None, service_request=None
+	patient,
+	therapy_type,
+	company,
+	therapy_plan=None,
+	appointment=None,
+	service_request=None,
+	practitioner=None,
 ):
 	sr_doc = None
 	if service_request:
@@ -94,6 +100,12 @@ def make_therapy_session(
 	therapy_session.therapy_plan = therapy_plan
 	therapy_session.company = company
 	therapy_session.patient = patient
+	therapy_session.practitioner = practitioner
+	therapy_session.department = (
+		frappe.get_cached_value("Healthcare Practitioner", practitioner, "department")
+		if practitioner
+		else ""
+	)
 	therapy_session.therapy_type = therapy_type.name
 	therapy_session.duration = therapy_type.default_duration
 	therapy_session.rate = therapy_type.rate

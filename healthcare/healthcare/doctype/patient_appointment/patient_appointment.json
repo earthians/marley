@@ -48,6 +48,9 @@
   "therapy_plan",
   "therapy_type",
   "get_prescribed_therapies",
+  "template_dt",
+  "template_dn",
+  "get_orders",
   "column_break_17",
   "appointment_time",
   "appointment_datetime",
@@ -128,6 +131,7 @@
    "depends_on": "eval:doc.patient",
    "fieldname": "procedure_template",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Clinical Procedure Template",
    "options": "Clinical Procedure Template",
    "set_only_once": 1
@@ -136,6 +140,7 @@
    "depends_on": "eval:doc.__islocal && doc.patient",
    "fieldname": "get_procedure_from_encounter",
    "fieldtype": "Button",
+   "hidden": 1,
    "label": "Get Prescribed Clinical Procedures"
   },
   {
@@ -317,6 +322,7 @@
    "depends_on": "eval:doc.patient && doc.therapy_plan;",
    "fieldname": "therapy_type",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Therapy",
    "options": "Therapy Type",
    "set_only_once": 1
@@ -325,12 +331,14 @@
    "depends_on": "eval:doc.patient && doc.therapy_plan && doc.__islocal;",
    "fieldname": "get_prescribed_therapies",
    "fieldtype": "Button",
+   "hidden": 1,
    "label": "Get Prescribed Therapies"
   },
   {
    "depends_on": "eval: doc.patient;",
    "fieldname": "therapy_plan",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Therapy Plan",
    "options": "Therapy Plan",
    "set_only_once": 1
@@ -516,11 +524,32 @@
   {
    "fieldname": "column_break_gdcb",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_dt",
+   "fieldtype": "Link",
+   "label": "Template DocType",
+   "options": "DocType",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "template_dn",
+   "fieldtype": "Dynamic Link",
+   "label": "Template DocName",
+   "options": "template_dt",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "get_orders",
+   "fieldtype": "Button",
+   "label": "Get Orders"
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-04-22 14:44:17.881699",
+ "modified": "2025-06-30 15:34:01.767364",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

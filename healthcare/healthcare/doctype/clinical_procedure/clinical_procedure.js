@@ -44,8 +44,9 @@ frappe.ui.form.on('Clinical Procedure', {
 		frm.set_query('appointment', function () {
 			return {
 				filters: {
-					'procedure_template': ['not in', null],
-					'status': ['in', 'Open, Scheduled']
+					'template_dt': 'Clinical Procedure Template',
+					'template_dn': frm.doc.procedure_template,
+					'status': ['in', ['Open', 'Scheduled']]
 				}
 			};
 		});
@@ -223,7 +224,7 @@ frappe.ui.form.on('Clinical Procedure', {
 				callback: function(data) {
 					let values = {
 						'patient':data.message.patient,
-						'procedure_template': data.message.procedure_template,
+						'procedure_template': data.message.template_dn,
 						'medical_department': data.message.department,
 						'practitioner': data.message.practitioner,
 						'start_date': data.message.appointment_date,

@@ -35,6 +35,10 @@ class Observation(Document):
 	def before_insert(self):
 		set_observation_idx(self)
 
+	def after_insert(self):
+		if self.appointment:
+			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
+
 	def on_submit(self):
 		if self.service_request:
 			frappe.db.set_value(

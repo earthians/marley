@@ -24,6 +24,8 @@ frappe.ui.form.on('Therapy Session', {
 
 			return {
 				filters: {
+					"template_dt": "Therapy Type",
+					"template_dn": frm.doc.therapy_type,
 					'status': ['in', ['Open', 'Scheduled']]
 				}
 			};
@@ -148,7 +150,7 @@ frappe.ui.form.on('Therapy Session', {
 				callback: function(data) {
 					let values = {
 						'patient':data.message.patient,
-						'therapy_type': data.message.therapy_type,
+						'therapy_type': data.message.template_dn,
 						'therapy_plan': data.message.therapy_plan,
 						'practitioner': data.message.practitioner,
 						'department': data.message.department,

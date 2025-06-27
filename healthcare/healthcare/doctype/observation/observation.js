@@ -2,6 +2,23 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Observation", {
+	refresh: function(frm) {
+		frm.set_query("patient", function () {
+			return {
+				filters: {"status": ["!=", "Disabled"]}
+			};
+		});
+
+		frm.set_query("appointment", function () {
+			return {
+				filters: {
+					"template_dt": "Observation Template",
+					"template_dn": frm.doc.observation_template,
+					"status": ["in", ["Open", "Scheduled"]]
+				}
+			};
+		});
+	},
 	onload_post_render: function(frm) {
 		frm.trigger("set_options");
 	},
@@ -16,9 +33,9 @@ frappe.ui.form.on("Observation", {
 
 	set_options: function(frm) {
 		if (frm.doc.permitted_data_type == "Select") {
-			frm.set_df_property('result_select', 'options', frm.doc.options);
+			frm.set_df_property("result_select", "options", frm.doc.options);
 		} else if (frm.doc.permitted_data_type == "Boolean") {
-			frm.set_df_property('result_boolean', 'options', frm.doc.options);
+			frm.set_df_property("result_boolean", "options", frm.doc.options);
 		}
 	},
 

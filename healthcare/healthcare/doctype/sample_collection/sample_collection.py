@@ -30,6 +30,9 @@ class SampleCollection(Document):
 							},
 						)
 
+		if self.appointment:
+			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
+
 	def validate(self):
 		if self.observation_sample_collection:
 			for obs in self.observation_sample_collection:

@@ -14,6 +14,7 @@
   "patient_name",
   "patient_age",
   "patient_sex",
+  "appointment",
   "referring_practitioner",
   "column_break_4",
   "company",
@@ -295,6 +296,12 @@
    "options": "Sample Collection",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "appointment",
+   "fieldtype": "Link",
+   "label": "Appointment",
+   "options": "Patient Appointment"
   }
  ],
  "is_submittable": 1,
@@ -304,7 +311,7 @@
    "link_fieldname": "sample_collection"
   }
  ],
- "modified": "2024-03-19 15:33:50.056780",
+ "modified": "2025-06-29 23:05:21.880616",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Sample Collection",
@@ -339,6 +346,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient, sample",
  "show_name_in_global_search": 1,
  "sort_field": "modified",

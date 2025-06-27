@@ -203,7 +203,7 @@ frappe.ui.form.on('Service Request', {
 	make_clinical_procedure: function(frm) {
 		frappe.call({
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_clinical_procedure',
-			args: { service_request: frm.doc },
+			args: { service_request: frm.doc.name },
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -215,7 +215,7 @@ frappe.ui.form.on('Service Request', {
 	make_lab_test: function(frm) {
 		frappe.call({
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_lab_test',
-			args: { service_request: frm.doc },
+			args: { service_request: frm.doc.name },
 			freeze: true,
 			callback: function(r) {
 				var doclist = frappe.model.sync(r.message);
@@ -244,7 +244,7 @@ frappe.ui.form.on('Service Request', {
 	make_observation: function(frm) {
 		frappe.call({
 			method: 'healthcare.healthcare.doctype.service_request.service_request.make_observation',
-			args: { service_request: frm.doc },
+			args: { service_request: frm.doc.name },
 			freeze: true,
 			callback: function(r) {
 				if (r.message) {
