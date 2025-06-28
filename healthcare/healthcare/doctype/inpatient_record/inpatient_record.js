@@ -66,7 +66,7 @@ frappe.ui.form.on("Inpatient Record", {
         );
         frm.encounter_renderer.display_encounter();
 
-        new pcare.ui.UIEncounterRender(
+        frm.discharge_renderer = new pcare.ui.UIEncounterRender(
           frm,
           frm.doc.patient,
           frm.doc.name,
@@ -74,7 +74,8 @@ frappe.ui.form.on("Inpatient Record", {
           frm.doc.name,
           "discharge_summary_json",
           "discharge_summary_html"
-        ).display_encounter();
+        );
+        frm.discharge_renderer.display_encounter();
 
         frm.trigger("add_notes");
 
@@ -85,6 +86,15 @@ frappe.ui.form.on("Inpatient Record", {
           frm.doc.name,
           "history_html"
         ).setup_app();
+      });
+
+      frappe.realtime.off("pdoc_update");
+      frappe.realtime.on("pdoc_update", function (data) {
+        if (locals[data["doctype"]] && locals[data["doctype"]][data["name"]]) {
+          frm.prescription_renderer.realtime_update(data);
+          frm.encounter_renderer.realtime_update(data);
+          frm.discharge_renderer.realtime_update(data);
+        }
       });
     }
 
@@ -148,15 +158,13 @@ frappe.ui.form.on("Inpatient Record", {
     <div class="row">
   <div class="col-3">
     <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-      <button class="nav-link active" id="v-pills-important-tab" data-toggle="pill" data-target="#v-pills-important" type="button" role="tab" aria-controls="v-pills-important" aria-selected="true">Important</button>
-      <button class="nav-link" id="v-pills-doctors-tab" data-toggle="pill" data-target="#v-pills-doctors" type="button" role="tab" aria-controls="v-pills-doctors" aria-selected="false">Doctor's Note</button>
+      <button class="nav-link active" id="v-pills-doctors-tab" data-toggle="pill" data-target="#v-pills-doctors" type="button" role="tab" aria-controls="v-pills-doctors" aria-selected="false">Doctor's Note</button>
       <button class="nav-link" id="v-pills-nurses-tab" data-toggle="pill" data-target="#v-pills-nurses" type="button" role="tab" aria-controls="v-pills-nurses" aria-selected="false">Nurse's Note</button>
     </div>
   </div>
   <div class="col-9">
     <div class="tab-content" id="v-pills-tabContent">
-      <div class="tab-pane fade show active" id="v-pills-important" role="tabpanel" aria-labelledby="v-pills-important-tab"></div>
-      <div class="tab-pane fade" id="v-pills-doctors" role="tabpanel" aria-labelledby="v-pills-doctors-tab"></div>
+      <div class="tab-pane fade show active" id="v-pills-doctors" role="tabpanel" aria-labelledby="v-pills-doctors-tab"></div>
       <div class="tab-pane fade" id="v-pills-nurses" role="tabpanel" aria-labelledby="v-pills-nurses-tab"></div>
     </div>
   </div>
