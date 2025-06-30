@@ -44,11 +44,23 @@
         />
       </div>
 
-      <div class="form-group" style="margin-bottom: 15px">
+      <div class="form-group" v-if="!forLeave" style="margin-bottom: 15px">
         <label>Medical opinion:</label>
         <input
           type="text"
           v-model="MC.opinion"
+          class="form-control"
+          style="width: 100%; padding: 8px; margin-top: 5px"
+        />
+      </div>
+
+      <div class="form-group" v-if="forLeave" style="margin-bottom: 15px">
+        <label>Duration:</label>
+        <input
+          type="text"
+          v-model="MC.duration"
+          placeholder="e.g.
+  3 days, 1 week"
           class="form-control"
           style="width: 100%; padding: 8px; margin-top: 5px"
         />
@@ -113,6 +125,7 @@ export default {
         present: "",
         opinion: "",
         asFrom: new Date().toISOString().split("T")[0],
+        duration: "",
         certificateDate: new Date().toISOString().split("T")[0],
       },
       forLeave: false,
@@ -143,7 +156,7 @@ export default {
 
       const noLeave = `<span style="text-transform: capitalize;">${this.pronoun}</span> is at present <strong>${this.MC.present}</strong> and in my opinion <strong>${this.MC.opinion}</strong>.`;
 
-      const leave = `<span style="text-transform: capitalize;">${this.pronoun}</span> is at present unfit to resume work/school and requires in my opinion <strong>${this.MC.opinion}</strong> of rest/treatment to recover from ${this.possessive} health, as from <strong>${this.MC.asFrom}</strong> `;
+      const leave = `<span style="text-transform: capitalize;">${this.pronoun}</span> is at present unfit to resume work/school and requires in my opinion <strong>${this.MC.duration}</strong> of rest/treatment to recover from ${this.possessive} health, as from <strong>${this.MC.asFrom}</strong> `;
 
       const bottom = this.forLeave ? leave : noLeave;
       return top + bottom;
@@ -151,7 +164,8 @@ export default {
   },
   methods: {
     async saveMedicalCertificate() {
-      if (!this.MC.suffering || !this.MC.opinion) {
+      // Only validate MC fields if this is for leave
+      if (!this.forLeave && (!this.MC.suffering || !this.MC.opinion)) {
         frappe.msgprint(
           __(
             "Please fill in all required fields (Suffering from and Medical opinion)."
@@ -201,6 +215,7 @@ export default {
           present: this.MC.present,
           opinion: this.MC.opinion,
           as_from: this.forLeave ? this.MC.asFrom : null,
+          duration: this.forLeave ? this.MC.duration : null,
           patient: patientId,
           practitioner: practitioner,
           date: this.MC.certificateDate,
