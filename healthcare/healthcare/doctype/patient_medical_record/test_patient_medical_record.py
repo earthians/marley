@@ -11,6 +11,7 @@ from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profi
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
+	create_clinical_procedure_template,
 	create_encounter,
 	create_healthcare_docs,
 	create_medical_department,
@@ -42,8 +43,9 @@ class TestPatientMedicalRecord(IntegrationTestCase):
 		)
 		self.assertTrue(medical_rec)
 
+		procedure_template = create_clinical_procedure_template().get("name")
 		appointment = create_appointment(
-			patient, practitioner, add_days(nowdate(), 1), invoice=1, procedure_template=1
+			patient, practitioner, add_days(nowdate(), 1), invoice=1, procedure_template=procedure_template
 		)
 		procedure = create_procedure(appointment)
 		procedure.start_procedure()
@@ -66,7 +68,7 @@ class TestPatientMedicalRecord(IntegrationTestCase):
 def create_procedure(appointment):
 	if appointment:
 		procedure = frappe.new_doc("Clinical Procedure")
-		procedure.procedure_template = appointment.procedure_template
+		procedure.procedure_template = appointment.template_dn
 		procedure.appointment = appointment.name
 		procedure.patient = appointment.patient
 		procedure.practitioner = appointment.practitioner

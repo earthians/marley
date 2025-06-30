@@ -73,7 +73,7 @@ class TestServiceRequest(IntegrationTestCase):
 						test.descriptive_test_items[2].result_value = 3
 						test.submit()
 					elif sr.get("template_dt") == "Clinical Procedure Template":
-						test = make_clinical_procedure(service_request_doc)
+						test = make_clinical_procedure(service_request_doc.name)
 						test.submit()
 						doc = "Clinical Procedure"
 						template = procedure_template
