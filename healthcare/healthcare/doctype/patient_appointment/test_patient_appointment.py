@@ -18,6 +18,7 @@ from healthcare.healthcare.doctype.patient_appointment.patient_appointment impor
 	make_encounter,
 	update_status,
 )
+from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
 
 
 class TestPatientAppointment(IntegrationTestCase):
@@ -662,6 +663,48 @@ class TestPatientAppointment(IntegrationTestCase):
 		su_appointment_1.save()
 		self.assertEqual(su_appointment_1.position_in_queue, 2)
 
+	def test_appointment_against_an_order(self):
+		patient, practitioner = create_healthcare_docs()
+		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
+		appointment = create_appointment(patient, practitioner, nowdate())
+		procedure_template = create_clinical_procedure_template()
+		encounter = create_encounter(appointment, procedure_template=procedure_template)
+
+		service_request = frappe.db.exists(
+			"Service Request",
+			{
+				"order_group": encounter.name,
+				"template_dt": "Clinical Procedure Template",
+				"template_dn": procedure_template.name,
+			},
+		)
+		self.assertTrue(service_request)
+
+		appointment = create_appointment(
+			patient,
+			practitioner,
+			nowdate(),
+			procedure_template=procedure_template.name,
+			service_request=service_request,
+		)
+
+		procedure = make_clinical_procedure(service_request, appointment.name).save()
+
+		self.assertTrue(
+			frappe.db.exists(
+				"Clinical Procedure",
+				{
+					"service_request": service_request,
+					"patient": patient,
+					"docstatus": 0,
+				},
+			)
+		)
+
+		self.assertEqual(
+			frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Closed"
+		)
+
 
 def create_healthcare_docs(id=0):
 	patient = create_patient(id)
@@ -719,7 +762,10 @@ def create_practitioner(id=0, medical_department=None):
 	return practitioner.name
 
 
-def create_encounter(appointment):
+def create_encounter(
+	appointment,
+	procedure_template=None,
+):
 	if appointment:
 		encounter = frappe.new_doc("Patient Encounter")
 		encounter.appointment = appointment.name
@@ -729,6 +775,12 @@ def create_encounter(appointment):
 		encounter.encounter_date = appointment.appointment_date
 		encounter.encounter_time = appointment.appointment_time
 		encounter.company = appointment.company
+
+		if procedure_template:
+			encounter.append(
+				"procedure_prescription",
+				{"procedure": procedure_template.name, "procedure_name": procedure_template.item_code},
+			)
 		encounter.save()
 		encounter.submit()
 
@@ -740,7 +792,7 @@ def create_appointment(
 	practitioner=None,
 	appointment_date=None,
 	invoice=0,
-	procedure_template=0,
+	procedure_template=None,
 	service_unit=None,
 	appointment_type=None,
 	save=1,
@@ -750,6 +802,7 @@ def create_appointment(
 	appointment_time=None,
 	discount_percentage=0,
 	discount_amount=0,
+	service_request=None,
 ):
 	item = create_healthcare_service_items()
 	frappe.db.set_single_value("Healthcare Settings", "inpatient_visit_charge_item", item)
@@ -769,7 +822,9 @@ def create_appointment(
 	if invoice:
 		appointment.mode_of_payment = "Cash"
 	if procedure_template:
-		appointment.procedure_template = create_clinical_procedure_template().get("name")
+		appointment.template_dt = "Clinical Procedure Template"
+		appointment.template_dn = procedure_template
+		appointment.service_request = service_request
 	if appointment_based_on_check_in:
 		appointment.appointment_based_on_check_in = True
 	if appointment_time:
