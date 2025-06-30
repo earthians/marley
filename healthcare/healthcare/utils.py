@@ -79,15 +79,13 @@ def get_appointments_to_invoice(patient, company):
 	for appointment in patient_appointments:
 		# Procedure Appointments
 		# TODO: insurance? do we need this?
-		if appointment.procedure_template:
-			if frappe.db.get_value(
-				"Clinical Procedure Template", appointment.procedure_template, "is_billable"
-			):
+		if appointment.template_dt and appointment.template_dn:
+			if frappe.db.get_value(appointment.template_dt, appointment.template_dn, "is_billable"):
 				appointments_to_invoice.append(
 					{
 						"reference_type": "Patient Appointment",
 						"reference_name": appointment.name,
-						"service": appointment.procedure_template,
+						"service": frappe.db.get_value(appointment.template_dt, appointment.template_dn, "item"),
 					}
 				)
 		# Consultation Appointments, should check fee validity
