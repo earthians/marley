@@ -18,6 +18,7 @@
   "email",
   "phone",
   "inp_insurance",
+  "healthcare_service_unit",
   "column_break_8",
   "company",
   "status",
@@ -555,6 +556,13 @@
    "fieldtype": "Link",
    "label": "INP Insurance",
    "options": "Inpatient Insurance"
+  },
+  {
+   "fieldname": "healthcare_service_unit",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Healthcare Service Unit",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -564,7 +572,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-07-02 22:14:53.561506",
+ "modified": "2025-07-03 16:11:48.451384",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
