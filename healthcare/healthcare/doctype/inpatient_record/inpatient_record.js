@@ -91,9 +91,9 @@ frappe.ui.form.on("Inpatient Record", {
       frappe.realtime.off("pdoc_update");
       frappe.realtime.on("pdoc_update", function (data) {
         if (locals[data["doctype"]] && locals[data["doctype"]][data["name"]]) {
-          frm.prescription_renderer.realtime_update(data);
-          frm.encounter_renderer.realtime_update(data);
-          frm.discharge_renderer.realtime_update(data);
+          // frm.prescription_renderer.realtime_update(data);
+          // frm.encounter_renderer.realtime_update(data);
+          // frm.discharge_renderer.realtime_update(data);
         }
       });
     }
