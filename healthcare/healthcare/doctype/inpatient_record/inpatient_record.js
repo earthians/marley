@@ -38,6 +38,9 @@ frappe.ui.form.on("Inpatient Record", {
             .append(
               `<div id="inp-room" class="border-black text-center rounded border border-dark"><small><strong>${r}</strong></small></div>`
             );
+          if (frm.doc.status !== "Discharged") {
+            frm.set_value("healthcare_service_unit", r);
+          }
         }
       });
     }
