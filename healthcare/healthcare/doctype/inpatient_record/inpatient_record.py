@@ -282,8 +282,13 @@ def discharge_patient(inpatient_record):
 
 	# validate_incompleted_service_requests(inpatient_record)
 
-	inpatient_record.discharge_datetime = now_datetime()
-	inpatient_record.status = "Discharged"
+    inpatient_record.discharge_datetime = now_datetime()
+    inpatient_record.status = "Discharged"
+
+    # Clear the healthcare service unit
+    inpatient_record.healthcare_service_unit = None
+
+    inpatient_record.save(ignore_permissions=True)
 
 	inpatient_record.save(ignore_permissions=True)
 
