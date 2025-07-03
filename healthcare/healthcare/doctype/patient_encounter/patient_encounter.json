@@ -350,8 +350,7 @@
    "fieldname": "source",
    "fieldtype": "Select",
    "label": "Source",
-   "options": "Direct\nReferral\nExternal Referral",
-   "reqd": 1
+   "options": "Direct\nReferral\nExternal Referral"
   },
   {
    "fieldname": "column_break_27",
@@ -467,7 +466,7 @@
    "link_fieldname": "admission_encounter"
   }
  ],
- "modified": "2025-05-13 18:25:05.874428",
+ "modified": "2025-07-03 23:06:16.148505",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",

@@ -452,8 +452,7 @@
    "fieldname": "source",
    "fieldtype": "Select",
    "label": "Source",
-   "options": "Direct\nReferral\nExternal Referral",
-   "reqd": 1
+   "options": "Direct\nReferral\nExternal Referral"
   },
   {
    "fieldname": "column_break_19",
@@ -600,7 +599,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2024-04-30 12:33:24.396599",
+ "modified": "2025-07-03 22:55:50.845601",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
@@ -688,6 +687,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient",
  "sort_field": "modified",
  "sort_order": "DESC",
