@@ -18,6 +18,7 @@
   "email",
   "phone",
   "inp_insurance",
+  "healthcare_service_unit",
   "column_break_8",
   "company",
   "status",
@@ -559,6 +560,7 @@
   {
    "fieldname": "healthcare_service_unit",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Healthcare Service Unit"
   }
  ],
@@ -569,7 +571,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-07-03 20:50:23.440988",
+ "modified": "2025-07-03 23:35:51.685898",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
