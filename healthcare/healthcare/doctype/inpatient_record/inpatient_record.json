@@ -562,6 +562,7 @@
    "fieldname": "healthcare_service_unit",
    "fieldtype": "Data",
    "hidden": 1,
+   "in_list_view": 1,
    "label": "Healthcare Service Unit"
   }
  ],
@@ -572,7 +573,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-07-03 23:35:51.685898",
+ "modified": "2025-07-05 17:21:50.063794",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
