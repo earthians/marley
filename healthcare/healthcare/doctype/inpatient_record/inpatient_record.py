@@ -68,8 +68,8 @@ class InpatientRecord(Document):
             )
 
     def validate_dates(self):
-        if (getdate(self.expected_discharge) < getdate(self.scheduled_date)) or (
-                getdate(self.discharge_ordered_datetime) < getdate(
+        if (get_datetime(self.expected_discharge) < get_datetime(self.scheduled_date)) or (
+                get_datetime(self.discharge_ordered_datetime) < get_datetime(
                     self.scheduled_date)
         ):
             frappe.throw(
