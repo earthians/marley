@@ -425,7 +425,7 @@
     },
     {
       "fieldname": "discharge_ordered_datetime",
-      "fieldtype": "Date",
+      "fieldtype": "Datetime",
       "in_list_view": 1,
       "label": "Discharge Ordered Date",
       "read_only": 1
