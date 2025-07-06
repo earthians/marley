@@ -1,654 +1,661 @@
 {
- "actions": [],
- "autoname": "naming_series:",
- "creation": "2018-07-11 17:48:51.404139",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "patient_details_tab",
-  "section_break_1",
-  "naming_series",
-  "patient",
-  "patient_name",
-  "gender",
-  "blood_group",
-  "dob",
-  "mobile",
-  "email",
-  "phone",
-  "column_break_8",
-  "company",
-  "status",
-  "scheduled_date",
-  "admitted_datetime",
-  "expected_discharge",
-  "references",
-  "admission_encounter",
-  "admission_practitioner",
-  "medical_department",
-  "admission_ordered_for",
-  "admission_service_unit_type",
-  "admission_nursing_checklist_template",
-  "discharge_nursing_checklist_template",
-  "expected_length_of_stay",
-  "cb_admission",
-  "primary_practitioner",
-  "secondary_practitioner",
-  "admission_instruction",
-  "encounter_details_section",
-  "chief_complaint",
-  "column_break_29",
-  "diagnosis",
-  "medication_section",
-  "drug_prescription",
-  "investigations_section",
-  "lab_test_prescription",
-  "procedures_section",
-  "procedure_prescription",
-  "rehabilitation_section",
-  "therapy_plan",
-  "therapies",
-  "sb_inpatient_occupancy",
-  "inpatient_occupancies",
-  "btn_transfer",
-  "sb_discharge_details",
-  "discharge_ordered_datetime",
-  "discharge_practitioner",
-  "discharge_encounter",
-  "discharge_datetime",
-  "cb_discharge",
-  "discharge_instructions",
-  "followup_date",
-  "sb_discharge_note",
-  "discharge_note",
-  "column_break_hjln",
-  "nurse_note_html",
-  "initial_encounter_tab",
-  "initial_encounter_html",
-  "requests_tab",
-  "prescription_html",
-  "vital_signs_tab",
-  "vital_signs",
-  "patient_history_tab",
-  "history_html",
-  "progress_notes",
-  "notes_html",
-  "discharge_summary_tab",
-  "discharge_summary_html",
-  "tab_3_tab",
-  "prescription_json",
-  "initial_encounter_json",
-  "discharge_summary_json"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_1",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Series",
-   "options": "HLC-INP-.YYYY.-"
-  },
-  {
-   "fieldname": "patient",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Patient",
-   "options": "Patient",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
-   "fetch_from": "patient.patient_name",
-   "fieldname": "patient_name",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Patient Name",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "patient.sex",
-   "fieldname": "gender",
-   "fieldtype": "Link",
-   "label": "Gender",
-   "options": "Gender",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "patient.blood_group",
-   "fieldname": "blood_group",
-   "fieldtype": "Select",
-   "label": "Blood Group",
-   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "patient.dob",
-   "fieldname": "dob",
-   "fieldtype": "Date",
-   "label": "Date of birth",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "patient.mobile",
-   "fieldname": "mobile",
-   "fieldtype": "Data",
-   "label": "Mobile",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "patient.email",
-   "fieldname": "email",
-   "fieldtype": "Data",
-   "label": "Email",
-   "options": "Email",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "patient.phone",
-   "fieldname": "phone",
-   "fieldtype": "Data",
-   "label": "Phone",
-   "read_only": 1
-  },
-  {
-   "fieldname": "medical_department",
-   "fieldtype": "Link",
-   "label": "Medical Department",
-   "options": "Medical Department"
-  },
-  {
-   "fieldname": "primary_practitioner",
-   "fieldtype": "Link",
-   "label": "Healthcare Practitioner (Primary)",
-   "options": "Healthcare Practitioner"
-  },
-  {
-   "fieldname": "secondary_practitioner",
-   "fieldtype": "Link",
-   "label": "Healthcare Practitioner (Secondary)",
-   "options": "Healthcare Practitioner"
-  },
-  {
-   "fieldname": "column_break_8",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "Admission Scheduled",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "Admission Scheduled\nAdmitted\nDischarge Scheduled\nDischarged\nCancelled",
-   "read_only": 1
-  },
-  {
-   "default": "Today",
-   "fieldname": "scheduled_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Admission Schedule Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "admission_ordered_for",
-   "fieldtype": "Date",
-   "label": "Admission Ordered For",
-   "read_only": 1
-  },
-  {
-   "fieldname": "admitted_datetime",
-   "fieldtype": "Datetime",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Admitted Datetime",
-   "permlevel": 2
-  },
-  {
-   "fieldname": "expected_length_of_stay",
-   "fieldtype": "Int",
-   "label": "Expected Length of Stay",
-   "mandatory_depends_on": "eval:!doc.admission_encounter;",
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "expected_discharge",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Expected Discharge",
-   "read_only": 1
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "references",
-   "fieldtype": "Section Break",
-   "label": "Admission Order Details"
-  },
-  {
-   "fieldname": "cb_admission",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "admission_practitioner",
-   "fieldtype": "Link",
-   "label": "Healthcare Practitioner",
-   "options": "Healthcare Practitioner",
-   "read_only": 1
-  },
-  {
-   "fieldname": "admission_encounter",
-   "fieldtype": "Link",
-   "label": "Patient Encounter",
-   "options": "Patient Encounter",
-   "read_only": 1
-  },
-  {
-   "fieldname": "chief_complaint",
-   "fieldtype": "Table MultiSelect",
-   "label": "Chief Complaint",
-   "options": "Patient Encounter Symptom",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "admission_instruction",
-   "fieldtype": "Small Text",
-   "label": "Admission Instructions",
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "cb_discharge",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "discharge_practitioner",
-   "fieldtype": "Link",
-   "label": "Healthcare Practitioner",
-   "options": "Healthcare Practitioner",
-   "read_only": 1
-  },
-  {
-   "fieldname": "discharge_encounter",
-   "fieldtype": "Link",
-   "label": "Patient Encounter",
-   "options": "Patient Encounter",
-   "read_only": 1
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:!doc.__islocal;",
-   "fieldname": "medication_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Medications",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "drug_prescription",
-   "fieldtype": "Table",
-   "options": "Drug Prescription",
-   "permlevel": 1
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:!doc.__islocal;",
-   "fieldname": "investigations_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Investigations",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "lab_test_prescription",
-   "fieldtype": "Table",
-   "options": "Lab Prescription",
-   "permlevel": 1
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:!doc.__islocal;",
-   "fieldname": "procedures_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Procedures",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "procedure_prescription",
-   "fieldtype": "Table",
-   "options": "Procedure Prescription",
-   "permlevel": 1
-  },
-  {
-   "depends_on": "eval:(doc.status != \"Admission Scheduled\")",
-   "fieldname": "sb_inpatient_occupancy",
-   "fieldtype": "Section Break",
-   "label": "Inpatient Occupancy"
-  },
-  {
-   "fieldname": "admission_service_unit_type",
-   "fieldtype": "Link",
-   "label": "Admission Service Unit Type",
-   "mandatory_depends_on": "eval:!doc.admission_encounter;",
-   "options": "Healthcare Service Unit Type",
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "inpatient_occupancies",
-   "fieldtype": "Table",
-   "options": "Inpatient Occupancy",
-   "permlevel": 2
-  },
-  {
-   "depends_on": "eval:doc.status == 'Admitted';",
-   "fieldname": "btn_transfer",
-   "fieldtype": "Button",
-   "label": "Transfer"
-  },
-  {
-   "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
-   "fieldname": "sb_discharge_note",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Discharge Notes"
-  },
-  {
-   "fieldname": "discharge_note",
-   "fieldtype": "Text Editor",
-   "permlevel": 1
-  },
-  {
-   "fetch_from": "admission_encounter.company",
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Company",
-   "options": "Company"
-  },
-  {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval:(doc.status == \"Admitted\")",
-   "depends_on": "eval:!doc.__islocal",
-   "fieldname": "encounter_details_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Encounter Impression",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "column_break_29",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "diagnosis",
-   "fieldtype": "Table MultiSelect",
-   "label": "Diagnosis",
-   "options": "Patient Encounter Diagnosis",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "followup_date",
-   "fieldtype": "Date",
-   "label": "Follow Up Date"
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
-   "fieldname": "sb_discharge_details",
-   "fieldtype": "Section Break",
-   "label": "Discharge Details"
-  },
-  {
-   "fieldname": "discharge_instructions",
-   "fieldtype": "Small Text",
-   "label": "Discharge Instructions"
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:!doc.__islocal;",
-   "fieldname": "rehabilitation_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Rehabilitation",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "therapy_plan",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Therapy Plan",
-   "options": "Therapy Plan",
-   "permlevel": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "therapies",
-   "fieldtype": "Table",
-   "options": "Therapy Plan Detail",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "discharge_datetime",
-   "fieldtype": "Datetime",
-   "label": "Discharge Date",
-   "permlevel": 2
-  },
-  {
-   "fieldname": "discharge_nursing_checklist_template",
-   "fieldtype": "Link",
-   "label": "Discharge Nursing Checklist Template",
-   "options": "Nursing Checklist Template"
-  },
-  {
-   "fieldname": "admission_nursing_checklist_template",
-   "fieldtype": "Link",
-   "label": "Admission Nursing Checklist Template",
-   "options": "Nursing Checklist Template"
-  },
-  {
-   "fieldname": "nurse_note_html",
-   "fieldtype": "HTML",
-   "options": "<div>cool</div>"
-  },
-  {
-   "fieldname": "requests_tab",
-   "fieldtype": "Tab Break",
-   "label": "Requests"
-  },
-  {
-   "fieldname": "prescription_html",
-   "fieldtype": "HTML",
-   "label": "prescription html"
-  },
-  {
-   "fieldname": "prescription_json",
-   "fieldtype": "JSON",
-   "label": "prescription json"
-  },
-  {
-   "fieldname": "tab_3_tab",
-   "fieldtype": "Tab Break",
-   "hidden": 1,
-   "label": "Tab 3",
-   "read_only_depends_on": "eval: frappe.user.has_role(\"Administrator\")"
-  },
-  {
-   "fieldname": "column_break_hjln",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "vital_signs_tab",
-   "fieldtype": "Tab Break",
-   "label": "Vital Signs"
-  },
-  {
-   "fieldname": "vital_signs",
-   "fieldtype": "HTML",
-   "label": "Vital Signs"
-  },
-  {
-   "fieldname": "patient_details_tab",
-   "fieldtype": "Tab Break",
-   "label": "Patient Details"
-  },
-  {
-   "fieldname": "initial_encounter_tab",
-   "fieldtype": "Tab Break",
-   "label": "Initial Encounter"
-  },
-  {
-   "fieldname": "initial_encounter_html",
-   "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "initial_encounter_json",
-   "fieldtype": "JSON",
-   "label": "initial_encounter_json"
-  },
-  {
-   "fieldname": "patient_history_tab",
-   "fieldtype": "Tab Break",
-   "label": "History"
-  },
-  {
-   "fieldname": "discharge_summary_json",
-   "fieldtype": "JSON",
-   "label": "discharge_summary_json"
-  },
-  {
-   "fieldname": "discharge_summary_tab",
-   "fieldtype": "Tab Break",
-   "label": "Discharge Summary"
-  },
-  {
-   "fieldname": "discharge_summary_html",
-   "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "progress_notes",
-   "fieldtype": "Tab Break",
-   "label": "Notes"
-  },
-  {
-   "fieldname": "notes_html",
-   "fieldtype": "HTML",
-   "label": "notes_html"
-  },
-  {
-   "fieldname": "history_html",
-   "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "discharge_ordered_datetime",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "Discharge Ordered Date",
-   "read_only": 1
-  }
- ],
- "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Nursing Task",
-   "link_fieldname": "reference_name"
-  }
- ],
- "modified": "2025-07-05 11:34:07.190989",
- "modified_by": "Administrator",
- "module": "Healthcare",
- "name": "Inpatient Record",
- "naming_rule": "By \"Naming Series\" field",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Healthcare Administrator",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Physician",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nursing User",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "permlevel": 1,
-   "read": 1,
-   "role": "Physician",
-   "write": 1
-  },
-  {
-   "permlevel": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nursing User"
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "permlevel": 2,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Healthcare Administrator",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "permlevel": 2,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Physician",
-   "share": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "permlevel": 2,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nursing User",
-   "share": 1
-  }
- ],
- "restrict_to_domain": "Healthcare",
- "search_fields": "patient, patient_name, admitted_datetime",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "title_field": "patient"
+  "actions": [],
+  "autoname": "naming_series:",
+  "creation": "2018-07-11 17:48:51.404139",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "patient_details_tab",
+    "section_break_1",
+    "naming_series",
+    "patient",
+    "patient_name",
+    "gender",
+    "blood_group",
+    "dob",
+    "mobile",
+    "email",
+    "phone",
+    "column_break_8",
+    "company",
+    "status",
+    "scheduled_date",
+    "admitted_datetime",
+    "expected_discharge",
+    "references",
+    "admission_encounter",
+    "admission_practitioner",
+    "medical_department",
+    "admission_ordered_for",
+    "admission_service_unit_type",
+    "admission_nursing_checklist_template",
+    "discharge_nursing_checklist_template",
+    "expected_length_of_stay",
+    "cb_admission",
+    "primary_practitioner",
+    "secondary_practitioner",
+    "admission_instruction",
+    "encounter_details_section",
+    "chief_complaint",
+    "column_break_29",
+    "diagnosis",
+    "medication_section",
+    "drug_prescription",
+    "investigations_section",
+    "lab_test_prescription",
+    "procedures_section",
+    "procedure_prescription",
+    "rehabilitation_section",
+    "therapy_plan",
+    "therapies",
+    "sb_inpatient_occupancy",
+    "inpatient_occupancies",
+    "btn_transfer",
+    "sb_discharge_details",
+    "discharge_ordered_datetime",
+    "discharge_practitioner",
+    "discharge_encounter",
+    "discharge_datetime",
+    "cb_discharge",
+    "discharge_instructions",
+    "followup_date",
+    "sb_discharge_note",
+    "discharge_note",
+    "column_break_hjln",
+    "nurse_note_html",
+    "initial_encounter_tab",
+    "initial_encounter_html",
+    "requests_tab",
+    "prescription_html",
+    "vital_signs_tab",
+    "vital_signs",
+    "patient_history_tab",
+    "history_html",
+    "progress_notes",
+    "notes_html",
+    "discharge_summary_tab",
+    "discharge_summary_html",
+    "tab_3_tab",
+    "prescription_json",
+    "initial_encounter_json",
+    "discharge_summary_json"
+  ],
+  "fields": [
+    {
+      "fieldname": "section_break_1",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "naming_series",
+      "fieldtype": "Select",
+      "hidden": 1,
+      "label": "Series",
+      "options": "HLC-INP-.YYYY.-"
+    },
+    {
+      "fieldname": "patient",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Patient",
+      "options": "Patient",
+      "reqd": 1,
+      "set_only_once": 1
+    },
+    {
+      "fetch_from": "patient.patient_name",
+      "fieldname": "patient_name",
+      "fieldtype": "Small Text",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Patient Name",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "patient.sex",
+      "fieldname": "gender",
+      "fieldtype": "Link",
+      "label": "Gender",
+      "options": "Gender",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "patient.blood_group",
+      "fieldname": "blood_group",
+      "fieldtype": "Select",
+      "label": "Blood Group",
+      "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "patient.dob",
+      "fieldname": "dob",
+      "fieldtype": "Date",
+      "label": "Date of birth",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "patient.mobile",
+      "fieldname": "mobile",
+      "fieldtype": "Data",
+      "label": "Mobile",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "patient.email",
+      "fieldname": "email",
+      "fieldtype": "Data",
+      "label": "Email",
+      "options": "Email",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "patient.phone",
+      "fieldname": "phone",
+      "fieldtype": "Data",
+      "label": "Phone",
+      "read_only": 1
+    },
+    {
+      "fieldname": "medical_department",
+      "fieldtype": "Link",
+      "label": "Medical Department",
+      "options": "Medical Department"
+    },
+    {
+      "fieldname": "primary_practitioner",
+      "fieldtype": "Link",
+      "label": "Healthcare Practitioner (Primary)",
+      "options": "Healthcare Practitioner"
+    },
+    {
+      "fieldname": "secondary_practitioner",
+      "fieldtype": "Link",
+      "label": "Healthcare Practitioner (Secondary)",
+      "options": "Healthcare Practitioner"
+    },
+    {
+      "fieldname": "column_break_8",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "Admission Scheduled",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "Status",
+      "options": "Admission Scheduled\nAdmitted\nDischarge Scheduled\nDischarged\nCancelled",
+      "read_only": 1
+    },
+    {
+      "default": "Today",
+      "fieldname": "scheduled_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Admission Schedule Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "admission_ordered_for",
+      "fieldtype": "Date",
+      "label": "Admission Ordered For",
+      "read_only": 1
+    },
+    {
+      "fieldname": "admitted_datetime",
+      "fieldtype": "Datetime",
+      "in_filter": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Admitted Datetime",
+      "permlevel": 2
+    },
+    {
+      "fieldname": "expected_length_of_stay",
+      "fieldtype": "Int",
+      "label": "Expected Length of Stay",
+      "mandatory_depends_on": "eval:!doc.admission_encounter;",
+      "set_only_once": 1
+    },
+    {
+      "fieldname": "expected_discharge",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Expected Discharge",
+      "read_only": 1
+    },
+    {
+      "collapsible": 1,
+      "fieldname": "references",
+      "fieldtype": "Section Break",
+      "label": "Admission Order Details"
+    },
+    {
+      "fieldname": "cb_admission",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "admission_practitioner",
+      "fieldtype": "Link",
+      "label": "Healthcare Practitioner",
+      "options": "Healthcare Practitioner",
+      "read_only": 1
+    },
+    {
+      "fieldname": "admission_encounter",
+      "fieldtype": "Link",
+      "label": "Patient Encounter",
+      "options": "Patient Encounter",
+      "read_only": 1
+    },
+    {
+      "fieldname": "chief_complaint",
+      "fieldtype": "Table MultiSelect",
+      "label": "Chief Complaint",
+      "options": "Patient Encounter Symptom",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "admission_instruction",
+      "fieldtype": "Small Text",
+      "label": "Admission Instructions",
+      "set_only_once": 1
+    },
+    {
+      "fieldname": "cb_discharge",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "discharge_practitioner",
+      "fieldtype": "Link",
+      "label": "Healthcare Practitioner",
+      "options": "Healthcare Practitioner",
+      "read_only": 1
+    },
+    {
+      "fieldname": "discharge_encounter",
+      "fieldtype": "Link",
+      "label": "Patient Encounter",
+      "options": "Patient Encounter",
+      "read_only": 1
+    },
+    {
+      "collapsible": 1,
+      "depends_on": "eval:!doc.__islocal;",
+      "fieldname": "medication_section",
+      "fieldtype": "Section Break",
+      "hidden": 1,
+      "label": "Medications",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "drug_prescription",
+      "fieldtype": "Table",
+      "options": "Drug Prescription",
+      "permlevel": 1
+    },
+    {
+      "collapsible": 1,
+      "depends_on": "eval:!doc.__islocal;",
+      "fieldname": "investigations_section",
+      "fieldtype": "Section Break",
+      "hidden": 1,
+      "label": "Investigations",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "lab_test_prescription",
+      "fieldtype": "Table",
+      "options": "Lab Prescription",
+      "permlevel": 1
+    },
+    {
+      "collapsible": 1,
+      "depends_on": "eval:!doc.__islocal;",
+      "fieldname": "procedures_section",
+      "fieldtype": "Section Break",
+      "hidden": 1,
+      "label": "Procedures",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "procedure_prescription",
+      "fieldtype": "Table",
+      "options": "Procedure Prescription",
+      "permlevel": 1
+    },
+    {
+      "depends_on": "eval:(doc.status != \"Admission Scheduled\")",
+      "fieldname": "sb_inpatient_occupancy",
+      "fieldtype": "Section Break",
+      "label": "Inpatient Occupancy"
+    },
+    {
+      "fieldname": "admission_service_unit_type",
+      "fieldtype": "Link",
+      "label": "Admission Service Unit Type",
+      "mandatory_depends_on": "eval:!doc.admission_encounter;",
+      "options": "Healthcare Service Unit Type",
+      "set_only_once": 1
+    },
+    {
+      "fieldname": "inpatient_occupancies",
+      "fieldtype": "Table",
+      "options": "Inpatient Occupancy",
+      "permlevel": 2
+    },
+    {
+      "depends_on": "eval:doc.status == 'Admitted';",
+      "fieldname": "btn_transfer",
+      "fieldtype": "Button",
+      "label": "Transfer"
+    },
+    {
+      "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
+      "fieldname": "sb_discharge_note",
+      "fieldtype": "Section Break",
+      "hidden": 1,
+      "label": "Discharge Notes"
+    },
+    {
+      "fieldname": "discharge_note",
+      "fieldtype": "Text Editor",
+      "permlevel": 1
+    },
+    {
+      "fetch_from": "admission_encounter.company",
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "in_standard_filter": 1,
+      "label": "Company",
+      "options": "Company"
+    },
+    {
+      "collapsible": 1,
+      "collapsible_depends_on": "eval:(doc.status == \"Admitted\")",
+      "depends_on": "eval:!doc.__islocal",
+      "fieldname": "encounter_details_section",
+      "fieldtype": "Section Break",
+      "hidden": 1,
+      "label": "Encounter Impression",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "column_break_29",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "diagnosis",
+      "fieldtype": "Table MultiSelect",
+      "label": "Diagnosis",
+      "options": "Patient Encounter Diagnosis",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "followup_date",
+      "fieldtype": "Date",
+      "label": "Follow Up Date"
+    },
+    {
+      "collapsible": 1,
+      "depends_on": "eval:(doc.status == \"Discharge Scheduled\" || doc.status == \"Discharged\")",
+      "fieldname": "sb_discharge_details",
+      "fieldtype": "Section Break",
+      "label": "Discharge Details"
+    },
+    {
+      "fieldname": "discharge_instructions",
+      "fieldtype": "Small Text",
+      "label": "Discharge Instructions"
+    },
+    {
+      "fieldname": "discharge_ordered_datetime",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Discharge Ordered Date",
+      "read_only": 1
+    },
+    {
+      "collapsible": 1,
+      "depends_on": "eval:!doc.__islocal;",
+      "fieldname": "rehabilitation_section",
+      "fieldtype": "Section Break",
+      "hidden": 1,
+      "label": "Rehabilitation",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "therapy_plan",
+      "fieldtype": "Link",
+      "hidden": 1,
+      "label": "Therapy Plan",
+      "options": "Therapy Plan",
+      "permlevel": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "therapies",
+      "fieldtype": "Table",
+      "options": "Therapy Plan Detail",
+      "permlevel": 1
+    },
+    {
+      "fieldname": "discharge_datetime",
+      "fieldtype": "Datetime",
+      "label": "Discharge Date",
+      "permlevel": 2
+    },
+    {
+      "fieldname": "discharge_nursing_checklist_template",
+      "fieldtype": "Link",
+      "label": "Discharge Nursing Checklist Template",
+      "options": "Nursing Checklist Template"
+    },
+    {
+      "fieldname": "admission_nursing_checklist_template",
+      "fieldtype": "Link",
+      "label": "Admission Nursing Checklist Template",
+      "options": "Nursing Checklist Template"
+    },
+    {
+      "fieldname": "nurse_note_html",
+      "fieldtype": "HTML",
+      "options": "<div>cool</div>"
+    },
+    {
+      "fieldname": "requests_tab",
+      "fieldtype": "Tab Break",
+      "label": "Requests"
+    },
+    {
+      "fieldname": "prescription_html",
+      "fieldtype": "HTML",
+      "label": "prescription html"
+    },
+    {
+      "fieldname": "prescription_json",
+      "fieldtype": "JSON",
+      "label": "prescription json"
+    },
+    {
+      "fieldname": "tab_3_tab",
+      "fieldtype": "Tab Break",
+      "hidden": 1,
+      "label": "Tab 3",
+      "read_only_depends_on": "eval: frappe.user.has_role(\"Administrator\")"
+    },
+    {
+      "fieldname": "column_break_hjln",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "vital_signs_tab",
+      "fieldtype": "Tab Break",
+      "label": "Vital Signs"
+    },
+    {
+      "fieldname": "vital_signs",
+      "fieldtype": "HTML",
+      "label": "Vital Signs"
+    },
+    {
+      "fieldname": "patient_details_tab",
+      "fieldtype": "Tab Break",
+      "label": "Patient Details"
+    },
+    {
+      "fieldname": "initial_encounter_tab",
+      "fieldtype": "Tab Break",
+      "label": "Initial Encounter"
+    },
+    {
+      "fieldname": "initial_encounter_html",
+      "fieldtype": "HTML"
+    },
+    {
+      "fieldname": "initial_encounter_json",
+      "fieldtype": "JSON",
+      "label": "initial_encounter_json"
+    },
+    {
+      "fieldname": "patient_history_tab",
+      "fieldtype": "Tab Break",
+      "label": "History"
+    },
+    {
+      "fieldname": "discharge_summary_json",
+      "fieldtype": "JSON",
+      "label": "discharge_summary_json"
+    },
+    {
+      "fieldname": "discharge_summary_tab",
+      "fieldtype": "Tab Break",
+      "label": "Discharge Summary"
+    },
+    {
+      "fieldname": "discharge_summary_html",
+      "fieldtype": "HTML"
+    },
+    {
+      "fieldname": "progress_notes",
+      "fieldtype": "Tab Break",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "notes_html",
+      "fieldtype": "HTML",
+      "label": "notes_html"
+    },
+    {
+      "fieldname": "history_html",
+      "fieldtype": "HTML"
+    },
+    {
+      "fieldname": "discharge_ordered_datetime",
+      "fieldtype": "Datetime",
+      "in_list_view": 1,
+      "label": "Discharge Ordered Date",
+      "read_only": 1
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "links": [
+    {
+      "link_doctype": "Nursing Task",
+      "link_fieldname": "reference_name"
+    }
+  ],
+  "modified": "2025-07-05 11:34:07.190989",
+  "modified_by": "Administrator",
+  "module": "Healthcare",
+  "name": "Inpatient Record",
+  "naming_rule": "By \"Naming Series\" field",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Healthcare Administrator",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Physician",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Nursing User",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "permlevel": 1,
+      "read": 1,
+      "role": "Physician",
+      "write": 1
+    },
+    {
+      "permlevel": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Nursing User"
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "permlevel": 2,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Healthcare Administrator",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "permlevel": 2,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Physician",
+      "share": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "permlevel": 2,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Nursing User",
+      "share": 1
+    }
+  ],
+  "restrict_to_domain": "Healthcare",
+  "search_fields": "patient, patient_name, admitted_datetime",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "patient"
 }
