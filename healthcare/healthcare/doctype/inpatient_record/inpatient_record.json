@@ -55,7 +55,7 @@
   "inpatient_occupancies",
   "btn_transfer",
   "sb_discharge_details",
-  "discharge_ordered_date",
+  "discharge_ordered_datetime",
   "discharge_practitioner",
   "discharge_encounter",
   "discharge_datetime",
@@ -411,13 +411,6 @@
    "label": "Discharge Instructions"
   },
   {
-   "fieldname": "discharge_ordered_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Discharge Ordered Date",
-   "read_only": 1
-  },
-  {
    "collapsible": 1,
    "depends_on": "eval:!doc.__islocal;",
    "fieldname": "rehabilitation_section",
@@ -553,17 +546,11 @@
    "fieldtype": "HTML"
   },
   {
-   "fieldname": "inp_insurance",
-   "fieldtype": "Link",
-   "label": "INP Insurance",
-   "options": "Inpatient Insurance"
-  },
-  {
-   "fieldname": "healthcare_service_unit",
-   "fieldtype": "Data",
-   "hidden": 1,
+   "fieldname": "discharge_ordered_datetime",
+   "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Healthcare Service Unit"
+   "label": "Discharge Ordered Date",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -573,7 +560,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-07-05 17:21:50.063794",
+ "modified": "2025-07-05 11:34:07.190989",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
