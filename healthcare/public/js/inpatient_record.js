@@ -58,10 +58,51 @@ frappe.ui.form.on("Inpatient Record", {
         } else {
           frm.page
             .add_inner_button(__("Add Insurance MR"), function () {
-              frappe.new_doc("Insurance MR");
+              frappe.db
+                .get_value("Patient", frm.doc.patient, "dob")
+                .then(({ message }) => {
+                  let age = 0;
+                  if (message.dob) {
+                    const today = new Date();
+                    const birthDate = new Date(message.dob);
+                    age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                    // Adjust age if birthday hasn't occurred this year
+                    if (
+                      monthDiff < 0 ||
+                      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+                    ) {
+                      age--;
+                    }
+                  }
+
+                  // Create new Insurance MR document with populated fields
+                  frappe.new_doc("Insurance MR", {
+                    patient: frm.doc.patient,
+                    patient_full_name: frm.doc.patient_name,
+                    age: age,
+                    doctors_name:
+                      frappe.session.user_fullname || frappe.session.user,
+                  });
+                })
+                .catch((err) => {
+                  console.error("Error fetching patient DOB:", err);
+                  // Create Insurance MR with age 0 if DOB fetch fails
+                  frappe.new_doc("Insurance MR", {
+                    patient: frm.doc.patient,
+                    patient_full_name: frm.doc.patient_name,
+                    age: 0,
+                    doctors_name:
+                      frappe.session.user_fullname || frappe.session.user,
+                  });
+                });
             })
             .addClass("inner-group-button");
         }
+      })
+      .catch((err) => {
+        console.error("Error checking existing Insurance MR:", err);
       });
 
     frappe.db
