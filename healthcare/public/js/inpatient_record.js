@@ -84,6 +84,7 @@ frappe.ui.form.on("Inpatient Record", {
                     age: age,
                     doctors_name:
                       frappe.session.user_fullname || frappe.session.user,
+                    inp_insurance: frm.doc.inp_insurance,
                   });
                 })
                 .catch((err) => {
@@ -95,6 +96,7 @@ frappe.ui.form.on("Inpatient Record", {
                     age: 0,
                     doctors_name:
                       frappe.session.user_fullname || frappe.session.user,
+                    inp_insurance: frm.doc.inp_insurance,
                   });
                 });
             })
