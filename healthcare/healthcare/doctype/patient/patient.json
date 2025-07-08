@@ -163,8 +163,7 @@
    "label": "Status",
    "no_copy": 1,
    "options": "Active\nDisabled",
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "fieldname": "image",
@@ -523,7 +522,7 @@
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2025-04-09 15:42:11.630512",
+ "modified": "2025-07-08 16:37:24.508578",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
