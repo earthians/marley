@@ -546,6 +546,18 @@
    "fieldtype": "HTML"
   },
   {
+    "fieldname": "inp_insurance",
+    "fieldtype": "Link",
+    "label": "INP Insurance",
+    "options": "Inpatient Insurance"
+   },
+   {
+    "fieldname": "healthcare_service_unit",
+    "fieldtype": "Data",
+    "hidden": 1,
+    "label": "Healthcare Service Unit"
+   },
+  {
    "fieldname": "discharge_ordered_datetime",
    "fieldtype": "Datetime",
    "in_list_view": 1,
