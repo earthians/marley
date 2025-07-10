@@ -47,11 +47,11 @@ frappe.ui.form.on("Inpatient Record", {
       });
 
     frappe.db
-      .get_value("Insurance MR", { patient: frm.doc.name }, "name")
+      .get_value("Insurance MR", { patient: frm.doc.patient }, "name")
       .then(({ message }) => {
         if (message.name) {
           frm.page
-            .add_inner_button(__("Insurance MR"), function () {
+            .add_inner_button(__("View Insurance MR"), function () {
               frappe.set_route("Form", "Insurance MR", message.name);
             })
             .addClass("inner-group-button");
@@ -82,9 +82,11 @@ frappe.ui.form.on("Inpatient Record", {
                     patient: frm.doc.patient,
                     patient_full_name: frm.doc.patient_name,
                     age: age,
+                    inpatient_record: frm.doc.name,
+                    admission_date: frm.doc.admitted_datetime,
+                    insurance: frm.doc.inp_insurance,
                     doctors_name:
                       frappe.session.user_fullname || frappe.session.user,
-                    inp_insurance: frm.doc.inp_insurance,
                   });
                 })
                 .catch((err) => {
@@ -94,9 +96,11 @@ frappe.ui.form.on("Inpatient Record", {
                     patient: frm.doc.patient,
                     patient_full_name: frm.doc.patient_name,
                     age: 0,
+                    inpatient_record: frm.doc.name,
+                    admission_date: frm.doc.admitted_datetime,
+                    insurance: frm.doc.inp_insurance,
                     doctors_name:
                       frappe.session.user_fullname || frappe.session.user,
-                    inp_insurance: frm.doc.inp_insurance,
                   });
                 });
             })
