@@ -69,6 +69,26 @@ frappe.ui.form.on("Sales Invoice", {
   items_add: function (frm) {
     set_service_unit(frm);
   },
+
+  inpatient_record: function (frm) {
+    if (frm.doc.inpatient_record) {
+      frappe.db
+        .get_value(
+          "Inpatient Record",
+          frm.doc.inpatient_record,
+          "inp_insurance"
+        )
+        .then((r) => {
+          if (!r.exc && r.message.inp_insurance) {
+            frm.set_value("insurance", r.message.inp_insurance);
+          } else {
+            frm.set_value("insurance", "");
+          }
+        });
+    } else {
+      frm.set_value("insurance", "");
+    }
+  },
 });
 
 var set_service_unit = function (frm) {
