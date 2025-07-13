@@ -16,6 +16,17 @@ frappe.ui.form.on("Inpatient Record", {
     }
   },
   refresh: function (frm) {
+    if (!frm.is_dirty() && !frm.doc.__islocal) {
+      let $wrapper = $(frm.fields_dict.initial_encounter_print_html?.wrapper);
+      if ($wrapper.length) {
+        $wrapper.empty();
+        $wrapper.append(
+          `<div id="initial-encounter-print-container" class="d-flex justify-content-center"></div>`
+        );
+        frm.trigger("initial_encounter_print");
+      }
+    }
+
     frappe.db
       .get_value(
         "Pain Rating Score",
@@ -157,5 +168,26 @@ frappe.ui.form.on("Inpatient Record", {
     frappe.new_doc("Pain Rating Score", {
       patient: frm.doc.patient,
     });
+  },
+
+  initial_encounter_print(frm) {
+    if (frm.doc.initial_encounter_json) {
+      const print_container = $("#initial-encounter-print-container");
+      const btn = $(
+        '<button class="btn btn-primary">Print Initial Encounter</button>'
+      );
+      print_container.append(btn);
+      btn.on("click", function () {
+        window.open(
+          "/printview?doctype=" +
+            "Inpatient Record" +
+            "&name=" +
+            frm.doc.name +
+            "&format=" +
+            "PC Initial Encounter",
+          "_blank"
+        );
+      });
+    }
   },
 });
