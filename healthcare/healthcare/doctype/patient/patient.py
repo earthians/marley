@@ -61,6 +61,10 @@ class Patient(Document):
             # Update inpatient records with new patient information
             # update_inpatient_record(self)
 
+        # Check for email changes and update user email
+        if old_doc and old_doc.email != self.email:
+            self.update_user_email()
+
         if frappe.db.get_single_value("Healthcare Settings", "link_customer_to_patient"):
             if self.customer:
                 if self.flags.existing_customer or frappe.db.exists(
@@ -79,8 +83,8 @@ class Patient(Document):
         if self.flags.is_new_doc and self.get("address_line1"):
             make_address(self)
 
-        if not self.user_id and self.email and self.invite_user:
-            self.create_website_user()
+        # if not self.user_id and self.email and self.invite_user:
+        #     self.create_website_user()
 
     def load_dashboard_info(self):
         if self.customer:
@@ -151,6 +155,22 @@ class Patient(Document):
         user.send_welcome_email = True
         user.add_roles("Patient")
         self.db_set("user_id", user.name)
+
+    def update_user_email(self):
+        """Update user email when patient email changes"""
+        if self.user_id and self.email:
+            try:
+                # Update user email
+                frappe.db.set_value("User", self.user_id, "email", self.email)
+                # Update user_id to match the new email
+                self.db_set("user_id", self.email)
+
+                frappe.msgprint(
+                    _("User email updated successfully"), alert=True)
+            except Exception as e:
+                frappe.log_error(f"Error updating user email: {str(e)}")
+                frappe.throw(
+                    _("Error updating user email. Please check the logs."))
 
     def autoname(self):
         patient_name_by = frappe.db.get_single_value(

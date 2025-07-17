@@ -449,9 +449,10 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "default": "1",
+   "default": "0",
    "fieldname": "invite_user",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Invite as User",
    "no_copy": 1,
    "read_only_depends_on": "eval: doc.user_id"
@@ -522,7 +523,7 @@
  "image_field": "image",
  "links": [],
  "max_attachments": 50,
- "modified": "2025-07-08 16:37:24.508578",
+ "modified": "2025-07-17 12:17:59.142443",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
