@@ -47,6 +47,15 @@ class Patient(Document):
         self.reload()
 
     def on_update(self):
+        # Check for patient name changes and update contact links
+        old_doc = self.get_doc_before_save()
+        if old_doc and (old_doc.first_name != self.first_name or
+                        old_doc.middle_name != self.middle_name or
+                        old_doc.last_name != self.last_name):
+            old_patient_name = old_doc.name
+            # Update patient links in contacts if patient name changed
+            self.update_patient_contact_links(old_patient_name)
+
         if frappe.db.get_single_value("Healthcare Settings", "link_customer_to_patient"):
             if self.customer:
                 if self.flags.existing_customer or frappe.db.exists(
@@ -105,38 +114,38 @@ class Patient(Document):
             self.language = frappe.db.get_single_value(
                 "System Settings", "language")
 
-    # def create_website_user(self):
-    # 	users = frappe.db.get_all(
-    # 		"User",
-    # 		fields=["email", "mobile_no"],
-    # 		or_filters={"email": self.email, "mobile_no": self.mobile},
-    # 	)
-    # 	if users and users[0]:
-    # 		frappe.throw(
-    # 			_(
-    # 				"User exists with Email {}, Mobile {}<br>Please check email / mobile or disable 'Invite as User' to skip creating User"
-    # 			).format(frappe.bold(users[0].email), frappe.bold(users[0].mobile_no)),
-    # 			frappe.DuplicateEntryError,
-    # 		)
+    def create_website_user(self):
+        users = frappe.db.get_all(
+            "User",
+            fields=["email", "mobile_no"],
+            or_filters={"email": self.email, "mobile_no": self.mobile},
+        )
+        if users and users[0]:
+            frappe.throw(
+                _(
+                    "User exists with Email {}, Mobile {}<br>Please check email / mobile or disable 'Invite as User' to skip creating User"
+                ).format(frappe.bold(users[0].email), frappe.bold(users[0].mobile_no)),
+                frappe.DuplicateEntryError,
+            )
 
-    # 	user = frappe.get_doc(
-    # 		{
-    # 			"doctype": "User",
-    # 			"first_name": self.first_name,
-    # 			"last_name": self.last_name,
-    # 			"email": self.email,
-    # 			"user_type": "Website User",
-    # 			"gender": self.sex,
-    # 			"phone": self.phone,
-    # 			"mobile_no": self.mobile,
-    # 			"birth_date": self.dob,
-    # 		}
-    # 	)
-    # 	user.flags.ignore_permissions = True
-    # 	user.enabled = True
-    # 	user.send_welcome_email = True
-    # 	user.add_roles("Patient")
-    # 	self.db_set("user_id", user.name)
+        user = frappe.get_doc(
+            {
+                "doctype": "User",
+                "first_name": self.first_name,
+                "last_name": self.last_name,
+                "email": self.email,
+                "user_type": "Website User",
+                "gender": self.sex,
+                "phone": self.phone,
+                "mobile_no": self.mobile,
+                "birth_date": self.dob,
+            }
+        )
+        user.flags.ignore_permissions = True
+        user.enabled = True
+        user.send_welcome_email = True
+        user.add_roles("Patient")
+        self.db_set("user_id", user.name)
 
     def autoname(self):
         patient_name_by = frappe.db.get_single_value(
@@ -152,7 +161,7 @@ class Patient(Document):
         if frappe.db.get_value("Patient", name):
             count = frappe.db.sql(
                 """select ifnull(MAX(CAST(SUBSTRING_INDEX(name, ' ', -1) AS UNSIGNED)), 0) from tabPatient
-				 where name like %s""",
+                                 where name like %s""",
                 "%{0} - %".format(name),
                 as_list=1,
             )[0][0]
@@ -302,6 +311,9 @@ class Patient(Document):
         frappe.db.set_value("Customer", customer.name,
                             "name", self.patient_name)
 
+        self.update_contact_links_after_rename(
+            old_customer_name, self.patient_name)
+
         frappe.msgprint(_("Customer {0} updated").format(
             customer.name), alert=True)
 
@@ -317,6 +329,48 @@ class Patient(Document):
             }
         )
         self.notify_update()
+
+    def update_contact_links_after_rename(self, old_name, new_name):
+        """Update Contact link table when customer name changes"""
+        # Find all contacts linked to this customer
+        contacts = frappe.db.sql("""
+                                                                                    SELECT parent FROM `tabDynamic Link`
+                                                                                    WHERE link_doctype = 'Customer'
+                                                                                    AND link_name = %s
+                    """, old_name, as_dict=True)
+
+        for contact in contacts:
+            # Update the link_name in Contact's links table
+            frappe.db.sql("""
+                                                                                        UPDATE `tabDynamic Link`
+                                                                                        SET link_name = %s
+                                                                                        WHERE parent = %s
+                                                                                        AND link_doctype = 'Customer'
+                                                                                        AND link_name = %s
+                        """, (new_name, contact.parent, old_name))
+
+        frappe.db.commit()
+
+    def update_patient_contact_links(self, old_patient_name):
+        """Update Patient links in contact when patient name changes"""
+        # Find all contacts linked to this patient
+        contacts = frappe.db.sql("""
+            SELECT parent FROM `tabDynamic Link`
+            WHERE link_doctype = 'Patient'
+            AND link_name = %s
+        """, old_patient_name, as_dict=True)
+
+        for contact in contacts:
+            # Update the link_name in Contact's links table for Patient
+            frappe.db.sql("""
+                UPDATE `tabDynamic Link`
+                SET link_name = %s
+                WHERE parent = %s
+                AND link_doctype = 'Patient'
+                AND link_name = %s
+            """, (self.name, contact.parent, old_patient_name))
+
+        frappe.db.commit()
 
 
 def update_sales_invoice(doc, method=None):
@@ -400,7 +454,7 @@ def get_patient_detail(patient):
         frappe.throw(_("Patient not found"))
     vital_sign = frappe.db.sql(
         """select * from `tabVital Signs` where patient=%s
-		order by signs_date desc limit 1""",
+                order by signs_date desc limit 1""",
         (patient),
         as_dict=1,
     )
