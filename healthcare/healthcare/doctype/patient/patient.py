@@ -55,6 +55,11 @@ class Patient(Document):
             old_patient_name = old_doc.name
             # Update patient links in contacts if patient name changed
             self.update_patient_contact_links(old_patient_name)
+            # Update sales invoices and delivery notes with new patient name
+            update_sales_invoice(self)
+            # update_delivery_note(self)
+            # Update inpatient records with new patient information
+            # update_inpatient_record(self)
 
         if frappe.db.get_single_value("Healthcare Settings", "link_customer_to_patient"):
             if self.customer:
@@ -398,6 +403,89 @@ def update_sales_invoice(doc, method=None):
     except Exception as e:
         frappe.log_error(f"{str(e)}")
         return 'invalid'
+
+
+# def update_delivery_note(doc, method=None):
+#     """
+#     Update customer name on patient name changes in Delivery Notes
+
+#     Document is renamed with latest customer name from Customer document
+#     """
+#     try:
+#         if not doc.customer:
+#             return 'invalid'
+
+#         # Get customer name from Customer document
+#         customer_name = frappe.db.get_value(
+#             "Customer", doc.customer, "customer_name")
+
+#         if not customer_name:
+#             return 'invalid'
+
+#         # Find delivery notes linked to this customer that need updating
+#         delivery_notes = frappe.db.sql("""
+#             SELECT name FROM `tabDelivery Note`
+#             WHERE customer = %s
+#             AND customer_name != %s
+#             AND status IN ('Draft', 'To Bill')
+#         """, (doc.customer, customer_name), as_dict=True)
+
+#         if delivery_notes:
+#             for dn in delivery_notes:
+#                 # Update delivery note with new customer name
+#                 frappe.db.sql("""
+#                     UPDATE `tabDelivery Note`
+#                     SET customer_name = %s
+#                     WHERE name = %s
+#                 """, (customer_name, dn.name))
+
+#                 # Also use set_value to ensure proper cache invalidation
+#                 frappe.db.set_value("Delivery Note", dn.name,
+#                                     "customer_name", customer_name)
+
+#             frappe.db.commit()
+
+#             frappe.msgprint(
+#                 _("Delivery Note updated successfully"), alert=True)
+
+#             return 'valid'
+#     except Exception as e:
+#         frappe.log_error(f"{str(e)}")
+#         return 'invalid'
+
+
+# def update_inpatient_record(doc, method=None):
+#     """
+#     Update patient information in Inpatient Records when patient details change
+#
+#     Updates patient_name, mobile, email, phone and other patient-related fields
+#     """
+#     try:
+#         # Find all inpatient records linked to this patient
+#         inpatient_records = frappe.db.sql("""
+#             SELECT name FROM `tabInpatient Record`
+#             WHERE patient = %s
+#             AND status IN ('Admitted', 'Discharge Scheduled')
+#         """, doc.name, as_dict=True)
+
+#         if inpatient_records:
+#             for record in inpatient_records:
+#                 # Update patient information in inpatient record
+#                 frappe.db.sql("""
+#                     UPDATE `tabInpatient Record`
+#                     SET patient_name = %s, mobile = %s, email = %s, phone = %s
+#                     WHERE name = %s
+#                 """, (doc.patient_name, doc.mobile, doc.email, doc.phone, record.name))
+
+#                 frappe.db.commit()
+
+#             frappe.msgprint(
+#                 _("Inpatient Record(s) updated successfully"), alert=True)
+
+#             return 'valid'
+#     except Exception as e:
+#         frappe.log_error(f"Error updating inpatient record: {str(e)}")
+#         return 'invalid'
 
 
 def create_customer(doc):
