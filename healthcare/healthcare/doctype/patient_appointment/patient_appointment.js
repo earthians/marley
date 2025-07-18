@@ -319,6 +319,13 @@ frappe.ui.form.on("Patient Appointment", {
 			frm.set_value("patient_age", "");
 			frm.set_value("inpatient_record", "");
 		}
+		if (frm.doc.template_dt && frm.doc.template_dn) {
+			frm.set_value({
+				"template_dt": "",
+				"template_dn": "",
+				"service_request": ""
+			});
+		}
 	},
 
 	practitioner: function(frm) {

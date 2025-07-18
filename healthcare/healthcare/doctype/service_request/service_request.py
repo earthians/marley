@@ -349,7 +349,7 @@ def make_observation(service_request, appointment=None):
 		"Diagnostic Report", {"reference_name": service_request.order_group}
 	)
 	if not diagnostic_report:
-		insert_diagnostic_report(service_request, sample_collection)
+		insert_diagnostic_report(service_request, sample_collection.name)
 
 	if sample_collection:
 		return sample_collection.name, "Sample Collection"
@@ -399,9 +399,6 @@ def create_observation(service_request, appointment=None):
 
 
 def insert_diagnostic_report(doc, sample_collection=None):
-	if isinstance(sample_collection, dict):
-		sample_collection = sample_collection.name
-
 	diagnostic_report = frappe.new_doc("Diagnostic Report")
 	diagnostic_report.company = doc.company
 	diagnostic_report.patient = doc.patient
