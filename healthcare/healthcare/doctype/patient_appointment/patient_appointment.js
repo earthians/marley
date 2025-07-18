@@ -481,7 +481,7 @@ frappe.ui.form.on("Patient Appointment", {
 			primary_action() {
 				const selected = d.$wrapper.find('.service-row[data-selected="true"]')[0];
 				if (!selected) {
-					frappe.msgprint("Please select a service request.");
+					frappe.msgprint(__("Please select a service request."));
 					return;
 				}
 				const selected_id = selected.dataset.name;
@@ -606,7 +606,7 @@ frappe.ui.form.on("Patient Appointment", {
 						indicator = "green"
 					}
 					frappe.show_alert({
-						message: __("{0}", [title]),
+						message: __(title),
 						indicator: indicator,
 					});
 					frappe.set_route('Form', r.message[1], r.message[0]);
