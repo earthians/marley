@@ -502,7 +502,9 @@ frappe.ui.form.on("Patient Appointment", {
 			fields: [
 				"name",
 				"order_group",
+				"order_date",
 				"practitioner",
+				"practitioner_name",
 				"template_dt",
 				"template_dn",
 				"status",
@@ -1388,16 +1390,15 @@ let get_service_request_list_html = function (data) {
 
 		html += `
 			<div class="service-row"
-				 data-name="${row.name}"
-				 data-selected="false"
-				 style="
-					border: 1px solid #dddaaa;
-					border-radius: 6px;
-					padding: 12px;
-					cursor: pointer;
-					transition: all 0.2s ease-in-out;
-				 ">
-				<!-- Top row: ServiceType: <b>ServiceName</b> + Badge -->
+				data-name="${row.name}"
+				data-selected="false"
+				style="
+				border: 1px solid #dddaaa;
+				border-radius: 6px;
+				padding: 12px;
+				cursor: pointer;
+				transition: all 0.2s ease-in-out;
+			">
 				<div style="display: flex; justify-content: space-between; align-items: center;">
 					<div style="font-size: 1rem;">
 						${service_type}: <b>${row.template_dn || ''}</b>
@@ -1405,10 +1406,15 @@ let get_service_request_list_html = function (data) {
 					<span class="indicator ${status_clr}">${status_txt}</span>
 				</div>
 
-				<!-- Second row: order_group and practitioner -->
 				<div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.875rem; color: #4b4b4b;">
-					<div>${row.order_group || ''}</div>
-					<div>${row.practitioner || ''}</div>
+					<div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+						<div>${row.order_group || ''}</div>
+						<div style="color: gray;">${frappe.datetime.str_to_user(row.order_date) || ''}</div>
+					</div>
+					<div style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+						<div>${row.practitioner || ''}</div>
+						<div style="color: gray;">${row.practitioner_name || ''}</div>
+					</div>
 				</div>
 			</div>
 		`;

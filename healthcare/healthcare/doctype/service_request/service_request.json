@@ -31,6 +31,7 @@
   "inpatient_status",
   "order_source_section",
   "practitioner",
+  "practitioner_name",
   "practitioner_email",
   "medical_department",
   "referred_to_practitioner",
@@ -594,6 +595,12 @@
    "fieldtype": "Duration",
    "hide_seconds": 1,
    "label": "Interval"
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Ordered by Practitioner Name"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -612,7 +619,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2025-05-15 12:58:58.427869",
+ "modified": "2025-07-18 20:36:56.162647",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
@@ -669,6 +676,7 @@
  "search_fields": "title,patient,order_group,inpatient_record,practitioner,patient_email,patient_mobile",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "title",
  "track_changes": 1,
  "track_seen": 1,
