@@ -2,6 +2,12 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Observation Template", {
+	setup: function (frm) {
+		if (frappe.meta.has_field(frm.doc.doctype, "gst_hsn_code")) {
+			frm.add_fetch("item", "gst_hsn_code", "gst_hsn_code");
+		}
+	},
+
 	onload: function(frm) {
 		set_select_field_options(frm);
 	},
@@ -48,19 +54,6 @@ frappe.ui.form.on("Observation Template", {
 	permitted_data_type: function(frm) {
 		set_observation_reference_range(frm);
 	},
-
-	observation_name: function(frm) {
-		frm.set_value("change_in_item", 1)
-	},
-
-	rate: function(frm) {
-		frm.set_value("change_in_item", 1)
-	},
-
-	item_group: function(frm) {
-		frm.set_value("change_in_item", 1)
-	},
-
 });
 
 frappe.ui.form.on("Observation Reference Range", {

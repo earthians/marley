@@ -18,31 +18,11 @@ frappe.ui.form.on('Healthcare Service Unit Type', {
 
 	service_unit_type: function(frm) {
 		set_item_details(frm);
-
-		if (!frm.doc.__islocal) {
-			frm.doc.change_in_item = 1;
-		}
 	},
 
 	is_billable: function(frm) {
 		set_item_details(frm);
 	},
-
-	rate: function(frm) {
-		if (!frm.doc.__islocal) {
-			frm.doc.change_in_item = 1;
-		}
-	},
-	item_group: function(frm) {
-		if (!frm.doc.__islocal) {
-			frm.doc.change_in_item = 1;
-		}
-	},
-	description: function(frm) {
-		if (!frm.doc.__islocal) {
-			frm.doc.change_in_item = 1;
-		}
-	}
 });
 
 let set_item_details = function(frm) {

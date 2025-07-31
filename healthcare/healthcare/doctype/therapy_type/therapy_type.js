@@ -43,36 +43,8 @@ frappe.ui.form.on('Therapy Type', {
 			frm.set_value('item_code', frm.doc.therapy_type);
 		if (!frm.doc.description)
 			frm.set_value('description', frm.doc.therapy_type);
-		mark_change_in_item(frm);
 	},
-
-	rate: function(frm) {
-		mark_change_in_item(frm);
-	},
-
-	is_billable: function (frm) {
-		mark_change_in_item(frm);
-	},
-
-	item_group: function(frm) {
-		mark_change_in_item(frm);
-	},
-
-	description: function(frm) {
-		mark_change_in_item(frm);
-	},
-
-	medical_department: function(frm) {
-		mark_change_in_item(frm);
-	},
-
 });
-
-let mark_change_in_item = function(frm) {
-	if (!frm.doc.__islocal) {
-		frm.doc.change_in_item = 1;
-	}
-};
 
 let change_template_code = function(doc) {
 	let d = new frappe.ui.Dialog({

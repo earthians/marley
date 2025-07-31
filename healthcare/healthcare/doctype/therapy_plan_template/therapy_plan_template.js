@@ -2,6 +2,12 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Therapy Plan Template', {
+	setup: function (frm) {
+		if (frappe.meta.has_field(frm.doc.doctype, "gst_hsn_code")) {
+			frm.add_fetch("linked_item", "gst_hsn_code", "gst_hsn_code");
+		}
+	},
+
 	refresh: function(frm) {
 		frm.set_query('therapy_type', 'therapy_types', () => {
 			return {
