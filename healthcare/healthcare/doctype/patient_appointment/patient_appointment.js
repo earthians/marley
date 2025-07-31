@@ -464,7 +464,7 @@ frappe.ui.form.on("Patient Appointment", {
 		}
 
 		const d = new frappe.ui.Dialog({
-			title: 'Select a Service Request',
+			title: __('Select a Service Request'),
 			fields: [
 				{
 					fieldname: 'service_html',
@@ -477,21 +477,35 @@ frappe.ui.form.on("Patient Appointment", {
 					`
 				}
 			],
-			primary_action_label: 'Select',
+			primary_action_label: __('Select'),
 			primary_action() {
 				const selected = d.$wrapper.find('.service-row[data-selected="true"]')[0];
 				if (!selected) {
 					frappe.msgprint(__("Please select a service request."));
 					return;
 				}
+
 				const selected_id = selected.dataset.name;
-				frm.set_value("service_request", selected_id);
-				frappe.db.get_value("Service Request", selected_id, ["template_dt", "template_dn"]).then(r => {
-					frm.set_value({
-						"template_dt": r.message.template_dt,
-						"template_dn": r.message.template_dn
+				if (selected_id) {
+					frappe.db.get_doc("Service Request", selected_id)
+					.then(doc => {
+						frm.set_value({
+							"service_request": selected_id,
+							"template_dt": doc.template_dt,
+							"template_dn": doc.template_dn,
+							"referring_practitioner": doc.practitioner,
+							"notes": doc.order_description
+						});
+
+						if (doc.template_dt == "Appointment Type" && doc.template_dn) {
+							frm.set_value({
+								"appointment_type": doc.template_dn,
+								"practitioner": doc.referred_to_practitioner
+							});
+						}
 					})
-				})
+				}
+
 				d.hide();
 			}
 		});
