@@ -67,6 +67,10 @@ frappe.ui.form.on("Medication Linked Item", {
 	description: function(frm, cdt, cdn) {
 		mark_change_in_item(frm, cdt, cdn);
 	},
+
+	gst_hsn_code: function(frm, cdt, cdn) {
+		mark_change_in_item(frm, cdt, cdn);
+	},
 })
 
 let mark_change_in_item = function(frm, cdt, cdn) {

@@ -28,6 +28,7 @@ class TherapyPlanTemplate(Document):
 			doc_before_save.item_name != self.item_name
 			or doc_before_save.item_group != self.item_group
 			or doc_before_save.description != self.description
+			or doc_before_save.get("gst_hsn_code") != self.get("gst_hsn_code")
 		):
 			self.update_item()
 

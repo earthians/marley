@@ -142,7 +142,7 @@ def update_item(doc):
 				"description": doc.description,
 			}
 		)
-		item.db_update()
+		item.save(ignore_permissions=True)
 
 
 @frappe.whitelist()

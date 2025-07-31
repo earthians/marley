@@ -2,32 +2,17 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Clinical Procedure Template', {
+	setup: function (frm) {
+		if (frappe.meta.has_field(frm.doc.doctype, "gst_hsn_code")) {
+			frm.add_fetch("item", "gst_hsn_code", "gst_hsn_code");
+		}
+	},
+
 	template: function (frm) {
 		if (!frm.doc.item_code)
 			frm.set_value('item_code', frm.doc.template);
 		if (!frm.doc.description)
 			frm.set_value('description', frm.doc.template);
-		mark_change_in_item(frm);
-	},
-
-	rate: function (frm) {
-		mark_change_in_item(frm);
-	},
-
-	is_billable: function (frm) {
-		mark_change_in_item(frm);
-	},
-
-	item_group: function (frm) {
-		mark_change_in_item(frm);
-	},
-
-	description: function (frm) {
-		mark_change_in_item(frm);
-	},
-
-	medical_department: function (frm) {
-		mark_change_in_item(frm);
 	},
 
 	refresh: function (frm) {
@@ -90,12 +75,6 @@ frappe.ui.form.on('Clinical Procedure Template', {
 		}
 	}
 });
-
-let mark_change_in_item = function (frm) {
-	if (!frm.doc.__islocal || frm.doc.link_existing_item) {
-		frm.doc.change_in_item = 1;
-	}
-};
 
 let change_template_code = function (doc) {
 	let d = new frappe.ui.Dialog({

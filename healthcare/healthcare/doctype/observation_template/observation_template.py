@@ -17,9 +17,17 @@ class ObservationTemplate(Document):
 			create_item_from_template(self)
 
 	def on_update(self):
-		# If change_in_item update Item and Price List
-		if self.change_in_item and self.is_billable:
+		doc_before_save = self.get_doc_before_save()
+		if not doc_before_save:
+			return
+		if (
+			doc_before_save.rate != self.rate
+			or doc_before_save.is_billable != self.is_billable
+			or doc_before_save.item_group != self.item_group
+			or doc_before_save.get("gst_hsn_code") != self.get("gst_hsn_code")
+		):
 			update_item_and_item_price(self)
+
 		if not self.item and self.is_billable:
 			create_item_from_template(self)
 
