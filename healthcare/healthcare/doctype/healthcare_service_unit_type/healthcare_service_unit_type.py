@@ -52,10 +52,19 @@ class HealthcareServiceUnitType(Document):
 				frappe.throw(_("Not permitted. Please disable the Service Unit Type"))
 
 	def on_update(self):
-		if self.change_in_item and self.is_billable and self.item:
+		doc_before_save = self.get_doc_before_save()
+		if not doc_before_save:
+			return
+		if (
+			doc_before_save.rate != self.rate
+			or doc_before_save.is_billable != self.is_billable
+			or doc_before_save.item_group != self.item_group
+			or doc_before_save.description != self.description
+			or doc_before_save.get("gst_hsn_code") != self.get("gst_hsn_code")
+		):
 			update_item(self)
 
-			item_price = item_price_exists(self)
+			item_price = frappe.db.exists("Item Price", {"item_code": self.item_code})
 
 			if not item_price:
 				price_list_name = frappe.db.get_value("Price List", {"selling": 1})
@@ -66,21 +75,11 @@ class HealthcareServiceUnitType(Document):
 			else:
 				frappe.db.set_value("Item Price", item_price, "price_list_rate", self.rate)
 
-			frappe.db.set_value(self.doctype, self.name, "change_in_item", 0)
-		elif not self.is_billable and self.item:
-			frappe.db.set_value("Item", self.item, "disabled", 1)
 		self.reload()
 
 	@frappe.whitelist()
 	def create_service_unit_item(self):
 		create_item(self)
-
-
-def item_price_exists(doc):
-	item_price = frappe.db.exists({"doctype": "Item Price", "item_code": doc.item_code})
-	if item_price and len(item_price):
-		return item_price[0][0]
-	return False
 
 
 def create_item(doc):
@@ -133,11 +132,12 @@ def make_item_price(item, price_list_name, item_price):
 def update_item(doc):
 	item = frappe.get_doc("Item", doc.item)
 	if item:
+		disabled = doc.disabled or not doc.is_billable
 		item.update(
 			{
 				"item_name": doc.service_unit_type,
 				"item_group": doc.item_group,
-				"disabled": 0,
+				"disabled": disabled,
 				"standard_rate": doc.rate,
 				"description": doc.description,
 			}
