@@ -339,7 +339,8 @@
   {
    "fieldname": "discharge_note",
    "fieldtype": "Text Editor",
-   "permlevel": 1
+   "permlevel": 1,
+   "label": "Discharge Note"
   },
   {
    "fetch_from": "admission_encounter.company",
@@ -485,7 +486,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2023-09-20 17:57:02.408982",
+ "modified": "2025-08-11 16:20:03.508982",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
