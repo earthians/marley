@@ -80,7 +80,11 @@ def get_appointments_to_invoice(patient, company):
 		# Appointments against Service Requests
 		# TODO: insurance? do we need this?
 		appointment = frappe.get_doc("Patient Appointment", appointment)
-		if appointment.template_dt and appointment.template_dn:
+		if (
+			appointment.template_dt
+			and appointment.template_dn
+			and appointment.template_dt != "Appointment Type"
+		):
 			if frappe.db.get_value(appointment.template_dt, appointment.template_dn, "is_billable"):
 				appointments_to_invoice.append(
 					{
