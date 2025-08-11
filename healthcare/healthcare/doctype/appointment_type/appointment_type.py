@@ -38,8 +38,8 @@ def get_billing_details(appointment_type, docname=None):
 			# fetch generic ones without department / service_unit
 			filters = {
 				"parent": appointment_type,
-				"dt": None,
-				"dn": None,
+				"dt": ["is", "not set"],
+				"dn": ["is", "not set"],
 			}
 		return frappe.db.get_value(
 			"Appointment Type Service Item",

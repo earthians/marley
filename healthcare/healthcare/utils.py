@@ -66,7 +66,7 @@ def get_appointments_to_invoice(patient, company):
 	appointments_to_invoice = []
 	patient_appointments = frappe.get_list(
 		"Patient Appointment",
-		fields="*",
+		pluck="name",
 		filters={
 			"patient": patient.name,
 			"company": company,
@@ -77,8 +77,9 @@ def get_appointments_to_invoice(patient, company):
 	)
 
 	for appointment in patient_appointments:
-		# Procedure Appointments
+		# Appointments against Service Requests
 		# TODO: insurance? do we need this?
+		appointment = frappe.get_doc("Patient Appointment", appointment)
 		if appointment.template_dt and appointment.template_dn:
 			if frappe.db.get_value(appointment.template_dt, appointment.template_dn, "is_billable"):
 				appointments_to_invoice.append(
@@ -180,11 +181,12 @@ def get_encounters_to_invoice(patient, company):
 	encounters_to_invoice = []
 	encounters = frappe.get_list(
 		"Patient Encounter",
-		fields=["*"],
+		pluck="name",
 		filters={"patient": patient, "company": company, "invoiced": False, "docstatus": 1},
 	)
 	if encounters:
 		for encounter in encounters:
+			encounter = frappe.get_doc("Patient Encounter", encounter)
 			if not encounter.appointment:  # TODO: make if not
 				practitioner_charge = 0
 				income_account = None
