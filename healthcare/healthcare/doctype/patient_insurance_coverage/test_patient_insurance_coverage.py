@@ -7,7 +7,7 @@ import json
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_years, flt, getdate, nowdate, today
+from frappe.utils import add_years, flt, getdate, nowdate, nowtime, today
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_receivable_account,
@@ -126,6 +126,7 @@ def create_appointment(patient, practitioner, appointment_date, appointment_type
 	appointment.appointment_type = appointment_type
 	appointment.department = create_medical_department()
 	appointment.appointment_date = appointment_date
+	appointment.appointment_time = nowtime()
 	appointment.company = "_Test Company"
 	appointment.duration = 30
 	appointment.insurance_policy = policy

@@ -139,6 +139,7 @@ class PatientAppointment(Document):
 					"patient": self.patient,
 					"appointment_date": self.appointment_date,
 					"appointment_time": self.appointment_time,
+					"appointment_for": self.appointment_for,
 					"appointment_based_on_check_in": True,
 					"name": ["!=", self.name],
 				}

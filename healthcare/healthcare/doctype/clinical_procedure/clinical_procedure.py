@@ -87,7 +87,7 @@ class ClinicalProcedure(Document):
 				"Clinical Procedure Template", self.procedure_template, "pre_op_nursing_checklist_template"
 			)
 			# pre op tasks to be created on Clinical Procedure submit, use scheduled date
-			start_time = frappe.utils.get_datetime(f"{self.start_date} {self.start_time}")
+			start_time = frappe.utils.get_datetime(f"{self.start_date} {self.start_time or nowtime()}")
 
 		if template:
 			NursingTask.create_nursing_tasks_from_template(

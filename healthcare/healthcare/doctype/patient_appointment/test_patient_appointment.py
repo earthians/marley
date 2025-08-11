@@ -7,7 +7,7 @@ import datetime
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import add_days, flt, get_time, getdate, now_datetime, nowdate
+from frappe.utils import add_days, flt, get_time, getdate, now_datetime, nowdate, nowtime
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 
@@ -827,8 +827,12 @@ def create_appointment(
 		appointment.service_request = service_request
 	if appointment_based_on_check_in:
 		appointment.appointment_based_on_check_in = True
-	if appointment_time:
-		appointment.appointment_time = appointment_time
+	if appointment.appointment_type:
+		appointment_for = frappe.get_cached_value(
+			"Appointment Type", appointment.appointment_type, "allow_booking_for"
+		)
+		if appointment_for == "Practitioner":
+			appointment.appointment_time = appointment_time if appointment_time else nowtime()
 	if save:
 		appointment.save(ignore_permissions=True)
 		if invoice or frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):
