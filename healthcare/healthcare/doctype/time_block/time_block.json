@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "autoname": "format:{scope}-{block_type}-{block_date}-{block_start_time}",
+ "creation": "2025-08-18 13:09:12.917754",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_zjsh",
+  "scope_type",
+  "scope",
+  "block_date",
+  "block_start_time",
+  "block_end_time",
+  "block_duration",
+  "column_break_wewi",
+  "status",
+  "block_type",
+  "note",
+  "section_break_binj",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_zjsh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Time Block",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Healthcare Practitioner",
+   "fieldname": "scope_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Scope Type",
+   "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Healthcare Practitioner\",\"Healthcare Service Unit\",\"Medical Department\"]]]",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "scope",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Scope",
+   "options": "scope_type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_wewi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nExpired",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "Today",
+   "fieldname": "block_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Block Date",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "block_start_time",
+   "fieldtype": "Time",
+   "label": "Block Start Time",
+   "reqd": 1
+  },
+  {
+   "description": "In minutes",
+   "fieldname": "block_duration",
+   "fieldtype": "Int",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Block Duration",
+   "non_negative": 1,
+   "precision": "0",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "block_end_time",
+   "fieldtype": "Time",
+   "label": "Block End Time",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "block_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Block Type",
+   "options": "Time Off\nBreak\nTraining\nTravel\nEmergency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_binj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-08-18 19:10:18.613322",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Time Block",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
