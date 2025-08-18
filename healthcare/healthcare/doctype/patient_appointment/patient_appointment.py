@@ -284,6 +284,9 @@ class PatientAppointment(Document):
 			self.appointment_date,
 			self.appointment_time or "00:00:00",
 		)
+		self.appointment_end_datetime = datetime.datetime.combine(
+			getdate(self.appointment_date), get_time(self.appointment_time)
+		) + datetime.timedelta(minutes=flt(self.duration))
 
 	def set_payment_details(self):
 		if frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):

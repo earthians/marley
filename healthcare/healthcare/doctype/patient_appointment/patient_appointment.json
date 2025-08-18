@@ -54,6 +54,7 @@
   "column_break_17",
   "appointment_time",
   "appointment_datetime",
+  "appointment_end_datetime",
   "add_video_conferencing",
   "event",
   "google_meet_link",
@@ -545,11 +546,21 @@
    "fieldname": "get_orders",
    "fieldtype": "Button",
    "label": "Get Orders"
+  },
+  {
+   "fieldname": "appointment_end_datetime",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Appointment End Datetime",
+   "print_hide": 1,
+   "read_only": 1,
+   "report_hide": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-06-30 15:34:01.767364",
+ "modified": "2025-08-19 00:20:47.398614",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
