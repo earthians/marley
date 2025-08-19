@@ -30,17 +30,23 @@ class TimeBlock(Document):
 	def validate_overlapping_blocks(self):
 		TB = DocType("Time Block")
 
+		same_timespan = (TB.block_start_time == self.block_start_time) & (
+			TB.block_end_time == self.block_end_time
+		)
+		overlap = (
+			(TB.block_start_time < self.block_end_time) & (TB.block_end_time > self.block_start_time)
+		) | same_timespan
+
 		overlaps = (
 			frappe.qb.from_(TB)
 			.select(TB.name)
 			.where(TB.name != self.name)
-			.where(TB.docstatus == 1)
+			.where(TB.docstatus != 2)
 			.where(TB.status == "Active")
 			.where(TB.scope_type == self.scope_type)
 			.where(TB.scope == self.scope)
 			.where(TB.block_date == self.block_date)
-			.where(TB.block_start_time < self.block_end_time)
-			.where(TB.block_end_time > self.block_start_time)
+			.where(overlap)
 			.limit(1)
 			.run(as_dict=True)
 		)
@@ -86,5 +92,5 @@ class TimeBlock(Document):
 			]
 			html = "<br>".join(links)
 			frappe.throw(
-				_("Cannot block schedule, booked appointments in this scope and window:<br>{0}").format(html)
+				_("Cannot block time, booked appointments in this scope and window:<br>{0}").format(html)
 			)
