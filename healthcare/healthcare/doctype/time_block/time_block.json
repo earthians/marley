@@ -43,7 +43,8 @@
    "label": "Scope Type",
    "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Healthcare Practitioner\",\"Healthcare Service Unit\",\"Medical Department\"]]]",
    "options": "DocType",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -76,14 +77,16 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Block Date",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "allow_in_quick_entry": 1,
    "fieldname": "block_start_time",
    "fieldtype": "Time",
    "label": "Block Start Time",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "description": "In minutes",
@@ -103,7 +106,8 @@
    "fieldname": "block_end_time",
    "fieldtype": "Time",
    "label": "Block End Time",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -130,7 +134,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-18 19:10:18.613322",
+ "modified": "2025-08-19 11:58:33.800903",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Time Block",
