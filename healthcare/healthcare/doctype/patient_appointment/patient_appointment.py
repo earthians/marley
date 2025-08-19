@@ -782,26 +782,10 @@ def get_available_slots(practitioner_doc, date):
 					fields=["name", "appointment_time", "duration", "status", "appointment_date"],
 				)
 
-				time_blocks = frappe.get_all(
-					"Time Block",
-					filters={
-						"docstatus": 1,
-						"status": "Active",
-						"block_date": date,
-						"scope": [
-							"in",
-							[schedule_entry.service_unit, practitioner_doc.name, practitioner_doc.department],
-						],
-					},
-					fields=[
-						"name",
-						"block_start_time as appointment_time",
-						"block_duration as duration",
-						"status",
-						"block_date as appointment_date",
-					],
+				time_blocks = get_time_blocks(
+					date, practitioner, practitioner_doc.department, schedule_entry.service_unit
 				)
-				appointments.extend(time_blocks)  # consider as booked appointments
+				appointments.extend(time_blocks)  # consider time_blocks as booked appointments
 
 				slot_details.append(
 					{
@@ -815,6 +799,28 @@ def get_available_slots(practitioner_doc, date):
 					}
 				)
 	return slot_details
+
+
+def get_time_blocks(date, practitioner=None, department=None, service_unit=None):
+	return frappe.get_all(
+		"Time Block",
+		filters={
+			"docstatus": 1,
+			"status": "Active",
+			"block_date": date,
+			"scope": [
+				"in",
+				[practitioner, department, service_unit],
+			],
+		},
+		fields=[
+			"name",
+			"block_start_time as appointment_time",
+			"block_duration as duration",
+			"status",
+			"block_date as appointment_date",
+		],
+	)
 
 
 def validate_practitioner_schedules(schedule_entry, practitioner):
