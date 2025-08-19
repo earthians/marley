@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import get_time, getdate, nowdate
+from frappe.utils import nowdate
 
 # On IntegrationTestCase, the doctype test records and all
 # link-field test record dependencies are recursively loaded
@@ -21,8 +21,9 @@ class IntegrationTestTimeBlock(IntegrationTestCase):
 	"""
 
 	def setUp(self):
-		frappe.db.sql("""delete from `tabTime Block`""")
+		frappe.db.sql("delete from `tabTime Block`")
 		frappe.db.sql("delete from `tabPatient Appointment`")
+		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
 
 	def create_time_block(self, start, end, scope=None, scope_type=None, date=None):
 		return frappe.get_doc(

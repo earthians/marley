@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import DocType
-from frappe.utils import format_datetime, get_link_to_form, get_time, getdate, time_diff_in_seconds
+from frappe.utils import get_link_to_form, get_time, getdate, time_diff_in_seconds
 
 
 class TimeBlock(Document):
@@ -22,10 +22,10 @@ class TimeBlock(Document):
 
 	def validate_start_and_end(self):
 		if not self.block_start_time or not self.block_end_time:
-			frappe.throw("Time Block Start and End times are required.")
+			frappe.throw(_("Time Block Start and End times are required."))
 
 		if self.block_end_time <= self.block_start_time:
-			frappe.throw("Time Block End time must be after Start time.")
+			frappe.throw(_("Time Block End time must be after Start time."))
 
 	def validate_overlapping_blocks(self):
 		TB = DocType("Time Block")
@@ -85,11 +85,7 @@ class TimeBlock(Document):
 		)
 
 		if appointments:
-			links = [
-				f"{get_link_to_form('Patient Appointment', a['name'])} "
-				f"({format_datetime(a['appointment_datetime'])} to {format_datetime(a['appointment_end_datetime'])})"
-				for a in appointments
-			]
+			links = [f"{get_link_to_form('Patient Appointment', a['name'])}" for a in appointments]
 			html = "<br>".join(links)
 			frappe.throw(
 				_("Cannot block time, booked appointments in this scope and window:<br>{0}").format(html)
