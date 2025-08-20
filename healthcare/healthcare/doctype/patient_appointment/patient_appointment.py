@@ -11,7 +11,8 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, format_date, get_link_to_form, get_time, getdate
+from frappe.query_builder import DocType
+from frappe.utils import flt, format_date, get_datetime, get_link_to_form, get_time, getdate
 
 from erpnext.setup.doctype.employee.employee import is_holiday
 
@@ -44,6 +45,7 @@ class PatientAppointment(Document):
 		self.validate_based_on_appointments_for()
 		self.validate_service_unit()
 		self.set_appointment_datetime()
+		self.validate_time_blocks()
 		self.validate_customer_created()
 		self.set_status()
 		self.set_title()
@@ -279,14 +281,57 @@ class PatientAppointment(Document):
 				)
 				frappe.throw(msg, title=_("Invalid Healthcare Service Unit"))
 
+	def validate_time_blocks(self):
+		if self.appointment_for != "Practitioner":
+			return
+
+		start_dt = get_datetime(self.appointment_datetime)
+		end_dt = get_datetime(self.appointment_end_datetime)
+
+		scopes = []
+		if self.get("service_unit"):
+			scopes.append(self.service_unit)
+		if self.get("practitioner"):
+			scopes.append(self.practitioner)
+		if self.get("department"):
+			scopes.append(self.department)
+
+		TB = DocType("Time Block")
+		candidate_dates = sorted({getdate(start_dt), getdate(end_dt)})
+		rows = (
+			frappe.qb.from_(TB)
+			.select(TB.name, TB.block_date, TB.block_start_time, TB.block_end_time, TB.scope)
+			.where(TB.docstatus != 2)
+			.where(TB.status == "Active")
+			.where(TB.scope.isin(scopes))  # for now, scope_type agnostic match
+			.where(TB.block_date.isin(candidate_dates))
+			.orderby(TB.block_date, TB.block_start_time)
+			.run(as_dict=True)
+		)
+
+		blocks = []
+		for r in rows:
+			b_start = datetime.datetime.combine(getdate(r["block_date"]), get_time(r["block_start_time"]))
+			b_end = datetime.datetime.combine(getdate(r["block_date"]), get_time(r["block_end_time"]))
+			if (b_start < end_dt) and (b_end > start_dt):
+				blocks.append(r)
+
+		if blocks:
+			links = [f"{get_link_to_form('Time Block', c['name'])}" for c in blocks]
+			html = "<br>".join(links)
+			frappe.throw(_("This appointment conflicts with Time Blocks:<br>{0}").format(html))
+
 	def set_appointment_datetime(self):
 		self.appointment_datetime = "%s %s" % (
 			self.appointment_date,
 			self.appointment_time or "00:00:00",
 		)
-		self.appointment_end_datetime = datetime.datetime.combine(
-			getdate(self.appointment_date), get_time(self.appointment_time)
-		) + datetime.timedelta(minutes=flt(self.duration))
+		self.appointment_end_datetime = (
+			datetime.datetime.combine(
+				getdate(self.appointment_date), get_time(self.appointment_time or "00:00:00")
+			)
+			+ datetime.timedelta(minutes=flt(self.duration or 0))
+		).strftime("%Y-%m-%d %H:%M:%S")
 
 	def set_payment_details(self):
 		if frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):

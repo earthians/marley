@@ -705,6 +705,78 @@ class TestPatientAppointment(IntegrationTestCase):
 			frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Closed"
 		)
 
+	def test_time_block_service_unit_scope(self):
+		patient, practitioner = create_healthcare_docs()
+		create_time_block(start="10:00", end="11:00", scope="Service Unit-A")
+		with self.assertRaises(frappe.ValidationError):
+			create_appointment(
+				patient,
+				practitioner,
+				appointment_time="10:30",
+				service_unit="Service Unit-A",
+			)
+
+	def test_time_block_department_scope(self):
+		patient, practitioner = create_healthcare_docs()
+		create_time_block(start="09:00", end="10:00", scope="Ortho")
+		with self.assertRaises(frappe.ValidationError):
+			create_appointment(
+				patient,
+				practitioner,
+				appointment_time="09:30",
+				department="Ortho",
+			)
+
+	def test_time_block_practitioner_scope(self):
+		patient, practitioner = create_healthcare_docs()
+		create_time_block(start="08:00", end="09:00", scope=practitioner)
+		with self.assertRaises(frappe.ValidationError):
+			create_appointment(
+				patient,
+				practitioner,
+				appointment_time="08:30",
+			)
+
+	def test_time_block_touching(self):
+		patient, practitioner = create_healthcare_docs()
+		create_time_block(start="07:00", end="07:30", scope=practitioner)
+		create_appointment(
+			patient,
+			practitioner,
+			appointment_time="07:30",
+		)
+
+	def test_time_block_gap(self):
+		patient, practitioner = create_healthcare_docs()
+		create_time_block(start="16:00", end="16:30", scope=practitioner)
+		create_appointment(
+			patient,
+			practitioner,
+			appointment_time="16:31",
+		)
+
+	def test_time_block_other_scope(self):
+		patient, practitioner = create_healthcare_docs()
+		create_time_block(start="17:00", end="17:30")
+		create_appointment(
+			patient,
+			practitioner,
+			appointment_time="17:15",
+		)
+
+
+def create_time_block(start, end, scope=None, scope_type=None, date=None):
+	return frappe.get_doc(
+		{
+			"doctype": "Time Block",
+			"block_date": date or nowdate(),
+			"block_start_time": start,
+			"block_end_time": end,
+			"scope_type": scope_type or "Healthcare Service Unit",
+			"scope": scope or "Service Unit-A",
+		}
+	).insert(ignore_permissions=True, ignore_links=True, ignore_if_duplicate=True)
+
 
 def create_healthcare_docs(id=0):
 	patient = create_patient(id)
