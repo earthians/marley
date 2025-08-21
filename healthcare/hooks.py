@@ -274,27 +274,9 @@ domains = {
 # nosemgrep
 standard_portal_menu_items = [
 	{
-		"title": "Personal Details",
-		"route": "/personal-details",
+		"title": "Patient Portal",
+		"route": "/patient-portal",
 		"reference_doctype": "Patient",
-		"role": "Patient",
-	},
-	{
-		"title": "Lab Test",
-		"route": "/lab-test",
-		"reference_doctype": "Lab Test",
-		"role": "Patient",
-	},
-	{
-		"title": "Prescription",
-		"route": "/prescription",
-		"reference_doctype": "Patient Encounter",
-		"role": "Patient",
-	},
-	{
-		"title": "Patient Appointment",
-		"route": "/patient-appointments",
-		"reference_doctype": "Patient Appointment",
 		"role": "Patient",
 	},
 ]

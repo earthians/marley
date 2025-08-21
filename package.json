@@ -1,0 +1,15 @@
+{
+    "name": "healthcare",
+    "version": "1.0.0",
+    "type": "commonjs",
+    "private": true,
+    "workspaces": ["patient_portal", "frappe-ui"],
+    "scripts": {
+        "postinstall": "cd patient_portal && yarn install",
+        "build": "cd patient_portal && yarn build"
+    },
+    "main": "commitlint.config.js",
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}

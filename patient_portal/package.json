@@ -1,0 +1,25 @@
+{
+  "name": "patient_portal",
+  "version": "1.0.0",
+  "main": "patient_portal.js",
+  "license": "MIT",
+  "dependencies": {
+    "feather-icons": "^4.28.0",
+    "frappe-ui": "^0.1.176",
+    "vue": "^3.2.25",
+    "vue-router": "^4.0.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "4.2.3",
+    "autoprefixer": "^10.4.2",
+    "postcss": "^8.4.5",
+    "tailwindcss": "3.4.15",
+    "vite": "4.4.9"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=/assets/healthcare/patient_portal/"
+  },
+  "private": true,
+  "type": "module"
+}
