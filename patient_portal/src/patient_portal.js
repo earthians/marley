@@ -11,7 +11,8 @@ import {
 	setConfig,
 	frappeRequest,
 	FeatherIcon,
-	Tooltip
+	Tooltip,
+	Card
 } from 'frappe-ui'
 
 let globalComponents = {
@@ -19,7 +20,8 @@ let globalComponents = {
 	Dialog,
 	Badge,
 	FeatherIcon,
-	Tooltip
+	Tooltip,
+	Card
 }
 
 let app = createApp(PatientPortal)

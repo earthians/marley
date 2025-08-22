@@ -1774,36 +1774,3 @@ def add_node():
 		args.parent_healthcare_service_unit = None
 
 	frappe.get_doc(args).insert()
-
-
-@frappe.whitelist()
-def get_appointments():
-	from frappe.query_builder import Order
-
-	patients = []
-	filters = {"status": "Active"}
-	if frappe.session.user != "Administrator":
-		filters["user_id"] = frappe.session.user
-
-	patients = frappe.db.get_all("Patient", filters=filters, pluck="name")
-
-	appointment = frappe.qb.DocType("Patient Appointment")
-	encounter = frappe.qb.DocType("Patient Encounter")
-	practitioner = frappe.qb.DocType("Healthcare Practitioner")
-	query = (
-		frappe.qb.from_(appointment)
-		.left_join(encounter)
-		.on((appointment.name == encounter.appointment) & (encounter.docstatus == 1))
-		.left_join(practitioner)
-		.on(appointment.practitioner == practitioner.name)
-		.select(appointment.star)
-		.select(encounter.name.as_("encounter"))
-		.select(practitioner.image.as_("practitioner_image"))
-		.where(appointment.patient.isin(patients))
-		.where(appointment.appointment_for == "Practitioner")
-		.orderby(appointment.appointment_date, order=Order.desc)
-	)
-
-	appointment_details = query.run(as_dict=True)
-
-	return appointment_details

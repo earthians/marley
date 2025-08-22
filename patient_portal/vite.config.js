@@ -21,7 +21,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // interactjs: 'interactjs/dist/interact.min.js',
     },
   },
   build: {
@@ -39,19 +38,6 @@ export default defineConfig({
       'frappe-ui > feather-icons',
       "tailwind.config.js",
       'engine.io-client',
-      // 'highlight.js',
-      // 'lowlight',
-      // 'interactjs'
     ],
   },
-  server: {
-    sourcemapIgnoreList: () => false,
-  },
-  // define: {
-  //   __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
-  // },
-  // worker: {
-	// 	format: "es",
-	// },
-  base: "/assets/healthcare/patient_portal/assets/"
 })

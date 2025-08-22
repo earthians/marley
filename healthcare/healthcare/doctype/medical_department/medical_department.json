@@ -11,7 +11,9 @@
  "engine": "InnoDB",
  "field_order": [
   "department",
-  "patient_care_type"
+  "patient_care_type",
+  "show_in_portal",
+  "portal_image"
  ],
  "fields": [
   {
@@ -30,10 +32,22 @@
    "in_standard_filter": 1,
    "label": "Patient Care Type",
    "options": "Patient Care Type"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_in_portal",
+   "fieldtype": "Check",
+   "label": "Show in Portal"
+  },
+  {
+   "fieldname": "portal_image",
+   "fieldtype": "Attach Image",
+   "label": "Portal Image",
+   "make_attachment_public": 1
   }
  ],
  "links": [],
- "modified": "2021-03-14 20:34:43.328918",
+ "modified": "2025-08-20 16:08:05.741634",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medical Department",
@@ -84,9 +98,11 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "department",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "department",
  "track_changes": 1
 }

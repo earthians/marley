@@ -10,6 +10,9 @@ declare module 'vue' {
   export interface GlobalComponents {
     BookAppointmentModel: typeof import('./src/components/BookAppointmentModel.vue')['default']
     Calendar: typeof import('./src/components/Calendar.vue')['default']
+    DepartmentSelector: typeof import('./src/components/DepartmentSelector.vue')['default']
+    Payment: typeof import('./src/components/Payment.vue')['default']
+    PractitionerSelector: typeof import('./src/components/PractitionerSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

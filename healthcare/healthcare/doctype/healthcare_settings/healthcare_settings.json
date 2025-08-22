@@ -64,7 +64,11 @@
   "laboratory_sms_alerts",
   "sms_printed",
   "column_break_28",
-  "sms_emailed"
+  "sms_emailed",
+  "patient_portal_tab",
+  "default_appointment_type",
+  "column_break_nxka",
+  "collect_payment"
  ],
  "fields": [
   {
@@ -428,11 +432,33 @@
    "fieldname": "naming_series_for_journal_entry",
    "fieldtype": "Select",
    "label": "Naming Series for Insurance Coverage Journal Entry"
+  },
+  {
+   "fieldname": "patient_portal_tab",
+   "fieldtype": "Tab Break",
+   "label": "Patient Portal"
+  },
+  {
+   "default": "0",
+   "description": "To enable this feature need Payments App",
+   "fieldname": "collect_payment",
+   "fieldtype": "Check",
+   "label": "Collect Payment on Portal"
+  },
+  {
+   "fieldname": "default_appointment_type",
+   "fieldtype": "Link",
+   "label": "Default Appointment Type",
+   "options": "Appointment Type"
+  },
+  {
+   "fieldname": "column_break_nxka",
+   "fieldtype": "Column Break"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-04-22 11:13:12.299816",
+ "modified": "2025-08-27 17:06:38.137455",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
@@ -447,6 +473,10 @@
    "role": "Healthcare Administrator",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Patient"
   }
  ],
  "quick_entry": 1,

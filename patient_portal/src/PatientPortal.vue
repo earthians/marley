@@ -8,17 +8,32 @@
 			]">
 				<template #tab-panel="{ tab }">
 					<div v-if="tab.label == 'Appointments'">
+						<div class="flex justify-end m-2">
+							<Button
+								variant="solid"
+								:label="'Book'"
+								@click="make_appointment_dialog = true"
+							>
+								<template #prefix>
+									<FeatherIcon name="plus" class="h-4" />
+								</template>
+							</Button>
+						</div>
 						<div class="space-y-2">
 							<!-- Appointment Grid -->
 							<div
-								class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[75vh] overflow-y-auto p-2">
-								<Card v-for="item in paginatedAppointments" :key="item.name"
-									class="cursor-pointer rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:scale-105 transition-transform duration-200 p-4 bg-white"
-									:class="{
-										'ring-2 ring-blue-500': selectedAppointment === item.name,
-									}" @click="appointmentDetails(item)">
+								class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2
+										max-h-[75vh] overflow-y-auto
+										lg:max-h-none lg:overflow-visible"
+								>
+								<Card
+									v-for="item in paginatedAppointments" :key="item.name"
+									class="cursor-pointer rounded-xl shadow-sm border border-gray-200
+										hover:shadow-md hover:scale-105 transition-transform duration-200
+										p-4 bg-white min-w-0"
+									@click="appointmentDetails(item)">
 									<div class="flex items-center justify-between whitespace-nowrap">
-										<h3 class="text-xs font-medium text-gray-500">{{ item.name }}</h3>
+										<h3 class="text-xs font-medium text-gray-500 truncate">{{ item.name }}</h3>
 										<Badge :variant="'outline'"
 											:theme="['Confirmed', 'Closed', 'Checked In'].includes(item.status) ? 'green' : 'orange'">
 											{{ item.status }}
@@ -61,23 +76,29 @@
 		</div>
 	</div>
 
+	<BookAppointmentModel
+		v-if="make_appointment_dialog"
+		v-model="make_appointment_dialog"
+		@appointment_booked="get_appointments.reload()"
+	/>
+
 	<Dialog v-model="appointment_details" :options="{
 		size: '4xl',
 	}">
 		<template #body-title>
 			<div>
 				<h2 class="text-xl font-semibold text-gray-900">Appointment Details</h2>
-				<p class="mt-1 text-sm text-gray-500">#{{ selectedAppointment.name }}</p>
+			</div>
+			<div class="py-2 flex items-center justify-between gap-2">
+				<p class="text-sm text-gray-500">#{{ selectedAppointment.name }}</p>
+				<Badge :variant="'outline'" size="sm"
+					:theme="['Confirmed', 'Closed', 'Checked In'].includes(selectedAppointment.status) ? 'green' : 'orange'">
+					{{ selectedAppointment.status }}
+				</Badge>
 			</div>
 		</template>
 		<template #body-content>
 			<div class="p-2">
-				<div class="flex justify-end mr-2">
-					<Badge :variant="'outline'"
-						:theme="['Confirmed', 'Closed', 'Checked In'].includes(selectedAppointment.status) ? 'green' : 'orange'">
-						{{ selectedAppointment.status }}
-					</Badge>
-				</div>
 				<div class="rounded-xl shadow-sm p-4 bg-gray-50 space-y-6">
 					<div class="flex items-start gap-6">
 						<img v-if="selectedAppointment.practitioner_image" :src="selectedAppointment.practitioner_image"
@@ -94,7 +115,7 @@
 									selectedAppointment.practitioner_name }}</p>
 								<p class="mt-1 text-sm text-gray-600">{{ selectedAppointment.department }}</p>
 								<div class="mt-4">
-									<h3 class="text-gray-700 font-medium">Date & Time</h3>
+									<h3 class="text-gray-700 font-medium">When</h3>
 									<p class="mt-1 text-lg font-semibold text-gray-900">
 										{{ formatDate(selectedAppointment.appointment_date) }}
 									</p>
@@ -118,14 +139,14 @@
 								<p class="mt-1 text-sm text-gray-600">Sex: {{ selectedAppointment.patient_sex }}</p>
 								<div class="mt-4">
 									<div class="flex items-center justify-between">
-										<h3 class="text-gray-700 font-medium">Payment</h3>
+										<h3 class="text-gray-700 font-medium">Fee</h3>
 										<Badge :variant="'outline'"
 											:theme="selectedAppointment.invoiced == 1 ? 'green' : 'red'">
 											{{ selectedAppointment.invoiced ? 'Paid' : 'Unpaid' }}
 										</Badge>
 									</div>
 									<p class="mt-1 text-lg font-semibold text-gray-900">
-										₹{{ selectedAppointment.paid_amount }}
+										{{ formatCurrency(selectedAppointment.paid_amount, selectedAppointment.default_currency) }}
 									</p>
 									<p class="mt-1 text-sm text-gray-600">{{ selectedAppointment.billing_item }}</p>
 								</div>
@@ -137,8 +158,8 @@
 		</template>
 		<template #actions>
 			<div class="flex justify-center gap-2" v-if="selectedAppointment.encounter">
-				<Button :ref_for="true" theme="gray" size="md" label="print_si"
-					@click="print_encounter(selectedAppointment.encounter)">
+				<Button :ref_for="true" theme="gray" size="md" label="print_encounter"
+					@click="print('Patient Encounter', selectedAppointment.encounter)">
 					<Tooltip :text="'Print Prescription'" placement="top">
 						<slot name="icon">
 							<FeatherIcon :name="'printer'" class="size-4 text-ink-white-7" />
@@ -168,6 +189,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import BookAppointmentModel from '@/components/BookAppointmentModel.vue'
+import { formatCurrency } from "@/utils/formatters"
 
 import {
 	createResource,
@@ -179,6 +202,7 @@ import {
 } from 'frappe-ui'
 
 let appointment_details = ref(false);
+let make_appointment_dialog = ref(false);
 let alert_dialog = ref(false);
 
 let appointments = ref([]);
@@ -192,7 +216,7 @@ let dialog_title = ref("");
 let dialog_message = ref("");
 
 let get_appointments = createResource({
-	url: "/api/method/healthcare.healthcare.utils.get_appointments",
+	url: "/api/method/healthcare.healthcare.api.patient_portal.get_appointments",
 	method: "GET",
 	onSuccess(response) {
 		if (response) {
@@ -207,23 +231,33 @@ let get_appointments = createResource({
 });
 get_appointments.fetch();
 
+let set_logged_in_patient = createResource({
+	url: "/api/method/healthcare.healthcare.api.patient_portal.get_logged_in_patient",
+	method: "GET",
+	onSuccess(response) {
+		if (response) {
+			localStorage.setItem("patient", JSON.stringify(response));
+		}
+	},
+	onError(error) {
+		dialog_message = error.messages?.[0] || error;
+		dialog_title = "Failed to load appointments";
+		alert_dialog.value = true;
+	}
+});
+set_logged_in_patient.fetch();
+
 function appointmentDetails(appointment) {
 	selectedAppointment.value = appointment;
 	appointment_details.value = true;
 }
 
-function print_encounter(encounter) {
-	const doc_names = JSON.stringify([encounter,]);
+function print(doctype, docname) {
 	const w = window.open(
-		"/api/method/frappe.utils.print_format.download_multi_pdf?" +
-		"doctype=" +
-		encodeURIComponent("Patient Encounter") +
-		"&name=" +
-		encodeURIComponent(doc_names) +
-		"&format=" +
-		encodeURIComponent('Standard') +
-		"&no_letterhead=1" +
-		"&letterhead=No Letterhead"
+		"/api/method/healthcare.healthcare.api.patient_portal.secure_print_pdf"
+		+ "?doctype=" + encodeURIComponent(doctype)
+		+ "&name=" + docname
+		+ "&no_letterhead=0"
 	);
 
 	if (!w) {

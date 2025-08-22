@@ -5,6 +5,8 @@
 
 import json
 
+import razorpay
+
 import frappe
 from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
@@ -110,3 +112,58 @@ def get_account(parent_type, parent_field, parent, company):
 		return frappe.db.get_value(
 			"Party Account", {"parentfield": parent_field, "parent": parent, "company": company}, "account"
 		)
+
+
+@frappe.whitelist()
+def create_razorpay_order(fee=0, appointment=None):
+	if not "payments" in frappe.get_installed_apps():
+		frappe.throw("Install Payments app and Setup razorpay via RazorPay Settings")
+
+	user = frappe.session.user
+	if user == "Guest":
+		frappe.throw("Not Permitted", frappe.AuthenticationError)
+
+	client = get_razorpay_client()
+
+	data = {
+		"amount": int(round(fee, 2) * 100),
+		"currency": "INR",
+		"notes": {
+			"Description": "Order for Consultation Charge",
+			"User": user,
+			"appointment": appointment,
+		},
+	}
+
+	order = client.order.create(data=data)
+
+	payment_record = frappe.get_doc(
+		{"doctype": "Razorpay Payment Record", "order_id": order.get("id"), "user": user}
+	).insert(ignore_permissions=True)
+
+	return {
+		"order_id": order.get("id"),
+		"key_id": client.auth[0],
+		"payment_record": payment_record.name,
+		"user": user,
+	}
+
+
+def get_razorpay_client():
+	from frappe.utils.password import get_decrypted_password
+
+	if not hasattr(frappe.local, "press_razorpay_client_object"):
+		key_id = frappe.db.get_single_value("RazorPay Settings", "api_key")
+		key_secret = get_decrypted_password(
+			"RazorPay Settings",
+			"RazorPay Settings",
+			"api_secret",
+			raise_exception=False,
+		)
+
+		if not (key_id and key_secret):
+			frappe.throw("Setup razorpay via RazorPay Settings")
+
+		frappe.local.press_razorpay_client_object = razorpay.Client(auth=(key_id, key_secret))
+
+	return frappe.local.press_razorpay_client_object
