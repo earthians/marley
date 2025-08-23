@@ -21,7 +21,7 @@ class LabTest(Document):
 
 		validate_nursing_tasks(self)
 		self.validate_result_values()
-		self.db_set("submitted_date", getdate())
+		self.db_set("submitted_date", now_datetime())
 		self.db_set("status", "Completed")
 
 	def on_cancel(self):

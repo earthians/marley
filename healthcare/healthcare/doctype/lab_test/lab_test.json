@@ -207,13 +207,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "submitted_date",
-   "fieldtype": "Datetime",
-   "label": "Submitted Date",
-   "print_hide": 1,
-   "report_hide": 1
-  },
-  {
    "fieldname": "approved_date",
    "fieldtype": "Datetime",
    "hidden": 1,
@@ -586,6 +579,13 @@
    "fieldtype": "Link",
    "label": "Service Unit",
    "options": "Healthcare Service Unit"
+  },
+  {
+   "fieldname": "submitted_date",
+   "fieldtype": "Datetime",
+   "label": "Submitted Datetime",
+   "print_hide": 1,
+   "report_hide": 1
   }
  ],
  "is_submittable": 1,
@@ -595,7 +595,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-06-21 00:31:52.282467",
+ "modified": "2025-09-02 15:10:24.606548",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
