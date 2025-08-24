@@ -1,23 +1,26 @@
 {
  "actions": [],
- "autoname": "format:{scope}-{block_type}-{block_date}-{block_start_time}",
+ "autoname": "hash",
  "creation": "2025-08-18 13:09:12.917754",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "section_break_zjsh",
+  "type",
+  "reason",
   "scope_type",
   "scope",
-  "block_date",
-  "block_start_time",
-  "block_end_time",
-  "block_duration",
+  "amended_from",
+  "column_break_gsyx",
+  "start_date",
+  "start_time",
+  "end_date",
+  "end_time",
+  "duration",
   "column_break_wewi",
   "status",
-  "block_type",
   "note",
-  "section_break_binj",
-  "amended_from"
+  "title"
  ],
  "fields": [
   {
@@ -29,7 +32,7 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Time Block",
+   "options": "Practitioner Availability",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -71,74 +74,101 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "default": "Today",
-   "fieldname": "block_date",
-   "fieldtype": "Date",
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "type",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Block Date",
+   "label": "Type",
+   "options": "\nUnavailable\nAvailable",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time",
    "reqd": 1,
    "search_index": 1
   },
   {
    "allow_in_quick_entry": 1,
-   "fieldname": "block_start_time",
+   "default": "Today",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "End Date",
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "end_time",
    "fieldtype": "Time",
-   "label": "Block Start Time",
+   "label": "End Time",
    "reqd": 1,
    "search_index": 1
   },
   {
    "description": "In minutes",
-   "fieldname": "block_duration",
+   "fieldname": "duration",
    "fieldtype": "Int",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Block Duration",
+   "label": "Duration",
    "non_negative": 1,
    "precision": "0",
    "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_gsyx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "Today",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Start Date",
    "reqd": 1,
    "search_index": 1
   },
   {
    "allow_in_quick_entry": 1,
-   "fieldname": "block_end_time",
-   "fieldtype": "Time",
-   "label": "Block End Time",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "fieldname": "block_type",
+   "depends_on": "eval:doc.type != \"Available\"",
+   "fieldname": "reason",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Block Type",
-   "options": "Time Off\nBreak\nTraining\nTravel\nEmergency",
-   "reqd": 1
+   "label": "Reason",
+   "options": "\nTime Off\nBreak\nTraining\nTravel\nEmergency"
   },
   {
-   "fieldname": "section_break_binj",
-   "fieldtype": "Section Break"
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "fieldname": "note",
+   "fieldname": "title",
    "fieldtype": "Small Text",
-   "label": "Note"
+   "hidden": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-19 11:58:33.800903",
+ "modified": "2025-08-26 08:54:27.372261",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Time Block",
- "naming_rule": "Expression",
+ "name": "Practitioner Availability",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {

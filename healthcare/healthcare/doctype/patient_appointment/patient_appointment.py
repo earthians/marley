@@ -12,7 +12,8 @@ from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.query_builder import DocType
-from frappe.utils import flt, format_date, get_datetime, get_link_to_form, get_time, getdate
+from frappe.query_builder.functions import Coalesce
+from frappe.utils import add_to_date, flt, format_date, get_datetime, get_link_to_form, get_time, getdate
 
 from erpnext.setup.doctype.employee.employee import is_holiday
 
@@ -45,7 +46,7 @@ class PatientAppointment(Document):
 		self.validate_based_on_appointments_for()
 		self.validate_service_unit()
 		self.set_appointment_datetime()
-		self.validate_time_blocks()
+		self.validate_practitioner_unavailability()
 		self.validate_customer_created()
 		self.set_status()
 		self.set_title()
@@ -281,45 +282,44 @@ class PatientAppointment(Document):
 				)
 				frappe.throw(msg, title=_("Invalid Healthcare Service Unit"))
 
-	def validate_time_blocks(self):
-		if self.appointment_for != "Practitioner":
-			return
+	def validate_practitioner_unavailability(self):
+		scopes = [self.practitioner, self.department, self.service_unit]
+		# appointment window
+		if getattr(self, "appointment_datetime", None):
+			start_dt = get_datetime(self.appointment_datetime)
+		else:
+			if not (self.appointment_date and self.appointment_time):
+				frappe.throw("Appointment Date and Time are required.")
+			start_dt = get_datetime(f"{self.appointment_date} {self.appointment_time}")
 
-		start_dt = get_datetime(self.appointment_datetime)
-		end_dt = get_datetime(self.appointment_end_datetime)
+		if self.appointment_end_datetime:
+			end_dt = get_datetime(self.appointment_end_datetime)
+		else:
+			end_dt = add_to_date(start_dt, minutes=int(self.duration) or 0)
 
-		scopes = []
-		if self.get("service_unit"):
-			scopes.append(self.service_unit)
-		if self.get("practitioner"):
-			scopes.append(self.practitioner)
-		if self.get("department"):
-			scopes.append(self.department)
+		if end_dt <= start_dt:
+			frappe.throw(_("Appointment end must be after start."))
 
-		TB = DocType("Time Block")
-		candidate_dates = sorted({getdate(start_dt), getdate(end_dt)})
-		rows = (
-			frappe.qb.from_(TB)
-			.select(TB.name, TB.block_date, TB.block_start_time, TB.block_end_time, TB.scope)
-			.where(TB.docstatus != 2)
-			.where(TB.status == "Active")
-			.where(TB.scope.isin(scopes))  # for now, scope_type agnostic match
-			.where(TB.block_date.isin(candidate_dates))
-			.orderby(TB.block_date, TB.block_start_time)
-			.run(as_dict=True)
+		rows = frappe.get_all(
+			"Practitioner Availability",
+			fields=["name", "start_date", "end_date", "start_time", "end_time"],
+			filters={"type": "Unavailable", "docstatus": ("!=", 2), "scope": ["in", scopes]},
+			order_by="start_date asc, start_time asc",
 		)
 
-		blocks = []
+		conflicts = []
 		for r in rows:
-			b_start = datetime.datetime.combine(getdate(r["block_date"]), get_time(r["block_start_time"]))
-			b_end = datetime.datetime.combine(getdate(r["block_date"]), get_time(r["block_end_time"]))
-			if (b_start < end_dt) and (b_end > start_dt):
-				blocks.append(r)
+			r_start = get_datetime(f"{r.get('start_date')} {r.get('start_time')}")
+			r_end_date = r.get("end_date") or r["start_date"]
+			r_end = get_datetime(f"{r_end_date} {r.get('end_time')}")
+			if (start_dt < r_end) and (r_start < end_dt):
+				conflicts.append(r["name"])
 
-		if blocks:
-			links = [f"{get_link_to_form('Time Block', c['name'])}" for c in blocks]
-			html = "<br>".join(links)
-			frappe.throw(_("This appointment conflicts with Time Blocks:<br>{0}").format(html))
+		if conflicts:
+			msg = ", ".join(frappe.bold(n) for n in conflicts)
+			frappe.throw(
+				_(f"This Appointment conflicts with Practitioner Availability of type 'Unavailable': {msg}.")
+			)
 
 	def set_appointment_datetime(self):
 		self.appointment_datetime = "%s %s" % (
@@ -827,10 +827,12 @@ def get_available_slots(practitioner_doc, date):
 					fields=["name", "appointment_time", "duration", "status", "appointment_date"],
 				)
 
-				time_blocks = get_time_blocks(
+				practitioner_availability = get_practitioner_unavailability(
 					date, practitioner, practitioner_doc.department, schedule_entry.service_unit
 				)
-				appointments.extend(time_blocks)  # consider time_blocks as booked appointments
+				appointments.extend(
+					practitioner_availability
+				)  # consider practitioner_availability as booked appointments
 
 				slot_details.append(
 					{
@@ -846,25 +848,26 @@ def get_available_slots(practitioner_doc, date):
 	return slot_details
 
 
-def get_time_blocks(date, practitioner=None, department=None, service_unit=None):
+def get_practitioner_unavailability(date, practitioner=None, department=None, service_unit=None):
+	scopes = (practitioner, department, service_unit)
+	date = getdate(date)
+
 	return frappe.get_all(
-		"Time Block",
-		filters={
-			"docstatus": 1,
-			"status": "Active",
-			"block_date": date,
-			"scope": [
-				"in",
-				[practitioner, department, service_unit],
-			],
-		},
+		"Practitioner Availability",
 		fields=[
 			"name",
-			"block_start_time as appointment_time",
-			"block_duration as duration",
-			"status",
-			"block_date as appointment_date",
+			"start_date as appointment_date",
+			"start_time as appointment_time",
+			"duration",
 		],
+		filters = {
+			"type": "Unavailable",
+			"docstatus": 1,
+			"start_date": ("<=", date),
+			"end_date": (">=", date),
+			"scope": ["in", [scopes]],
+		},
+		order_by="start_time",
 	)
 
 
