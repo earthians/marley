@@ -21,21 +21,20 @@
 						</div>
 						<div class="space-y-2">
 							<!-- Appointment Grid -->
-							<div
-								class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2
-										max-h-[75vh] overflow-y-auto
-										lg:max-h-none lg:overflow-visible"
-								>
+							<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2
+									max-h-[75vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
 								<Card
-									v-for="item in paginatedAppointments" :key="item.name"
-									class="cursor-pointer rounded-xl shadow-sm border border-gray-200
-										hover:shadow-md hover:scale-105 transition-transform duration-200
-										p-4 bg-white min-w-0"
-									@click="appointmentDetails(item)">
+									v-for="item in paginatedAppointments"
+									:key="item.name"
+									class="cursor-pointer rounded-xl border border-gray-200 transition-transform
+										hover:scale-105 duration-200 hover:drop-shadow-md p-4 bg-white
+										min-w-0 !shadow-none drop-shadow-xl"
+									@click="appointmentDetails(item)"
+								>
 									<div class="flex items-center justify-between whitespace-nowrap">
 										<h3 class="text-xs font-medium text-gray-500 truncate">{{ item.name }}</h3>
 										<Badge :variant="'outline'"
-											:theme="['Confirmed', 'Closed', 'Checked In'].includes(item.status) ? 'green' : 'orange'">
+											:theme="['Confirmed', 'Closed', 'Checked In'].includes(item.status) ? 'green' : item.status == 'Cancelled' ? 'red' : 'orange'">
 											{{ item.status }}
 										</Badge>
 									</div>
@@ -90,82 +89,121 @@
 				<h2 class="text-xl font-semibold text-gray-900">Appointment Details</h2>
 			</div>
 			<div class="py-2 flex items-center justify-between gap-2">
-				<p class="text-sm text-gray-500">#{{ selectedAppointment.name }}</p>
-				<Badge :variant="'outline'" size="sm"
+				<p class="text-sm text-gray-500"># {{ selectedAppointment.name }}</p>
+				<Badge
+					:variant="'outline'"
+					size="sm"
 					:theme="['Confirmed', 'Closed', 'Checked In'].includes(selectedAppointment.status) ? 'green' : 'orange'">
 					{{ selectedAppointment.status }}
 				</Badge>
 			</div>
 		</template>
 		<template #body-content>
-			<div class="p-2">
-				<div class="rounded-xl shadow-sm p-4 bg-gray-50 space-y-6">
-					<div class="flex items-start gap-6">
-						<img v-if="selectedAppointment.practitioner_image" :src="selectedAppointment.practitioner_image"
-							class="w-20 h-20 rounded-full object-cover border" />
-						<div v-else
-							class="w-20 h-20 rounded-full object-cover border flex items-center justify-center text-gray-700 text-2xl font-semibold">
-							{{ selectedAppointment.practitioner_name.charAt(0).toUpperCase() }}
-						</div>
-
-						<div class="grid grid-cols-2 gap-6 flex-1">
-							<div>
-								<h3 class="text-gray-700 font-medium">Practitioner</h3>
-								<p class="mt-1 text-lg font-semibold text-gray-900">{{
-									selectedAppointment.practitioner_name }}</p>
-								<p class="mt-1 text-sm text-gray-600">{{ selectedAppointment.department }}</p>
-								<div class="mt-4">
-									<h3 class="text-gray-700 font-medium">When</h3>
-									<p class="mt-1 text-lg font-semibold text-gray-900">
-										{{ formatDate(selectedAppointment.appointment_date) }}
-									</p>
-									<p class="mt-1 text-sm text-gray-600">
-										{{ selectedAppointment.appointment_time }} ({{ selectedAppointment.duration }} mins)
-									</p>
-								</div>
-								<div class="mt-4" v-if="selectedAppointment.encounter">
-									<h3 class="text-gray-700 font-medium">Encounter ID</h3>
-									<p class="mt-1 text-lg font-semibold text-gray-900">{{ selectedAppointment.encounter
-										}}</p>
-								</div>
+			<div class="rounded-xl shadow-sm py-2 bg-gray-50">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:[&>section]:h-full">
+					<section class="md:col-start-1 md:row-start-1">
+						<div class="flex items-start gap-4 px-2">
+							<img v-if="selectedAppointment.patient_image" :src="selectedAppointment.patient_image"
+								class="w-20 h-20 rounded-full object-cover border" />
+							<div v-else
+								class="w-20 h-20 rounded-full flex items-center justify-center text-gray-700 text-2xl font-semibold border">
+								{{ selectedAppointment.patient_name?.charAt(0)?.toUpperCase() }}
 							</div>
-
 							<div>
 								<h3 class="text-gray-700 font-medium">Patient</h3>
 								<p class="mt-1 text-lg font-semibold text-gray-900">
 									{{ selectedAppointment.patient_name }}
 								</p>
-								<p class="mt-1 text-sm text-gray-600">{{ selectedAppointment.patient_email }}</p>
-								<p class="mt-1 text-sm text-gray-600">Sex: {{ selectedAppointment.patient_sex }}</p>
-								<div class="mt-4">
-									<div class="flex items-center justify-between">
-										<h3 class="text-gray-700 font-medium">Fee</h3>
-										<Badge :variant="'outline'"
-											:theme="selectedAppointment.invoiced == 1 ? 'green' : 'red'">
-											{{ selectedAppointment.invoiced ? 'Paid' : 'Unpaid' }}
-										</Badge>
-									</div>
+								<p class="mt-1 text-sm text-gray-600">
+									{{ selectedAppointment.patient_email }}
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section class="md:col-start-2 md:row-start-1">
+						<div>
+							<h3 class="text-gray-700 font-medium">When</h3>
+							<p class="mt-1 text-lg font-semibold text-gray-900">
+								{{ formatDate(selectedAppointment.appointment_date) }}
+							</p>
+							<p class="mt-1 text-sm text-gray-600">
+								{{ selectedAppointment.appointment_time }} ({{ selectedAppointment.duration }} mins)
+							</p>
+						</div>
+					</section>
+
+					<section class="md:col-start-1 md:row-start-2">
+						<div class="flex items-start gap-4 px-2">
+							<img v-if="selectedAppointment.practitioner_image"
+								:src="selectedAppointment.practitioner_image"
+								class="w-20 h-20 rounded-full object-cover border" />
+							<div v-else
+								class="w-20 h-20 rounded-full flex items-center justify-center text-gray-700 text-2xl font-semibold border">
+								{{ selectedAppointment.practitioner_name?.charAt(0)?.toUpperCase() }}
+							</div>
+							<div>
+								<h3 class="text-gray-700 font-medium">Practitioner</h3>
+								<p class="mt-1 text-lg font-semibold text-gray-900">
+									{{ selectedAppointment.practitioner_name }}
+								</p>
+								<p class="mt-1 text-sm text-gray-600">
+									{{ selectedAppointment.department }}
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section class="md:col-start-2 md:row-start-2">
+						<div>
+							<div class="flex items-center justify-between">
+								<h3 class="text-gray-700 font-medium">Fee</h3>
+								<div class="flex items-center justify-between gap-2">
+									<Badge :variant="'outline'"
+										:theme="selectedAppointment.invoiced == 1 ? 'green' : 'red'">
+										{{ selectedAppointment.invoiced ? 'Paid' : 'Unpaid' }}
+									</Badge>
+									<Button v-if="selectedAppointment.ref_sales_invoice" :ref_for="true" theme="gray" size="md"
+										@click="print('Sales Invoice', selectedAppointment.ref_sales_invoice)">
+										<Tooltip :text="'Print Invoice'" placement="top">
+											<slot name="icon">
+												<FeatherIcon :name="'printer'" class="size-4 text-ink-white-7" />
+											</slot>
+										</Tooltip>
+									</Button>
+								</div>
+							</div>
+							<p class="mt-1 text-lg font-semibold text-gray-900">
+								{{ formatCurrency(selectedAppointment.paid_amount, selectedAppointment.default_currency) }}
+							</p>
+							<p v-if="selectedAppointment.ref_sales_invoice" class="mt-1 text-sm text-gray-600">
+								# {{ selectedAppointment.ref_sales_invoice }}
+							</p>
+						</div>
+					</section>
+
+					<section v-if="selectedAppointment.encounter" class="md:col-start-1 md:row-start-3">
+						<div class="flex items-start gap-4 px-2">
+							<div class="w-20"></div>
+							<div>
+								<h3 class="text-gray-700 font-medium">Prescription ID</h3>
+								<div class="flex items-center justify-between gap-10">
 									<p class="mt-1 text-lg font-semibold text-gray-900">
-										{{ formatCurrency(selectedAppointment.paid_amount, selectedAppointment.default_currency) }}
+										{{ selectedAppointment.encounter }}
 									</p>
-									<p class="mt-1 text-sm text-gray-600">{{ selectedAppointment.billing_item }}</p>
+									<Button :ref_for="true" theme="gray" size="md"
+										@click="print('Patient Encounter', selectedAppointment.encounter)">
+										<Tooltip :text="'Print Prescription'" placement="top">
+											<slot name="icon">
+												<FeatherIcon :name="'printer'" class="size-4 text-ink-white-7" />
+											</slot>
+										</Tooltip>
+									</Button>
 								</div>
 							</div>
 						</div>
-					</div>
+					</section>
 				</div>
-			</div>
-		</template>
-		<template #actions>
-			<div class="flex justify-center gap-2" v-if="selectedAppointment.encounter">
-				<Button :ref_for="true" theme="gray" size="md" label="print_encounter"
-					@click="print('Patient Encounter', selectedAppointment.encounter)">
-					<Tooltip :text="'Print Prescription'" placement="top">
-						<slot name="icon">
-							<FeatherIcon :name="'printer'" class="size-4 text-ink-white-7" />
-						</slot>
-					</Tooltip>
-				</Button>
 			</div>
 		</template>
 	</Dialog>
