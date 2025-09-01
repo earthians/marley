@@ -53,20 +53,10 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Insurance",
-   "link_count": 5,
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Insurance Claim",
-   "link_count": 0,
-   "link_to": "Insurance Claim",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   },
   {
    "hidden": 0,
@@ -81,9 +71,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Payor Contract",
+   "label": "Insurance Claim",
    "link_count": 0,
-   "link_to": "Insurance Payor Contract",
+   "link_to": "Insurance Claim",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -101,9 +91,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Sales Invoice",
+   "label": "Payor Contract",
    "link_count": 0,
-   "link_to": "Sales Invoice",
+   "link_to": "Insurance Payor Contract",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -120,9 +110,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Insurance Payor Eligibility Plan",
+   "label": "Item Insurance Eligibility",
    "link_count": 0,
-   "link_to": "Insurance Payor Eligibility Plan",
+   "link_to": "Item Insurance Eligibility",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -130,15 +120,15 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Item Insurance Eligibility",
+   "label": "Insurance Payor Eligibility Plan",
    "link_count": 0,
-   "link_to": "Item Insurance Eligibility",
+   "link_to": "Insurance Payor Eligibility Plan",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-06-06 10:53:41.159676",
+ "modified": "2025-09-01 17:56:59.811882",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance",

@@ -6,7 +6,7 @@
    "label": "Medication Revenue"
   }
  ],
- "content": "[{\"id\":\"V7llpJFQ8D\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Medication Revenue\",\"col\":12}},{\"id\":\"6Aww2TK-VQ\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"Hgg4aNAx5o\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Medications\",\"col\":4}},{\"id\":\"I202pke_aS\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Sales Value\",\"col\":4}},{\"id\":\"NmFWNYzxh3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Expiring Items\",\"col\":4}},{\"id\":\"ZUm4NBsrGA\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"zrx9RbU9XA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication\",\"col\":3}},{\"id\":\"vKq5TE0HbR\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Request\",\"col\":3}},{\"id\":\"YmwmPc4DJe\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"Nq1uRnnpj9\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item\",\"col\":3}},{\"id\":\"b0aGZQiaN6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"iNmr-e-G6K\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"G3TPZlXvuv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Ledger\",\"col\":3}},{\"id\":\"lq9dYBBU7c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"yTy64zFquo\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"6dB7f5wsqb\",\"type\":\"card\",\"data\":{\"card_name\":\"Pharmacy\",\"col\":4}},{\"id\":\"48CGMZXNfK\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Tools\",\"col\":4}},{\"id\":\"jF8iUCRgr5\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}}]",
+ "content": "[{\"id\":\"V7llpJFQ8D\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Medication Revenue\",\"col\":12}},{\"id\":\"6Aww2TK-VQ\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"Hgg4aNAx5o\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Medications\",\"col\":4}},{\"id\":\"I202pke_aS\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Sales Value\",\"col\":4}},{\"id\":\"NmFWNYzxh3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Expiring Items\",\"col\":4}},{\"id\":\"ZUm4NBsrGA\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"zrx9RbU9XA\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication\",\"col\":3}},{\"id\":\"vKq5TE0HbR\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Request\",\"col\":3}},{\"id\":\"YmwmPc4DJe\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"Nq1uRnnpj9\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item\",\"col\":3}},{\"id\":\"b0aGZQiaN6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"iNmr-e-G6K\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Entry\",\"col\":3}},{\"id\":\"G3TPZlXvuv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Ledger\",\"col\":3}},{\"id\":\"lq9dYBBU7c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Stock Balance\",\"col\":3}},{\"id\":\"yTy64zFquo\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"6dB7f5wsqb\",\"type\":\"card\",\"data\":{\"card_name\":\"Pharmacy\",\"col\":4}},{\"id\":\"48CGMZXNfK\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock Tools\",\"col\":4}},{\"id\":\"jF8iUCRgr5\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"WF2WP0QE5w\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
  "creation": "2025-06-06 11:07:24.669080",
  "custom_blocks": [],
  "docstatus": 0,
@@ -112,7 +112,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Pharmacy",
-   "link_count": 5,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -130,6 +130,16 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Medication Request",
+   "link_count": 0,
+   "link_to": "Medication Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Stock Entry",
    "link_count": 0,
    "link_to": "Stock Entry",
@@ -140,35 +150,54 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Item",
-   "link_count": 0,
-   "link_to": "Item",
+   "label": "Reports",
+   "link_count": 4,
    "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stock Ledger",
+   "link_count": 0,
+   "link_to": "Stock Ledger",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
-   "label": "Medication",
+   "is_query_report": 1,
+   "label": "Stock Balance",
    "link_count": 0,
-   "link_to": "Medication",
-   "link_type": "DocType",
+   "link_to": "Stock Balance",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
-   "label": "Medication Request",
+   "is_query_report": 1,
+   "label": "Stock Ageing",
    "link_count": 0,
-   "link_to": "Medication Request",
-   "link_type": "DocType",
+   "link_to": "Stock Ageing",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Batch Item Expiry Status",
+   "link_count": 0,
+   "link_to": "Batch Item Expiry Status",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2025-06-09 11:55:44.947617",
+ "modified": "2025-09-01 17:55:47.510991",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Pharmacy",

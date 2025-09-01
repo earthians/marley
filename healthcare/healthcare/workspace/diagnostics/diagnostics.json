@@ -6,7 +6,7 @@
    "label": "Observations"
   }
  ],
- "content": "[{\"id\":\"HSlLOJpmAY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Observations\",\"col\":12}},{\"id\":\"svg8yn8WQc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Diagnostic Reports\",\"col\":3}},{\"id\":\"3qxtkG85zc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Draft Observations\",\"col\":3}},{\"id\":\"IP9QdvUaX3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Service Requests\",\"col\":3}},{\"id\":\"DDv2Arm_nd\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Sample Collection\",\"col\":3}},{\"id\":\"RUdamDpLck\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"Y4JXpBH8b0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Diagnostic Report\",\"col\":3}},{\"id\":\"LfY6HIGIwx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"NSI3pNuG0c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sample Collection\",\"col\":3}},{\"id\":\"tlxVe5EZak\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}},{\"id\":\"4N74yTs9zO\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PUWZT8q5FH\",\"type\":\"card\",\"data\":{\"card_name\":\"Diagnostics\",\"col\":4}},{\"id\":\"XfHhwhQN77\",\"type\":\"card\",\"data\":{\"card_name\":\"Templates\",\"col\":4}},{\"id\":\"tt2GYYSfpi\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"BbrX_1Ak2X\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Unit\",\"col\":4}}]",
+ "content": "[{\"id\":\"HSlLOJpmAY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Observations\",\"col\":12}},{\"id\":\"svg8yn8WQc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Diagnostic Reports\",\"col\":3}},{\"id\":\"3qxtkG85zc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Draft Observations\",\"col\":3}},{\"id\":\"IP9QdvUaX3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Service Requests\",\"col\":3}},{\"id\":\"DDv2Arm_nd\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Sample Collection\",\"col\":3}},{\"id\":\"RUdamDpLck\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"Y4JXpBH8b0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Diagnostic Report\",\"col\":3}},{\"id\":\"LfY6HIGIwx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"NSI3pNuG0c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sample Collection\",\"col\":3}},{\"id\":\"tlxVe5EZak\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}},{\"id\":\"4N74yTs9zO\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PUWZT8q5FH\",\"type\":\"card\",\"data\":{\"card_name\":\"Diagnostics\",\"col\":4}},{\"id\":\"c3oJNWHgpM\",\"type\":\"card\",\"data\":{\"card_name\":\"Orders\",\"col\":4}},{\"id\":\"tt2GYYSfpi\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"r-xnkrVYO-\",\"type\":\"card\",\"data\":{\"card_name\":\"Laboratory (Legacy)\",\"col\":4}}]",
  "creation": "2025-05-30 17:38:48.052912",
  "custom_blocks": [],
  "docstatus": 0,
@@ -24,7 +24,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Masters",
-   "link_count": 3,
+   "link_count": 2,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -52,46 +52,7 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Specimen",
-   "link_count": 0,
-   "link_to": "Specimen",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Service Unit",
-   "link_count": 2,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Service Unit",
-   "link_count": 0,
-   "link_to": "Healthcare Service Unit",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Healthcare Service Unit Type",
-   "link_count": 0,
-   "link_to": "Healthcare Service Unit Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Templates",
+   "label": "Laboratory (Legacy)",
    "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
@@ -100,9 +61,9 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Observation Template",
+   "label": "Lab Test",
    "link_count": 0,
-   "link_to": "Observation Template",
+   "link_to": "Lab Test",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -111,7 +72,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Diagnostics",
-   "link_count": 5,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -149,12 +110,11 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Sales Invoice",
-   "link_count": 0,
-   "link_to": "Sales Invoice",
+   "label": "Orders",
+   "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
-   "type": "Link"
+   "type": "Card Break"
   },
   {
    "hidden": 0,
@@ -167,7 +127,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-06-06 13:42:05.853655",
+ "modified": "2025-09-01 20:10:18.584550",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostics",
