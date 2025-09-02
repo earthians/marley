@@ -320,12 +320,22 @@ def make_observation(service_request):
 			observation = create_observation(service_request)
 
 	diagnostic_report = frappe.db.exists(
-		"Diagnostic Report", {"reference_name": service_request.order_group}
+		"Diagnostic Report", {"docname": service_request.order_group}
 	)
 	if not diagnostic_report:
+<<<<<<< HEAD
 		insert_diagnostic_report(service_request, sample_collection)
+=======
+		insert_diagnostic_report(service_request, sample_collection.name if sample_collection else None)
+>>>>>>> d12c6bb (fix(Service Request): correct Diagnostic Report exists filters and sample_collection assignment)
 
 	if sample_collection:
+		if diagnostic_report and not frappe.db.get_value(
+			"Diagnostic Report", diagnostic_report, "sample_collection"
+		):
+			frappe.db.set_value(
+				"Diagnostic Report", diagnostic_report, "sample_collection", sample_collection.name
+			)
 		return sample_collection.name, "Sample Collection"
 	elif observation:
 		return observation.name, "Observation"
