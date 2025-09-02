@@ -1,0 +1,224 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-09-02 18:45:42.372739",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "decedent_demographics_section",
+  "naming_series",
+  "decedent",
+  "decedent_name",
+  "gender",
+  "age",
+  "column_break_nnzju",
+  "aadhaar",
+  "mobile",
+  "email",
+  "column_break_krgzt",
+  "decedent_father",
+  "decedent_mother",
+  "decedent_spouse",
+  "decedent_spouse_aadhaar",
+  "death_investigation_section",
+  "death__datetime",
+  "death_location",
+  "manner_of_death",
+  "cause_of_death",
+  "column_break_hdhu8",
+  "injury_location",
+  "injury_incident",
+  "admission_details_section",
+  "inpatient_record",
+  "admitted_datetime",
+  "column_break_xkrbe",
+  "discharge_datetime"
+ ],
+ "fields": [
+  {
+   "fieldname": "decedent_demographics_section",
+   "fieldtype": "Section Break",
+   "label": "Decedent Demographics"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "HLC-DC-.YYYY.-"
+  },
+  {
+   "fieldname": "decedent",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Decedent",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "decedent.patient_name",
+   "fieldname": "decedent_name",
+   "fieldtype": "Data",
+   "label": "Decedent Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "decedent.sex",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "decedent.age_in_years",
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age"
+  },
+  {
+   "fieldname": "column_break_nnzju",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "decedent.uid",
+   "fieldname": "aadhaar",
+   "fieldtype": "Data",
+   "label": "Aadhaar"
+  },
+  {
+   "fetch_from": "decedent.mobile",
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
+  },
+  {
+   "fetch_from": "decedent.email",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "column_break_krgzt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "decedent_father",
+   "fieldtype": "Data",
+   "label": "Decedent Father"
+  },
+  {
+   "fieldname": "decedent_mother",
+   "fieldtype": "Data",
+   "label": "Decedent Mother"
+  },
+  {
+   "fieldname": "decedent_spouse",
+   "fieldtype": "Data",
+   "label": "Decedent Spouse"
+  },
+  {
+   "fieldname": "decedent_spouse_aadhaar",
+   "fieldtype": "Data",
+   "label": "Decedent Spouse Aadhaar"
+  },
+  {
+   "fieldname": "death_investigation_section",
+   "fieldtype": "Section Break",
+   "label": "Death Investigation"
+  },
+  {
+   "fieldname": "death__datetime",
+   "fieldtype": "Datetime",
+   "label": "Death  Datetime"
+  },
+  {
+   "fieldname": "death_location",
+   "fieldtype": "Data",
+   "label": "Death Location"
+  },
+  {
+   "fieldname": "manner_of_death",
+   "fieldtype": "Select",
+   "label": "Manner of Death",
+   "options": "\nNatural death\nAccidental death\nSuicide\nHomicide\nPatient awaiting investigation\nUndetermined manner of death"
+  },
+  {
+   "fieldname": "cause_of_death",
+   "fieldtype": "Data",
+   "label": "Cause of Death"
+  },
+  {
+   "fieldname": "column_break_hdhu8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "injury_location",
+   "fieldtype": "Select",
+   "label": "Injury Location",
+   "options": "\nHome\nResidential institution\nSchool\nSports or recreational area\nStreet or highway\nTrade or service area\nIndustrial or construction area\nFarm\nUnspecified"
+  },
+  {
+   "fieldname": "injury_incident",
+   "fieldtype": "Small Text",
+   "label": "Injury Incident"
+  },
+  {
+   "fieldname": "admission_details_section",
+   "fieldtype": "Section Break",
+   "label": "Admission Details"
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record"
+  },
+  {
+   "fetch_from": "inpatient_record.admitted_datetime",
+   "fieldname": "admitted_datetime",
+   "fieldtype": "Datetime",
+   "label": "Admitted Datetime"
+  },
+  {
+   "fieldname": "column_break_xkrbe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "inpatient_record.discharge_ordered_datetime",
+   "fieldname": "discharge_datetime",
+   "fieldtype": "Datetime",
+   "label": "Discharge Datetime"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-02 18:45:42.372739",
+ "modified_by": "irfan123@4csolutions.in",
+ "module": "Healthcare",
+ "name": "Death Certificate",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "irfan123@4csolutions.in",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

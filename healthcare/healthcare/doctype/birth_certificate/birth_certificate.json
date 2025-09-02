@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-09-02 18:43:40.257600",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "patient_details_section",
+  "naming_series",
+  "patient",
+  "patient_name",
+  "gender",
+  "age",
+  "column_break_pp8s2",
+  "aadhaar",
+  "mobile",
+  "email",
+  "column_break_lacdw",
+  "spouse_name",
+  "spouse_aadhaar",
+  "birth_details_section",
+  "birth_datetime",
+  "infant_gender",
+  "weight",
+  "column_break_hqicf",
+  "birth_location",
+  "location",
+  "section_break_pn2q6",
+  "inpatient_record",
+  "admitted_datetime",
+  "section_break_rkfsr",
+  "discharge_datetime"
+ ],
+ "fields": [
+  {
+   "fieldname": "patient_details_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "HLC-BC-.YYYY.-"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name"
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender"
+  },
+  {
+   "fetch_from": "patient.age_in_years",
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age"
+  },
+  {
+   "fieldname": "column_break_pp8s2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "patient.uid",
+   "fieldname": "aadhaar",
+   "fieldtype": "Data",
+   "label": "Aadhaar"
+  },
+  {
+   "fetch_from": "patient.mobile",
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile"
+  },
+  {
+   "fetch_from": "patient.email",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "column_break_lacdw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spouse_name",
+   "fieldtype": "Data",
+   "label": "Spouse Name"
+  },
+  {
+   "fieldname": "spouse_aadhaar",
+   "fieldtype": "Data",
+   "label": "Spouse Aadhaar"
+  },
+  {
+   "fieldname": "birth_details_section",
+   "fieldtype": "Section Break",
+   "label": "Birth Details"
+  },
+  {
+   "fieldname": "birth_datetime",
+   "fieldtype": "Datetime",
+   "label": "Birth Datetime"
+  },
+  {
+   "fieldname": "infant_gender",
+   "fieldtype": "Link",
+   "label": "Infant Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight"
+  },
+  {
+   "fieldname": "column_break_hqicf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "birth_location",
+   "fieldtype": "Link",
+   "label": "Birth Location",
+   "options": "Address"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Text",
+   "label": "Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_pn2q6",
+   "fieldtype": "Section Break",
+   "label": "Admission Details"
+  },
+  {
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record"
+  },
+  {
+   "fetch_from": "inpatient_record.admitted_datetime",
+   "fieldname": "admitted_datetime",
+   "fieldtype": "Datetime",
+   "label": "Admitted Datetime"
+  },
+  {
+   "fieldname": "section_break_rkfsr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "inpatient_record.discharge_ordered_datetime",
+   "fieldname": "discharge_datetime",
+   "fieldtype": "Datetime",
+   "label": "Discharge Datetime"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-02 18:43:40.257600",
+ "modified_by": "irfan123@4csolutions.in",
+ "module": "Healthcare",
+ "name": "Birth Certificate",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "irfan123@4csolutions.in",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
