@@ -11,6 +11,7 @@ declare module 'vue' {
     BookAppointmentModel: typeof import('./src/components/BookAppointmentModel.vue')['default']
     Calendar: typeof import('./src/components/Calendar.vue')['default']
     DepartmentSelector: typeof import('./src/components/DepartmentSelector.vue')['default']
+    DiagnosticModel: typeof import('./src/components/DiagnosticModel.vue')['default']
     Payment: typeof import('./src/components/Payment.vue')['default']
     PractitionerSelector: typeof import('./src/components/PractitionerSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

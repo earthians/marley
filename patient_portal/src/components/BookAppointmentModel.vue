@@ -246,7 +246,6 @@ let practitioners = ref([]);
 let slots = ref([]);
 const patientOptions = ref([])
 const selectedPatient = ref(JSON.parse(localStorage.getItem("patient")) || {})
-console.log(selectedPatient)
 const selectedDepartment = ref(null);
 const selectedPractitioner = ref(null);
 const selectedDate = ref(null);
