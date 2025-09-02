@@ -324,6 +324,7 @@ def add_observation(**args):
 	if args.get("parent"):
 		observation_doc.parent_observation = args.get("parent")
 	observation_doc.sales_invoice_item = args.get("child") if args.get("child") else ""
+	observation_doc.service_request = args.get("service_request")
 	observation_doc.insert(ignore_permissions=True)
 	return observation_doc.name
 
