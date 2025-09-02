@@ -486,17 +486,133 @@
    "label": "Medical History"
   },
   {
-    "fieldname": "country",
-    "fieldtype": "Link",
-    "label": "Country",
-    "options": "Country"
-   }
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  }
  ],
  "icon": "fa fa-user",
  "image_field": "image",
- "links": [],
+ "links": [
+  {
+   "group": "Appointments and Encounters",
+   "link_doctype": "Patient Appointment",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Appointments and Encounters",
+   "link_doctype": "Vital Signs",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Appointments and Encounters",
+   "link_doctype": "Patient Encounter",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Diagnostics",
+   "link_doctype": "Observation",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Diagnostics",
+   "link_doctype": "Sample Collection",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Diagnostics",
+   "link_doctype": "Lab Test",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Rehab and Physiotherapy",
+   "link_doctype": "Therapy Session",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Rehab and Physiotherapy",
+   "link_doctype": "Therapy Plan",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Rehab and Physiotherapy",
+   "link_doctype": "Patient Assessment",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Orders",
+   "link_doctype": "Medication Request",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Orders",
+   "link_doctype": "Service Request",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Surgery and Nursing",
+   "link_doctype": "Clinical Procedure",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Surgery and Nursing",
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Surgery and Nursing",
+   "link_doctype": "Clinical Note",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Admissions",
+   "link_doctype": "Inpatient Record",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Admissions",
+   "link_doctype": "Discharge Summary",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Admissions",
+   "link_doctype": "Inpatient Medication Order",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Admissions",
+   "link_doctype": "Inpatient Medication Entry",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Billing and Payments",
+   "link_doctype": "Sales Invoice",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Billing and Payments",
+   "link_doctype": "Payment Entry",
+   "link_fieldname": "party"
+  },
+  {
+   "group": "Insurance",
+   "link_doctype": "Patient Insurance Policy",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Insurance",
+   "link_doctype": "Patient Insurance Coverage",
+   "link_fieldname": "patient"
+  },
+  {
+   "group": "Others",
+   "link_doctype": "Fee Validity",
+   "link_fieldname": "patient"
+  }
+ ],
  "max_attachments": 50,
- "modified": "2023-01-13 17:48:59.069268",
+ "modified": "2025-09-02 13:28:52.643822",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
@@ -553,6 +669,7 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient_name,mobile,email,phone,uid",
  "show_name_in_global_search": 1,
  "sort_field": "modified",
