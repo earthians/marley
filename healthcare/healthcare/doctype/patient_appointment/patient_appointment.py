@@ -871,7 +871,7 @@ def get_practitioner_unavailability(date, practitioner=None, department=None, se
 			"docstatus": 1,
 			"start_date": ("<=", date),
 			"end_date": (">=", date),
-			"scope": ["in", [scopes]],
+			"scope": ["in", scopes],
 		},
 		order_by="start_time",
 	)
