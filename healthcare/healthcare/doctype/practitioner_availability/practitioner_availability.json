@@ -1,0 +1,223 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2025-08-18 13:09:12.917754",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_zjsh",
+  "type",
+  "reason",
+  "scope_type",
+  "scope",
+  "amended_from",
+  "column_break_gsyx",
+  "start_date",
+  "start_time",
+  "end_time",
+  "end_date",
+  "duration",
+  "column_break_wewi",
+  "status",
+  "note",
+  "title"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_zjsh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Practitioner Availability",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Healthcare Practitioner",
+   "fieldname": "scope_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Scope Type",
+   "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Healthcare Practitioner\",\"Healthcare Service Unit\",\"Medical Department\"]]]",
+   "options": "DocType",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "scope",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Scope",
+   "options": "scope_type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_wewi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nExpired",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "Unavailable",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type",
+   "options": "\nUnavailable\nAvailable",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "Today",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "End Date",
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "End Time",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "In minutes",
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Duration",
+   "non_negative": 1,
+   "precision": "0",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_gsyx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "Today",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Start Date",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "depends_on": "eval:doc.type != \"Available\"",
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Reason",
+   "options": "\nTime Off\nBreak\nTraining\nTravel\nEmergency"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-09-03 12:36:20.299906",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Practitioner Availability",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
