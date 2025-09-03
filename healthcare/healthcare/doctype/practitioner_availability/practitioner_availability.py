@@ -19,6 +19,10 @@ from frappe.utils import (
 
 class PractitionerAvailability(Document):
 	def validate(self):
+		if not frappe.flags.in_test and self.type == "Available":
+			# NOTE: some tests rely on type Available
+			frappe.throw(_("Option 'Available' is not supported right now"))
+
 		self.set_fallbacks()
 		self.set_title()
 		self.validate_start_and_end()

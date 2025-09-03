@@ -291,11 +291,11 @@ class PatientAppointment(Document):
 	def validate_practitioner_unavailability(self):
 		scopes = [self.practitioner, self.department, self.service_unit]
 		# appointment window
-		if getattr(self, "appointment_datetime", None):
+		if self.appointment_datetime:
 			start_dt = get_datetime(self.appointment_datetime)
 		else:
 			if not (self.appointment_date and self.appointment_time):
-				frappe.throw("Appointment Date and Time are required.")
+				frappe.throw(_("Appointment Date and Time are required."))
 			start_dt = get_datetime(f"{self.appointment_date} {self.appointment_time}")
 
 		if self.appointment_end_datetime:

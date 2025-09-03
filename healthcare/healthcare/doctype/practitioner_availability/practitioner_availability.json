@@ -14,8 +14,8 @@
   "column_break_gsyx",
   "start_date",
   "start_time",
-  "end_date",
   "end_time",
+  "end_date",
   "duration",
   "column_break_wewi",
   "status",
@@ -80,12 +80,14 @@
   },
   {
    "allow_in_quick_entry": 1,
+   "default": "Unavailable",
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Type",
    "options": "\nUnavailable\nAvailable",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -164,7 +166,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-26 08:54:27.372261",
+ "modified": "2025-09-03 12:36:20.299906",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Practitioner Availability",

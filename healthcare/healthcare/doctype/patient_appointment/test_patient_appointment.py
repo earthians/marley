@@ -863,7 +863,7 @@ def create_practitioner_availability(
 	return frappe.get_doc(
 		{
 			"doctype": "Practitioner Availability",
-			"type": type or "Available",
+			"type": type,
 			"start_date": date or nowdate(),
 			"start_time": start,
 			"end_date": date or nowdate(),
