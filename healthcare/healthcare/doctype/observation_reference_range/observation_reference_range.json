@@ -175,14 +175,14 @@
    "depends_on": "eval:doc.permitted_data_type==\"Period\";",
    "fieldname": "to_datetime",
    "fieldtype": "Datetime",
-   "label": "To"
+   "label": "To Datetime"
   },
   {
    "default": "Years",
    "depends_on": "eval: doc.age == \"Range\"",
    "fieldname": "from_age_type",
    "fieldtype": "Select",
-   "label": "Age Type",
+   "label": "From Age Type",
    "options": "Years\nMonths\nDays"
   },
   {
@@ -190,7 +190,7 @@
    "depends_on": "eval:doc.age == \"Range\"",
    "fieldname": "to_age_type",
    "fieldtype": "Select",
-   "label": "Age Type",
+   "label": "To Age Type",
    "options": "Years\nMonths\nDays"
   },
   {
@@ -249,7 +249,7 @@
    "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
    "fieldname": "normal_ratio",
    "fieldtype": "Data",
-   "label": "Ratio"
+   "label": "Normal Ratio"
   },
   {
    "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
@@ -279,19 +279,19 @@
    "depends_on": "eval:doc.permitted_data_type==\"Select\";",
    "fieldname": "normal_select",
    "fieldtype": "Select",
-   "label": "Options"
+   "label": "Normal Options"
   },
   {
    "depends_on": "eval:doc.permitted_data_type==\"Select\";",
    "fieldname": "abnormal_select",
    "fieldtype": "Select",
-   "label": "Options"
+   "label": "Abnormal Options"
   },
   {
    "depends_on": "eval:doc.permitted_data_type==\"Select\";",
    "fieldname": "critical_select",
    "fieldtype": "Select",
-   "label": "Options"
+   "label": "Critical Options"
   },
   {
    "fieldname": "age",
@@ -424,12 +424,13 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-07-07 11:10:53.335716",
+ "modified": "2025-08-31 23:52:17.253518",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Reference Range",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
