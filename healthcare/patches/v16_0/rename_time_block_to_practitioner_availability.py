@@ -1,8 +1,11 @@
 import frappe
 from frappe.model.utils.rename_field import rename_field
 
+
 def execute():
-	if frappe.db.exists("DocType", "Time Block") and not frappe.db.exists("DocType", "Practitioner Availability"):
+	if frappe.db.exists("DocType", "Time Block") and not frappe.db.exists(
+		"DocType", "Practitioner Availability"
+	):
 		try:
 			frappe.rename_doc("DocType", "Time Block", "Practitioner Availability", force=True)
 		except Exception as e:
@@ -18,7 +21,9 @@ def execute():
 
 		for pa in frappe.get_all("Practitioner Availability"):
 			doc = frappe.get_doc("Practitioner Availability", pa.name)
-			doc.db_set({
-				"end_date": doc.start_date,
-				"type": "Unavailable",
-			})
+			doc.db_set(
+				{
+					"end_date": doc.start_date,
+					"type": "Unavailable",
+				}
+			)

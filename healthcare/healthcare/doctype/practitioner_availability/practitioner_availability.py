@@ -7,7 +7,14 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import DocType
-from frappe.utils import get_link_to_form, get_datetime, get_time, getdate, time_diff_in_seconds, add_to_date
+from frappe.utils import (
+	add_to_date,
+	get_datetime,
+	get_link_to_form,
+	get_time,
+	getdate,
+	time_diff_in_seconds,
+)
 
 
 class PractitionerAvailability(Document):
@@ -80,7 +87,6 @@ class PractitionerAvailability(Document):
 		# 			"Unavailable block must overlap at least partially with an existing "
 		# 			"Available block for the same scope."
 		# 		)
-
 
 	def validate_existing_appointments(self):
 		if self.type != "Unavailable":

@@ -2,9 +2,11 @@
 # See license.txt
 
 from datetime import timedelta
+
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import nowdate, get_datetime
+from frappe.utils import nowdate
+
 
 class IntegrationTestPractitionerAvailability(IntegrationTestCase):
 	"""

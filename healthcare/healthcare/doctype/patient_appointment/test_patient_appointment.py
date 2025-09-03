@@ -708,7 +708,9 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_overlap_with_unavailable_same_scope_is_blocked(self):
 		create_practitioner_availability("09:00:00", "12:00:00", scope="Service Unit-A")
-		create_practitioner_availability("10:15:00", "10:45:00", scope="Service Unit-A", type="Unavailable")
+		create_practitioner_availability(
+			"10:15:00", "10:45:00", scope="Service Unit-A", type="Unavailable"
+		)
 		patient, practitioner = create_healthcare_docs()
 		with self.assertRaises(frappe.ValidationError):
 			create_appointment(
@@ -721,7 +723,9 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_touching_unavailable_is_allowed(self):
 		create_practitioner_availability("09:00:00", "12:00:00", scope="Service Unit-A")
-		create_practitioner_availability("10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable")
+		create_practitioner_availability(
+			"10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable"
+		)
 		patient, practitioner = create_healthcare_docs()
 		create_appointment(
 			patient,
@@ -733,7 +737,9 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_after_unavailable_is_allowed(self):
 		create_practitioner_availability("09:00:00", "12:00:00", scope="Service Unit-A")
-		create_practitioner_availability("10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable")
+		create_practitioner_availability(
+			"10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable"
+		)
 		patient, practitioner = create_healthcare_docs()
 		create_appointment(
 			patient,
@@ -757,7 +763,9 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_cancelled_unavailability_is_ignored(self):
 		create_practitioner_availability("09:00:00", "12:00:00", scope="Service Unit-A")
-		u = create_practitioner_availability("10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable")
+		u = create_practitioner_availability(
+			"10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable"
+		)
 		u.submit().cancel()
 		patient, practitioner = create_healthcare_docs()
 		create_appointment(
@@ -770,17 +778,21 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_explicit_datetime_overlap_blocks(self):
 		create_practitioner_availability("09:00:00", "12:00:00", scope="Service Unit-A")
-		create_practitioner_availability("10:15:00", "10:45:00", scope="Service Unit-A", type="Unavailable")
-		doc = frappe.get_doc({
-			"doctype": "Patient Appointment",
-			"status": "Scheduled",
-			"service_unit": "Service Unit-A",
-			"appointment_date": "2025-01-01",
-			"appointment_time": "10:00:00",
-			"duration": 0,
-			"appointment_datetime": "2025-01-01 10:30:00",
-			"appointment_end_datetime": "2025-01-01 10:40:00",
-		})
+		create_practitioner_availability(
+			"10:15:00", "10:45:00", scope="Service Unit-A", type="Unavailable"
+		)
+		doc = frappe.get_doc(
+			{
+				"doctype": "Patient Appointment",
+				"status": "Scheduled",
+				"service_unit": "Service Unit-A",
+				"appointment_date": "2025-01-01",
+				"appointment_time": "10:00:00",
+				"duration": 0,
+				"appointment_datetime": "2025-01-01 10:30:00",
+				"appointment_end_datetime": "2025-01-01 10:40:00",
+			}
+		)
 		with self.assertRaises(frappe.ValidationError):
 			doc.insert(ignore_permissions=True, ignore_mandatory=True, ignore_links=True)
 
@@ -800,7 +812,9 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_scope_priority_department_over_service_unit(self):
 		create_practitioner_availability("13:00:00", "14:00:00", scope="Service Unit-A")
-		create_practitioner_availability("13:15:00", "13:30:00", scope="Service Unit-A", type="Unavailable")
+		create_practitioner_availability(
+			"13:15:00", "13:30:00", scope="Service Unit-A", type="Unavailable"
+		)
 		with self.assertRaises(frappe.ValidationError):
 			patient, practitioner = create_healthcare_docs()
 			create_appointment(
@@ -813,7 +827,9 @@ class TestPatientAppointment(IntegrationTestCase):
 
 	def test_any_scope_field_matching_blocks(self):
 		create_practitioner_availability("09:00:00", "11:30:00", scope="Service Unit-A")
-		create_practitioner_availability("10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable")
+		create_practitioner_availability(
+			"10:00:00", "10:30:00", scope="Service Unit-A", type="Unavailable"
+		)
 		patient, practitioner = create_healthcare_docs()
 		with self.assertRaises(frappe.ValidationError):
 			create_appointment(
@@ -840,7 +856,10 @@ class TestPatientAppointment(IntegrationTestCase):
 				appointment_time="13:20:00",
 			)
 
-def create_practitioner_availability(start, end, scope=None, scope_type=None, date=None, type="Available"):
+
+def create_practitioner_availability(
+	start, end, scope=None, scope_type=None, date=None, type="Available"
+):
 	return frappe.get_doc(
 		{
 			"doctype": "Practitioner Availability",

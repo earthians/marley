@@ -11,9 +11,15 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.query_builder import DocType
-from frappe.query_builder.functions import Coalesce
-from frappe.utils import add_to_date, flt, format_date, get_datetime, get_link_to_form, get_time, getdate
+from frappe.utils import (
+	add_to_date,
+	flt,
+	format_date,
+	get_datetime,
+	get_link_to_form,
+	get_time,
+	getdate,
+)
 
 from erpnext.setup.doctype.employee.employee import is_holiday
 
@@ -860,7 +866,7 @@ def get_practitioner_unavailability(date, practitioner=None, department=None, se
 			"start_time as appointment_time",
 			"duration",
 		],
-		filters = {
+		filters={
 			"type": "Unavailable",
 			"docstatus": 1,
 			"start_date": ("<=", date),
