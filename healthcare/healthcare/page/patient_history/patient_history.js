@@ -406,10 +406,8 @@ class PatientHistory {
 							}
 						}
 						if (btn_id === 'pulse_rate') {
-							if (data[i].pulse && data[i].respiratory_rate) {
-								pulse.push(data[i].pulse);
-								respiratory_rate.push(data[i].respiratory_rate);
-							}
+							if (data[i].pulse) pulse.push(data[i].pulse);
+							if (data[i].respiratory_rate) respiratory_rate.push(data[i].respiratory_rate);
 						}
 						if (btn_id === 'bmi') {
 							if (data[i].bmi) {
