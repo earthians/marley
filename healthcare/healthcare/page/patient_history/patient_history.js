@@ -384,7 +384,6 @@ class PatientHistory {
 								${__('BMI')}
 							</a>
 						</div>`;
-
 					me.page.main.find('.show_chart_btns').html(show_chart_btns_html);
 					let data = r.message;
 					let labels = [], datasets = [];
@@ -392,8 +391,8 @@ class PatientHistory {
 					let pulse = [], respiratory_rate = [], bmi = [], height = [], weight = [];
 
 					for (let i=0; i<data.length; i++) {
-						const signs_date = moment(data[i].signs_date).format("DD-MM-YYYY");
-						labels.push(signs_date+' | '+data[i].signs_time);
+						const signs_date = moment(data[i].signs_date).format(frappe.boot.sysdefaults.date_format.toUpperCase());
+						labels.push(signs_date+' '+data[i].signs_time);
 
 						if (btn_id === 'bp') {
 							if (data[i].bp_systolic && data[i].bp_diastolic) {
