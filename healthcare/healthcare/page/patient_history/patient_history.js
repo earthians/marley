@@ -392,23 +392,32 @@ class PatientHistory {
 					let pulse = [], respiratory_rate = [], bmi = [], height = [], weight = [];
 
 					for (let i=0; i<data.length; i++) {
-						labels.push(data[i].signs_date+' | '+data[i].signs_time);
+						const signs_date = moment(data[i].signs_date).format("DD-MM-YYYY");
+						labels.push(signs_date+' | '+data[i].signs_time);
 
 						if (btn_id === 'bp') {
-							bp_systolic.push(data[i].bp_systolic);
-							bp_diastolic.push(data[i].bp_diastolic);
+							if (data[i].bp_systolic && data[i].bp_diastolic) {
+								bp_systolic.push(data[i].bp_systolic);
+								bp_diastolic.push(data[i].bp_diastolic);
+							}
 						}
 						if (btn_id === 'temperature') {
-							temperature.push(data[i].temperature);
+							if (data[i].temperature) {
+								temperature.push(data[i].temperature);
+							}
 						}
 						if (btn_id === 'pulse_rate') {
-							pulse.push(data[i].pulse);
-							respiratory_rate.push(data[i].respiratory_rate);
+							if (data[i].pulse && data[i].respiratory_rate) {
+								pulse.push(data[i].pulse);
+								respiratory_rate.push(data[i].respiratory_rate);
+							}
 						}
 						if (btn_id === 'bmi') {
-							bmi.push(data[i].bmi);
-							height.push(data[i].height);
-							weight.push(data[i].weight);
+							if (data[i].bmi) {
+								bmi.push(data[i].bmi);
+								height.push(data[i].height);
+								weight.push(data[i].weight);
+							}
 						}
 					}
 					if (btn_id === 'temperature') {
