@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppointmentModel: typeof import('./src/components/AppointmentModel.vue')['default']
     BookAppointmentModel: typeof import('./src/components/BookAppointmentModel.vue')['default']
     Calendar: typeof import('./src/components/Calendar.vue')['default']
     DepartmentSelector: typeof import('./src/components/DepartmentSelector.vue')['default']
