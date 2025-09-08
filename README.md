@@ -56,8 +56,3 @@ Complete documentation for Marley Health is available at https://marleyhealth.io
 ### License
 
 GNU GPL V3. See [license.txt](https://github.com/earthians/marley/blob/develop/license.txt) for more information.
-
-
-### Credits
-
-Marley Health module is developed & maintained by [earthians](https://earthianslive.com) and community contributors.

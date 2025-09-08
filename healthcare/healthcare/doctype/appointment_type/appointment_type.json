@@ -9,8 +9,8 @@
  "engine": "InnoDB",
  "field_order": [
   "appointment_type",
-  "default_duration",
   "allow_booking_for",
+  "default_duration",
   "column_break_jdo1",
   "color",
   "billing_tab",
@@ -25,7 +25,6 @@
    "fieldname": "appointment_type",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
-   "in_list_view": 1,
    "label": "Type",
    "reqd": 1,
    "translatable": 1,
@@ -74,9 +73,12 @@
    "default": "Practitioner",
    "fieldname": "allow_booking_for",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Allow Booking For",
    "options": "Practitioner\nDepartment\nService Unit",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "medical_codes_tab",
@@ -92,7 +94,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-03-31 17:31:51.709349",
+ "modified": "2025-09-04 14:05:10.548547",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Appointment Type",
