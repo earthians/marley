@@ -68,7 +68,8 @@
   "patient_portal_tab",
   "default_appointment_type",
   "column_break_nxka",
-  "collect_payment"
+  "collect_payment",
+  "show_diagnostics_tab"
  ],
  "fields": [
   {
@@ -434,6 +435,7 @@
    "label": "Naming Series for Insurance Coverage Journal Entry"
   },
   {
+   "default": "0",
    "fieldname": "patient_portal_tab",
    "fieldtype": "Tab Break",
    "label": "Patient Portal"
@@ -454,11 +456,18 @@
   {
    "fieldname": "column_break_nxka",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, diagnostic details tab will show on patient portal",
+   "fieldname": "show_diagnostics_tab",
+   "fieldtype": "Check",
+   "label": "Show Diagnostics Tab on Portal"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-08-27 17:06:38.137455",
+ "modified": "2025-09-08 16:58:58.384746",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

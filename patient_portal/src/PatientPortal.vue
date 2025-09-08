@@ -1,14 +1,7 @@
 <template>
 	<div class="w-full h-full">
 		<div>
-			<Tabs as="div" v-model="portal_tabs" :tabs="[
-				{
-					label: 'Appointments',
-				},
-				{
-					label: 'Diagnostics',
-				}
-			]">
+			<Tabs as="div" v-model="portal_tabs" :tabs="tabs">
 				<template #tab-panel="{ tab }">
 					<div v-if="tab.label == 'Appointments'">
 						<div class="flex justify-end m-2">
@@ -84,7 +77,7 @@
 							</div>
 						</div>
 					</div>
-					<div v-if="tab.label == 'Diagnostics'">
+					<div v-else-if="tab.label == 'Diagnostics'">
 						<DiagnosticModel />
 					</div>
 				</template>
@@ -270,6 +263,27 @@ const pageSize = 16;
 const selectedAppointment = ref("");
 let dialog_title = ref("");
 let dialog_message = ref("");
+
+let healthcareSettings = ref({});
+
+let getHealthcareSettings = createResource({
+	url: "/api/method/healthcare.healthcare.api.patient_portal.get_settings",
+	method: "GET",
+	onSuccess(response) {
+		if (response) {
+			healthcareSettings.value = response
+		}
+	},
+});
+getHealthcareSettings.fetch();
+
+const tabs = computed(() => {
+	let baseTabs = [{ label: 'Appointments' }]
+	if (healthcareSettings.value.show_diagnostics_tab) {
+		baseTabs.push({ label: 'Diagnostics' })
+	}
+	return baseTabs
+})
 
 let get_appointments = createResource({
 	url: "/api/method/healthcare.healthcare.api.patient_portal.get_appointments",
