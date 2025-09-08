@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 import frappe
+from frappe import _
 from frappe.query_builder import Order
 from frappe.utils import get_datetime, get_time, getdate
 
@@ -221,7 +222,7 @@ def get_fees(practitioner=None, date=None):
 def get_print_format(doctype: str, name: str):
 	allowed_doctypes = ["Sales Invoice", "Patient Encounter", "Diagnostic Report"]
 	if doctype not in allowed_doctypes:
-		frappe.throw("Not allowed to print this document.", frappe.PermissionError)
+		frappe.throw(_("Not allowed to print this document."), frappe.PermissionError)
 
 	meta = frappe.get_meta(doctype)
 

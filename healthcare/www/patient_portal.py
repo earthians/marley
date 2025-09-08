@@ -2,6 +2,7 @@
 # GNU GPLv3 License. See license.txt
 
 import frappe
+from frappe import _
 from frappe.utils import cint, get_system_timezone
 from frappe.utils.telemetry import capture
 
@@ -9,7 +10,6 @@ no_cache = 1
 
 
 def get_context():
-	frappe.db.commit()
 	context = frappe._dict()
 	context.boot = get_boot()
 	if frappe.session.user != "Guest":
@@ -20,7 +20,7 @@ def get_context():
 @frappe.whitelist(methods=["POST"], allow_guest=True)
 def get_context_for_dev():
 	if not frappe.conf.developer_mode:
-		frappe.throw("This method is only meant for developer mode")
+		frappe.throw(_("This method is only meant for developer mode"))
 	return get_boot()
 
 
@@ -36,8 +36,7 @@ def get_boot():
 			"sysdefaults": frappe.defaults.get_defaults(),
 			"timezone": {
 				"system": get_system_timezone(),
-				"user": frappe.db.get_value("User", frappe.session.user, "time_zone")
-				or get_system_timezone(),
+				"user": frappe.db.get_value("User", frappe.session.user, "time_zone") or get_system_timezone(),
 			},
 		}
 	)

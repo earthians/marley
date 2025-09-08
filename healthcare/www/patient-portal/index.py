@@ -8,10 +8,7 @@ from frappe.utils import get_bench_path
 
 def get_context(context):
 	portal_entry = frappe.db.get_value(
-		"Portal Menu Item",
-		{"route": "/patient-portal"},
-		["enabled", "role"],
-		as_dict=True
+		"Portal Menu Item", {"route": "/patient-portal"}, ["enabled", "role"], as_dict=True
 	)
 
 	if not portal_entry or not portal_entry.enabled:
@@ -35,8 +32,7 @@ def get_context(context):
 
 def get_vite_assets(entry="src/patient_portal.js"):
 	manifest_path = os.path.join(
-		get_bench_path(),
-		"apps", "healthcare", "healthcare", "public", "frontend", "manifest.json"
+		get_bench_path(), "apps", "healthcare", "healthcare", "public", "frontend", "manifest.json"
 	)
 
 	with open(manifest_path, "r") as f:

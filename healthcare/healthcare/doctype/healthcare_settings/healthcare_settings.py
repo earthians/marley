@@ -117,11 +117,11 @@ def get_account(parent_type, parent_field, parent, company):
 @frappe.whitelist()
 def create_razorpay_order(fee=0, appointment=None):
 	if not "payments" in frappe.get_installed_apps():
-		frappe.throw("Install Payments app and Setup razorpay via RazorPay Settings")
+		frappe.throw(_("Install Payments app and Setup razorpay via RazorPay Settings"))
 
 	user = frappe.session.user
 	if user == "Guest":
-		frappe.throw("Not Permitted", frappe.AuthenticationError)
+		frappe.throw(_("Not Permitted"), frappe.AuthenticationError)
 
 	client = get_razorpay_client()
 
@@ -162,7 +162,7 @@ def get_razorpay_client():
 		)
 
 		if not (key_id and key_secret):
-			frappe.throw("Setup razorpay via RazorPay Settings")
+			frappe.throw(_("Setup razorpay via RazorPay Settings"))
 
 		frappe.local.press_razorpay_client_object = razorpay.Client(auth=(key_id, key_secret))
 
