@@ -15,6 +15,8 @@ healthcare.patches.v15_0.add_discharge_summary_to_patient_history
 healthcare.patches.v16_0.setup_service_request_and_insurance
 healthcare.patches.v16_0.validate_inpatient_billables
 healthcare.patches.v16_0.rename_time_block_to_practitioner_availability
+healthcare.patches.v16_0.setup_portal_settings
+healthcare.patches.v16_0.add_patient_role_permissions
 
 [post_model_sync]
 healthcare.patches.v15_0.rename_field_medical_department_in_appoitment_type_service_item
