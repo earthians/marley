@@ -5,11 +5,18 @@
     "private": true,
     "workspaces": ["patient_portal", "frappe-ui"],
     "scripts": {
-        "postinstall": "cd patient_portal && yarn install",
+        "postinstall": "cd patient_portal && yarn install --check-files",
         "build": "cd patient_portal && yarn build"
     },
     "main": "commitlint.config.js",
     "keywords": [],
-    "author": "",
-    "license": "ISC"
+    "author": "earthians Health Informatics Pvt. Ltd.",
+    "license": "ISC",
+    "dependencies": {
+        "vite": "4.4.9",
+        "@vitejs/plugin-vue": "4.2.3",
+        "postcss": "^8.4.5",
+        "tailwindcss": "3.4.15",
+        "autoprefixer": "^10.4.2"
+    }
 }
