@@ -33,6 +33,7 @@
   "appointments",
   "practitioner_schedules",
   "google_calendar",
+  "show_in_portal",
   "charges",
   "op_consulting_charge_item",
   "op_consulting_charge",
@@ -386,12 +387,18 @@
    "fieldtype": "Int",
    "label": "Valid Number of Days",
    "mandatory_depends_on": "eval:doc.enable_free_follow_ups == 1"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_in_portal",
+   "fieldtype": "Check",
+   "label": "Show in Portal"
   }
  ],
  "grid_page_length": 50,
  "image_field": "image",
  "links": [],
- "modified": "2025-05-08 12:35:22.089677",
+ "modified": "2025-09-09 10:03:37.476693",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",

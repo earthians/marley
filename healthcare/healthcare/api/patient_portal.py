@@ -70,7 +70,7 @@ def get_departments():
 def get_practitioners(department):
 	return frappe.db.get_all(
 		"Healthcare Practitioner",
-		filters={"department": department},
+		filters={"department": department, "show_in_portal": 1},
 		fields=["name", "practitioner_name", "designation", "department", "image"],
 	)
 
