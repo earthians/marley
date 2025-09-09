@@ -11,16 +11,26 @@
   "scope_type",
   "scope",
   "amended_from",
+  "column_break_wewi",
+  "status",
+  "note",
+  "title",
+  "section_break_soiq",
   "column_break_gsyx",
   "start_date",
   "start_time",
   "end_time",
   "end_date",
   "duration",
-  "column_break_wewi",
-  "status",
-  "note",
-  "title"
+  "column_break_cena",
+  "repeat",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday"
  ],
  "fields": [
   {
@@ -160,13 +170,77 @@
    "label": "Title",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_soiq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_cena",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Never",
+   "fieldname": "repeat",
+   "fieldtype": "Select",
+   "label": "Repeat",
+   "options": "Never\nDaily\nWeekly\nMonthly"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "monday",
+   "fieldtype": "Check",
+   "label": "Monday "
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "tuesday",
+   "fieldtype": "Check",
+   "label": "Tuesday"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "wednesday",
+   "fieldtype": "Check",
+   "label": "Wednesday"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "thursday",
+   "fieldtype": "Check",
+   "label": "Thursday"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "friday",
+   "fieldtype": "Check",
+   "label": "Friday"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "saturday",
+   "fieldtype": "Check",
+   "label": "Saturday"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.repeat == \"Weekly\"",
+   "fieldname": "sunday",
+   "fieldtype": "Check",
+   "label": "Sunday"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-03 12:36:20.299906",
+ "modified": "2025-09-09 16:42:54.253723",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Practitioner Availability",
