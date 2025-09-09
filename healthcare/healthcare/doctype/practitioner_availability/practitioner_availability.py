@@ -19,10 +19,6 @@ from frappe.utils import (
 
 class PractitionerAvailability(Document):
 	def validate(self):
-		if not frappe.flags.in_test and self.type == "Available":
-			# NOTE: some tests rely on type Available
-			frappe.throw(_("Option 'Available' is not supported right now"))
-
 		self.set_fallbacks()
 		self.set_title()
 		self.validate_start_and_end()
@@ -73,24 +69,26 @@ class PractitionerAvailability(Document):
 				re_date = r.get("end_date") or r.get("start_date")
 				re = get_datetime(f"{re_date} {r.get('end_time')}")
 				if (start_dt < re) and (rs < end_dt):
-					frappe.throw(f"Overlaps with another Available block: {get_link_to_form(r.get('name'))}")
+					frappe.throw(_(f"Overlaps with another Available block: {get_link_to_form(r.get('name'))}"))
 
-		# else:
-		# 	has_overlap_with_available = False
-		# 	for r in rows:
-		# 		if r.get("type") != "Available":
-		# 			continue
-		# 		rs = get_datetime(f"{r.get('start_date')} {r.get('start_time')}")
-		# 		re_date = r.get("end_date") or r.get("start_date")
-		# 		re = get_datetime(f"{re_date} {r.get('end_time')}")
-		# 		if (start_dt < re) and (rs < end_dt):
-		# 			has_overlap_with_available = True
-		# 			break
-		# 	if not has_overlap_with_available:
-		# 		frappe.throw(
-		# 			"Unavailable block must overlap at least partially with an existing "
-		# 			"Available block for the same scope."
-		# 		)
+		else:
+			has_overlap_with_available = False
+			for r in rows:
+				if r.get("type") != "Available":
+					continue
+				rs = get_datetime(f"{r.get('start_date')} {r.get('start_time')}")
+				re_date = r.get("end_date") or r.get("start_date")
+				re = get_datetime(f"{re_date} {r.get('end_time')}")
+				if (start_dt < re) and (rs < end_dt):
+					has_overlap_with_available = True
+					break
+			if not has_overlap_with_available:
+				frappe.throw(
+					_(
+						"Unavailable block must overlap at least partially with an existing "
+						"Available block for the same scope."
+					)
+				)
 
 	def validate_existing_appointments(self):
 		if self.type != "Unavailable":
@@ -103,7 +101,7 @@ class PractitionerAvailability(Document):
 		elif self.scope_type == "Medical Department":
 			scope_field = "department"
 		else:
-			frappe.throw(f"Invalid Scope Type: {frappe.bold(self.scope_type)}")
+			frappe.throw(_(f"Invalid Scope Type: {frappe.bold(self.scope_type)}"))
 
 		PAP = DocType("Patient Appointment")
 		scope_col = getattr(PAP, scope_field)
@@ -147,6 +145,8 @@ class PractitionerAvailability(Document):
 		if conflicts:
 			conflict_links = ", ".join(get_link_to_form(n) for n in conflicts)
 			frappe.throw(
-				f"Cannot create Unavailable block: it conflicts with existing Patient Appointment(s): "
-				f"{conflict_links}."
+				_(
+					f"Cannot create Unavailable block: it conflicts with existing Patient Appointment(s): "
+					f"{conflict_links}."
+				)
 			)
