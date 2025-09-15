@@ -217,14 +217,14 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-01 20:22:42.395178",
+ "modified": "2025-09-15 16:34:37.722704",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Outpatient",
  "number_cards": [
   {
    "label": "Open Appointments",
-   "number_card_name": "Open Appointments IP"
+   "number_card_name": "Open Appointments OP"
   },
   {
    "label": "Total Patients",
@@ -236,11 +236,10 @@
   }
  ],
  "owner": "Administrator",
- "parent_page": "Healthcare",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 23.0,
+ "sequence_id": 14.0,
  "shortcuts": [
   {
    "color": "Orange",

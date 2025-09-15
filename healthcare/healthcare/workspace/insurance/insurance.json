@@ -128,7 +128,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-01 17:56:59.811882",
+ "modified": "2025-09-15 16:34:37.722704",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance",
@@ -151,11 +151,10 @@
   }
  ],
  "owner": "Administrator",
- "parent_page": "Healthcare",
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 27.0,
+ "sequence_id": 18.0,
  "shortcuts": [
   {
    "color": "Grey",

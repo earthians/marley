@@ -127,7 +127,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-01 20:10:18.584550",
+ "modified": "2025-09-15 16:34:37.722704",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostics",
@@ -150,11 +150,11 @@
   }
  ],
  "owner": "Administrator",
- "parent_page": "Healthcare",
  "public": 1,
  "quick_lists": [],
+ "restrict_to_domain": "Healthcare",
  "roles": [],
- "sequence_id": 26.0,
+ "sequence_id": 17.0,
  "shortcuts": [
   {
    "color": "Orange",
