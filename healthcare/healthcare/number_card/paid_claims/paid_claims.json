@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#29CD42",
+ "color": "#8797AF",
  "creation": "2025-06-04 15:24:28.302137",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Paid Claims",
- "modified": "2025-06-09 11:53:05.637199",
+ "modified": "2025-09-16 10:39:33.093969",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Paid Claims",

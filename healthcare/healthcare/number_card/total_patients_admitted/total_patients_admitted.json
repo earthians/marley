@@ -1,4 +1,5 @@
 {
+ "color": "#0E4749",
  "creation": "2020-07-14 18:17:54.749754",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -9,7 +10,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Total Patients Admitted",
- "modified": "2025-06-09 12:03:57.717976",
+ "modified": "2025-09-16 09:49:27.812484",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Total Patients Admitted",

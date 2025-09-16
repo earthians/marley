@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#ED6396",
+ "color": "#EE8434",
  "creation": "2025-06-02 17:09:06.786200",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Total Sessions to Bill",
- "modified": "2025-06-09 11:43:11.131191",
+ "modified": "2025-09-16 10:15:05.651915",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Total Sessions to Bill",

@@ -1,4 +1,5 @@
 {
+ "color": "#2E294E",
  "creation": "2020-07-14 18:17:54.727946",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -9,11 +10,12 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Total Patients",
- "modified": "2020-07-22 13:26:03.643534",
+ "modified": "2025-09-15 22:17:24.942589",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Total Patients",
  "owner": "Administrator",
+ "show_full_number": 0,
  "show_percentage_stats": 1,
  "stats_time_interval": "Daily",
  "type": "Document Type"

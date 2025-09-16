@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "paid_amount",
- "color": "#29CD42",
+ "color": "#56667A",
  "creation": "2025-06-02 19:44:52.406429",
  "currency": "INR",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Paid Claims Value",
- "modified": "2025-06-09 11:53:29.707893",
+ "modified": "2025-09-16 10:39:48.803059",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Paid Claims Value",

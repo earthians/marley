@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "outstanding_amount",
- "color": "#CB2929",
+ "color": "#5F4B66",
  "creation": "2025-06-04 15:09:33.976916",
  "currency": "INR",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Outstanding Claims Value",
- "modified": "2025-06-09 11:51:37.725818",
+ "modified": "2025-09-16 10:38:59.408665",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Outstanding Claims Value",

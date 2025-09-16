@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#29CD42",
+ "color": "#F5AC72",
  "creation": "2025-06-02 15:48:48.474233",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Total Out Patients",
- "modified": "2025-06-09 12:08:08.565928",
+ "modified": "2025-09-15 22:15:00.944211",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Total Out Patients",

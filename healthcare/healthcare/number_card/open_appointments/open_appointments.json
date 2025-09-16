@@ -1,6 +1,6 @@
 {
  "background_color": "",
- "color": "",
+ "color": "#BE97C6",
  "creation": "2020-07-14 18:17:54.771092",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -12,7 +12,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Open Appointments",
- "modified": "2025-06-09 12:11:50.439733",
+ "modified": "2025-09-15 22:18:00.035593",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Open Appointments",

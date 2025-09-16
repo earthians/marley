@@ -1,5 +1,5 @@
 {
- "color": "#ED6396",
+ "color": "#3E4E50",
  "creation": "2025-06-02 15:57:33.762413",
  "currency": "",
  "docstatus": 0,
@@ -12,7 +12,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Appointments To Bill OP",
- "modified": "2025-06-09 12:08:51.491654",
+ "modified": "2025-09-15 22:16:00.847366",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Appointments To Bill OP",

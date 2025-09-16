@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "total_sessions",
- "color": "#EC864B",
+ "color": "#AE8799",
  "creation": "2025-06-04 14:07:18.640721",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Planned Sessions",
- "modified": "2025-06-09 11:39:15.363748",
+ "modified": "2025-09-16 10:15:25.949738",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Planned Sessions",

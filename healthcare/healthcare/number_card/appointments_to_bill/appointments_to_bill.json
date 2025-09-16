@@ -1,4 +1,5 @@
 {
+ "color": "#8661C1",
  "creation": "2020-07-14 18:17:54.792773",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -10,7 +11,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Appointments To Bill",
- "modified": "2025-06-09 12:04:45.903497",
+ "modified": "2025-09-15 22:18:39.567375",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Appointments to Bill",
