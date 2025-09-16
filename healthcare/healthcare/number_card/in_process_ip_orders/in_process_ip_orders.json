@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#E55812",
+ "color": "#888DA7",
  "creation": "2025-06-04 13:36:05.665514",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "In-Process IP Orders",
- "modified": "2025-09-16 09:49:50.586534",
+ "modified": "2025-09-16 17:30:53.036482",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "In-Process IP Orders",

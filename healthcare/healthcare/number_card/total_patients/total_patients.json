@@ -1,5 +1,5 @@
 {
- "color": "#2E294E",
+ "color": "#7A89C2",
  "creation": "2020-07-14 18:17:54.727946",
  "docstatus": 0,
  "doctype": "Number Card",
@@ -10,7 +10,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Total Patients",
- "modified": "2025-09-15 22:17:24.942589",
+ "modified": "2025-09-16 17:38:08.994152",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Total Patients",

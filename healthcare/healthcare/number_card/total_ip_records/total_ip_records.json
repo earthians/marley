@@ -1,6 +1,6 @@
 {
  "aggregate_function_based_on": "",
- "color": "#002626",
+ "color": "#9C7A97",
  "creation": "2025-06-02 16:05:48.566133",
  "currency": "",
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_public": 1,
  "is_standard": 1,
  "label": "Total IP Records",
- "modified": "2025-09-16 09:49:18.434284",
+ "modified": "2025-09-16 17:31:26.380922",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Total IP Records",
