@@ -15,37 +15,38 @@
 			<!-- Appointment Grid -->
 			<div 
 				v-if="paginatedAppointments.length"
-				class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2
-					max-h-[75vh] overflow-y-auto lg:max-h-none lg:overflow-visible">
-				<Card
-					v-for="item in paginatedAppointments"
-					:key="item.name"
-					class="cursor-pointer rounded-xl border border-gray-200 transition-transform
-						hover:scale-105 duration-200 hover:drop-shadow-md p-4 bg-white
-						min-w-0 !shadow-none drop-shadow-xl"
-					@click="appointmentDetails(item)"
-				>
-					<div class="flex items-center justify-between whitespace-nowrap">
-						<h3 class="text-xs font-medium text-gray-500 truncate">{{ item.name }}</h3>
-						<Badge :variant="'outline'"
-							:theme="getStatusColor(item.status)">
-							{{ item.status }}
-						</Badge>
-					</div>
+				class="flex-1 overflow-y-auto p-2">
+				<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+					<Card
+						v-for="item in paginatedAppointments"
+						:key="item.name"
+						class="cursor-pointer rounded-xl border border-gray-200 transition-transform
+							hover:scale-105 duration-200 hover:drop-shadow-md p-2 bg-suface-white
+							min-h-[170px] min-w-[240px] !shadow-none drop-shadow-xl"
+						@click="appointmentDetails(item)"
+					>
+						<div class="flex items-center justify-between whitespace-nowrap">
+							<h3 class="text-xs font-medium text-gray-500 truncate">{{ item.name }}</h3>
+							<Badge :variant="'outline'"
+								:theme="getStatusColor(item.status)">
+								{{ item.status }}
+							</Badge>
+						</div>
 
-					<p class="mt-2 text-md font-semibold text-gray-800 truncate">
-						{{ item.title }}
-					</p>
+						<p class="mt-2 text-md font-semibold text-gray-800 truncate">
+							{{ item.title }}
+						</p>
 
-					<p class="mt-1 text-xs text-gray-600 whitespace-nowrap">
-						<FeatherIcon name="calendar" class="inline w-3 h-3 mr-1 text-gray-500" />
-						{{ formatDate(item.appointment_date) }}
-					</p>
-					<p class="mt-1 text-xs text-gray-600 whitespace-nowrap">
-						<FeatherIcon name="clock" class="inline w-3 h-3 mr-1 text-gray-500" />
-						{{ item.appointment_time }} ({{ item.duration }} mins)
-					</p>
-				</Card>
+						<p class="mt-1 mb-1 text-xs text-gray-600 leading-snug break-words whitespace-normal">
+							<FeatherIcon name="calendar" class="inline w-3 h-3 mr-1 text-gray-500" />
+							{{ formatDate(item.appointment_date) }}
+						</p>
+						<p class="mt-1 text-xs text-gray-600 whitespace-nowrap">
+							<FeatherIcon name="clock" class="inline w-3 h-3 mr-1 text-gray-500" />
+							{{ item.appointment_time }} ({{ item.duration }} mins)
+						</p>
+					</Card>
+				</div>
 			</div>
 
 			<div
