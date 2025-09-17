@@ -23,6 +23,7 @@ from frappe.utils import (
 
 from erpnext.setup.doctype.employee.employee import is_holiday
 
+from healthcare.healthcare.api.patient_portal import update_payment_record
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
 	get_fee_validity,
@@ -69,6 +70,10 @@ class PatientAppointment(Document):
 		doc_before_save = self.get_doc_before_save()
 		if doc_before_save and not doc_before_save.insurance_policy == self.insurance_policy:
 			self.make_insurance_coverage()
+
+	def on_payment_authorized(self, payment_status):
+		if payment_status in ["Authorized", "Completed"]:
+			update_payment_record("Patient Appointment", self.name)
 
 	def after_insert(self):
 		self.update_prescription_details()

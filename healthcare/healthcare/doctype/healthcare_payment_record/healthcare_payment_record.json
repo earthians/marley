@@ -6,10 +6,16 @@
  "field_order": [
   "payment_id",
   "order_id",
-  "signature",
+  "patient",
   "user",
+  "signature",
+  "amount",
+  "amount_with_gst",
   "column_break_kstl",
   "status",
+  "currency",
+  "payment_for_doctype",
+  "payment_for_document",
   "failure_reason"
  ],
  "fields": [
@@ -64,16 +70,54 @@
    "fieldtype": "Small Text",
    "label": "Failure Reason",
    "read_only": 1
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "options": "currency"
+  },
+  {
+   "fieldname": "amount_with_gst",
+   "fieldtype": "Currency",
+   "label": "Amount with GST",
+   "options": "currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "payment_for_doctype",
+   "fieldtype": "Link",
+   "label": "Payment for Doctype",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_for_document",
+   "fieldtype": "Dynamic Link",
+   "label": "Payment for Document",
+   "options": "payment_for_doctype",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-26 17:02:24.166785",
+ "modified": "2025-09-17 11:31:39.143726",
  "modified_by": "Administrator",
  "module": "Healthcare",
- "name": "Razorpay Payment Record",
+ "name": "Healthcare Payment Record",
  "owner": "Administrator",
  "permissions": [
   {

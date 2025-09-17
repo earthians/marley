@@ -133,7 +133,6 @@
 						<Payment
 							v-model:practitioner="selectedPractitioner.practitioner_name"
 							v-model:consultationFee="consultationFee"
-							v-model:error="createRazorpayOrder.error"
 							v-model:currency="currency"
 							class="w-full h-full max-w-sm" 
 							@payment_success="() => success = true"
@@ -184,8 +183,7 @@
 					v-if="booked && !success"
 					size="md"
 					variant="solid"
-					:loading="createRazorpayOrder.loading"
-					@click="createOrder"
+					@click="generatePaymentLink()"
 				>
 					Pay
 				</Button>
@@ -230,7 +228,8 @@ import {
 	Progress,
 	Select,
 	FormControl,
-	ErrorMessage
+	ErrorMessage,
+	toast,
 } from 'frappe-ui'
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import DepartmentSelector from '@/components/DepartmentSelector.vue'
@@ -338,9 +337,6 @@ let fetchDepartments = createResource({
 	},
 	onError(e) {
 		error.value = e.messages?.[0] || e;
-		// dialog_message = error.messages?.[0] || error;
-		// dialog_title = "Failed to load Departments";
-		// alert_dialog.value = true;
 	}
 });
 
@@ -375,9 +371,6 @@ function fetchPractitioners(deptName) {
 		},
 		onError(e) {
 			error.value = e.messages?.[0] || e;
-			// dialog_message = error.messages?.[0] || error;
-			// dialog_title = "Failed to load Practitioners";
-			// alert_dialog.value = true;
 		}
 	});
 
@@ -402,9 +395,6 @@ function fetchSlots(date) {
 		},
 		onError(e) {
 			error.value = e.messages?.[0] || e;
-			// dialog_message = error.messages?.[0] || error;
-			// dialog_title = "Failed to load Slotes";
-			// alert_dialog.value = true;
 		}
 	});
 	get_practitioners.fetch();
@@ -575,79 +565,33 @@ function reload_appointments() {
 	emit('appointment_booked')
 }
 
-onMounted(() => {
-	razorpayCheckoutJS.value = document.createElement("script");
-	razorpayCheckoutJS.value.setAttribute(
-		"src",
-		"https://checkout.razorpay.com/v1/checkout.js"
-	);
-	razorpayCheckoutJS.value.async = true;
-	document.head.appendChild(razorpayCheckoutJS.value);
-});
-
-onBeforeUnmount(() => {
-	razorpayCheckoutJS.value?.remove();
-});
-
-function createOrder() {
-	createRazorpayOrder.submit({
-		fee: totalFee.value,
-		appointment: appointment.value
-	});
-}
-
-const createRazorpayOrder = createResource({
-	url: "/api/method/healthcare.healthcare.doctype.healthcare_settings.healthcare_settings.create_razorpay_order",
-	params: {
-		fee: totalFee.value,
-		appointment: appointment.value
+const paymentLink = createResource({
+	url: 'healthcare.healthcare.api.patient_portal.get_payment_link',
+	makeParams(values) {
+		return {
+			doctype: 'Patient Appointment',
+			docname: appointment.value?.name,
+			title: appointment.value?.title,
+			amount: totalFee.value,
+			total_amount: totalFee.value,
+			currency: currency.value,
+			patient: selectedPatient.value?.value,
+			redirect_to: '/patient-portal',
+		}
 	},
-	onSuccess: data => processOrder(data),
-});
+})
 
-const handlePaymentFailed = createResource({
-	url: "healthcare.healthcare.doctype.razorpay_payment_record.razorpay_payment_record.handle_razorpay_payment_failed",
-	onSuccess: () => {
-		console.log("Payment Failed.");
-	}
-});
-
-const PaymentSuccess = createResource({
-	url: "healthcare.healthcare.doctype.razorpay_payment_record.razorpay_payment_record.handle_razorpay_payment_success",
-	onSuccess: () => {
-		console.log("Payment Success.");
-	}
-});
-
-function processOrder(data) {
-	minimized.value = true;
-	const options = {
-		key: data.key_id,
-		order_id: data.order_id,
-		prefill: { email: data.user },
-		handler: handlePaymentSuccess,
-		theme: { color: '#171717' },
-	};
-
-	const rzp = new Razorpay(options);
-
-	// Opens the payment checkout frame
-	rzp.open();
-
-	// Attach failure handler
-	rzp.on("payment.failed", handlePaymentFailure);
-}
-
-function handlePaymentFailure(response) {
-	handlePaymentFailed.submit({ response });
-}
-
-function handlePaymentSuccess(response) {
-	if (response) {
-		PaymentSuccess.submit({ response });
-	}
-	minimized.value = false;
-	success.value = true;
-	emit("payment_success");	
+const generatePaymentLink = () => {
+	paymentLink.submit(
+		{},
+		{
+			onSuccess(data) {
+				window.location.href = data
+			},
+			onError(err) {
+				toast.error(err.messages?.[0] || err)
+			},
+		}
+	)
 }
 </script>

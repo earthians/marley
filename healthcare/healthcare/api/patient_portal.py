@@ -187,7 +187,7 @@ def make_appointment(practitioner, patient, date, slot):
 	doc.paid_amount = practitioner_service["practitioner_charge"]
 	doc.insert(ignore_permissions=True)
 
-	return doc.name
+	return doc
 
 
 @frappe.whitelist()
@@ -610,3 +610,119 @@ def get_observation_result(obs_data):
 		result = obs_data.result_select
 
 	return result
+
+
+def get_payment_gateway():
+	return frappe.db.get_single_value("Healthcare Settings", "payment_gateway")
+
+
+def get_controller(payment_gateway):
+	if "payments" in frappe.get_installed_apps():
+		from payments.utils import get_payment_gateway_controller
+
+		return get_payment_gateway_controller(payment_gateway)
+
+
+def validate_currency(payment_gateway, currency):
+	controller = get_controller(payment_gateway)
+	controller().validate_transaction_currency(currency)
+
+
+@frappe.whitelist()
+def get_payment_link(
+	doctype,
+	docname,
+	title,
+	amount,
+	total_amount,
+	currency,
+	patient,
+	redirect_to,
+):
+	payment_gateway = get_payment_gateway()
+	amount_with_gst = total_amount if total_amount != amount else 0
+
+	payment = record_payment(patient, doctype, docname, amount, currency, amount_with_gst)
+	controller = get_controller(payment_gateway)
+
+	payment_details = {
+		"amount": total_amount,
+		"title": f"Payment for {doctype} {title} {docname}",
+		"description": f"{patient}'s Consultation Charge payment for {title}",
+		"reference_doctype": doctype,
+		"reference_docname": docname,
+		"payer_email": frappe.session.user,
+		"payer_name": patient,
+		"currency": currency,
+		"payment_gateway": payment_gateway,
+		"redirect_to": redirect_to,
+		"payment": payment.name,
+	}
+	if payment_gateway == "Razorpay":
+		order = controller.create_order(**payment_details)
+		payment_details.update({"order_id": order.get("id")})
+
+	url = controller.get_payment_url(**payment_details)
+
+	return url
+
+
+def record_payment(
+	patient,
+	doctype,
+	docname,
+	amount,
+	currency,
+	amount_with_gst=0,
+):
+	payment_doc = frappe.new_doc("Healthcare Payment Record")
+	payment_doc.update(
+		{
+			"user": frappe.session.user,
+			"patient": patient,
+			"amount": amount,
+			"currency": currency,
+			"amount_with_gst": amount_with_gst,
+			"payment_for_doctype": doctype,
+			"payment_for_document": docname,
+		}
+	)
+
+	payment_doc.save(ignore_permissions=True)
+	return payment_doc
+
+
+def update_payment_record(doctype, docname):
+	request = frappe.get_all(
+		"Integration Request",
+		{
+			"reference_doctype": doctype,
+			"reference_docname": docname,
+			"owner": frappe.session.user,
+		},
+		order_by="creation desc",
+		limit=1,
+	)
+
+	if len(request):
+		data = frappe.db.get_value("Integration Request", request[0].name, "data")
+		data = frappe._dict(json.loads(data))
+
+		payment_gateway = data.get("payment_gateway")
+		if payment_gateway == "Razorpay":
+			payment_id = "razorpay_payment_id"
+		elif "Stripe" in payment_gateway:
+			payment_id = "stripe_token_id"
+		else:
+			payment_id = "order_id"
+
+		payment_doc = frappe.get_doc("Healthcare Payment Record", data.payment)
+		payment_doc.update(
+			{
+				"status": "Captured",
+				"payment_id": data.get(payment_id),
+				"order_id": data.get("order_id"),
+				"signature": data.get("razorpay_signature") or data.get("signature"),
+			},
+		)
+		payment_doc.save(ignore_permissions=True)

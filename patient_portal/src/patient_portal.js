@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import PatientPortal from './PatientPortal.vue'
+import { initSocket } from './socket'
 
 import './index.css'
 
@@ -27,6 +28,7 @@ let globalComponents = {
 let app = createApp(PatientPortal)
 setConfig('resourceFetcher', frappeRequest)
 app.use(FrappeUI)
+app.provide('$socket', initSocket())
 
 for (let key in globalComponents) {
 	app.component(key, globalComponents[key])

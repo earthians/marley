@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestRazorpayWebhookLog(IntegrationTestCase):
+class IntegrationTestHealthcarePaymentRecord(IntegrationTestCase):
 	"""
-	Integration tests for RazorpayWebhookLog.
+	Integration tests for HealthcarePaymentRecord.
 	Use this class for testing interactions between multiple components.
 	"""
 
