@@ -18,3 +18,4 @@ healthcare.patches.v15_0.setup_basic_code_systems
 healthcare.patches.v15_0.setup_diagnostic_module_codes
 healthcare.patches.v15_0.setup_order_status_codes
 healthcare.patches.v15_0.set_observation_and_diagnostic_report_status
+healthcare.patches.v15_0.update_patient_history_settings_for_lab_test
