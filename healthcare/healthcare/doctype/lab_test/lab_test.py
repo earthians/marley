@@ -94,21 +94,20 @@ class LabTest(Document):
 						title=_("Mandatory Results"),
 					)
 
-
-def before_insert(self):
-	if self.service_request:
-		lab_test = frappe.db.exists(
-			"Lab Test",
-			{"service_request": self.service_request, "docstatus": ["!=", 2]},
-		)
-		if lab_test:
-			frappe.throw(
-				_("Lab Test {0} already created from service request {1}").format(
-					frappe.bold(get_link_to_form("Lab Test", lab_test)),
-					frappe.bold(get_link_to_form("Service Request", self.service_request)),
-				),
-				title=_("Already Exist"),
+	def before_insert(self):
+		if self.service_request:
+			lab_test = frappe.db.exists(
+				"Lab Test",
+				{"service_request": self.service_request, "docstatus": ["!=", 2]},
 			)
+			if lab_test:
+				frappe.throw(
+					_("Lab Test {0} already created from service request {1}").format(
+						frappe.bold(get_link_to_form("Lab Test", lab_test)),
+						frappe.bold(get_link_to_form("Service Request", self.service_request)),
+					),
+					title=_("Already Exist"),
+				)
 
 
 def create_test_from_template(lab_test):
