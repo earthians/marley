@@ -14,6 +14,11 @@ from healthcare.healthcare.utils import get_appointment_billing_item_and_rate
 
 @frappe.whitelist()
 def get_appointments():
+	patients = get_patients_with_relations()
+
+	if not len(patients):
+		return
+
 	appointment = frappe.qb.DocType("Patient Appointment")
 	encounter = frappe.qb.DocType("Patient Encounter")
 	practitioner = frappe.qb.DocType("Healthcare Practitioner")

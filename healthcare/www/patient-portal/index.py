@@ -23,6 +23,14 @@ def get_context(context):
 	if portal_entry.role and not portal_entry.role in frappe.get_roles(frappe.session.user):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+	if frappe.session.user != "Administrator" and not frappe.db.exists(
+		"Patient", {"status": "Active", "user_id": frappe.session.user}
+	):
+		frappe.throw(
+			_("You are not linked to any patient. Please contact the administration."),
+			frappe.PermissionError,
+		)
+
 	context.no_cache = 1
 	context.parents = [{"name": _("My Account"), "route": "/me"}]
 	context.body_class = "portal-page"
