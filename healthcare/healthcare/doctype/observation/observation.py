@@ -34,6 +34,7 @@ class Observation(Document):
 
 	def before_insert(self):
 		set_observation_idx(self)
+		self.render_templates()
 
 	def on_submit(self):
 		if self.service_request:
@@ -110,6 +111,19 @@ class Observation(Document):
 						frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)
 					)
 				)
+
+	def render_templates(self):
+		if self.result_template and not self.result_text:
+			terms_and_conditions = frappe.get_doc("Terms and Conditions", self.result_template)
+
+			if terms_and_conditions.terms:
+				self.result_text = frappe.render_template(terms_and_conditions.terms, self.as_dict())
+
+		if self.interpretation_template and not self.result_interpretation:
+			terms_and_conditions = frappe.get_doc("Terms and Conditions", self.interpretation_template)
+
+			if terms_and_conditions.terms:
+				self.result_interpretation = frappe.render_template(terms_and_conditions.terms, self.as_dict())
 
 
 @frappe.whitelist()
