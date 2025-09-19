@@ -848,8 +848,13 @@ def get_events(start, end, filters=None):
 	:param filters: Filters (JSON).
 	"""
 	from frappe.desk.calendar import get_event_conditions
+	from frappe.desk.reportview import build_match_conditions
 
 	conditions = get_event_conditions("Patient Appointment", filters)
+	match_conditions = build_match_conditions("Patient Appointment")
+
+	if match_conditions:
+		conditions += "and" + match_conditions
 
 	data = frappe.db.sql(
 		"""
