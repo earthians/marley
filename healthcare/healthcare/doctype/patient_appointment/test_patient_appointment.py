@@ -948,7 +948,11 @@ def create_encounter(
 		if procedure_template:
 			encounter.append(
 				"procedure_prescription",
-				{"procedure": procedure_template.name, "procedure_name": procedure_template.item_code},
+				{
+					"procedure": procedure_template.name,
+					"procedure_name": procedure_template.item_code,
+					"no_of_sessions": 1,
+				},
 			)
 		encounter.save()
 		encounter.submit()

@@ -198,7 +198,11 @@ def create_encounter(
 	if procedure_template:
 		patient_encounter.append(
 			"procedure_prescription",
-			{"procedure": procedure_template.name, "procedure_name": procedure_template.item_code},
+			{
+				"procedure": procedure_template.name,
+				"procedure_name": procedure_template.item_code,
+				"no_of_sessions": 1,
+			},
 		)
 	if therapy_type:
 		patient_encounter.append(
