@@ -18,7 +18,8 @@ class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
 		self.validate_medications()
-		self.validate_therapies()
+		self.validate_sessions("therapies", "Therapies")
+		self.validate_sessions("procedure_prescription", "Clinical Procedures")
 		self.validate_observations()
 		set_codification_table_from_diagnosis(self)
 		if not self.is_new() and self.submit_orders_on_save:
@@ -135,7 +136,14 @@ class PatientEncounter(Document):
 
 	def set_treatment_plan_item(self, plan_item):
 		if plan_item.type == "Clinical Procedure Template":
-			self.append("procedure_prescription", {"procedure": plan_item.template})
+			self.append(
+				"procedure_prescription",
+				{
+					"procedure": plan_item.template,
+					"no_of_sessions": plan_item.qty,
+					"interval": plan_item.interval,
+				},
+			)
 
 		if plan_item.type == "Lab Test Template":
 			self.append("lab_test_prescription", {"lab_test_code": plan_item.template})
@@ -170,15 +178,14 @@ class PatientEncounter(Document):
 					if medication:
 						item.medication = medication
 
-	def validate_therapies(self):
-		if not self.therapies:
+	def validate_sessions(self, table, label):
+		"""validate sessions in child tables"""
+		if not getattr(self, table, None):
 			return
 
-		for therapy in self.therapies:
-			if not therapy.no_of_sessions or therapy.no_of_sessions <= 0:
-				frappe.throw(
-					_("Row #{0} (Therapies): Number of Sessions should be at least 1").format(therapy.idx)
-				)
+		for row in getattr(self, table):
+			if not row.no_of_sessions or row.no_of_sessions <= 0:
+				frappe.throw(_(f"Row #{row.idx} ({label}): Number of Sessions should be at least 1"))
 
 	def validate_observations(self):
 		if not self.lab_test_prescription:
@@ -245,7 +252,7 @@ class PatientEncounter(Document):
 		qty = 1
 		if line_item.get("doctype") == "Drug Prescription":
 			qty = line_item.get_quantity()
-		elif line_item.get("doctype") == "Therapy Plan Detail":
+		elif line_item.get("doctype") in ["Therapy Plan Detail", "Procedure Prescription"]:
 			qty = line_item.get("no_of_sessions")
 		order = frappe.get_doc(
 			{

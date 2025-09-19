@@ -40,7 +40,7 @@ class ClinicalProcedure(Document):
 		if self.service_request:
 			has_proceedure = frappe.db.exists(
 				"Clinical Procedure",
-				{"service_request": self.service_request, "docstatus": ["!=", 2]},
+				{"service_request": self.service_request, "docstatus": 0},
 			)
 			if has_proceedure:
 				frappe.throw(
@@ -71,9 +71,12 @@ class ClinicalProcedure(Document):
 	def on_submit(self):
 		self.create_nursing_tasks(post_event=False)
 		if self.service_request:
-			frappe.db.set_value(
-				"Service Request", self.service_request, "status", "completed-Request Status"
-			)
+			status = "active-Request Status"
+			sessions_completed = self.check_sessions_completed()
+			if sessions_completed:
+				status = "completed-Request Status"
+
+			set_service_request_status(self.service_request, status)
 
 	def create_nursing_tasks(self, post_event=True):
 		if post_event:
@@ -230,6 +233,16 @@ class ClinicalProcedure(Document):
 			stock_entry.submit()
 			return stock_entry
 		return stock_entry.as_dict()
+
+	def check_sessions_completed(self):
+		total_sessions_requested = frappe.db.get_value(
+			"Service Request", self.service_request, "quantity"
+		)
+		sessions = frappe.db.count(
+			"Clinical Procedure", filters={"docstatus": ["!=", 2], "service_request": self.service_request}
+		)
+
+		return True if total_sessions_requested == sessions else False
 
 
 def get_stock_qty(item_code, warehouse):

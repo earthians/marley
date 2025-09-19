@@ -100,20 +100,34 @@ frappe.ui.form.on('Service Request', {
 		if (frm.doc.docstatus !== 1 || frm.doc.status === 'Completed') return;
 
 		if (frm.doc.template_dt === 'Clinical Procedure Template') {
-
 			frm.add_custom_button(__('Clinical Procedure'), function() {
-				frappe.db.get_value("Clinical Procedure", {"service_request": frm.doc.name, "docstatus":["!=", 2]}, "name")
-				.then(r => {
-					if (Object.keys(r.message).length == 0) {
-						frm.trigger('make_clinical_procedure');
+				frappe.db.get_list("Clinical Procedure", {
+					filters: {
+						"service_request": frm.doc.name,
+						"docstatus":["!=", 2],
+						"procedure_template": frm.doc.template_dn
+					},
+					fields: ["name"]
+				}).then(response => {
+					if (response.length == frm.doc.quantity) {
+						frappe.set_route("List", "Clinical Procedure", {
+							service_request: frm.doc.name,
+						});
 					} else {
-						if (r.message && r.message.name) {
-							frappe.set_route("Form", "Clinical Procedure", r.message.name);
-							frappe.show_alert({
-								message: __(`Clinical Procedure is already created`),
-								indicator: "info",
-							});
-						}
+						frappe.db.get_value("Clinical Procedure", {"service_request": frm.doc.name, "docstatus": 0}, "name")
+						.then(r => {
+							if (Object.keys(r.message).length == 0) {
+								frm.trigger('make_clinical_procedure');
+							} else {
+								if (r.message && r.message.name) {
+									frappe.set_route("Form", "Clinical Procedure", r.message.name);
+									frappe.show_alert({
+										message: __(`Clinical Procedure is already created`),
+										indicator: "info",
+									});
+								}
+							}
+						})
 					}
 				})
 			}, __('Create'));
