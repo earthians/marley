@@ -259,6 +259,7 @@ class PatientEncounter(Document):
 				"source_doc": "Patient Encounter",
 				"order_group": self.name,
 				"sequence": line_item.get("sequence"),
+				"patient_care_type": line_item.get("patient_care_type"),
 				"intent": line_item.get("intent"),
 				"priority": line_item.get("priority"),
 				"quantity": qty,
@@ -273,6 +274,7 @@ class PatientEncounter(Document):
 				"note": line_item.get("note"),
 				"patient_instruction": line_item.get("patient_instruction"),
 				"insurance_policy": self.insurance_policy,
+				"comment": line_item.get("comments") or line_item.get("lab_test_comment"),
 			}
 		)
 
@@ -290,7 +292,6 @@ class PatientEncounter(Document):
 			order.update(
 				{
 					"referred_to_practitioner": line_item.get("practitioner"),
-					"ordered_for": line_item.get("date"),
 				}
 			)
 
@@ -307,9 +308,6 @@ class PatientEncounter(Document):
 				{
 					"template_dt": template_doc.get("doctype"),
 					"template_dn": template_doc.get("name"),
-					# "patient_care_type": line_item.patient_care_type
-					# if line_item.patient_care_type
-					# else template_doc.get("patient_care_type"),
 				}
 			)
 

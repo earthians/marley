@@ -54,6 +54,7 @@
   "dosage",
   "number_of_repeats_allowed",
   "column_break_91",
+  "comment",
   "order_description",
   "period",
   "occurrence_time",
@@ -458,12 +459,17 @@
    "label": "Medication Item",
    "options": "Item",
    "reqd": 1
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-07 20:40:10.119600",
+ "modified": "2025-09-19 12:40:02.481435",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Request",
