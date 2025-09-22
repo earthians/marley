@@ -759,7 +759,15 @@ let check_and_set_availability = function(frm) {
 
 	function show_slots(d, fd) {
 		if (d.get_value("appointment_date") && d.get_value("practitioner")) {
-			fd.available_slots.html("");
+			fd.available_slots.html(`
+				<div class="text-center" style="padding: 20px;">
+					<div class="spinner-border text-primary" role="status">
+						<span class="sr-only">${__("Loading...")}</span>
+					</div>
+					<div class="mt-2 text-muted">${__("Fetching Available Slots...")}</div>
+				</div>
+			`);
+
 			frappe.call({
 				method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
 				args: {
@@ -827,12 +835,12 @@ let check_and_set_availability = function(frm) {
 						});
 
 					} else {
-						//	fd.available_slots.html("Please select a valid date.".bold())
 						show_empty_state(d.get_value("practitioner"), d.get_value("appointment_date"));
 					}
 				},
-				freeze: true,
-				freeze_message: __("Fetching Schedule...")
+				error: () => {
+					fd.available_slots.html("");
+				}
 			});
 		} else {
 			fd.available_slots.html(__("Appointment date and Healthcare Practitioner are Mandatory").bold());
