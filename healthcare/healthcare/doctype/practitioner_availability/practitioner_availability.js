@@ -28,5 +28,11 @@ frappe.ui.form.on("Practitioner Availability", {
 		if (frm.doc.type == "Available") {
 			frm.set_value("reason", "");
 		}
+	},
+
+	type: function (frm) {
+		if (frm.doc.type == "Available" && frm.doc.scope_type != "Healthcare Practitioner") {
+			frm.set_value("scope_type", "Healthcare Practitioner");
+		}
 	}
 });

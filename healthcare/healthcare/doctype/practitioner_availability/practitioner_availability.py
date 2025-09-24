@@ -9,6 +9,7 @@ from frappe.model.document import Document
 from frappe.query_builder import DocType
 from frappe.utils import (
 	add_to_date,
+	date_diff,
 	get_datetime,
 	get_link_to_form,
 	get_time,
@@ -47,6 +48,9 @@ class PractitionerAvailability(Document):
 		if end_dt <= start_dt:
 			frappe.throw(_("Practitioner Availability End time must be after Start time."))
 
+		if self.end_time and get_time(self.start_time) > get_time(self.end_time):
+			frappe.throw(_("End time must be after start time."))
+
 	def validate_availability_overlaps(self):
 		PAV = DocType("Practitioner Availability")
 		rows = (
@@ -58,28 +62,39 @@ class PractitionerAvailability(Document):
 			.where(PAV.scope == self.scope)
 		).run(as_dict=True)
 
-		start_dt = datetime.combine(getdate(self.start_date), get_time(self.start_time))
-		end_dt = datetime.combine(getdate(self.end_date), get_time(self.end_time))
+		def has_time_overlap(r):
+			"""Check if date & time overlap exists with given record"""
+			existing_start_date = getdate(r.start_date)
+			existing_end_date = getdate(r.end_date)
+			existing_start_time = get_time(r.start_time)
+			existing_end_time = get_time(r.end_time)
+
+			overlap_start_date = max(getdate(self.start_date), existing_start_date)
+			overlap_end_date = min(getdate(self.end_date), existing_end_date)
+
+			if overlap_start_date <= overlap_end_date:
+				return get_time(self.start_time) < existing_end_time and existing_start_time < get_time(
+					self.end_time
+				)
+			return False
 
 		if self.type == "Available":
 			for r in rows:
 				if r.get("type") != "Available":
 					continue
-				rs = get_datetime(f"{r.get('start_date')} {r.get('start_time')}")
-				re_date = r.get("end_date") or r.get("start_date")
-				re = get_datetime(f"{re_date} {r.get('end_time')}")
-				if (start_dt < re) and (rs < end_dt):
-					frappe.throw(_(f"Overlaps with another Available block: {get_link_to_form(r.get('name'))}"))
-
+				if has_time_overlap(r):
+					frappe.throw(
+						_(
+							f"Overlaps with another Available block: "
+							f"{get_link_to_form(self.doctype, r.get('name'))}"
+						)
+					)
 		else:
 			has_overlap_with_available = False
 			for r in rows:
 				if r.get("type") != "Available":
 					continue
-				rs = get_datetime(f"{r.get('start_date')} {r.get('start_time')}")
-				re_date = r.get("end_date") or r.get("start_date")
-				re = get_datetime(f"{re_date} {r.get('end_time')}")
-				if (start_dt < re) and (rs < end_dt):
+				if has_time_overlap(r):
 					has_overlap_with_available = True
 					break
 			if not has_overlap_with_available:
@@ -143,10 +158,21 @@ class PractitionerAvailability(Document):
 				conflicts.append(a.get("name"))
 
 		if conflicts:
-			conflict_links = ", ".join(get_link_to_form(n) for n in conflicts)
+			conflict_links = ", ".join(get_link_to_form("Patient Appointment", n) for n in conflicts)
 			frappe.throw(
 				_(
 					f"Cannot create Unavailable block: it conflicts with existing Patient Appointment(s): "
 					f"{conflict_links}."
 				)
 			)
+
+
+def daterange(start_date, end_date):
+	start_date = getdate(start_date)
+	end_date = getdate(end_date)
+
+	days_count = date_diff(end_date, start_date)
+
+	for i in range(days_count + 1):
+		day = getdate(add_to_date(start_date, days=i))
+		yield day

@@ -320,11 +320,17 @@ class PatientAppointment(Document):
 
 		conflicts = []
 		for r in rows:
-			r_start = get_datetime(f"{r.get('start_date')} {r.get('start_time')}")
-			r_end_date = r.get("end_date") or r["start_date"]
-			r_end = get_datetime(f"{r_end_date} {r.get('end_time')}")
-			if (start_dt < r_end) and (r_start < end_dt):
-				conflicts.append(r["name"])
+			existing_start_date = getdate(r.start_date)
+			existing_end_date = getdate(r.end_date)
+			existing_start_time = get_time(r.start_time)
+			existing_end_time = get_time(r.end_time)
+
+			overlap_start_date = max(getdate(start_dt), existing_start_date)
+			overlap_end_date = min(getdate(end_dt), existing_end_date)
+			if overlap_start_date <= overlap_end_date:
+				# Check if the daily times overlap
+				if get_time(start_dt) < existing_end_time and existing_start_time < get_time(end_dt):
+					conflicts.append(r["name"])
 
 		if conflicts:
 			msg = ", ".join(frappe.bold(n) for n in conflicts)
@@ -713,24 +719,40 @@ def get_availability_data(date, practitioner, appointment):
 
 	check_employee_wise_availability(date, practitioner_doc)
 
+	available_slotes = []
+	if isinstance(appointment, str):
+		appointment = frappe.get_doc(json.loads(appointment))
+
+	if frappe.db.exists(
+		"Practitioner Availability",
+		{
+			"type": "Available",
+			"scope": practitioner_doc.name,
+			"status": "Active",
+			"start_date": ["<=", date],
+			"end_date": [">=", date],
+			"docstatus": 1,
+		},
+	):
+		available_slotes = get_availability_slots(practitioner_doc, date, appointment.appointment_type)
+
 	if practitioner_doc.practitioner_schedules:
 		slot_details = get_available_slots(practitioner_doc, date)
-	else:
+	elif not len(available_slotes):
 		frappe.throw(
 			_(
-				"{0} does not have a Healthcare Practitioner Schedule. Add it in Healthcare Practitioner master"
+				"{0} does not have a Healthcare Practitioner Schedule / Availability. Add it in Healthcare Practitioner master / Practitioner Availability"
 			).format(practitioner),
 			title=_("Practitioner Schedule Not Found"),
 		)
 
+	if available_slotes and len(available_slotes):
+		slot_details += available_slotes
 	if not slot_details:
 		# TODO: return available slots in nearby dates
 		frappe.throw(
 			_("Healthcare Practitioner not available on {0}").format(weekday), title=_("Not Available")
 		)
-
-	if isinstance(appointment, str):
-		appointment = frappe.get_doc(json.loads(appointment))
 
 	fee_validity = "Disabled"
 	free_follow_ups = False
@@ -857,6 +879,101 @@ def get_available_slots(practitioner_doc, date):
 					}
 				)
 	return slot_details
+
+
+def get_availability_slots(practitioner_doc, date, appointment_type):
+	availability_details = frappe.db.get_all(
+		"Practitioner Availability",
+		filters={
+			"type": "Available",
+			"scope": practitioner_doc.name,
+			"status": "Active",
+			"start_date": ["<=", date],
+			"end_date": [">=", date],
+			"docstatus": 1,
+		},
+		pluck="name",
+	)
+
+	if not len(availability_details):
+		return []
+
+	available_slotes = []
+	for availability in availability_details:
+		data = build_availability_data(availability, appointment_type, date, practitioner_doc)
+		if data:
+			available_slotes.append(data)
+
+	return available_slotes
+
+
+def build_availability_data(availability, appointment_type, date, practitioner_doc):
+	available_slots = []
+
+	appointment_duration = frappe.db.get_value(
+		"Appointment Type", appointment_type, "default_duration"
+	)
+	availability_doc = frappe.get_doc("Practitioner Availability", availability)
+
+	weekday = date.strftime("%A").lower()
+	if availability_doc.repeat == "Weekly" and not getattr(availability_doc, weekday, 0):
+		return {}
+	elif (
+		availability_doc.repeat == "Monthly" and getdate(date).day != availability_doc.start_date.day
+	):
+		return {}
+	elif availability_doc.repeat == "Never" and not (
+		getdate(date) >= availability_doc.start_date and getdate(date) <= availability_doc.end_date
+	):
+		return {}
+
+	start_time = (
+		datetime.datetime.combine(date, datetime.time()) + availability_doc.start_time
+	).time()
+	end_time = (datetime.datetime.combine(date, datetime.time()) + availability_doc.end_time).time()
+
+	current = datetime.datetime.combine(date, start_time)
+	end = datetime.datetime.combine(date, end_time)
+
+	while current + datetime.timedelta(minutes=appointment_duration) <= end:
+		slot_start = current.time().strftime("%H:%M:%S")
+		slot_end = (
+			(current + datetime.timedelta(minutes=appointment_duration)).time().strftime("%H:%M:%S")
+		)
+		available_slots.append({"from_time": slot_start, "to_time": slot_end})
+		current += datetime.timedelta(minutes=appointment_duration)
+
+	filters = {
+		"practitioner": practitioner_doc.name,
+		"appointment_date": date,
+		"status": ["not in", ["Cancelled"]],
+	}
+	appointments = frappe.get_all(
+		"Patient Appointment",
+		filters=filters,
+		fields=["name", "appointment_time", "duration", "status", "appointment_date"],
+	)
+
+	practitioner_availability = get_practitioner_unavailability(
+		date,
+		practitioner_doc.name,
+		practitioner_doc.department,
+	)
+	appointments.extend(practitioner_availability)
+
+	return (
+		{
+			"slot_name": "Practitioner Availability",
+			"service_unit": availability_doc.service_unit or None,
+			"avail_slot": available_slots,
+			"appointments": appointments,
+			"allow_overlap": 0,
+			"service_unit_capacity": 0,
+			"tele_conf": 0,
+		}
+		if available_slots
+		else None
+	)
 
 
 def get_practitioner_unavailability(date, practitioner=None, department=None, service_unit=None):
