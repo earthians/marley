@@ -261,10 +261,6 @@
    "label": "Service Request Defaults"
   }
  ],
-<<<<<<< HEAD
- "links": [],
- "modified": "2023-11-06 15:00:26.292044",
-=======
  "links": [
   {
    "link_doctype": "Clinical Procedure",
@@ -272,7 +268,6 @@
   }
  ],
  "modified": "2025-09-25 14:58:58.823692",
->>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

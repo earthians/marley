@@ -356,10 +356,6 @@
   }
  ],
  "image_field": "image",
-<<<<<<< HEAD
- "links": [],
- "modified": "2023-03-04 18:33:25.753648",
-=======
   "links": [
   {
    "group": "Consultations",
@@ -393,7 +389,6 @@
   }
  ],
  "modified": "2025-09-25 14:20:06.299954",
->>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",

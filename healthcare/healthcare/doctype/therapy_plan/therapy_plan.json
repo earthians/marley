@@ -128,10 +128,6 @@
    "read_only": 1
   }
  ],
-<<<<<<< HEAD
- "links": [],
- "modified": "2020-11-04 18:13:13.564999",
-=======
  "grid_page_length": 50,
  "links": [
   {
@@ -141,7 +137,6 @@
   }
  ],
  "modified": "2025-09-25 13:44:57.440831",
->>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Plan",

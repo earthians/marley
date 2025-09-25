@@ -259,11 +259,7 @@
    "link_fieldname": "reference_name"
   }
  ],
-<<<<<<< HEAD
- "modified": "2023-04-06 04:11:55.237021",
-=======
  "modified": "2025-09-25 12:17:43.610989",
->>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Session",

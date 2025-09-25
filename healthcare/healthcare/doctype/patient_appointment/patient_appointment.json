@@ -442,10 +442,6 @@
   }
  ],
  "grid_page_length": 50,
-<<<<<<< HEAD
- "links": [],
- "modified": "2025-04-01 12:45:08.615248",
-=======
  "links": [
   {
    "group": "Records",
@@ -464,7 +460,6 @@
   }
  ],
  "modified": "2025-09-25 13:27:12.862039",
->>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",
