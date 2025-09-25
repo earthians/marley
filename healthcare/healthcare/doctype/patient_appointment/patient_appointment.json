@@ -442,8 +442,29 @@
   }
  ],
  "grid_page_length": 50,
+<<<<<<< HEAD
  "links": [],
  "modified": "2025-04-01 12:45:08.615248",
+=======
+ "links": [
+  {
+   "group": "Records",
+   "link_doctype": "Patient Encounter",
+   "link_fieldname": "appointment"
+  },
+  {
+   "group": "Records",
+   "link_doctype": "Vital Signs",
+   "link_fieldname": "appointment"
+  },
+  {
+   "group": "Records",
+   "link_doctype": "Patient Medical Record",
+   "link_fieldname": "reference_name"
+  }
+ ],
+ "modified": "2025-09-25 13:27:12.862039",
+>>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Appointment",

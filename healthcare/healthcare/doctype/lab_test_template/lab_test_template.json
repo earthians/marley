@@ -410,8 +410,15 @@
    "fieldtype": "Column Break"
   }
  ],
- "links": [],
- "modified": "2023-11-03 15:28:04.801812",
+ "grid_page_length": 50,
+ "links": [
+  {
+   "group": "Tests",
+   "link_doctype": "Lab Test",
+   "link_fieldname": "template"
+  }
+ ],
+ "modified": "2025-09-25 13:34:46.895774",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",
@@ -441,6 +448,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "lab_test_code,lab_test_name,lab_test_template_type",
  "sort_field": "modified",
  "sort_order": "DESC",

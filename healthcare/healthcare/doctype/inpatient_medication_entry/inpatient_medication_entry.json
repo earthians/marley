@@ -176,10 +176,20 @@
    "label": "To Time"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2021-01-11 12:37:46.749659",
+ "links": [
+  {
+   "group": "Orders",
+   "is_child_table": 1,
+   "link_doctype": "Inpatient Medication Entry Detail",
+   "link_fieldname": "against_imoe",
+   "parent_doctype": "Inpatient Medication Order",
+   "table_fieldname": "medication_orders"
+  }
+ ],
+ "modified": "2025-09-25 14:32:32.230025",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Medication Entry",
@@ -198,7 +208,9 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

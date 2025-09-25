@@ -242,8 +242,23 @@
   }
  ],
  "is_tree": 1,
- "links": [],
- "modified": "2023-04-20 11:43:38.575796",
+ "links": [
+  {
+   "is_child_table": 1,
+   "link_doctype": "Inpatient Occupancy",
+   "link_fieldname": "service_unit",
+   "parent_doctype": "Inpatient Record",
+   "table_fieldname": "inpatient_occupancies"
+  },
+  {
+   "is_child_table": 1,
+   "link_doctype": "Practitioner Service Unit Schedule",
+   "link_fieldname": "service_unit",
+   "parent_doctype": "Healthcare Practitioner",
+   "table_fieldname": "practitioner_schedules"
+  }
+ ],
+ "modified": "2025-09-25 15:03:07.339676",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",
@@ -285,6 +300,7 @@
  ],
  "quick_entry": 1,
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "healthcare_service_unit_name",
  "sort_field": "modified",
  "sort_order": "DESC",

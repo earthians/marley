@@ -56,7 +56,12 @@
   "order_history_html",
   "encounter_details",
   "notes_tab",
-  "clinical_notes"
+  "clinical_notes",
+  "section_break_tgan",
+  "data_ohqu",
+  "dental_tab_tab",
+  "dental_chart",
+  "dental_chart_store"
  ],
  "fields": [
   {
@@ -387,16 +392,89 @@
    "fieldname": "order_history_html",
    "fieldtype": "HTML",
    "label": "Order History"
+  },
+  {
+   "fieldname": "section_break_tgan",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "data_ohqu",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "dental_tab_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dental"
+  },
+  {
+   "fieldname": "dental_chart",
+   "fieldtype": "HTML",
+   "label": "Dental Chart"
+  },
+  {
+   "fieldname": "dental_chart_store",
+   "fieldtype": "Code",
+   "label": "Dental Chart Store",
+   "print_hide": 1,
+   "read_only": 1,
+   "report_hide": 1
   }
  ],
  "is_submittable": 1,
  "links": [
   {
+   "group": "Orders",
+   "link_doctype": "Medication Request",
+   "link_fieldname": "order_group"
+  },
+  {
+   "group": "Inpatient",
+   "link_doctype": "Treatment Counselling",
+   "link_fieldname": "admission_encounter"
+  },
+  {
+   "group": "Notes, Tasks & Vitals",
    "link_doctype": "Clinical Note",
    "link_fieldname": "reference_name"
+<<<<<<< HEAD
   }
  ],
  "modified": "2023-11-07 18:03:12.793649",
+=======
+  },
+  {
+   "group": "Notes, Tasks & Vitals",
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "reference_name"
+  },
+  {
+   "group": "Notes, Tasks & Vitals",
+   "link_doctype": "Vital Signs",
+   "link_fieldname": "encounter"
+  },
+  {
+   "group": "Inpatient",
+   "link_doctype": "Inpatient Record",
+   "link_fieldname": "admission_encounter"
+  },
+  {
+   "group": "Inpatient",
+   "link_doctype": "Inpatient Medication Order",
+   "link_fieldname": "patient_encounter"
+  },
+  {
+   "group": "Orders",
+   "link_doctype": "Service Request",
+   "link_fieldname": "order_group"
+  },
+  {
+   "group": "Medical Records",
+   "link_doctype": "Patient Medical Record",
+   "link_fieldname": "reference_name"
+  }
+ ],
+ "modified": "2025-09-25 13:22:49.662965",
+>>>>>>> 39fe6be (fix: doctype links moved to frontend for customisability - 2)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
