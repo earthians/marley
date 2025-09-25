@@ -65,12 +65,7 @@
   "order_history_html",
   "encounter_details",
   "notes_tab",
-  "clinical_notes",
-  "section_break_tgan",
-  "data_ohqu",
-  "dental_tab_tab",
-  "dental_chart",
-  "dental_chart_store"
+  "clinical_notes"
  ],
  "fields": [
   {
@@ -457,32 +452,6 @@
    "fieldname": "order_history_html",
    "fieldtype": "HTML",
    "label": "Order History"
-  },
-  {
-   "fieldname": "section_break_tgan",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "data_ohqu",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "dental_tab_tab",
-   "fieldtype": "Tab Break",
-   "label": "Dental"
-  },
-  {
-   "fieldname": "dental_chart",
-   "fieldtype": "HTML",
-   "label": "Dental Chart"
-  },
-  {
-   "fieldname": "dental_chart_store",
-   "fieldtype": "Code",
-   "label": "Dental Chart Store",
-   "print_hide": 1,
-   "read_only": 1,
-   "report_hide": 1
   }
  ],
  "grid_page_length": 50,
