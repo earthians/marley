@@ -84,26 +84,33 @@ class PractitionerAvailability(Document):
 					continue
 				if has_time_overlap(r):
 					frappe.throw(
-						_(
-							f"Overlaps with another Available block: "
-							f"{get_link_to_form(self.doctype, r.get('name'))}"
-						)
+						_(f"Overlaps with another Availability: " f"{get_link_to_form(self.doctype, r.get('name'))}")
 					)
 		else:
-			has_overlap_with_available = False
-			for r in rows:
-				if r.get("type") != "Available":
-					continue
-				if has_time_overlap(r):
-					has_overlap_with_available = True
-					break
-			if not has_overlap_with_available:
-				frappe.throw(
-					_(
-						"Unavailable block must overlap at least partially with an existing "
-						"Available block for the same scope."
+			if self.scope_type == "Healthcare Practitioner":
+				has_overlap_with_available = False
+				for r in rows:
+					if r.get("type") != "Available":
+						continue
+					if has_time_overlap(r):
+						has_overlap_with_available = True
+						break
+				if not has_overlap_with_available:
+					frappe.throw(
+						_(
+							"Unavailable block for a practitioner must overlap at least partially with an existing Availability"
+						)
 					)
-				)
+			else:
+				for r in rows:
+					if r.get("type") == "Available":
+						continue
+					if has_time_overlap(r):
+						frappe.throw(
+							_(
+								f"Overlaps with another Unvailability: " f"{get_link_to_form(self.doctype, r.get('name'))}"
+							)
+						)
 
 	def validate_existing_appointments(self):
 		if self.type != "Unavailable":
