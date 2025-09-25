@@ -870,7 +870,7 @@ let check_and_set_availability = function(frm) {
 			if (slot_info.slot_name == "Practitioner Availability") {
 				slot_html += `
 					<span>
-						<b>${__("General Availability")}</b>
+						<b>${ slot_info.display || slot_info.slot_name }</b>
 					</span><br>`;
 				if (slot_info.service_unit) {
 					slot_html += `<span><b>${__("Service Unit:")}</b> ${slot_info.service_unit}</span>`;

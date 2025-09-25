@@ -14,6 +14,7 @@
   "amended_from",
   "column_break_wewi",
   "status",
+  "display",
   "note",
   "title",
   "section_break_soiq",
@@ -92,13 +93,13 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "default": "Unavailable",
+   "default": "Available",
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Type",
-   "options": "\nUnavailable\nAvailable",
+   "options": "\nAvailable\nUnavailable",
    "reqd": 1
   },
   {
@@ -242,13 +243,20 @@
    "fieldtype": "Link",
    "label": "Service Unit",
    "options": "Healthcare Service Unit"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Available\"",
+   "fieldname": "display",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Display"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-24 18:17:00.186144",
+ "modified": "2025-09-25 16:57:37.516537",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Practitioner Availability",

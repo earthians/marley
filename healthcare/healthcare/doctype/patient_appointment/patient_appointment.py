@@ -964,6 +964,7 @@ def build_availability_data(availability, appointment_type, date, practitioner_d
 	return (
 		{
 			"slot_name": "Practitioner Availability",
+			"display": availability_doc.display,
 			"service_unit": availability_doc.service_unit or None,
 			"avail_slot": available_slots,
 			"appointments": appointments,
