@@ -915,6 +915,14 @@ def build_availability_data(availability, appointment_type, date, practitioner_d
 	)
 	availability_doc = frappe.get_doc("Practitioner Availability", availability)
 
+	allow_overlap = service_unit_capacity = 0
+	if availability_doc.service_unit:
+		allow_overlap, service_unit_capacity = frappe.db.get_value(
+			"Healthcare Service Unit",
+			availability_doc.service_unit,
+			["allow_appointments", "service_unit_capacity"],
+		)
+
 	weekday = date.strftime("%A").lower()
 	if availability_doc.repeat == "Weekly" and not getattr(availability_doc, weekday, 0):
 		return {}
@@ -968,8 +976,8 @@ def build_availability_data(availability, appointment_type, date, practitioner_d
 			"service_unit": availability_doc.service_unit or None,
 			"avail_slot": available_slots,
 			"appointments": appointments,
-			"allow_overlap": 0,
-			"service_unit_capacity": 0,
+			"allow_overlap": allow_overlap or 0,
+			"service_unit_capacity": service_unit_capacity or 0,
 			"tele_conf": 0,
 		}
 		if available_slots
@@ -988,6 +996,7 @@ def get_practitioner_unavailability(date, practitioner=None, department=None, se
 			"start_date as appointment_date",
 			"start_time as appointment_time",
 			"duration",
+			"type",
 		],
 		filters={
 			"type": "Unavailable",

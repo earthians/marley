@@ -850,6 +850,7 @@ let check_and_set_availability = function(frm) {
 	function get_slots(slot_details, fee_validity, appointment_date) {
 		let slot_html = "";
 		let appointment_count = 0;
+		let unavailable = false;
 		let disabled = false;
 		let start_str, slot_start_time, slot_end_time, interval, count, count_class, tool_tip, available_slots;
 
@@ -870,7 +871,7 @@ let check_and_set_availability = function(frm) {
 			if (slot_info.slot_name == "Practitioner Availability") {
 				slot_html += `
 					<span>
-						<b>${ slot_info.display || slot_info.slot_name }</b>
+						<b>${__("Practitioner Availability:")}</b> ${ slot_info.display || slot_info.slot_name }</b>
 					</span><br>`;
 				if (slot_info.service_unit) {
 					slot_html += `<span><b>${__("Service Unit:")}</b> ${slot_info.service_unit}</span>`;
@@ -891,6 +892,7 @@ let check_and_set_availability = function(frm) {
 
 			slot_html += slot_info.avail_slot.map(slot => {
 				appointment_count = 0;
+				unavailable = false;
 				disabled = false;
 				count_class = tool_tip = "";
 				start_str = slot.from_time;
@@ -933,6 +935,9 @@ let check_and_set_availability = function(frm) {
 							}
 						} else {
 							if (slot_start_time.isBefore(end_time) && slot_end_time.isAfter(booked_moment)) {
+								if (booked.type == "Unavailable") {
+									unavailable = true;
+								}
 								appointment_count++;
 							}
 							if (appointment_count >= slot_info.service_unit_capacity) {
@@ -943,15 +948,26 @@ let check_and_set_availability = function(frm) {
 						}
 					});
 				}
-				if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
+
+				if (
+					unavailable &&
+					slot_info.allow_overlap == 1 &&
+					slot_info.service_unit_capacity > 1
+				) {
+					disabled = true;
+					available_slots = 0;
+					count = __("Unavailable");
+					count_class = "badge-danger";
+					tool_tip = __("No slots available for booking");
+				} else if (slot_info.allow_overlap == 1 && slot_info.service_unit_capacity > 1) {
 					available_slots = slot_info.service_unit_capacity - appointment_count;
-					count = `${(available_slots > 0 ? available_slots : __("Full"))}`;
-					count_class = `${(available_slots > 0 ? "badge-success" : "badge-danger")}`;
+					count = `${available_slots > 0 ? available_slots : __("Full")}`;
+					count_class = `${available_slots > 0 ? "badge-success" : "badge-danger"}`;
 					tool_tip = `${available_slots} ${__("slots available for booking")}`;
 				}
 
 				if (slot.maximum_appointments) {
-					if (appointment_count >= slot.maximum_appointments) {
+					if (appointment_count >= slot.maximum_appointments || unavailable) {
 						disabled = true;
 					} else {
 						disabled = false;
