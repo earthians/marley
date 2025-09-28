@@ -397,11 +397,6 @@
    "link_fieldname": "order_group"
   },
   {
-   "group": "Inpatient",
-   "link_doctype": "Treatment Counselling",
-   "link_fieldname": "admission_encounter"
-  },
-  {
    "group": "Notes, Tasks & Vitals",
    "link_doctype": "Clinical Note",
    "link_fieldname": "reference_name"
@@ -437,7 +432,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-09-25 13:22:49.662965",
+ "modified": "2025-09-28 12:18:20.535746",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
@@ -461,6 +456,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient, practitioner, medical_department, encounter_date, encounter_time",
  "show_name_in_global_search": 1,
  "sort_field": "modified",
