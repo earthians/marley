@@ -1208,18 +1208,36 @@ def insert_diagnostic_report(doc, patient, sample_collection=None):
 		diagnostic_report.save(ignore_permissions=True)
 
 
-def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child=None):
+def insert_observation_and_sample_collection(
+	doc, patient, grp, sample_collection, child=None, parent_observation=None
+):
 	diag_report_required = False
 	if grp.get("has_component"):
 		diag_report_required = True
+
 		# parent observation
-		parent_observation = add_observation(
+		current_parent_observation = add_observation(
 			patient=patient,
 			template=grp.get("name"),
 			practitioner=doc.ref_practitioner,
 			invoice=doc.name,
 			child=child if child else "",
+			parent=parent_observation,
 		)
+
+		add_to_sample_collection = has_direct_leaf_component(grp.get("name"))
+		if add_to_sample_collection:
+			sample_collection.append(
+				"observation_sample_collection",
+				{
+					"observation_template": grp.get("name"),
+					"container_closure_color": grp.get("container_closure_color"),
+					"sample": grp.get("sample"),
+					"sample_type": grp.get("sample_type"),
+					"component_observation_parent": current_parent_observation,
+					"reference_child": child if child else "",
+				},
+			)
 
 		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
 			grp.get("name")
@@ -1228,27 +1246,68 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 
 		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
-				add_observation(
-					patient=patient,
-					template=comp,
-					practitioner=doc.ref_practitioner,
-					parent=parent_observation,
-					invoice=doc.name,
-					child=child if child else "",
+				comp_details = frappe.get_value(
+					"Observation Template",
+					comp,
+					[
+						"name",
+						"has_component",
+						"sample_collection_required",
+						"sample",
+						"sample_type",
+						"container_closure_color",
+					],
+					as_dict=True,
 				)
-		# create sample_colleciton child row for  sample_collection_reqd grouped templates
+				if comp_details.get("has_component"):
+					# recurse if component is also a template with components
+					sub_sc, sub_drc = insert_observation_and_sample_collection(
+						doc,
+						patient,
+						comp_details,
+						sample_collection,
+						child,
+						parent_observation=current_parent_observation,
+					)
+					sample_collection = sub_sc
+					diag_report_required = diag_report_required or sub_drc
+				else:
+					add_observation(
+						patient=patient,
+						template=comp,
+						practitioner=doc.ref_practitioner,
+						parent=current_parent_observation,
+						invoice=doc.name,
+						child=child if child else "",
+					)
+		# create sample_colleciton child row for sample_collection_reqd grouped templates
 		if len(sample_reqd_component_obs) > 0:
-			sample_collection.append(
-				"observation_sample_collection",
-				{
-					"observation_template": grp.get("name"),
-					"container_closure_color": grp.get("color"),
-					"sample": grp.get("sample"),
-					"sample_type": grp.get("sample_type"),
-					"component_observation_parent": parent_observation,
-					"reference_child": child if child else "",
-				},
-			)
+			for comp in sample_reqd_component_obs:
+				comp_details = frappe.get_value(
+					"Observation Template",
+					comp,
+					[
+						"name",
+						"has_component",
+						"sample_collection_required",
+						"sample",
+						"sample_type",
+						"container_closure_color",
+					],
+					as_dict=True,
+				)
+				if comp_details.get("has_component"):
+					# recurse into nested template
+					sub_sc, sub_drc = insert_observation_and_sample_collection(
+						doc,
+						patient,
+						comp_details,
+						sample_collection,
+						child,
+						parent_observation=current_parent_observation,
+					)
+					sample_collection = sub_sc
+					diag_report_required = diag_report_required or sub_drc
 
 	else:
 		diag_report_required = True
@@ -1262,18 +1321,38 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 				child=child if child else "",
 			)
 		else:
-			# create sample_colleciton child row for  sample_collection_reqd individual templates
+			# create sample_colleciton child row for sample_collection_reqd individual templates
 			sample_collection.append(
 				"observation_sample_collection",
 				{
 					"observation_template": grp.get("name"),
-					"container_closure_color": grp.get("color"),
+					"container_closure_color": grp.get("container_closure_color"),
 					"sample": grp.get("sample"),
 					"sample_type": grp.get("sample_type"),
 					"reference_child": child if child else "",
 				},
 			)
 	return sample_collection, diag_report_required
+
+
+def has_direct_leaf_component(template_name):
+	"""Return True if the given template has at least one direct leaf child."""
+	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
+		template_name
+	)
+	all_components = sample_reqd_component_obs + non_sample_reqd_component_obs
+
+	for comp in all_components:
+		comp_details = frappe.db.get_value(
+			"Observation Template",
+			comp,
+			["has_component", "sample_collection_required"],
+			as_dict=True,
+		)
+		if not comp_details.get("has_component") and comp_details.get("sample_collection_required"):
+			return True
+
+	return False
 
 
 @frappe.whitelist()
