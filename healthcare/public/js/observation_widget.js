@@ -231,7 +231,7 @@ healthcare.ObservationWidget = class {
 
 	set_values(th, obs_data) {
 		var me = this;
-		let name_html = `<div class="observation-name obs-field" style="font-size:10px; padding-top:20px;" value="{{observation_details.observation.name}}">
+		let name_html = `<div class="observation-name obs-field" style="font-size:10px; padding-top:20px;" value="${obs_data.name}">
 			<a href="/app/observation/${obs_data.name }" title="${obs_data.name }">`
 		if (obs_data.preferred_display_name) {
 			name_html += obs_data.preferred_display_name
@@ -245,7 +245,7 @@ healthcare.ObservationWidget = class {
 
 		let specimen_html = `<div class="text-muted" style="font-size:10px; padding-top:20px;">`
 		if (obs_data.specimen) {
-			specimen_html += `<a href="/app/specimen/{{ observation_details.observation.specimen }}" title="{{ observation_details.observation.specimen }}">`
+			specimen_html += `<a href="/app/specimen/${obs_data.specimen}" title="${obs_data.specimen}">`
 			specimen_html += obs_data.specimen + '</a>'
 		}
 		specimen_html += `</div>
