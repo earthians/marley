@@ -325,6 +325,7 @@ def create_custom_records():
 	create_duration()
 	create_dosage()
 	create_dosage_form()
+	create_customer_groups()
 	create_healthcare_item_groups()
 	create_sensitivity()
 	setup_patient_history_settings()
@@ -817,6 +818,18 @@ def create_healthcare_item_groups():
 		insert_record([item_group])
 
 	records = get_item_group_records()
+	insert_record(records)
+
+
+def create_customer_groups():
+	records = [
+		{
+			"doctype": "Customer Group",
+			"customer_group_name": _("Insurance Payor"),
+			"is_group": 0,
+			"parent_customer_group": _("All Customer Groups"),
+		}
+	]
 	insert_record(records)
 
 
