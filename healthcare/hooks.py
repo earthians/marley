@@ -8,6 +8,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "info@earthianslive.com"
 app_license = "GNU GPL V3"
+<<<<<<< HEAD
 required_apps = ["erpnext"]
 app_home = "/app/healthcare"
 
@@ -20,6 +21,9 @@ add_to_apps_screen = [
 		"has_permission": "erpnext.check_app_permission",
 	}
 ]
+=======
+required_apps = ["frappe/erpnext"]
+>>>>>>> f325c50 (fix: No module named 'erpnext')
 
 # Includes in <head>
 # ------------------
