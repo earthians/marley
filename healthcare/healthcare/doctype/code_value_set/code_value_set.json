@@ -51,8 +51,7 @@
    "fetch_from": "code_system.uri",
    "fieldname": "system_uri",
    "fieldtype": "Data",
-   "label": "System URI",
-   "unique": 1
+   "label": "System URI"
   }
  ],
  "index_web_pages_for_search": 1,
