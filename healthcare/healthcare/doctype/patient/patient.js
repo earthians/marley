@@ -136,10 +136,10 @@ let invoice_registration = function (frm) {
 		method: 'invoice_patient_registration',
 		callback: function(data) {
 			if (!data.exc) {
-				if (data.message.invoice) {
-					frappe.set_route('Form', 'Sales Invoice', data.message.invoice);
+				if (data.message) {
+					var doc = frappe.model.sync(data.message);
+					frappe.set_route("Form", doc[0].doctype, doc[0].name);
 				}
-				cur_frm.reload_doc();
 			}
 		}
 	});

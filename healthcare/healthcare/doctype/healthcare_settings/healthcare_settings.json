@@ -14,6 +14,7 @@
   "default_google_calendar",
   "column_break_9",
   "collect_registration_fee",
+  "registration_item",
   "registration_fee",
   "show_payment_popup",
   "enable_free_follow_ups",
@@ -500,11 +501,19 @@
    "fieldtype": "Link",
    "label": "Mode of Payment",
    "options": "Mode of Payment"
+  },
+  {
+   "depends_on": "eval:doc.collect_registration_fee == 1",
+   "fieldname": "registration_item",
+   "fieldtype": "Link",
+   "label": "Registration Item",
+   "mandatory_depends_on": "eval:doc.collect_registration_fee == 1",
+   "options": "Item"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-09-17 15:20:01.438478",
+ "modified": "2025-11-05 15:45:05.268654",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

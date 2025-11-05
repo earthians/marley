@@ -930,6 +930,20 @@ def manage_invoice_submit_cancel(doc, method):
 				if item.reference_dt == "Patient Appointment":
 					manage_fee_validity(frappe.get_doc("Patient Appointment", item.reference_dn))
 
+				# set patient as active if registration invoice
+				if item.get("reference_dt") == "Patient":
+					registration_item = (
+						frappe.db.get_single_value("Healthcare Settings", "registration_item") or None
+					)
+					if registration_item:
+						is_registration = item.item_code == registration_item
+					else:
+						is_registration = item.item_name == "Registration Fee"
+
+					if is_registration:
+						status = "Active" if method == "on_submit" else "Disabled"
+						frappe.db.set_value("Patient", item.reference_dn, "status", status)
+
 		if method == "on_submit" and frappe.db.get_single_value(
 			"Healthcare Settings", "create_observation_on_si_submit"
 		):
@@ -1065,7 +1079,7 @@ def set_invoiced(item, method, ref_invoice=None):
 		else:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 	else:
-		if item.reference_dt not in ["Service Request", "Medication Request"]:
+		if item.reference_dt not in ["Service Request", "Medication Request", "Patient"]:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 
 	if item.reference_dt == "Patient Appointment":
@@ -1104,6 +1118,7 @@ def set_invoiced(item, method, ref_invoice=None):
 
 
 def validate_invoiced_on_submit(item):
+	is_invoiced = False
 	if (
 		item.reference_dt == "Clinical Procedure"
 		and frappe.db.get_single_value("Healthcare Settings", "clinical_procedure_consumable_item")
@@ -1114,6 +1129,18 @@ def validate_invoiced_on_submit(item):
 	elif item.reference_dt in ["Service Request", "Medication Request"]:
 		billing_status = frappe.db.get_value(item.reference_dt, item.reference_dn, "billing_status")
 		is_invoiced = True if billing_status == "Invoiced" else False
+
+	elif item.reference_dt == "Patient":
+		if frappe.db.get_single_value("Healthcare Settings", "collect_registration_fee"):
+			is_invoiced = frappe.db.exists(
+				"Sales Invoice Item",
+				{
+					"name": ["!=", item.name],
+					"reference_dn": item.reference_dn,
+					"item_name": "Registration Fee",
+					"docstatus": 1,
+				},
+			)
 
 	else:
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, "invoiced")
