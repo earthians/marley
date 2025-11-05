@@ -14,6 +14,7 @@
   "default_google_calendar",
   "column_break_9",
   "collect_registration_fee",
+  "registration_item",
   "registration_fee",
   "show_payment_popup",
   "enable_free_follow_ups",
@@ -401,11 +402,109 @@
    "fieldname": "orders_tab",
    "fieldtype": "Tab Break",
    "label": "Orders"
+<<<<<<< HEAD
+=======
+  },
+  {
+   "default": "0",
+   "description": "Nightly generate billable from Inpatient Occupancy",
+   "fieldname": "automatically_generate_billable",
+   "fieldtype": "Check",
+   "label": "Automatically Generate Billable"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_discharge_despite_pending_healthcare_services",
+   "fieldtype": "Check",
+   "label": "Allow Discharge Despite Pending Healthcare Services"
+  },
+  {
+   "fieldname": "column_break_bkvx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "naming_series_for_journal_entry",
+   "fieldtype": "Select",
+   "label": "Naming Series for Insurance Coverage Journal Entry"
+  },
+  {
+   "default": "0",
+   "fieldname": "patient_portal_tab",
+   "fieldtype": "Tab Break",
+   "label": "Patient Portal"
+  },
+  {
+   "default": "0",
+   "description": "To enable this feature need Payments App",
+   "fieldname": "collect_payment",
+   "fieldtype": "Check",
+   "label": "Collect Payment on Portal"
+  },
+  {
+   "fieldname": "default_appointment_type",
+   "fieldtype": "Link",
+   "label": "Default Appointment Type",
+   "options": "Appointment Type"
+  },
+  {
+   "fieldname": "column_break_nxka",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, diagnostic details tab will show on patient portal",
+   "fieldname": "show_diagnostics_tab",
+   "fieldtype": "Check",
+   "label": "Show Diagnostics Tab on Portal"
+  },
+  {
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Settings"
+  },
+  {
+   "depends_on": "eval: doc.collect_payment==1;",
+   "fieldname": "payment_gateway",
+   "fieldtype": "Data",
+   "label": "Payment Gateway"
+  },
+  {
+   "fieldname": "no_payments_app",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "payments_app_is_not_installed",
+   "fieldtype": "HTML",
+   "label": "Payments app is not installed"
+  },
+  {
+   "fieldname": "column_break_xvtl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.collect_payment==1;",
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Mode of Payment",
+   "options": "Mode of Payment"
+  },
+  {
+   "depends_on": "eval:doc.collect_registration_fee == 1",
+   "fieldname": "registration_item",
+   "fieldtype": "Link",
+   "label": "Registration Item",
+   "mandatory_depends_on": "eval:doc.collect_registration_fee == 1",
+   "options": "Item"
+>>>>>>> 34ec61c (fix(Patient): add configurable registration item and improve patient registration invoicing)
   }
  ],
  "issingle": 1,
  "links": [],
+<<<<<<< HEAD
  "modified": "2025-04-01 10:19:23.435671",
+=======
+ "modified": "2025-11-05 15:45:05.268654",
+>>>>>>> 34ec61c (fix(Patient): add configurable registration item and improve patient registration invoicing)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
