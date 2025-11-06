@@ -22,8 +22,10 @@ class TestPatient(FrappeTestCase):
 
 	def test_patient_registration(self):
 		frappe.db.sql("""delete from `tabPatient`""")
+		registration_item = create_registration_item()
 		settings = frappe.get_single("Healthcare Settings")
 		settings.collect_registration_fee = 1
+		settings.registration_item = registration_item
 		settings.registration_fee = 500
 		settings.save()
 
@@ -33,7 +35,12 @@ class TestPatient(FrappeTestCase):
 
 		# check sales invoice and patient status
 		result = patient.invoice_patient_registration()
-		self.assertTrue(frappe.db.exists("Sales Invoice", result.get("invoice")))
+		self.assertTrue(frappe.db.exists("Sales Invoice", result.get("name")))
+
+		invoice_doc = frappe.get_doc("Sales Invoice", result.get("name"))
+		self.assertTrue(invoice_doc.status, "Draft")
+
+		invoice_doc.submit()
 		self.assertTrue(patient.status, "Active")
 
 		settings.collect_registration_fee = 0
@@ -131,3 +138,19 @@ class TestPatient(FrappeTestCase):
 
 		self.assertEqual(p1_customer_name, p2_customer_name)
 		self.assertEqual(p2_customer.customer_name, "John Doe")
+
+
+def create_registration_item():
+	if not frappe.db.exists("Item", "Registration Item"):
+		item = frappe.new_doc("Item")
+		item.item_code = "Registration Item"
+		item.item_name = "Registration Item"
+		item.description = "Registration Item"
+		item.item_group = "Services"
+		item.stock_uom = "Nos"
+		item.is_stock_item = 0
+		item.save()
+	else:
+		item = frappe.get_doc("Item", "Registration Item")
+
+	return item.name
