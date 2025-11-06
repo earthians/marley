@@ -47,7 +47,7 @@ frappe.ui.form.on('Sales Invoice', {
 	},
 
 	onload_post_render(frm) {
-		if (frm.doc.items && frm.doc.items.length === 1 && !frm.doc.items[0].item_code) {
+		if (frm.doc.items && frm.doc.items.length === 1 && !frm.doc.items[0].item_name) {
 			frm.clear_table('items');
 			frm.refresh_field('items');  // Ensure UI updates
 		}
