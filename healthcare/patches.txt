@@ -11,7 +11,6 @@ healthcare.patches.v15_0.setup_service_request
 healthcare.patches.v15_0.create_custom_field_in_payment_entry
 healthcare.patches.v15_0.add_observation_to_patient_history
 healthcare.patches.v15_0.create_patient_medical_records_for_observations #25-12-2024
-healthcare.patches.v15_0.add_discharge_summary_to_patient_history
 healthcare.patches.v16_0.setup_service_request_and_insurance
 healthcare.patches.v16_0.validate_inpatient_billables
 healthcare.patches.v16_0.rename_time_block_to_practitioner_availability
@@ -28,3 +27,4 @@ healthcare.patches.v15_0.setup_order_status_codes
 healthcare.patches.v15_0.set_reference_in_therapy_plan
 healthcare.patches.v15_0.set_observation_and_diagnostic_report_status
 healthcare.patches.v16_0.set_template_dn_and_template_dt_in_appointment
+healthcare.patches.v15_0.add_discharge_summary_to_patient_history
