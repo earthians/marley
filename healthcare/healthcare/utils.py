@@ -548,12 +548,6 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
-<<<<<<< HEAD
-=======
-
-				# update Fee validity with Sales Invoice Reference if exists
-				if item.reference_dt == "Patient Appointment":
-					manage_fee_validity(frappe.get_doc("Patient Appointment", item.reference_dn))
 
 				# set patient as active if registration invoice
 				if item.get("reference_dt") == "Patient":
@@ -569,7 +563,6 @@ def manage_invoice_submit_cancel(doc, method):
 						status = "Active" if method == "on_submit" else "Disabled"
 						frappe.db.set_value("Patient", item.reference_dn, "status", status)
 
->>>>>>> 34ec61c (fix(Patient): add configurable registration item and improve patient registration invoicing)
 		if method == "on_submit" and frappe.db.get_single_value(
 			"Healthcare Settings", "create_observation_on_si_submit"
 		):
