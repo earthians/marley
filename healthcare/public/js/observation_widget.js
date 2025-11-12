@@ -8,59 +8,25 @@ healthcare.ObservationWidget = class {
 
 	init_widget() {
 		var me = this;
+
+		const is_approved = me.data.obs_approved;
+		var btn_action = is_approved ? "Rejected" : "Approved";
+		var btn_label = is_approved ? "Reject" : "Approve";
+
 		if (me.data.has_component || me.data.has_component == "true") {
-			if (!me.wrapper.find(`.${me.data.observation}`).length==0) {
-				return
+			if (me.wrapper.find(`.${me.data.observation}`).length!==0) {
+				return;
 			}
+			me.render_parent_observation(me.data, btn_label)
 
-			const is_approved = me.data.obs_approved;
-			var btn_action = is_approved ? "Rejected" : "Approved";
-			var btn_label = is_approved ? "Reject" : "Approve";
-
-			let grouped_html = (
-				`<div class="${me.data.observation} grouped-obs" style="
-					border: 1px solid var(--border-color);
-					padding-right: 0;
-					font-size: 11px;
-					padding-left: 15px;
-					padding-top: 15px;
-					padding-bottom: 5px;
-					margin-bottom: 3px;
-					border-radius: 10px;
-					background-color:var(--bg-color);">
-					<b>
-						<a href="/app/observation/${me.data.observation}">
-							${me.data.display_name}
-						</a>
-					</b>
-					<div style="float:right; padding-right:5px; margin-top:-10px;">
-						<button class="btn btn-xs btn-secondary small obs-approve" id="authorise-observation-btn-${me.data.observation}">
-							<span style="font-size:10px;">${btn_label}</span>
-						</button>
-					</div>
-				</div>`)
-			me.wrapper.append(grouped_html)
 			let component_wrapper = me.wrapper.find(`.${me.data.observation}`)
 			for(var j=0, k=me.data[me.data.observation].length; j<k; j++) {
 				var obs_data = me.data[me.data.observation][j].observation;
-				component_wrapper.append(`<div class="observations-${obs_data.name} observs"
-						style="border: 1px solid var(--border-color);
-						padding-right: 0;
-						font-size: 11px;
-						padding-left: 15px;
-						margin-right: 15px;
-						padding-bottom: 5px;
-						margin-bottom: 3px;
-						border-radius: var(--border-radius-md);
-						background-color: var(--fg-color);
-						box-shadow: var(--card-shadow);"
-						value=${obs_data.name}>
-					</div>`)
-
-				me.init_field_group(obs_data, component_wrapper.find(`.observations-${obs_data.name}`))
+				var nested_obs = me.data[me.data.observation][j]
+				me.render_component_observations(component_wrapper, obs_data, nested_obs, btn_action)
 			}
 		} else {
-			if (!me.wrapper.find(`.observations-${me.data.observation.name}`).length==0) {
+			if (me.wrapper.find(`.children-${me.data.observation.name}`).length!==0) {
 				return
 			}
 			me.wrapper.append(
@@ -98,6 +64,75 @@ healthcare.ObservationWidget = class {
 		if (authbutton) {
 			authbutton.addEventListener("click", function() {
 				me.auth_observation(me.data.observation, btn_action)
+			});
+		}
+	}
+
+	render_parent_observation(me_data, btn_label, parent_wrapper=null) {
+		let grouped_html = (
+			`<div class="${me_data.observation} grouped-obs"
+				style="border: 1px solid var(--border-color);
+				padding-right: 15px;
+				font-size: 11px;
+				padding-left: 15px;
+				padding-top: 15px;
+				padding-bottom: 5px;
+				margin-bottom: 3px;
+				border-radius: 10px;
+				background-color:var(--bg-color);">
+				<b>
+					<a href="/app/observation/${me_data.observation}">
+						${me_data.display_name}
+					</a>
+				</b>
+				<div style="float:right; padding-right:5px; margin-top:-10px;">
+					<button class="btn btn-xs btn-secondary small obs-approve" id="authorise-observation-btn-${me_data.observation}">
+						<span style="font-size:10px;">${btn_label}</span>
+					</button>
+				</div>
+				<div class="children-${me_data.observation}"></div>
+			</div>`)
+		if (parent_wrapper) {
+			parent_wrapper.append(grouped_html);
+		} else {
+			this.wrapper.append(grouped_html);
+		}
+	}
+
+	render_component_observations(component_wrapper, obs_data, nested_obs, btn_action) {
+		var me = this;
+		if (nested_obs.has_component) {
+			const is_approved = nested_obs.obs_approved;
+			var btn_action = is_approved ? "Rejected" : "Approved";
+			var btn_label = is_approved ? "Reject" : "Approve";
+
+			me.render_parent_observation(nested_obs, btn_label, component_wrapper)
+			let current_wrapper = component_wrapper.find(`.children-${nested_obs.observation}`);
+			for (var j = 0, k = nested_obs[nested_obs.observation].length; j < k; j++) {
+				var child_obs = nested_obs[nested_obs.observation][j].observation;
+				var child_nested_obs = nested_obs[nested_obs.observation][j];
+				this.render_component_observations(current_wrapper, child_obs, child_nested_obs, btn_action);
+			}
+		} else {
+			component_wrapper.append(`<div class="observations-${obs_data.name} observs"
+			style="border: 1px solid var(--border-color);
+			padding-right: 0;
+			font-size: 11px;
+			padding-left: 15px;
+			margin-right: 15px;
+			padding-bottom: 5px;
+			margin-bottom: 3px;
+			border-radius: var(--border-radius-md);
+			background-color: var(--fg-color);
+			box-shadow: var(--card-shadow);"
+			value=${obs_data.name}>
+			</div>`)
+			me.init_field_group(obs_data, component_wrapper.find(`.observations-${obs_data.name}`))
+		}
+		var authbutton = document.getElementById(`authorise-observation-btn-${nested_obs.observation}`);
+		if (authbutton) {
+			authbutton.addEventListener("click", function() {
+				me.auth_observation(nested_obs.observation, btn_action)
 			});
 		}
 	}

@@ -98,8 +98,12 @@ class Observation(Document):
 		component_obs = frappe.db.get_all("Observation", {"parent_observation": self.name}, pluck="name")
 		for obs in component_obs:
 			obs_doc = frappe.get_doc("Observation", obs)
-			if not obs_doc.has_result():
-				return False
+			if obs_doc.has_component:
+				if not obs_doc.component_has_result():
+					return False
+			else:
+				if not obs_doc.has_result():
+					return False
 
 		return True
 
@@ -220,16 +224,28 @@ def return_child_observation_data_as_dict(child_observations, obs, obs_length=0)
 	obs_list = []
 	has_result = False
 	obs_approved = False
+	all_children_approved = True
 
 	for child in child_observations:
-		if child.get("permitted_data_type"):
-			obs_length += 1
-		if child.get("permitted_data_type") == "Select" and child.get("options"):
-			child["options_list"] = child.get("options").split("\n")
-		if child.get("specimen"):
-			child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
-		observation_data = {"observation": child}
-		obs_list.append(observation_data)
+		if child.get("has_component"):
+			grand_children = get_child_observations(child)
+			grand_dict, obs_length = return_child_observation_data_as_dict(
+				grand_children, child, obs_length
+			)
+			obs_list.append(grand_dict)
+			if not grand_dict.get("obs_approved", False):
+				all_children_approved = False
+		else:
+			if child.get("permitted_data_type"):
+				obs_length += 1
+			if child.get("permitted_data_type") == "Select" and child.get("options"):
+				child["options_list"] = child.get("options").split("\n")
+			if child.get("specimen"):
+				child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
+			if child.get("status") != "Approved":
+				all_children_approved = False
+			observation_data = {"observation": child}
+			obs_list.append(observation_data)
 
 		if (
 			child.get("result_data")
@@ -237,8 +253,9 @@ def return_child_observation_data_as_dict(child_observations, obs, obs_length=0)
 			or child.get("result_select") not in [None, "", "Null"]
 		):
 			has_result = True
-		if child.get("status") == "Approved":
-			obs_approved = True
+
+	if all_children_approved and child_observations:
+		obs_approved = True
 
 	obs_dict = {
 		"has_component": True,
@@ -495,11 +512,10 @@ def set_observation_status(observation, status, reason=None, parent_obs=None):
 			parent_obs = new_doc.name
 
 	if observation_doc.has_component:
-		docstatus_filter = 0 if status == "Approved" else 1
 
 		component_obs = frappe.db.get_all(
 			"Observation",
-			filters={"parent_observation": observation, "docstatus": docstatus_filter},
+			filters={"parent_observation": observation},
 			pluck="name",
 		)
 
