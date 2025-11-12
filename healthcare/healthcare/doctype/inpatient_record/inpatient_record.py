@@ -181,6 +181,10 @@ class InpatientRecord(Document):
 
 			ip_records = list(item_hours.values())
 
+			price_list, price_list_currency = frappe.db.get_values(
+				"Price List", {"selling": 1}, ["name", "currency"]
+			)[0]
+
 			for inpatient in ip_records:
 				item_name, stock_uom = frappe.db.get_value(
 					"Item", inpatient.get("item"), ["item_name", "stock_uom"]
@@ -192,9 +196,12 @@ class InpatientRecord(Document):
 					order_by="idx DESC",
 					as_dict=True,
 				)
-				price_list, price_list_currency = frappe.db.get_values(
-					"Price List", {"selling": 1}, ["name", "currency"]
-				)[0]
+
+				if not self.price_list and not price_list:
+					frappe.throw(
+						_("Selling Price List not found. Please configure a valid Price List in the document.")
+					)
+
 				ctx: ItemDetailsCtx = ItemDetailsCtx(
 					{
 						"doctype": "Sales Invoice",
@@ -208,6 +215,13 @@ class InpatientRecord(Document):
 					}
 				)
 				item_details = get_item_details(ctx)
+
+				if not item_details.get("price_list_rate") or int(item_details.get("price_list_rate")) == 0:
+					frappe.throw(
+						_(
+							f"The Item Price for '{get_link_to_form('Item', inpatient.get('item'))}' is missing or set to zero for Price List'{get_link_to_form('Price List', self.price_list or price_list)}'. Please verify the Item Price master."
+						)
+					)
 
 				minimum_billable_qty = inpatient.get("minimum_billable_qty")
 				total_qty = (
@@ -256,6 +270,7 @@ class InpatientRecord(Document):
 
 		except Exception as e:
 			frappe.log_error(message=e, title="Can't bill Service Unit occupancy")
+			raise
 
 	@frappe.whitelist()
 	def create_insurance_coverage(self):
