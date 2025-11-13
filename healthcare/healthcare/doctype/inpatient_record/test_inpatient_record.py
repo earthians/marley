@@ -185,6 +185,25 @@ class TestInpatientRecord(IntegrationTestCase):
 		checkin = add_to_date(now_datetime(), hours=-12)
 		admit_patient(ip_record, service_unit, checkin)
 
+		# Remove any existing Item Price to force the error
+		frappe.db.sql(f"""delete from `tabItem Price` where item_code='{service_unit_type}'""")
+
+		# Expect frappe.throw when Item Price is missing
+		with self.assertRaises(frappe.ValidationError):
+			ip_record.add_service_unit_rent_to_billable_items()
+
+		# Now, create a valid Item Price and ensure it proceeds correctly
+		price_list_name = frappe.db.get_value("Price List", {"selling": 1})
+		frappe.get_doc(
+			{
+				"doctype": "Item Price",
+				"price_list": price_list_name,
+				"item_code": service_unit_type,
+				"uom": "Day",
+				"price_list_rate": 1000,
+			}
+		).insert(ignore_permissions=True, ignore_mandatory=True)
+
 		# Generate Billables
 		ip_record.add_service_unit_rent_to_billable_items()
 		ip_record.reload()
