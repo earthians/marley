@@ -1,6 +1,5 @@
 {
  "aggregate_function_based_on": "",
-
  "color": "#EC864B",
  "creation": "2025-06-02 17:49:10.123438",
  "currency": "",
@@ -8,13 +7,13 @@
  "doctype": "Number Card",
  "document_type": "Service Request",
  "dynamic_filters_json": "[[\"Service Request\",\"company\",\"=\",\"frappe.defaults.get_user_default(\\\"Company\\\")\"]]",
- "filters_json": "[[\"Service Request\",\"docstatus\",\"=\",\"1\",false],[\"Service Request\",\"template_dt\",\"=\",\"Observation Template\",false],[\"Service Request\",\"status\",\"=\",\"active-Request Status\",false]]",
+ "filters_json": "[[\"Service Request\",\"docstatus\",\"=\",\"1\"],[\"Service Request\",\"template_dt\",\"=\",\"Observation Template\"],[\"Service Request\",\"status\",\"=\",\"active-Request Status\"]]",
  "function": "Count",
  "idx": 0,
  "is_public": 1,
  "is_standard": 1,
  "label": "Active Service Requests",
- "modified": "2025-06-09 11:49:39.099965",
+ "modified": "2025-11-21 14:55:18.064608",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Active Service Requests",
