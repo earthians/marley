@@ -7,8 +7,6 @@
 		"@cornerstonejs/core": "^3.30.3",
 		"@cornerstonejs/dicom-image-loader": "^3.30.3",
 		"@cornerstonejs/nifti-volume-loader": "^3.30.3",
-		"@cornerstonejs/tools": "^3.30.3",
-		"@cornerstonejs/wado-image-loader": "^3.30.3",
 		"dcmjs": "^0.30.0",
 		"frappe-ui": "^0.1.168",
 		"tailwindcss": "^3.4.1",
