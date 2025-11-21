@@ -1,0 +1,16 @@
+{
+  "doctype":"DocType",
+  "name":"Requested Procedure",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"rp_id","label":"Requested Procedure ID","fieldtype":"Data","reqd":1},
+    {"fieldname":"order","label":"Order","fieldtype":"Link","options":"Order"},
+    {"fieldname":"procedure_code","label":"Procedure Code","fieldtype":"Data"},
+    {"fieldname":"phase","label":"Phase","fieldtype":"Select","options":"Acquisition\nPost-Processing\nReporting","default":"Acquisition"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Scheduled\nIn Progress\nPhase Completed\nCompleted\nDiscontinued","default":"Scheduled"},
+    {"fieldname":"scheduled_steps","label":"Scheduled Steps","fieldtype":"Table","options":"Scheduled Procedure Step"},
+    {"fieldname":"performed_steps","label":"Performed Steps","fieldtype":"Table","options":"Performed Procedure Step"
+}
+  ]
+}

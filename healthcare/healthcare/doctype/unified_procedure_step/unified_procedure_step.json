@@ -1,0 +1,17 @@
+{
+  "doctype":"DocType",
+  "name":"Unified Procedure Step",
+  "module":"Healthcare",
+  "custom":1,
+  "description":"Represents DICOM UPS (Unified Procedure Step) events for post-processing and other UPS-capable workflows.",
+  "fields":[
+    {"fieldname":"ups_id","label":"UPS ID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"rp","label":"Requested Procedure","fieldtype":"Link","options":"Requested Procedure"},
+    {"fieldname":"ups_status","label":"UPS Status","fieldtype":"Select","options":"SCHEDULED\nIN-PROGRESS\nCOMPLETED\nFAILED\nCANCELLED","default":"SCHEDULED"},
+    {"fieldname":"actor","label":"Actor","fieldtype":"Data"},
+    {"fieldname":"instance_uids","label":"Instance UIDs","fieldtype":"Text"},
+    {"fieldname":"start_time","label":"Start Time","fieldtype":"Datetime"},
+    {"fieldname":"end_time","label":"End Time","fieldtype":"Datetime"
+}
+  ]
+}

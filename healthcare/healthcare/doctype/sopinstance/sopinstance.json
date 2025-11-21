@@ -1,0 +1,15 @@
+{
+  "doctype":"DocType",
+  "name":"SOPInstance",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"sop_uid","label":"SOP Instance UID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"type","label":"Type","fieldtype":"Select","options":"Image\nEvidence Document\nPresentation State\nReport","default":"Image"},
+    {"fieldname":"created_by","label":"Created By","fieldtype":"Data"},
+    {"fieldname":"stored_at_aet","label":"Storage AE Title","fieldtype":"Data"},
+    {"fieldname":"file","label":"File","fieldtype":"Attach"},
+    {"fieldname":"size","label":"Size (bytes)","fieldtype":"Int"},
+    {"fieldname":"created_at","label":"Created At","fieldtype":"Datetime"}
+  ]
+}

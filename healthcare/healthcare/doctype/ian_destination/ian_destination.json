@@ -1,0 +1,12 @@
+{
+  "doctype":"DocType",
+  "name":"IAN Destination",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"destination_id","label":"Destination ID","fieldtype":"Data","reqd":1},
+    {"fieldname":"endpoint","label":"Endpoint","fieldtype":"Data"},
+    {"fieldname":"secret","label":"Secret","fieldtype":"Password"
+}
+  ]
+}

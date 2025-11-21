@@ -1,0 +1,12 @@
+{
+  "doctype":"DocType",
+  "name":"Worklist Manager Config",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"manager_id","label":"Manager ID","fieldtype":"Data","reqd":1},
+    {"fieldname":"ian_destinations","label":"IAN Destinations","fieldtype":"Table","options":"IAN Destination"},
+    {"fieldname":"policies","label":"Policies","fieldtype":"Text"
+}
+  ]
+}

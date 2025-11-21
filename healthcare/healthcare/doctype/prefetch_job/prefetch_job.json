@@ -1,0 +1,12 @@
+{
+  "doctype":"DocType",
+  "name":"PreFetch Job",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"job_id","label":"Job ID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"selector","label":"Selection Criteria","fieldtype":"Text"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Queued\nRunning\nCompleted\nFailed","default":"Queued"},
+    {"fieldname":"scheduled_for","label":"Scheduled For","fieldtype":"Datetime"}
+  ]
+}

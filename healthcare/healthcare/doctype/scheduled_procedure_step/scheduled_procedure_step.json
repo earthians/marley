@@ -1,0 +1,13 @@
+{
+  "doctype":"DocType",
+  "name":"Scheduled Procedure Step",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"sps_uid","label":"SPS UID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"rp","label":"Requested Procedure","fieldtype":"Link","options":"Requested Procedure"},
+    {"fieldname":"modality","fieldname":"Modality","fieldtype":"Data"},
+    {"fieldname":"scheduled_time","label":"Scheduled Time","fieldtype":"Datetime"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Scheduled\nClaimed\nIn Progress\nCompleted\nCancelled","default":"Scheduled"}
+  ]
+}

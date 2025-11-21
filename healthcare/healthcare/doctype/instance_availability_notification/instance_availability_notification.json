@@ -1,0 +1,13 @@
+{
+  "doctype":"DocType",
+  "name":"Instance Availability Notification",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"ian_id","label":"IAN ID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"source","label":"Source Output Manager","fieldtype":"Data"},
+    {"fieldname":"sop_instance_uids","label":"SOP Instances","fieldtype":"Text"},
+    {"fieldname":"availability_status","label":"Availability Status","fieldtype":"Select","options":"Available\nPartially Available\nUnavailable","default":"Available"},
+    {"fieldname":"timestamp","label":"Timestamp","fieldtype":"Datetime"}
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "doctype": "DocType",
+  "name": "Order",
+  "module": "Healthcare",
+  "custom": 1,
+  "fields": [
+    {"fieldname":"order_id","label":"Order ID","fieldtype":"Data","reqd":1},
+    {"fieldname":"placer","label":"Placer","fieldtype":"Link","options":"User"},
+    {"fieldname":"patient_id","label":"Patient ID","fieldtype":"Data"},
+    {"fieldname":"patient_name","label":"Patient Name","fieldtype":"Data"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Received\nBegun\nCompleted\nCancelled","default":"Received"},
+    {"fieldname":"ordered_at","label":"Ordered At","fieldtype":"Datetime"},
+    {"fieldname":"requested_procedures","label":"Requested Procedures","fieldtype":"Table","options":"Requested Procedure"}
+  ],
+  "permissions": [{"role":"Order Placer","read":1,"write":1},{"role":"Order Filler","read":1,"write":1}]
+}

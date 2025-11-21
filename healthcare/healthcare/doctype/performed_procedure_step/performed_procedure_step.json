@@ -1,0 +1,16 @@
+{
+  "doctype":"DocType",
+  "name":"Performed Procedure Step",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"pps_uid","label":"PPS UID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"sps","label":"SPS","fieldtype":"Link","options":"Scheduled Procedure Step"},
+    {"fieldname":"rp","label":"Requested Procedure","fieldtype":"Link","options":"Requested Procedure"},
+    {"fieldname":"actor","label":"Actor","fieldtype":"Data"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"IN-PROGRESS\nCOMPLETED\nCANCELLED","default":"IN-PROGRESS"},
+    {"fieldname":"performed_protocol_codes","label":"Performed Protocol Codes","fieldtype":"Text"},
+    {"fieldname":"instance_uids","label":"Instance UIDs","fieldtype":"Text"},
+    {"fieldname":"created_at","label":"Created At","fieldtype":"Datetime"}
+  ]
+}

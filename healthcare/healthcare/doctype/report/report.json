@@ -1,0 +1,15 @@
+{
+  "doctype":"DocType",
+  "name":"Report",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"report_id","label":"Report ID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"rp","label":"Requested Procedure","fieldtype":"Link","options":"Requested Procedure"},
+    {"fieldname":"author","label":"Author","fieldtype":"Link","options":"User"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Draft\nFinal\nAmended","default":"Draft"},
+    {"fieldname":"report_text","label":"Report Text","fieldtype":"Text"},
+    {"fieldname":"hl7_message","label":"HL7 Message","fieldtype":"Text"},
+    {"fieldname":"attached_file","label":"Attached File","fieldtype":"Attach"}
+  ]
+}

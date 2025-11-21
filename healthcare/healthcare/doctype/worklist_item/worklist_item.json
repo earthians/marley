@@ -1,0 +1,15 @@
+{
+  "doctype":"DocType",
+  "name":"Worklist Item",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"worklist_id","label":"Worklist Item ID","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"rp","label":"Requested Procedure","fieldtype":"Link","options":"Requested Procedure"},
+    {"fieldname":"assigned_to","label":"Assigned To","fieldtype":"Link","options":"User"},
+    {"fieldname":"worklist_manager","label":"Worklist Manager","fieldtype":"Data"},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Waiting\nClaimed\nIn Progress\nComplete","default":"Waiting"},
+    {"fieldname":"partial_data_flag","label":"Partial Data Flag","fieldtype":"Check"
+}
+  ]
+}

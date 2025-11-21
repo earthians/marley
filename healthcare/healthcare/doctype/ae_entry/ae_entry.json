@@ -1,0 +1,12 @@
+{
+  "doctype":"DocType",
+  "name":"AE Entry",
+  "module":"Healthcare",
+  "custom":1,
+  "fields":[
+    {"fieldname":"ae_title","label":"AE Title","fieldtype":"Data","reqd":1},
+    {"fieldname":"host","label":"Host","fieldtype":"Data"},
+    {"fieldname":"port","label":"Port","fieldtype":"Int"},
+    {"fieldname":"description","label":"Description","fieldtype":"Text"}
+  ]
+}
