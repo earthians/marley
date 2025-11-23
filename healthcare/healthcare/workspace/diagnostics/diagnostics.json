@@ -13,7 +13,7 @@
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "file-large",
+ "icon": "flask-conical",
  "idx": 0,
  "indicator_color": "green",
  "is_hidden": 0,
@@ -127,7 +127,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-15 16:34:37.722704",
+ "modified": "2025-11-23 20:17:17.487518",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Diagnostics",

@@ -1,0 +1,20 @@
+{
+ "app": "healthcare",
+ "creation": "2025-11-20 19:22:49.720618",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "setting",
+ "icon_type": "Link",
+ "idx": 6,
+ "label": "Setup",
+ "link_to": "Setup",
+ "link_type": "Workspace",
+ "modified": "2025-11-20 20:41:17.934952",
+ "modified_by": "Administrator",
+ "name": "Setup",
+ "owner": "Administrator",
+ "parent_icon": "Marley Health",
+ "roles": [],
+ "standard": 1
+}

@@ -2,22 +2,22 @@
  "app": "healthcare",
  "charts": [
   {
-   "chart_name": "Inpatient Occupancy",
-   "label": "Occupancy"
-  },
-  {
    "chart_name": "Service Unit Type wise Status",
    "label": "Admission Status"
+  },
+  {
+   "chart_name": "Inpatient Occupancy",
+   "label": "Inpatient Occupancy"
   }
  ],
- "content": "[{\"id\":\"pxdw7O75CN\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Admission Status\",\"col\":6}},{\"id\":\"VWjKYFWgug\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Occupancy\",\"col\":6}},{\"id\":\"C53FVzk5H7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"-8cLwG57tE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total IP Records\",\"col\":3}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Admitted Patients\",\"col\":3}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending IP Medications\",\"col\":3}},{\"id\":\"nAL4q8j3LC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In-Process IP Orders\",\"col\":3}},{\"id\":\"vjMnjTr0FO\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"BtngFAzJ0X\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Inpatient Record\",\"col\":3}},{\"id\":\"7vvONujQ2W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Order\",\"col\":3}},{\"id\":\"-qLrAm9jo8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Entry\",\"col\":3}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}},{\"id\":\"8f6nnf9wz7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"b_uixk5e--\",\"type\":\"card\",\"data\":{\"card_name\":\"Inpatient\",\"col\":4}},{\"id\":\"kGUukhVOL4\",\"type\":\"card\",\"data\":{\"card_name\":\"Orders\",\"col\":4}},{\"id\":\"VDrb-OqmPy\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing & Payments\",\"col\":4}},{\"id\":\"QbxiOFmIBz\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"3RBhVSSL8r\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports and Pages\",\"col\":4}}]",
+ "content": "[{\"id\":\"WQ_OdhhnRD\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Admission Status\",\"col\":6}},{\"id\":\"qMxTiQTBT6\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Inpatient Occupancy\",\"col\":6}},{\"id\":\"C53FVzk5H7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"-8cLwG57tE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total IP Records\",\"col\":3}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Admitted Patients\",\"col\":3}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending IP Medications\",\"col\":3}},{\"id\":\"nAL4q8j3LC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In-Process IP Orders\",\"col\":3}},{\"id\":\"vjMnjTr0FO\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"BtngFAzJ0X\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Inpatient Record\",\"col\":3}},{\"id\":\"7vvONujQ2W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Order\",\"col\":3}},{\"id\":\"-qLrAm9jo8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Entry\",\"col\":3}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}},{\"id\":\"8f6nnf9wz7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"b_uixk5e--\",\"type\":\"card\",\"data\":{\"card_name\":\"Inpatient\",\"col\":4}},{\"id\":\"kGUukhVOL4\",\"type\":\"card\",\"data\":{\"card_name\":\"Orders\",\"col\":4}},{\"id\":\"VDrb-OqmPy\",\"type\":\"card\",\"data\":{\"card_name\":\"Billing & Payments\",\"col\":4}},{\"id\":\"QbxiOFmIBz\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"3RBhVSSL8r\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports and Pages\",\"col\":4}}]",
  "creation": "2025-05-30 17:56:22.153991",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
  "for_user": "",
  "hide_custom": 0,
- "icon": "change",
+ "icon": "bed",
  "idx": 0,
  "indicator_color": "green",
  "is_hidden": 0,
@@ -250,7 +250,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-15 16:34:37.722704",
+ "modified": "2025-11-23 20:35:38.741354",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient",

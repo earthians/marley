@@ -1,0 +1,20 @@
+{
+ "app": "healthcare",
+ "creation": "2025-11-20 19:22:49.717981",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "bed",
+ "icon_type": "Link",
+ "idx": 2,
+ "label": "Inpatient",
+ "link_to": "Inpatient",
+ "link_type": "Workspace",
+ "modified": "2025-11-21 16:45:09.760530",
+ "modified_by": "Administrator",
+ "name": "Inpatient",
+ "owner": "Administrator",
+ "parent_icon": "Marley Health",
+ "roles": [],
+ "standard": 1
+}
