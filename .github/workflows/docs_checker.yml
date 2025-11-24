@@ -15,7 +15,7 @@ jobs:
           python-version: 3.8
 
       - name: 'Clone repo'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Validate Docs
         env:
