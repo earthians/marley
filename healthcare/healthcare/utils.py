@@ -8,7 +8,8 @@ import json
 
 import frappe
 from frappe import _
-from frappe.query_builder import DocType
+from frappe.query_builder import DocType, Field
+from frappe.query_builder.functions import IfNull
 from frappe.utils import cint, cstr, flt, get_link_to_form, getdate, time_diff_in_hours
 from frappe.utils.formatters import format_value
 
@@ -1229,16 +1230,24 @@ def get_drugs_to_invoice(encounter, customer, link_customer=False):
 
 
 @frappe.whitelist()
-def get_children(doctype, parent=None, company=None, is_root=False):
-	parent_fieldname = "parent_" + doctype.lower().replace(" ", "_")
-	fields = ["name as value", "is_group as expandable", "lft", "rgt"]
+def get_children(doctype, parent=None, company=None, is_root=False, include_disabled=False):
+	if isinstance(include_disabled, str):
+		include_disabled = json.loads(include_disabled)
 
-	filters = [["ifnull(`{0}`,'')".format(parent_fieldname), "=", "" if is_root else parent]]
+	parent_fieldname = "parent_" + doctype.lower().replace(" ", "_")
+	fields = ["name as value", "is_group as expandable"]
+
+	filters = [["docstatus", "<", 2]]
+
+	if frappe.db.has_column(doctype, "disabled") and not include_disabled:
+		filters.append(["disabled", "=", False])
 
 	if is_root:
-		fields += ["service_unit_type"] if doctype == "Healthcare Service Unit" else []
+		filters.append(IfNull(Field(parent_fieldname), "") == "")
 		filters.append(["company", "=", company])
+		fields += ["service_unit_type"] if doctype == "Healthcare Service Unit" else []
 	else:
+		filters.append([parent_fieldname, "=", parent])
 		fields += (
 			["service_unit_type", "allow_appointments", "inpatient_occupancy", "occupancy_status"]
 			if doctype == "Healthcare Service Unit"
