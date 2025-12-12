@@ -292,12 +292,12 @@ healthcare.Orders = class Orders {
 						"depends_on": "eval:['Lab Test Template', 'Clinical Procedure Template'].includes(doc.order_template_type);",
 					},
 					// therapy
-					   {
+					{
 						"fieldname": "no_of_sessions",
 						"fieldtype": "Int",
 						"label": "No of Sessions",
 						"depends_on": "eval:doc.order_template_type=='Therapy Type';",
-					   },
+					},
 				],
 				primary_action: function() {
 					var data = d.get_values();
@@ -320,6 +320,13 @@ healthcare.Orders = class Orders {
 				primary_action_label: __("Create")
 			});
 			d.show();
+
+			const dateField = d.fields_dict?.date;
+			if (dateField?.datepicker) {
+				const today = new Date();
+				today.setHours(0, 0, 0, 0);
+				dateField.datepicker.update({ minDate: today });
+			}
 		};
 		$(".new-service-request-btn").click(_create_service_request);
 	}
