@@ -128,7 +128,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-11-23 20:17:54.487201",
+ "modified": "2025-11-23 20:17:55.487201",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance",
@@ -162,7 +162,7 @@
    "format": "{}",
    "label": "Eligibility Plan",
    "link_to": "Insurance Payor Eligibility Plan",
-   "stats_filter": "[[\"Insurance Payor Eligibility Plan\",\"is_active\",\"=\",1,false]]",
+   "stats_filter": "[[\"Insurance Payor Eligibility Plan\",\"is_active\",\"=\",1]]",
    "type": "DocType"
   },
   {
@@ -171,7 +171,7 @@
    "format": "{}",
    "label": "Insurance Claim",
    "link_to": "Insurance Claim",
-   "stats_filter": "[[\"Insurance Claim\",\"status\",\"in\",[\"Draft\",\"Submitted\",null],false],[\"Insurance Claim\",\"docstatus\",\"=\",\"1\",false]]",
+   "stats_filter": "[[\"Insurance Claim\",\"status\",\"in\",[\"Draft\",\"Submitted\",null]],[\"Insurance Claim\",\"docstatus\",\"=\",\"1\"]]",
    "type": "DocType"
   },
   {
@@ -180,7 +180,7 @@
    "format": "{}",
    "label": "Coverage",
    "link_to": "Patient Insurance Coverage",
-   "stats_filter": "[[\"Patient Insurance Coverage\",\"docstatus\",\"=\",\"1\",false],[\"Patient Insurance Coverage\",\"status\",\"in\",[\"Draft\",\"Approved\",\"Partly Invoiced\",null],false]]",
+   "stats_filter": "[[\"Patient Insurance Coverage\",\"docstatus\",\"=\",\"1\"],[\"Patient Insurance Coverage\",\"status\",\"in\",[\"Draft\",\"Approved\",\"Partly Invoiced\",null]]]",
    "type": "DocType"
   },
   {
@@ -189,7 +189,7 @@
    "format": "{}",
    "label": "Sales Invoice",
    "link_to": "Sales Invoice",
-   "stats_filter": "[[\"Sales Invoice\",\"docstatus\",\"=\",\"1\",false],[\"Sales Invoice\",\"total_insurance_coverage_amount\",\"is\",\"set\",false]]",
+   "stats_filter": "[[\"Sales Invoice\",\"docstatus\",\"=\",\"1\"],[\"Sales Invoice\",\"total_insurance_coverage_amount\",\"is\",\"set\"]]",
    "type": "DocType"
   }
  ],

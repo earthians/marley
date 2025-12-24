@@ -217,7 +217,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-15 16:34:37.722704",
+ "modified": "2025-09-15 16:34:47.722704",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Outpatient",
@@ -247,7 +247,7 @@
    "format": "{} Open",
    "label": "Patient Appointment",
    "link_to": "Patient Appointment",
-   "stats_filter": "[[\"Patient Appointment\",\"status\",\"=\",\"Open\",false]]",
+   "stats_filter": "[[\"Patient Appointment\",\"status\",\"=\",\"Open\"]]",
    "type": "DocType"
   },
   {
@@ -255,7 +255,7 @@
    "doc_view": "List",
    "label": "Encounter",
    "link_to": "Patient Encounter",
-   "stats_filter": "[[\"Patient Encounter\",\"inpatient_record\",\"is\",\"not set\",false]]",
+   "stats_filter": "[[\"Patient Encounter\",\"inpatient_record\",\"is\",\"not set\"]]",
    "type": "DocType"
   },
   {
@@ -264,7 +264,7 @@
    "format": "{} Active",
    "label": "Patient",
    "link_to": "Patient",
-   "stats_filter": "[[\"Patient\",\"status\",\"=\",\"Active\",false],[\"Patient\",\"inpatient_record\",\"is\",\"not set\",false]]",
+   "stats_filter": "[[\"Patient\",\"status\",\"=\",\"Active\"],[\"Patient\",\"inpatient_record\",\"is\",\"not set\"]]",
    "type": "DocType"
   },
   {
@@ -280,7 +280,7 @@
    "doc_view": "List",
    "label": "Vital Signs",
    "link_to": "Vital Signs",
-   "stats_filter": "[[\"Vital Signs\",\"inpatient_record\",\"is\",\"not set\",false]]",
+   "stats_filter": "[[\"Vital Signs\",\"inpatient_record\",\"is\",\"not set\"]]",
    "type": "DocType"
   },
   {

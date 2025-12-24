@@ -235,7 +235,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-11-23 20:18:19.529500",
+ "modified": "2025-11-23 20:18:29.529500",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Rehabilitation",
@@ -269,7 +269,7 @@
    "format": "{} Pending",
    "label": "Therapy Plan",
    "link_to": "Therapy Plan",
-   "stats_filter": "[[\"Therapy Plan\",\"status\",\"in\",[\"Not Started\",\"In Progress\",null],false]]",
+   "stats_filter": "[[\"Therapy Plan\",\"status\",\"in\",[\"Not Started\",\"In Progress\",null]]]",
    "type": "DocType"
   },
   {
@@ -278,7 +278,7 @@
    "format": "{} Draft",
    "label": "Therapy Session",
    "link_to": "Therapy Session",
-   "stats_filter": "[[\"Therapy Session\",\"docstatus\",\"=\",\"0\",false]]",
+   "stats_filter": "[[\"Therapy Session\",\"docstatus\",\"=\",\"0\"]]",
    "type": "DocType"
   },
   {

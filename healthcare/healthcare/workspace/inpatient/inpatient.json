@@ -250,7 +250,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-11-23 20:35:38.741354",
+ "modified": "2025-11-23 20:35:48.741354",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient",
@@ -284,7 +284,7 @@
    "format": "{} Admitted",
    "label": "Inpatient Record",
    "link_to": "Inpatient Record",
-   "stats_filter": "[[\"Inpatient Record\",\"status\",\"=\",\"Admitted\",false]]",
+   "stats_filter": "[[\"Inpatient Record\",\"status\",\"=\",\"Admitted\"]]",
    "type": "DocType"
   },
   {
@@ -293,7 +293,7 @@
    "format": "{}",
    "label": "Medication Order",
    "link_to": "Inpatient Medication Order",
-   "stats_filter": "[[\"Inpatient Medication Order\",\"status\",\"=\",\"Pending\",false]]",
+   "stats_filter": "[[\"Inpatient Medication Order\",\"status\",\"=\",\"Pending\"]]",
    "type": "DocType"
   },
   {
