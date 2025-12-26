@@ -1,0 +1,20 @@
+name: CI — Integration (Bench)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  bench-integration:
+    name: Run integration tests on a Bench-capable runner
+    runs-on: [self-hosted, linux, bench]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run bench integration script
+        run: |
+          chmod +x ci/integration/run_bench_tests.sh
+          ci/integration/run_bench_tests.sh
+
+    # NOTE: This job is intended to run on a self-hosted runner that has Frappe
+    # Bench installed and configured. Use `workflow_dispatch` to trigger manually.
