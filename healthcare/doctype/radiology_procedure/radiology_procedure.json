@@ -1,0 +1,13 @@
+{
+  "doctype": "DocType",
+  "name": "Radiology Procedure",
+  "module": "Healthcare",
+  "custom": true,
+  "fields": [
+    { "fieldname": "code", "label": "Code", "fieldtype": "Data" },
+    { "fieldname": "description", "label": "Description", "fieldtype": "Small Text" },
+    { "fieldname": "priority", "label": "Priority", "fieldtype": "Select", "options": "routine\nurgent\nstat" },
+    { "fieldname": "steps", "label": "Steps", "fieldtype": "Table", "options": "Procedure Step" }
+  ],
+  "permissions": [ { "role": "System Manager" } ]
+}

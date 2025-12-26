@@ -1,0 +1,14 @@
+{
+  "doctype": "DocType",
+  "name": "Procedure Step",
+  "module": "Healthcare",
+  "custom": true,
+  "fields": [
+    { "fieldname": "title", "label": "Title", "fieldtype": "Data" },
+    { "fieldname": "description", "label": "Description", "fieldtype": "Small Text" },
+    { "fieldname": "scheduled_datetime", "label": "Scheduled DateTime", "fieldtype": "Datetime" },
+    { "fieldname": "assigned_resource_id", "label": "Assigned Resource ID", "fieldtype": "Data" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "pending\nscheduled\nin-progress\nperformed\ncancelled" }
+  ],
+  "permissions": [ { "role": "System Manager" } ]
+}

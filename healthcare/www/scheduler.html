@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Scheduler — Healthcare</title>
+    <script>
+      async function loadOrder() {
+        const orderId = document.getElementById('orderId').value;
+        const res = await fetch(`/api/method/healthcare.desk_page.scheduler.scheduler.get_order_for_scheduler?order_id=${orderId}`);
+        const data = await res.json();
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+      }
+
+      async function scheduleStep() {
+        const stepId = document.getElementById('stepId').value;
+        const dt = document.getElementById('scheduledDatetime').value;
+        const res = await fetch(`/api/method/healthcare.desk_page.scheduler.scheduler.schedule_step?step_id=${stepId}&scheduled_datetime=${encodeURIComponent(dt)}`);
+        const data = await res.json();
+        alert('Scheduled: ' + JSON.stringify(data));
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Scheduler</h1>
+    <div>
+      <label>Order ID: <input id="orderId" value="" /></label>
+      <button onclick="loadOrder()">Load Order</button>
+    </div>
+    <pre id="out"></pre>
+    <hr />
+    <div>
+      <label>Step ID: <input id="stepId" /></label>
+      <label>Scheduled Datetime: <input id="scheduledDatetime" type="datetime-local" /></label>
+      <button onclick="scheduleStep()">Schedule Step</button>
+    </div>
+  </body>
+</html>

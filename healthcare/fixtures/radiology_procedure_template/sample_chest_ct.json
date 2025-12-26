@@ -1,0 +1,12 @@
+{
+  "template": "Chest CT",
+  "modality": "CT",
+  "body_part": "Chest",
+  "description": "Standard chest CT protocol for lung evaluation.",
+  "steps": [
+    { "title": "Patient prep", "description": "Remove metal objects" },
+    { "title": "Scan", "description": "Helical acquisition" }
+  ],
+  "is_billable": 1,
+  "rate": 150.0
+}

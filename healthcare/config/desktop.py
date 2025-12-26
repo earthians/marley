@@ -9,5 +9,13 @@ def get_data():
 			"icon": "octicon octicon-file-directory",
 			"type": "module",
 			"label": _("Healthcare"),
+			"items": [
+				{
+					"type": "page",
+					"name": "scheduler",
+					"label": _("Scheduler"),
+					"icon": "octicon octicon-calendar"
+				}
+			]
 		}
 	]

@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Healthcare Imaging Orders API
+  version: "0.1.0"
+  description: API for Imaging Orders, Radiology Procedures and Procedure Steps
+servers:
+  - url: /api
+paths:
+  /imaging-orders:
+    get:
+      summary: List imaging orders
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create imaging order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImagingOrder'
+      responses:
+        '201':
+          description: Created
+
+  /imaging-orders/{orderId}:
+    get:
+      summary: Get imaging order
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /radiology-procedures:
+    post:
+      summary: Create radiology procedure
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RadiologyProcedure'
+      responses:
+        '201':
+          description: Created
+
+  /procedure-steps/{stepId}/status:
+    patch:
+      summary: Update procedure step status
+      parameters:
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Status updated
+
+  /templates/radiology-procedure-templates:
+    get:
+      summary: List radiology procedure templates
+      responses:
+        '200':
+          description: OK
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ProcedureStep:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        scheduled_datetime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, scheduled, in-progress, performed, cancelled]
+
+    RadiologyProcedure:
+      type: object
+      properties:
+        code:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [routine, urgent, stat]
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureStep'
+
+    ImagingOrder:
+      type: object
+      properties:
+        patient_id:
+          type: string
+        ordering_actor_id:
+          type: string
+        order_datetime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [draft, requested, scheduled, in-progress, completed, cancelled]
+        procedures:
+          type: array
+          items:
+            $ref: '#/components/schemas/RadiologyProcedure'
+
+security:
+  - bearerAuth: []
+openapi: 3.0.3
+info:
+  title: Imaging Orders API
+  version: 0.1.0
+paths:
+  /api/imaging-orders:
+    post:
+      summary: Create an Imaging Order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImagingOrderCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImagingOrder'
+  /api/imaging-orders/{orderId}:
+    get:
+      summary: Get Imaging Order
+      parameters:
+        - in: path
+          name: orderId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImagingOrder'
+  /api/procedure-steps/{stepId}/status:
+    patch:
+      summary: Update Procedure Step status
+      parameters:
+        - in: path
+          name: stepId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, scheduled, in-progress, performed, cancelled]
+                notes:
+                  type: string
+                scheduled_datetime:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    ProcedureStep:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        scheduled_datetime:
+          type: string
+          format: date-time
+        assigned_resource_id:
+          type: string
+        performer_id:
+          type: string
+    RadiologyProcedure:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcedureStep'
+    ImagingOrderCreate:
+      type: object
+      required: [patient_id, procedures]
+      properties:
+        patient_id:
+          type: string
+        ordering_actor_id:
+          type: string
+        procedures:
+          type: array
+          items:
+            $ref: '#/components/schemas/RadiologyProcedure'
+    ImagingOrder:
+      allOf:
+        - $ref: '#/components/schemas/ImagingOrderCreate'
+        - type: object
+          properties:
+            id:
+              type: string
+            created_at:
+              type: string
+              format: date-time

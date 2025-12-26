@@ -1,0 +1,13 @@
+{
+  "doctype": "DocType",
+  "name": "Imaging Order",
+  "module": "Healthcare",
+  "custom": true,
+  "fields": [
+    { "fieldname": "patient_id", "label": "Patient ID", "fieldtype": "Data", "reqd": 1 },
+    { "fieldname": "ordering_actor_id", "label": "Ordering Actor ID", "fieldtype": "Data" },
+    { "fieldname": "procedures", "label": "Procedures", "fieldtype": "Table", "options": "Radiology Procedure" },
+    { "fieldname": "created_at", "label": "Created At", "fieldtype": "Datetime" }
+  ],
+  "permissions": [ { "role": "System Manager" } ]
+}

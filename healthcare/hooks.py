@@ -1,3 +1,14 @@
+# Hooks additions for exposing desk page endpoints (minimal)
+app_name = "healthcare"
+
+doc_events = {
+    # placeholder for future hooks
+}
+
+# Expose the desk page controllers via standard import path for bench routing
+override_whitelisted_methods = {
+    # 'healthcare.desk_page.scheduler.scheduler.get_order_for_scheduler': 'healthcare.desk_page.scheduler.scheduler.get_order_for_scheduler'
+}
 from . import __version__ as app_version  # noqa
 
 app_name = "healthcare"

@@ -1,0 +1,17 @@
+{
+  "doctype": "DocType",
+  "name": "Radiology Procedure Template",
+  "module": "Healthcare",
+  "custom": true,
+  "fields": [
+    { "fieldname": "template", "label": "Template Name", "fieldtype": "Data", "reqd": 1, "unique": 1 },
+    { "fieldname": "modality", "label": "Modality", "fieldtype": "Select", "options": "XRAY\nCT\nMRI\nULTRASOUND\nPET" },
+    { "fieldname": "body_part", "label": "Body Part", "fieldtype": "Data" },
+    { "fieldname": "description", "label": "Description", "fieldtype": "Small Text" },
+    { "fieldname": "steps", "label": "Procedure Steps", "fieldtype": "Table", "options": "Procedure Step" },
+    { "fieldname": "is_billable", "label": "Is Billable", "fieldtype": "Check", "default": "0" },
+    { "fieldname": "rate", "label": "Rate", "fieldtype": "Float" },
+    { "fieldname": "disabled", "label": "Disabled", "fieldtype": "Check", "default": "0" }
+  ],
+  "permissions": [ { "role": "System Manager" }, { "role": "Healthcare Administrator" } ]
+}
