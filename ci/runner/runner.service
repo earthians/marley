@@ -1,0 +1,13 @@
+[Unit]
+Description=GitHub Actions Runner
+After=network.target
+
+[Service]
+Type=simple
+User=%RUNNER_USER%
+WorkingDirectory=%RUNNER_DIR%
+ExecStart=%RUNNER_DIR%/run.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
