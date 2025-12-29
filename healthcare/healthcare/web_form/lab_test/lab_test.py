@@ -10,9 +10,7 @@ def get_list_context(context):
 	context.get_list = get_lab_test_list
 
 
-def get_lab_test_list(
-	doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified desc"
-):
+def get_lab_test_list(doctype, txt, filters, limit_start, limit_page_length=20, order_by="modified desc"):
 	patient = get_patient()
 	lab_tests = frappe.db.sql(
 		"""select * from `tabLab Test`

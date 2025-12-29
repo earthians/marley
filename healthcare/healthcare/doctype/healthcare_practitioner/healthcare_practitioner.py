@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS LLP and contributors
 # For license information, please see license.txt
 
@@ -82,7 +81,6 @@ class HealthcarePractitioner(Document):
 			if frappe.db.get_value(
 				"Practitioner Schedule", practitioner_schedule.schedule, "allow_video_conferencing"
 			):
-
 				if not self.google_calendar and not frappe.db.get_single_value(
 					"Healthcare Settings", "default_google_calendar"
 				):
@@ -93,7 +91,9 @@ class HealthcarePractitioner(Document):
 						).format(
 							get_link_to_form("Practitioner Schedule", practitioner_schedule.schedule),
 							frappe.bold("Google Calendar"),
-							get_link_to_form("Healthcare Settings", "Healthcare Settings", "Healthcare Settings"),
+							get_link_to_form(
+								"Healthcare Settings", "Healthcare Settings", "Healthcare Settings"
+							),
 						),
 						title=_("Google Calendar Required"),
 					)
@@ -128,14 +128,13 @@ def validate_service_item(item, msg):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_practitioner_list(doctype, txt, searchfield, start, page_len, filters=None):
-
 	active_filter = {"status": "Active"}
 
 	filters = {**active_filter, **filters} if filters else active_filter
 
 	fields = ["name", "practitioner_name", "mobile_phone"]
 
-	text_in = {"name": ("like", "%%%s%%" % txt), "practitioner_name": ("like", "%%%s%%" % txt)}
+	text_in = {"name": ("like", f"%{txt}%"), "practitioner_name": ("like", f"%{txt}%")}
 
 	return frappe.get_all(
 		"Healthcare Practitioner",

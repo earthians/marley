@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
@@ -97,7 +96,7 @@ class TestInpatientMedicationOrder(IntegrationTestCase):
 			discharge_patient(self.ip_record)
 
 		for doctype in ["Inpatient Medication Entry", "Inpatient Medication Order"]:
-			frappe.db.sql("delete from `tab{doctype}`".format(doctype=doctype))
+			frappe.db.sql(f"delete from `tab{doctype}`")
 
 
 def create_dosage_form():

@@ -14,20 +14,25 @@ healthcare.ObservationWidget = class {
 		var btn_label = is_approved ? "Reject" : "Approve";
 
 		if (me.data.has_component || me.data.has_component == "true") {
-			if (me.wrapper.find(`.${me.data.observation}`).length!==0) {
+			if (me.wrapper.find(`.${me.data.observation}`).length !== 0) {
 				return;
 			}
-			me.render_parent_observation(me.data, btn_label)
+			me.render_parent_observation(me.data, btn_label);
 
-			let component_wrapper = me.wrapper.find(`.${me.data.observation}`)
-			for(var j=0, k=me.data[me.data.observation].length; j<k; j++) {
+			let component_wrapper = me.wrapper.find(`.${me.data.observation}`);
+			for (var j = 0, k = me.data[me.data.observation].length; j < k; j++) {
 				var obs_data = me.data[me.data.observation][j].observation;
-				var nested_obs = me.data[me.data.observation][j]
-				me.render_component_observations(component_wrapper, obs_data, nested_obs, btn_action)
+				var nested_obs = me.data[me.data.observation][j];
+				me.render_component_observations(
+					component_wrapper,
+					obs_data,
+					nested_obs,
+					btn_action,
+				);
 			}
 		} else {
-			if (me.wrapper.find(`.children-${me.data.observation.name}`).length!==0) {
-				return
+			if (me.wrapper.find(`.children-${me.data.observation.name}`).length !== 0) {
+				return;
 			}
 			me.wrapper.append(
 				`<div class="grouped-obs"
@@ -52,25 +57,30 @@ healthcare.ObservationWidget = class {
 						box-shadow: var(--card-shadow);"
 						value=${me.data.observation.name}>
 					</div>
-				</div>`)
+				</div>`,
+			);
 			if (me.data.observation.name) {
-			var obs_data = me.data.observation
-			me.init_field_group(obs_data, me.wrapper.find(`.observations-${me.data.observation.name}`))
-			me.$widget = me.wrapper.find(`.grouped-obs`)
+				var obs_data = me.data.observation;
+				me.init_field_group(
+					obs_data,
+					me.wrapper.find(`.observations-${me.data.observation.name}`),
+				);
+				me.$widget = me.wrapper.find(`.grouped-obs`);
 			}
 		}
-		me.$widget = me.wrapper.find(`.grouped-obs`)
-		var authbutton = document.getElementById(`authorise-observation-btn-${me.data.observation}`);
+		me.$widget = me.wrapper.find(`.grouped-obs`);
+		var authbutton = document.getElementById(
+			`authorise-observation-btn-${me.data.observation}`,
+		);
 		if (authbutton) {
-			authbutton.addEventListener("click", function() {
-				me.auth_observation(me.data.observation, btn_action)
+			authbutton.addEventListener("click", function () {
+				me.auth_observation(me.data.observation, btn_action);
 			});
 		}
 	}
 
-	render_parent_observation(me_data, btn_label, parent_wrapper=null) {
-		let grouped_html = (
-			`<div class="${me_data.observation} grouped-obs"
+	render_parent_observation(me_data, btn_label, parent_wrapper = null) {
+		let grouped_html = `<div class="${me_data.observation} grouped-obs"
 				style="border: 1px solid var(--border-color);
 				padding-right: 15px;
 				font-size: 11px;
@@ -91,7 +101,7 @@ healthcare.ObservationWidget = class {
 					</button>
 				</div>
 				<div class="children-${me_data.observation}"></div>
-			</div>`)
+			</div>`;
 		if (parent_wrapper) {
 			parent_wrapper.append(grouped_html);
 		} else {
@@ -106,12 +116,19 @@ healthcare.ObservationWidget = class {
 			var btn_action = is_approved ? "Rejected" : "Approved";
 			var btn_label = is_approved ? "Reject" : "Approve";
 
-			me.render_parent_observation(nested_obs, btn_label, component_wrapper)
-			let current_wrapper = component_wrapper.find(`.children-${nested_obs.observation}`);
+			me.render_parent_observation(nested_obs, btn_label, component_wrapper);
+			let current_wrapper = component_wrapper.find(
+				`.children-${nested_obs.observation}`,
+			);
 			for (var j = 0, k = nested_obs[nested_obs.observation].length; j < k; j++) {
 				var child_obs = nested_obs[nested_obs.observation][j].observation;
 				var child_nested_obs = nested_obs[nested_obs.observation][j];
-				this.render_component_observations(current_wrapper, child_obs, child_nested_obs, btn_action);
+				this.render_component_observations(
+					current_wrapper,
+					child_obs,
+					child_nested_obs,
+					btn_action,
+				);
 			}
 		} else {
 			component_wrapper.append(`<div class="observations-${obs_data.name} observs"
@@ -126,326 +143,351 @@ healthcare.ObservationWidget = class {
 			background-color: var(--fg-color);
 			box-shadow: var(--card-shadow);"
 			value=${obs_data.name}>
-			</div>`)
-			me.init_field_group(obs_data, component_wrapper.find(`.observations-${obs_data.name}`))
+			</div>`);
+			me.init_field_group(
+				obs_data,
+				component_wrapper.find(`.observations-${obs_data.name}`),
+			);
 		}
-		var authbutton = document.getElementById(`authorise-observation-btn-${nested_obs.observation}`);
+		var authbutton = document.getElementById(
+			`authorise-observation-btn-${nested_obs.observation}`,
+		);
 		if (authbutton) {
-			authbutton.addEventListener("click", function() {
-				me.auth_observation(nested_obs.observation, btn_action)
+			authbutton.addEventListener("click", function () {
+				me.auth_observation(nested_obs.observation, btn_action);
 			});
 		}
 	}
 
 	init_field_group(obs_data, wrapper) {
 		var me = this;
-		var default_input = ""
-		if( ['Range', 'Ratio', 'Quantity', 'Numeric'].includes(obs_data.permitted_data_type)) {
-			default_input = obs_data.result_data
-
-		} else if (obs_data.permitted_data_type=='Text') {
-			default_input = trim_html(obs_data.result_text)
-
+		var default_input = "";
+		if (
+			["Range", "Ratio", "Quantity", "Numeric"].includes(
+				obs_data.permitted_data_type,
+			)
+		) {
+			default_input = obs_data.result_data;
+		} else if (obs_data.permitted_data_type == "Text") {
+			default_input = trim_html(obs_data.result_text);
 		}
-		let fieldtype = "Data"
-		let options = ""
-		if (obs_data.permitted_data_type=='Select') {
-			fieldtype = "Select"
-			options = obs_data.options
-			default_input = obs_data.result_select
+		let fieldtype = "Data";
+		let options = "";
+		if (obs_data.permitted_data_type == "Select") {
+			fieldtype = "Select";
+			options = obs_data.options;
+			default_input = obs_data.result_select;
 		}
 		me[obs_data.name] = new frappe.ui.FieldGroup({
 			fields: [
 				{
-					fieldtype: 'Section Break',
+					fieldtype: "Section Break",
 				},
 				{
-					fieldname: 'observation',
-					fieldtype: 'HTML',
+					fieldname: "observation",
+					fieldtype: "HTML",
 				},
 				{
-					fieldname: 'note_button',
-					fieldtype: 'HTML',
+					fieldname: "note_button",
+					fieldtype: "HTML",
 				},
 				{
-					'fieldtype': 'Column Break',
+					fieldtype: "Column Break",
 				},
 				{
-					fieldname: 'specimen',
-					fieldtype: 'HTML',
+					fieldname: "specimen",
+					fieldtype: "HTML",
 				},
 				{
-					'fieldtype': 'Column Break',
+					fieldtype: "Column Break",
 				},
 				{
-					fieldname: 'result',
+					fieldname: "result",
 					fieldtype: fieldtype,
 					options: options,
-					read_only: 1 ? (obs_data.status=='Approved') : 0,
-					change: (s) => {
-						me.frm.dirty()
-						me.set_result_n_name(obs_data.name)
+					read_only: 1 ? obs_data.status == "Approved" : 0,
+					change: s => {
+						me.frm.dirty();
+						me.set_result_n_name(obs_data.name);
 					},
 					default: default_input,
 					hidden: 1 ? obs_data.observation_category == "Imaging" : 0,
 				},
 				{
-					fieldname: 'result_date',
-					fieldtype: 'HTML',
+					fieldname: "result_date",
+					fieldtype: "HTML",
 					hidden: 1 ? obs_data.observation_category == "Imaging" : 0,
 				},
 				{
-					'fieldtype': 'Column Break',
+					fieldtype: "Column Break",
 				},
 				{
-					fieldname: 'unit',
-					fieldtype: 'HTML',
+					fieldname: "unit",
+					fieldtype: "HTML",
 				},
 				{
-					fieldname: 'method',
-					fieldtype: 'HTML',
+					fieldname: "method",
+					fieldtype: "HTML",
 				},
 				{
-					'fieldtype': 'Column Break',
+					fieldtype: "Column Break",
 				},
 				{
-					fieldname: 'reference',
-					fieldtype: 'HTML',
+					fieldname: "reference",
+					fieldtype: "HTML",
 				},
 				{
-					'fieldtype': 'Column Break',
+					fieldtype: "Column Break",
 				},
 				{
-					fieldname: 'auth_btn',
-					fieldtype: 'HTML',
+					fieldname: "auth_btn",
+					fieldtype: "HTML",
 				},
 				{
-					fieldtype: 'Section Break',
+					fieldtype: "Section Break",
 				},
 				{
-					fieldname: 'note_text',
-					fieldtype: 'Text',
+					fieldname: "note_text",
+					fieldtype: "Text",
 					read_only: 1,
 				},
 				{
-					fieldtype: 'Section Break',
+					fieldtype: "Section Break",
 					hidden: 1 ? obs_data.observation_category != "Imaging" : 0,
 				},
 				{
 					label: __("Findings"),
-					fieldname: 'findings',
-					fieldtype: 'Button',
+					fieldname: "findings",
+					fieldtype: "Button",
 					click: () => me.add_finding_interpretation(obs_data, "Findings"),
 				},
 				{
-					fieldname: 'findings_text',
-					fieldtype: 'Text',
+					fieldname: "findings_text",
+					fieldtype: "Text",
 					read_only: 1,
 				},
 				{
-					'fieldtype': 'Column Break',
+					fieldtype: "Column Break",
 				},
 				{
 					label: __("Interpretation"),
-					fieldname: 'interpretation',
-					fieldtype: 'Button',
-					click: () => me.add_finding_interpretation(obs_data, "Interpretation"),
+					fieldname: "interpretation",
+					fieldtype: "Button",
+					click: () =>
+						me.add_finding_interpretation(obs_data, "Interpretation"),
 				},
 				{
-					fieldname: 'result_interpretation',
-					fieldtype: 'Text',
+					fieldname: "result_interpretation",
+					fieldtype: "Text",
 					read_only: 1,
 				},
-
 			],
-			body: wrapper
-		})
+			body: wrapper,
+		});
 		me[obs_data.name].make();
-		me.set_values(this, obs_data)
+		me.set_values(this, obs_data);
 	}
 
 	set_values(th, obs_data) {
 		var me = this;
 		let name_html = `<div class="observation-name obs-field" style="font-size:10px; padding-top:20px;" value="${obs_data.name}">
-			<a href="/app/observation/${obs_data.name }" title="${obs_data.name }">`
+			<a href="/app/observation/${obs_data.name}" title="${obs_data.name}">`;
 		if (obs_data.preferred_display_name) {
-			name_html += obs_data.preferred_display_name
+			name_html += obs_data.preferred_display_name;
 		} else {
-			name_html += obs_data.observation_template
+			name_html += obs_data.observation_template;
 		}
 		name_html += `</a>
-		<div>`
-		me[obs_data.name].get_field('observation').html(name_html);
+		<div>`;
+		me[obs_data.name].get_field("observation").html(name_html);
 
-
-		let specimen_html = `<div class="text-muted" style="font-size:10px; padding-top:20px;">`
+		let specimen_html = `<div class="text-muted" style="font-size:10px; padding-top:20px;">`;
 		if (obs_data.specimen) {
-			specimen_html += `<a href="/app/specimen/${obs_data.specimen}" title="${obs_data.specimen}">`
-			specimen_html += obs_data.specimen + '</a>'
+			specimen_html += `<a href="/app/specimen/${obs_data.specimen}" title="${obs_data.specimen}">`;
+			specimen_html += obs_data.specimen + "</a>";
 		}
 		specimen_html += `</div>
-			<div class="text-muted" style="font-size: 8px;">`
-			if (obs_data.received_time) {
-				specimen_html += frappe.datetime.global_date_format(obs_data.received_time)
-			}
-			specimen_html += `</div>`
-		me[obs_data.name].get_field('specimen').html(specimen_html);
+			<div class="text-muted" style="font-size: 8px;">`;
+		if (obs_data.received_time) {
+			specimen_html += frappe.datetime.global_date_format(obs_data.received_time);
+		}
+		specimen_html += `</div>`;
+		me[obs_data.name].get_field("specimen").html(specimen_html);
 
-		let result_date_html = `<div class="text-muted" style="font-size:8px; margin-top:-12px;">${obs_data.time_of_result ? frappe.datetime.global_date_format(obs_data.time_of_result): ""}</div>`
-		me[obs_data.name].get_field('result_date').html(result_date_html);
+		let result_date_html = `<div class="text-muted" style="font-size:8px; margin-top:-12px;">${
+			obs_data.time_of_result
+				? frappe.datetime.global_date_format(obs_data.time_of_result)
+				: ""
+		}</div>`;
+		me[obs_data.name].get_field("result_date").html(result_date_html);
 
-		let method_html = `<div style="display:flex"><div style="font-size:10px; padding-top:20px; padding-right:45px; width:10%;">${obs_data.permitted_unit?obs_data.permitted_unit:""}</div>`
+		let method_html = `<div style="display:flex"><div style="font-size:10px; padding-top:20px; padding-right:45px; width:10%;">${
+			obs_data.permitted_unit ? obs_data.permitted_unit : ""
+		}</div>`;
 
-
-		method_html+= `<div class="text-muted" style="font-size:10px; padding-top:20px;">`
+		method_html += `<div class="text-muted" style="font-size:10px; padding-top:20px;">`;
 		if (obs_data.method) {
-			method_html += `${obs_data.method }`
+			method_html += `${obs_data.method}`;
 		}
-		method_html += `</div></div>`
-		me[obs_data.name].get_field('unit').html(method_html);
+		method_html += `</div></div>`;
+		me[obs_data.name].get_field("unit").html(method_html);
 
-
-		let reference_html = `<div style="display:flex;"><div class="text-muted" style="font-size:10px; padding-top:20px;">`
+		let reference_html = `<div style="display:flex;"><div class="text-muted" style="font-size:10px; padding-top:20px;">`;
 		if (obs_data.reference) {
-			reference_html += `${obs_data.reference }`
+			reference_html += `${obs_data.reference}`;
 		}
-		reference_html += `</div>`
-		me[obs_data.name].get_field('reference').html(reference_html);
+		reference_html += `</div>`;
+		me[obs_data.name].get_field("reference").html(reference_html);
 
-		let auth_html = ""
-		if (!['Approved'].includes(obs_data.status)) {
+		let auth_html = "";
+		if (!["Approved"].includes(obs_data.status)) {
 			auth_html += `<div style="float:right;">
 				<button class="btn btn-xs btn-secondary small" id="authorise-observation-btn-${obs_data.name}">
 				<span style="font-size:10px;">Approve</span>
-				</button>`
-			auth_html += `</div></div>`
-			me[obs_data.name].get_field('auth_btn').html(auth_html);
-			var authbutton = document.getElementById(`authorise-observation-btn-${obs_data.name}`);
-			authbutton.addEventListener("click", function() {
-				me.auth_observation(obs_data.name, "Approved")
+				</button>`;
+			auth_html += `</div></div>`;
+			me[obs_data.name].get_field("auth_btn").html(auth_html);
+			var authbutton = document.getElementById(
+				`authorise-observation-btn-${obs_data.name}`,
+			);
+			authbutton.addEventListener("click", function () {
+				me.auth_observation(obs_data.name, "Approved");
 			});
-		} else if (obs_data.status=='Approved') {
+		} else if (obs_data.status == "Approved") {
 			auth_html += `<div style="float:right;">
 				<button class="btn btn-xs btn-del btn-secondary small" id="unauthorise-observation-btn-${obs_data.name}">
 				<span class="btn-observ" style="font-size:10px;">Reject</span>
-				</button>`
-			auth_html += `</div></div>`
-			me[obs_data.name].get_field('auth_btn').html(auth_html);
-			var authbutton = document.getElementById(`unauthorise-observation-btn-${obs_data.name}`);
-			authbutton.addEventListener("click", function() {
-				me.auth_observation(obs_data.name, "Rejected")
+				</button>`;
+			auth_html += `</div></div>`;
+			me[obs_data.name].get_field("auth_btn").html(auth_html);
+			var authbutton = document.getElementById(
+				`unauthorise-observation-btn-${obs_data.name}`,
+			);
+			authbutton.addEventListener("click", function () {
+				me.auth_observation(obs_data.name, "Rejected");
 			});
 		}
 
 		let note_html = `<div><span class="add-note-observation-btn btn btn-link"
 			id="add-note-observation-btn-${obs_data.name}">
 			<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
-			</span>`
-		note_html += `</div>`
-		me[obs_data.name].get_field('note_button').html(note_html);
-		var myButton = document.getElementById(`add-note-observation-btn-${obs_data.name}`);
-		myButton.addEventListener("click", function() {
-			me.add_note(obs_data.name, obs_data.note)
-		  });
+			</span>`;
+		note_html += `</div>`;
+		me[obs_data.name].get_field("note_button").html(note_html);
+		var myButton = document.getElementById(
+			`add-note-observation-btn-${obs_data.name}`,
+		);
+		myButton.addEventListener("click", function () {
+			me.add_note(obs_data.name, obs_data.note);
+		});
 
 		if (obs_data.note) {
-			me[obs_data.name].set_value("note_text", obs_data.note)
+			me[obs_data.name].set_value("note_text", obs_data.note);
 		}
 
 		if (obs_data.observation_category == "Imaging") {
-			me[obs_data.name].set_value("findings_text", obs_data.result_text)
-			me[obs_data.name].set_value("result_interpretation", obs_data.result_interpretation)
+			me[obs_data.name].set_value("findings_text", obs_data.result_text);
+			me[obs_data.name].set_value(
+				"result_interpretation",
+				obs_data.result_interpretation,
+			);
 		}
-
 	}
 
 	set_result_n_name(observation) {
 		var me = this;
 		let dialog_values = me[observation].get_values();
-		dialog_values["observation"] =  observation
+		dialog_values["observation"] = observation;
 		let valuexists = me.result.some(dict => dict.observation === observation);
 		for (var res of me.result) {
 			if (observation == res.observation) {
-				res["result"] = dialog_values.result
+				res["result"] = dialog_values.result;
 			}
 		}
 		if (!valuexists) {
-			me.result.push(dialog_values)
+			me.result.push(dialog_values);
 		}
 	}
 
-	add_note (observation, note) {
+	add_note(observation, note) {
 		var me = this;
 		let observation_name = observation;
-		let note_text = me[observation].get_value('note_text') || note
+		let note_text = me[observation].get_value("note_text") || note;
 		// let result = note;
-			var d = new frappe.ui.Dialog({
-				title: __('Add Note'),
-				static: true,
-				fields: [
-					{
-						"label": __("Observation"),
-						"fieldname": "observation",
-						"fieldtype": "Link",
-						"options": "Observation",
-						"default": observation_name,
-						"hidden": 1,
-					},
-					{
-						"label": __("Note"),
-						"fieldname": "note",
-						"fieldtype": "Text Editor",
-						"default": note_text,
-					}
-				],
-				primary_action: function() {
-					me.frm.dirty()
-					var data = d.get_values();
-					me[observation].set_value("note_text", data.note)
-					if (me.result.length > 0) {
-						me.result.forEach(function(res) {
-						if (res.observation == observation) {
-							res["note"] =  data.note
-						}
-						});
-					} else {
-						me.result.push({"observation": observation, "note": data.note})
-					}
-					d.hide();
+		var d = new frappe.ui.Dialog({
+			title: __("Add Note"),
+			static: true,
+			fields: [
+				{
+					label: __("Observation"),
+					fieldname: "observation",
+					fieldtype: "Link",
+					options: "Observation",
+					default: observation_name,
+					hidden: 1,
 				},
-				primary_action_label: __("Add Note")
-			});
-			d.show();
-			d.get_close_btn().show();
+				{
+					label: __("Note"),
+					fieldname: "note",
+					fieldtype: "Text Editor",
+					default: note_text,
+				},
+			],
+			primary_action: function () {
+				me.frm.dirty();
+				var data = d.get_values();
+				me[observation].set_value("note_text", data.note);
+				if (me.result.length > 0) {
+					me.result.forEach(function (res) {
+						if (res.observation == observation) {
+							res["note"] = data.note;
+						}
+					});
+				} else {
+					me.result.push({ observation: observation, note: data.note });
+				}
+				d.hide();
+			},
+			primary_action_label: __("Add Note"),
+		});
+		d.show();
+		d.get_close_btn().show();
 	}
 
-	auth_observation (observation, status) {
+	auth_observation(observation, status) {
 		var me = this;
 		if (status == "Approved") {
-			frappe.confirm(__("Are you sure you want to authorise Observation <b>" + observation +"</b>"), function () {
-				frappe.call({
-					method: 'healthcare.healthcare.doctype.observation.observation.set_observation_status',
-					args: {
-						observation: observation,
-						status: status,
-					},
-					callback: function (r) {
-						me.frm.reload_doc();
-					}
-				});
-			})
+			frappe.confirm(
+				__(
+					"Are you sure you want to authorise Observation <b>" +
+						observation +
+						"</b>",
+				),
+				function () {
+					frappe.call({
+						method: "healthcare.healthcare.doctype.observation.observation.set_observation_status",
+						args: {
+							observation: observation,
+							status: status,
+						},
+						callback: function (r) {
+							me.frm.reload_doc();
+						},
+					});
+				},
+			);
 		} else if (status == "Rejected") {
 			var d = new frappe.ui.Dialog({
-				title: __('Reason For Rejection'),
+				title: __("Reason For Rejection"),
 				fields: [
 					{
-						"label": __("Reason"),
-						"fieldname": "unauthorisation_reason",
-						"fieldtype": "Text",
+						label: __("Reason"),
+						fieldname: "unauthorisation_reason",
+						fieldtype: "Text",
 						reqd: 1,
-					}
+					},
 				],
-				primary_action: function() {
+				primary_action: function () {
 					var data = d.get_values();
 					frappe.call({
 						method: "healthcare.healthcare.doctype.observation.observation.set_observation_status",
@@ -455,117 +497,117 @@ healthcare.ObservationWidget = class {
 							reason: data.unauthorisation_reason,
 						},
 						freeze: true,
-						callback: function(r) {
+						callback: function (r) {
 							if (!r.exc) {
 								me.frm.reload_doc();
 							}
 							d.hide();
-						}
+						},
 					});
 				},
-				primary_action_label: __("Reject")
+				primary_action_label: __("Reject"),
 			});
-			d.show()
+			d.show();
 		}
-
 	}
 
-	add_finding_interpretation (obs_data, type) {
+	add_finding_interpretation(obs_data, type) {
 		var me = this;
-		let template = ""
-		let note = ""
-		if (type=="Findings") {
-			template = obs_data.result_template
-			note = me[obs_data.name].get_value('result_text') || obs_data.result_text
-		} else if (type=="Interpretation") {
-			template = obs_data.interpretation_template
-			note = me[obs_data.name].get_value('result_interpretation') || obs_data.result_interpretation
+		let template = "";
+		let note = "";
+		if (type == "Findings") {
+			template = obs_data.result_template;
+			note = me[obs_data.name].get_value("result_text") || obs_data.result_text;
+		} else if (type == "Interpretation") {
+			template = obs_data.interpretation_template;
+			note =
+				me[obs_data.name].get_value("result_interpretation") ||
+				obs_data.result_interpretation;
 		}
 		var d = new frappe.ui.Dialog({
 			title: __(type),
 			static: true,
 			fields: [
 				{
-					"label": "Observation",
-					"fieldname": "observation",
-					"fieldtype": "Link",
-					"options": "Observation",
-					"default": obs_data.name,
-					"hidden": 1,
+					label: "Observation",
+					fieldname: "observation",
+					fieldtype: "Link",
+					options: "Observation",
+					default: obs_data.name,
+					hidden: 1,
 				},
 				{
-					"label": "Template",
-					"fieldname": "template",
-					"fieldtype": "Link",
-					"options": "Terms and Conditions",
-					"default": template,
+					label: "Template",
+					fieldname: "template",
+					fieldtype: "Link",
+					options: "Terms and Conditions",
+					default: template,
 				},
 				{
-					"label": "Note",
-					"fieldname": "note",
-					"fieldtype": "Text Editor",
-					"default" : note,
-				}
+					label: "Note",
+					fieldname: "note",
+					fieldtype: "Text Editor",
+					default: note,
+				},
 			],
-			primary_action: function() {
-				me.frm.dirty()
+			primary_action: function () {
+				me.frm.dirty();
 				var data = d.get_values();
 				let val_dict = {};
 				var values = [];
-				val_dict["observation"] = obs_data.name
-				val_dict["result"] = ""
-				if (type=="Findings") {
-					val_dict["result"] = data.note
-					me[obs_data.name].set_value("findings_text", data.note)
-				} else if (type=="Interpretation") {
-					val_dict["interpretation"] = data.note
-					me[obs_data.name].set_value("result_interpretation", data.note)
+				val_dict["observation"] = obs_data.name;
+				val_dict["result"] = "";
+				if (type == "Findings") {
+					val_dict["result"] = data.note;
+					me[obs_data.name].set_value("findings_text", data.note);
+				} else if (type == "Interpretation") {
+					val_dict["interpretation"] = data.note;
+					me[obs_data.name].set_value("result_interpretation", data.note);
 				}
 				d.hide();
 				values.push(val_dict);
-				me.result.push(val_dict)
+				me.result.push(val_dict);
 			},
-			primary_action_label: __("Add")
-			});
-			if ((!note || note == "") && d.get_values("template")) {
-				set_text_to_dialog(d)
+			primary_action_label: __("Add"),
+		});
+		if ((!note || note == "") && d.get_values("template")) {
+			set_text_to_dialog(d);
+		}
+		d.fields_dict["template"].df.onchange = () => {
+			const regex = /<p>(.*?)<\/p>/;
+			const match = d.get_value("note").match(regex);
+			const result_value = match ? match[1] : null;
+			if (d.get_value("template") && (!result_value || result_value == "<br>")) {
+				set_text_to_dialog(d);
 			}
-			d.fields_dict['template'].df.onchange = () => {
-				const regex = /<p>(.*?)<\/p>/;
-				const match = d.get_value("note").match(regex);
-				const result_value = match ? match[1] : null;
-				if (d.get_value('template') && (!result_value || result_value == "<br>")) {
-					set_text_to_dialog(d)
-				}
-			}
-			d.show();
-			d.get_close_btn().show();
+		};
+		d.show();
+		d.get_close_btn().show();
 	}
+};
 
-}
-
-var trim_html = function(text_result) {
-	if (text_result && text_result.includes('</div>')) {
-		var tempElement = document.createElement('div');
+var trim_html = function (text_result) {
+	if (text_result && text_result.includes("</div>")) {
+		var tempElement = document.createElement("div");
 		tempElement.innerHTML = text_result;
-		var paragraphElement = tempElement.querySelector('p');
-		return paragraphElement.textContent
+		var paragraphElement = tempElement.querySelector("p");
+		return paragraphElement.textContent;
 	} else {
-		return text_result
+		return text_result;
 	}
-}
+};
 
-var set_text_to_dialog = function(d) {
+var set_text_to_dialog = function (d) {
 	if (d.get_value("template")) {
 		frappe.call({
-			method: 'healthcare.healthcare.doctype.observation.observation.get_observation_result_template',
+			method: "healthcare.healthcare.doctype.observation.observation.get_observation_result_template",
 			args: {
 				template_name: d.get_value("template"),
-				observation: d.get_value("observation")
+				observation: d.get_value("observation"),
 			},
 			callback: function (r) {
-				d.set_value('note', r.message)
-			}
+				d.set_value("note", r.message);
+			},
 		});
 	}
-}
+};

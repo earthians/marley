@@ -261,7 +261,7 @@ def setup_healthcare():
 		# already setup
 		return
 
-	from healthcare.regional.india.abdm.setup import setup as abdm_setup  # noqa
+	from healthcare.regional.india.abdm.setup import setup as abdm_setup
 
 	abdm_setup()
 
@@ -1042,7 +1042,11 @@ def get_patient_history_config():
 				{"label": "Procedure Template", "fieldname": "procedure_template", "fieldtype": "Link"},
 				{"label": "Healthcare Practitioner", "fieldname": "practitioner", "fieldtype": "Link"},
 				{"label": "Notes", "fieldname": "notes", "fieldtype": "Small Text"},
-				{"label": "Service Unit", "fieldname": "service_unit", "fieldtype": "Healthcare Service Unit"},
+				{
+					"label": "Service Unit",
+					"fieldname": "service_unit",
+					"fieldtype": "Healthcare Service Unit",
+				},
 				{"label": "Start Time", "fieldname": "start_time", "fieldtype": "Time"},
 				{"label": "Sample", "fieldname": "sample", "fieldtype": "Link"},
 			],
@@ -1082,7 +1086,11 @@ def get_patient_history_config():
 				{"label": "Start Time", "fieldname": "start_time", "fieldtype": "Time"},
 				{"label": "Exercises", "fieldname": "exercises", "fieldtype": "Table"},
 				{"label": "Total Counts Targeted", "fieldname": "total_counts_targeted", "fieldtype": "Int"},
-				{"label": "Total Counts Completed", "fieldname": "total_counts_completed", "fieldtype": "Int"},
+				{
+					"label": "Total Counts Completed",
+					"fieldname": "total_counts_completed",
+					"fieldtype": "Int",
+				},
 			],
 		),
 		"Vital Signs": (

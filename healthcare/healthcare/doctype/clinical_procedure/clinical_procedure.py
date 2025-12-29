@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, ESS LLP and contributors
 # For license information, please see license.txt
 
@@ -114,9 +113,7 @@ class ClinicalProcedure(Document):
 			self.status = "Cancelled"
 
 	def set_title(self):
-		self.title = _("{0} - {1}").format(self.patient_name or self.patient, self.procedure_template)[
-			:100
-		]
+		self.title = _("{0} - {1}").format(self.patient_name or self.patient, self.procedure_template)[:100]
 
 	@frappe.whitelist()
 	def complete_procedure(self):
@@ -149,7 +146,13 @@ class ClinicalProcedure(Document):
 						item_details = get_item_details(ctx)
 						item_price = item_details.price_list_rate * item.qty
 						item_consumption_details = (
-							item_details.item_name + " " + str(item.qty) + " " + item.uom + " " + str(item_price)
+							item_details.item_name
+							+ " "
+							+ str(item.qty)
+							+ " "
+							+ item.uom
+							+ " "
+							+ str(item_price)
 						)
 						consumable_total_amount += item_price
 						if not consumption_details:
@@ -235,9 +238,7 @@ class ClinicalProcedure(Document):
 		return stock_entry.as_dict()
 
 	def check_sessions_completed(self):
-		total_sessions_requested = frappe.db.get_value(
-			"Service Request", self.service_request, "quantity"
-		)
+		total_sessions_requested = frappe.db.get_value("Service Request", self.service_request, "quantity")
 		sessions = frappe.db.count(
 			"Clinical Procedure", filters={"docstatus": ["!=", 2], "service_request": self.service_request}
 		)
@@ -287,9 +288,7 @@ def set_stock_items(doc, stock_detail_parent, parenttype):
 
 
 def get_items(table, parent, parenttype):
-	items = frappe.db.get_all(
-		table, filters={"parent": parent, "parenttype": parenttype}, fields=["*"]
-	)
+	items = frappe.db.get_all(table, filters={"parent": parent, "parenttype": parenttype}, fields=["*"])
 
 	return items
 

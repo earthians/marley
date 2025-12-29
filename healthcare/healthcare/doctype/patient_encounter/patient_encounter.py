@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS LLP and contributors
 # For license information, please see license.txt
 
@@ -588,9 +587,7 @@ def get_encounter_details(doc):
 def get_value_map(status_codes):
 	"""return a map, for example, {"name": "x", "code_value": "", "display": "1"} to {"x": "1"}"""
 	status_code_map = {
-		list(d.values())[0]: list(d.values())[2]  # display is preferred over code_value
-		if list(d.values())[2]
-		else list(d.values())[1]
+		next(iter(d.values())): (lambda vals: vals[2] if vals[2] else vals[1])(list(d.values()))
 		for d in status_codes
 	}
 	return dict(status_code_map)

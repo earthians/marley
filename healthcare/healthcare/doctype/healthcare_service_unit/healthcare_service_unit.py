@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
@@ -31,7 +30,7 @@ class HealthcareServiceUnit(NestedSet):
 			self.name = self.healthcare_service_unit_name
 
 	def on_update(self):
-		super(HealthcareServiceUnit, self).on_update()
+		super().on_update()
 		self.validate_one_root()
 
 	def on_trash(self):
@@ -119,7 +118,7 @@ def add_multiple_service_units(parent, data):
 		WHERE name like %(prefix)s AND company=%(company)s""",
 		{
 			"start": len(service_unit_name) + 2,
-			"prefix": "{}-%".format(service_unit_name),
+			"prefix": f"{service_unit_name}-%",
 			"company": company,
 		},
 		as_list=1,
@@ -129,9 +128,7 @@ def add_multiple_service_units(parent, data):
 	failed_list = []
 	for i in range(start_suffix, count + start_suffix):
 		# name to be in the form WARD-####
-		service_unit["healthcare_service_unit_name"] = "{}-{}".format(
-			service_unit_name, cstr("%0*d" % (4, i))
-		)
+		service_unit["healthcare_service_unit_name"] = f"{service_unit_name}-{cstr(f'{i:04d}')}"
 		service_unit_doc = frappe.get_doc(service_unit)
 		try:
 			service_unit_doc.insert()

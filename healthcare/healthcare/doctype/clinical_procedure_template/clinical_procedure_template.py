@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, earthians and contributors
 # For license information, please see license.txt
 
@@ -139,9 +138,7 @@ def update_item_and_item_price(doc):
 		item_doc = frappe.get_doc("Item", {"item_code": doc.item})
 		item_doc.item_name = item_name
 		item_doc.item_group = item_group
-		item_doc.description = (
-			doc.description if doc.get("doctype") == "Clinical Procedure Template" else ""
-		)
+		item_doc.description = doc.description if doc.get("doctype") == "Clinical Procedure Template" else ""
 		item_doc.disabled = 0
 		item_doc.save(ignore_permissions=True)
 		if rate:

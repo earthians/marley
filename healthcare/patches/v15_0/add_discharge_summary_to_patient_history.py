@@ -4,9 +4,7 @@ import frappe
 
 
 def execute():
-	if not frappe.db.exists(
-		"Patient History Standard Document Type", {"document_type": "Discharge Summary"}
-	):
+	if not frappe.db.exists("Patient History Standard Document Type", {"document_type": "Discharge Summary"}):
 		settings = frappe.get_single("Patient History Settings")
 		selected_fields = [
 			{

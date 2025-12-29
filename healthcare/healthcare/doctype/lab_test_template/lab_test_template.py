@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS and contributors
 # For license information, please see license.txt
 
@@ -128,9 +127,6 @@ def create_item_from_template(doc):
 
 	# Insert item price
 	if doc.is_billable and doc.lab_test_rate != 0.0:
-		price_list_name = frappe.db.get_value(
-			"Selling Settings", None, "selling_price_list"
-		) or frappe.db.get_value("Price List", {"selling": 1})
 		if doc.lab_test_rate:
 			make_item_price(item.name, doc.lab_test_rate)
 		else:

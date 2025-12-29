@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
@@ -102,9 +101,7 @@ def make_therapy_session(
 	therapy_session.patient = patient
 	therapy_session.practitioner = practitioner
 	therapy_session.department = (
-		frappe.get_cached_value("Healthcare Practitioner", practitioner, "department")
-		if practitioner
-		else ""
+		frappe.get_cached_value("Healthcare Practitioner", practitioner, "department") if practitioner else ""
 	)
 	therapy_session.therapy_type = therapy_type.name
 	therapy_session.duration = therapy_type.default_duration

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS and contributors
 # For license information, please see license.txt
 
@@ -70,7 +69,8 @@ class LabTest(Document):
 				except Exception:
 					item.secondary_uom_result = ""
 					frappe.msgprint(
-						_("Row #{0}: Result for Secondary UOM not calculated").format(item.idx), title=_("Warning")
+						_("Row #{0}: Result for Secondary UOM not calculated").format(item.idx),
+						title=_("Warning"),
 					)
 
 	def validate_result_values(self):
@@ -147,9 +147,7 @@ def create_multiple(doctype, docname):
 		lab_test_created = create_lab_test_from_encounter(docname)
 
 	if lab_test_created:
-		frappe.msgprint(
-			_("Lab Test(s) {0} created successfully").format(lab_test_created), indicator="green"
-		)
+		frappe.msgprint(_("Lab Test(s) {0} created successfully").format(lab_test_created), indicator="green")
 
 
 def create_lab_test_from_encounter(encounter):
@@ -197,7 +195,6 @@ def create_lab_test_from_invoice(sales_invoice):
 		for item in invoice.items:
 			lab_test_created = 0
 			if item.reference_dt == "Service Request":
-
 				lab_test_created = (
 					1 if frappe.db.exists("Lab Test", {"service_request": item.reference_dn}) else 0
 				)
@@ -232,9 +229,7 @@ def get_lab_test_template(item):
 	return False
 
 
-def create_lab_test_doc(
-	practitioner, patient, template, company, invoiced=False, service_unit=None
-):
+def create_lab_test_doc(practitioner, patient, template, company, invoiced=False, service_unit=None):
 	lab_test = frappe.new_doc("Lab Test")
 	lab_test.invoiced = invoiced
 	lab_test.practitioner = practitioner

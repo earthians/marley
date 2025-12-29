@@ -96,7 +96,10 @@ def set_observation_status(docname):
 				if doc.status in ["Approved", "Rejected"]:
 					observation_doc = frappe.get_doc("Observation", obs)
 					if observation_doc.has_result():
-						if doc.status == "Approved" and not observation_doc.status in ["Approved", "Rejected"]:
+						if doc.status == "Approved" and observation_doc.status not in [
+							"Approved",
+							"Rejected",
+						]:
 							observation_doc.status = doc.status
 							observation_doc.save().submit()
 						if doc.status == "Rejected" and observation_doc.status == "Approved":

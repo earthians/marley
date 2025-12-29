@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS LLP and contributors
 # For license information, please see license.txt
 
@@ -118,9 +117,7 @@ class Patient(Document):
 			if users[0].mobile_no:
 				message += _(", Mobile {}").format(frappe.bold(users[0].mobile_no))
 
-			message += _(
-				"<br>Please check email / mobile or disable 'Invite as User' to skip creating User"
-			)
+			message += _("<br>Please check email / mobile or disable 'Invite as User' to skip creating User")
 
 			frappe.throw(message, frappe.DuplicateEntryError)
 
@@ -159,11 +156,11 @@ class Patient(Document):
 			count = frappe.db.sql(
 				"""select ifnull(MAX(CAST(SUBSTRING_INDEX(name, ' ', -1) AS UNSIGNED)), 0) from tabPatient
 				 where name like %s""",
-				"%{0} - %".format(name),
+				f"%{name} - %",
 				as_list=1,
 			)[0][0]
 			count = cint(count) + 1
-			return "{0} - {1}".format(name, cstr(count))
+			return f"{name} - {cstr(count)}"
 
 		return name
 
@@ -179,7 +176,7 @@ class Patient(Document):
 		age = self.age
 		if not age:
 			return
-		age_str = f'{str(age.years)} {_("Year(s)")} {str(age.months)} {_("Month(s)")} {str(age.days)} {_("Day(s)")}'
+		age_str = f"{age.years!s} {_('Year(s)')} {age.months!s} {_('Month(s)')} {age.days!s} {_('Day(s)')}"
 		return age_str
 
 	@frappe.whitelist()
@@ -288,7 +285,7 @@ class Patient(Document):
 			months = (diff - (years * 365)) // 30
 			days = (diff - (years * 365)) - (months * 30)
 			return {
-				"age_in_string": f'{str(years)} {_("Year(s)")} {str(months)} {_("Month(s)")} {str(days)} {_("Day(s)")}',
+				"age_in_string": f"{years!s} {_('Year(s)')} {months!s} {_('Month(s)')} {days!s} {_('Day(s)')}",
 				"age_in_days": diff,
 			}
 

@@ -7,6 +7,4 @@ def execute():
 	)
 
 	for inpatient_record in inpatient_records:
-		frappe.get_doc(
-			"Inpatient Record", inpatient_record.name
-		).add_service_unit_rent_to_billable_items()
+		frappe.get_doc("Inpatient Record", inpatient_record.name).add_service_unit_rent_to_billable_items()

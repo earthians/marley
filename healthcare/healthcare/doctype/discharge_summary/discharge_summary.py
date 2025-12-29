@@ -29,7 +29,9 @@ class DischargeSummary(Document):
 				all_service_requests += service_requests
 			for service_request in service_requests:
 				if service_request.template_dt == "Lab Test Template":
-					lab_test = frappe.db.get_value("Lab Test", {"service_request": service_request.name}, "name")
+					lab_test = frappe.db.get_value(
+						"Lab Test", {"service_request": service_request.name}, "name"
+					)
 					if lab_test:
 						subject = frappe.db.get_value(
 							"Patient Medical Record", {"reference_name": lab_test}, "subject"

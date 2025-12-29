@@ -20,7 +20,7 @@ def get_context(context):
 		frappe.local.response["type"] = "redirect"
 
 	# check role
-	if portal_entry.role and not portal_entry.role in frappe.get_roles(frappe.session.user):
+	if portal_entry.role and portal_entry.role not in frappe.get_roles(frappe.session.user):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	if frappe.session.user != "Administrator" and not frappe.db.exists(
@@ -43,7 +43,7 @@ def get_vite_assets(entry="src/patient_portal.js"):
 		get_bench_path(), "apps", "healthcare", "healthcare", "public", "frontend", "manifest.json"
 	)
 
-	with open(manifest_path, "r") as f:
+	with open(manifest_path) as f:
 		manifest = json.load(f)
 
 	return manifest[entry]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS LLP and Contributors
 # See license.txt
 
@@ -95,7 +94,9 @@ class TestLabTest(IntegrationTestCase):
 		)
 		if service_requests:
 			for service_request in service_requests:
-				self.assertTrue(frappe.db.exists("Lab Test", {"service_request": service_request.get("name")}))
+				self.assertTrue(
+					frappe.db.exists("Lab Test", {"service_request": service_request.get("name")})
+				)
 		# self.assertTrue(patient_encounter.lab_test_prescription[0].lab_test_created)
 		# self.assertTrue(patient_encounter.lab_test_prescription[0].lab_test_created)
 

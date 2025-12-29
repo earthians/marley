@@ -86,7 +86,7 @@ def get_data(filters):
 	conditions, values = get_conditions(filters)
 
 	data = frappe.db.sql(
-		"""
+		f"""
 		SELECT
 			parent.patient, parent.inpatient_record, parent.practitioner,
 			child.drug, child.drug_name, child.dosage, child.dosage_form,
@@ -98,9 +98,7 @@ def get_data(filters):
 			parent.docstatus = 1
 			{conditions}
 		ORDER BY date, time
-	""".format(
-			conditions=conditions
-		),
+	""",
 		values,
 		as_dict=1,
 	)
@@ -141,9 +139,7 @@ def get_inpatient_details(data, service_unit):
 		if entry.is_completed:
 			entry["inpatient_medication_entry"] = get_inpatient_medication_entry(entry.name)
 
-		if (
-			service_unit and entry.healthcare_service_unit and service_unit != entry.healthcare_service_unit
-		):
+		if service_unit and entry.healthcare_service_unit and service_unit != entry.healthcare_service_unit:
 			service_unit_filtered_data.append(entry)
 
 		entry.pop("name", None)
@@ -155,9 +151,7 @@ def get_inpatient_details(data, service_unit):
 
 
 def get_inpatient_medication_entry(order_entry):
-	return frappe.db.get_value(
-		"Inpatient Medication Entry Detail", {"against_imoe": order_entry}, "parent"
-	)
+	return frappe.db.get_value("Inpatient Medication Entry Detail", {"against_imoe": order_entry}, "parent")
 
 
 def get_chart_data(data):

@@ -285,9 +285,7 @@ def observation_with_formula(**kwargs):
 	obs_template.save()
 
 	create_sales_invoice(kwargs.get("patient"), obs_template.name)
-	child_obs_1 = frappe.db.get_value(
-		"Observation", {"observation_template": first_obs_template}, "name"
-	)
+	child_obs_1 = frappe.db.get_value("Observation", {"observation_template": first_obs_template}, "name")
 	child_obs_2 = frappe.db.get_value(
 		"Observation", {"observation_template": obs_template_component.name}, "name"
 	)
@@ -354,9 +352,7 @@ def with_incorrect_operand(self, patient):
 		operand_1_db_set=True,
 	)
 	self.assertTrue(
-		frappe.db.exists(
-			"Observation", {"observation_template": result_observ_temp, "result_data": None}
-		)
+		frappe.db.exists("Observation", {"observation_template": result_observ_temp, "result_data": None})
 	)
 
 

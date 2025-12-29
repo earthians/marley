@@ -8,7 +8,7 @@ def execute():
 	):
 		try:
 			frappe.rename_doc("DocType", "Time Block", "Practitioner Availability", force=True)
-		except Exception as e:
+		except Exception:
 			frappe.log_error(title="Error renaming DocType to Time Block Practitioner Availability")
 
 		# rename fields

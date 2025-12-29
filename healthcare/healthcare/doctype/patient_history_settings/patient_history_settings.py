@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
@@ -51,10 +50,8 @@ class PatientHistorySettings(Document):
 		doc_fields = frappe.get_meta(document_type).fields
 
 		for field in doc_fields:
-			if (
-				field.fieldtype not in frappe.model.no_value_fields
-				or field.fieldtype in frappe.model.table_fields
-				and not field.hidden
+			if field.fieldtype not in frappe.model.no_value_fields or (
+				field.fieldtype in frappe.model.table_fields and not field.hidden
 			):
 				multicheck_fields.append(
 					{
@@ -162,9 +159,7 @@ def get_date_field(doctype):
 
 def get_patient_history_fields(doc):
 	dt = get_patient_history_config_dt(doc.doctype)
-	patient_history_fields = frappe.db.get_value(
-		dt, {"document_type": doc.doctype}, "selected_fields"
-	)
+	patient_history_fields = frappe.db.get_value(dt, {"document_type": doc.doctype}, "selected_fields")
 
 	if patient_history_fields:
 		return json.loads(patient_history_fields)
@@ -190,9 +185,7 @@ def get_formatted_value_for_table_field(items, df):
 		create_head = False
 		table_row += "</tr>"
 
-	html += (
-		"<table class='table table-condensed table-bordered'>" + table_head + table_row + "</table>"
-	)
+	html += "<table class='table table-condensed table-bordered'>" + table_head + table_row + "</table>"
 
 	return html
 

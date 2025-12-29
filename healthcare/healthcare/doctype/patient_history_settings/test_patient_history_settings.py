@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
@@ -45,8 +44,8 @@ class TestPatientHistorySettings(IntegrationTestCase):
 		self.assertTrue(medical_rec)
 
 		medical_rec = frappe.get_doc("Patient Medical Record", medical_rec)
-		expected_subject = "Date:{0}Rating:0.3Feedback:Test Patient History Settings".format(
-			frappe.utils.format_date(getdate())
+		expected_subject = (
+			f"Date:{frappe.utils.format_date(getdate())}Rating:0.3Feedback:Test Patient History Settings"
 		)
 		self.assertEqual(strip_html(medical_rec.subject), expected_subject)
 		self.assertEqual(medical_rec.patient, patient)

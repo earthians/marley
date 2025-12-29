@@ -36,7 +36,9 @@ class TreatmentCounselling(Document):
 				frappe.throw(
 					_("Active Treatment Counselling {0} already exist for encounter {1}").format(
 						frappe.bold(frappe.utils.get_link_to_form("Treatment Counselling", active_tpc)),
-						frappe.bold(frappe.utils.get_link_to_form("Patient Encounter", self.admission_encounter)),
+						frappe.bold(
+							frappe.utils.get_link_to_form("Patient Encounter", self.admission_encounter)
+						),
 					)
 				)
 		set_treatment_plan_template_items(self)
@@ -81,9 +83,7 @@ def set_treatment_plan_template_items(doc):
 			["type", "template", "qty", "instructions"],
 		)
 		item_list.extend(template_item_list)
-		medication_list = frappe.get_all(
-			"Drug Prescription", {"parent": doc.treatment_plan_template}, ["*"]
-		)
+		medication_list = frappe.get_all("Drug Prescription", {"parent": doc.treatment_plan_template}, ["*"])
 		item_list.extend(medication_list)
 		for item in item_list:
 			args = {"price_list": doc.price_list}

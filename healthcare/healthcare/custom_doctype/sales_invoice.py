@@ -7,12 +7,11 @@ from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 
 class HealthcareSalesInvoice(SalesInvoice):
 	def validate(self):
-		super(HealthcareSalesInvoice, self).validate()
+		super().validate()
 		self.calculate_patient_insurance_coverage()
 
 	@frappe.whitelist()
 	def set_healthcare_services(self, checked_values):
-
 		for checked_item in checked_values:
 			item_line = self.append("items", {})
 			price_list, price_list_currency = frappe.db.get_values(
@@ -86,8 +85,8 @@ class HealthcareSalesInvoice(SalesInvoice):
 					flt(item_line.amount) * 0.01 * flt(item_line.get("coverage_percentage", 0))
 				)
 
-		super(SalesInvoice, self).calculate_taxes_and_totals()
-		super(HealthcareSalesInvoice, self).set_missing_values(for_validate=True)
+		super().calculate_taxes_and_totals()
+		super().set_missing_values(for_validate=True)
 		self.calculate_patient_insurance_coverage()
 
 	def calculate_patient_insurance_coverage(self):

@@ -13,7 +13,7 @@ def execute(filters=None):
 	return DiagnosisTrends(filters).run()
 
 
-class DiagnosisTrends(object):
+class DiagnosisTrends:
 	"""
 	Diagnosis Trends Report.
 	"""
@@ -50,9 +50,7 @@ class DiagnosisTrends(object):
 
 		from_date, to_date = getdate(self.filters.from_date), getdate(self.filters.to_date)
 
-		increment = {"Monthly": 1, "Quarterly": 3, "Half-Yearly": 6, "Yearly": 12}.get(
-			self.filters.range, 1
-		)
+		increment = {"Monthly": 1, "Quarterly": 3, "Half-Yearly": 6, "Yearly": 12}.get(self.filters.range, 1)
 
 		if self.filters.range in ["Monthly", "Quarterly"]:
 			from_date = from_date.replace(day=1)
@@ -95,9 +93,7 @@ class DiagnosisTrends(object):
 				{"label": _(period), "fieldname": scrub(period), "fieldtype": "Int", "width": 120}
 			)
 
-		self.columns.append(
-			{"label": _("Total"), "fieldname": "total", "fieldtype": "Int", "width": 120}
-		)
+		self.columns.append({"label": _("Total"), "fieldname": "total", "fieldtype": "Int", "width": 120})
 
 	def get_data(self):
 		pe_diagnosis = frappe.qb.DocType("Patient Encounter Diagnosis")

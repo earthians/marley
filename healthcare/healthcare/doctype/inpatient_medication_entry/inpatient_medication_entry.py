@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
@@ -154,24 +153,20 @@ class InpatientMedicationEntry(Document):
 
 			for drug, shortage_qty in drug_shortage.items():
 				item_link = get_link_to_form("Item", drug)
-				formatted_item_rows += """
-					<td>{0}</td>
-					<td>{1}</td>
-				</tr>""".format(
-					item_link, frappe.bold(shortage_qty)
-				)
+				formatted_item_rows += f"""
+					<td>{item_link}</td>
+					<td>{frappe.bold(shortage_qty)}</td>
+				</tr>"""
 
-			message += """
+			message += f"""
 				<table class='table'>
 					<thead>
-						<th>{0}</th>
-						<th>{1}</th>
+						<th>{_("Drug Code")}</th>
+						<th>{_("Shortage Qty")}</th>
 					</thead>
-					{2}
+					{formatted_item_rows}
 				</table>
-			""".format(
-				_("Drug Code"), _("Shortage Qty"), formatted_item_rows
-			)
+			"""
 
 			frappe.throw(message, title=_("Insufficient Stock"), is_minimizable=True, wide=True)
 
@@ -215,7 +210,7 @@ def get_pending_medication_orders(entry):
 	to_remove = []
 
 	data = frappe.db.sql(
-		"""
+		f"""
 		SELECT
 			ip.inpatient_record, ip.patient, ip.patient_name,
 			entry.name, entry.parent, entry.drug, entry.drug_name,
@@ -230,12 +225,10 @@ def get_pending_medication_orders(entry):
 			ip.docstatus = 1 and
 			ip.company = %(company)s and
 			entry.is_completed = 0
-			{0}
+			{filters}
 		ORDER BY
 			entry.date, entry.time
-		""".format(
-			filters
-		),
+		""",
 		values,
 		as_dict=1,
 	)

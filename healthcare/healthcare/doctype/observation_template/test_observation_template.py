@@ -60,7 +60,6 @@ class TestObservationTemplate(IntegrationTestCase):
 			child.save()
 
 	def test_nesting_depth_limit(self):
-
 		lvl1 = frappe.get_doc(
 			{
 				"doctype": "Observation Template",

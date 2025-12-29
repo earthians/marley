@@ -1,85 +1,83 @@
 // Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Therapy Type', {
-	onload_post_render: function(frm) {
-		frm.get_field('exercises').grid.editable_fields = [
-			{fieldname: 'exercise_type', columns: 7},
-			{fieldname: 'difficulty_level', columns: 1},
-			{fieldname: 'counts_target', columns: 1},
-			{fieldname: 'assistance_level', columns: 1}
+frappe.ui.form.on("Therapy Type", {
+	onload_post_render: function (frm) {
+		frm.get_field("exercises").grid.editable_fields = [
+			{ fieldname: "exercise_type", columns: 7 },
+			{ fieldname: "difficulty_level", columns: 1 },
+			{ fieldname: "counts_target", columns: 1 },
+			{ fieldname: "assistance_level", columns: 1 },
 		];
 	},
 
-	refresh: function(frm) {
-		if (!frm.doc.__islocal) {
-			cur_frm.add_custom_button(__('Change Item Code'), function() {
-				change_template_code(frm.doc);
+	refresh: function (frm) {
+		if (!frm.is_new()) {
+			frm.add_custom_button(__("Change Item Code"), function () {
+				change_template_code(frm);
 			});
 		}
 
-		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function (doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
 			if (row.code_system) {
 				return {
 					filters: {
-						code_system: row.code_system
-					}
+						code_system: row.code_system,
+					},
 				};
 			}
-		})
+		});
 
-		frm.set_query('staff_role', function () {
+		frm.set_query("staff_role", function () {
 			return {
 				filters: {
-					'restrict_to_domain': 'Healthcare'
-				}
+					restrict_to_domain: "Healthcare",
+				},
 			};
 		});
 	},
 
-	therapy_type: function(frm) {
-		if (!frm.doc.item_code)
-			frm.set_value('item_code', frm.doc.therapy_type);
-		if (!frm.doc.description)
-			frm.set_value('description', frm.doc.therapy_type);
+	therapy_type: function (frm) {
+		if (!frm.doc.item_code) frm.set_value("item_code", frm.doc.therapy_type);
+		if (!frm.doc.description) frm.set_value("description", frm.doc.therapy_type);
 	},
 });
 
-let change_template_code = function(doc) {
+let change_template_code = function (frm) {
 	let d = new frappe.ui.Dialog({
-		title:__('Change Item Code'),
-		fields:[
+		title: __("Change Item Code"),
+		fields: [
 			{
-				'fieldtype': 'Data',
-				'label': 'Item Code',
-				'fieldname': 'item_code',
-				reqd: 1
-			}
+				fieldtype: "Data",
+				label: "Item Code",
+				fieldname: "item_code",
+				reqd: 1,
+			},
 		],
-		primary_action: function() {
+		primary_action: function () {
 			let values = d.get_values();
 
 			if (values) {
 				frappe.call({
-					'method': 'healthcare.healthcare.doctype.therapy_type.therapy_type.change_item_code_from_therapy',
-					'args': {item_code: values.item_code, doc: doc},
+					method: "healthcare.healthcare.doctype.therapy_type.therapy_type.change_item_code_from_therapy",
+					args: { item_code: values.item_code, doc: frm.doc },
 					callback: function () {
-						cur_frm.reload_doc();
+						frm.reload_doc();
 						frappe.show_alert({
-							message: 'Item Code renamed successfully',
-							indicator: 'green'
+							message: "Item Code renamed successfully",
+							indicator: "green",
 						});
-					}
+					},
 				});
 			}
 			d.hide();
 		},
-		primary_action_label: __('Change Item Code')
+		primary_action_label: __("Change Item Code"),
 	});
 	d.show();
 
 	d.set_values({
-		'item_code': doc.item_code
+		item_code: frm.doc.item_code,
 	});
 };

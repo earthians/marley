@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS and contributors
 # For license information, please see license.txt
 
@@ -158,7 +157,9 @@ def insert_observation(selected, sample_collection, component_observations=None,
 							if observation:
 								comp["status"] = "Collected"
 								comp["collection_date_time"] = now_datetime()
-								comp["specimen"] = comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name"))
+								comp["specimen"] = comp_obs_ref.get(j + 1) or comp_obs_ref.get(
+									obs.get("name")
+								)
 
 						frappe.db.set_value(
 							"Observation Sample Collection",
@@ -180,9 +181,7 @@ def insert_observation(selected, sample_collection, component_observations=None,
 
 		child_db_set_dict = {"component_observations": json.dumps(component_observations, default=str)}
 		# to set child table status Collected if all childs are Collected
-		if component_observations and not any(
-			(comp["status"] == "Open") for comp in component_observations
-		):
+		if component_observations and not any((comp["status"] == "Open") for comp in component_observations):
 			child_db_set_dict["status"] = "Collected"
 
 		if child_name:
@@ -254,7 +253,7 @@ def create_specimen(patient, selected, component_observations):
 
 
 def set_component_observation_data(observation_template):
-	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
+	sample_reqd_component_obs, _non_sample_reqd_component_obs = get_observation_template_details(
 		observation_template
 	)
 	data = []

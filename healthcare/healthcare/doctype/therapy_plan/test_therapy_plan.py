@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
@@ -52,9 +51,7 @@ class TestTherapyPlan(IntegrationTestCase):
 		)
 		session = frappe.get_doc(session)
 		session.submit()
-		self.assertEqual(
-			frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Closed"
-		)
+		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Closed")
 		session.cancel()
 		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Open")
 
@@ -69,9 +66,7 @@ class TestTherapyPlan(IntegrationTestCase):
 		si = make_sales_invoice(plan.name, patient, "_Test Company", template)
 		si.save()
 
-		therapy_plan_template_amt = frappe.db.get_value(
-			"Therapy Plan Template", template, "total_amount"
-		)
+		therapy_plan_template_amt = frappe.db.get_value("Therapy Plan Template", template, "total_amount")
 		self.assertEqual(si.items[0].amount, therapy_plan_template_amt)
 
 

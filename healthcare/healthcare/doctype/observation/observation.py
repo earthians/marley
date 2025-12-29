@@ -42,9 +42,7 @@ class Observation(Document):
 
 	def on_submit(self):
 		if self.service_request:
-			frappe.db.set_value(
-				"Service Request", self.service_request, "status", "completed-Request Status"
-			)
+			frappe.db.set_value("Service Request", self.service_request, "status", "completed-Request Status")
 
 	def on_cancel(self):
 		if self.service_request:
@@ -131,14 +129,14 @@ class Observation(Document):
 			terms_and_conditions = frappe.get_doc("Terms and Conditions", self.interpretation_template)
 
 			if terms_and_conditions.terms:
-				self.result_interpretation = frappe.render_template(terms_and_conditions.terms, self.as_dict())
+				self.result_interpretation = frappe.render_template(
+					terms_and_conditions.terms, self.as_dict()
+				)
 
 
 @frappe.whitelist()
 def get_observation_details(docname):
-	reference = frappe.get_value(
-		"Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True
-	)
+	reference = frappe.get_value("Diagnostic Report", docname, ["docname", "ref_doctype"], as_dict=True)
 	observation = []
 
 	if reference.get("ref_doctype") == "Sales Invoice":
@@ -201,9 +199,7 @@ def aggregate_and_return_observation_data(observations):
 
 		else:
 			child_observations = get_child_observations(obs)
-			obs_dict, obs_length = return_child_observation_data_as_dict(
-				child_observations, obs, obs_length
-			)
+			obs_dict, obs_length = return_child_observation_data_as_dict(child_observations, obs, obs_length)
 
 			if len(obs_dict) > 0:
 				out_data.append(obs_dict)
@@ -233,9 +229,7 @@ def return_child_observation_data_as_dict(child_observations, obs, obs_length=0)
 	for child in child_observations:
 		if child.get("has_component"):
 			grand_children = get_child_observations(child)
-			grand_dict, obs_length = return_child_observation_data_as_dict(
-				grand_children, child, obs_length
-			)
+			grand_dict, obs_length = return_child_observation_data_as_dict(grand_children, child, obs_length)
 			obs_list.append(grand_dict)
 			if not grand_dict.get("obs_approved", False):
 				all_children_approved = False
@@ -313,15 +307,17 @@ def set_reference_string(child):
 	display_reference = ""
 	if (child.reference_from and child.reference_to) or child.conditions:
 		if child.reference_from and child.reference_to:
-			display_reference = f"{str(child.reference_from)} - {str(child.reference_to)}"
+			display_reference = f"{child.reference_from!s} - {child.reference_to!s}"
 		elif child.conditions:
-			display_reference = f"{str(child.conditions)}"
+			display_reference = f"{child.conditions!s}"
 
 		if child.short_interpretation:
-			display_reference = f"{display_reference}: {str(child.short_interpretation)}<br>"
+			display_reference = f"{display_reference}: {child.short_interpretation!s}<br>"
 
 	elif child.short_interpretation or child.long_interpretation:
-		display_reference = f"{(child.short_interpretation if child.short_interpretation else child.long_interpretation)}<br>"
+		display_reference = (
+			f"{(child.short_interpretation if child.short_interpretation else child.long_interpretation)}<br>"
+		)
 
 	return display_reference
 
@@ -457,9 +453,7 @@ def add_note(note, observation):
 
 def set_observation_idx(doc):
 	if doc.parent_observation:
-		parent_template = frappe.db.get_value(
-			"Observation", doc.parent_observation, "observation_template"
-		)
+		parent_template = frappe.db.get_value("Observation", doc.parent_observation, "observation_template")
 		idx = frappe.db.get_value(
 			"Observation Component",
 			{"parent": parent_template, "observation_template": doc.observation_template},
@@ -516,7 +510,6 @@ def set_observation_status(observation, status, reason=None, parent_obs=None):
 			parent_obs = new_doc.name
 
 	if observation_doc.has_component:
-
 		component_obs = frappe.db.get_all(
 			"Observation",
 			filters={"parent_observation": observation},
@@ -559,9 +552,7 @@ def set_diagnostic_report_status(doc):
 			set_value_dict = {"status": set_status}
 			if workflow_state_field:
 				set_value_dict[workflow_state_field] = set_status
-			frappe.db.set_value(
-				"Diagnostic Report", diagnostic_report, set_value_dict, update_modified=False
-			)
+			frappe.db.set_value("Diagnostic Report", diagnostic_report, set_value_dict, update_modified=False)
 
 
 def get_approved_observations(data):
@@ -580,9 +571,7 @@ def get_approved_observations(data):
 
 def set_calculated_result(doc):
 	if doc.parent_observation:
-		parent_template = frappe.db.get_value(
-			"Observation", doc.parent_observation, "observation_template"
-		)
+		parent_template = frappe.db.get_value("Observation", doc.parent_observation, "observation_template")
 		parent_template_doc = frappe.get_cached_doc("Observation Template", parent_template)
 
 		data = frappe._dict()
@@ -708,15 +697,13 @@ def get_observations_for_medical_record(observation, parent_observation=None):
 			obs_doc["options_list"] = obs_doc.get("options").split("\n")
 
 		if obs_doc.get("observation_template") and obs_doc.get("specimen"):
-			obs_doc["received_time"] = frappe.get_value(
-				"Specimen", obs_doc.get("specimen"), "received_time"
-			)
+			obs_doc["received_time"] = frappe.get_value("Specimen", obs_doc.get("specimen"), "received_time")
 
 		out_data.append({"observation": obs_doc})
 
 	else:
 		child_observations = get_child_observations(obs_doc)
-		obs_dict, obs_length = return_child_observation_data_as_dict(child_observations, obs_doc)
+		obs_dict, _obs_length = return_child_observation_data_as_dict(child_observations, obs_doc)
 
 		if len(obs_dict) > 0:
 			out_data.append(obs_dict)

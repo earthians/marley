@@ -36,7 +36,8 @@ def get_boot():
 			"sysdefaults": frappe.defaults.get_defaults(),
 			"timezone": {
 				"system": get_system_timezone(),
-				"user": frappe.db.get_value("User", frappe.session.user, "time_zone") or get_system_timezone(),
+				"user": frappe.db.get_value("User", frappe.session.user, "time_zone")
+				or get_system_timezone(),
 			},
 		}
 	)

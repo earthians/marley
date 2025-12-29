@@ -10,7 +10,7 @@ frappe.ui.form.on("Healthcare Payment Record", {
 					method: "sync",
 					freeze: true,
 					freeze_message: __("Syncing Documents ..."),
-					callback: (r) => {
+					callback: r => {
 						frm.refresh();
 					},
 				});

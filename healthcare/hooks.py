@@ -1,4 +1,4 @@
-from . import __version__ as app_version  # noqa
+from . import __version__ as app_version
 
 app_name = "healthcare"
 app_title = "Marley Health"
@@ -133,9 +133,7 @@ doc_events = {
 		"after_insert": "healthcare.healthcare.utils.create_healthcare_service_unit_tree_root",
 		"on_trash": "healthcare.healthcare.utils.company_on_trash",
 	},
-	"Patient": {
-		"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"
-	},
+	"Patient": {"after_insert": "healthcare.regional.india.abdm.utils.set_consent_attachment_details"},
 	"Payment Entry": {
 		"on_submit": "healthcare.healthcare.custom_doctype.payment_entry.manage_payment_entry_submit_cancel",
 		"on_cancel": "healthcare.healthcare.custom_doctype.payment_entry.manage_payment_entry_submit_cancel",

@@ -1,6 +1,6 @@
-frappe.listview_settings[('Medication Request')] = {
-	add_fields: ['name', 'status'],
-	filters: [['docstatus', '=', '1']],
+frappe.listview_settings["Medication Request"] = {
+	add_fields: ["name", "status"],
+	filters: [["docstatus", "=", "1"]],
 	has_indicator_for_cancelled: 1,
 	get_indicator: function (doc) {
 		if (doc.status == "draft-Medication Request Status") {
@@ -19,8 +19,9 @@ frappe.listview_settings[('Medication Request')] = {
 			return [__("Cancelled"), "grey", "status,=,Cancelled"];
 		} else if (doc.status == "entered-in-error-Medication Request Status") {
 			return [__("Entered In Error"), "red", "status,=,Entered In Error"];
-		} else { //if (doc.status == "unknown-Medication Request Status") {
+		} else {
+			//if (doc.status == "unknown-Medication Request Status") {
 			return [__("Unknown"), "grey", "status,=,Unknown"];
 		}
-	}
+	},
 };

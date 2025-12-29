@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 
 import frappe
 from frappe import _
@@ -14,15 +12,11 @@ from frappe.utils import getdate
 class InsurancePayor(Document):
 	def validate(self):
 		# Verify if party account entries are duplicated for company
-		receivable_accounts_list = [
-			account.get("company") for account in self.claims_receivable_accounts
-		]
+		receivable_accounts_list = [account.get("company") for account in self.claims_receivable_accounts]
 		if len(receivable_accounts_list) != len(set(receivable_accounts_list)):
 			frappe.throw(_("Receivable Account is entered more than once for same Company"))
 
-		expense_accounts_list = [
-			account.get("company") for account in self.rejected_claims_expense_accounts
-		]
+		expense_accounts_list = [account.get("company") for account in self.rejected_claims_expense_accounts]
 		if len(expense_accounts_list) != len(set(expense_accounts_list)):
 			frappe.throw(_("Rejected Claims Expense Account is entered more than once for same company"))
 
@@ -49,9 +43,7 @@ class InsurancePayor(Document):
 						)
 					)
 
-		customer_group = frappe.db.exists(
-			"Customer Group", {"customer_group_name": _("Insurance Payor")}
-		)
+		customer_group = frappe.db.exists("Customer Group", {"customer_group_name": _("Insurance Payor")})
 		if not customer_group:
 			customer_group_doc = frappe.get_doc(
 				{

@@ -1,110 +1,118 @@
 // Copyright (c) 2016, ESS LLP and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Appointment Type', {
-	refresh: function(frm) {
-		frm.set_query('price_list', function() {
+frappe.ui.form.on("Appointment Type", {
+	refresh: function (frm) {
+		frm.set_query("price_list", function () {
 			return {
-				filters: {'selling': 1}
+				filters: { selling: 1 },
 			};
 		});
 
-		frm.set_query('dt', 'items', function() {
-			if (['Department', 'Practitioner'].includes(frm.doc.allow_booking_for)) {
+		frm.set_query("dt", "items", function () {
+			if (["Department", "Practitioner"].includes(frm.doc.allow_booking_for)) {
 				return {
-					filters: {'name': ['=', 'Medical Department']}
+					filters: { name: ["=", "Medical Department"] },
 				};
 			} else if (frm.doc.allow_booking_for === "Service Unit") {
 				return {
-					filters: {'name': ['=', 'Healthcare Service Unit']}
+					filters: { name: ["=", "Healthcare Service Unit"] },
 				};
 			}
 		});
 
-		frm.set_query('dn', 'items', function(doc, cdt, cdn) {
+		frm.set_query("dn", "items", function (doc, cdt, cdn) {
 			let child = locals[cdt][cdn];
-			if (child.dt === 'Medical Department') {
+			if (child.dt === "Medical Department") {
 				let item_list = doc.items
-					.filter(item => item.dt === 'Medical Department')
-					.map(({dn}) => dn);
+					.filter(item => item.dt === "Medical Department")
+					.map(({ dn }) => dn);
 				return {
-					filters: [
-						['Medical Department', 'name', 'not in', item_list]
-					]
+					filters: [["Medical Department", "name", "not in", item_list]],
 				};
-			} else if (child.dt === 'Healthcare Service Unit') {
+			} else if (child.dt === "Healthcare Service Unit") {
 				let item_list = doc.items
-					.filter(item => item.dt === 'Healthcare Service Unit')
-					.map(({dn}) => dn);
+					.filter(item => item.dt === "Healthcare Service Unit")
+					.map(({ dn }) => dn);
 				return {
 					filters: [
-						['Healthcare Service Unit', 'name', 'not in', item_list],
-						['Healthcare Service Unit', 'allow_appointments', "=", 1],
-					]
+						["Healthcare Service Unit", "name", "not in", item_list],
+						["Healthcare Service Unit", "allow_appointments", "=", 1],
+					],
 				};
 			}
 		});
 
-		frm.set_query('op_consulting_charge_item', 'items', function() {
+		frm.set_query("op_consulting_charge_item", "items", function () {
 			return {
 				filters: {
-					is_stock_item: 0
-				}
+					is_stock_item: 0,
+				},
 			};
 		});
 
-		frm.set_query('inpatient_visit_charge_item', 'items', function() {
+		frm.set_query("inpatient_visit_charge_item", "items", function () {
 			return {
 				filters: {
-					is_stock_item: 0
-				}
+					is_stock_item: 0,
+				},
 			};
 		});
-	}
+	},
 });
 
-frappe.ui.form.on('Appointment Type Service Item', {
-	op_consulting_charge_item: function(frm, cdt, cdn) {
+frappe.ui.form.on("Appointment Type Service Item", {
+	op_consulting_charge_item: function (frm, cdt, cdn) {
 		let d = locals[cdt][cdn];
 		if (frm.doc.price_list && d.op_consulting_charge_item) {
 			frappe.call({
-				'method': 'frappe.client.get_value',
+				method: "frappe.client.get_value",
 				args: {
-					'doctype': 'Item Price',
-					'filters': {
-						'item_code': d.op_consulting_charge_item,
-						'price_list': frm.doc.price_list
+					doctype: "Item Price",
+					filters: {
+						item_code: d.op_consulting_charge_item,
+						price_list: frm.doc.price_list,
 					},
-					'fieldname': ['price_list_rate']
+					fieldname: ["price_list_rate"],
 				},
-				callback: function(data) {
+				callback: function (data) {
 					if (data.message.price_list_rate) {
-						frappe.model.set_value(cdt, cdn, 'op_consulting_charge', data.message.price_list_rate);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"op_consulting_charge",
+							data.message.price_list_rate,
+						);
 					}
-				}
+				},
 			});
 		}
 	},
 
-	inpatient_visit_charge_item: function(frm, cdt, cdn) {
+	inpatient_visit_charge_item: function (frm, cdt, cdn) {
 		let d = locals[cdt][cdn];
 		if (frm.doc.price_list && d.inpatient_visit_charge_item) {
 			frappe.call({
-				'method': 'frappe.client.get_value',
+				method: "frappe.client.get_value",
 				args: {
-					'doctype': 'Item Price',
-					'filters': {
-						'item_code': d.inpatient_visit_charge_item,
-						'price_list': frm.doc.price_list
+					doctype: "Item Price",
+					filters: {
+						item_code: d.inpatient_visit_charge_item,
+						price_list: frm.doc.price_list,
 					},
-					'fieldname': ['price_list_rate']
+					fieldname: ["price_list_rate"],
 				},
 				callback: function (data) {
 					if (data.message.price_list_rate) {
-						frappe.model.set_value(cdt, cdn, 'inpatient_visit_charge', data.message.price_list_rate);
+						frappe.model.set_value(
+							cdt,
+							cdn,
+							"inpatient_visit_charge",
+							data.message.price_list_rate,
+						);
 					}
-				}
+				},
 			});
 		}
-	}
+	},
 });

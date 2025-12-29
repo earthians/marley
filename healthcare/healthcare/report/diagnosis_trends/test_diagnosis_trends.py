@@ -20,9 +20,7 @@ class TestDiagnosisTrends(IntegrationTestCase):
 
 	@classmethod
 	def create_diagnosis(cls):
-		medical_department = frappe.get_doc(
-			{"doctype": "Medical Department", "department": "Cardiology"}
-		)
+		medical_department = frappe.get_doc({"doctype": "Medical Department", "department": "Cardiology"})
 		try:
 			medical_department.insert()
 		except DuplicateEntryError:

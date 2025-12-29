@@ -16,9 +16,7 @@ def execute():
 
 
 def update_template_links(doctype, source_field, template_dt):
-	records = frappe.db.get_all(
-		doctype, filters={source_field: ["is", "set"]}, fields=["name", source_field]
-	)
+	records = frappe.db.get_all(doctype, filters={source_field: ["is", "set"]}, fields=["name", source_field])
 
 	for record in records:
 		frappe.db.set_value(

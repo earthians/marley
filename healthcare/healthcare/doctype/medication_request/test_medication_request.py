@@ -68,7 +68,9 @@ def create_medication():
 					"default_prescription_duration": "1 Hour",
 					"is_billable": 1,
 					"rate": 800,
-					"linked_items": [{"item": item.item_code, "item_code": item.item_name, "item_group": "Drug"}],
+					"linked_items": [
+						{"item": item.item_code, "item_code": item.item_name, "item_group": "Drug"}
+					],
 				}
 			).insert(ignore_permissions=True, ignore_mandatory=True)
 			return medication

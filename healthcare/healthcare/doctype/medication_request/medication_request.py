@@ -1,7 +1,6 @@
 # Copyright (c) 2022, healthcare and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 
 import frappe
 from frappe import _
@@ -43,9 +42,7 @@ class MedicationRequest(ServiceRequestController):
 
 	def calculate_total_dispensable_quantity(self):
 		if self.number_of_repeats_allowed:
-			self.total_dispensable_quantity = self.quantity + (
-				self.number_of_repeats_allowed * self.quantity
-			)
+			self.total_dispensable_quantity = self.quantity + (self.number_of_repeats_allowed * self.quantity)
 		else:
 			self.total_dispensable_quantity = self.quantity
 

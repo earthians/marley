@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, ESS LLP and Contributors
 # See license.txt
 
@@ -16,7 +15,6 @@ EXTRA_TEST_RECORD_DEPENDENCIES = ["Item"]
 
 class TestClinicalProcedure(IntegrationTestCase):
 	def test_procedure_template_item(self):
-		patient, practitioner = create_healthcare_docs()
 		procedure_template = create_clinical_procedure_template()
 		self.assertTrue(frappe.db.exists("Item", procedure_template.item))
 

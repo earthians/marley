@@ -1,6 +1,6 @@
-frappe.listview_settings['Service Request'] = {
-	add_fields: ['name', 'status'],
-	filters: [['docstatus', '=', '1']],
+frappe.listview_settings["Service Request"] = {
+	add_fields: ["name", "status"],
+	filters: [["docstatus", "=", "1"]],
 	has_indicator_for_cancelled: 1,
 	get_indicator: function (doc) {
 		if (doc.status == "draft-Request Status") {
@@ -17,8 +17,9 @@ frappe.listview_settings['Service Request'] = {
 			return [__("Replaced"), "grey", "status,=,Replaced"];
 		} else if (doc.status == "entered-in-error-Request Status") {
 			return [__("Entered In Error"), "red", "status,=,Entered In Error"];
-		} else { //if (doc.status == "unknown-Request Status") {
+		} else {
+			//if (doc.status == "unknown-Request Status") {
 			return [__("Unknown"), "grey", "status,=,Unknown"];
 		}
-	}
+	},
 };

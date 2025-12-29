@@ -37,9 +37,9 @@ class TestNursingTask(IntegrationTestCase):
 		self.activity = frappe.get_doc(self.globalTestRecords["Nursing Checklist Template"][0]).insert(
 			ignore_if_duplicate=True
 		)
-		self.nc_template = frappe.get_doc(
-			self.globalTestRecords["Nursing Checklist Template"][1]
-		).insert(ignore_if_duplicate=True)
+		self.nc_template = frappe.get_doc(self.globalTestRecords["Nursing Checklist Template"][1]).insert(
+			ignore_if_duplicate=True
+		)
 
 		self.settings = frappe.get_single("Healthcare Settings")
 		self.settings.validate_nursing_checklists = 1

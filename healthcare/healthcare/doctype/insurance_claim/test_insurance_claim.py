@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
-from __future__ import unicode_literals
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -22,9 +20,7 @@ from healthcare.healthcare.doctype.patient_insurance_coverage.test_patient_insur
 class TestInsuranceClaim(IntegrationTestCase):
 	def test_insurance_claim(self):
 		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
-		frappe.db.sql(
-			"""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'"""
-		)
+		frappe.db.sql("""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'""")
 		frappe.db.sql(
 			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
 		)
@@ -37,9 +33,7 @@ class TestInsuranceClaim(IntegrationTestCase):
 		self.assertEqual(balance, 80)
 
 		# Create Insurance Claim
-		claim_name, claim_doc = create_insurance_claim(
-			test_docs["Patient"], test_docs["Insurance Policy"]
-		)
+		claim_name, claim_doc = create_insurance_claim(test_docs["Patient"], test_docs["Insurance Policy"])
 
 		self.assertEqual(claim_doc.insurance_claim_amount, 320)
 		self.assertEqual(claim_doc.approved_amount, 320)

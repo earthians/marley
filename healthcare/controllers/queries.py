@@ -9,7 +9,7 @@ def get_healthcare_service_units(doctype, txt, searchfield, start, page_len, fil
 		frappe.qb.from_(table)
 		.where(table.is_group == 0)
 		.where(table.company == filters.get("company"))
-		.where(table.name.like("%{0}%".format(txt)))
+		.where(table.name.like(f"%{txt}%"))
 		.select("name")
 		.get_sql()
 	)
@@ -24,9 +24,7 @@ def get_healthcare_service_units(doctype, txt, searchfield, start, page_len, fil
 		# if the patient is admitted, then appointments should be allowed against the admission service unit,
 		# inspite of it being an Inpatient Occupancy service unit
 		if service_unit:
-			query += " and (allow_appointments = 1 or name = {service_unit})".format(
-				service_unit=frappe.db.escape(service_unit)
-			)
+			query += f" and (allow_appointments = 1 or name = {frappe.db.escape(service_unit)})"
 		else:
 			query += " and allow_appointments = 1"
 	else:

@@ -50,7 +50,9 @@ class ObservationTemplate(Document):
 			for row in self.observation_component:
 				if row.observation_template == self.name:
 					frappe.throw(
-						_("Observation Template '{0}' cannot be added as a component of itself.").format(self.name)
+						_("Observation Template '{0}' cannot be added as a component of itself.").format(
+							self.name
+						)
 					)
 
 			# Prevent circular / nested self-reference
@@ -70,9 +72,7 @@ class ObservationTemplate(Document):
 					frappe.throw(
 						_(
 							"You cannot add '{0}' because it already contains {1} levels of nested components. The maximum allowed depth is {2}."
-						).format(
-							row.observation_template, total_depth, ObservationTemplate.MAX_NESTING_LEVEL
-						)
+						).format(row.observation_template, total_depth, ObservationTemplate.MAX_NESTING_LEVEL)
 					)
 		else:
 			self.validate_abbr()
@@ -142,9 +142,7 @@ class ObservationTemplate(Document):
 
 def create_item_from_template(doc):
 	if doc.is_billable:
-		uom = frappe.db.exists("UOM", "Unit") or frappe.db.get_single_value(
-			"Stock Settings", "stock_uom"
-		)
+		uom = frappe.db.exists("UOM", "Unit") or frappe.db.get_single_value("Stock Settings", "stock_uom")
 		# Insert item
 		item = frappe.get_doc(
 			{

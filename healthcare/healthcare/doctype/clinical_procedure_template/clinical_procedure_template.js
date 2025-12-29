@@ -1,140 +1,148 @@
 // Copyright (c) 2017, earthians and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Clinical Procedure Template', {
+frappe.ui.form.on("Clinical Procedure Template", {
 	setup: function (frm) {
 		if (frappe.meta.has_field(frm.doc.doctype, "gst_hsn_code")) {
 			frm.add_fetch("item", "gst_hsn_code", "gst_hsn_code");
 		}
+
+		// List Stock items
+		frm.set_query("item_code", "items", function () {
+			return {
+				filters: {
+					is_stock_item: 1,
+				},
+			};
+		});
 	},
 
 	template: function (frm) {
-		if (!frm.doc.item_code)
-			frm.set_value('item_code', frm.doc.template);
-		if (!frm.doc.description)
-			frm.set_value('description', frm.doc.template);
+		if (!frm.doc.item_code) frm.set_value("item_code", frm.doc.template);
+		if (!frm.doc.description) frm.set_value("description", frm.doc.template);
 	},
 
 	refresh: function (frm) {
-		frm.fields_dict['items'].grid.set_column_disp('barcode', false);
-		frm.fields_dict['items'].grid.set_column_disp('batch_no', false);
+		frm.fields_dict["items"].grid.set_column_disp("barcode", false);
+		frm.fields_dict["items"].grid.set_column_disp("batch_no", false);
 
-		if (!frm.doc.__islocal) {
-			cur_frm.add_custom_button(__('Change Item Code'), function () {
-				change_template_code(frm.doc);
+		if (!frm.is_new()) {
+			frm.add_custom_button(__("Change Item Code"), function () {
+				change_template_code(frm);
 			});
 		}
 
-		frm.set_query('item', function() {
+		frm.set_query("item", function () {
 			return {
 				filters: {
-					'disabled': false,
-					'is_stock_item': false
-				}
+					disabled: false,
+					is_stock_item: false,
+				},
 			};
 		});
 
-		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
+		frm.set_query("code_value", "codification_table", function (doc, cdt, cdn) {
 			let row = frappe.get_doc(cdt, cdn);
 			if (row.code_system) {
 				return {
 					filters: {
-						code_system: row.code_system
-					}
+						code_system: row.code_system,
+					},
 				};
 			}
 		});
 
-		frm.set_query('staff_role', function () {
+		frm.set_query("staff_role", function () {
 			return {
 				filters: {
-					'restrict_to_domain': 'Healthcare'
-				}
+					restrict_to_domain: "Healthcare",
+				},
 			};
 		});
 	},
 
 	link_existing_item: function (frm) {
 		if (frm.doc.link_existing_item) {
-			frm.set_value('item_code', '');
+			frm.set_value("item_code", "");
 		} else {
-			frm.set_value('item', '');
+			frm.set_value("item", "");
 		}
 	},
 
 	item: function (frm) {
 		if (frm.doc.item) {
-			frappe.db.get_value('Item', frm.doc.item, ['item_group', 'description'])
-			.then(r => {
-				frm.set_value({
-					'item_group': r.message.item_group,
-					'description': r.message.description,
-					'item_code': frm.doc.item
+			frappe.db
+				.get_value("Item", frm.doc.item, ["item_group", "description"])
+				.then(r => {
+					frm.set_value({
+						item_group: r.message.item_group,
+						description: r.message.description,
+						item_code: frm.doc.item,
+					});
 				});
-			})
 		}
-	}
+	},
 });
 
-let change_template_code = function (doc) {
+let change_template_code = function (frm) {
 	let d = new frappe.ui.Dialog({
-		title: __('Change Item Code'),
+		title: __("Change Item Code"),
 		fields: [
 			{
-				'fieldtype': 'Data',
-				'label': 'Item Code',
-				'fieldname': 'item_code',
-				reqd: 1
-			}
+				fieldtype: "Data",
+				label: "Item Code",
+				fieldname: "item_code",
+				reqd: 1,
+			},
 		],
 		primary_action: function () {
 			let values = d.get_values();
 
 			if (values) {
 				frappe.call({
-					'method': 'healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.change_item_code_from_template',
-					'args': { item_code: values.item_code, doc: doc },
+					method: "healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.change_item_code_from_template",
+					args: { item_code: values.item_code, doc: frm.doc },
 					callback: function () {
-						cur_frm.reload_doc();
+						frm.reload_doc();
 						frappe.show_alert({
-							message: 'Item Code renamed successfully',
-							indicator: 'green'
+							message: "Item Code renamed successfully",
+							indicator: "green",
 						});
-					}
+					},
 				});
 			}
 			d.hide();
 		},
-		primary_action_label: __('Change Item Code')
+		primary_action_label: __("Change Item Code"),
 	});
 	d.show();
 
 	d.set_values({
-		'item_code': doc.item_code
+		item_code: frm.doc.item_code,
 	});
 };
 
-frappe.ui.form.on('Clinical Procedure Item', {
+frappe.ui.form.on("Clinical Procedure Item", {
 	qty: function (frm, cdt, cdn) {
 		let d = locals[cdt][cdn];
-		frappe.model.set_value(cdt, cdn, 'transfer_qty', d.qty * d.conversion_factor);
+		frappe.model.set_value(cdt, cdn, "transfer_qty", d.qty * d.conversion_factor);
 	},
 
 	uom: function (doc, cdt, cdn) {
 		let d = locals[cdt][cdn];
 		if (d.uom && d.item_code) {
 			return frappe.call({
-				method: 'erpnext.stock.doctype.stock_entry.stock_entry.get_uom_details',
+				method: "erpnext.stock.doctype.stock_entry.stock_entry.get_uom_details",
 				args: {
 					item_code: d.item_code,
 					uom: d.uom,
-					qty: d.qty
+					qty: d.qty,
 				},
 				callback: function (r) {
 					if (r.message) {
 						frappe.model.set_value(cdt, cdn, r.message);
 					}
-				}
+				},
 			});
 		}
 	},
@@ -143,12 +151,12 @@ frappe.ui.form.on('Clinical Procedure Item', {
 		let d = locals[cdt][cdn];
 		if (d.item_code) {
 			let args = {
-				'item_code': d.item_code,
-				'transfer_qty': d.transfer_qty,
-				'quantity': d.qty
+				item_code: d.item_code,
+				transfer_qty: d.transfer_qty,
+				quantity: d.qty,
 			};
 			return frappe.call({
-				method: 'healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.get_item_details',
+				method: "healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template.get_item_details",
 				args: { args: args },
 				callback: function (r) {
 					if (r.message) {
@@ -156,53 +164,51 @@ frappe.ui.form.on('Clinical Procedure Item', {
 						$.each(r.message, function (k, v) {
 							d[k] = v;
 						});
-						refresh_field('items');
+						refresh_field("items");
 					}
-				}
+				},
 			});
 		}
-	}
+	},
 });
 
-// List Stock items
-cur_frm.set_query('item_code', 'items', function () {
-	return {
-		filters: {
-			is_stock_item: 1
-		}
-	};
-});
-
-frappe.tour['Clinical Procedure Template'] = [
+frappe.tour["Clinical Procedure Template"] = [
 	{
-		fieldname: 'template',
-		title: __('Template Name'),
-		description: __('Enter a name for the Clinical Procedure Template')
+		fieldname: "template",
+		title: __("Template Name"),
+		description: __("Enter a name for the Clinical Procedure Template"),
 	},
 	{
-		fieldname: 'item_code',
-		title: __('Item Code'),
-		description: __('Set the Item Code which will be used for billing the Clinical Procedure.')
+		fieldname: "item_code",
+		title: __("Item Code"),
+		description: __(
+			"Set the Item Code which will be used for billing the Clinical Procedure.",
+		),
 	},
 	{
-		fieldname: 'item_group',
-		title: __('Item Group'),
-		description: __('Select an Item Group for the Clinical Procedure Item.')
+		fieldname: "item_group",
+		title: __("Item Group"),
+		description: __("Select an Item Group for the Clinical Procedure Item."),
 	},
 	{
-		fieldname: 'is_billable',
-		title: __('Clinical Procedure Rate'),
-		description: __('Check this if the Clinical Procedure is billable and also set the rate.')
+		fieldname: "is_billable",
+		title: __("Clinical Procedure Rate"),
+		description: __(
+			"Check this if the Clinical Procedure is billable and also set the rate.",
+		),
 	},
 	{
-		fieldname: 'consume_stock',
-		title: __('Allow Stock Consumption'),
-		description: __('Check this if the Clinical Procedure utilises consumables. Click ') + "<a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/clinical_procedure_template#22-manage-procedure-consumables' target='_blank'>here</a>" + __(' to know more')
-
+		fieldname: "consume_stock",
+		title: __("Allow Stock Consumption"),
+		description: __(
+			"Check this if the Clinical Procedure utilises consumables. Click <a href='https://frappehealth.com/docs/v13/user/manual/en/healthcare/clinical_procedure_template#22-manage-procedure-consumables' target='_blank'>here</a> to know more",
+		),
 	},
 	{
-		fieldname: 'medical_department',
-		title: __('Medical Department'),
-		description: __('You can also set the Medical Department for the template. After saving the document, an Item will automatically be created for billing this Clinical Procedure. You can then use this template while creating Clinical Procedures for Patients. Templates save you from filling up redundant data every single time. You can also create templates for other operations like Lab Tests, Therapy Sessions, etc.')
-	}
+		fieldname: "medical_department",
+		title: __("Medical Department"),
+		description: __(
+			"You can also set the Medical Department for the template. After saving the document, an Item will automatically be created for billing this Clinical Procedure. You can then use this template while creating Clinical Procedures for Patients. Templates save you from filling up redundant data every single time. You can also create templates for other operations like Lab Tests, Therapy Sessions, etc.",
+		),
+	},
 ];

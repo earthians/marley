@@ -15,7 +15,7 @@ from erpnext import get_default_company
 class NursingTask(Document):
 	def before_insert(self):
 		self.set_task_schedule()
-		self.title = "{} - {}".format(_(self.patient), _(self.activity))
+		self.title = f"{_(self.patient)} - {_(self.activity)}"
 		self.age = frappe.get_doc("Patient", self.patient).get_age()
 
 	def validate(self):

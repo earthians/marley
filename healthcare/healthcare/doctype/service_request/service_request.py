@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, earthians and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 
 import json
 
@@ -345,9 +343,7 @@ def make_observation(service_request, appointment=None):
 		else:
 			observation = create_observation(service_request, appointment)
 
-	diagnostic_report = frappe.db.exists(
-		"Diagnostic Report", {"docname": service_request.order_group}
-	)
+	diagnostic_report = frappe.db.exists("Diagnostic Report", {"docname": service_request.order_group})
 	if not diagnostic_report:
 		insert_diagnostic_report(service_request, sample_collection.name if sample_collection else None)
 

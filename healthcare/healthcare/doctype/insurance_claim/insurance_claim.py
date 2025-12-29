@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 
 import frappe
 from frappe import _
@@ -44,9 +42,9 @@ class InsuranceClaim(Document):
 
 			update_insurance_coverage_status(coverage)
 
-		self.insurance_claim_amount = (
-			self.outstanding_amount
-		) = self.paid_amount = self.approved_amount = self.rejected_amount = 0
+		self.insurance_claim_amount = self.outstanding_amount = self.paid_amount = self.approved_amount = (
+			self.rejected_amount
+		) = 0
 		self.status = "Cancelled"
 
 	def before_update_after_submit(self):
@@ -82,9 +80,9 @@ class InsuranceClaim(Document):
 				coverage.paid_amount = 0
 				if not coverage.payment_error_reason:
 					frappe.throw(
-						_("<b>Reason for Claim Rejection / Error</b> is required, please update row #{}").format(
-							coverage.idx
-						),
+						_(
+							"<b>Reason for Claim Rejection / Error</b> is required, please update row #{}"
+						).format(coverage.idx),
 						title=_("Reason Required"),
 					)
 
@@ -277,15 +275,13 @@ def update_insurance_coverage_status(coverage):
 	"""
 	coverage_doc = frappe.get_doc("Patient Insurance Coverage", coverage.insurance_coverage)
 
-	coverage_doc.db_set(
-		{"approved_amount": coverage.approved_amount, "paid_amount": coverage.paid_amount}
-	)
+	coverage_doc.db_set({"approved_amount": coverage.approved_amount, "paid_amount": coverage.paid_amount})
 
 	coverage_doc.add_comment(
 		"Comment",
 		f"""
-		Insurance Claim {get_link_to_form('Insurance Claim', coverage.parent)} {coverage.status}
-		{"<br>Reason: " + coverage.payment_error_reason if coverage.status in ['Rejected', 'Error'] else ''}
+		Insurance Claim {get_link_to_form("Insurance Claim", coverage.parent)} {coverage.status}
+		{"<br>Reason: " + coverage.payment_error_reason if coverage.status in ["Rejected", "Error"] else ""}
 	""",
 	)
 
@@ -342,7 +338,6 @@ def update_claim_paid_amount(pe, method):
 	)
 
 	for claim in insurance_claims:
-
 		claim = frappe.get_doc("Insurance Claim", claim)
 		for claim_coverage in claim.coverages:
 			# process claim coverage based on journal entry
@@ -371,7 +366,6 @@ def update_claim_paid_amount(pe, method):
 
 @frappe.whitelist()
 def create_payment_entry(doc):
-
 	import json
 
 	if isinstance(doc, str):

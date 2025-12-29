@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015, ESS LLP and contributors
 # For license information, please see license.txt
 
@@ -84,9 +83,7 @@ def check_fee_validity(appointment, date=None, practitioner=None):
 		return
 
 	# Check if free follow-ups are enabled
-	pract_enabled = frappe.get_cached_value(
-		"Healthcare Practitioner", practitioner, "enable_free_follow_ups"
-	)
+	pract_enabled = frappe.get_cached_value("Healthcare Practitioner", practitioner, "enable_free_follow_ups")
 	settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
 	if not (pract_enabled or settings_enabled):
 		return
@@ -138,9 +135,7 @@ def manage_fee_validity(appointment):
 		return
 
 	# Update fee validity dates when rescheduling an invoiced appointment
-	invoiced_fee_validity = frappe.db.exists(
-		"Fee Validity", {"patient_appointment": appointment.name}
-	)
+	invoiced_fee_validity = frappe.db.exists("Fee Validity", {"patient_appointment": appointment.name})
 	if invoiced_fee_validity and appointment.invoiced:
 		start_date = frappe.db.get_value("Fee Validity", invoiced_fee_validity, "start_date")
 		if getdate(appointment.appointment_date) != start_date:

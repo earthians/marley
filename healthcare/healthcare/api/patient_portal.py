@@ -144,12 +144,8 @@ def get_slots(practitioner, date):
 @frappe.whitelist()
 def make_appointment(practitioner, patient, date, slot):
 	doc = frappe.new_doc("Patient Appointment")
-	doc.appointment_type = frappe.db.get_single_value(
-		"Healthcare Settings", "default_appointment_type"
-	)
-	doc.appointment_for = frappe.db.get_value(
-		"Appointment Type", doc.appointment_type, "allow_booking_for"
-	)
+	doc.appointment_type = frappe.db.get_single_value("Healthcare Settings", "default_appointment_type")
+	doc.appointment_for = frappe.db.get_value("Appointment Type", doc.appointment_type, "allow_booking_for")
 	company = frappe.defaults.get_user_default("company")
 	if not company:
 		company = frappe.db.get_single_value("Global Defaults", "default_company")
@@ -168,9 +164,7 @@ def make_appointment(practitioner, patient, date, slot):
 	for schedule_entry in practitioner.practitioner_schedules:
 		# validate_practitioner_schedules(schedule_entry, practitioner)
 		practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
-		service_unit = frappe.db.get_value(
-			"Healthcare Service Unit", schedule_entry.service_unit, "name"
-		)
+		service_unit = frappe.db.get_value("Healthcare Service Unit", schedule_entry.service_unit, "name")
 
 		if practitioner_schedule and not practitioner_schedule.disabled:
 			available_slots = []
@@ -232,9 +226,7 @@ def get_print_format(doctype: str, name: str):
 	meta = frappe.get_meta(doctype)
 
 	print_format = (
-		"Diagnostic Report"
-		if doctype == "Diagnostic Report"
-		else meta.default_print_format or "Standard"
+		"Diagnostic Report" if doctype == "Diagnostic Report" else meta.default_print_format or "Standard"
 	)
 
 	letter_head = None
@@ -253,9 +245,7 @@ def get_patients_with_relations():
 		filters["user_id"] = frappe.session.user
 
 	patients = frappe.db.get_all("Patient", filters=filters, pluck="name")
-	relation = frappe.db.get_all(
-		"Patient Relation", filters={"parent": ["in", patients]}, pluck="patient"
-	)
+	relation = frappe.db.get_all("Patient Relation", filters={"parent": ["in", patients]}, pluck="patient")
 
 	return patients + relation
 
@@ -319,7 +309,7 @@ def build_order_map(orders, from_invoice=False):
 					"Sales Invoice Item", {"reference_dn": row.service_request, "docstatus": 1}, "parent"
 				)
 
-		if invoice and not invoice in orders_map[key]["invoice"]:
+		if invoice and invoice not in orders_map[key]["invoice"]:
 			orders_map[key]["invoice"].append(invoice)
 
 		orders_map[key]["tests"].append(build_template_dict(row))

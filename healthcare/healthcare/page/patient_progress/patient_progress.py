@@ -66,7 +66,7 @@ def get_therapy_sessions_distribution_data(patient, field):
 		)
 
 	return {
-		"labels": [r[0] for r in result if r[0] != None],
+		"labels": [r[0] for r in result if r[0] is not None],
 		"datasets": [{"values": [r[1] for r in result]}],
 	}
 
@@ -97,10 +97,10 @@ def get_therapy_progress_data(patient, therapy_type, time_span):
 	)
 
 	return {
-		"labels": [r[0] for r in result if r[0] != None],
+		"labels": [r[0] for r in result if r[0] is not None],
 		"datasets": [
-			{"name": _("Targetted"), "values": [r[1] for r in result if r[0] != None]},
-			{"name": _("Completed"), "values": [r[2] for r in result if r[0] != None]},
+			{"name": _("Targetted"), "values": [r[1] for r in result if r[0] is not None]},
+			{"name": _("Completed"), "values": [r[2] for r in result if r[0] is not None]},
 		],
 	}
 
@@ -131,8 +131,8 @@ def get_patient_assessment_data(patient, assessment_template, time_span):
 	)
 
 	return {
-		"labels": [getdate(r[0]) for r in result if r[0] != None],
-		"datasets": [{"name": _("Score Obtained"), "values": [r[2] for r in result if r[0] != None]}],
+		"labels": [getdate(r[0]) for r in result if r[0] is not None],
+		"datasets": [{"name": _("Score Obtained"), "values": [r[2] for r in result if r[0] is not None]}],
 		"max_score": result[0][1] if result else None,
 	}
 
@@ -166,13 +166,13 @@ def get_therapy_assessment_correlation_data(patient, assessment_template, time_s
 	)
 
 	return {
-		"labels": [r[0] for r in result if r[0] != None],
+		"labels": [r[0] for r in result if r[0] is not None],
 		"datasets": [
-			{"name": _("Sessions"), "chartType": "bar", "values": [r[1] for r in result if r[0] != None]},
+			{"name": _("Sessions"), "chartType": "bar", "values": [r[1] for r in result if r[0] is not None]},
 			{
 				"name": _("Average Score"),
 				"chartType": "line",
-				"values": [round(r[2], 2) for r in result if r[0] != None],
+				"values": [round(r[2], 2) for r in result if r[0] is not None],
 			},
 		],
 		"max_score": result[0][1] if result else None,
@@ -214,12 +214,12 @@ def get_assessment_parameter_data(patient, parameter, time_span):
 
 	score_percentages = []
 	for r in results:
-		if r[2] != 0 and r[0] != None:
+		if r[2] != 0 and r[0] is not None:
 			score = round((int(r[1]) / int(r[2])) * 100, 2)
 			score_percentages.append(score)
 
 	return {
-		"labels": [getdate(r[0]) for r in results if r[0] != None],
+		"labels": [getdate(r[0]) for r in results if r[0] is not None],
 		"datasets": [{"name": _("Score"), "values": score_percentages}],
 	}
 

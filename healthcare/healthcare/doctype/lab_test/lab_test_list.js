@@ -19,7 +19,7 @@ frappe.listview_settings["Lab Test"] = {
 		listview.page.add_menu_item(__("Create Multiple"), function () {
 			create_multiple_dialog(listview);
 		});
-	}
+	},
 };
 
 var create_multiple_dialog = function (listview) {
@@ -27,30 +27,42 @@ var create_multiple_dialog = function (listview) {
 		title: "Create Multiple Lab Tests",
 		width: 100,
 		fields: [
-			{ fieldtype: "Link", label: "Patient", fieldname: "patient", options: "Patient", reqd: 1 },
 			{
-				fieldtype: "Select", label: "Invoice / Patient Encounter", fieldname: "doctype",
-				options: "\nSales Invoice\nPatient Encounter", reqd: 1
+				fieldtype: "Link",
+				label: "Patient",
+				fieldname: "patient",
+				options: "Patient",
+				reqd: 1,
 			},
 			{
-				fieldtype: "Dynamic Link", fieldname: "docname", options: "doctype", reqd: 1,
+				fieldtype: "Select",
+				label: "Invoice / Patient Encounter",
+				fieldname: "doctype",
+				options: "\nSales Invoice\nPatient Encounter",
+				reqd: 1,
+			},
+			{
+				fieldtype: "Dynamic Link",
+				fieldname: "docname",
+				options: "doctype",
+				reqd: 1,
 				get_query: function () {
 					return {
 						filters: {
-							"patient": dialog.get_value("patient"),
-							"docstatus": 1
-						}
+							patient: dialog.get_value("patient"),
+							docstatus: 1,
+						},
 					};
-				}
-			}
+				},
+			},
 		],
 		primary_action_label: __("Create"),
 		primary_action: function () {
 			frappe.call({
 				method: "healthcare.healthcare.doctype.lab_test.lab_test.create_multiple",
 				args: {
-					"doctype": dialog.get_value("doctype"),
-					"docname": dialog.get_value("docname")
+					doctype: dialog.get_value("doctype"),
+					docname: dialog.get_value("docname"),
 				},
 				callback: function (data) {
 					if (!data.exc) {
@@ -61,10 +73,10 @@ var create_multiple_dialog = function (listview) {
 					}
 				},
 				freeze: true,
-				freeze_message: __("Creating Lab Tests...")
+				freeze_message: __("Creating Lab Tests..."),
 			});
 			dialog.hide();
-		}
+		},
 	});
 
 	dialog.show();

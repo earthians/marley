@@ -9,9 +9,13 @@ frappe.listview_settings["Inpatient Record"] = {
 		} else if (doc.status === "Admitted") {
 			return [__("Admitted"), "blue", "status, =, Admitted"];
 		} else if (doc.status === "Discharge Scheduled") {
-			return [__("Discharge Scheduled"), "orange", "status, =, Discharge Scheduled"];
-		}  else if (doc.status === "Discharged") {
+			return [
+				__("Discharge Scheduled"),
+				"orange",
+				"status, =, Discharge Scheduled",
+			];
+		} else if (doc.status === "Discharged") {
 			return [__("Discharged"), "green", "status, =, Discharged"];
 		}
-	}
+	},
 };

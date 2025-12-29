@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
 
 import datetime
 
@@ -151,9 +149,7 @@ class TherapySession(Document):
 				)
 
 	def check_sessions_completed(self):
-		total_sessions_requested = frappe.db.get_value(
-			"Service Request", self.service_request, "quantity"
-		)
+		total_sessions_requested = frappe.db.get_value("Service Request", self.service_request, "quantity")
 		sessions = frappe.db.count(
 			"Therapy Session", filters={"docstatus": ["!=", 2], "service_request": self.service_request}
 		)

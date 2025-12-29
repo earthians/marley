@@ -84,7 +84,10 @@ class PractitionerAvailability(Document):
 					continue
 				if has_time_overlap(r):
 					frappe.throw(
-						_(f"Overlaps with another Availability: " f"{get_link_to_form(self.doctype, r.get('name'))}")
+						_(
+							f"Overlaps with another Availability: "
+							f"{get_link_to_form(self.doctype, r.get('name'))}"
+						)
 					)
 		else:
 			if self.scope_type == "Healthcare Practitioner":
@@ -108,7 +111,8 @@ class PractitionerAvailability(Document):
 					if has_time_overlap(r):
 						frappe.throw(
 							_(
-								f"Overlaps with another Unvailability: " f"{get_link_to_form(self.doctype, r.get('name'))}"
+								f"Overlaps with another Unvailability: "
+								f"{get_link_to_form(self.doctype, r.get('name'))}"
 							)
 						)
 

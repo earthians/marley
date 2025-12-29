@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2018, earthians and contributors
 # For license information, please see license.txt
 
@@ -91,7 +90,9 @@ def get_appointments_to_invoice(patient, company):
 					{
 						"reference_type": "Patient Appointment",
 						"reference_name": appointment.name,
-						"service": frappe.db.get_value(appointment.template_dt, appointment.template_dn, "item"),
+						"service": frappe.db.get_value(
+							appointment.template_dt, appointment.template_dn, "item"
+						),
 					}
 				)
 		# Consultation Appointments, should check fee validity
@@ -402,7 +403,11 @@ def get_clinical_procedures_to_invoice(patient, company):
 				)
 			else:
 				clinical_procedures_to_invoice.append(
-					{"reference_type": "Clinical Procedure", "reference_name": procedure.name, "service": item}
+					{
+						"reference_type": "Clinical Procedure",
+						"reference_name": procedure.name,
+						"service": item,
+					}
 				)
 
 		# consumables
@@ -413,7 +418,6 @@ def get_clinical_procedures_to_invoice(patient, company):
 			and procedure.status == "Completed"
 			and not procedure.consumption_invoiced
 		):
-
 			service_item = frappe.db.get_single_value(
 				"Healthcare Settings", "clinical_procedure_consumable_item"
 			)
@@ -747,7 +751,6 @@ def get_service_requests_to_invoice(patient, company):
 				and coverage_details.status in ["Approved", "Partly Invoiced"]
 				and getdate() <= coverage_details.coverage_validity_end_date
 			):
-
 				# billable qty from insurance coverage
 				billable_coverage_qty = coverage_details.get("qty", 1) - coverage_details.get(
 					"qty_invoiced", 0
@@ -802,9 +805,7 @@ def get_appointment_billing_item_and_rate(doc):
 	is_inpatient = doc.inpatient_record
 
 	if doc.get("practitioner"):
-		service_item, practitioner_charge = get_practitioner_billing_details(
-			doc.practitioner, is_inpatient
-		)
+		service_item, practitioner_charge = get_practitioner_billing_details(doc.practitioner, is_inpatient)
 
 	if not service_item and doc.get("appointment_type"):
 		service_item, appointment_charge = get_appointment_type_billing_details(
@@ -855,7 +856,7 @@ def throw_config_service_item(is_inpatient):
 	)
 
 	msg = _(
-		("Please Configure {0} in ").format(service_item_label)
+		(f"Please Configure {service_item_label} in ")
 		+ """<b><a href='/app/Form/Healthcare Settings'>Healthcare Settings</a></b>"""
 	)
 	frappe.throw(msg, title=_("Missing Configuration"))
@@ -865,8 +866,8 @@ def throw_config_practitioner_charge(is_inpatient, practitioner):
 	charge_name = _("Inpatient Visit Charge") if is_inpatient else _("OP Consulting Charge")
 
 	msg = _(
-		("Please Configure {0} for Healthcare Practitioner").format(charge_name)
-		+ """ <b><a href='/app/Form/Healthcare Practitioner/{0}'>{0}</a></b>""".format(practitioner)
+		(f"Please Configure {charge_name} for Healthcare Practitioner")
+		+ f""" <b><a href='/app/Form/Healthcare Practitioner/{practitioner}'>{practitioner}</a></b>"""
 	)
 	frappe.throw(msg, title=_("Missing Configuration"))
 
@@ -875,8 +876,8 @@ def throw_config_appointment_type_charge(is_inpatient, appointment_type):
 	charge_name = _("Inpatient Visit Charge") if is_inpatient else _("OP Consulting Charge")
 
 	msg = _(
-		("Please Configure {0} for Appointment Type").format(charge_name)
-		+ """ <b><a href='/app/Form/Appointment type/{0}'>{0}</a></b>""".format(appointment_type)
+		(f"Please Configure {charge_name} for Appointment Type")
+		+ f""" <b><a href='/app/Form/Appointment type/{appointment_type}'>{appointment_type}</a></b>"""
 	)
 	frappe.throw(msg, title=_("Missing Configuration"))
 
@@ -1004,9 +1005,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 			get_insurance_payor_details,
 		)
 
-		insurance_payor_details = get_insurance_payor_details(
-			item.insurance_payor, sales_invoice.company
-		)
+		insurance_payor_details = get_insurance_payor_details(item.insurance_payor, sales_invoice.company)
 
 		if (
 			not insurance_payor_details
@@ -1072,9 +1071,7 @@ def set_invoiced(item, method, ref_invoice=None):
 		invoiced = True
 
 	if item.reference_dt == "Clinical Procedure":
-		service_item = frappe.db.get_single_value(
-			"Healthcare Settings", "clinical_procedure_consumable_item"
-		)
+		service_item = frappe.db.get_single_value("Healthcare Settings", "clinical_procedure_consumable_item")
 		if service_item == item.item_code:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "consumption_invoiced", invoiced)
 		else:
@@ -1092,9 +1089,7 @@ def set_invoiced(item, method, ref_invoice=None):
 		frappe.db.set_value("Patient Appointment", item.reference_dn, "ref_sales_invoice", ref_invoice)
 
 	elif item.reference_dt == "Lab Prescription":
-		manage_prescriptions(
-			invoiced, item.reference_dt, item.reference_dn, "Lab Test", "lab_test_created"
-		)
+		manage_prescriptions(invoiced, item.reference_dt, item.reference_dn, "Lab Test", "lab_test_created")
 
 	elif item.reference_dt == "Procedure Prescription":
 		manage_prescriptions(
@@ -1110,10 +1105,10 @@ def set_invoiced(item, method, ref_invoice=None):
 
 		# service transaction linking to HSO
 		if item.reference_dt == "Service Request":
-			template_map = {
+			_template_map = {
 				"Clinical Procedure Template": "Clinical Procedure",
 				"Therapy Type": "Therapy Session",
-				"Lab Test Template": "Lab Test"
+				"Lab Test Template": "Lab Test",
 				# "Healthcare Service Unit": "Inpatient Occupancy"
 			}
 
@@ -1162,9 +1157,7 @@ def manage_prescriptions(invoiced, ref_dt, ref_dn, dt, created_check_field):
 
 
 def manage_doc_for_appointment(dt_from_appointment, appointment, invoiced):
-	dn_from_appointment = frappe.db.get_value(
-		dt_from_appointment, filters={"appointment": appointment}
-	)
+	dn_from_appointment = frappe.db.get_value(dt_from_appointment, filters={"appointment": appointment})
 	if dn_from_appointment:
 		frappe.db.set_value(dt_from_appointment, dn_from_appointment, "invoiced", invoiced)
 
@@ -1200,7 +1193,9 @@ def get_drugs_to_invoice(encounter, customer, link_customer=False):
 
 				description = ""
 				if medication_request.dosage and medication_request.period:
-					description = _("{0} for {1}").format(medication_request.dosage, medication_request.period)
+					description = _("{0} for {1}").format(
+						medication_request.dosage, medication_request.period
+					)
 
 				if medication_request.medication_item and is_billable:
 					billable_order_qty = medication_request.get("quantity", 1) - medication_request.get(
@@ -1214,7 +1209,8 @@ def get_drugs_to_invoice(encounter, customer, link_customer=False):
 							billable_order_qty = medication_request.get("quantity", 1)
 						else:
 							billable_order_qty = (
-								medication_request.total_dispensable_quantity - medication_request.get("qty_invoiced", 0)
+								medication_request.total_dispensable_quantity
+								- medication_request.get("qty_invoiced", 0)
 							)
 
 					orders_to_invoice.append(
@@ -1275,7 +1271,7 @@ def get_children(doctype, parent=None, company=None, is_root=False, include_disa
 				},
 			)
 			# set occupancy status of group node
-			each["occupied_of_available"] = f"{str(occupied_count)} Occupied of {str(available_count)}"
+			each["occupied_of_available"] = f"{occupied_count!s} Occupied of {available_count!s}"
 
 	return service_units
 
@@ -1325,21 +1321,19 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 				doc_html += section_html + html + "</div>"
 
 			elif has_data and not col_on and sec_on:
-				doc_html += """
+				doc_html += f"""
 					<br>
 					<div class='row'>
 						<div class='col-md-12 col-sm-12'>
-							<b>{0}</b>
+							<b>{section_label}</b>
 						</div>
 					</div>
 					<div class='row'>
 						<div class='col-md-12 col-sm-12'>
-							{1} {2}
+							{section_html} {html}
 						</div>
 					</div>
-				""".format(
-					section_label, section_html, html
-				)
+				"""
 
 			# close divs for columns
 			while col_on:
@@ -1358,34 +1352,30 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 		# on column break append html to section html or doc html
 		if df.fieldtype == "Column Break":
 			if sec_on and not col_on and has_data:
-				section_html += """
+				section_html += f"""
 					<br>
 					<div class='row'>
 						<div class='col-md-12 col-sm-12'>
-							<b>{0}</b>
+							<b>{section_label}</b>
 						</div>
 					</div>
 					<div class='row'>
 						<div class='col-md-4 col-sm-4'>
-							{1}
+							{html}
 						</div>
-				""".format(
-					section_label, html
-				)
+				"""
 			elif col_on == 1 and has_data:
 				section_html += "<div class='col-md-4 col-sm-4'>" + html + "</div>"
 			elif col_on > 1 and has_data:
 				doc_html += "<div class='col-md-4 col-sm-4'>" + html + "</div>"
 			else:
-				doc_html += """
+				doc_html += f"""
 					<div class='row'>
 						<div class='col-md-12 col-sm-12'>
-							{0}
+							{html}
 						</div>
 					</div>
-				""".format(
-					html
-				)
+				"""
 
 			html = ""
 			col_on += 1
@@ -1423,21 +1413,17 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 				table_row += "</tr>"
 
 			if sec_on:
-				section_html += """
+				section_html += f"""
 					<table class='table table-condensed bordered'>
-						{0} {1}
+						{table_head} {table_row}
 					</table>
-				""".format(
-					table_head, table_row
-				)
+				"""
 			else:
-				html += """
+				html += f"""
 					<table class='table table-condensed table-bordered'>
-						{0} {1}
+						{table_head} {table_row}
 					</table>
-				""".format(
-					table_head, table_row
-				)
+				"""
 			continue
 
 		# on any other field type add label and value to html
@@ -1448,7 +1434,7 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 			and df.fieldname not in exclude_fields
 		):
 			formatted_value = format_value(doc.get(df.fieldname), meta.get_field(df.fieldname), doc)
-			html += "<br>{0} : {1}".format(df.label or df.fieldname, formatted_value)
+			html += f"<br>{df.label or df.fieldname} : {formatted_value}"
 
 			if not has_data:
 				has_data = True
@@ -1456,15 +1442,13 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 	if sec_on and col_on and has_data:
 		doc_html += section_html + html + "</div></div>"
 	elif sec_on and not col_on and has_data:
-		doc_html += """
+		doc_html += f"""
 			<div class='col-md-12 col-sm-12'>
 				<div class='col-md-12 col-sm-12'>
-					{0} {1}
+					{section_html} {html}
 				</div>
 			</div>
-		""".format(
-			section_html, html
-		)
+		"""
 	return {"html": doc_html}
 
 
@@ -1664,7 +1648,10 @@ def create_sample_collection_and_observation(doc):
 		if meta.has_field("patient"):
 			sample_collection = create_sample_collection(doc, patient)
 			for obs in out_data[grp]:
-				(sample_collection, diag_report_required,) = insert_observation_and_sample_collection(
+				(
+					sample_collection,
+					diag_report_required,
+				) = insert_observation_and_sample_collection(
 					doc, patient, obs, sample_collection, obs.get("child")
 				)
 			if sample_collection and len(sample_collection.get("observation_sample_collection")) > 0:
@@ -1839,9 +1826,7 @@ def insert_observation_and_sample_collection(
 
 def has_direct_leaf_component(template_name):
 	"""Return True if the given template has at least one direct leaf child."""
-	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
-		template_name
-	)
+	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(template_name)
 	all_components = sample_reqd_component_obs + non_sample_reqd_component_obs
 
 	for comp in all_components:

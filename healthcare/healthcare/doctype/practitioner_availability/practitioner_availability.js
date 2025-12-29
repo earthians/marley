@@ -12,15 +12,12 @@ frappe.ui.form.on("Practitioner Availability", {
 
 	set_duration: function (frm) {
 		if (frm.doc.end_time && frm.doc.start_time) {
-			end_date = frm.doc.end_date || frm.doc.start_date
+			end_date = frm.doc.end_date || frm.doc.start_date;
 
-			start = new Date(`${frm.doc.start_date} ${frm.doc.start_time}`)
-			end = new Date(`${frm.doc.end_date} ${frm.doc.end_time}`)
+			start = new Date(`${frm.doc.start_date} ${frm.doc.start_time}`);
+			end = new Date(`${frm.doc.end_date} ${frm.doc.end_time}`);
 
-			frm.set_value(
-				"duration",
-				parseInt(end - start) / 60000 | 0,
-			);
+			frm.set_value("duration", (parseInt(end - start) / 60000) | 0);
 		}
 	},
 
@@ -31,8 +28,11 @@ frappe.ui.form.on("Practitioner Availability", {
 	},
 
 	type: function (frm) {
-		if (frm.doc.type == "Available" && frm.doc.scope_type != "Healthcare Practitioner") {
+		if (
+			frm.doc.type == "Available" &&
+			frm.doc.scope_type != "Healthcare Practitioner"
+		) {
 			frm.set_value("scope_type", "Healthcare Practitioner");
 		}
-	}
+	},
 });

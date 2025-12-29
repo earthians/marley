@@ -80,7 +80,7 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, p
 	if config.get("encrypted"):
 		message = payload.get("to_encrypt")
 		encrypted = get_encrypted_message(message)
-		if "encrypted_msg" in encrypted and encrypted["encrypted_msg"]:
+		if encrypted.get("encrypted_msg"):
 			payload[to_be_enc] = payload.pop("to_encrypt")
 			payload[to_be_enc] = encrypted["encrypted_msg"]
 
@@ -118,7 +118,7 @@ def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, p
 			_file = frappe.get_doc(
 				{
 					"doctype": "File",
-					"file_name": "abha_card{}.png".format(patient_name),
+					"file_name": f"abha_card{patient_name}.png",
 					"attached_to_doctype": "Patient",
 					"attached_to_name": patient_name,
 					"attached_to_field": "abha_card",

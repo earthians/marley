@@ -1,21 +1,21 @@
 // Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Patient Insurance Policy', {
+frappe.ui.form.on("Patient Insurance Policy", {
 	onload: function (frm) {
-		frm.set_query('insurance_plan', function () {
+		frm.set_query("insurance_plan", function () {
 			return {
 				filters: {
-					'insurance_payor': frm.doc.insurance_payor
-				}
+					insurance_payor: frm.doc.insurance_payor,
+				},
 			};
 		});
 
-		frm.set_query('patient', function () {
+		frm.set_query("patient", function () {
 			return {
 				filters: {
-					'status': 'Active'
-				}
+					status: "Active",
+				},
 			};
 		});
 	},
@@ -23,24 +23,28 @@ frappe.ui.form.on('Patient Insurance Policy', {
 	insurance_payor: function (frm) {
 		if (frm.doc.insurance_payor) {
 			frappe.call({
-				'method': 'frappe.client.get_value',
+				method: "frappe.client.get_value",
 				args: {
-					doctype: 'Insurance Payor Contract',
+					doctype: "Insurance Payor Contract",
 					filters: {
-						'insurance_payor': frm.doc.insurance_payor,
-						'is_active': 1,
-						'end_date': ['>=', frappe.datetime.nowdate()],
-						'docstatus': 1
+						insurance_payor: frm.doc.insurance_payor,
+						is_active: 1,
+						end_date: [">=", frappe.datetime.nowdate()],
+						docstatus: 1,
 					},
-					fieldname: ['name']
+					fieldname: ["name"],
 				},
 				callback: function (data) {
 					if (!data.message.name) {
-						frappe.msgprint(__('No valid contract found with the Insurance Payor {0}', [frm.doc.insurance_payor]));
-						frm.set_value('insurance_payor', '');
+						frappe.msgprint(
+							__("No valid contract found with the Insurance Payor {0}", [
+								frm.doc.insurance_payor,
+							]),
+						);
+						frm.set_value("insurance_payor", "");
 					}
-				}
+				},
 			});
 		}
-	}
+	},
 });

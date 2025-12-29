@@ -13,7 +13,7 @@ def execute(filters=None):
 	return Analytics(filters).run()
 
 
-class Analytics(object):
+class Analytics:
 	def __init__(self, filters=None):
 		"""Patient Appointment Analytics Report."""
 		self.filters = frappe._dict(filters or {})
@@ -45,9 +45,7 @@ class Analytics(object):
 
 		from_date, to_date = getdate(self.filters.from_date), getdate(self.filters.to_date)
 
-		increment = {"Monthly": 1, "Quarterly": 3, "Half-Yearly": 6, "Yearly": 12}.get(
-			self.filters.range, 1
-		)
+		increment = {"Monthly": 1, "Quarterly": 3, "Half-Yearly": 6, "Yearly": 12}.get(self.filters.range, 1)
 
 		if self.filters.range in ["Monthly", "Quarterly"]:
 			from_date = from_date.replace(day=1)
@@ -57,7 +55,7 @@ class Analytics(object):
 			from_date = from_date + relativedelta(from_date, weekday=MO(-1))
 
 		self.periodic_daterange = []
-		for dummy in range(1, 53):
+		for _dummy in range(1, 53):
 			if self.filters.range == "Weekly":
 				period_end_date = add_days(from_date, 6)
 			else:
@@ -103,9 +101,7 @@ class Analytics(object):
 				{"label": _(period), "fieldname": scrub(period), "fieldtype": "Int", "width": 120}
 			)
 
-		self.columns.append(
-			{"label": _("Total"), "fieldname": "total", "fieldtype": "Int", "width": 120}
-		)
+		self.columns.append({"label": _("Total"), "fieldname": "total", "fieldtype": "Int", "width": 120})
 
 	def get_data(self):
 		if self.filters.tree_type == "Healthcare Practitioner":
@@ -194,7 +190,9 @@ class Analytics(object):
 				self.appointment_periodic_data[d.practitioner][period] += 1
 
 			elif self.filters.tree_type == "Medical Department":
-				self.appointment_periodic_data.setdefault(d.department, frappe._dict()).setdefault(period, 0.0)
+				self.appointment_periodic_data.setdefault(d.department, frappe._dict()).setdefault(
+					period, 0.0
+				)
 				self.appointment_periodic_data[d.department][period] += 1
 
 	def get_chart_data(self):

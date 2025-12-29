@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
-from __future__ import unicode_literals
 
 import json
 
@@ -34,9 +32,7 @@ from healthcare.healthcare.utils import get_appointments_to_invoice
 class TestPatientInsuranceCoverage(IntegrationTestCase):
 	def test_insurance_coverage(self):
 		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
-		frappe.db.sql(
-			"""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'"""
-		)
+		frappe.db.sql("""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'""")
 		frappe.db.sql(
 			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
 		)
@@ -68,18 +64,14 @@ def create_insurance_test_docs():
 		"medical_department": medical_department,
 	}
 	appointment_type = create_appointment_type(args).name
-	create_item_insurance_eligibility(
-		"Service", "Appointment Type", appointment_type, eligibility_plan
-	)
+	create_item_insurance_eligibility("Service", "Appointment Type", appointment_type, eligibility_plan)
 
 	# Book Appointment and Invoice
 	# invoice total 400 (after 20% discount) coverage 80%
 	appointment = create_appointment(
 		patient, practitioner, nowdate(), appointment_type, insurance_policy.name
 	)
-	appointments_to_invoice = get_appointments_to_invoice(
-		frappe.get_doc("Patient", patient), "_Test Company"
-	)
+	appointments_to_invoice = get_appointments_to_invoice(frappe.get_doc("Patient", patient), "_Test Company")
 	sales_invoice = create_sales_invoice(appointment, appointments_to_invoice)
 	test_docs = {
 		"Patient": patient,
