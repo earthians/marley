@@ -8,8 +8,6 @@ on:
       - "**.md"
       - "**.html"
       - "**.csv"
-    branches-ignore:
-      - version-**-beta
   schedule:
     # Run everday at midnight UTC / 5:30 IST
     - cron: "0 0 * * *"
