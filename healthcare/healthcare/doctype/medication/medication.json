@@ -46,7 +46,8 @@
   {
    "fieldname": "generic_name",
    "fieldtype": "Data",
-   "label": "Generic Name"
+   "label": "Generic Name",
+   "reqd": 1
   },
   {
    "fieldname": "medication_class",
@@ -217,11 +218,11 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-12-25 09:36:30.992082",
+ "modified": "2025-12-31 17:13:12.796752",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
- "naming_rule": "By fieldname",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
