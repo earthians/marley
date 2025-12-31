@@ -46,9 +46,7 @@
   {
    "fieldname": "generic_name",
    "fieldtype": "Data",
-   "label": "Generic Name",
-   "no_copy": 1,
-   "unique": 1
+   "label": "Generic Name"
   },
   {
    "fieldname": "medication_class",
@@ -146,7 +144,8 @@
    "fieldname": "dosage_form",
    "fieldtype": "Link",
    "label": "Dosage Form",
-   "options": "Dosage Form"
+   "options": "Dosage Form",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_16",
