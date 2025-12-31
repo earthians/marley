@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:generic_name",
+ "autoname": "format:{dosage_form}. {generic_name} {strength}{strength_uom}",
  "creation": "2020-03-24 15:56:36.583587",
  "doctype": "DocType",
  "editable_grid": 1,
