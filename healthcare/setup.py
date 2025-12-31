@@ -1,7 +1,10 @@
 # isort: skip_file
-from erpnext.setup.utils import insert_record
 import frappe
 from frappe import _
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+from erpnext.setup.utils import insert_record
+
 
 data = {
 	"desktop_icons": [
@@ -260,6 +263,9 @@ def setup_healthcare():
 	if frappe.db.exists("Medical Department", "Cardiology"):
 		# already setup
 		return
+
+	if data.get("custom_fields"):
+		create_custom_fields(data.get("custom_fields"), ignore_validate=True)
 
 	from healthcare.regional.india.abdm.setup import setup as abdm_setup
 
