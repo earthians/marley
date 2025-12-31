@@ -18,7 +18,7 @@ from healthcare.healthcare.doctype.service_request.test_service_request import (
 
 class TestMedicationRequest(IntegrationTestCase):
 	def setup(self):
-		frappe.db.sql("""delete from `tabMedication` where name = '_Test Medication'""")
+		frappe.db.sql("""delete from `tabMedication` where name = 'Capsule _Test Medication 500Unit'""")
 
 	def test_medication_request(self):
 		patient, practitioner = create_healthcare_docs()
@@ -72,7 +72,7 @@ class TestMedicationRequest(IntegrationTestCase):
 
 
 def create_medication():
-	if not frappe.db.exists("Medication", "_Test Medication"):
+	if not frappe.db.exists("Medication", "Capsule _Test Medication 500Unit"):
 		if not frappe.db.exists("Medication Class", "Tablet"):
 			try:
 				medication = frappe.get_doc(
@@ -108,4 +108,4 @@ def create_medication():
 		except frappe.DuplicateEntryError:
 			pass
 	else:
-		return frappe.get_doc("Medication", "_Test Medication")
+		return frappe.get_doc("Medication", "Capsule _Test Medication 500Unit")
