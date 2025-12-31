@@ -40,6 +40,10 @@ def create_medication(medication, is_billable=False, price_list=None):
 	medication_doc.strength = 500
 	medication_doc.strength_uom = "Milligram"
 	medication_doc.price_list = price_list
+
+	if not frappe.db.exists("Dosage Form", "Tablet"):
+		frappe.get_doc({"doctype": "Dosage Form", "dosage_form": "Tablet"}).insert()
+	medication_doc.dosage_form = "Tablet"
 	medication_doc.append(
 		"linked_items",
 		{"item_code": medication, "item_group": "Drug", "is_billable": is_billable, "rate": 25},
