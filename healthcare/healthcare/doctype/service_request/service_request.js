@@ -1,6 +1,7 @@
 // Copyright (c) 2020, earthians and contributors
 // For license information, please see license.txt
-// {% include "healthcare/public/js/service_request.js" %}
+
+{% include "healthcare/healthcare/service_request.js" %}
 
 frappe.ui.form.on("Service Request", {
 	refresh: function (frm) {
@@ -39,15 +40,6 @@ frappe.ui.form.on("Service Request", {
 				d.show();
 			});
 		}
-		frm.set_query("order_group", function () {
-			return {
-				filters: {
-					docstatus: 1,
-					patient: frm.doc.patient,
-					practitioner: frm.doc.ordered_by,
-				},
-			};
-		});
 
 		frm.set_query("template_dt", function () {
 			let order_template_doctypes = [
@@ -69,22 +61,6 @@ frappe.ui.form.on("Service Request", {
 			return {
 				filters: {
 					code_system: "Request Status",
-				},
-			};
-		});
-
-		frm.set_query("patient", function () {
-			return {
-				filters: {
-					status: "Active",
-				},
-			};
-		});
-
-		frm.set_query("staff_role", function () {
-			return {
-				filters: {
-					restrict_to_domain: "Healthcare",
 				},
 			};
 		});

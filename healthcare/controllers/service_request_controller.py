@@ -3,7 +3,7 @@ import dateutil
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
+from frappe.utils import getdate, month_diff
 
 
 class ServiceRequestController(Document):
@@ -49,7 +49,8 @@ class ServiceRequestController(Document):
 	def set_patient_age(self):
 		patient = frappe.get_doc("Patient", self.patient)
 		self.patient_age_data = patient.get_age()
-		self.patient_age = dateutil.relativedelta.relativedelta(getdate(), getdate(patient.dob))
+		if patient.dob:
+			self.patient_age = int(month_diff(getdate(), getdate(patient.dob)) / 12)
 
 	def set_medication_qty(self):
 		if not self.doctype == "Medication Request":

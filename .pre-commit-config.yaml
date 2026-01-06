@@ -29,6 +29,7 @@ repos:
                 .*node_modules.*|
                 healthcare/healthcare/doctype/patient/patient.js|
                 healthcare/healthcare/doctype/medication_request/medication_request.js|
+                healthcare/healthcare/doctype/service_request/service_request.js|
             )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

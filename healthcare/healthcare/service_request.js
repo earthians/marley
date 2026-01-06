@@ -12,7 +12,7 @@ frappe.ui.form.on(cur_frm.doctype, {
 				filters: {
 					docstatus: 1,
 					patient: frm.doc.patient,
-					practitioner: frm.doc.ordered_by,
+					practitioner: frm.doc.practitioner,
 				},
 			};
 		});
@@ -167,9 +167,9 @@ frappe.ui.form.on(cur_frm.doctype, {
 		}
 	},
 
-	birth_date: function (frm) {
-		let age_str = calculate_age(frm.doc.birth_date);
-		frm.set_value("patient_age", age_str);
+	patient_birth_date: function (frm) {
+		let age_str = calculate_age(frm.doc.patient_birth_date);
+		frm.set_value("patient_age_data", age_str);
 	},
 });
 
