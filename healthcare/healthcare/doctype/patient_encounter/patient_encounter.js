@@ -592,7 +592,7 @@ var schedule_discharge = function (frm) {
 		],
 		primary_action_label: __("Order Discharge"),
 		primary_action: function () {
-			var args = {
+			var discharge_order = {
 				patient: frm.doc.patient,
 				discharge_encounter: frm.doc.name,
 				discharge_practitioner: frm.doc.practitioner,
@@ -606,7 +606,7 @@ var schedule_discharge = function (frm) {
 			};
 			frappe.call({
 				method: "healthcare.healthcare.doctype.inpatient_record.inpatient_record.schedule_discharge",
-				args: { args },
+				args: { discharge_order: discharge_order },
 				callback: function (data) {
 					if (!data.exc) {
 						frm.reload_doc();
