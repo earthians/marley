@@ -116,7 +116,9 @@ def insert_observation(selected, sample_collection, component_observations=None,
 						specimen=comp_obs_ref.get(obs.get("name"))
 						or comp_obs_ref.get(i + 1)
 						or comp_obs_ref.get(obs.get("idx")),
-						invoice=sample_col_doc.get("reference_name"),
+						invoice=sample_col_doc.get("reference_name")
+						if sample_col_doc.reference_doc == "Sales Invoice"
+						else None,
 						practitioner=sample_col_doc.get("referring_practitioner"),
 						child=obs.get("reference_child") if obs.get("reference_child") else "",
 						service_request=obs.get("service_request"),
