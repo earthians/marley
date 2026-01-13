@@ -386,8 +386,10 @@ def get_child_observations(row):
 				"sample_collection_required": obs.sample_collection_required,
 				"sample_collection": row.sample_collection,
 				"observation_sample_collection": row.observation_sample_collection,
-				"sample_collection_status": sample_details.get("status"),
-				"collection_date_time": sample_details.get("collection_date_time"),
+				"sample_collection_status": sample_details.get("status") if sample_details else None,
+				"collection_date_time": sample_details.get("collection_date_time")
+				if sample_details
+				else None,
 				"has_component": obs.get("has_component"),
 			}
 		)
@@ -421,7 +423,7 @@ def get_child_observations(row):
 					"sample_collection_required": template_doc.sample_collection_required,
 					"sample_collection": row.sample_collection,
 					"observation_sample_collection": row.observation_sample_collection,
-					"sample_collection_status": sample_details.get("status"),
+					"sample_collection_status": sample_details.get("status") if sample_details else None,
 					"has_component": template_doc.has_component,
 				}
 			)
