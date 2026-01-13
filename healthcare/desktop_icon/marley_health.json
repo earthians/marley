@@ -1,0 +1,20 @@
+{
+ "app": "healthcare",
+ "creation": "2025-11-23 21:20:42.395425",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 15,
+ "label": "Marley Health",
+ "link": "/desk/healthcare",
+ "link_type": "External",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-01-13 13:08:00.882469",
+ "modified_by": "Administrator",
+ "name": "Marley Health",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}

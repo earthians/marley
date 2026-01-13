@@ -9,12 +9,13 @@
  "idx": 5,
  "label": "Insurance",
  "link_to": "Insurance",
- "link_type": "Workspace",
- "modified": "2025-11-23 19:32:38.754529",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-01-13 15:14:06.731021",
  "modified_by": "Administrator",
  "name": "Insurance",
  "owner": "Administrator",
  "parent_icon": "Marley Health",
+ "restrict_removal": 0,
  "roles": [],
  "standard": 1
 }
