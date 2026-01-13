@@ -5,6 +5,7 @@ on:
     branches:
       - version-14
       - version-15
+      - version-16
 jobs:
   release:
     name: Release
