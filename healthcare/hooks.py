@@ -1,5 +1,3 @@
-from . import __version__ as app_version
-
 app_name = "healthcare"
 app_title = "Marley Health"
 app_publisher = "earthians Health Informatics Pvt. Ltd."
@@ -9,14 +7,14 @@ app_color = "grey"
 app_email = "info@earthianslive.com"
 app_license = "GNU GPL V3"
 required_apps = ["frappe/erpnext"]
-app_home = "/app/healthcare"
+app_home = "/desk/healthcare"
 
 add_to_apps_screen = [
 	{
-		"name": "healthcare",
+		"name": app_name,
 		"logo": "/assets/healthcare/images/healthcare.svg",
-		"title": "Marley Health",
-		"route": "/app/healthcare",
+		"title": app_title,
+		"route": app_home,
 		"has_permission": "erpnext.check_app_permission",
 	}
 ]
