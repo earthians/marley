@@ -261,7 +261,7 @@ def make_observation(service_request):
 			frappe.db.set_value(
 				"Diagnostic Report", diagnostic_report, "sample_collection", sample_collection.name
 			)
-		return sample_collection, "Sample Collection"
+		return sample_collection.name, "Sample Collection"
 	else:
 		return diagnostic_report, "Diagnostic Report"
 
