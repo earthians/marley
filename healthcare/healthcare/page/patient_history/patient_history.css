@@ -149,3 +149,16 @@
 #page-medical_record .list-filters {
 	display: none;
 }
+
+.layout-side-section {
+	display: block !important;
+	padding: 10px;
+	width: 20%;
+	flex: 0 0 20%;
+}
+
+.layout-main-section-wrapper {
+	flex: 1;
+	width: 80%;
+	max-width: 80%;
+}

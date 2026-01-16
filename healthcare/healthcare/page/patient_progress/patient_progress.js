@@ -22,6 +22,13 @@ class PatientProgress {
 		frappe.breadcrumbs.add("Healthcare");
 		this.sidebar.empty();
 
+		this.wrapper.find(".patient-progress-heading").remove();
+		$(
+			`<h2 class="patient-progress-heading" style="margin-top: 15px; margin-bottom: 10px; padding-left: 10px; font-size: 20px; font-weight: 600;">${__(
+				"Patient Progress",
+			)}</h2>`,
+		).insertBefore(this.sidebar.parent());
+
 		let me = this;
 		let patient = frappe.ui.form.make_control({
 			parent: me.sidebar,

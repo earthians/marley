@@ -24,6 +24,13 @@ class PatientHistory {
 		frappe.breadcrumbs.add("Healthcare");
 		this.sidebar.empty();
 
+		this.wrapper.find(".patient-history-heading").remove();
+		$(
+			`<h2 class="patient-history-heading" style="margin-top: 15px; margin-bottom: 10px; padding-left: 10px; font-size: 20px; font-weight: 600;">${__(
+				"Patient History",
+			)}</h2>`,
+		).insertBefore(this.sidebar.parent());
+
 		let me = this;
 		let patient = frappe.ui.form.make_control({
 			parent: me.sidebar,
