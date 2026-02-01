@@ -726,6 +726,7 @@ def get_availability_data(date, practitioner, appointment):
 	):
 		available_slotes = get_availability_slots(practitioner_doc, date, appointment.appointment_type)
 
+	slot_details = []
 	if practitioner_doc.practitioner_schedules:
 		slot_details = get_available_slots(practitioner_doc, date)
 	elif not len(available_slotes):
