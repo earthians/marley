@@ -6,7 +6,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "info@earthianslive.com"
 app_license = "GNU GPL V3"
-required_apps = ["frappe/erpnext"]
+required_apps = []
 app_home = "/desk/healthcare"
 
 add_to_apps_screen = [
