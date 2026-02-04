@@ -94,6 +94,58 @@ frappe.ui.form.on("Healthcare Practitioner", {
 
 		set_query_service_item(frm, "inpatient_visit_charge_item");
 		set_query_service_item(frm, "op_consulting_charge_item");
+
+				// Availability Status Button
+		if (!frm.is_new()) {
+			frm.add_custom_button(__("Set Availability Status"), function () {
+				let d = new frappe.ui.Dialog({
+					title: __("Set Availability Status"),
+					fields: [
+						{
+							label: __("Availability Status"),
+							fieldname: "availability_status",
+							fieldtype: "Select",
+							options: ["Available", "Unavailable"],
+							reqd: 1,
+							default: frm.doc.availability_status || "Available",
+						},
+						{
+							label: __("Unavailability Note"),
+							fieldname: "unavailability_note",
+							fieldtype: "Small Text",
+							depends_on: "eval:doc.availability_status=='Unavailable'",
+							description: __("Note for unavailability (optional)"),
+						},
+					],
+					primary_action_label: __("Update"),
+					primary_action(values) {
+						frappe.call({
+							method: "healthcare.healthcare.doctype.healthcare_practitioner.healthcare_practitioner.update_availability_status",
+							args: {
+								practitioner: frm.doc.name,
+								status: values.availability_status,
+								note: values.unavailability_note || "",
+							},
+							callback: function () {
+								frm.set_value("availability_status", values.availability_status);
+								frm.set_value("unavailability_note", values.unavailability_note || "");
+								frm.refresh_fields();
+
+								frappe.msgprint(__("Availability status updated successfully"));
+								d.hide();
+
+								frm.reload_doc();
+							},
+						});
+					},
+				});
+
+				d.show();
+			});
+		}
+
+
+
 	},
 
 	practitioner_primary_address: function (frm) {
