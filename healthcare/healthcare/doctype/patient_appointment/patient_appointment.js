@@ -419,28 +419,30 @@ frappe.ui.form.on("Patient Appointment", {
 		if (frm.doc.practitioner) {
 			frm.events.set_payment_details(frm);
 		}
-		frappe.call({
-			method: "frappe.client.get_value",
-			args: {
-				doctype: "Healthcare Practitioner",
-				filters: { name: frm.doc.practitioner },
-				fieldname: ["availability_status", "unavailability_note", "practitioner_name"] 
-			},
-			callback: function(r) {
-				if (r.message && r.message.availability_status === "Unavailable") {
-					let note = r.message.unavailability_note;
-					let doctor_name = r.message.practitioner_name || frm.doc.practitioner;
-					frappe.msgprint({
-						title: "Unavailable",
-						message: note ? note : ` ${doctor_name} is unavailable now.`,
-						indicator: "red"
-					});
+		if (frm.doc.practitioner) {
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+					doctype: "Healthcare Practitioner",
+					filters: { name: frm.doc.practitioner },
+					fieldname: ["availability_status", "unavailability_note", "practitioner_name"] 
+				},
+				callback: function(r) {
+					if (r.message && r.message.availability_status === "Unavailable") {
+						let note = r.message.unavailability_note;
+						let doctor_name = r.message.practitioner_name || frm.doc.practitioner;
+						frappe.msgprint({
+							title: __("Unavailable"),
+							message: note ? note : __("{0} is unavailable now.", [doctor_name]),
+							indicator: "red"
+						});
+					}
 				}
-			}
-		});
+			});
 		
 		
-	},
+	   }
+},
 
 	appointment_type: function (frm) {
 		if (frm.doc.appointment_type) {

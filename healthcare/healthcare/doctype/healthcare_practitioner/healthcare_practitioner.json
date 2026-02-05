@@ -402,7 +402,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Availability Status",
-   "options": "\nAvailable\nUnavailable",
+   "options": "Available\nUnavailable",
    "read_only": 1
   },
   {

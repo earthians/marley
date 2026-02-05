@@ -126,14 +126,12 @@ frappe.ui.form.on("Healthcare Practitioner", {
 								status: values.availability_status,
 								note: values.unavailability_note || "",
 							},
-							callback: function () {
-								frm.set_value("availability_status", values.availability_status);
-								frm.set_value("unavailability_note", values.unavailability_note || "");
-								frm.refresh_fields();
-
+							callback: function (r) {
+								if (r.exc) {
+									return;
+								}
 								frappe.msgprint(__("Availability status updated successfully"));
 								d.hide();
-
 								frm.reload_doc();
 							},
 						});

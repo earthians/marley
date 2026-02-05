@@ -778,14 +778,14 @@ def get_availability_data(date, practitioner, appointment):
 			["availability_status", "unavailability_note"]
 		)
 		
-	if status == "Unavailable":
-		doctor_name = frappe.db.get_value(
-			"Healthcare Practitioner", 
-			practitioner, 
-			"practitioner_name"
-		) or practitioner
-		message = note or _("Doctor {0} is unavailable now.").format(doctor_name)
-		frappe.throw(message, title=_("Practitioner Unavailable"))
+		if status == "Unavailable":
+			doctor_name = frappe.db.get_value(
+				"Healthcare Practitioner", 
+				practitioner, 
+				"practitioner_name"
+			) or practitioner
+			message = note or _("Doctor {0} is unavailable now.").format(doctor_name)
+			frappe.throw(message, title=_("Practitioner Unavailable"))
 
 	practitioner_doc = frappe.get_doc("Healthcare Practitioner", practitioner)
 
