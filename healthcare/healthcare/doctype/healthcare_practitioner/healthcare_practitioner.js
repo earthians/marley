@@ -115,6 +115,7 @@ frappe.ui.form.on("Healthcare Practitioner", {
 							fieldtype: "Small Text",
 							depends_on: "eval:doc.availability_status=='Unavailable'",
 							description: __("Note for unavailability (optional)"),
+							default: frm.doc.unavailability_note || "",
 						},
 					],
 					primary_action_label: __("Update"),
@@ -124,7 +125,10 @@ frappe.ui.form.on("Healthcare Practitioner", {
 							args: {
 								practitioner: frm.doc.name,
 								status: values.availability_status,
-								note: values.unavailability_note || "",
+								note:
+									values.availability_status === "Unavailable"
+										? values.unavailability_note || ""
+										: "",
 							},
 							callback: function (r) {
 								if (r.exc) {
