@@ -908,7 +908,7 @@ def build_availability_data(availability, appointment_type, date, practitioner_d
 		allow_overlap, service_unit_capacity = frappe.db.get_value(
 			"Healthcare Service Unit",
 			availability_doc.service_unit,
-			["allow_appointments", "service_unit_capacity"],
+			["overlap_appointments", "service_unit_capacity"],
 		)
 
 	weekday = date.strftime("%A").lower()
