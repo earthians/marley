@@ -1,6 +1,7 @@
 # Copyright (c) 2025, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import calendar
 from datetime import datetime
 
 import frappe
@@ -98,10 +99,43 @@ class PractitionerAvailability(Document):
 					if has_time_overlap(r):
 						has_overlap_with_available = True
 						break
+
+				# check the practitioner schedule for available slots
+				if not has_overlap_with_available:
+					weekdays = set()
+					for d in daterange(self.start_date, self.end_date):
+						weekdays.add(calendar.day_name[d.weekday()])
+					weekdays = list(weekdays)
+
+					schedules = frappe.db.get_all(
+						"Practitioner Service Unit Schedule",
+						filters={
+							"parent": self.scope,
+							"parentfield": "practitioner_schedules",
+							"parenttype": "Healthcare Practitioner",
+						},
+						pluck="schedule",
+					)
+
+					for schedule in schedules:
+						if frappe.db.exists(
+							"Healthcare Schedule Time Slot",
+							{
+								"parent": schedule,
+								"parentfield": "time_slots",
+								"parenttype": "Practitioner Schedule",
+								"day": ["in", weekdays],
+								"from_time": ["<", get_time(self.end_time)],
+								"to_time": [">", get_time(self.start_time)],
+							},
+						):
+							has_overlap_with_available = True
+							break
+
 				if not has_overlap_with_available:
 					frappe.throw(
 						_(
-							"Unavailable block for a practitioner must overlap at least partially with an existing Availability"
+							"Unavailable block for a practitioner must overlap at least partially with an existing Availability or Practitioner Schedule"
 						)
 					)
 			else:
@@ -111,7 +145,7 @@ class PractitionerAvailability(Document):
 					if has_time_overlap(r):
 						frappe.throw(
 							_(
-								f"Overlaps with another Unvailability: "
+								f"Overlaps with another Unavailability: "
 								f"{get_link_to_form(self.doctype, r.get('name'))}"
 							)
 						)

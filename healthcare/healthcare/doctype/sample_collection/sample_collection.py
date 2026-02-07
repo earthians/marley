@@ -241,7 +241,7 @@ def create_specimen(patient, selected, component_observations):
 		specimen = frappe.new_doc("Specimen")
 		specimen.received_time = now_datetime()
 		specimen.patient = patient
-		specimen.specimen_type = groups[gr][0].get("sample_type")
+		specimen.specimen_type = groups[gr][0].get("sample") or groups[gr][0].get("sample_type")
 		specimen.save()
 		for sub_grp in groups[gr]:
 			if component_observations:
