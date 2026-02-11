@@ -4,6 +4,7 @@
 
 import datetime
 import json
+from typing import Optional
 
 import frappe
 from frappe import _
@@ -694,11 +695,14 @@ def check_sales_invoice_exists(appointment):
 
 
 @frappe.whitelist()
-def get_availability_data(date, practitioner, appointment):
+def get_availability_data(
+	date: str, practitioner: str, appointment: str | dict | "PatientAppointment" | None = None
+):
 	"""
 	Get availability data of 'practitioner' on 'date'
 	:param date: Date to check in schedule
 	:param practitioner: Name of the practitioner
+	:param appointment: Appointment doc to validate fee validity
 	:return: dict containing a list of available slots, list of appointments and time of appointments
 	"""
 
@@ -726,6 +730,7 @@ def get_availability_data(date, practitioner, appointment):
 	):
 		available_slotes = get_availability_slots(practitioner_doc, date, appointment.appointment_type)
 
+	slot_details = []
 	if practitioner_doc.practitioner_schedules:
 		slot_details = get_available_slots(practitioner_doc, date)
 	elif not len(available_slotes):
@@ -907,7 +912,7 @@ def build_availability_data(availability, appointment_type, date, practitioner_d
 		allow_overlap, service_unit_capacity = frappe.db.get_value(
 			"Healthcare Service Unit",
 			availability_doc.service_unit,
-			["allow_appointments", "service_unit_capacity"],
+			["overlap_appointments", "service_unit_capacity"],
 		)
 
 	weekday = date.strftime("%A").lower()
