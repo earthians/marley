@@ -24,15 +24,15 @@ def execute():
     create_complaints_and_diagnoses()
     create_billing_items() # Ensure Consultation and other services are items
     
-    # Advanced Flow Scenarios (Payment-First)
-    create_paid_op_journey_01() # Consultation -> Payment -> Encounter -> Lab Payment -> Lab Result
-    create_paid_op_journey_02() # Pediatric Flow with Payment
-    create_paid_op_journey_03() # Gynaecology Flow with Procedure Payment
+    # # Advanced Flow Scenarios (Payment-First)
+    # create_paid_op_journey_01() # Consultation -> Payment -> Encounter -> Lab Payment -> Lab Result
+    # create_paid_op_journey_02() # Pediatric Flow with Payment
+    # create_paid_op_journey_03() # Gynaecology Flow with Procedure Payment
     
-    # Inpatient Scenarios
-    create_in_journey_01()
-    create_in_journey_02()
-    create_in_journey_03()
+    # # Inpatient Scenarios
+    # create_in_journey_01()
+    # create_in_journey_02()
+    # create_in_journey_03()
 
 def create_billing_items():
     company = frappe.db.get_single_value('Global Defaults', 'default_company')
