@@ -29,3 +29,5 @@ healthcare.patches.v15_0.set_observation_and_diagnostic_report_status
 healthcare.patches.v16_0.set_template_dn_and_template_dt_in_appointment
 healthcare.patches.v15_0.add_discharge_summary_to_patient_history
 healthcare.patches.v15_0.add_custom_fields_if_not_exists
+healthcare.patches.v16_0.somalia_demo_data
+
