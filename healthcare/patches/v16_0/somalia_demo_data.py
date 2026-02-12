@@ -399,26 +399,28 @@ def create_appointment_types():
 
 def create_service_unit_types():
     types = [
+    types = [
         {"name": "OPD Consultation Room", "inpatient": 0, "allow_appt": 1},
-        {"name": "Emergency Room", "inpatient": 0, "allow_appt": 0},
+        {"name": "Emergency Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Emergency Bed", "inpatient": 1, "allow_appt": 0},
         {"name": "General Ward Bed", "inpatient": 1, "allow_appt": 0},
         {"name": "Private Room Bed", "inpatient": 1, "allow_appt": 0},
         {"name": "ICU Bed", "inpatient": 1, "allow_appt": 0},
         {"name": "Maternity / Labour Room", "inpatient": 1, "allow_appt": 0},
-        {"name": "Operation Theatre", "inpatient": 0, "allow_appt": 0},
-        {"name": "Minor Procedure Room", "inpatient": 0, "allow_appt": 0},
+        {"name": "Operation Theatre", "inpatient": 0, "allow_appt": 1},
+        {"name": "Minor Procedure Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Recovery Room", "inpatient": 1, "allow_appt": 0},
-        {"name": "Laboratory Unit", "inpatient": 0, "allow_appt": 0},
-        {"name": "Sample Collection Room", "inpatient": 0, "allow_appt": 0},
-        {"name": "Radiology Unit", "inpatient": 0, "allow_appt": 0},
-        {"name": "X-Ray Room", "inpatient": 0, "allow_appt": 0},
+        {"name": "Laboratory Unit", "inpatient": 0, "allow_appt": 1},
+        {"name": "Sample Collection Room", "inpatient": 0, "allow_appt": 1},
+        {"name": "Radiology Unit", "inpatient": 0, "allow_appt": 1},
+        {"name": "X-Ray Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Ultrasound Room", "inpatient": 0, "allow_appt": 1},
-        {"name": "Pharmacy Unit", "inpatient": 0, "allow_appt": 0},
-        {"name": "Injection / Treatment Room", "inpatient": 0, "allow_appt": 0},
+        {"name": "Pharmacy Unit", "inpatient": 0, "allow_appt": 1},
+        {"name": "Injection / Treatment Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Vaccination Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Isolation Room", "inpatient": 1, "allow_appt": 0},
         {"name": "Physiotherapy Room", "inpatient": 0, "allow_appt": 1},
+    ]
     ]
     for t in types:
         if not frappe.db.exists("Healthcare Service Unit Type", t["name"]):
