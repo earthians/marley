@@ -51,7 +51,9 @@ def create_billing_items():
                 "item_name": i["item_name"],
                 "item_group": "Services",
                 "is_stock_item": 0,
+                "is_service_item": 1,
                 "is_sales_item": 1,
+                "stock_uom": "Nos",
                 "standard_rate": i["rate"]
             })
             doc.insert(ignore_permissions=True)
@@ -80,7 +82,9 @@ def create_radiology_templates():
                 "item_code": t["code"],
                 "item_name": t["name"],
                 "item_group": "Services",
-                "is_stock_item": 0, "is_sales_item": 1, "standard_rate": t["rate"]
+                "is_stock_item": 0, "is_service_item": 1, "is_sales_item": 1,
+                "stock_uom": "Nos",
+                "standard_rate": t["rate"]
             }).insert(ignore_permissions=True)
             # Price
             frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Sales", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
@@ -159,7 +163,8 @@ def create_procedure_templates():
             frappe.get_doc({
                 "doctype": "Item",
                 "item_code": p["code"], "item_name": p["name"], "item_group": "Services",
-                "is_stock_item": 0, "is_sales_item": 1, "standard_rate": p["rate"]
+                "is_stock_item": 0, "is_service_item": 1, "is_sales_item": 1, 
+                "stock_uom": "Nos", "standard_rate": p["rate"]
             }).insert(ignore_permissions=True)
             frappe.get_doc({"doctype": "Item Price", "item_code": p["code"], "price_list": "Standard Sales", "price_list_rate": p["rate"]}).insert(ignore_permissions=True)
 
@@ -181,7 +186,7 @@ def create_procedure_templates():
                 "pre_op_nursing_checklist_template": p.get("pre_op"),
                 "post_op_nursing_checklist_template": p.get("post_op"),
                 "sample": p.get("sample"),
-                "sample_qty": p.get("sample_qty", 0),
+                "sample_qty": p.get("sample_qty", 1) if p.get("sample") else 0,
                 "consume_stock": 1 if p.get("consumables") else 0
             })
             
@@ -424,13 +429,16 @@ def create_service_units():
     if not company: return
     root_name = company
     
-    if not frappe.db.exists("Healthcare Service Unit", root_name): return
-
+    if not frappe.db.exists("Healthcare Service Unit", root_name):
+        doc = frappe.new_doc("Healthcare Service Unit")
+        doc.update({"healthcare_service_unit_name": root_name, "is_group": 1, "company": company})
+        doc.insert(ignore_permissions=True)
+    
     opd = "Outpatient Department"
     if not frappe.db.exists("Healthcare Service Unit", opd):
          doc = frappe.new_doc("Healthcare Service Unit")
          doc.update({"healthcare_service_unit_name": opd, "parent_healthcare_service_unit": root_name, "is_group": 1, "company": company})
-         doc.save(ignore_permissions=True)
+         doc.insert(ignore_permissions=True)
     
     for i in range(1, 4):
         room_name = f"Consultation Room {i}"
@@ -569,7 +577,9 @@ def create_lab_test_templates():
         if t["type"] != "No Result" and not frappe.db.exists("Item", t["code"]):
             item = frappe.new_doc("Item")
             item.update({
-                "item_code": t["code"], "item_name": t["name"], "item_group": "Laboratory", "is_stock_item": 0, "is_sales_item": 1, "standard_rate": t["rate"]
+                "item_code": t["code"], "item_name": t["name"], "item_group": "Laboratory", 
+                "is_stock_item": 0, "is_service_item": 1, "is_sales_item": 1, 
+                "stock_uom": "Nos", "standard_rate": t["rate"]
             })
             item.insert(ignore_permissions=True)
             frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Sales", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
@@ -587,7 +597,9 @@ def create_lab_test_templates():
                 "lab_test_rate": t["rate"], "lab_test_group": t["group"], 
                 "department": "Laboratory", "is_billable": 1 if t["type"] != "No Result" else 0,
                 "lab_test_template_type": t["type"], "lab_test_uom": t["uom"],
-                "lab_test_normal_range": t["range"], "sample": t["sample"],
+                "lab_test_normal_range": t["range"], 
+                "sample": t.get("sample"),
+                "sample_qty": t.get("sample_qty", 1) if t.get("sample") else 0,
                 "worksheet_instructions": "Handle sample with care. Follow standard operating procedures for analysis.",
                 "result_legend": "Note: Reference ranges are provided as a guide only. Results should be interpreted by a qualified medical professional.",
                 "legend_print_position": "Bottom"
@@ -623,7 +635,9 @@ def create_therapy_types():
                 "item_name": t["type"],
                 "item_group": "Services",
                 "is_stock_item": 0,
+                "is_service_item": 1,
                 "is_sales_item": 1,
+                "stock_uom": "Nos",
                 "standard_rate": t["rate"]
             })
             item.insert(ignore_permissions=True)
@@ -656,7 +670,7 @@ def create_medications():
     for med in meds:
         if not frappe.db.exists("Item", med["name"]):
             item = frappe.new_doc("Item")
-            item.update({"item_code": med["name"], "item_name": med["name"], "item_group": "Products", "is_stock_item": 1, "is_sales_item": 1, "standard_rate": 2})
+            item.update({"item_code": med["name"], "item_name": med["name"], "item_group": "Products", "is_stock_item": 1, "is_sales_item": 1, "stock_uom": med["form"], "standard_rate": 2})
             item.insert(ignore_permissions=True)
         if not frappe.db.exists("Medication", med["name"]):
             frappe.get_doc({"doctype": "Medication", "medication_name": med["name"], "item_code": med["name"], "generic_name": med["name"], "medication_class": "General", "strength": med["strength"], "strength_uom": med["uom"], "dosage_form": med["form"]}).insert(ignore_permissions=True)
@@ -776,13 +790,13 @@ def create_paid_op_journey_03():
     create_paid_invoice(patient, company, [{"code": "Consultation", "rate": 10}])
     
     enc = frappe.new_doc("Patient Encounter")
-    enc.update({"patient": patient, "practitioner": practitioner, "encounter_date": date, "company": company})
-    enc.append("procedure_prescription", {"procedure": "Wound Dressing", "date": date})
+    enc.update({"patient": patient, "practitioner": practitioner, "encounter_date": date, "company": company, "appointment_type": "General Consultation"})
+    enc.append("procedure_prescription", {"procedure": "Dressing Change", "date": date})
     enc.insert(ignore_permissions=True)
     enc.submit()
 
     # Procedure Payment
-    create_paid_invoice(patient, company, [{"code": "PROC-WD", "rate": 10}])
+    create_paid_invoice(patient, company, [{"code": "PROC-DRESS", "rate": 10}])
 
     # Step 4: Perform Procedure (Transactional)
     proc = frappe.new_doc("Clinical Procedure")
