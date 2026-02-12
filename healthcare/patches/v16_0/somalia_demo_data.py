@@ -399,7 +399,6 @@ def create_appointment_types():
 
 def create_service_unit_types():
     types = [
-    types = [
         {"name": "OPD Consultation Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Emergency Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Emergency Bed", "inpatient": 1, "allow_appt": 0},
@@ -420,7 +419,6 @@ def create_service_unit_types():
         {"name": "Vaccination Room", "inpatient": 0, "allow_appt": 1},
         {"name": "Isolation Room", "inpatient": 1, "allow_appt": 0},
         {"name": "Physiotherapy Room", "inpatient": 0, "allow_appt": 1},
-    ]
     ]
     for t in types:
         if not frappe.db.exists("Healthcare Service Unit Type", t["name"]):
