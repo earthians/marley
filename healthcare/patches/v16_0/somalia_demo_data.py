@@ -427,12 +427,12 @@ def create_service_unit_types():
 def create_service_units():
     company = frappe.db.get_single_value('Global Defaults', 'default_company')
     if not company: return
-    root_name = company
+    root_name = "All Healthcare Service Units"
     
-    if not frappe.db.exists("Healthcare Service Unit", root_name):
-        doc = frappe.new_doc("Healthcare Service Unit")
-        doc.update({"healthcare_service_unit_name": root_name, "is_group": 1, "company": company})
-        doc.insert(ignore_permissions=True)
+    # if not frappe.db.exists("Healthcare Service Unit", root_name):
+    #     doc = frappe.new_doc("Healthcare Service Unit")
+    #     doc.update({"healthcare_service_unit_name": root_name, "is_group": 1, "company": company})
+    #     doc.insert(ignore_permissions=True)
     
     opd = "Outpatient Department"
     if not frappe.db.exists("Healthcare Service Unit", opd):
