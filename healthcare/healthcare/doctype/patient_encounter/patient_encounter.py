@@ -485,7 +485,7 @@ def create_medication_request(encounter):
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
+def get_medications_query_old(doctype, txt, searchfield, start, page_len, filters):
 	medication_name = filters.get("medication")
 
 	medication_child = frappe.qb.DocType("Medication Linked Item")
@@ -523,6 +523,71 @@ def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
 	res = tuple(tuple(sub) for sub in data_list)
 	return res
 
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
+
+    medication_name = filters.get("medication")
+
+    item = frappe.qb.DocType("Item")
+    medication_child = frappe.qb.DocType("Medication Linked Item")
+    medication = frappe.qb.DocType("Medication")
+    bin = frappe.qb.DocType("Bin")
+
+    default_warehouse = frappe.get_cached_value(
+        "Stock Settings", None, "default_warehouse"
+    )
+
+    query = (
+        frappe.qb
+        .select(
+            item.name,
+            medication_child.brand,
+            medication_child.manufacturer,
+            bin.actual_qty
+        )
+        .from_(item)
+        .left_join(medication_child)
+            .on(medication_child.item == item.name)
+        .left_join(medication)
+            .on(medication.name == medication_child.parent)
+        .left_join(bin)
+            .on(
+                (bin.item_code == item.name)
+                & (bin.warehouse == default_warehouse)
+            )
+        .where(item.disabled == 0)
+        .where(item.name.like(f"%{txt}%"))
+        .limit(page_len)
+        .offset(start)
+    )
+
+    if medication_name:
+        query = query.where(medication.name == medication_name)
+
+    data = query.run(as_dict=True)
+
+    data_list = []
+
+    for d in data:
+        display_list = []
+
+        if d.get("name"):
+            display_list.append(d.get("name"))
+
+        if d.get("brand"):
+            display_list.append(d.get("brand"))
+
+        if d.get("manufacturer"):
+            display_list.append(d.get("manufacturer"))
+
+        qty = d.get("actual_qty") or 0
+        display_list.append(f"\nActual Qty : {qty}")
+
+        data_list.append(display_list)
+
+    return tuple(tuple(row) for row in data_list)
 
 @frappe.whitelist()
 def get_medications(medication):
