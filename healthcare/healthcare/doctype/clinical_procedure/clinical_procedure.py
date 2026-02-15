@@ -24,18 +24,16 @@ class ClinicalProcedure(Document):
 		self.set_status()
 		self.set_title()
 		if self.consume_stock:
-			self.set_actual_qty()
+			self.has_required_qty()
 
 		if self.items:
 			self.invoice_separately_as_consumables = False
 			for item in self.items:
 				if item.invoice_separately_as_consumables:
 					self.invoice_separately_as_consumables = True
+					break
 
 	def before_insert(self):
-		if self.consume_stock:
-			self.set_actual_qty()
-
 		if self.service_request:
 			has_procedure = frappe.db.exists(
 				"Clinical Procedure",
@@ -64,8 +62,7 @@ class ClinicalProcedure(Document):
 				patient = frappe.get_doc("Patient", self.patient)
 				sample_collection = create_sample_doc(template, patient, None, self.company)
 				self.db_set("sample", sample_collection.name)
-
-		self.reload()
+				self.notify_update()
 
 	def on_submit(self):
 		self.create_nursing_tasks(post_event=False)
@@ -124,54 +121,49 @@ class ClinicalProcedure(Document):
 			consumable_total_amount = 0
 			consumption_details = False
 			customer = frappe.db.get_value("Patient", self.patient, "customer")
-			if customer:
-				for item in self.items:
-					if item.invoice_separately_as_consumables:
-						price_list, price_list_currency = frappe.db.get_values(
-							"Price List", {"selling": 1}, ["name", "currency"]
-						)[0]
-						ctx: ItemDetailsCtx = ItemDetailsCtx(
-							{
-								"doctype": "Sales Invoice",
-								"item_code": item.item_code,
-								"company": self.company,
-								"warehouse": self.warehouse,
-								"customer": customer,
-								"selling_price_list": price_list,
-								"price_list_currency": price_list_currency,
-								"plc_conversion_rate": 1.0,
-								"conversion_rate": 1.0,
-							}
-						)
-						item_details = get_item_details(ctx)
-						item_price = item_details.price_list_rate * item.qty
-						item_consumption_details = (
-							item_details.item_name
-							+ " "
-							+ str(item.qty)
-							+ " "
-							+ item.uom
-							+ " "
-							+ str(item_price)
-						)
-						consumable_total_amount += item_price
-						if not consumption_details:
-							consumption_details = _("Clinical Procedure ({0}):").format(self.name)
-						consumption_details += "\n\t" + item_consumption_details
-
-				if consumable_total_amount > 0:
-					frappe.db.set_value(
-						"Clinical Procedure", self.name, "consumable_total_amount", consumable_total_amount
-					)
-					frappe.db.set_value(
-						"Clinical Procedure", self.name, "consumption_details", consumption_details
-					)
-			else:
+			if not customer:
 				frappe.throw(
 					_("Please set Customer in Patient {0}").format(frappe.bold(self.patient)),
 					title=_("Customer Not Found"),
 				)
 
+			for item in self.items:
+				if item.invoice_separately_as_consumables:
+					price_list, price_list_currency = frappe.db.get_values(
+						"Price List", {"selling": 1}, ["name", "currency"]
+					)[0]
+					ctx: ItemDetailsCtx = ItemDetailsCtx(
+						{
+							"doctype": "Sales Invoice",
+							"item_code": item.item_code,
+							"company": self.company,
+							"warehouse": self.warehouse,
+							"customer": customer,
+							"selling_price_list": price_list,
+							"price_list_currency": price_list_currency,
+							"plc_conversion_rate": 1.0,
+							"conversion_rate": 1.0,
+						}
+					)
+					item_details = get_item_details(ctx)
+					item_price = item_details.price_list_rate * item.qty
+					item_consumption_details = (
+						item_details.item_name + " " + str(item.qty) + " " + item.uom + " " + str(item_price)
+					)
+					consumable_total_amount += item_price
+					if not consumption_details:
+						consumption_details = _("Clinical Procedure ({0}):").format(self.name)
+					consumption_details += "\n\t" + item_consumption_details
+
+			if consumable_total_amount > 0:
+				frappe.db.set_value(
+					"Clinical Procedure",
+					self.name,
+					{
+						"consumable_total_amount": consumable_total_amount,
+						"consumption_details": consumption_details,
+					},
+				)
 		self.db_set("status", "Completed")
 
 		if self.service_request:
@@ -186,7 +178,7 @@ class ClinicalProcedure(Document):
 
 	@frappe.whitelist()
 	def start_procedure(self):
-		allow_start = self.set_actual_qty()
+		allow_start = self.has_required_qty()
 
 		if allow_start:
 			validate_nursing_tasks(self)
@@ -202,18 +194,17 @@ class ClinicalProcedure(Document):
 
 		return "insufficient stock"
 
-	def set_actual_qty(self):
+	def has_required_qty(self):
 		allow_negative_stock = frappe.db.get_single_value("Stock Settings", "allow_negative_stock")
+		if allow_negative_stock:
+			return True
 
-		allow_start = True
 		for d in self.get("items"):
-			d.actual_qty = get_stock_qty(d.item_code, self.warehouse)
-			# validate qty
-			if not allow_negative_stock and d.actual_qty < d.qty:
-				allow_start = False
-				break
+			actual_qty = get_stock_qty(d.item_code, self.warehouse)
+			if actual_qty < d.qty:
+				return False
 
-		return allow_start
+		return True
 
 	@frappe.whitelist()
 	def make_material_receipt(self, submit=False):
