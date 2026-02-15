@@ -10,12 +10,12 @@
  "label": "Diagnostics",
  "link_to": "Diagnostics",
  "link_type": "Workspace Sidebar",
- "modified": "2026-01-13 15:14:06.711200",
+ "modified": "2026-02-12 08:25:54.866045",
  "modified_by": "Administrator",
  "name": "Diagnostics",
  "owner": "Administrator",
  "parent_icon": "Marley Health",
- "restrict_removal": 0,
+ "restrict_removal": 1,
  "roles": [],
  "standard": 1
 }

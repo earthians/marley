@@ -1,0 +1,14 @@
+{
+  "src/patient_portal.css": {
+    "file": "assets/patient_portal-6f630a25.css",
+    "src": "src/patient_portal.css"
+  },
+  "src/patient_portal.js": {
+    "css": [
+      "assets/patient_portal-6f630a25.css"
+    ],
+    "file": "assets/patient_portal-6582b8da.js",
+    "isEntry": true,
+    "src": "src/patient_portal.js"
+  }
+}
