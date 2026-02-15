@@ -37,14 +37,14 @@ class ClinicalProcedure(Document):
 			self.set_actual_qty()
 
 		if self.service_request:
-			has_proceedure = frappe.db.exists(
+			has_procedure = frappe.db.exists(
 				"Clinical Procedure",
 				{"service_request": self.service_request, "docstatus": 0},
 			)
-			if has_proceedure:
+			if has_procedure:
 				frappe.throw(
 					_("Clinical Procedure {0} already created from service request {1}").format(
-						frappe.bold(get_link_to_form("Clinical Procedure", has_proceedure)),
+						frappe.bold(get_link_to_form("Clinical Procedure", has_procedure)),
 						frappe.bold(get_link_to_form("Service Request", self.service_request)),
 					),
 					title=_("Already Exist"),
