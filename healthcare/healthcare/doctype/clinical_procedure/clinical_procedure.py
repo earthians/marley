@@ -191,7 +191,13 @@ class ClinicalProcedure(Document):
 		if allow_start:
 			validate_nursing_tasks(self)
 
-			self.db_set("status", "In Progress")
+			self.db_set(
+				{
+					"status": "In Progress",
+					"start_time": nowtime(),
+				}
+			)
+			self.notify_update()
 			return "success"
 
 		return "insufficient stock"
