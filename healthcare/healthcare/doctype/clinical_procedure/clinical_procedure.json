@@ -8,26 +8,26 @@
  "field_order": [
   "naming_series",
   "title",
-  "appointment",
   "procedure_template",
   "column_break_30",
   "company",
+  "appointment",
   "section_break_6",
   "patient",
   "patient_name",
   "patient_sex",
   "patient_age",
   "inpatient_record",
-  "notes",
+  "start_date",
+  "start_time",
   "column_break_7",
   "status",
   "practitioner",
   "practitioner_name",
   "medical_department",
   "service_unit",
-  "start_date",
-  "start_time",
   "sample",
+  "end_datetime",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -38,6 +38,8 @@
   "consumable_total_amount",
   "column_break_27",
   "consumption_details",
+  "section_break_igrj",
+  "notes",
   "medical_coding_section",
   "codification_table",
   "sb_refs",
@@ -76,7 +78,8 @@
    "in_standard_filter": 1,
    "label": "Patient",
    "options": "Patient",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "patient_age",
@@ -124,7 +127,8 @@
    "in_list_view": 1,
    "label": "Procedure Template",
    "options": "Clinical Procedure Template",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "service_unit",
@@ -313,6 +317,15 @@
    "options": "Service Request",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "end_datetime",
+   "fieldtype": "Datetime",
+   "label": "End Datetime"
+  },
+  {
+   "fieldname": "section_break_igrj",
+   "fieldtype": "Section Break"
   }
  ],
  "is_submittable": 1,
@@ -322,7 +335,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-12-25 09:36:38.342353",
+ "modified": "2026-02-15 19:29:19.267220",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

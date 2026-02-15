@@ -17,6 +17,7 @@
   "disabled",
   "pre_op_nursing_checklist_template",
   "post_op_nursing_checklist_template",
+  "default_duration",
   "billing_section",
   "column_break_ea5h",
   "link_existing_item",
@@ -259,6 +260,13 @@
    "fieldname": "service_request_defaults_tab",
    "fieldtype": "Tab Break",
    "label": "Service Request Defaults"
+  },
+  {
+   "fieldname": "default_duration",
+   "fieldtype": "Duration",
+   "hide_days": 1,
+   "hide_seconds": 1,
+   "label": "Default Duration"
   }
  ],
  "links": [
@@ -267,7 +275,7 @@
    "link_fieldname": "procedure_template"
   }
  ],
- "modified": "2025-12-25 09:36:40.358748",
+ "modified": "2026-02-15 17:59:28.208401",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
