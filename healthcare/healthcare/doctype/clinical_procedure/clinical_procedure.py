@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, get_link_to_form, now_datetime, nowdate, nowtime
+from frappe.utils import add_to_date, flt, get_link_to_form, now_datetime, nowdate, nowtime
 
 from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
@@ -23,8 +23,8 @@ class ClinicalProcedure(Document):
 	def validate(self):
 		self.set_status()
 		self.set_title()
-		if self.consume_stock:
-			self.has_required_qty()
+		self.set_planned_start_time()
+		self.set_planned_endtime()
 
 		if self.items:
 			self.invoice_separately_as_consumables = False
@@ -47,6 +47,28 @@ class ClinicalProcedure(Document):
 					),
 					title=_("Already Exist"),
 				)
+
+	def set_planned_start_time(self):
+		if not self.appointment:
+			return
+
+		if not self.start_time:
+			d, t = frappe.db.get_value("Patient Appointment", self.appointment, ["date", "time"])
+			self.start_date = d
+			self.start_time = t
+
+	def set_planned_endtime(self):
+		if not self.procedure_template or not self.start_time:
+			return
+
+		duration = frappe.db.get_value(
+			"Clinical Procedure Template", self.procedure_template, "default_duration"
+		)
+		if duration:
+			self.planned_end_datetime = add_to_date(
+				frappe.utils.get_datetime(f"{self.start_date} {self.start_time}"),
+				seconds=duration,
+			)
 
 	def on_cancel(self):
 		if self.service_request:
@@ -92,13 +114,6 @@ class ClinicalProcedure(Document):
 			NursingTask.create_nursing_tasks_from_template(
 				template, self, start_time=start_time, post_event=post_event
 			)
-
-		template_doc = frappe.get_doc("Clinical Procedure Template", self.procedure_template)
-		if template_doc.sample:
-			patient = frappe.get_doc("Patient", self.patient)
-			sample_collection = create_sample_doc(template_doc, patient, None, self.company)
-			self.db_set("sample", sample_collection.name)
-			self.reload()
 
 	def set_status(self):
 		if self.docstatus == 0:
@@ -164,7 +179,12 @@ class ClinicalProcedure(Document):
 						"consumption_details": consumption_details,
 					},
 				)
-		self.db_set("status", "Completed")
+		self.db_set(
+			{
+				"status": "Completed",
+				"actual_end_datetime": now_datetime(),
+			}
+		)
 
 		if self.service_request:
 			set_service_request_status(self.service_request, "completed-Request Status")
@@ -180,13 +200,13 @@ class ClinicalProcedure(Document):
 	def start_procedure(self):
 		allow_start = self.has_required_qty()
 
-		if allow_start:
+		if not self.consume_stock or allow_start:
 			validate_nursing_tasks(self)
 
 			self.db_set(
 				{
 					"status": "In Progress",
-					"start_time": nowtime(),
+					"actual_start_datetime": now_datetime(),
 				}
 			)
 			self.notify_update()
@@ -215,6 +235,7 @@ class ClinicalProcedure(Document):
 		stock_entry.company = self.company
 		expense_account = get_account(None, "expense_account", "Healthcare Settings", self.company)
 		for item in self.items:
+			item.actual_qty = get_stock_qty(item.item_code, self.warehouse)
 			if item.qty > item.actual_qty:
 				se_child = stock_entry.append("items")
 				se_child.item_code = item.item_code

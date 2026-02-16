@@ -18,8 +18,6 @@
   "patient_sex",
   "patient_age",
   "inpatient_record",
-  "start_date",
-  "start_time",
   "column_break_7",
   "status",
   "practitioner",
@@ -27,7 +25,13 @@
   "medical_department",
   "service_unit",
   "sample",
-  "end_datetime",
+  "section_break_brtm",
+  "start_date",
+  "start_time",
+  "actual_start_datetime",
+  "column_break_mugc",
+  "planned_end_datetime",
+  "actual_end_datetime",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -148,12 +152,14 @@
    "default": "Today",
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "label": "Start Date"
+   "label": "Start Date",
+   "no_copy": 1
   },
   {
    "fieldname": "start_time",
    "fieldtype": "Time",
-   "label": "Start Time"
+   "label": "Start Time",
+   "no_copy": 1
   },
   {
    "fieldname": "sample",
@@ -319,13 +325,37 @@
    "search_index": 1
   },
   {
-   "fieldname": "end_datetime",
-   "fieldtype": "Datetime",
-   "label": "End Datetime"
-  },
-  {
    "fieldname": "section_break_igrj",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "planned_end_datetime",
+   "fieldtype": "Datetime",
+   "label": "Planned End Datetime",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_end_datetime",
+   "fieldtype": "Datetime",
+   "label": "Actual End Datetime",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_brtm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "actual_start_datetime",
+   "fieldtype": "Datetime",
+   "label": "Actual Start Datetime",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_mugc",
+   "fieldtype": "Column Break"
   }
  ],
  "is_submittable": 1,
@@ -335,7 +365,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2026-02-15 19:29:19.267220",
+ "modified": "2026-02-16 11:15:37.978040",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
