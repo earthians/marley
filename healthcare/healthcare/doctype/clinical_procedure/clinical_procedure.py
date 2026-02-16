@@ -53,7 +53,9 @@ class ClinicalProcedure(Document):
 			return
 
 		if not self.start_date or not self.start_time:
-			d, t = frappe.db.get_value("Patient Appointment", self.appointment, ["date", "time"])
+			d, t = frappe.db.get_value(
+				"Patient Appointment", self.appointment, ["appointment_date", "appointment_time"]
+			)
 			self.start_date = d
 			self.start_time = t
 
@@ -142,11 +144,16 @@ class ClinicalProcedure(Document):
 					title=_("Customer Not Found"),
 				)
 
+			price_list_details = frappe.db.get_values("Price List", {"selling": 1}, ["name", "currency"])
+			if not price_list_details:
+				frappe.throw(
+					_("Please create a Selling Price List"),
+					title=_("Price List Not Found"),
+				)
+			price_list, price_list_currency = price_list_details[0]
+
 			for item in self.items:
 				if item.invoice_separately_as_consumables:
-					price_list, price_list_currency = frappe.db.get_values(
-						"Price List", {"selling": 1}, ["name", "currency"]
-					)[0]
 					ctx: ItemDetailsCtx = ItemDetailsCtx(
 						{
 							"doctype": "Sales Invoice",
