@@ -23,7 +23,7 @@ class ClinicalProcedure(Document):
 	def validate(self):
 		self.set_status()
 		self.set_title()
-		self.set_planned_start_time()
+		self.set_planned_start_date_and_time()
 		self.set_planned_endtime()
 
 		if self.items:
@@ -48,11 +48,11 @@ class ClinicalProcedure(Document):
 					title=_("Already Exist"),
 				)
 
-	def set_planned_start_time(self):
+	def set_planned_start_date_and_time(self):
 		if not self.appointment:
 			return
 
-		if not self.start_time:
+		if not self.start_date or not self.start_time:
 			d, t = frappe.db.get_value("Patient Appointment", self.appointment, ["date", "time"])
 			self.start_date = d
 			self.start_time = t
