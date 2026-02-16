@@ -35,6 +35,7 @@
   "consumables_section",
   "consume_stock",
   "warehouse",
+  "price_list",
   "items",
   "section_break_24",
   "invoice_separately_as_consumables",
@@ -356,6 +357,14 @@
   {
    "fieldname": "column_break_mugc",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "link_filters": "[[\"Price List\",\"selling\",\"=\",1]]",
+   "mandatory_depends_on": "eval: doc.consume_stock == 1",
+   "options": "Price List"
   }
  ],
  "is_submittable": 1,
@@ -365,7 +374,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2026-02-16 11:15:37.978040",
+ "modified": "2026-02-16 18:35:08.776702",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

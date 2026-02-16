@@ -35,42 +35,20 @@ class ClinicalProcedure(Document):
 
 	def before_insert(self):
 		if self.service_request:
-			has_procedure = frappe.db.exists(
+			existing_procedure = frappe.db.exists(
 				"Clinical Procedure",
 				{"service_request": self.service_request, "docstatus": 0},
 			)
-			if has_procedure:
+			if existing_procedure:
 				frappe.throw(
 					_("Clinical Procedure {0} already created from service request {1}").format(
-						frappe.bold(get_link_to_form("Clinical Procedure", has_procedure)),
+						frappe.bold(get_link_to_form("Clinical Procedure", existing_procedure)),
 						frappe.bold(get_link_to_form("Service Request", self.service_request)),
 					),
 					title=_("Already Exist"),
 				)
 
-	def set_planned_start_date_and_time(self):
-		if not self.appointment:
-			return
-
-		if not self.start_date or not self.start_time:
-			d, t = frappe.db.get_value(
-				"Patient Appointment", self.appointment, ["appointment_date", "appointment_time"]
-			)
-			self.start_date = d
-			self.start_time = t
-
-	def set_planned_endtime(self):
-		if not self.procedure_template or not self.start_time:
-			return
-
-		duration = frappe.db.get_value(
-			"Clinical Procedure Template", self.procedure_template, "default_duration"
-		)
-		if duration:
-			self.planned_end_datetime = add_to_date(
-				frappe.utils.get_datetime(f"{self.start_date} {self.start_time}"),
-				seconds=duration,
-			)
+		self.set_price_list()
 
 	def on_cancel(self):
 		if self.service_request:
@@ -117,6 +95,41 @@ class ClinicalProcedure(Document):
 				template, self, start_time=start_time, post_event=post_event
 			)
 
+	def set_price_list(self):
+		if self.price_list:
+			return
+
+		customer = frappe.db.get_value("Patient", self.patient, "customer")
+		if customer:
+			self.price_list = frappe.db.get_value("Customer", customer, "default_price_list")
+
+		if not self.price_list:
+			self.price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
+
+	def set_planned_start_date_and_time(self):
+		if not self.appointment:
+			return
+
+		if not self.start_date or not self.start_time:
+			d, t = frappe.db.get_value(
+				"Patient Appointment", self.appointment, ["appointment_date", "appointment_time"]
+			)
+			self.start_date = d
+			self.start_time = t
+
+	def set_planned_endtime(self):
+		if not self.procedure_template or not self.start_time:
+			return
+
+		duration = frappe.db.get_value(
+			"Clinical Procedure Template", self.procedure_template, "default_duration"
+		)
+		if duration:
+			self.planned_end_datetime = add_to_date(
+				frappe.utils.get_datetime(f"{self.start_date} {self.start_time}"),
+				seconds=duration,
+			)
+
 	def set_status(self):
 		if self.docstatus == 0:
 			self.status = "Draft"
@@ -147,13 +160,10 @@ class ClinicalProcedure(Document):
 					title=_("Customer Not Found"),
 				)
 
-			price_list_details = frappe.db.get_values("Price List", {"selling": 1}, ["name", "currency"])
-			if not price_list_details:
-				frappe.throw(
-					_("Please create a Selling Price List"),
-					title=_("Price List Not Found"),
-				)
-			price_list, price_list_currency = price_list_details[0]
+			if not self.price_list:
+				frappe.throw(_("Price List is mandatory"), title=_("Price List Not Set"))
+
+			price_list_currency = frappe.db.get_value("Price List", self.price_list, "currency")
 
 			for item in self.items:
 				if item.invoice_separately_as_consumables:
@@ -164,7 +174,7 @@ class ClinicalProcedure(Document):
 							"company": self.company,
 							"warehouse": self.warehouse,
 							"customer": customer,
-							"selling_price_list": price_list,
+							"selling_price_list": self.price_list,
 							"price_list_currency": price_list_currency,
 							"plc_conversion_rate": 1.0,
 							"conversion_rate": 1.0,
