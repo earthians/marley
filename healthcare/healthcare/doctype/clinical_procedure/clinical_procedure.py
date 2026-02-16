@@ -227,7 +227,7 @@ class ClinicalProcedure(Document):
 		return True
 
 	@frappe.whitelist()
-	def make_material_receipt(self, submit=False):
+	def make_material_receipt(self, submit: bool = False) -> dict:
 		stock_entry = frappe.new_doc("Stock Entry")
 
 		stock_entry.stock_entry_type = "Material Receipt"
