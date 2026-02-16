@@ -131,8 +131,11 @@ class ClinicalProcedure(Document):
 
 	@frappe.whitelist()
 	def complete_procedure(self):
+		stock_entry = None
 		if self.consume_stock and self.items:
 			stock_entry = make_stock_entry(self)
+
+		update_fields = {}
 
 		if self.items:
 			consumable_total_amount = 0
@@ -178,20 +181,13 @@ class ClinicalProcedure(Document):
 					consumption_details += "\n\t" + item_consumption_details
 
 			if consumable_total_amount > 0:
-				frappe.db.set_value(
-					"Clinical Procedure",
-					self.name,
-					{
-						"consumable_total_amount": consumable_total_amount,
-						"consumption_details": consumption_details,
-					},
-				)
-		self.db_set(
-			{
-				"status": "Completed",
-				"actual_end_datetime": now_datetime(),
-			}
-		)
+				update_fields["consumable_total_amount"] = consumable_total_amount
+				update_fields["consumption_details"] = consumption_details
+
+		update_fields["status"] = "Completed"
+		update_fields["actual_end_datetime"] = now_datetime()
+
+		self.db_set(update_fields)
 
 		if self.service_request:
 			set_service_request_status(self.service_request, "completed-Request Status")
