@@ -275,11 +275,7 @@
    "link_fieldname": "procedure_template"
   }
  ],
-<<<<<<< HEAD
  "modified": "2026-02-17 05:48:33.900358",
-=======
- "modified": "2026-02-15 17:59:28.208401",
->>>>>>> refs/remotes/upstream/dev
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
