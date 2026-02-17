@@ -219,6 +219,7 @@ frappe.ui.form.on("Clinical Procedure", {
 			);
 			frm.set_value("start_time", null);
 		}
+		set_defaults(frm);
 	},
 
 	patient: function (frm) {
@@ -580,4 +581,20 @@ let show_procedure_templates = function (frm, result) {
 		);
 	}
 	d.show();
+};
+
+let set_defaults = function (frm) {
+	if (frm.is_new()) {
+		frappe.db
+			.get_single_value("Stock Settings", "default_warehouse")
+			.then(value => {
+				frm.set_value("warehouse", value);
+			});
+
+		frappe.db
+			.get_single_value("Selling Settings", "selling_price_list")
+			.then(value => {
+				frm.set_value("price_list", value);
+			});
+	}
 };
