@@ -19,7 +19,7 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:42.422244",
+ "modified": "2026-02-17 06:24:00.781925",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Class",
@@ -34,12 +34,34 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Physician",
+   "select": 1,
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Nursing User",
+   "select": 1,
+   "share": 1
   }
  ],
  "quick_entry": 1,
+ "restrict_to_domain": "Healthcare",
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

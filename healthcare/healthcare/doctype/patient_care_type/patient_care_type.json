@@ -30,7 +30,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2025-12-25 09:36:32.449379",
+ "modified": "2026-02-17 14:46:07.666148",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Care Type",
@@ -45,19 +45,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -67,7 +56,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Physician",
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1
   },
   {
@@ -76,7 +66,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Nursing User",
+   "role": "HCM - Nursing User",
+   "select": 1,
    "share": 1
   }
  ],

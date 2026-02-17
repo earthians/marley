@@ -1,21 +1,43 @@
 {
  "app": "healthcare",
+ "bg_color": "blue",
  "creation": "2025-11-20 19:22:49.723194",
  "docstatus": 0,
  "doctype": "Desktop Icon",
  "hidden": 0,
  "icon": "heart-handshake",
  "icon_type": "Link",
- "idx": 5,
+ "idx": 46,
  "label": "Insurance",
  "link_to": "Insurance",
  "link_type": "Workspace Sidebar",
- "modified": "2026-02-12 08:25:55.338744",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-02-17 21:43:01.408723",
  "modified_by": "Administrator",
  "name": "Insurance",
  "owner": "Administrator",
- "parent_icon": "Marley Health",
+ "parent_icon": "Health Center",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  },
+  {
+   "role": "HCM - Accounting"
+  },
+  {
+   "role": "HCM - LabTest Approver"
+  },
+  {
+   "role": "HCM - Laboratory User"
+  },
+  {
+   "role": "HCM - Physician"
+  },
+  {
+   "role": "HCM - Nursing User"
+  }
+ ],
+ "sidebar": "Insurance",
  "standard": 1
 }

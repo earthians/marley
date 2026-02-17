@@ -23,10 +23,11 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:43.421793",
+ "modified": "2026-02-17 05:48:37.436516",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Dosage Form",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -34,24 +35,48 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Physician",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Physician",
+   "select": 1,
+   "share": 1
   },
   {
    "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Nursing User",
+   "select": 1,
+   "share": 1
   }
  ],
  "quick_entry": 1,

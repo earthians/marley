@@ -1,21 +1,43 @@
 {
  "app": "healthcare",
+ "bg_color": "blue",
  "creation": "2025-11-20 19:22:49.728375",
  "docstatus": 0,
  "doctype": "Desktop Icon",
  "hidden": 0,
  "icon": "hand-heart",
  "icon_type": "Link",
- "idx": 3,
+ "idx": 44,
  "label": "Rehabilitation",
  "link_to": "Rehabilitation",
  "link_type": "Workspace Sidebar",
- "modified": "2026-02-12 08:25:54.853018",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-02-17 21:42:47.169642",
  "modified_by": "Administrator",
  "name": "Rehabilitation",
  "owner": "Administrator",
- "parent_icon": "Marley Health",
+ "parent_icon": "Health Center",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  },
+  {
+   "role": "HCM - Accounting"
+  },
+  {
+   "role": "HCM - LabTest Approver"
+  },
+  {
+   "role": "HCM - Laboratory User"
+  },
+  {
+   "role": "HCM - Physician"
+  },
+  {
+   "role": "HCM - Nursing User"
+  }
+ ],
+ "sidebar": "Rehabilitation",
  "standard": 1
 }

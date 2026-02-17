@@ -31,7 +31,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-25 09:36:37.348884",
+ "modified": "2026-02-17 14:42:31.154220",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient History Settings",
@@ -40,15 +40,14 @@
   {
    "create": 1,
    "delete": 1,
-   "email": 1,
-   "print": 1,
    "read": 1,
-   "role": "System Manager",
-   "share": 1,
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "write": 1
   }
  ],
  "quick_entry": 1,
+ "restrict_to_domain": "Healthcare",
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

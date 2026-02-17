@@ -6,15 +6,34 @@
  "hidden": 0,
  "icon_type": "App",
  "idx": 40,
- "label": "Marley Health",
+ "label": "Health Center",
  "link": "/desk/healthcare",
  "link_type": "External",
  "logo_url": "/assets/healthcare/images/healthcare.svg",
- "modified": "2026-02-12 08:25:55.512446",
+ "modified": "2026-02-17 21:28:11.554178",
  "modified_by": "Administrator",
- "name": "Marley Health",
+ "name": "Health Center",
  "owner": "Administrator",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  },
+  {
+   "role": "HCM - Accounting"
+  },
+  {
+   "role": "HCM - LabTest Approver"
+  },
+  {
+   "role": "HCM - Laboratory User"
+  },
+  {
+   "role": "HCM - Physician"
+  },
+  {
+   "role": "HCM - Nursing User"
+  }
+ ],
  "standard": 1
 }

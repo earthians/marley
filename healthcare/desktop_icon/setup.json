@@ -1,21 +1,28 @@
 {
  "app": "healthcare",
+ "bg_color": "blue",
  "creation": "2025-11-20 19:22:49.720618",
  "docstatus": 0,
  "doctype": "Desktop Icon",
  "hidden": 0,
  "icon": "setting",
  "icon_type": "Link",
- "idx": 6,
+ "idx": 47,
  "label": "Setup",
  "link_to": "Setup",
  "link_type": "Workspace Sidebar",
- "modified": "2026-02-12 08:25:55.362678",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-02-17 21:43:08.652647",
  "modified_by": "Administrator",
  "name": "Setup",
  "owner": "Administrator",
- "parent_icon": "Marley Health",
+ "parent_icon": "Health Center",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  }
+ ],
+ "sidebar": "Setup",
  "standard": 1
 }

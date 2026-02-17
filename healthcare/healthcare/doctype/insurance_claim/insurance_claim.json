@@ -215,7 +215,7 @@
   {
    "fieldname": "mode_of_payment_section",
    "fieldtype": "Section Break",
-   "label": "Mode of Payment"
+   "label": "Method of Payment"
   },
   {
    "fieldname": "column_break_133",
@@ -259,7 +259,7 @@
   {
    "fieldname": "mode_of_payment_section",
    "fieldtype": "Section Break",
-   "label": "Mode of Payment"
+   "label": "Method of Payment"
   },
   {
    "fieldname": "column_break_133",
@@ -293,7 +293,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-25 09:39:02.134891",
+ "modified": "2026-02-17 05:48:45.231293",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",
@@ -301,6 +301,7 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
    "cancel": 1,
    "create": 1,
    "delete": 1,
@@ -309,7 +310,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1
@@ -324,37 +326,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Accounts Manager",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Accounts User",
-   "share": 1,
-   "submit": 1,
-   "write": 1
-  },
-  {
-   "amend": 1,
-   "cancel": 1,
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Accounting",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1

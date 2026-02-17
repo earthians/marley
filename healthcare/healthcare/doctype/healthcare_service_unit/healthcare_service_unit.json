@@ -41,7 +41,8 @@
    "in_global_search": 1,
    "in_list_view": 1,
    "label": "Service Unit",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "bold": 1,
@@ -258,22 +259,13 @@
    "table_fieldname": "practitioner_schedules"
   }
  ],
- "modified": "2025-12-25 09:36:44.187301",
+ "modified": "2026-02-17 05:51:45.861464",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",
  "nsm_parent_field": "parent_healthcare_service_unit",
  "owner": "Administrator",
  "permissions": [
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Nursing User",
-   "share": 1
-  },
   {
    "create": 1,
    "delete": 1,
@@ -282,7 +274,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -293,9 +286,30 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Physician",
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Nursing User",
+   "select": 1,
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Laboratory User",
+   "select": 1,
+   "share": 1
   }
  ],
  "quick_entry": 1,

@@ -51,7 +51,7 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:42.964595",
+ "modified": "2026-02-17 06:11:12.897977",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Sample",
@@ -60,12 +60,14 @@
  "permissions": [
   {
    "create": 1,
+   "delete": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -75,7 +77,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Laboratory User",
+   "role": "HCM - Laboratory User",
+   "select": 1,
    "share": 1
   }
  ],

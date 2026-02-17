@@ -1,21 +1,43 @@
 {
  "app": "healthcare",
+ "bg_color": "blue",
  "creation": "2025-11-20 19:22:49.730931",
  "docstatus": 0,
  "doctype": "Desktop Icon",
  "hidden": 0,
  "icon": "users",
  "icon_type": "Link",
- "idx": 1,
+ "idx": 42,
  "label": "Outpatient",
  "link_to": "Outpatient",
  "link_type": "Workspace Sidebar",
- "modified": "2026-02-12 08:25:54.793053",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-02-17 21:42:35.457247",
  "modified_by": "Administrator",
  "name": "Outpatient",
  "owner": "Administrator",
- "parent_icon": "Marley Health",
+ "parent_icon": "Health Center",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  },
+  {
+   "role": "HCM - Accounting"
+  },
+  {
+   "role": "HCM - LabTest Approver"
+  },
+  {
+   "role": "HCM - Laboratory User"
+  },
+  {
+   "role": "HCM - Physician"
+  },
+  {
+   "role": "HCM - Nursing User"
+  }
+ ],
+ "sidebar": "Outpatient",
  "standard": 1
 }

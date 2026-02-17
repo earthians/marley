@@ -26,10 +26,11 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:40.596778",
+ "modified": "2026-02-17 06:35:16.256254",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Organism",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -40,21 +41,56 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Laboratory User",
+   "select": 1,
+   "share": 1
   },
   {
    "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Laboratory User",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Physician",
+   "select": 1,
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Nursing User",
+   "select": 1,
+   "share": 1
   }
  ],
  "quick_entry": 1,

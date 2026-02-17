@@ -125,7 +125,7 @@
  "grid_page_length": 50,
  "in_create": 1,
  "links": [],
- "modified": "2025-12-25 09:36:29.334799",
+ "modified": "2026-02-17 05:48:39.275602",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Fee Validity",
@@ -139,7 +139,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   }

@@ -267,7 +267,7 @@
    "link_fieldname": "procedure_template"
   }
  ],
- "modified": "2025-12-25 09:36:40.358748",
+ "modified": "2026-02-17 05:48:33.900358",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
@@ -279,22 +279,36 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Physician",
+   "select": 1,
+   "share": 1
   },
   {
    "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -304,18 +318,9 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Nursing User",
+   "role": "HCM - Nursing User",
+   "select": 1,
    "share": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Physician",
-   "share": 1,
-   "write": 1
   }
  ],
  "restrict_to_domain": "Healthcare",
@@ -325,6 +330,5 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "template",
- "track_changes": 1,
- "track_seen": 1
+ "track_changes": 1
 }

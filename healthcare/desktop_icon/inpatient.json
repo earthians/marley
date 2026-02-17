@@ -1,21 +1,43 @@
 {
  "app": "healthcare",
+ "bg_color": "blue",
  "creation": "2025-11-20 19:22:49.717981",
  "docstatus": 0,
  "doctype": "Desktop Icon",
  "hidden": 0,
  "icon": "bed",
  "icon_type": "Link",
- "idx": 2,
+ "idx": 43,
  "label": "Inpatient",
  "link_to": "Inpatient",
  "link_type": "Workspace Sidebar",
- "modified": "2026-02-12 08:25:54.828971",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-02-17 21:42:41.426577",
  "modified_by": "Administrator",
  "name": "Inpatient",
  "owner": "Administrator",
- "parent_icon": "Marley Health",
+ "parent_icon": "Health Center",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  },
+  {
+   "role": "HCM - Accounting"
+  },
+  {
+   "role": "HCM - LabTest Approver"
+  },
+  {
+   "role": "HCM - Laboratory User"
+  },
+  {
+   "role": "HCM - Physician"
+  },
+  {
+   "role": "HCM - Nursing User"
+  }
+ ],
+ "sidebar": "Inpatient",
  "standard": 1
 }

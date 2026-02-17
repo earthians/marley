@@ -212,7 +212,7 @@
    "link_fieldname": "service_unit_type"
   }
  ],
- "modified": "2025-12-25 09:36:31.415367",
+ "modified": "2026-02-17 05:48:41.757490",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
@@ -227,7 +227,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   }

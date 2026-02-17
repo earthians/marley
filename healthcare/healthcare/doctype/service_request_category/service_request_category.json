@@ -34,10 +34,11 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:35.637980",
+ "modified": "2026-02-17 15:34:03.079537",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request Category",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -45,10 +46,12 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -57,22 +60,25 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1,
    "write": 1
   },
   {
-   "create": 1,
    "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Physician",
-   "share": 1
+   "role": "HCM - Physician",
+   "select": 1,
+   "share": 1,
+   "write": 1
   },
   {
    "email": 1,
@@ -80,7 +86,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Nursing User",
+   "role": "HCM - Nursing User",
+   "select": 1,
    "share": 1
   }
  ],

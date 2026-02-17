@@ -31,10 +31,11 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:45.002461",
+ "modified": "2026-02-17 06:10:06.997068",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test UOM",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -45,7 +46,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Healthcare Administrator",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -55,7 +57,8 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Laboratory User",
+   "role": "HCM - Laboratory User",
+   "select": 1,
    "share": 1
   }
  ],

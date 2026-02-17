@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "autoname": "autoincrement",
  "creation": "2025-08-26 15:54:25.540082",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -114,10 +115,11 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-17 11:31:39.143726",
+ "modified": "2026-02-17 05:58:02.590343",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Payment Record",
+ "naming_rule": "Autoincrement",
  "owner": "Administrator",
  "permissions": [
   {
@@ -128,11 +130,26 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Accounting",
+   "select": 1,
    "share": 1,
    "write": 1
   }
  ],
+ "restrict_to_domain": "Healthcare",
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

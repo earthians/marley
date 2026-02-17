@@ -381,6 +381,7 @@
   {
    "fieldname": "middle_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Middle Name (optional)",
    "no_copy": 1
   },
@@ -445,7 +446,7 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "default": "1",
+   "default": "0",
    "fieldname": "invite_user",
    "fieldtype": "Check",
    "label": "Invite as User",
@@ -465,7 +466,7 @@
    "fieldname": "uid",
    "fieldtype": "Data",
    "in_standard_filter": 1,
-   "label": "Identification Number (UID)",
+   "label": "ID / IC / Mykad",
    "unique": 1
   },
   {
@@ -612,10 +613,11 @@
   }
  ],
  "max_attachments": 50,
- "modified": "2025-12-25 09:36:34.528457",
+ "modified": "2026-02-17 14:55:05.469587",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -623,10 +625,23 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "HCM - Healthcare Administrator",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1,
    "write": 1
   },
@@ -635,34 +650,60 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Physician",
+   "role": "HCM - Physician",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Nursing User",
+   "select": 1,
+   "share": 1
   },
   {
    "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Laboratory User",
+   "role": "HCM - Nursing User",
+   "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HCM - Laboratory User",
+   "select": 1,
+   "share": 1
   },
   {
    "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,
+   "if_owner": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Nursing User",
+   "role": "HCM - Laboratory User",
+   "select": 1,
    "share": 1,
    "write": 1
   }

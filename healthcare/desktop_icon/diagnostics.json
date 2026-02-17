@@ -1,21 +1,43 @@
 {
  "app": "healthcare",
+ "bg_color": "blue",
  "creation": "2025-11-20 19:22:49.725791",
  "docstatus": 0,
  "doctype": "Desktop Icon",
  "hidden": 0,
  "icon": "flask-conical",
  "icon_type": "Link",
- "idx": 4,
+ "idx": 45,
  "label": "Diagnostics",
  "link_to": "Diagnostics",
  "link_type": "Workspace Sidebar",
- "modified": "2026-02-12 08:25:54.866045",
+ "logo_url": "/assets/healthcare/images/healthcare.svg",
+ "modified": "2026-02-17 21:42:54.896012",
  "modified_by": "Administrator",
  "name": "Diagnostics",
  "owner": "Administrator",
- "parent_icon": "Marley Health",
+ "parent_icon": "Health Center",
  "restrict_removal": 1,
- "roles": [],
+ "roles": [
+  {
+   "role": "HCM - Healthcare Administrator"
+  },
+  {
+   "role": "HCM - Accounting"
+  },
+  {
+   "role": "HCM - Physician"
+  },
+  {
+   "role": "HCM - Nursing User"
+  },
+  {
+   "role": "HCM - LabTest Approver"
+  },
+  {
+   "role": "HCM - Laboratory User"
+  }
+ ],
+ "sidebar": "Diagnostics",
  "standard": 1
 }
