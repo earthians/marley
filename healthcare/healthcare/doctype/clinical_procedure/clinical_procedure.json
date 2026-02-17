@@ -8,34 +8,29 @@
  "field_order": [
   "naming_series",
   "title",
+  "appointment",
   "procedure_template",
   "column_break_30",
   "company",
-  "appointment",
   "section_break_6",
   "patient",
   "patient_name",
   "patient_sex",
   "patient_age",
   "inpatient_record",
+  "notes",
   "column_break_7",
   "status",
   "practitioner",
   "practitioner_name",
   "medical_department",
   "service_unit",
-  "sample",
-  "section_break_brtm",
   "start_date",
   "start_time",
-  "actual_start_datetime",
-  "column_break_mugc",
-  "planned_end_datetime",
-  "actual_end_datetime",
+  "sample",
   "consumables_section",
   "consume_stock",
   "warehouse",
-  "price_list",
   "items",
   "section_break_24",
   "invoice_separately_as_consumables",
@@ -43,8 +38,6 @@
   "consumable_total_amount",
   "column_break_27",
   "consumption_details",
-  "section_break_igrj",
-  "notes",
   "medical_coding_section",
   "codification_table",
   "sb_refs",
@@ -56,18 +49,20 @@
  ],
  "fields": [
   {
-   "fetch_from": "patient.inpatient_record",
-   "fieldname": "inpatient_record",
-   "fieldtype": "Link",
-   "label": "Inpatient Record",
-   "options": "Inpatient Record",
-   "read_only": 1
-  },
-  {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
    "options": "HLC-CPR-.YYYY.-"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "appointment",
@@ -76,55 +71,6 @@
    "label": "Appointment",
    "options": "Patient Appointment",
    "set_only_once": 1
-  },
-  {
-   "fieldname": "patient",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Patient",
-   "options": "Patient",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "patient_age",
-   "fieldtype": "Data",
-   "label": "Age",
-   "read_only": 1
-  },
-  {
-   "fieldname": "patient_sex",
-   "fieldtype": "Link",
-   "label": "Gender",
-   "options": "Gender",
-   "read_only": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "prescription",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Procedure Prescription",
-   "options": "Procedure Prescription",
-   "read_only": 1
-  },
-  {
-   "fieldname": "medical_department",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Medical Department",
-   "options": "Medical Department"
-  },
-  {
-   "fieldname": "practitioner",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Healthcare Practitioner",
-   "options": "Healthcare Practitioner"
-  },
-  {
-   "fieldname": "column_break_7",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "procedure_template",
@@ -136,44 +82,54 @@
    "search_index": 1
   },
   {
-   "fieldname": "service_unit",
+   "fieldname": "column_break_30",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
    "fieldtype": "Link",
-   "label": "Service Unit",
-   "options": "Healthcare Service Unit",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_sex",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1,
    "set_only_once": 1
   },
   {
-   "fieldname": "warehouse",
+   "fieldname": "patient_age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
    "fieldtype": "Link",
-   "label": "Warehouse",
-   "mandatory_depends_on": "eval: doc.consume_stock == 1",
-   "options": "Warehouse"
-  },
-  {
-   "default": "Today",
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "label": "Start Date",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "start_time",
-   "fieldtype": "Time",
-   "label": "Start Time",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "sample",
-   "fieldtype": "Link",
-   "label": "Sample",
-   "options": "Sample Collection"
-  },
-  {
-   "default": "0",
-   "fieldname": "invoiced",
-   "fieldtype": "Check",
-   "label": "Invoiced",
-   "no_copy": 1,
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
    "read_only": 1
   },
   {
@@ -183,52 +139,8 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company"
-  },
-  {
-   "default": "0",
-   "fieldname": "consume_stock",
-   "fieldtype": "Check",
-   "label": "Consume Stock"
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Consumables",
-   "options": "Clinical Procedure Item"
-  },
-  {
-   "default": "0",
-   "fieldname": "invoice_separately_as_consumables",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Invoice Consumables Separately",
-   "read_only": 1
-  },
-  {
-   "depends_on": "invoice_separately_as_consumables",
-   "fieldname": "consumable_total_amount",
-   "fieldtype": "Currency",
-   "label": "Consumable Total Amount",
-   "read_only": 1
-  },
-  {
-   "depends_on": "invoice_separately_as_consumables",
-   "fieldname": "consumption_details",
-   "fieldtype": "Small Text",
-   "label": "Consumption Details"
-  },
-  {
-   "default": "0",
-   "depends_on": "invoice_separately_as_consumables",
-   "fieldname": "consumption_invoiced",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Consumption Invoiced",
-   "read_only": 1
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
   },
   {
    "depends_on": "eval:!doc.__islocal",
@@ -241,48 +153,11 @@
    "read_only": 1
   },
   {
-   "fieldname": "amended_from",
+   "fieldname": "practitioner",
    "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Clinical Procedure",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
-   "collapsible": 1,
-   "collapsible_depends_on": "consume_stock",
-   "fieldname": "consumables_section",
-   "fieldtype": "Section Break",
-   "label": "Consumables"
-  },
-  {
-   "fieldname": "column_break_27",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_24",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_30",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_6",
-   "fieldtype": "Section Break"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "sb_refs",
-   "fieldtype": "Section Break",
-   "label": "More Information"
-  },
-  {
-   "fieldname": "patient_name",
-   "fieldtype": "Data",
-   "label": "Patient Name",
-   "read_only": 1
+   "in_standard_filter": 1,
+   "label": "Healthcare Practitioner",
+   "options": "Healthcare Practitioner"
   },
   {
    "fieldname": "practitioner_name",
@@ -292,18 +167,99 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_34",
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Medical Department",
+   "options": "Medical Department"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit",
+   "set_only_once": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time"
+  },
+  {
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "options": "Sample Collection"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "consume_stock",
+   "fieldname": "consumables_section",
+   "fieldtype": "Section Break",
+   "label": "Consumables"
+  },
+  {
+   "default": "0",
+   "fieldname": "consume_stock",
+   "fieldtype": "Check",
+   "label": "Consume Stock"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "mandatory_depends_on": "eval: doc.consume_stock == 1",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Consumables",
+   "options": "Clinical Procedure Item"
+  },
+  {
+   "fieldname": "section_break_24",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "invoice_separately_as_consumables",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Invoice Consumables Separately",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "invoice_separately_as_consumables",
+   "fieldname": "consumption_invoiced",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Consumption Invoiced",
+   "read_only": 1
+  },
+  {
+   "depends_on": "invoice_separately_as_consumables",
+   "fieldname": "consumable_total_amount",
+   "fieldtype": "Currency",
+   "label": "Consumable Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_27",
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Title",
-   "no_copy": 1,
-   "print_hide": 1,
-   "read_only": 1
+   "depends_on": "invoice_separately_as_consumables",
+   "fieldname": "consumption_details",
+   "fieldtype": "Small Text",
+   "label": "Consumption Details"
   },
   {
    "collapsible": 1,
@@ -318,6 +274,16 @@
    "options": "Codification Table"
   },
   {
+   "collapsible": 1,
+   "fieldname": "sb_refs",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "column_break_34",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "service_request",
    "fieldtype": "Link",
    "label": "Service Request",
@@ -326,45 +292,29 @@
    "search_index": 1
   },
   {
-   "fieldname": "section_break_igrj",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "planned_end_datetime",
-   "fieldtype": "Datetime",
-   "label": "Planned End Datetime",
+   "default": "0",
+   "fieldname": "invoiced",
+   "fieldtype": "Check",
+   "label": "Invoiced",
    "no_copy": 1,
    "read_only": 1
   },
   {
-   "fieldname": "actual_end_datetime",
-   "fieldtype": "Datetime",
-   "label": "Actual End Datetime",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_brtm",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "actual_start_datetime",
-   "fieldtype": "Datetime",
-   "label": "Actual Start Datetime",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_mugc",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "price_list",
+   "fieldname": "prescription",
    "fieldtype": "Link",
-   "label": "Price List",
-   "link_filters": "[[\"Price List\",\"selling\",\"=\",1]]",
-   "mandatory_depends_on": "eval: doc.consume_stock == 1",
-   "options": "Price List"
+   "hidden": 1,
+   "label": "Procedure Prescription",
+   "options": "Procedure Prescription",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Clinical Procedure",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
@@ -374,11 +324,7 @@
    "link_fieldname": "reference_name"
   }
  ],
-<<<<<<< HEAD
- "modified": "2026-02-17 05:48:33.125122",
-=======
- "modified": "2026-02-16 18:35:08.776702",
->>>>>>> refs/remotes/upstream/dev
+ "modified": "2026-02-18 06:06:13.409823",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
