@@ -154,8 +154,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "collapsible": 1,
-   "collapsible_depends_on": "!doc.__islocal",
    "description": "Properties of the linked Item, you may further configure Batch Number and Expiry, Serial Number, Shelf Life etc. in the Item master",
    "fieldname": "item_details",
    "fieldtype": "Section Break",
@@ -168,7 +166,6 @@
    "options": "Role"
   },
   {
-   "collapsible": 1,
    "depends_on": "is_combination",
    "fieldname": "combinations_section",
    "fieldtype": "Section Break",
@@ -219,7 +216,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-01-18 10:13:12.796752",
+ "modified": "2026-02-20 19:58:49.408370",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
