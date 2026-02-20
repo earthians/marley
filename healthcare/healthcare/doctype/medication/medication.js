@@ -51,6 +51,12 @@ frappe.ui.form.on("Medication", {
 });
 
 frappe.ui.form.on("Medication Linked Item", {
+	item: function (frm, cdt, cdn) {
+		let child = frappe.get_doc(cdt, cdn);
+		frappe.model.set_value(cdt, cdn, "item_code", child.item);
+
+		mark_change_in_item(frm, cdt, cdn);
+	},
 	rate: function (frm, cdt, cdn) {
 		mark_change_in_item(frm, cdt, cdn);
 	},
