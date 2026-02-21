@@ -216,11 +216,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
-<<<<<<< HEAD
- "modified": "2025-09-02 12:26:22.513604",
-=======
  "modified": "2026-02-20 19:58:49.408370",
->>>>>>> 0dac5b2 (fix: set sections collapsible false)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
