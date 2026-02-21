@@ -51,10 +51,6 @@ frappe.ui.form.on('Medication', {
 	}
 });
 
-<<<<<<< HEAD
-frappe.ui.form.on('Medication Linked Item', {
-	rate: function(frm, cdt, cdn) {
-=======
 frappe.ui.form.on("Medication Linked Item", {
 	item: function (frm, cdt, cdn) {
 		let child = frappe.get_doc(cdt, cdn);
@@ -62,8 +58,8 @@ frappe.ui.form.on("Medication Linked Item", {
 
 		mark_change_in_item(frm, cdt, cdn);
 	},
+
 	rate: function (frm, cdt, cdn) {
->>>>>>> 19f1ace (fix: link existing item via link field)
 		mark_change_in_item(frm, cdt, cdn);
 	},
 
