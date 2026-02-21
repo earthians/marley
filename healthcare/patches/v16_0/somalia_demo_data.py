@@ -8,20 +8,54 @@ def execute():
     Excludes data already set up by healthcare/setup.py.
     Workflow Focus: Payment-First logic as per Somalia Hospital standard.
     """
+    create_uoms()
     create_appointment_types()
     create_service_unit_types()
     create_service_units()
     create_practitioners()
     create_patients()
+    create_nursing_checklists()
+    create_observation_templates()
     create_lab_test_templates()
     create_procedure_templates()
     create_therapy_types()
     create_medications()
     create_radiology_templates()
-    create_nursing_checklists()
-    create_observation_templates()
     create_complaints_and_diagnoses()
     create_billing_items() # Ensure Consultation and other services are items
+
+def create_uoms():
+    """Ensure all required UOMs (standard and Lab Test) exist, aligning with healthcare/setup.py."""
+    # Standard UOMs for Items
+    standard_uoms = ["Nos", "ml", "Unit", "g", "mg", "Capsule", "Tablet", "Hour", "Day", "Box"]
+    for uom in list(set(standard_uoms)):
+        if not frappe.db.exists("UOM", uom):
+            frappe.get_doc({
+                "doctype": "UOM",
+                "uom_name": uom
+            }).insert(ignore_permissions=True)
+
+    # Lab Test UOMs (Comprehensive list from setup.py + Extras)
+    lab_uoms = [
+        "umol/L", "mg/L", "mg / dl", "pg / ml", "U/ml", "/HPF", "Million Cells / cumm", 
+        "Lakhs Cells / cumm", "U / L", "g / L", "IU / ml", "gm %", "Microgram", "Micron", 
+        "Cells / cumm", "%", "mm / dl", "mm / hr", "ulU / ml", "ng / ml", "ng / dl", 
+        "ug / dl", "g/dL", "mg/dL", "mmol/L", "10^3/uL", "10^6/uL", "IU/L", "ml", "g", 
+        "Unit", "fL", "pg", "Titre", "/hpf", "cm"
+    ]
+    for uom in list(set(lab_uoms)):
+        if not frappe.db.exists("Lab Test UOM", uom):
+            frappe.get_doc({"doctype": "Lab Test UOM", "lab_test_uom": uom}).insert(ignore_permissions=True)
+
+    # Ensure required Item Groups exist (Base)
+    for group in ["Services", "Products", "Laboratory", "Medical Supplies"]:
+        if not frappe.db.exists("Item Group", group):
+            frappe.get_doc({
+                "doctype": "Item Group",
+                "item_group_name": group,
+                "parent_item_group": "All Item Groups",
+                "is_group": 0
+            }).insert(ignore_permissions=True)
     
     # # Advanced Flow Scenarios (Payment-First)
     # create_paid_op_journey_01() # Consultation -> Payment -> Encounter -> Lab Payment -> Lab Result
@@ -58,10 +92,10 @@ def create_billing_items():
             })
             doc.insert(ignore_permissions=True)
             # Create standard price
-            if not frappe.db.exists("Item Price", {"item_code": i["item_code"]}):
+            if not frappe.db.exists("Item Price", {"item_code": i["item_code"], "price_list": "Standard Selling"}):
                  price = frappe.new_doc("Item Price")
                  price.item_code = i["item_code"]
-                 price.price_list = "Standard Sales"
+                 price.price_list = "Standard Selling"
                  price.price_list_rate = i["rate"]
                  price.insert(ignore_permissions=True)
 
@@ -75,6 +109,10 @@ def create_radiology_templates():
         {"name": "CT Scan Brain", "code": "RAD-CT-BRAIN", "rate": 100, "group": "CT Scan"},
     ]
     for t in templates:
+        # Ensure Item Group exists
+        if not frappe.db.exists("Item Group", t["group"]):
+            frappe.get_doc({"doctype": "Item Group", "item_group_name": t["group"], "parent_item_group": "All Item Groups", "is_group": 0}).insert(ignore_permissions=True)
+
         # Create Item first
         if not frappe.db.exists("Item", t["code"]):
             item = frappe.get_doc({
@@ -87,7 +125,11 @@ def create_radiology_templates():
                 "standard_rate": t["rate"]
             }).insert(ignore_permissions=True)
             # Price
-            frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Sales", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
+            if not frappe.db.exists("Item Price", {"item_code": t["code"], "price_list": "Standard Selling"}):
+                frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Selling", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
+
+        if not frappe.db.exists("Medical Department", "Diagnostic Imaging"):
+            frappe.get_doc({"doctype": "Medical Department", "department": "Diagnostic Imaging"}).insert(ignore_permissions=True)
 
         if not frappe.db.exists("Lab Test Template", {"lab_test_code": t["code"]}):
             doc = frappe.new_doc("Lab Test Template")
@@ -166,7 +208,8 @@ def create_procedure_templates():
                 "is_stock_item": 0, "is_service_item": 1, "is_sales_item": 1, 
                 "stock_uom": "Nos", "standard_rate": p["rate"]
             }).insert(ignore_permissions=True)
-            frappe.get_doc({"doctype": "Item Price", "item_code": p["code"], "price_list": "Standard Sales", "price_list_rate": p["rate"]}).insert(ignore_permissions=True)
+            if not frappe.db.exists("Item Price", {"item_code": p["code"], "price_list": "Standard Selling"}):
+                frappe.get_doc({"doctype": "Item Price", "item_code": p["code"], "price_list": "Standard Selling", "price_list_rate": p["rate"]}).insert(ignore_permissions=True)
 
         if not frappe.db.exists("Medical Department", p["dept"]):
             frappe.get_doc({"doctype": "Medical Department", "department": p["dept"]}).insert(ignore_permissions=True)
@@ -298,7 +341,8 @@ def create_observation_templates():
                         "doctype": "Item", "item_code": t["code"], "item_name": t["observation"], 
                         "item_group": "Services", "is_stock_item": 0, "is_sales_item": 1, "standard_rate": t["rate"]
                     }).insert(ignore_permissions=True)
-                    frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Sales", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
+                    if not frappe.db.exists("Item Price", {"item_code": t["code"], "price_list": "Standard Selling"}):
+                         frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Selling", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
 
             doc = frappe.new_doc("Observation Template")
             doc.update({
@@ -368,6 +412,9 @@ def create_nursing_checklists():
         }
     ]
     for cl in checklists:
+        if not frappe.db.exists("Medical Department", cl["dept"]):
+            frappe.get_doc({"doctype": "Medical Department", "department": cl["dept"]}).insert(ignore_permissions=True)
+
         if not frappe.db.exists("Nursing Checklist Template", cl["title"]):
             doc = frappe.new_doc("Nursing Checklist Template")
             doc.title = cl["title"]
@@ -378,6 +425,7 @@ def create_nursing_checklists():
 
 def create_appointment_types():
     types = [
+        {"name": "General Checkup", "duration": 15, "color": "#3498db", "for": "Practitioner"},
         {"name": "General Consultation", "duration": 15, "color": "#3498db", "for": "Practitioner"},
         {"name": "Follow-up Visit", "duration": 10, "color": "#2ecc71", "for": "Practitioner"},
         {"name": "Emergency Visit", "duration": 20, "color": "#e74c3c", "for": "Practitioner"},
@@ -429,23 +477,24 @@ def create_service_units():
     abbr = frappe.db.get_value("Company", company, "abbr")
     if not company: return
     root_name = f"All Healthcare Service Units - {abbr}"
+    if not frappe.db.exists("Healthcare Service Unit", root_name):
+        doc = frappe.new_doc("Healthcare Service Unit")
+        doc.update({"healthcare_service_unit_name": "All Healthcare Service Units", "is_group": 1, "company": company})
+        doc.insert(ignore_permissions=True)
     
-    # if not frappe.db.exists("Healthcare Service Unit", root_name):
-    #     doc = frappe.new_doc("Healthcare Service Unit")
-    #     doc.update({"healthcare_service_unit_name": root_name, "is_group": 1, "company": company})
-    #     doc.insert(ignore_permissions=True)
-    
-    opd = "Outpatient Department"
-    if not frappe.db.exists("Healthcare Service Unit", opd):
+    opd_label = "Outpatient Department"
+    opd_name = f"{opd_label} - {abbr}"
+    if not frappe.db.exists("Healthcare Service Unit", opd_name):
          doc = frappe.new_doc("Healthcare Service Unit")
-         doc.update({"healthcare_service_unit_name": opd, "parent_healthcare_service_unit": root_name, "is_group": 1, "company": company})
+         doc.update({"healthcare_service_unit_name": opd_label, "parent_healthcare_service_unit": root_name, "is_group": 1, "company": company})
          doc.insert(ignore_permissions=True)
     
     for i in range(1, 4):
-        room_name = f"Consultation Room {i}"
-        if not frappe.db.exists("Healthcare Service Unit", room_name):
+        room_label = f"Consultation Room {i}"
+        room_id = f"{room_label} - {abbr}"
+        if not frappe.db.exists("Healthcare Service Unit", room_id):
             doc = frappe.new_doc("Healthcare Service Unit")
-            doc.update({"healthcare_service_unit_name": room_name, "parent_healthcare_service_unit": opd, "is_group": 0, "company": company, "service_unit_type": "OPD Consultation Room"})
+            doc.update({"healthcare_service_unit_name": room_label, "parent_healthcare_service_unit": opd_name, "is_group": 0, "company": company, "service_unit_type": "OPD Consultation Room"})
             doc.save(ignore_permissions=True)
 
 def create_practitioners():
@@ -476,12 +525,6 @@ def create_patients():
             doc.save(ignore_permissions=True)
 
 def create_lab_test_templates():
-    # 1. Create Lab Test UOMs
-    uoms = ["g/dL", "mg/dL", "mg / dl", "mmol/L", "%", "10^3/uL", "10^6/uL", "IU/L", "umol/L", "ml", "g", "Unit", "mm / hr", "fL", "pg", "Titre", "/hpf"]
-    for uom in uoms:
-        if not frappe.db.exists("Lab Test UOM", uom):
-            frappe.get_doc({"doctype": "Lab Test UOM", "lab_test_uom": uom}).insert(ignore_permissions=True)
-
     # 2. Create Sample Types
     sample_types = ["Blood", "Urine", "Stool", "Sputum", "Swab"]
     for st in sample_types:
@@ -571,8 +614,11 @@ def create_lab_test_templates():
     # Creation Loop
     for t in templates:
         # 1. Ensure Item Group exists
+        if not frappe.db.exists("Item Group", t["group"]):
+            frappe.get_doc({"doctype": "Item Group", "item_group_name": t["group"], "parent_item_group": "All Item Groups", "is_group": 0}).insert(ignore_permissions=True)
+        
         if not frappe.db.exists("Item Group", "Laboratory"):
-            frappe.get_doc({"doctype": "Item Group", "item_group_name": "Laboratory", "parent_item_group": "Services", "is_group": 0}).insert(ignore_permissions=True)
+            frappe.get_doc({"doctype": "Item Group", "item_group_name": "Laboratory", "parent_item_group": "All Item Groups", "is_group": 0}).insert(ignore_permissions=True)
 
         # 2. Create Item (except for 'No Result' components that shouldn't be billed individually)
         if t["type"] != "No Result" and not frappe.db.exists("Item", t["code"]):
@@ -583,7 +629,8 @@ def create_lab_test_templates():
                 "stock_uom": "Nos", "standard_rate": t["rate"]
             })
             item.insert(ignore_permissions=True)
-            frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Sales", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
+            if not frappe.db.exists("Item Price", {"item_code": t["code"], "price_list": "Standard Selling"}):
+                frappe.get_doc({"doctype": "Item Price", "item_code": t["code"], "price_list": "Standard Selling", "price_list_rate": t["rate"]}).insert(ignore_permissions=True)
 
         if not frappe.db.exists("Medical Department", "Laboratory"):
             frappe.get_doc({"doctype": "Medical Department", "department": "Laboratory"}).insert(ignore_permissions=True)
@@ -628,31 +675,18 @@ def create_therapy_types():
     ]
     
     for t in therapies:
-        # 1. Create Item
-        if not frappe.db.exists("Item", t["code"]):
-            item = frappe.new_doc("Item")
-            item.update({
-                "item_code": t["code"],
-                "item_name": t["type"],
-                "item_group": "Services",
-                "is_stock_item": 0,
-                "is_service_item": 1,
-                "is_sales_item": 1,
-                "stock_uom": "Nos",
-                "standard_rate": t["rate"]
-            })
-            item.insert(ignore_permissions=True)
-            
-            # Create price
-            frappe.get_doc({
-                "doctype": "Item Price",
-                "item_code": t["code"],
-                "price_list": "Standard Sales",
-                "price_list_rate": t["rate"]
-            }).insert(ignore_permissions=True)
+        if not frappe.db.exists("Medical Department", t["dept"]):
+            frappe.get_doc({"doctype": "Medical Department", "department": t["dept"]}).insert(ignore_permissions=True)
 
         # 2. Create Therapy Type
+        # Note: Therapy Type's after_insert hook automatically creates the Item and Item Price.
+        # We must NOT create them manually to avoid DuplicateEntryError.
         if not frappe.db.exists("Therapy Type", t["type"]):
+            # If the Item already exists (e.g. from a partially failed previous run), 
+            # we must remove it so the hook can recreate it safely.
+            if frappe.db.exists("Item", t["code"]):
+                frappe.delete_doc("Item", t["code"], force=1, ignore_permissions=True)
+
             doc = frappe.new_doc("Therapy Type")
             doc.update({
                 "therapy_type": t["type"],
@@ -665,10 +699,25 @@ def create_therapy_types():
                 "medical_department": t["dept"]
             })
             doc.insert(ignore_permissions=True)
+        else:
+            # Ensure price list exists even if Therapy Type exists
+            if not frappe.db.exists("Item Price", {"item_code": t["code"], "price_list": "Standard Selling"}):
+                frappe.get_doc({
+                    "doctype": "Item Price",
+                    "item_code": t["code"],
+                    "price_list": "Standard Selling",
+                    "price_list_rate": t["rate"]
+                }).insert(ignore_permissions=True)
 
 def create_medications():
+    if not frappe.db.exists("Medication Class", "General"):
+        frappe.get_doc({"doctype": "Medication Class", "medication_class": "General"}).insert(ignore_permissions=True)
+
     meds = [{"name": "Paracetamol", "strength": 500, "uom": "mg", "form": "Tablet"}, {"name": "Amoxicillin", "strength": 250, "uom": "mg", "form": "Capsule"}]
     for med in meds:
+        if not frappe.db.exists("Dosage Form", med["form"]):
+            frappe.get_doc({"doctype": "Dosage Form", "dosage_form": med["form"]}).insert(ignore_permissions=True)
+
         if not frappe.db.exists("Item", med["name"]):
             item = frappe.new_doc("Item")
             item.update({"item_code": med["name"], "item_name": med["name"], "item_group": "Products", "is_stock_item": 1, "is_sales_item": 1, "stock_uom": med["form"], "standard_rate": 2})
@@ -677,9 +726,43 @@ def create_medications():
             frappe.get_doc({"doctype": "Medication", "medication_name": med["name"], "item_code": med["name"], "generic_name": med["name"], "medication_class": "General", "strength": med["strength"], "strength_uom": med["uom"], "dosage_form": med["form"]}).insert(ignore_permissions=True)
 
 def create_complaints_and_diagnoses():
-    for i in ["Fever", "Cough"]:
-        if not frappe.db.exists("Complaint", i): frappe.get_doc({"doctype": "Complaint", "complaints": i}).insert(ignore_permissions=True)
-        if not frappe.db.exists("Diagnosis", i + " Syndrome"): frappe.get_doc({"doctype": "Diagnosis", "diagnosis": i + " Syndrome"}).insert(ignore_permissions=True)
+    symptoms = [
+        "Fever", "Cough", "Headache", "Abdominal Pain", "Chest Pain", 
+        "Shortness of Breath", "Nausea", "Vomiting", "Diarrhea", 
+        "Joint Pain", "Back Pain", "Skin Rash", "Fatigue", 
+        "Dizziness", "Sore Throat", "Body Weakness", "Urinary Pain",
+        "Loss of Appetite", "Night Sweats", "Earache", "Blurred Vision",
+        "Palpitations", "Constipation", "Generalized Body Aches", "Itching",
+        "Swelling (Edema)", "Numbness", "Tingling", "Heartburn", "Bloating",
+        "Insomnia", "Weight Loss", "Weight Gain", "Tremors", "Muscle Spasms",
+        "Excessive Thirst", "Frequent Urination", "Bloody Stool", "Bloody Urine",
+        "Coughing up Blood", "Yellowish Skin (Jaundice)", "Pale Skin", 
+        "Difficulty Swallowing", "Sneezing", "Runny Nose", "Nasal Congestion",
+        "Hoarseness", "Mouth Ulcers", "Gum Bleeding", "Neck Pain", "Shoulder Pain",
+        "Leg Cramps", "Fainting (Syncope)", "Memory Loss", "Confusion"
+    ]
+    for i in symptoms:
+        if not frappe.db.exists("Complaint", i): 
+            frappe.get_doc({"doctype": "Complaint", "complaints": i}).insert(ignore_permissions=True)
+        
+        # Create a basic diagnosis for each symptom if it doesn't exist
+        diag_name = i if any(x in i for x in ["Pain", "Injury", "Loss", "Swelling"]) else i + " Syndrome"
+        if not frappe.db.exists("Diagnosis", diag_name):
+            frappe.get_doc({"doctype": "Diagnosis", "diagnosis": diag_name}).insert(ignore_permissions=True)
+
+    # Add some specific common clinical diagnoses
+    clinical_diagnoses = [
+        "Malaria", "Typhoid Fever", "Upper Respiratory Tract Infection", 
+        "Gastroenteritis", "Hypertension", "Diabetes Mellitus Type 2", 
+        "Anemia", "Pneumonia", "Amoebiasis", "Giardiasis", "Asthma",
+        "Bronchitis", "Urinary Tract Infection", "Osteoarthritis", 
+        "Rheumatoid Arthritis", "Peptic Ulcer Disease", "GERD", "Migraine",
+        "Tonsillitis", "Sinusitis", "Otitis Media", "Conjunctivitis",
+        "Dermatitis", "Scabies", "Helminthiasis (Worms)"
+    ]
+    for d in clinical_diagnoses:
+        if not frappe.db.exists("Diagnosis", d):
+            frappe.get_doc({"doctype": "Diagnosis", "diagnosis": d}).insert(ignore_permissions=True)
 
 # --- PAYMENT HELPERS ---
 

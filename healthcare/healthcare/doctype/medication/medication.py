@@ -50,6 +50,32 @@ class Medication(Document):
 			if not item.item:
 				insert_item(self, item)
 			else:
+				if item.item and not item.item_code:
+					item_doc = frappe.get_doc("Item", {"name": item.item})
+					MedicationLinkedItem = frappe.get_doc("Medication Linked Item", item.name)
+					
+					MedicationLinkedItem.item_code = item_doc.item_code
+					item.item_code = item_doc.item_code
+					MedicationLinkedItem.item_group = item_doc.item_group	
+					MedicationLinkedItem.description = item_doc.description
+					MedicationLinkedItem.stock_uom = item_doc.stock_uom
+					# MedicationLinkedItem.manufacturer = item_doc.manufacturer
+
+					# make item price
+					item_price = frappe.db.exists(
+						"Item Price", {"item_code": item.item_code, "price_list": self.price_list}
+					)
+					if item_price:
+						item_price = frappe.get_doc("Item Price", item_price)
+						MedicationLinkedItem.rate = item_price.price_list_rate
+					
+					MedicationLinkedItem.brand = item_doc.brand
+					MedicationLinkedItem.save(ignore_permissions=True)
+
+					frappe.db.commit()
+
+					
+
 				if item.is_billable:
 					if item.change_in_item:
 						item_doc = frappe.get_doc("Item", {"name": item.item_code})
