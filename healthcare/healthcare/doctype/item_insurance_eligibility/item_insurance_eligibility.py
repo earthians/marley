@@ -20,13 +20,13 @@ class ItemInsuranceEligibility(Document):
 			self.set_service_item()
 
 		if self.is_active:
-			self.validate_coverage_percentageages()
+			self.validate_percentages()
 			self.validate_dates()
 			self.validate_overlaps()
 
 		self.set_title()
 
-	def validate_coverage_percentageages(self):
+	def validate_percentages(self):
 		if self.coverage == 100:
 			self.discount = 0
 
