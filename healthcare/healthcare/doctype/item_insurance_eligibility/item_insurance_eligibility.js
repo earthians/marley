@@ -25,6 +25,7 @@ frappe.ui.form.on("Item Insurance Eligibility", {
 				"Clinical Procedure Template",
 				"Therapy Type",
 				"Medication",
+				"Observation Template",
 				"Lab Test Template",
 				"Healthcare Service Unit Type",
 			];
