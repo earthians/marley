@@ -500,87 +500,112 @@ let calculate_age = function (birth) {
 
 let get_procedure_prescribed = function (frm) {
 	if (frm.doc.patient) {
-		frappe.call({
-			method: "healthcare.healthcare.doctype.clinical_procedure.clinical_procedure.get_procedure_prescribed",
-			args: { patient: frm.doc.patient },
-			callback: function (r) {
-				show_procedure_templates(frm, r.message);
-			},
-		});
+		show_orders(frm);
 	} else {
 		frappe.msgprint(__("Please select Patient to get prescribed procedure"));
 	}
 };
 
-let show_procedure_templates = function (frm, result) {
-	var d = new frappe.ui.Dialog({
-		title: __("Prescribed Procedures"),
+let show_orders = function (frm) {
+	const d = new frappe.ui.Dialog({
+		title: __("Select a Service Request"),
 		fields: [
 			{
+				fieldname: "service_html",
 				fieldtype: "HTML",
-				fieldname: "procedure_template",
+				options: `
+					<div id="service-request-list"
+						style="max-height: 420px; overflow-y: auto; padding-right: 5px;">
+						No active procedure orders found for the selected Patient
+					</div>
+				`,
 			},
 		],
-	});
-	var html_field = d.fields_dict.procedure_template.$wrapper;
-	html_field.empty();
-	$.each(result, function (x, y) {
-		var row = $(
-			repl(
-				'<div class="col-xs-12 row" style="padding-top:12px;">\
-				<div class="col-xs-3"> %(procedure_template)s </div>\
-				<div class="col-xs-4">%(encounter)s</div>\
-				<div class="col-xs-3"> %(date)s </div>\
-				<div class="col-xs-1">\
-				<a data-name="%(name)s" data-procedure-template="%(procedure_template)s"\
-					data-encounter="%(encounter)s" data-practitioner="%(practitioner)s"\
-					data-invoiced="%(invoiced)s" data-source="%(source)s"\
-					data-insurance-payor="%(insurance_payor)s" data-insurance-policy="%(insurance_policy)s"\
-					href="#"><button class="btn btn-default btn-xs">Get</button></a>\
-				</div>\
-			</div><hr>',
-				{
-					procedure_template: y[0],
-					encounter: y[1],
-					invoiced: y[2],
-					practitioner: y[3],
-					date: y[4],
-					name: y[5],
-					insurance_policy: y[6] ? y[6] : "",
-					insurance_payor: y[7],
-				},
-			),
-		).appendTo(html_field);
-		row.find("a").click(function () {
-			frm.doc.procedure_template = $(this).attr("data-procedure-template");
-			frm.doc.service_request = $(this).attr("data-name");
-			frm.doc.practitioner = $(this).attr("data-practitioner");
-			if ($(this).attr("data-insurance-policy")) {
-				frm.doc.insurance_policy = $(this).attr("data-insurance-policy");
-				frm.doc.insurance_payor = $(this).attr("data-insurance-payor");
-				frm.set_df_property("insurance_policy", "read_only", 1);
+		primary_action_label: __("Select"),
+		primary_action() {
+			const selected = d.$wrapper.find('.service-row[data-selected="true"]')[0];
+			if (!selected) {
+				frappe.msgprint(__("Please select a service request."));
+				return;
 			}
-			frm.doc.invoiced = 0;
-			if ($(this).attr("data-invoiced") === "Invoiced") {
-				frm.doc.invoiced = 1;
+
+			const selected_id = selected.dataset.name;
+			if (selected_id) {
+				frappe.db.get_doc("Service Request", selected_id).then(doc => {
+					frm.set_value({
+						service_request: selected_id,
+						procedure_template: doc.template_dn,
+						practitioner: doc.practitioner,
+						invoiced: doc.billing_status === "Invoiced" ? 1 : 0,
+					});
+					frm.refresh_fields();
+				});
 			}
-			frm.refresh_field("procedure_template");
-			frm.refresh_field("service_request");
-			frm.refresh_field("practitioner");
-			frm.refresh_field("insurance_policy");
-			frm.refresh_field("insurance_payor");
-			frm.refresh_field("invoiced");
+
 			d.hide();
-			return false;
-		});
+		},
 	});
-	if (!result || result.length < 1) {
-		var msg = "There are no procedure prescribed for patient " + frm.doc.patient;
-		$(repl('<div class="text-left">%(msg)s</div>', { msg: msg })).appendTo(
-			html_field,
-		);
-	}
 	d.show();
+
+	frappe.db
+		.get_list("Service Request", {
+			fields: [
+				"name",
+				"order_group",
+				"order_date",
+				"practitioner",
+				"practitioner_name",
+				"template_dt",
+				"template_dn",
+				"status",
+				"coverage_status",
+				"billing_status",
+			],
+			filters: {
+				patient: frm.doc.patient,
+				template_dt: "Clinical Procedure Template",
+				status: "active-Request Status",
+			},
+		})
+		.then(r => {
+			const data = r || [];
+
+			if (data.length) {
+				const html = get_service_request_list_html(data);
+				const wrapper = d.fields_dict.service_html.$wrapper;
+				wrapper.html(html);
+
+				wrapper.find(".service-row").each(function () {
+					const row = this;
+
+					row.addEventListener("mouseenter", function () {
+						if (row.dataset.selected !== "true") {
+							row.style.backgroundColor = "#fafafa";
+						}
+					});
+
+					row.addEventListener("mouseleave", function () {
+						if (row.dataset.selected !== "true") {
+							row.style.backgroundColor = "";
+						}
+					});
+
+					row.addEventListener("click", function () {
+						wrapper.find(".service-row").each(function () {
+							this.dataset.selected = "false";
+							this.style.border = "1px solid #dddaaa";
+							this.style.backgroundColor = "";
+						});
+
+						row.dataset.selected = "true";
+						row.style.border = "2px solid #afafaf";
+						row.style.backgroundColor = "#f3f3f3";
+					});
+				});
+			} else {
+				d.$wrapper.find(".modal-footer .btn-primary").hide();
+			}
+		});
 };
 
 let set_defaults = function (frm) {
@@ -597,4 +622,58 @@ let set_defaults = function (frm) {
 				frm.set_value("price_list", value);
 			});
 	}
+};
+
+let get_service_request_list_html = function (data) {
+	let html = `
+		<div style="max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 5px;">
+	`;
+
+	data.forEach(row => {
+		// trimming the last part of template_dt (Template, Type etc)
+		const service_type = (row.template_dt || "").trim().split(" ").pop();
+
+		const coverage_status = (row.coverage_status || "").toLowerCase();
+		const status_clr = coverage_status.includes("approved")
+			? "green"
+			: coverage_status.includes("pending") ||
+			    coverage_status.includes("requested")
+			  ? "orange"
+			  : "gray";
+		const status_txt = row.coverage_status || "NA";
+
+		html += `
+			<div class="service-row"
+				data-name="${row.name}"
+				data-selected="false"
+				style="
+				border: 1px solid #dddaaa;
+				border-radius: 6px;
+				padding: 12px;
+				cursor: pointer;
+				transition: all 0.2s ease-in-out;
+			">
+				<div style="display: flex; justify-content: space-between; align-items: center;">
+					<div style="font-size: 1rem;">
+						${service_type}: <b>${row.template_dn || ""}</b>
+					</div>
+					<span class="indicator ${status_clr}">${status_txt}</span>
+				</div>
+
+				<div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.875rem; color: #4b4b4b;">
+					<div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+						<div>${row.order_group || ""}</div>
+						<div style="color: gray;">${frappe.datetime.str_to_user(row.order_date) || ""}</div>
+					</div>
+					<div style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
+						<div>${row.practitioner || ""}</div>
+						<div style="color: gray;">${row.practitioner_name || ""}</div>
+					</div>
+				</div>
+			</div>
+		`;
+	});
+
+	html += "</div>";
+	return html;
 };
