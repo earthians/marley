@@ -171,8 +171,13 @@
    "label": "Change in Item"
   }
  ],
- "links": [],
- "modified": "2024-04-29 18:59:16.479821",
+ "links": [
+  {
+   "link_doctype": "Healthcare Service Unit",
+   "link_fieldname": "service_unit_type"
+  }
+ ],
+ "modified": "2025-09-25 15:04:43.831015",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit Type",
@@ -192,6 +197,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

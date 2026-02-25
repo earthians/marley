@@ -28,13 +28,6 @@ frappe.ui.form.on("Observation Template", {
 	},
 
 	refresh: function(frm) {
-		frm.set_query("observation_template", "observation_component", function () {
-			return {
-				"filters": {
-					"has_component":  0,
-				}
-			};
-		});
 		frm.set_query("method", function () {
 			return {
 				"filters": {

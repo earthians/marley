@@ -356,8 +356,39 @@
   }
  ],
  "image_field": "image",
- "links": [],
- "modified": "2023-03-04 18:33:25.753648",
+ "links": [
+  {
+   "group": "Consultations",
+   "link_doctype": "Patient Appointment",
+   "link_fieldname": "practitioner"
+  },
+  {
+   "group": "Consultations",
+   "link_doctype": "Patient Encounter",
+   "link_fieldname": "practitioner"
+  },
+  {
+   "group": "Orders",
+   "link_doctype": "Medication Request",
+   "link_fieldname": "practitioner"
+  },
+  {
+   "group": "Orders",
+   "link_doctype": "Service Request",
+   "link_fieldname": "practitioner"
+  },
+  {
+   "group": "Admissions",
+   "link_doctype": "Inpatient Record",
+   "link_fieldname": "practitioner"
+  },
+  {
+   "group": "Consultations",
+   "link_doctype": "Fee Validity",
+   "link_fieldname": "practitioner"
+  }
+ ],
+ "modified": "2025-11-26 19:14:01.575157",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",

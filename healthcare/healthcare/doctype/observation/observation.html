@@ -245,6 +245,8 @@
                         </b>
                     </div>
                     {% for comps in data[data.get("observation")] %}
+                        {% set comps_dict = comps.get("observation") %}
+                        {% if comps_dict and isinstance(comps_dict, dict) %}
                         {% if comps.get("observation").get("preferred_display_name")  %}
                             {% set observation_name = comps.get("observation").get("preferred_display_name") %}
                         {% else %}
@@ -345,6 +347,7 @@
                             </div>
                         {% endif %}
                         {% endif %}
+                    {% endif %}
                     {% endfor %}
                     <div class="note obs-second-line">
                         {{data.get("description") or ""}}

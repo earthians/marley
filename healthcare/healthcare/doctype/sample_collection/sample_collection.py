@@ -116,7 +116,9 @@ def insert_observation(selected, sample_collection, component_observations=None,
 						specimen=comp_obs_ref.get(obs.get("name"))
 						or comp_obs_ref.get(i + 1)
 						or comp_obs_ref.get(obs.get("idx")),
-						invoice=sample_col_doc.get("reference_name"),
+						invoice=sample_col_doc.get("reference_name")
+						if sample_col_doc.reference_doc == "Sales Invoice"
+						else None,
 						practitioner=sample_col_doc.get("referring_practitioner"),
 						child=obs.get("reference_child") if obs.get("reference_child") else "",
 						service_request=obs.get("service_request"),
@@ -143,7 +145,9 @@ def insert_observation(selected, sample_collection, component_observations=None,
 								docname=sample_collection,
 								parent=obs.get("component_observation_parent"),
 								specimen=comp_obs_ref.get(j + 1) or comp_obs_ref.get(obs.get("name")),
-								invoice=sample_col_doc.get("reference_name"),
+								invoice=sample_col_doc.get("reference_name")
+								if sample_col_doc.reference_doc == "Sales Invoice"
+								else None,
 								practitioner=sample_col_doc.get("referring_practitioner"),
 								child=obs.get("reference_child") if obs.get("reference_child") else "",
 								service_request=obs.get("service_request"),
@@ -235,7 +239,7 @@ def create_specimen(patient, selected, component_observations):
 		specimen = frappe.new_doc("Specimen")
 		specimen.received_time = now_datetime()
 		specimen.patient = patient
-		specimen.specimen_type = groups[gr][0].get("sample_type")
+		specimen.specimen_type = groups[gr][0].get("sample") or groups[gr][0].get("sample_type")
 		specimen.save()
 		for sub_grp in groups[gr]:
 			if component_observations:

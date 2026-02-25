@@ -914,7 +914,7 @@ def get_patient_history_config():
 			"result_date",
 			[
 				{"label": "Test Template", "fieldname": "template", "fieldtype": "Link"},
-				{"label": "Healthcare Practitioner", "fieldname": "practitioner", "fieldtype": "Link"},
+				{"label": "Requesting Practitioner", "fieldname": "practitioner", "fieldtype": "Link"},
 				{"label": "Test Name", "fieldname": "lab_test_name", "fieldtype": "Data"},
 				{"label": "Lab Technician Name", "fieldname": "employee_name", "fieldtype": "Data"},
 				{"label": "Sample ID", "fieldname": "sample", "fieldtype": "Link"},
@@ -930,7 +930,7 @@ def get_patient_history_config():
 					"fieldname": "sensitivity_test_items",
 					"fieldtype": "Table",
 				},
-				{"label": "Comments", "fieldname": "lab_test_comment", "fieldtype": "Table"},
+				{"label": "Comments", "fieldname": "lab_test_comment", "fieldtype": "Text"},
 			],
 		),
 		"Therapy Session": (

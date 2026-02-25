@@ -392,11 +392,47 @@
  "is_submittable": 1,
  "links": [
   {
+   "group": "Orders",
+   "link_doctype": "Medication Request",
+   "link_fieldname": "order_group"
+  },
+  {
+   "group": "Notes, Tasks & Vitals",
    "link_doctype": "Clinical Note",
+   "link_fieldname": "reference_name"
+  },
+  {
+   "group": "Notes, Tasks & Vitals",
+   "link_doctype": "Nursing Task",
+   "link_fieldname": "reference_name"
+  },
+  {
+   "group": "Notes, Tasks & Vitals",
+   "link_doctype": "Vital Signs",
+   "link_fieldname": "encounter"
+  },
+  {
+   "group": "Inpatient",
+   "link_doctype": "Inpatient Record",
+   "link_fieldname": "admission_encounter"
+  },
+  {
+   "group": "Inpatient",
+   "link_doctype": "Inpatient Medication Order",
+   "link_fieldname": "patient_encounter"
+  },
+  {
+   "group": "Orders",
+   "link_doctype": "Service Request",
+   "link_fieldname": "order_group"
+  },
+  {
+   "group": "Medical Records",
+   "link_doctype": "Patient Medical Record",
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2023-11-07 18:03:12.793649",
+ "modified": "2025-09-28 12:18:20.535746",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Encounter",
@@ -420,6 +456,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "search_fields": "patient, practitioner, medical_department, encounter_date, encounter_time",
  "show_name_in_global_search": 1,
  "sort_field": "modified",

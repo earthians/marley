@@ -62,7 +62,7 @@ def get_appointments_to_invoice(patient, company):
 	appointments_to_invoice = []
 	patient_appointments = frappe.get_list(
 		"Patient Appointment",
-		fields="*",
+		pluck="name",
 		filters={
 			"patient": patient.name,
 			"company": company,
@@ -73,7 +73,8 @@ def get_appointments_to_invoice(patient, company):
 	)
 
 	for appointment in patient_appointments:
-		# Procedure Appointments
+		# Appointments against Service Requests
+		appointment = frappe.get_doc("Patient Appointment", appointment)
 		if appointment.procedure_template:
 			if frappe.db.get_value(
 				"Clinical Procedure Template", appointment.procedure_template, "is_billable"
@@ -118,11 +119,12 @@ def get_encounters_to_invoice(patient, company):
 	encounters_to_invoice = []
 	encounters = frappe.get_list(
 		"Patient Encounter",
-		fields=["*"],
+		pluck="name",
 		filters={"patient": patient, "company": company, "invoiced": False, "docstatus": 1},
 	)
 	if encounters:
 		for encounter in encounters:
+			encounter = frappe.get_doc("Patient Encounter", encounter)
 			if not encounter.appointment:
 				practitioner_charge = 0
 				income_account = None
@@ -546,6 +548,21 @@ def manage_invoice_submit_cancel(doc, method):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
 				set_invoiced(item, method, doc.name)
+
+				# set patient as active if registration invoice
+				if item.get("reference_dt") == "Patient":
+					registration_item = (
+						frappe.db.get_single_value("Healthcare Settings", "registration_item") or None
+					)
+					if registration_item:
+						is_registration = item.item_code == registration_item
+					else:
+						is_registration = item.item_name == "Registration Fee"
+
+					if is_registration:
+						status = "Active" if method == "on_submit" else "Disabled"
+						frappe.db.set_value("Patient", item.reference_dn, "status", status)
+
 		if method == "on_submit" and frappe.db.get_single_value(
 			"Healthcare Settings", "create_observation_on_si_submit"
 		):
@@ -599,7 +616,7 @@ def set_invoiced(item, method, ref_invoice=None):
 		else:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 	else:
-		if item.reference_dt not in ["Service Request", "Medication Request"]:
+		if item.reference_dt not in ["Service Request", "Medication Request", "Patient"]:
 			frappe.db.set_value(item.reference_dt, item.reference_dn, "invoiced", invoiced)
 
 	if item.reference_dt == "Patient Appointment":
@@ -637,6 +654,7 @@ def set_invoiced(item, method, ref_invoice=None):
 
 
 def validate_invoiced_on_submit(item):
+	is_invoiced = False
 	if (
 		item.reference_dt == "Clinical Procedure"
 		and frappe.db.get_single_value("Healthcare Settings", "clinical_procedure_consumable_item")
@@ -647,6 +665,18 @@ def validate_invoiced_on_submit(item):
 	elif item.reference_dt in ["Service Request", "Medication Request"]:
 		billing_status = frappe.db.get_value(item.reference_dt, item.reference_dn, "billing_status")
 		is_invoiced = True if billing_status == "Invoiced" else False
+
+	elif item.reference_dt == "Patient":
+		if frappe.db.get_single_value("Healthcare Settings", "collect_registration_fee"):
+			is_invoiced = frappe.db.exists(
+				"Sales Invoice Item",
+				{
+					"name": ["!=", item.name],
+					"reference_dn": item.reference_dn,
+					"item_name": "Registration Fee",
+					"docstatus": 1,
+				},
+			)
 
 	else:
 		is_invoiced = frappe.db.get_value(item.reference_dt, item.reference_dn, "invoiced")
@@ -1206,18 +1236,36 @@ def insert_diagnostic_report(doc, patient, sample_collection=None):
 		diagnostic_report.save(ignore_permissions=True)
 
 
-def insert_observation_and_sample_collection(doc, patient, grp, sample_collection, child=None):
+def insert_observation_and_sample_collection(
+	doc, patient, grp, sample_collection, child=None, parent_observation=None
+):
 	diag_report_required = False
 	if grp.get("has_component"):
 		diag_report_required = True
+
 		# parent observation
-		parent_observation = add_observation(
+		current_parent_observation = add_observation(
 			patient=patient,
 			template=grp.get("name"),
 			practitioner=doc.ref_practitioner,
 			invoice=doc.name,
 			child=child if child else "",
+			parent=parent_observation,
 		)
+
+		add_to_sample_collection = has_direct_leaf_component(grp.get("name"))
+		if add_to_sample_collection:
+			sample_collection.append(
+				"observation_sample_collection",
+				{
+					"observation_template": grp.get("name"),
+					"container_closure_color": grp.get("container_closure_color"),
+					"sample": grp.get("sample"),
+					"sample_type": grp.get("sample_type"),
+					"component_observation_parent": current_parent_observation,
+					"reference_child": child if child else "",
+				},
+			)
 
 		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
 			grp.get("name")
@@ -1226,27 +1274,68 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 
 		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
-				add_observation(
-					patient=patient,
-					template=comp,
-					practitioner=doc.ref_practitioner,
-					parent=parent_observation,
-					invoice=doc.name,
-					child=child if child else "",
+				comp_details = frappe.get_value(
+					"Observation Template",
+					comp,
+					[
+						"name",
+						"has_component",
+						"sample_collection_required",
+						"sample",
+						"sample_type",
+						"container_closure_color",
+					],
+					as_dict=True,
 				)
-		# create sample_colleciton child row for  sample_collection_reqd grouped templates
+				if comp_details.get("has_component"):
+					# recurse if component is also a template with components
+					sub_sc, sub_drc = insert_observation_and_sample_collection(
+						doc,
+						patient,
+						comp_details,
+						sample_collection,
+						child,
+						parent_observation=current_parent_observation,
+					)
+					sample_collection = sub_sc
+					diag_report_required = diag_report_required or sub_drc
+				else:
+					add_observation(
+						patient=patient,
+						template=comp,
+						practitioner=doc.ref_practitioner,
+						parent=current_parent_observation,
+						invoice=doc.name,
+						child=child if child else "",
+					)
+		# create sample_colleciton child row for sample_collection_reqd grouped templates
 		if len(sample_reqd_component_obs) > 0:
-			sample_collection.append(
-				"observation_sample_collection",
-				{
-					"observation_template": grp.get("name"),
-					"container_closure_color": grp.get("color"),
-					"sample": grp.get("sample"),
-					"sample_type": grp.get("sample_type"),
-					"component_observation_parent": parent_observation,
-					"reference_child": child if child else "",
-				},
-			)
+			for comp in sample_reqd_component_obs:
+				comp_details = frappe.get_value(
+					"Observation Template",
+					comp,
+					[
+						"name",
+						"has_component",
+						"sample_collection_required",
+						"sample",
+						"sample_type",
+						"container_closure_color",
+					],
+					as_dict=True,
+				)
+				if comp_details.get("has_component"):
+					# recurse into nested template
+					sub_sc, sub_drc = insert_observation_and_sample_collection(
+						doc,
+						patient,
+						comp_details,
+						sample_collection,
+						child,
+						parent_observation=current_parent_observation,
+					)
+					sample_collection = sub_sc
+					diag_report_required = diag_report_required or sub_drc
 
 	else:
 		diag_report_required = True
@@ -1260,18 +1349,38 @@ def insert_observation_and_sample_collection(doc, patient, grp, sample_collectio
 				child=child if child else "",
 			)
 		else:
-			# create sample_colleciton child row for  sample_collection_reqd individual templates
+			# create sample_colleciton child row for sample_collection_reqd individual templates
 			sample_collection.append(
 				"observation_sample_collection",
 				{
 					"observation_template": grp.get("name"),
-					"container_closure_color": grp.get("color"),
+					"container_closure_color": grp.get("container_closure_color"),
 					"sample": grp.get("sample"),
 					"sample_type": grp.get("sample_type"),
 					"reference_child": child if child else "",
 				},
 			)
 	return sample_collection, diag_report_required
+
+
+def has_direct_leaf_component(template_name):
+	"""Return True if the given template has at least one direct leaf child."""
+	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
+		template_name
+	)
+	all_components = sample_reqd_component_obs + non_sample_reqd_component_obs
+
+	for comp in all_components:
+		comp_details = frappe.db.get_value(
+			"Observation Template",
+			comp,
+			["has_component", "sample_collection_required"],
+			as_dict=True,
+		)
+		if not comp_details.get("has_component") and comp_details.get("sample_collection_required"):
+			return True
+
+	return False
 
 
 @frappe.whitelist()

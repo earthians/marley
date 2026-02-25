@@ -56,6 +56,7 @@ frappe.ui.form.on('Healthcare Settings', {
 		set_query_service_item(frm, 'inpatient_visit_charge_item');
 		set_query_service_item(frm, 'op_consulting_charge_item');
 		set_query_service_item(frm, 'clinical_procedure_consumable_item');
+		set_query_service_item(frm, 'registration_item');
 	}
 });
 
