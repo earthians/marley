@@ -82,6 +82,16 @@ frappe.ui.form.on('Therapy Session', {
 				}
 			});
 		}
+
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+
+	before_save : function(frm) {
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.before_save_check(frm);
+		});
 	},
 
 	therapy_plan: function(frm) {
@@ -194,6 +204,7 @@ frappe.ui.form.on('Therapy Session', {
 							mcode.code = val.code
 							mcode.description = val.description
 							mcode.system = val.system
+							mcode.code_value_set = val.code_value_set
 						}
 					});
 					refresh_field("codification_table");
@@ -214,3 +225,28 @@ let calculate_age = function(birth) {
 	let years =  age.getFullYear() - 1970;
 	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
 };
+
+
+frappe.ui.form.on('Codification Table', {
+	code_value_set: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_system: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_value: function(frm, cdt, cdn){
+		var row = locals[cdt][cdn];
+		if (!row.code_value_set) {
+			frappe.require('assets/healthcare/js/utils.js', function() {
+				healthcare.utils.auto_table_code_val_set(frm, cdt, cdn);
+			});
+		}
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	}
+});

@@ -167,6 +167,18 @@ frappe.ui.form.on('Clinical Procedure', {
 					frappe.new_doc("Clinical Note");
 		},__('Create'));
 
+		frm.trigger("procedure_template");
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+
+	},
+
+	before_save: function(frm) {
+		if (frm.is_new()) {
+			frm.add_fetch('procedure_template', 'medical_department', 'medical_department');
+			frm.set_value('start_time', null);
+		}
 	},
 
 	onload: function(frm) {
@@ -363,6 +375,7 @@ frappe.ui.form.on('Clinical Procedure', {
 							child.code = val.code
 							child.description = val.description
 							child.system = val.system
+							child.code_value_set = val.code_value_set
 						}
 					});
 					frm.refresh_field("codification_table");
@@ -505,3 +518,28 @@ let show_procedure_templates = function(frm, result){
 	}
 	d.show();
 };
+
+
+frappe.ui.form.on('Codification Table', {
+	code_value_set: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_system: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_value: function(frm, cdt, cdn){
+		var row = locals[cdt][cdn];
+		if (!row.code_value_set) {
+			frappe.require('assets/healthcare/js/utils.js', function() {
+				healthcare.utils.auto_table_code_val_set(frm, cdt, cdn);
+			});
+		}
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	}
+});

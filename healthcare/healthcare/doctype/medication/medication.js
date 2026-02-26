@@ -32,7 +32,18 @@ frappe.ui.form.on('Medication', {
 				},
 			);
 		}
+
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
 	},
+
+	before_save : function(frm) {
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.before_save_check(frm);
+		});
+	},
+
 	onload: function (frm) {
 		if (frm.is_new() && !frm.doc.price_list) {
 			frappe.db.get_single_value("Selling Settings", "selling_price_list").then((price_list) => {
@@ -123,3 +134,26 @@ let change_medication_code = function(doc) {
 		'item_code': doc.item_code
 	});
 };
+
+
+frappe.ui.form.on('Codification Table', {
+	code_value_set: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_system: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_value: function(frm, cdt, cdn){
+		var row = locals[cdt][cdn];
+		if (!row.code_value_set) {
+
+		}
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	}
+});

@@ -53,6 +53,16 @@ frappe.ui.form.on('Clinical Procedure Template', {
 				}
 			};
 		});
+
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+
+	before_save: function(frm) {
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.before_save_check(frm);
+		});
 	},
 
 	link_existing_item: function (frm) {
@@ -206,3 +216,30 @@ frappe.tour['Clinical Procedure Template'] = [
 		description: __('You can also set the Medical Department for the template. After saving the document, an Item will automatically be created for billing this Clinical Procedure. You can then use this template while creating Clinical Procedures for Patients. Templates save you from filling up redundant data every single time. You can also create templates for other operations like Lab Tests, Therapy Sessions, etc.')
 	}
 ];
+
+
+frappe.ui.form.on('Codification Table', {
+	code_value_set: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_system: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_value: function(frm, cdt, cdn){
+		var row = locals[cdt][cdn];
+		if (!row.code_value_set) {
+			frappe.require('assets/healthcare/js/utils.js', function() {
+				healthcare.utils.auto_table_code_val_set(frm, cdt, cdn);
+			});
+		}
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	}
+});
+
+

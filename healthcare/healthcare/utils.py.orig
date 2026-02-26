@@ -1415,17 +1415,3 @@ def add_node():
 		args.parent_healthcare_service_unit = None
 
 	frappe.get_doc(args).insert()
-
-@frappe.whitelist()
-def get_codification_row_code_data(code):
-
-	row_data = frappe.get_list(
-		"Code Value",
-		fields=["code_system", "value_set"],
-		filters={
-			"code_value": code
-		},
-		limit_page_length = 1
-	)
-
-	return {"row_data": row_data}
