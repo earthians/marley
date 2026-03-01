@@ -198,6 +198,16 @@ frappe.ui.form.on('Patient Encounter', {
 		var table_list =  ["drug_prescription", "lab_test_prescription", "procedure_prescription", "therapies"]
 		apply_code_sm_filter_to_child(frm, "priority", table_list, "Priority")
 		apply_code_sm_filter_to_child(frm, "intent", table_list, "Intent")
+
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+
+	before_save : function(frm) {
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.before_save_check(frm);
+		});
 	},
 
 	appointment: function(frm) {
@@ -780,3 +790,28 @@ let create_patient_referral = function(frm) {
 
 	dialog.show();
 };
+
+
+frappe.ui.form.on('Codification Table', {
+	code_value_set: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_system: function(frm, cdt, cdn){
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	},
+	code_value: function(frm, cdt, cdn){
+		var row = locals[cdt][cdn];
+		if (!row.code_value_set) {
+			frappe.require('assets/healthcare/js/utils.js', function() {
+				healthcare.utils.auto_table_code_val_set(frm, cdt, cdn);
+			});
+		}
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.set_codification_table_query(frm);
+		});
+	}
+});
