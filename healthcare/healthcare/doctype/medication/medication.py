@@ -100,6 +100,7 @@ def insert_item(doc, item):
 				"description": item.item_code,
 				"is_sales_item": 1,
 				"is_stock_item": 1,
+				"is_purchase_item": 1,
 				"disabled": 0 if item.is_billable and not doc.disabled else 1,
 				"stock_uom": item.stock_uom or frappe.db.get_single_value("Stock Settings", "stock_uom"),
 			}
