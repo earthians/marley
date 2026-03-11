@@ -568,25 +568,18 @@ def create_single_lab_test_from_invoice(sales_invoice, create_bundle=False):
         lab_test.expected_result_date = frappe.utils.today()
         lab_test.invoiced = 1
 
-        # Keep these empty in bundle
-        lab_test.template = None
-        lab_test.lab_test_name = None
-        lab_test.lab_test_group = None
-        lab_test.department = None
-
-        lab_test.normal_toggle = 0
-        lab_test.imaging_toggle = 0
-        lab_test.descriptive_toggle = 0
-        lab_test.sensitivity_toggle = 0
+        test_names = [t[1].lab_test_name for t in valid_templates]
+        lab_test.lab_test_name = (_("Bundle: {0}")).format(", ".join(test_names))[:140]
 
         for item, template in valid_templates:
-
             lab_test.append("custom_lab_test_items", {
                 "test_template": template.name,
                 "lab_test_name": template.lab_test_name,
                 "lab_test_group": template.lab_test_group,
                 "department": template.department
             })
+
+            load_result_format(lab_test, template, None, None)
 
             # Link invoice row to bundle lab test
             frappe.db.set_value(
@@ -702,26 +695,18 @@ def create_single_lab_test_from_encounter(encounter_name, create_bundle=False):
         lab_test.expected_result_date = frappe.utils.today()
         lab_test.invoiced = 0
 
-        # IMPORTANT: keep these empty
-        lab_test.template = None
-        lab_test.lab_test_name = None
-        lab_test.lab_test_group = None
-        lab_test.department = None
-
-        # No result formats in bundle mode
-        lab_test.normal_toggle = 0
-        lab_test.imaging_toggle = 0
-        lab_test.descriptive_toggle = 0
-        lab_test.sensitivity_toggle = 0
+        test_names = [t[1].lab_test_name for t in valid_templates]
+        lab_test.lab_test_name = (_("Bundle: {0}")).format(", ".join(test_names))[:140]
 
         for sr, template in valid_templates:
-
             lab_test.append("custom_lab_test_items", {
                 "test_template": template.name,
                 "lab_test_name": template.lab_test_name,
                 "lab_test_group": template.lab_test_group,
                 "department": template.department
             })
+
+            load_result_format(lab_test, template, None, None)
 
             frappe.db.set_value(
                 "Service Request",
