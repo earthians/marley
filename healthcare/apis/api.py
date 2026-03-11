@@ -1,12 +1,12 @@
 import frappe
 from .utils import validate_api_payload,handle_exception
 from healthcare.healthcare.doctype.lab_test.lab_test import get_lab_test_count_for_doc,create_lab_test
-
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["name","patient_name","customer"],
-    allowed_filters=["name","patient_name"],
+    allowed_fields=["name", "patient_name"],
+    allowed_filters=["name", "patient_name", "uid", "mobile"],
     require_auth=False
 )
 def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
@@ -23,9 +23,9 @@ def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, saf
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields = ["name","title","practitioner","appointment_type","creation"],
-    allowed_filters = ["name","patient","patient_name","practitioner","practitioner_name"],
-    require_auth = False
+    allowed_fields=["name", "title", "patient", "patient_name", "practitioner", "practitioner_name"],
+    allowed_filters=["name", "patient", "patient_name", "practitioner", "practitioner_name"],
+    require_auth=False
 )
 def get_patient_encounter(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
     safe_filters.append(["docstatus","=",1])
@@ -114,7 +114,8 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
                 "service": item.get("item_code") or item.get("lab_test_name"),
                 "qty": getattr(sr, "quantity"),
                 "rate": item.get("rate")or item.get("lab_test_rate"),
-                "serverice_type":sr.get("template_dt")
+                "serverice_type":sr.get("template_dt"),
+                "income_account": get_income_account(sr.get("practitioner"), sr.get("company"))
             }
             result.append(obj)
 
@@ -124,13 +125,31 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
         handle_exception(e)
 
 
-@frappe.whitelist()
 @frappe.whitelist(allow_guest=True)
 def get_lab_test_result(doctype,docname):
-    get_lab_test_count_for_doc(doctype,docname)
+    return get_lab_test_count_for_doc(doctype,docname)
 
 
 @frappe.whitelist(allow_guest=True)
 def create_lab_test(doctype,docname,create_bundle=False):
-    create_lab_test(doctype,docname,create_bundle)
+    return create_lab_test_logic(doctype,docname,create_bundle)
 
+@frappe.whitelist(allow_guest=True)
+@validate_api_payload(
+    allowed_fields=["first_name", "middle_name", "last_name", "sex", "blood_group", "dob", "phone"],
+    require_auth=False
+)
+def create_patient(data=None, **kwargs):
+    try:
+        payload = data or kwargs.get("data")
+        if not payload:
+            frappe.throw(_("Missing patient data"))
+
+        doc = frappe.new_doc("Patient")
+        doc.update(payload)
+        doc.insert(ignore_permissions=True)
+        return doc.name
+    except Exception as e:
+        handle_exception(e)
+
+    
