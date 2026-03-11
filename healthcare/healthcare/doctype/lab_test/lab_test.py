@@ -503,7 +503,7 @@ def get_lab_test_count_for_doc(doctype, docname):
 
 
 @frappe.whitelist()
-def create_lab_test_bundle(doctype, docname):
+def create_lab_test(doctype, docname, create_bundle=True):
 	if not doctype or not docname:
 		frappe.throw(
 			_("Sales Invoice or Patient Encounter is required to create Lab Tests"),
@@ -512,17 +512,17 @@ def create_lab_test_bundle(doctype, docname):
 
 	lab_test_created = False
 	if doctype == "Sales Invoice":
-		lab_test_created = create_single_lab_test_from_invoice(docname, True)
+		lab_test_created = create_single_lab_test_from_invoice(docname, create_bundle)
 	elif doctype == "Patient Encounter":
-		lab_test_created = create_single_lab_test_from_encounter(docname, True)
+		lab_test_created = create_single_lab_test_from_encounter(docname, create_bundle)
 
 	if lab_test_created:
 		frappe.msgprint(_("Lab Test {0} created successfully").format(lab_test_created), indicator="green")
 
 
-def create_single_lab_test_from_invoice(sales_invoice, create_bundle=False):
+def create_single_lab_test_from_invoice(docname, create_bundle=False):
     lab_test_created = False
-    invoice = frappe.get_doc("Sales Invoice", sales_invoice)
+    invoice = frappe.get_doc("Sales Invoice", docname)
 
     if not invoice or not invoice.patient:
         return

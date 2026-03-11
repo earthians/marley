@@ -123,7 +123,7 @@ var create_multiple_dialog = function (listview) {
 var create_lab_tests = function (mode, dialog, listview) {
 	var method = mode === 'single'
 		? "healthcare.healthcare.doctype.lab_test.lab_test.create_multiple"
-		: "healthcare.healthcare.doctype.lab_test.lab_test.create_lab_test_bundle";
+		: "healthcare.healthcare.doctype.lab_test.lab_test.create_lab_test";
 
 	frappe.call({
 		method: method,

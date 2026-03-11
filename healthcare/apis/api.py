@@ -1,6 +1,6 @@
 import frappe
 from .utils import validate_api_payload,handle_exception
-
+from healthcare.healthcare.doctype.lab_test.lab_test import get_lab_test_count_for_doc,create_lab_test
 
 
 @frappe.whitelist(allow_guest=True)
@@ -122,3 +122,13 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
 
     except Exception as e:
         handle_exception(e)
+
+@frappe.whitelist(allow_guest=True)
+def get_lab_test_result(doctype,docname):
+    get_lab_test_count_for_doc(doctype,docname)
+
+
+@frappe.whitelist(allow_guest=True)
+def create_lab_test(doctype,docname,create_bundle):
+    create_lab_test(doctype,docname,create_bundle)
+
