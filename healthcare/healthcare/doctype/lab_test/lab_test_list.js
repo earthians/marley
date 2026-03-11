@@ -54,30 +54,94 @@ var create_multiple_dialog = function (listview) {
 						},
 					};
 				},
+				onchange: function () {
+					var doctype = dialog.get_value("doctype");
+					var docname = dialog.get_value("docname");
+					if (doctype && docname) {
+						frappe.call({
+							method: "healthcare.healthcare.doctype.lab_test.lab_test.get_lab_test_count_for_doc",
+							args: { doctype: doctype, docname: docname },
+							callback: function (r) {
+								if (r.message !== undefined) {
+									var count = r.message;
+									dialog.set_df_property('docname', 'description', __(`Uncreated Lab Tests: ${count}`));
+
+									if (dialog.custom_btn_multi) {
+										dialog.custom_btn_multi.remove();
+										dialog.custom_btn_multi = null;
+									}
+
+									if (count === 1) {
+
+										dialog.set_primary_action(__('Create Single'), function () {
+											create_lab_tests('single', dialog, listview);
+										});
+
+									} else if (count > 1) {
+
+										dialog.set_primary_action(__('Create Single'), function () {
+											create_lab_tests('single', dialog, listview);
+										});
+
+										dialog.add_custom_action(__('Create Bundle'), function () {
+											create_lab_tests('bundle', dialog, listview);
+										});
+
+										// When none
+									} else {
+
+										dialog.set_primary_action(__('Create'), function () {
+											frappe.msgprint(__("No Lab Tests to create"));
+										});
+
+									}
+								}
+							}
+						});
+					} else {
+						dialog.set_df_property('docname', 'description', '');
+						if (dialog.custom_btn_multi) {
+							dialog.custom_btn_multi.remove();
+							dialog.custom_btn_multi = null;
+						}
+						dialog.set_primary_action(__('Create'), function () {
+							frappe.msgprint(__("Select Patient and Invoice/Encounter First"));
+						});
+					}
+				}
 			},
 		],
 		primary_action_label: __("Create"),
 		primary_action: function () {
-			frappe.call({
-				method: "healthcare.healthcare.doctype.lab_test.lab_test.create_multiple",
-				args: {
-					doctype: dialog.get_value("doctype"),
-					docname: dialog.get_value("docname"),
-				},
-				callback: function (data) {
-					if (!data.exc) {
-						if (!data.message) {
-							frappe.msgprint(__("No Lab Tests created"));
-						}
-						listview.refresh();
-					}
-				},
-				freeze: true,
-				freeze_message: __("Creating Lab Tests..."),
-			});
-			dialog.hide();
+			frappe.msgprint(__("Select Patient and Invoice/Encounter First"));
 		},
 	});
 
 	dialog.show();
 };
+
+var create_lab_tests = function (mode, dialog, listview) {
+	var method = mode === 'single'
+		? "healthcare.healthcare.doctype.lab_test.lab_test.create_multiple"
+		: "healthcare.healthcare.doctype.lab_test.lab_test.create_lab_test_bundle";
+
+	frappe.call({
+		method: method,
+		args: {
+			doctype: dialog.get_value("doctype"),
+			docname: dialog.get_value("docname"),
+		},
+		callback: function (data) {
+			if (!data.exc) {
+				if (!data.message) {
+					frappe.msgprint(__("No Lab Tests created"));
+				}
+				listview.refresh();
+			}
+		},
+		freeze: true,
+		freeze_message: __("Creating Lab Tests..."),
+	});
+	dialog.hide();
+};
+

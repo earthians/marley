@@ -467,3 +467,311 @@ def get_lab_test_prescribed(patient):
 	# 			and sr.status!=%s
 	# 			and sr.template_dt=%s
 	# 	""", (patient, "Completed", "Lab Test Template"))
+
+
+@frappe.whitelist()
+def get_lab_test_count_for_doc(doctype, docname):
+	count = 0
+	if doctype == "Sales Invoice":
+		invoice = frappe.get_doc("Sales Invoice", docname)
+		for item in invoice.items:
+			lab_test_created = 0
+			if item.reference_dt == "Service Request":
+				lab_test_created = (
+					1 if frappe.db.exists("Lab Test", {"service_request": item.reference_dn, "docstatus": ["!=", 2]}) else 0
+				)
+			elif item.reference_dt == "Lab Test":
+				lab_test_created = 1
+			
+			if lab_test_created != 1:
+				template = get_lab_test_template(item.item_code)
+				if template:
+					count += 1
+	elif doctype == "Patient Encounter":
+		encounter = frappe.get_doc("Patient Encounter", docname)
+		service_requests = frappe.db.get_list(
+			"Service Request",
+			filters={
+				"order_group": encounter.name,
+				"status": ["!=", "completed-Request Status"],
+				"template_dt": "Lab Test Template",
+			},
+			fields=["name"]
+		)
+		count = len(service_requests) if service_requests else 0
+	return count
+
+
+@frappe.whitelist()
+def create_lab_test_bundle(doctype, docname):
+	if not doctype or not docname:
+		frappe.throw(
+			_("Sales Invoice or Patient Encounter is required to create Lab Tests"),
+			title=_("Insufficient Data"),
+		)
+
+	lab_test_created = False
+	if doctype == "Sales Invoice":
+		lab_test_created = create_single_lab_test_from_invoice(docname, True)
+	elif doctype == "Patient Encounter":
+		lab_test_created = create_single_lab_test_from_encounter(docname, True)
+
+	if lab_test_created:
+		frappe.msgprint(_("Lab Test {0} created successfully").format(lab_test_created), indicator="green")
+
+
+def create_single_lab_test_from_invoice(sales_invoice, create_bundle=False):
+    lab_test_created = False
+    invoice = frappe.get_doc("Sales Invoice", sales_invoice)
+
+    if not invoice or not invoice.patient:
+        return
+
+    patient = frappe.get_doc("Patient", invoice.patient)
+
+    valid_templates = []
+
+    for item in invoice.items:
+        created = 0
+
+        if item.reference_dt == "Service Request":
+            created = 1 if frappe.db.exists(
+                "Lab Test",
+                {"service_request": item.reference_dn, "docstatus": ["!=", 2]},
+            ) else 0
+
+        elif item.reference_dt == "Lab Test":
+            created = 1
+
+        if not created:
+            template = get_lab_test_template(item.item_code)
+            if template:
+                valid_templates.append((item, template))
+
+    if not valid_templates:
+        return
+
+    # ============================================================
+    # ✅ BUNDLE MODE
+    # ============================================================
+    if create_bundle:
+
+        lab_test = frappe.new_doc("Lab Test")
+
+        lab_test.custom_multiple_lab_items = 1
+        lab_test.company = invoice.company
+        lab_test.patient = patient.name
+        lab_test.patient_name = patient.patient_name
+        lab_test.patient_age = patient.get_age()
+        lab_test.patient_sex = patient.sex
+        lab_test.practitioner = invoice.ref_practitioner
+        lab_test.expected_result_date = frappe.utils.today()
+        lab_test.invoiced = 1
+
+        # Keep these empty in bundle
+        lab_test.template = None
+        lab_test.lab_test_name = None
+        lab_test.lab_test_group = None
+        lab_test.department = None
+
+        lab_test.normal_toggle = 0
+        lab_test.imaging_toggle = 0
+        lab_test.descriptive_toggle = 0
+        lab_test.sensitivity_toggle = 0
+
+        for item, template in valid_templates:
+
+            lab_test.append("custom_lab_test_items", {
+                "test_template": template.name,
+                "lab_test_name": template.lab_test_name,
+                "lab_test_group": template.lab_test_group,
+                "department": template.department
+            })
+
+            # Link invoice row to bundle lab test
+            frappe.db.set_value(
+                "Sales Invoice Item",
+                item.name,
+                {
+                    "reference_dt": "Lab Test",
+                    "reference_dn": lab_test.name,
+                },
+            )
+
+        lab_test.save()
+        lab_test_created = lab_test.name
+
+    # ============================================================
+    # ✅ SINGLE MODE (Existing Behavior)
+    # ============================================================
+    else:
+
+        lab_test = create_lab_test_doc(
+            invoice.ref_practitioner,
+            patient,
+            valid_templates[0][1],
+            invoice.company,
+            True,
+            valid_templates[0][0].service_unit
+        )
+
+        test_names = [t[1].lab_test_name for t in valid_templates]
+        lab_test.lab_test_name = ", ".join(test_names)[:140]
+
+        if len(valid_templates) > 1:
+            lab_test.custom_multiple_lab_items = 1
+
+        for item, template in valid_templates:
+
+            if len(valid_templates) > 1:
+                lab_test.append("custom_lab_test_items", {
+                    "test_template": template.name,
+                    "lab_test_name": template.lab_test_name,
+                    "lab_test_group": template.lab_test_group,
+                    "department": template.department
+                })
+
+            load_result_format(lab_test, template, None, None)
+
+            if item.reference_dt != "Service Request":
+                frappe.db.set_value(
+                    "Sales Invoice Item",
+                    item.name,
+                    {
+                        "reference_dt": "Lab Test",
+                        "reference_dn": lab_test.name,
+                    },
+                )
+            else:
+                frappe.db.set_value(
+                    "Service Request",
+                    item.reference_dn,
+                    "status",
+                    "active-Request Status",
+                )
+
+        lab_test.save()
+        lab_test_created = lab_test.name
+
+    return lab_test_created
+
+def create_single_lab_test_from_encounter(encounter_name, create_bundle=False):
+    lab_test_created = False
+    encounter = frappe.get_doc("Patient Encounter", encounter_name)
+
+    if not encounter:
+        return
+
+    patient = frappe.get_doc("Patient", encounter.patient)
+
+    service_requests = frappe.db.get_list(
+        "Service Request",
+        filters={
+            "order_group": encounter.name,
+            "status": ["!=", "completed-Request Status"],
+            "template_dt": "Lab Test Template",
+        },
+        fields=["name", "billing_status", "template_dn"]
+    )
+
+    valid_templates = []
+    for sr in service_requests:
+        template = get_lab_test_template(sr.template_dn)
+        if template:
+            valid_templates.append((sr, template))
+
+    if not valid_templates:
+        return
+
+    # ============================================================
+    # ✅ BUNDLE MODE
+    # ============================================================
+    if create_bundle:
+
+        lab_test = frappe.new_doc("Lab Test")
+
+        lab_test.custom_multiple_lab_items = 1
+        lab_test.company = encounter.company
+        lab_test.patient = patient.name
+        lab_test.patient_name = patient.patient_name
+        lab_test.patient_age = patient.get_age()
+        lab_test.patient_sex = patient.sex
+        lab_test.practitioner = encounter.practitioner
+        lab_test.practitioner_name = encounter.practitioner_name
+        lab_test.requesting_department = encounter.medical_department
+        lab_test.expected_result_date = frappe.utils.today()
+        lab_test.invoiced = 0
+
+        # IMPORTANT: keep these empty
+        lab_test.template = None
+        lab_test.lab_test_name = None
+        lab_test.lab_test_group = None
+        lab_test.department = None
+
+        # No result formats in bundle mode
+        lab_test.normal_toggle = 0
+        lab_test.imaging_toggle = 0
+        lab_test.descriptive_toggle = 0
+        lab_test.sensitivity_toggle = 0
+
+        for sr, template in valid_templates:
+
+            lab_test.append("custom_lab_test_items", {
+                "test_template": template.name,
+                "lab_test_name": template.lab_test_name,
+                "lab_test_group": template.lab_test_group,
+                "department": template.department
+            })
+
+            frappe.db.set_value(
+                "Service Request",
+                sr.name,
+                "status",
+                "active-Request Status"
+            )
+
+        lab_test.save()
+        lab_test_created = lab_test.name
+
+    # ============================================================
+    # ✅ SINGLE MODE (Your Existing Logic)
+    # ============================================================
+    else:
+
+        lab_test = create_lab_test_doc(
+            encounter.practitioner,
+            patient,
+            valid_templates[0][1],
+            encounter.company,
+            1 if valid_templates[0][0].billing_status == "Invoiced" else 0,
+        )
+
+        test_names = [t[1].lab_test_name for t in valid_templates]
+        lab_test.lab_test_name = ", ".join(test_names)[:140]
+
+        if len(valid_templates) > 1:
+            lab_test.custom_multiple_lab_items = 1
+
+        for sr, template in valid_templates:
+
+            if len(valid_templates) > 1:
+                lab_test.append("custom_lab_test_items", {
+                    "test_template": template.name,
+                    "lab_test_name": template.lab_test_name,
+                    "lab_test_group": template.lab_test_group,
+                    "department": template.department
+                })
+
+            load_result_format(lab_test, template, None, None)
+
+            frappe.db.set_value(
+                "Service Request",
+                sr.name,
+                "status",
+                "active-Request Status"
+            )
+
+        lab_test.save()
+        lab_test_created = lab_test.name
+
+    return lab_test_created
