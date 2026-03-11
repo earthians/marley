@@ -337,7 +337,6 @@
    "options": "Lab Test Template",
    "print_hide": 1,
    "report_hide": 1,
-   "reqd": 1,
    "set_only_once": 1
   },
   {
@@ -639,7 +638,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2025-12-25 09:36:31.745769",
+ "modified": "2026-03-11 10:39:01.212127",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test",
@@ -696,7 +695,7 @@
  ],
  "restrict_to_domain": "Healthcare",
  "row_format": "Dynamic",
- "search_fields": "patient,practitioner,lab_test_name,sample",
+ "search_fields": "patient,practitioner,sample",
  "show_name_in_global_search": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
