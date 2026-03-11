@@ -152,4 +152,27 @@ def create_patient(data=None, **kwargs):
     except Exception as e:
         handle_exception(e)
 
+@frappe.whitelist(allow_guest=True)
+@validate_api_payload(
+    allowed_fields=["name", "patient_name"],
+    allowed_filters=["name", "patient_name"],
+    require_auth=False
+)
+def get_patient_by_name(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
+    try:
+        return frappe.get_all(
+            "Sales Invoice",
+            filters=safe_filters,
+            or_filters=or_filters,
+            fields=fields,
+            limit_page_length=limit,
+            start=start,
+            order_by=order_by,
+            ignore_permissions=True
+        )
+    except Exception as e:
+        handle_exception(e)
+
+    
+
     
