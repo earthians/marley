@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "autoincrement",
+ "creation": "2026-03-10 16:27:19.555345",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "test_template",
+  "lab_test_name",
+  "lab_test_group",
+  "department"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Test Template",
+   "options": "Lab Test Template",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "test_template.lab_test_name",
+   "fieldname": "lab_test_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Test Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "test_template.lab_test_group",
+   "fieldname": "lab_test_group",
+   "fieldtype": "Link",
+   "label": "Test Group",
+   "options": "Item Group",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "test_template.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Medical Department",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-11 10:28:33.881702",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Lab Test Item",
+ "naming_rule": "Autoincrement",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
