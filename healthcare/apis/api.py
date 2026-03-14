@@ -5,8 +5,8 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["name", "patient_name"],
-    allowed_filters=["name", "patient_name", "uid", "mobile"],
+    allowed_fields=["name", "patient_name","phone"],
+    allowed_filters=["name", "patient_name", "uid", "phone"],
     require_auth=False
 )
 def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
