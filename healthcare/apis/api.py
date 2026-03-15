@@ -113,6 +113,7 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
                 "reference_type": sr.get("source_doc") if sr.get("source_doc")  else"Service Request",
                 "reference_name": sr.get("order_group") if sr.get("order_group")  else sr.name,
                 "service": item.get("item_code") or item.get("lab_test_name"),
+                "item_name":item.get("item_name") or item.get("lab_test_name"),
                 "qty": getattr(sr, "quantity"),
                 "rate": item.get("rate")or item.get("lab_test_rate"),
                 "serverice_type":sr.get("template_dt"),
