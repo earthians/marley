@@ -24,15 +24,20 @@ def validate_api_payload(
     require_auth=True,
     max_limit=100
 ):
-    field_map = {}
+    field_map = {} # maps base field to aliased field string (e.g., 'order_group' -> 'order_group as Encounter')
+    alias_map = {} # maps alias to base field (e.g., 'Encounter' -> 'order_group')
     base_allowed = []
     if allowed_fields:
         for f in allowed_fields:
             if " as " in f.lower():
-                base = f.lower().split(" as ")[0].strip()
+                idx = f.lower().find(" as ")
+                base = f[:idx].strip()
+                alias = f[idx+4:].strip()
+                field_map[base] = f
+                alias_map[alias] = base
             else:
                 base = f.strip()
-            field_map[base] = f
+                field_map[base] = f
             base_allowed.append(base)
 
     def decorator(func):
@@ -47,8 +52,10 @@ def validate_api_payload(
                 if allowed_fields:
                     extracted_data = {}
                     for key in list(kwargs.keys()):
-                        if key in allowed_fields or key in base_allowed:
-                            extracted_data[key] = kwargs.pop(key)
+                        if key in allowed_fields or key in base_allowed or key in alias_map:
+                            val = kwargs.pop(key)
+                            real_key = alias_map.get(key, key)
+                            extracted_data[real_key] = val
                     
                     if extracted_data:
                         current_data = kwargs.get("data", {})
@@ -81,10 +88,19 @@ def validate_api_payload(
                         except Exception:
                             handle_exception(_("Invalid fields format, expected JSON array"))
                     if allowed_fields:
-                        safe_fields = [f for f in fields if f in allowed_fields or f in base_allowed]
+                        safe_fields = []
+                        for f in fields:
+                            if f in allowed_fields:
+                                safe_fields.append(f)
+                            elif f in base_allowed:
+                                safe_fields.append(field_map.get(f, f))
+                            elif f in alias_map:
+                                base = alias_map[f]
+                                safe_fields.append(field_map.get(base, f))
+                        
                         if not safe_fields:
                             handle_exception(_("No valid fields requested"))
-                        kwargs["fields"] = safe_fields
+                        kwargs["fields"] = list(set(safe_fields))
                     else:
                         kwargs["fields"] = fields
                 else:
@@ -99,9 +115,13 @@ def validate_api_payload(
                         except Exception:
                             handle_exception(_("Invalid data format, expected JSON object"))
                     if allowed_fields:
-                        for key in data.keys():
-                            if key not in allowed_fields and key not in base_allowed:
+                        for key in list(data.keys()):
+                            if key not in allowed_fields and key not in base_allowed and key not in alias_map:
                                 handle_exception(_("Invalid field in data: {0}").format(key))
+                            
+                            # Normalize key to base field name in data dict
+                            if key in alias_map:
+                                data[alias_map[key]] = data.pop(key)
                     
                     kwargs["data"] = data
 
@@ -135,8 +155,9 @@ def validate_api_payload(
                             continue
                             
                         value = str(value).strip()[:50]  
-                        if key in allowed_filters:
-                            safe_filters.append([key, "like", f"%{value}%"])
+                        real_key = alias_map.get(key, key)
+                        if real_key in allowed_filters:
+                            safe_filters.append([real_key, "like", f"%{value}%"])
                         elif key == "search" and allowed_fields:
                             or_filters = [[base, "like", f"%{value}%"] for base in base_allowed]
                         else:
@@ -153,7 +174,8 @@ def validate_api_payload(
                 order_by = kwargs.get("order_by")
                 if order_by:
                     field = order_by.split()[0]
-                    if allowed_fields and field not in (allowed_fields + base_allowed + ["modified"]):
+                    real_field = alias_map.get(field, field)
+                    if allowed_fields and real_field not in (allowed_fields + base_allowed + ["modified"]):
                         kwargs["order_by"] = "modified desc"
                 else:
                     kwargs["order_by"] = "modified desc"

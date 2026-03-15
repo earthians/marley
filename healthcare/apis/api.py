@@ -65,7 +65,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
             final_filters = [f for f in final_filters if f[0] != "patient"]
             final_filters.append(["order_group", "in", encounter_list])
 
-        return frappe.get_all(
+        medication_requests = frappe.get_all(
             "Medication Request",
             filters=final_filters,
             or_filters=or_filters,
@@ -75,6 +75,17 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
             order_by=order_by,
             ignore_permissions=True
         )
+        result = []
+        for medication_request in medication_requests:
+            # Dynamically fetch item details if medication_item is present
+            item_code = medication_request.get("medication_item")
+            if item_code:
+                medication_request["item_name"] = frappe.get_value("Item", item_code, "item_name")
+                medication_request["rate"] = frappe.get_value("Item Price", {"item_code": item_code}, "price_list_rate")
+            
+            result.append(medication_request)
+        return result
+            
     except Exception as e:
        handle_exception(e)
 
