@@ -64,8 +64,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
                 return []
             final_filters = [f for f in final_filters if f[0] != "patient"]
             final_filters.append(["order_group", "in", encounter_list])
-        
-            
+
         medication_requests = frappe.get_all(
             "Medication Request",
             filters=final_filters,
@@ -83,8 +82,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
             if item_code:
                 medication_request["item_name"] = frappe.get_value("Item", item_code, "item_name")
                 medication_request["rate"] = frappe.get_value("Item Price", {"item_code": item_code}, "price_list_rate")
-            medication_request["reference_type"] = "Patient Encounter" if medication_request.get("Encounter") else "Medication Request"
-            medication_request["reference_name"] = medication_request.get("Encounter") or medication_request.get("name")
+            
             result.append(medication_request)
         return result
             
