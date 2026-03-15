@@ -81,7 +81,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["service","rate","income_account","qty"],
+    allowed_fields=["service","rate","income_account","qty","name"],
     allowed_filters=["patient","encouner_name"],
     require_auth=False
 )
