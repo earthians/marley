@@ -42,7 +42,7 @@ def get_patient_encounter(filters=None, fields=None, limit=10, start=0, order_by
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["name","order_group","medication_item","dosage","period","quantity"],
+    allowed_fields=["name","order_group as Encounter","medication_item","dosage","period","quantity"],
     allowed_filters=["order_group","patient"],
     require_auth=False
 )
@@ -98,7 +98,7 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
         service_requests = frappe.get_all(
             "Service Request",
             filters=sr_filters,
-            fields=["name","template_dt","template_dn","source_doc","order_group","quantity"],
+            fields=["name","template_dt","template_dn","source_doc","order_group","quantity","practitioner","practitioner_name"],
             limit_page_length=limit,
             start=start,
             order_by=order_by,
