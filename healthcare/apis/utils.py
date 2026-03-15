@@ -18,7 +18,7 @@ from functools import wraps
 from frappe import _
 
 def validate_api_payload(
-    allowed_keys=["filters","fields","limit","start","order_by","data"],
+    allowed_keys=["filters","fields","limit","start","order_by","data", "start_date", "end_date", "date_key"],
     allowed_fields=None,
     allowed_filters=None,
     require_auth=True,
@@ -132,32 +132,64 @@ def validate_api_payload(
                         filters = frappe.parse_json(filters)
                     except Exception:
                         handle_exception(_("Invalid filters format, expected JSON object"))
-                kwargs["filters"] = filters or {}
+                
+                # Merge flat params start_date/end_date/date_key if not present in filters
+                if not isinstance(filters, dict): filters = {}
+                for dk in ["start_date", "end_date", "date_key"]:
+                    if dk in kwargs and dk not in filters:
+                        filters[dk] = kwargs.pop(dk)
+                
+                kwargs["filters"] = filters
 
                 safe_filters = []
                 or_filters = []
 
                 if allowed_filters:
-                    # Handle date ranges
+                    # Handle date ranges dynamically
                     start_date = filters.get("start_date")
                     end_date = filters.get("end_date")
                     
-                    date_field = next((f for f in ["encounter_date", "date", "posting_date", "transaction_date"] if f in allowed_filters), None)
-                    
-                    if date_field:
-                        if start_date:
-                            safe_filters.append([date_field, ">=", start_date])
-                        if end_date:
-                            safe_filters.append([date_field, "<=", end_date])
+                    if start_date or end_date:
+                        # Priority list for automatic date field detection
+                        date_field = filters.get("date_key")
+                        if not date_field:
+                            priority = ["encounter_date", "date", "posting_date", "transaction_date", "order_date", "modified", "creation"]
+                            date_field = next((f for f in priority if f in allowed_filters), None)
+                        
+                        if not date_field:
+                            # Fallback 1: any field ending with _date
+                            date_field = next((f for f in allowed_filters if f.endswith("_date")), None)
+                        
+                        if not date_field:
+                            # Fallback 2: any field containing 'date'
+                            date_field = next((f for f in allowed_filters if "date" in f.lower()), None)
+                        
+                        if date_field and date_field in allowed_filters:
+                            if start_date: safe_filters.append([date_field, ">=", start_date])
+                            if end_date: safe_filters.append([date_field, "<=", end_date])
+                        elif date_field:
+                            handle_exception(_("Invalid date range field: {0}").format(date_field))
 
                     for key, value in filters.items():
-                        if key in ["start_date", "end_date"]:
+                        if key in ["start_date", "end_date", "date_key"]:
                             continue
                             
-                        value = str(value).strip()[:50]  
                         real_key = alias_map.get(key, key)
+                        
+                        # Handle dynamic range suffixes: fieldname_start / fieldname_end
+                        if key.endswith("_start") and key[:-6] in allowed_filters:
+                            safe_filters.append([key[:-6], ">=", value])
+                            continue
+                        if key.endswith("_end") and key[:-4] in allowed_filters:
+                            safe_filters.append([key[:-4], "<=", value])
+                            continue
+
                         if real_key in allowed_filters:
-                            safe_filters.append([real_key, "like", f"%{value}%"])
+                            if isinstance(value, (list, tuple)):
+                                safe_filters.append([real_key] + list(value))
+                            else:
+                                value = str(value).strip()[:50]  
+                                safe_filters.append([real_key, "like", f"%{value}%"])
                         elif key == "search" and allowed_fields:
                             or_filters = [[base, "like", f"%{value}%"] for base in base_allowed]
                         else:

@@ -92,24 +92,23 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["service","rate","income_account","qty","name"],
-    allowed_filters=["patient","encouner_name"],
+    allowed_fields=["service","rate","income_account","qty","name","order_date", "order_group as encouner_name"],
+    allowed_filters=["patient","encouner_name","order_date"],
     require_auth=False
 )
 def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=None, safe_filters=None, or_filters=None):
     try:
         result = []
         
-        sr_filters = {"docstatus": "1"}
-        if filters.get("patient"):
-            sr_filters["patient"] = ["like", f"%{filters.get('patient')}%"]
-        if filters.get("encouner_name"):
-            sr_filters["order_group"] = ["like", f"%{filters.get('encouner_name')}%"]
+        # Merge mandatory filters
+        final_filters = safe_filters or []
+        final_filters.append(["docstatus", "=", 1])
             
         service_requests = frappe.get_all(
             "Service Request",
-            filters=sr_filters,
-            fields=["name","template_dt","template_dn","source_doc","order_group","quantity","practitioner","practitioner_name"],
+            filters=final_filters,
+            or_filters=or_filters,
+            fields=["name","template_dt","template_dn","source_doc","order_group","quantity","practitioner","practitioner_name","order_date"],
             limit_page_length=limit,
             start=start,
             order_by=order_by,
@@ -128,6 +127,7 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
                 "qty": getattr(sr, "quantity"),
                 "rate": item.get("rate")or item.get("lab_test_rate"),
                 "serverice_type":sr.get("template_dt"),
+                "order_date":sr.get("order_date"),
                 "income_account": get_income_account(sr.get("practitioner"), sr.get("company"))
             }
             result.append(obj)
