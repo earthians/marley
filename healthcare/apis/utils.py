@@ -184,7 +184,7 @@ def validate_api_payload(
                             safe_filters.append([key[:-4], "<=", value])
                             continue
 
-                        if real_key in allowed_filters:
+                        if key in allowed_filters or real_key in allowed_filters:
                             if isinstance(value, (list, tuple)):
                                 safe_filters.append([real_key] + list(value))
                             else:

@@ -92,7 +92,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["service","rate","income_account","qty","name","order_date", "order_group as encouner_name"],
+    allowed_fields=["service","rate","income_account","qty","name","order_date"],
     allowed_filters=["patient","encouner_name","order_date"],
     require_auth=False
 )
@@ -100,14 +100,15 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
     try:
         result = []
         
-        # Merge mandatory filters
-        final_filters = safe_filters or []
-        final_filters.append(["docstatus", "=", 1])
+        sr_filters = {"docstatus": "1"}
+        if filters.get("patient"):
+            sr_filters["patient"] = ["like", f"%{filters.get('patient')}%"]
+        if filters.get("encouner_name"):
+            sr_filters["order_group"] = ["like", f"%{filters.get('encouner_name')}%"]
             
         service_requests = frappe.get_all(
             "Service Request",
-            filters=final_filters,
-            or_filters=or_filters,
+            filters=sr_filters,
             fields=["name","template_dt","template_dn","source_doc","order_group","quantity","practitioner","practitioner_name","order_date"],
             limit_page_length=limit,
             start=start,
