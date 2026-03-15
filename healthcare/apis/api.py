@@ -109,6 +109,7 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
             if sr.get("template_dt") and sr.get("template_dn"):
                 item = frappe.get_value(sr.get("template_dt"), {"name":sr.get("template_dn")}, ["*"],as_dict=True)
             obj = {
+                "name":sr.get("name"),
                 "reference_type": sr.get("source_doc") if sr.get("source_doc")  else"Service Request",
                 "reference_name": sr.get("order_group") if sr.get("order_group")  else sr.name,
                 "service": item.get("item_code") or item.get("lab_test_name"),
