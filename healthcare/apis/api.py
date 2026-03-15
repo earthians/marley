@@ -42,7 +42,7 @@ def get_patient_encounter(filters=None, fields=None, limit=10, start=0, order_by
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["name","order_group as Encounter","medication_item","dosage","period","quantity"],
+    allowed_fields=["name","order_group as Encounter","medication_item","dosage","period","quantity","practitioner"],
     allowed_filters=["order_group","patient"],
     require_auth=False
 )
@@ -84,6 +84,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
                 medication_request["rate"] = frappe.get_value("Item Price", {"item_code": item_code}, "price_list_rate")
                 medication_request["reference_type"] = "Patient Encounter" if medication_request.get("Encounter") else "Medication Request"
                 medication_request["reference_name"] = medication_request.get("order_group") or medication_request.get("name")
+                medication_request["practitioner"] = medication_request.get("practitioner") 
             result.append(medication_request)
         return result
             
@@ -93,7 +94,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["service","rate","income_account","qty","name","order_date"],
+    allowed_fields=["service","rate","income_account","qty","name","order_date","practitioner"],
     allowed_filters=["patient","encouner_name","order_date"],
     require_auth=False
 )
@@ -130,6 +131,7 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
                 "rate": item.get("rate")or item.get("lab_test_rate"),
                 "serverice_type":sr.get("template_dt"),
                 "order_date":sr.get("order_date"),
+                "practitioner":sr.get("practitioner"),
                 "income_account": get_income_account(sr.get("practitioner"), sr.get("company"))
             }
             result.append(obj)
