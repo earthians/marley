@@ -23,8 +23,8 @@ def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, saf
 
 @frappe.whitelist(allow_guest=True)
 @validate_api_payload(
-    allowed_fields=["name", "title", "patient", "patient_name", "practitioner", "practitioner_name"],
-    allowed_filters=["name", "patient", "patient_name", "practitioner", "practitioner_name"],
+    allowed_fields=["name", "title", "patient", "patient_name", "practitioner", "practitioner_name","encounter_date"],
+    allowed_filters=["name", "patient", "patient_name", "practitioner", "practitioner_name","encounter_date"],
     require_auth=False
 )
 def get_patient_encounter(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):

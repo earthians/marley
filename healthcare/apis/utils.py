@@ -118,7 +118,22 @@ def validate_api_payload(
                 or_filters = []
 
                 if allowed_filters:
+                    # Handle date ranges
+                    start_date = filters.get("start_date")
+                    end_date = filters.get("end_date")
+                    
+                    date_field = next((f for f in ["encounter_date", "date", "posting_date", "transaction_date"] if f in allowed_filters), None)
+                    
+                    if date_field:
+                        if start_date:
+                            safe_filters.append([date_field, ">=", start_date])
+                        if end_date:
+                            safe_filters.append([date_field, "<=", end_date])
+
                     for key, value in filters.items():
+                        if key in ["start_date", "end_date"]:
+                            continue
+                            
                         value = str(value).strip()[:50]  
                         if key in allowed_filters:
                             safe_filters.append([key, "like", f"%{value}%"])
