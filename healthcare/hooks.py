@@ -79,6 +79,7 @@ jinja = {
 
 before_install = "healthcare.install.before_install"
 after_install = "healthcare.setup.setup_healthcare"
+after_migrate = "healthcare.install.add_healthcare_mode"
 
 # Uninstallation
 # ------------

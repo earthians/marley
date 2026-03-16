@@ -6,6 +6,7 @@ from healthcare.setup import before_uninstall as remove_customizations
 
 
 def before_uninstall():
+	remove_healthcare_mode()
 	try:
 		print("Removing customizations created by Marley Health...")
 		remove_customizations()
@@ -21,7 +22,6 @@ def before_uninstall():
 		raise e
 
 	click.secho("Marley Health app customizations have been removed successfully...", fg="green")
-	remove_healthcare_mode()
 
 def after_uninstall():
 	print("Reset Portal Settings...")

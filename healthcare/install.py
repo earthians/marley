@@ -6,6 +6,7 @@ import healthcare
 
 
 def before_install():
+	add_healthcare_mode()
 	def major_version(v: str) -> str:
 		return v.split(".")[0]
 
@@ -23,7 +24,6 @@ def before_install():
 
 	raise SystemExit(1)
 
-	add_healthcare_mode()
 
 
 
