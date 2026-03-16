@@ -3,11 +3,10 @@ from .utils import validate_api_payload,handle_exception
 from healthcare.healthcare.doctype.lab_test.lab_test import get_lab_test_count_for_doc,create_lab_test
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_income_account
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["name", "patient_name","phone"],
     allowed_filters=["name", "patient_name", "uid", "phone"],
-    require_auth=False
 )
 def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
     return frappe.get_all(
@@ -21,11 +20,10 @@ def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, saf
         ignore_permissions=True
     )
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["name", "title", "patient", "patient_name", "practitioner", "practitioner_name","encounter_date"],
     allowed_filters=["name", "patient", "patient_name", "practitioner", "practitioner_name","encounter_date"],
-    require_auth=False
 )
 def get_patient_encounter(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
     safe_filters.append(["docstatus","=",1])
@@ -40,11 +38,10 @@ def get_patient_encounter(filters=None, fields=None, limit=10, start=0, order_by
         ignore_permissions=True
     )
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["name","order_group as Encounter","medication_item","dosage","period","quantity","practitioner"],
     allowed_filters=["order_group","patient"],
-    require_auth=False
 )
 def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
     try:
@@ -92,11 +89,10 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
        handle_exception(e)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["service","rate","income_account","qty","name","order_date","practitioner"],
     allowed_filters=["patient","encouner_name","order_date"],
-    require_auth=False
 )
 def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=None, safe_filters=None, or_filters=None):
     try:
@@ -142,19 +138,18 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
         handle_exception(e)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_lab_test_result(doctype,docname):
     return get_lab_test_count_for_doc(doctype,docname)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def create_lab_test(doctype,docname,create_bundle=False):
     return create_lab_test_logic(doctype,docname,create_bundle)
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["first_name", "middle_name", "last_name", "sex", "blood_group", "dob", "phone"],
-    require_auth=False
 )
 def create_patient(data=None, **kwargs):
     try:
@@ -169,11 +164,10 @@ def create_patient(data=None, **kwargs):
     except Exception as e:
         handle_exception(e)
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["name", "patient_name"],
     allowed_filters=["name", "patient_name"],
-    require_auth=False
 )
 def get_patient_by_name(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
     try:
@@ -190,6 +184,27 @@ def get_patient_by_name(filters=None, fields=None, limit=10, start=0, order_by=N
     except Exception as e:
         handle_exception(e)
 
-    
+
+@frappe.whitelist(allow_guest=True)
+@validate_api_payload(
+    allowed_fields=["name", "practitioner_name"],
+    allowed_filters=["name", "practitioner_name"],
+    require_auth=False
+)
+def get_practitioner_by_name(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
+    try:
+        return frappe.get_all(
+            "Healthcare Practitioner",
+            filters=safe_filters,
+            or_filters=or_filters,
+            fields=fields,
+            limit_page_length=limit,
+            start=start,
+            order_by=order_by,
+            ignore_permissions=True
+        )
+    except Exception as e:
+        handle_exception(e)
+
 
     
