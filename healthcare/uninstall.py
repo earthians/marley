@@ -21,8 +21,18 @@ def before_uninstall():
 		raise e
 
 	click.secho("Marley Health app customizations have been removed successfully...", fg="green")
-
+	remove_healthcare_mode()
 
 def after_uninstall():
 	print("Reset Portal Settings...")
 	frappe.get_doc("Portal Settings", "Portal Settings").reset()
+    
+def remove_healthcare_mode():
+    field = frappe.get_doc("Custom Field", {"fieldname": "etpos_mode", "dt": "POS Profile"})
+    if field:
+        options = field.options.split("\n")
+        if "Healthcare" in options:
+            options.remove("Healthcare")
+            field.options = "\n".join(options)
+            field.save()
+            frappe.db.commit()

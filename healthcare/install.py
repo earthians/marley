@@ -22,3 +22,23 @@ def before_install():
 	)
 
 	raise SystemExit(1)
+
+	add_healthcare_mode()
+
+
+
+
+
+
+def add_healthcare_mode():
+    field = frappe.get_doc("Custom Field", {"fieldname": "etpos_mode", "dt": "POS Profile"})
+    if field:
+        options = field.options.split("\n")
+        if "Healthcare" not in options:
+            options.append("Healthcare")
+            field.options = "\n".join(options)
+            field.save()
+            frappe.db.commit()
+
+
+
