@@ -21,8 +21,9 @@ def get_patient(filters=None, fields=None, limit=10, start=0, order_by=None, saf
     )
     result = []
     for patient in patients:
-        customer = frappe.get_value("Customer", patient.get("customer"), "*", as_dict=True)
-        patient["customer_name"] = customer.get("customer_name")
+        if patient.get("customer"):
+            customer = frappe.get_value("Customer", patient.get("customer"), "*", as_dict=True)
+            patient["customer_name"] = customer.get("customer_name")
         result.append(patient)
     return result
         
