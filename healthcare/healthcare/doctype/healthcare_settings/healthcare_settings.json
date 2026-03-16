@@ -35,6 +35,7 @@
   "create_lab_test_on_si_submit",
   "create_observation_on_si_submit",
   "create_sample_collection_for_lab_test",
+  "lab_test_creation",
   "column_break_34",
   "lab_test_approval_required",
   "employee_name_and_designation_in_print",
@@ -509,11 +510,18 @@
    "label": "Registration Item",
    "mandatory_depends_on": "eval:doc.collect_registration_fee == 1",
    "options": "Item"
+  },
+  {
+   "default": "Single",
+   "fieldname": "lab_test_creation",
+   "fieldtype": "Select",
+   "label": "Lab Test Creation",
+   "options": "Single\nMultiple"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-12-25 09:36:33.073374",
+ "modified": "2026-03-16 16:06:56.957582",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

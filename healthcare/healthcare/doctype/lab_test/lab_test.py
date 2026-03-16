@@ -140,11 +140,13 @@ def create_multiple(doctype, docname):
 			title=_("Insufficient Data"),
 		)
 
+	healthcare = frappe.get_single("Healthcare Settings")
+	create_bundle = healthcare.lab_test_creation == "Multiple"
 	lab_test_created = False
 	if doctype == "Sales Invoice":
-		lab_test_created = create_lab_test_from_invoice(docname)
+		lab_test_created = create_lab_test(doctype, docname, create_bundle)
 	elif doctype == "Patient Encounter":
-		lab_test_created = create_lab_test_from_encounter(docname)
+		lab_test_created = create_lab_test(doctype, docname, create_bundle)
 
 	if lab_test_created:
 		frappe.msgprint(_("Lab Test(s) {0} created successfully").format(lab_test_created), indicator="green")

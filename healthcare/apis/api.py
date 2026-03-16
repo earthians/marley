@@ -154,8 +154,8 @@ def get_lab_test_result(doctype,docname):
 
 
 @frappe.whitelist()
-def create_lab_test(doctype,docname,create_bundle=False):
-    return create_lab_test_logic(doctype,docname,create_bundle)
+def create_lab(doctype,docname,create_bundle=False):
+    return create_lab_test(doctype,docname,create_bundle)
 
 @frappe.whitelist()
 @validate_api_payload(
