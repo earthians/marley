@@ -80,7 +80,7 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
                 medication_request["item_name"] = frappe.get_value("Item", item_code, "item_name")
                 medication_request["rate"] = frappe.get_value("Item Price", {"item_code": item_code}, "price_list_rate")
                 medication_request["reference_type"] = "Patient Encounter" if medication_request.get("Encounter") else "Medication Request"
-                medication_request["reference_name"] = medication_request.get("order_group") or medication_request.get("name")
+                medication_request["reference_name"] = medication_request.get("Encounter") or medication_request.get("name")
                 medication_request["practitioner"] = medication_request.get("practitioner") 
             result.append(medication_request)
         return result
@@ -121,8 +121,8 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
                 "name":sr.get("name"),
                 "reference_type": sr.get("source_doc") if sr.get("source_doc")  else"Service Request",
                 "reference_name": sr.get("order_group") if sr.get("order_group")  else sr.name,
-                "service": item.get("item_code") or item.get("lab_test_name"),
-                "item_name":item.get("item_name") or item.get("lab_test_name"),
+                "service": item.get("item") or item.get("lab_test_name"),
+                "item_name":item.get("item_code") or item.get("lab_test_name"),
                 "qty": getattr(sr, "quantity"),
                 "rate": item.get("rate")or item.get("lab_test_rate"),
                 "serverice_type":sr.get("template_dt"),
