@@ -185,11 +185,10 @@ def get_patient_by_name(filters=None, fields=None, limit=10, start=0, order_by=N
         handle_exception(e)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 @validate_api_payload(
     allowed_fields=["name", "practitioner_name"],
     allowed_filters=["name", "practitioner_name"],
-    require_auth=False
 )
 def get_practitioner_by_name(filters=None, fields=None, limit=10, start=0, order_by=None, safe_filters=None, or_filters=None):
     try:
