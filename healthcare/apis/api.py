@@ -98,10 +98,11 @@ def get_drug_prescription(filters=None, fields=None, limit=10, start=0, order_by
        handle_exception(e)
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 @validate_api_payload(
     allowed_fields=["service","rate","income_account","qty","name","order_date","practitioner"],
     allowed_filters=["patient","encouner_name","order_date"],
+    require_auth=False
 )
 def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=None, safe_filters=None, or_filters=None):
     try:
@@ -128,8 +129,8 @@ def get_service_requests(filters=None, fields=None, limit=50, start=0, order_by=
                 item = frappe.get_value(sr.get("template_dt"), {"name":sr.get("template_dn")}, ["*"],as_dict=True)
             obj = {
                 "name":sr.get("name"),
-                "reference_type": sr.get("source_doc") if sr.get("source_doc")  else"Service Request",
-                "reference_name": sr.get("order_group") if sr.get("order_group")  else sr.name,
+                "reference_type": "Service Request",
+                "reference_name":  sr.name,
                 "service": item.get("item") or item.get("lab_test_name"),
                 "item_name":item.get("item_code") or item.get("lab_test_name"),
                 "qty": getattr(sr, "quantity"),
