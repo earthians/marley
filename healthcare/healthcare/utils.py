@@ -1418,7 +1418,6 @@ def add_node():
 	frappe.get_doc(args).insert()
 
 
-
 @frappe.whitelist()
 def get_codification_row_code_data(code, code_system=None):
 
