@@ -174,17 +174,6 @@ frappe.ui.form.on('Clinical Procedure', {
 
 	},
 
-	before_save: async function(frm) {
-		if (frm.is_new()) {
-			frm.add_fetch('procedure_template', 'medical_department', 'medical_department');
-			frm.set_value('start_time', null);
-		}
-		await new Promise(function(resolve) {
-			frappe.require('assets/healthcare/js/utils.js', resolve);
-		});
-		await healthcare.utils.before_save_check(frm);
-	},
-
 	before_save: function(frm) {
 		if (frm.is_new()) {
 			frm.add_fetch('procedure_template', 'medical_department', 'medical_department');

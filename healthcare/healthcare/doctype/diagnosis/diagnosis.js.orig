@@ -1,15 +1,17 @@
-// Copyright (c) 2022, healthcare and contributors
+// Copyright (c) 2016, ESS LLP and contributors
 // For license information, please see license.txt
-{% include "healthcare/public/js/service_request.js" %}
 
-frappe.ui.form.on('Medication Request', {
-	refresh: function(frm) {
-		frm.set_query("status", function () {
-			return {
-				"filters": {
-					"code_system": "Medication Request Status",
-				}
-			};
+frappe.ui.form.on('Diagnosis', {
+	refresh : function(frm) {
+		frm.set_query("code_value", "codification_table", function(doc, cdt, cdn) {
+			let row = frappe.get_doc(cdt, cdn);
+			if (row.code_system) {
+				return {
+					filters: {
+						code_system: row.code_system
+					}
+				};
+			}
 		});
 
 		frappe.require('assets/healthcare/js/utils.js', function() {
@@ -17,13 +19,11 @@ frappe.ui.form.on('Medication Request', {
 		});
 	},
 
-	before_save: async function(frm) {
-		await new Promise(function(resolve) {
-			frappe.require('assets/healthcare/js/utils.js', resolve);
+	before_save: function(frm) {
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.before_save_check(frm);
 		});
-		await healthcare.utils.before_save_check(frm);
 	}
-
 });
 
 

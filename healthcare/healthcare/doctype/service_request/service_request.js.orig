@@ -34,12 +34,12 @@ frappe.ui.form.on('Service Request', {
 		});
 	},
 
-	before_save: async function(frm) {
-		await new Promise(function(resolve) {
-			frappe.require('assets/healthcare/js/utils.js', resolve);
+	before_save: function(frm) {
+		frappe.require('assets/healthcare/js/utils.js', function() {
+			healthcare.utils.before_save_check(frm);
 		});
-		await healthcare.utils.before_save_check(frm);
 	},
+
 
 	setup_create_buttons: function(frm) {
 		if (frm.doc.docstatus !== 1 || frm.doc.status === 'Completed') return;

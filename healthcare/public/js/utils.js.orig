@@ -44,40 +44,39 @@ healthcare.utils.set_codification_table_query = function(frm) {
 
 
 healthcare.utils.before_save_check = async function(frm) {
+	let errors = []
 
 	for (const row of frm.doc.codification_table) {
 
 		try {
+			if (row.code) {
+				let response = await frappe.call ({
+					method: "healthcare.healthcare.utils.get_codification_row_code_data",
+					args: {
+						code: row.code,
+						code_system: row.code_system
+					}
+				});
 
-			const response = await frappe.call ({
-				method: "healthcare.healthcare.utils.get_codification_row_code_data",
-				args: {
-					code: row.code,
-					code_system: row.code_system
+				if (response.message && response.message.row_data) {
+					debugger;
+//					if (row.code_system != response.message.row_data[0].code_system) {
+//						errors.push(row.idx);
+//					}
+					if (row.code_value_set && row.code_value_set !== response.message.row_data[0].value_set) {
+						errors.push(row.idx);
+					}
 				}
-			});
-
-			const server_value_set = response?.message?.row_data?.[0]?.value_set;
-
-//			if (!server_value_set) {
-//				frappe.msgprint(__("No Code Value found for row {0}", [row.idx]));
-//				frappe.validated = false;
-//				return false;
-//			}
-
-			if (row.code_value_set && row.code_value_set !== server_value_set) {
-				frappe.msgprint(__("Mismatch in Code-data for row {0}", [row.idx]));
-				frappe.validated = false;
-				return false;
 			}
-
 		} catch (e) {
 			frappe.msgprint(__("Error checking row {0}: {1}", [row.idx, e.message]));
-			frappe.validated = false;
-			return false;
 		}
 	}
 
+	if (errors.length > 0) {
+		frappe.msgprint(__("Mismatch in Code-data for row(s): {0}  ", [errors.join(", ")]));
+		frappe.validated = false;
+	}
 };
 
 

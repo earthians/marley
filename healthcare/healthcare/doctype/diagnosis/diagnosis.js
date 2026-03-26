@@ -19,11 +19,13 @@ frappe.ui.form.on('Diagnosis', {
 		});
 	},
 
-	before_save: function(frm) {
-		frappe.require('assets/healthcare/js/utils.js', function() {
-			healthcare.utils.before_save_check(frm);
+	before_save: async function(frm) {
+		await new Promise(function(resolve) {
+			frappe.require('assets/healthcare/js/utils.js', resolve);
 		});
-	}
+		await healthcare.utils.before_save_check(frm);
+	},
+
 });
 
 
