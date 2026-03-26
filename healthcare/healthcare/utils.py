@@ -1430,7 +1430,7 @@ def get_codification_row_code_data(code, code_system=None):
 			"code_system": code_system,
 			"code_value": code
 		},
-		limit_page_length = 1
+		limit_page_length=1
 	)
 
 	return {"row_data": row_data}
