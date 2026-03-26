@@ -1426,7 +1426,7 @@ def get_codification_row_code_data(code, code_system=None):
 	row_data = frappe.get_list(
 		"Code Value",
 		fields=["value_set"],
-		filters={"code_system": code_system,"code_value": code},
+		filters={"code_system": code_system, "code_value": code},
 		limit_page_length=1,
 	)
 
