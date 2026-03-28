@@ -641,6 +641,7 @@ def get_leave_from(
 	doctype: str | None, txt: str, searchfield: str | None, start: int, page_len: int, filters: dict
 ):
 	docname = filters["docname"]
+	frappe.has_permission("Inpatient Record", "read", docname, throw=True)
 
 	io = frappe.qb.DocType("Inpatient Occupancy")
 
@@ -648,6 +649,7 @@ def get_leave_from(
 		frappe.qb.from_(io)
 		.select(io.service_unit)
 		.where(io.parent == docname)
+		.where(io.parenttype == "Inpatient Record")
 		.where(io.parentfield == "inpatient_occupancies")
 		.where(io.left != 1)
 	)
