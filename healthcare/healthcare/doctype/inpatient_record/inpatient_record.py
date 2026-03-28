@@ -637,7 +637,9 @@ def patient_leave_service_unit(inpatient_record, check_out, leave_from):
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_leave_from(doctype: str | None, txt: str, searchfield: str | None, start: int, page_len: int, filters: dict):
+def get_leave_from(
+	doctype: str | None, txt: str, searchfield: str | None, start: int, page_len: int, filters: dict
+):
 	docname = filters["docname"]
 
 	io = frappe.qb.DocType("Inpatient Occupancy")
