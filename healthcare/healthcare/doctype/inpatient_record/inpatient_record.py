@@ -7,7 +7,6 @@ from math import floor
 
 import frappe
 from frappe import _
-from frappe.desk.reportview import get_match_cond
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import (
@@ -638,18 +637,27 @@ def patient_leave_service_unit(inpatient_record, check_out, leave_from):
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_leave_from(doctype, txt, searchfield, start, page_len, filters):
+def get_leave_from(
+	doctype: str | None, txt: str, searchfield: str | None, start: int, page_len: int, filters: dict
+):
 	docname = filters["docname"]
+	frappe.has_permission("Inpatient Record", "read", docname, throw=True)
 
-	query = """select io.service_unit
-		from `tabInpatient Occupancy` io, `tabInpatient Record` ir
-		where io.parent = '{docname}' and io.parentfield = 'inpatient_occupancies'
-		and io.left!=1 and io.parent = ir.name"""
+	io = frappe.qb.DocType("Inpatient Occupancy")
 
-	return frappe.db.sql(
-		query.format(**{"docname": docname, "searchfield": searchfield, "mcond": get_match_cond(doctype)}),
-		{"txt": f"%{txt}%", "_txt": txt.replace("%", ""), "start": start, "page_len": page_len},
+	query = (
+		frappe.qb.from_(io)
+		.select(io.service_unit)
+		.where(io.parent == docname)
+		.where(io.parenttype == "Inpatient Record")
+		.where(io.parentfield == "inpatient_occupancies")
+		.where(io.left != 1)
 	)
+
+	if txt:
+		query = query.where(io.service_unit.like(f"%{txt}%"))
+
+	return query.limit(page_len).offset(start).run()
 
 
 def is_service_unit_billable(service_unit):
