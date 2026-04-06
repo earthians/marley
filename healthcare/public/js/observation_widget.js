@@ -207,8 +207,11 @@ healthcare.ObservationWidget = class {
 					options: options,
 					read_only: 1 ? obs_data.status == "Approved" : 0,
 					change: s => {
-						me.frm.dirty();
-						me.set_result_n_name(obs_data.name);
+						let current_val = me[obs_data.name].get_value("result");
+						if ((current_val || "") != (default_input || "")) {
+							me.frm.dirty();
+							me.set_result_n_name(obs_data.name);
+						}
 					},
 					default: default_input,
 					hidden: 1 ? obs_data.observation_category == "Imaging" : 0,

@@ -12,7 +12,7 @@ frappe.ui.form.on("Diagnostic Report", {
 	},
 	before_save: function (frm) {
 		if (!frm.is_new() && frm.is_dirty()) {
-			this.diagnostic_report.save_action("save");
+			return this.diagnostic_report.save_action("save");
 		}
 	},
 	after_workflow_action: function (frm) {
@@ -20,6 +20,9 @@ frappe.ui.form.on("Diagnostic Report", {
 			method: "healthcare.healthcare.doctype.diagnostic_report.diagnostic_report.set_observation_status",
 			args: {
 				docname: frm.doc.name,
+			},
+			callback: function () {
+				frm.reload_doc();
 			},
 		});
 	},

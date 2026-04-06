@@ -69,7 +69,7 @@ healthcare.Diagnostic.DiagnosticReport = class DiagnosticReport {
 	save_action(func) {
 		var me = this;
 		if (func == "save") {
-			frappe.call({
+			return frappe.call({
 				method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
 				args: {
 					values: this.result,
