@@ -397,6 +397,8 @@ def create_therapy_plan(encounter):
 		doc.start_date = encounter.encounter_date
 		doc.source_doc = encounter.doctype
 		doc.order_group = encounter.name
+		doc.practitioner = encounter.practitioner
+		doc.practitioner_name = encounter.practitioner_name
 		for entry in encounter.therapies:
 			doc.append(
 				"therapy_plan_details",
