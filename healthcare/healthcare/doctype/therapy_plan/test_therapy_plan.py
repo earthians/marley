@@ -78,9 +78,14 @@ def create_therapy_plan(template=None, patient=None):
 	if not patient:
 		patient = create_patient()
 	therapy_type = create_therapy_type()
+	practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
 	plan = frappe.new_doc("Therapy Plan")
 	plan.patient = patient
 	plan.start_date = getdate()
+	plan.practitioner = practitioner
+	plan.practitioner_name = frappe.db.get_value(
+		"Healthcare Practitioner", practitioner, "practitioner_name"
+	)
 
 	if template:
 		plan.therapy_plan_template = template
