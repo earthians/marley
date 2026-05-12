@@ -34,7 +34,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
-	make_insurance_coverage,
+	make_insurance_coverage as generate_insurance_coverage,
 )
 from healthcare.healthcare.utils import get_appointment_billing_item_and_rate
 
@@ -99,7 +99,7 @@ class PatientAppointment(Document):
 
 	def make_insurance_coverage(self):
 		billing_detail = get_appointment_billing_item_and_rate(self)
-		coverage = make_insurance_coverage(
+		coverage = generate_insurance_coverage(
 			patient=self.patient,
 			policy=self.insurance_policy,
 			company=self.company,
