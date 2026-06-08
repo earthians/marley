@@ -77,7 +77,17 @@ class Medication(Document):
 								item_price.price_list = self.price_list
 								item_price.save()
 				else:
-					frappe.db.set_value("Item", item.item_code, "disabled", 1)
+					# "Not separately billable" must not deactivate an Item that is
+					# used in other flows. A linked Item can be a non-billable
+					# stock/purchase consumable (e.g. a vaccine received via Purchase
+					# Receipt and issued per dose, while the patient is billed through
+					# a separate service Item). Only disable Items that aren't
+					# transactable elsewhere.
+					item_flags = frappe.db.get_value(
+						"Item", item.item_code, ["is_stock_item", "is_purchase_item"], as_dict=True
+					)
+					if item_flags and not item_flags.is_stock_item and not item_flags.is_purchase_item:
+						frappe.db.set_value("Item", item.item_code, "disabled", 1)
 
 				frappe.db.set_value("Medication Linked Item", item.name, "change_in_item", 0)
 		self.reload()
@@ -100,7 +110,10 @@ def insert_item(doc, item):
 				"description": item.item_code,
 				"is_sales_item": 1,
 				"is_stock_item": 1,
-				"disabled": 0 if item.is_billable and not doc.disabled else 1,
+				# The Item created here is a stock item; don't disable it merely
+				# because the linked row isn't separately billable — only honour the
+				# parent Medication's own disabled state.
+				"disabled": 1 if doc.disabled else 0,
 				"stock_uom": item.stock_uom or frappe.db.get_single_value("Stock Settings", "stock_uom"),
 			}
 		)
