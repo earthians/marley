@@ -23,6 +23,8 @@ frappe.ui.form.PatientQuickEntryForm = class PatientQuickEntryForm extends (
 		this.mandatory.splice(3, 0, ...custom_fields);
 
 		super.render_dialog();
+
+		this.dialog?.fields_dict?.dob?.datepicker?.update({ maxDate: new Date() });
 	}
 
 	get_standard_fields() {
