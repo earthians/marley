@@ -1,2 +1,2 @@
-def get_data():
+def get_data(data=None):
 	return []
