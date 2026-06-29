@@ -290,10 +290,11 @@ def reference_applies_to_patient(child, doc):
 
 
 def reference_matches_age(child, doc):
+	missing_days = doc.days is None or doc.days == ""
 	if child.age != "Range":
-		return child.age == "All" or not doc.days
+		return child.age == "All" or missing_days
 
-	if not doc.days:
+	if missing_days:
 		return False
 
 	day_from = age_value_in_days(child.age_from, child.from_age_type)
