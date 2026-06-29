@@ -222,7 +222,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 	}
 
 	update_selection() {
-		const count = this.wrapper.find(".sample-tree-check:checked").length;
+		const count = this.selected_units().length;
 		this.toolbar.find(".mark-selected-btn").prop("disabled", count === 0);
 		this.toolbar
 			.find(".sample-tree-selection")
@@ -263,7 +263,10 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 	}
 
 	collect_call(group) {
-		const args = { selected: group.rows, sample_collection: this.frm.doc.name };
+		const args = {
+			selected: JSON.stringify(group.rows),
+			sample_collection: this.frm.doc.name,
+		};
 		if (group.parent) {
 			args.component_observations = group.parent.component_observations;
 			args.child_name = group.parent.name;
