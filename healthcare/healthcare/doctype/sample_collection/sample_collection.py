@@ -106,9 +106,11 @@ def insert_observation(
 		update_child_status(context)
 		update_collection_status(context)
 	except Exception as exception:
+		frappe.db.rollback()
 		frappe.log_error(message=exception, title="Failed to mark Collected!")
-
-	publish_progress(sample_collection)
+		raise
+	else:
+		publish_progress(sample_collection)
 
 
 def build_context(selected, sample_collection, component_observations, child_name):
@@ -155,7 +157,8 @@ def collect_sample(context, index, obs):
 		child=obs.get("reference_child") or "",
 		service_request=obs.get("service_request"),
 	)
-	if observation:
+
+	if observation and obs.get("name"):
 		frappe.db.set_value(
 			"Observation Sample Collection",
 			obs.get("name"),
