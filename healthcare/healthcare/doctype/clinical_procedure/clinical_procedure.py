@@ -7,7 +7,13 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_to_date, flt, get_link_to_form, now_datetime, nowdate, nowtime
 
-from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
+from erpnext.stock.get_item_details import get_item_details
+
+try:
+	from erpnext.stock.get_item_details import ItemDetailsCtx
+except ImportError:
+	ItemDetailsCtx = dict
+
 from erpnext.stock.stock_ledger import get_previous_sle
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account

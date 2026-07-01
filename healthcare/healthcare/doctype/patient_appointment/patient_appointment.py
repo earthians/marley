@@ -1,6 +1,7 @@
 # Copyright (c) 2015, ESS LLP and contributors
 # For license information, please see license.txt
 
+from __future__ import annotations
 
 import datetime
 import json

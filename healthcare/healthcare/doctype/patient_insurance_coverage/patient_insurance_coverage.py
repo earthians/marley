@@ -7,7 +7,12 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_link_to_form, getdate
 
-from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
+from erpnext.stock.get_item_details import get_item_details
+
+try:
+	from erpnext.stock.get_item_details import ItemDetailsCtx
+except ImportError:
+	ItemDetailsCtx = dict
 
 from healthcare.healthcare.doctype.insurance_payor.insurance_payor import has_active_contract
 from healthcare.healthcare.doctype.item_insurance_eligibility.item_insurance_eligibility import (

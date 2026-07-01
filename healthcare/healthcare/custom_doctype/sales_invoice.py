@@ -2,7 +2,12 @@ import frappe
 from frappe.utils import flt
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
-from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
+from erpnext.stock.get_item_details import get_item_details
+
+try:
+	from erpnext.stock.get_item_details import ItemDetailsCtx
+except ImportError:
+	ItemDetailsCtx = dict
 
 
 class SalesInvoiceMixin:

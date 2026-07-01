@@ -21,7 +21,12 @@ from frappe.utils import (
 	today,
 )
 
-from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
+from erpnext.stock.get_item_details import get_item_details
+
+try:
+	from erpnext.stock.get_item_details import ItemDetailsCtx
+except ImportError:
+	ItemDetailsCtx = dict
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
