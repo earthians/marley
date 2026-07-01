@@ -11,7 +11,7 @@ frappe.ui.form.on("Sales Invoice", {
 					frappe.db
 						.get_value("Patient", frm.doc.patient, "customer")
 						.then(r => {
-							let link_customer = null;
+							let link_customer = 0;
 							let msg =
 								"Patient is not linked to a customer. Do you want to link the selected customer to the patient permanently?";
 							if (r.message.customer) {
@@ -47,7 +47,7 @@ frappe.ui.form.on("Sales Invoice", {
 					frappe.db
 						.get_value("Patient", frm.doc.patient, "customer")
 						.then(r => {
-							let link_customer = null;
+							let link_customer = 0;
 							if (r.message.customer) {
 								get_drugs_to_invoice(frm, link_customer);
 							} else {
