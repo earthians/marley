@@ -49,6 +49,15 @@ data = {
 				"read_only": True,
 			},
 			{
+				"fieldname": "custom_fs_number",
+				"label": "FS Number",
+				"fieldtype": "Data",
+				"insert_after": "patient_name",
+				"allow_on_submit": True,
+				"print_hide": False,
+				"no_copy": True,
+			},
+			{
 				"fieldname": "ref_practitioner",
 				"label": "Referring Practitioner",
 				"fieldtype": "Link",
