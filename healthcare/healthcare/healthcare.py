@@ -24,6 +24,16 @@ data = {
 		"Patient",
 	],
 	"custom_fields": {
+		"Patient": [
+			{
+				"fieldname": "tax_id",
+				"label": "TIN Number",
+				"fieldtype": "Data",
+				"insert_after": "patient_name",
+				"unique": True,
+				"description": "Patient taxpayer identification number used on billing documents.",
+			},
+		],
 		"Sales Invoice": [
 			{
 				"fieldname": "patient",
