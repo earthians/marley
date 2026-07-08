@@ -393,11 +393,11 @@
    "read_only": 1
   },
   {
-   "fetch_from": "sales_invoice.status",
    "fieldname": "sales_invoice_status",
    "fieldtype": "Data",
    "label": "Sales Invoice Status",
-   "read_only": 1
+   "read_only": 1,
+   "is_virtual": 1
   },
   {
    "fieldname": "column_break_zrac",

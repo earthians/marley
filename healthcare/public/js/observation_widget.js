@@ -161,6 +161,8 @@ healthcare.ObservationWidget = class {
 
 	init_field_group(obs_data, wrapper) {
 		var me = this;
+		me._is_rendering_result_field = me._is_rendering_result_field || {};
+		me._is_rendering_result_field[obs_data.name] = true;
 		var default_input = "";
 		if (
 			["Range", "Ratio", "Quantity", "Numeric"].includes(
@@ -206,7 +208,10 @@ healthcare.ObservationWidget = class {
 					fieldtype: fieldtype,
 					options: options,
 					read_only: 1 ? obs_data.status == "Approved" : 0,
-					change: s => {
+					change: () => {
+						if (me._is_rendering_result_field[obs_data.name]) {
+							return;
+						}
 						me.frm.dirty();
 						me.set_result_n_name(obs_data.name);
 					},
@@ -286,6 +291,9 @@ healthcare.ObservationWidget = class {
 		});
 		me[obs_data.name].make();
 		me.set_values(this, obs_data);
+		setTimeout(() => {
+			me._is_rendering_result_field[obs_data.name] = false;
+		}, 0);
 	}
 
 	set_values(th, obs_data) {

@@ -18,6 +18,11 @@ DAYS_PER_AGE_TYPE = {"Years": 365.2425, "Months": 30.436875, "Days": 1}
 
 
 class Observation(Document):
+	@property
+	def sales_invoice_status(self):
+		if self.sales_invoice:
+			return frappe.db.get_value("Sales Invoice", self.sales_invoice, "status")
+
 	def validate(self):
 		self.set_age()
 		self.set_result_time()

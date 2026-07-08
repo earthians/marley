@@ -86,7 +86,7 @@ def set_treatment_plan_template_items(doc):
 		medication_list = frappe.get_all("Drug Prescription", {"parent": doc.treatment_plan_template}, ["*"])
 		item_list.extend(medication_list)
 		for item in item_list:
-			args = {"price_list": doc.price_list}
+			args = frappe._dict({"price_list": doc.price_list})
 			if item.get("drug_code"):
 				item_details = get_item_price(args, item.get("drug_code"))
 			else:

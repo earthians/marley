@@ -10,6 +10,7 @@
  "field_order": [
   "patient",
   "patient_name",
+  "inpatient_record",
   "gender",
   "age",
   "practitioner",
@@ -44,6 +45,14 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
    "read_only": 1
   },
   {
