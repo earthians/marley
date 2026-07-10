@@ -96,15 +96,21 @@ class TestInpatientMedicationOrder(FrappeTestCase):
 
 		self.assertTrue(first_ipmo.name)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ce555ca9 (fix: linter-issue)
 		self.assertEqual(first_ipmo.docstatus, 0)
 		self.assertFalse(first_ipmo.patient_encounter)
 
 		self.assertTrue(second_ipmo.name)
 		self.assertEqual(second_ipmo.docstatus, 0)
 		self.assertFalse(second_ipmo.patient_encounter)
+<<<<<<< HEAD
 =======
 		self.assertTrue(second_ipmo.name)
 >>>>>>> 8f603f6 (fix(inpatient-medication-order): skip duplicate inpatient medication order check when patient encounter is blank)
+=======
+>>>>>>> ce555ca9 (fix: linter-issue)
 
 	def tearDown(self):
 		if frappe.db.get_value("Patient", self.patient, "inpatient_record"):

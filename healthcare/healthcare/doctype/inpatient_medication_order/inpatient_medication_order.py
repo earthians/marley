@@ -91,4 +91,3 @@ class InpatientMedicationOrder(Document):
 			return
 		for drug in patient_encounter.drug_prescription:
 			self.add_order_entries(drug)
-
