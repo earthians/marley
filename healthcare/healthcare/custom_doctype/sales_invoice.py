@@ -25,6 +25,7 @@ class SalesInvoiceMixin:
 					"customer": frappe.db.get_value("Patient", self.patient, "customer"),
 					"selling_price_list": self.selling_price_list or price_list,
 					"price_list_currency": self.currency or price_list_currency,
+				"currency": self.currency or price_list_currency,
 					"plc_conversion_rate": 1.0,
 					"conversion_rate": 1.0,
 				}
@@ -39,7 +40,20 @@ class SalesInvoiceMixin:
 			if checked_item.get("rate"):
 				item_line.rate = checked_item.get("rate")
 			else:
-				item_line.rate = item_details.price_list_rate
+				rate = item_details.price_list_rate
+				if not rate:
+					# v16 erpnext get_item_details strips uom; re-fetch Item Price rate
+					selling_price_list = self.selling_price_list or price_list
+					rate = frappe.db.get_value(
+						"Item Price",
+						{"item_code": checked_item.get("item"), "price_list": selling_price_list, "customer": ""},
+						"price_list_rate",
+					) or frappe.db.get_value(
+						"Item Price",
+						{"item_code": checked_item.get("item"), "price_list": selling_price_list},
+						"price_list_rate",
+					)
+				item_line.rate = rate
 
 			if checked_item.get("income_account"):
 				item_line.income_account = checked_item.get("income_account")
