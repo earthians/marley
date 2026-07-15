@@ -24,16 +24,20 @@ frappe.ui.form.on("Appointment Type", {
 		frm.set_query("dn", "items", function (doc, cdt, cdn) {
 			let child = locals[cdt][cdn];
 			if (child.dt === "Medical Department") {
+				// dn is unset on the row being edited until a value is picked, and MySQL's
+				// "NOT IN (...)" evaluates to UNKNOWN for every row once the list contains a
+				// NULL - which silently empties the whole dropdown. Coerce unset dn to "" so
+				// the filter still excludes only actually-selected rows.
 				let item_list = doc.items
-					.filter(item => item.dt === "Medical Department" && item.dn)
-					.map(({ dn }) => dn);
+					.filter(item => item.dt === "Medical Department")
+					.map(({ dn }) => dn || "");
 				return {
 					filters: [["Medical Department", "name", "not in", item_list]],
 				};
 			} else if (child.dt === "Healthcare Service Unit") {
 				let item_list = doc.items
-					.filter(item => item.dt === "Healthcare Service Unit" && item.dn)
-					.map(({ dn }) => dn);
+					.filter(item => item.dt === "Healthcare Service Unit")
+					.map(({ dn }) => dn || "");
 				return {
 					filters: [
 						["Healthcare Service Unit", "name", "not in", item_list],
