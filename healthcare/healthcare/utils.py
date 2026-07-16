@@ -54,7 +54,7 @@ def get_healthcare_services_to_invoice(
 def validate_customer_created(patient, customer, link_customer):
 	message = ""
 	if link_customer:
-		frappe.db.set_value("Patient", patient, "customer", customer)
+		frappe.db.set_value("Patient", patient.name, "customer", customer)
 		message = _("Customer {0} has been linked to Patient").format(customer)
 	elif not frappe.db.get_value("Patient", patient.name, "customer"):
 		message = _(
