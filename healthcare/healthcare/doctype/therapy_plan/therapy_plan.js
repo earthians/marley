@@ -152,6 +152,14 @@ frappe.ui.form.on("Therapy Plan", {
 
 frappe.ui.form.on("Therapy Plan Detail", {
 	no_of_sessions: function (frm) {
+		// "Therapy Plan Detail" is also used as Patient Encounter's "therapies" table, and
+		// child-doctype triggers fire on every parent form that embeds the child table, not
+		// just this one. Patient Encounter has neither a therapy_plan_details field nor a
+		// total_sessions field, so without this guard, editing "No of Sessions" there throws
+		// "Field total_sessions not found" instead of doing nothing.
+		if (frm.doc.doctype !== "Therapy Plan") {
+			return;
+		}
 		let total = 0;
 		$.each(frm.doc.therapy_plan_details, function (_i, e) {
 			total += e.no_of_sessions;
