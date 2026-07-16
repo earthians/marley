@@ -125,6 +125,8 @@ def make_therapy_session(
 				(frappe.copy_doc(code)).as_dict(),
 			)
 	therapy_session.appointment = appointment
+	if appointment:
+		therapy_session.service_unit = frappe.db.get_value("Patient Appointment", appointment, "service_unit")
 	therapy_session.service_request = service_request
 	if sr_doc:
 		therapy_session.invoiced = 1 if sr_doc.billing_status == "Invoiced" else 0
