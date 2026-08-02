@@ -8,6 +8,11 @@ frappe.ui.form.on("Diagnostic Report", {
 			frm.add_custom_button(__(`Get PDF`), function () {
 				generate_pdf_with_print_format(frm);
 			});
+			if (frm.doc.status !== "Approved") {
+				frm.add_custom_button(__("Approve All"), function () {
+					confirm_approve_all(frm);
+				});
+			}
 		}
 	},
 	before_save: function (frm) {
@@ -35,6 +40,36 @@ var show_diagnostic_report = function (frm) {
 		});
 		this.diagnostic_report.refresh();
 	}
+};
+
+var confirm_approve_all = function (frm) {
+	frappe.confirm(
+		__("Are you sure you want to approve all Observations in this report?"),
+		function () {
+			save_pending_results(frm).then(function () {
+				approve_all_observations(frm);
+			});
+		},
+	);
+};
+
+var save_pending_results = function (frm) {
+	return frm.is_dirty() ? frm.save() : Promise.resolve();
+};
+
+var approve_all_observations = function (frm) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.observation.observation.approve_all_observations",
+		args: {
+			diagnostic_report: frm.doc.name,
+		},
+		freeze: true,
+		freeze_message: __("Approving Observations"),
+		callback: function (r) {
+			if (r.exc) return;
+			console.log(r.message);
+		},
+	});
 };
 
 var generate_pdf_with_print_format = function (frm) {
