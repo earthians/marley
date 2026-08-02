@@ -67,9 +67,29 @@ var approve_all_observations = function (frm) {
 		freeze_message: __("Approving Observations"),
 		callback: function (r) {
 			if (r.exc) return;
-			console.log(r.message);
+			show_approval_summary(r.message);
+			frm.reload_doc();
 		},
 	});
+};
+
+var show_approval_summary = function (summary) {
+	const approved = (summary && summary.approved) || [];
+	const skipped = (summary && summary.skipped) || [];
+	if (skipped.length) {
+		frappe.msgprint({
+			title: __("Approved {0} Observation(s)", [approved.length]),
+			message: __("Observations without a result were skipped: {0}", [
+				skipped.join(", "),
+			]),
+			indicator: "orange",
+		});
+	} else {
+		frappe.show_alert({
+			message: __("Approved {0} Observation(s)", [approved.length]),
+			indicator: "green",
+		});
+	}
 };
 
 var generate_pdf_with_print_format = function (frm) {
