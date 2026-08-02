@@ -105,7 +105,14 @@ class Observation(Document):
 		return False
 
 	def component_has_result(self):
-		component_obs = frappe.db.get_all("Observation", {"parent_observation": self.name}, pluck="name")
+		component_obs = frappe.db.get_all(
+			"Observation",
+			{
+				"parent_observation": self.name,
+				"docstatus": ["!=", 2],
+			},
+			pluck="name",
+		)
 		for obs in component_obs:
 			obs_doc = frappe.get_doc("Observation", obs)
 			if obs_doc.has_component:
