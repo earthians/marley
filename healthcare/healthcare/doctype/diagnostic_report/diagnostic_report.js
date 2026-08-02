@@ -13,6 +13,11 @@ frappe.ui.form.on("Diagnostic Report", {
 					confirm_approve_all(frm);
 				});
 			}
+			if (["Approved", "Partially Approved"].includes(frm.doc.status)) {
+				frm.add_custom_button(__("Reject All"), function () {
+					prompt_reject_all(frm);
+				});
+			}
 		}
 	},
 	before_save: function (frm) {
@@ -76,20 +81,72 @@ var approve_all_observations = function (frm) {
 var show_approval_summary = function (summary) {
 	const approved = (summary && summary.approved) || [];
 	const skipped = (summary && summary.skipped) || [];
+	show_bulk_summary(
+		__("Approved {0} Observation(s)", [approved.length]),
+		skipped,
+		__("Observations without a result were skipped: {0}", [skipped.join(", ")]),
+		"green",
+	);
+};
+
+var show_rejection_summary = function (summary) {
+	const rejected = (summary && summary.rejected) || [];
+	const skipped = (summary && summary.skipped) || [];
+	show_bulk_summary(
+		__("Rejected {0} Observation(s)", [rejected.length]),
+		skipped,
+		__("Observations that are not approved were skipped: {0}", [
+			skipped.join(", "),
+		]),
+		"orange",
+	);
+};
+
+var show_bulk_summary = function (title, skipped, skipped_message, indicator) {
 	if (skipped.length) {
 		frappe.msgprint({
-			title: __("Approved {0} Observation(s)", [approved.length]),
-			message: __("Observations without a result were skipped: {0}", [
-				skipped.join(", "),
-			]),
+			title: title,
+			message: skipped_message,
 			indicator: "orange",
 		});
 	} else {
-		frappe.show_alert({
-			message: __("Approved {0} Observation(s)", [approved.length]),
-			indicator: "green",
-		});
+		frappe.show_alert({ message: title, indicator: indicator });
 	}
+};
+
+var prompt_reject_all = function (frm) {
+	frappe.prompt(
+		[
+			{
+				label: __("Reason"),
+				fieldname: "reason",
+				fieldtype: "Text",
+				reqd: 1,
+			},
+		],
+		function (values) {
+			reject_all_observations(frm, values.reason);
+		},
+		__("Reason For Rejection"),
+		__("Reject All"),
+	);
+};
+
+var reject_all_observations = function (frm, reason) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.observation.observation.reject_all_observations",
+		args: {
+			diagnostic_report: frm.doc.name,
+			reason: reason,
+		},
+		freeze: true,
+		freeze_message: __("Rejecting Observations"),
+		callback: function (r) {
+			if (r.exc) return;
+			show_rejection_summary(r.message);
+			frm.reload_doc();
+		},
+	});
 };
 
 var generate_pdf_with_print_format = function (frm) {

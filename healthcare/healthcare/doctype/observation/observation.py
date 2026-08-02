@@ -528,6 +528,7 @@ def set_observation_status(observation, status, reason=None, parent_obs=None):
 		if not observation_doc.has_component:
 			observation_doc.cancel()
 		new_doc = frappe.copy_doc(observation_doc)
+		new_doc.docstatus = 0
 		new_doc.status = ""
 		new_doc.disapproval_reason = ""
 		if parent_obs:
@@ -570,6 +571,25 @@ def approve_all_observations(diagnostic_report):
 		approved.append(observation_doc.name)
 
 	return {"approved": approved, "skipped": skipped}
+
+
+@frappe.whitelist()
+def reject_all_observations(diagnostic_report, reason):
+	"""Reject every approved Observation of the report"""
+	if not reason:
+		frappe.throw(_("Please enter a reason to Reject."))
+
+	rejected, skipped = [], []
+
+	for observation in get_root_observations(diagnostic_report):
+		if observation.get("status") != "Approved":
+			skipped.append(get_observation_label(observation))
+			continue
+
+		set_observation_status(observation.get("name"), "Rejected", reason)
+		rejected.append(observation.get("name"))
+
+	return {"rejected": rejected, "skipped": skipped}
 
 
 def get_observation_label(observation_doc):
