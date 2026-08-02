@@ -13,11 +13,14 @@ frappe.ui.form.on("Diagnostic Report", {
 					confirm_approve_all(frm);
 				});
 			}
+<<<<<<< HEAD
 			if (["Approved", "Partially Approved"].includes(frm.doc.status)) {
 				frm.add_custom_button(__("Reject All"), function () {
 					prompt_reject_all(frm);
 				});
 			}
+=======
+>>>>>>> 9e3710d (feat: option to 'approve all' observations in a diagnostic report)
 		}
 	},
 	before_save: function (frm) {
@@ -72,6 +75,7 @@ var approve_all_observations = function (frm) {
 		freeze_message: __("Approving Observations"),
 		callback: function (r) {
 			if (r.exc) return;
+<<<<<<< HEAD
 			show_approval_summary(r.message);
 			frm.reload_doc();
 		},
@@ -147,6 +151,9 @@ var reject_all_observations = function (frm, reason) {
 			if (r.exc) return;
 			show_rejection_summary(r.message);
 			frm.reload_doc();
+=======
+			console.log(r.message);
+>>>>>>> 9e3710d (feat: option to 'approve all' observations in a diagnostic report)
 		},
 	});
 };

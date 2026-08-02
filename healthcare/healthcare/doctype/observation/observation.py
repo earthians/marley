@@ -144,7 +144,11 @@ class Observation(Document):
 
 
 @frappe.whitelist()
+<<<<<<< HEAD
 def get_observation_details(docname: str) -> tuple[list[dict], int]:
+=======
+def get_observation_details(docname):
+>>>>>>> 9e3710d (feat: option to 'approve all' observations in a diagnostic report)
 	observation = get_root_observations(docname)
 
 	out_data, obs_length = aggregate_and_return_observation_data(observation)
@@ -748,7 +752,11 @@ def get_component_observations(observation, status):
 
 
 @frappe.whitelist()
+<<<<<<< HEAD
 def approve_all_observations(diagnostic_report: str) -> dict[str, list[str]]:
+=======
+def approve_all_observations(diagnostic_report):
+>>>>>>> 9e3710d (feat: option to 'approve all' observations in a diagnostic report)
 	"""Approve every Observation of the report that has a result, skip the rest"""
 	approved, skipped = [], []
 
@@ -767,6 +775,7 @@ def approve_all_observations(diagnostic_report: str) -> dict[str, list[str]]:
 	return {"approved": approved, "skipped": skipped}
 
 
+<<<<<<< HEAD
 @frappe.whitelist()
 def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, list[str]]:
 	"""Reject every approved Observation of the report"""
@@ -786,6 +795,8 @@ def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, li
 	return {"rejected": rejected, "skipped": skipped}
 
 
+=======
+>>>>>>> 9e3710d (feat: option to 'approve all' observations in a diagnostic report)
 def get_observation_label(observation_doc):
 	return (
 		observation_doc.preferred_display_name or observation_doc.observation_template or observation_doc.name
