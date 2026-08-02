@@ -150,7 +150,7 @@ class Observation(Document):
 
 
 @frappe.whitelist()
-def get_observation_details(docname):
+def get_observation_details(docname: str) -> tuple[list[dict], int]:
 	observation = get_root_observations(docname)
 
 	out_data, obs_length = aggregate_and_return_observation_data(observation)
@@ -363,7 +363,7 @@ def edit_observation(observation: str, data_type: str, result: str) -> None:
 
 
 @frappe.whitelist()
-def add_observation(**kwargs):
+def add_observation(**kwargs: str) -> str:
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
 	observation_doc.patient = kwargs.get("patient")
@@ -389,7 +389,7 @@ def add_observation(**kwargs):
 
 
 @frappe.whitelist()
-def record_observation_result(values):
+def record_observation_result(values: str) -> None:
 	values = json.loads(values)
 	if values:
 		values = [dict(t) for t in {tuple(d.items()) for d in values}]
@@ -497,7 +497,7 @@ def is_numbers_with_exceptions(value):
 
 
 @frappe.whitelist()
-def get_observation_result_template(template_name, observation):
+def get_observation_result_template(template_name: str, observation: str) -> str:
 	if observation:
 		observation_doc = frappe.get_doc("Observation", observation)
 		patient_doc = frappe.get_doc("Patient", observation_doc.get("patient"))
@@ -510,7 +510,9 @@ def get_observation_result_template(template_name, observation):
 
 
 @frappe.whitelist()
-def set_observation_status(observation, status, reason=None, parent_obs=None):
+def set_observation_status(
+	observation: str, status: str, reason: str | None = None, parent_obs: str | None = None
+) -> None:
 	observation_doc = frappe.get_doc("Observation", observation)
 
 	if not observation_doc.is_ready_for_approval():
@@ -554,7 +556,7 @@ def get_component_observations(observation, status):
 
 
 @frappe.whitelist()
-def approve_all_observations(diagnostic_report):
+def approve_all_observations(diagnostic_report: str) -> dict[str, list[str]]:
 	"""Approve every Observation of the report that has a result, skip the rest"""
 	approved, skipped = [], []
 
@@ -574,7 +576,7 @@ def approve_all_observations(diagnostic_report):
 
 
 @frappe.whitelist()
-def reject_all_observations(diagnostic_report, reason):
+def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, list[str]]:
 	"""Reject every approved Observation of the report"""
 	if not reason:
 		frappe.throw(_("Please enter a reason to Reject."))
