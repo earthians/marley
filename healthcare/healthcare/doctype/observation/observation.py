@@ -776,8 +776,13 @@ def approve_all_observations(diagnostic_report):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 @frappe.whitelist()
 def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, list[str]]:
+=======
+@frappe.whitelist()
+def reject_all_observations(diagnostic_report, reason):
+>>>>>>> 56ce5a7 (feat: option to 'reject all' from diagnotic report)
 	"""Reject every approved Observation of the report"""
 	if not reason:
 		frappe.throw(_("Please enter a reason to Reject."))
@@ -795,8 +800,11 @@ def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, li
 	return {"rejected": rejected, "skipped": skipped}
 
 
+<<<<<<< HEAD
 =======
 >>>>>>> 9e3710d (feat: option to 'approve all' observations in a diagnostic report)
+=======
+>>>>>>> 56ce5a7 (feat: option to 'reject all' from diagnotic report)
 def get_observation_label(observation_doc):
 	return (
 		observation_doc.preferred_display_name or observation_doc.observation_template or observation_doc.name
