@@ -4,13 +4,19 @@
 import frappe
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c5df02e (fix: tests for reject all observations)
 from healthcare.healthcare.doctype.observation.observation import (
 	approve_all_observations,
 	reject_all_observations,
 )
+<<<<<<< HEAD
 =======
 from healthcare.healthcare.doctype.observation.observation import approve_all_observations
 >>>>>>> ff89f46 (fix: tests for approve all observations)
+=======
+>>>>>>> c5df02e (fix: tests for reject all observations)
 from healthcare.healthcare.doctype.observation.test_observation import create_sales_invoice
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -59,6 +65,9 @@ class TestDiagnosticReport(HealthcareTestSuite):
 		self.assertEqual(summary["skipped"], [])
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c5df02e (fix: tests for reject all observations)
 	def test_reject_all_rejects_approved_observations(self):
 		diagnostic_report, observations = self.create_report("_Test Observation without Sample")
 		self.set_results(observations)
@@ -94,8 +103,11 @@ class TestDiagnosticReport(HealthcareTestSuite):
 
 		self.assertRaises(frappe.ValidationError, reject_all_observations, diagnostic_report, "")
 
+<<<<<<< HEAD
 =======
 >>>>>>> ff89f46 (fix: tests for approve all observations)
+=======
+>>>>>>> c5df02e (fix: tests for reject all observations)
 	def create_report(self, observation_template):
 		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
 		patient = frappe.get_list("Patient", pluck="name")[0]
