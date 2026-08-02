@@ -125,7 +125,9 @@ var prompt_reject_all = function (frm) {
 			},
 		],
 		function (values) {
-			reject_all_observations(frm, values.reason);
+			save_pending_results(frm).then(function () {
+				reject_all_observations(frm, values.reason);
+			});
 		},
 		__("Reason For Rejection"),
 		__("Reject All"),
