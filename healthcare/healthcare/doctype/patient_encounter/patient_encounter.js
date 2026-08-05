@@ -390,12 +390,28 @@ frappe.ui.form.on("Patient Encounter", {
 			args: { encounter: frm.doc },
 			freeze: true,
 			freeze_message: __("Fetching Treatment Plans"),
-			callback: function () {
+			callback: function (r) {
+				let applicable_plans = (r.message || []).map(plan => plan.name);
+
+				if (!applicable_plans.length) {
+					frappe.msgprint(
+						__(
+							"No Treatment Plan Templates match this patient's age, gender, or diagnosis.",
+						),
+					);
+					return;
+				}
+
 				new frappe.ui.form.MultiSelectDialog({
 					doctype: "Treatment Plan Template",
 					target: this.cur_frm,
 					setters: {
 						medical_department: "",
+					},
+					get_query() {
+						return {
+							filters: { name: ["in", applicable_plans] },
+						};
 					},
 					action(selections) {
 						frappe
