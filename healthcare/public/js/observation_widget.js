@@ -535,6 +535,7 @@ healthcare.ObservationWidget = class {
 		var d = new frappe.ui.Dialog({
 			title: __(type),
 			static: true,
+			size: "large",
 			fields: [
 				{
 					label: "Observation",
