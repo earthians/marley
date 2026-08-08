@@ -69,6 +69,7 @@ def make_therapy_session(
 	service_request: str | None = None,
 	practitioner: str | None = None,
 ) -> dict:
+	tp_doc = None
 	if not service_request and therapy_plan:
 		tp_doc = frappe.get_cached_doc("Therapy Plan", therapy_plan)
 		service_request = frappe.db.exists(
@@ -98,6 +99,11 @@ def make_therapy_session(
 			_("Therapy Plan is required to create Therapy Session"),
 			title=_("Therapy Plan Required"),
 		)
+
+	if not tp_doc and therapy_plan:
+		tp_doc = frappe.get_cached_doc("Therapy Plan", therapy_plan)
+
+	practitioner = practitioner or (sr_doc.practitioner if sr_doc else None) or tp_doc.practitioner
 
 	therapy_type = frappe.get_doc("Therapy Type", therapy_type)
 
