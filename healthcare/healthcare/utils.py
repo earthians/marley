@@ -1035,7 +1035,7 @@ def manage_invoice_submit_cancel(doc, method):
 			if item.get("reference_dt") and item.get("reference_dn"):
 				# TODO check
 				# if frappe.get_meta(item.reference_dt).has_field("invoiced"):
-				set_invoiced(item, method, doc.name)
+				set_invoiced(item, method, doc)
 
 				# update Fee validity with Sales Invoice Reference if exists
 				if item.reference_dt == "Patient Appointment":
@@ -1176,10 +1176,16 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 		coverage.update_invoice_details(item.qty, item.insurance_coverage_amount)
 
 
-def set_invoiced(item, method, ref_invoice=None):
+def set_invoiced(item, method, sales_invoice=None):
+	ref_invoice = sales_invoice.name if sales_invoice else None
+	is_return = bool(sales_invoice and sales_invoice.is_return)
+
 	invoiced = False
 	if method == "on_submit":
-		validate_invoiced_on_submit(item)
+		if not is_return:
+			validate_invoiced_on_submit(item)
+		invoiced = True
+	elif method == "on_cancel" and is_return:
 		invoiced = True
 
 	if item.reference_dt == "Clinical Procedure":
@@ -1198,6 +1204,10 @@ def set_invoiced(item, method, ref_invoice=None):
 		else:
 			dt_from_appointment = "Patient Encounter"
 		manage_doc_for_appointment(dt_from_appointment, item.reference_dn, invoiced)
+		if is_return:
+			if method == "on_submit":
+				return
+			ref_invoice = frappe.db.get_value("Patient Appointment", item.reference_dn, "ref_sales_invoice")
 		frappe.db.set_value("Patient Appointment", item.reference_dn, "ref_sales_invoice", ref_invoice)
 
 	elif item.reference_dt == "Lab Prescription":
