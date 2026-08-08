@@ -11,6 +11,7 @@ from frappe.utils.make_random import get_random
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 	admit_patient,
 	discharge_patient,
+	get_unbilled_inpatient_docs,
 	schedule_discharge,
 )
 from healthcare.healthcare.doctype.lab_test.test_lab_test import create_patient_encounter
@@ -127,6 +128,122 @@ class TestInpatientRecord(FrappeTestCase):
 		self.assertRaises(frappe.ValidationError, ip_record_new.save)
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 
+<<<<<<< HEAD
+=======
+	def test_validate_admission_on_vacant_service_unit(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		patient_1 = frappe.get_list("Patient", pluck="name")[0]
+		patient_2 = frappe.get_list("Patient", pluck="name")[1]
+
+		ip_record_1 = create_inpatient(patient_1)
+		ip_record_1.expected_length_of_stay = 0
+		ip_record_1.save(ignore_permissions=True)
+
+		ip_record_2 = create_inpatient(patient_2)
+		ip_record_2.expected_length_of_stay = 0
+		ip_record_2.save(ignore_permissions=True)
+
+		# # Admit
+		service_unit = get_healthcare_service_unit()
+		admit_patient(ip_record_1, service_unit, now_datetime())
+
+		with self.assertRaises(frappe.ValidationError):
+			admit_patient(ip_record_2, service_unit, now_datetime())
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+
+	def test_unbilled_lab_test_blocks_discharge(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		ip_record = admit_inpatient()
+		lab_test = create_inpatient_lab_test(ip_record)
+
+		self.assertIn(lab_test.name, get_unbilled_names("Lab Test", ip_record))
+
+		schedule_discharge(frappe.as_json({"patient": ip_record.patient}))
+		ip_record = frappe.get_doc("Inpatient Record", ip_record.name)
+		mark_invoiced_inpatient_occupancy(ip_record)
+		self.assertRaises(frappe.ValidationError, ip_record.discharge)
+
+	def test_cancelled_lab_test_does_not_block_discharge(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		ip_record = admit_inpatient()
+		service_unit = ip_record.inpatient_occupancies[0].service_unit
+		lab_test = create_inpatient_lab_test(ip_record)
+		lab_test.submit()
+		lab_test.cancel()
+
+		self.assertNotIn(lab_test.name, get_unbilled_names("Lab Test", ip_record))
+
+		schedule_discharge(frappe.as_json({"patient": ip_record.patient}))
+		ip_record = frappe.get_doc("Inpatient Record", ip_record.name)
+		mark_invoiced_inpatient_occupancy(ip_record)
+		ip_record.discharge()
+		self.assertEqual(
+			"Vacant", frappe.db.get_value("Healthcare Service Unit", service_unit, "occupancy_status")
+		)
+
+	def test_validate_billables(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+
+		# Setup test patient and inpatient record
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		ip_record = create_inpatient(patient)
+		ip_record.expected_length_of_stay = 0
+		ip_record.save(ignore_permissions=True)
+
+		# Setup service unit and mark as billable
+		service_unit = get_healthcare_service_unit()
+		service_unit_type = frappe.get_cached_value(
+			"Healthcare Service Unit", service_unit, "service_unit_type"
+		)
+		service_unit_type_doc = frappe.get_doc("Healthcare Service Unit Type", service_unit_type)
+		service_unit_type_doc.update(
+			{
+				"is_billable": 1,
+				"item_code": service_unit_type,
+				"item_group": "Services",
+				"uom": "Day",
+				"no_of_hours": 24,
+				"minimum_billable_qty": 0,
+				"rate": 1000,
+			}
+		)
+		service_unit_type_doc.save()
+
+		# Admit patient with backdated timestamp (12 hours ago)
+		checkin = add_to_date(now_datetime(), hours=-12)
+		admit_patient(ip_record, service_unit, checkin, currency="INR")
+
+		# allow items (like OT) to have 0 as Item Price Rate - disable this check
+		# Remove any existing Item Price to force the error
+		# frappe.db.sql(f"""delete from `tabItem Price` where item_code='{service_unit_type}'""")
+
+		# # Expect frappe.throw when Item Price is missing
+		# with self.assertRaises(frappe.ValidationError):
+		# 	ip_record.add_service_unit_rent_to_billable_items()
+
+		# # Now, create a valid Item Price and ensure it proceeds correctly
+		# price_list_name = frappe.db.get_value("Price List", {"selling": 1})
+		# frappe.get_doc(
+		# 	{
+		# 		"doctype": "Item Price",
+		# 		"price_list": price_list_name,
+		# 		"item_code": service_unit_type,
+		# 		"uom": "Day",
+		# 		"price_list_rate": 1000,
+		# 	}
+		# ).insert(ignore_permissions=True, ignore_mandatory=True)
+
+		# Generate Billables
+		ip_record.add_service_unit_rent_to_billable_items()
+		ip_record.reload()
+
+		self.assertTrue(frappe.db.exists("Inpatient Record Item", {"parent": ip_record.name}))
+		self.assertEqual(1000, ip_record.items[0].get("rate"))
+		self.assertEqual("Day", ip_record.items[0].get("uom"))
+		self.assertEqual(0.5, flt(ip_record.items[0].get("quantity"), 2))
+		self.assertEqual(500, flt(ip_record.items[0].get("amount"), 2))
+
+>>>>>>> 55b1143 (fix: add missing tests for inpatient record)
 
 def mark_invoiced_inpatient_occupancy(ip_record):
 	if ip_record.inpatient_occupancies:
@@ -158,6 +275,62 @@ def create_inpatient(patient):
 	return inpatient_record
 
 
+<<<<<<< HEAD
+=======
+def admit_inpatient():
+	patient = frappe.get_list("Patient", pluck="name")[0]
+	inpatient_record = create_inpatient(patient)
+	inpatient_record.expected_length_of_stay = 0
+	inpatient_record.save(ignore_permissions=True)
+	admit_patient(inpatient_record, get_healthcare_service_unit(), now_datetime())
+	return inpatient_record
+
+
+def create_inpatient_lab_test(inpatient_record):
+	lab_test = frappe.new_doc("Lab Test")
+	lab_test.template = "_Test Lab Test - without Sample"
+	lab_test.patient = inpatient_record.patient
+	lab_test.patient_sex = inpatient_record.gender
+	lab_test.company = "_Test Company"
+	lab_test.inpatient_record = inpatient_record.name
+	lab_test.save()
+
+	for descriptive_test_item in lab_test.descriptive_test_items:
+		descriptive_test_item.result_value = 1
+	lab_test.save()
+
+	return lab_test
+
+
+def get_unbilled_names(doctype, inpatient_record):
+	return [entry.name for entry in get_unbilled_inpatient_docs(doctype, inpatient_record)]
+
+
+def create_pending_service_request(ip_record):
+	patient = frappe.get_doc("Patient", ip_record.patient)
+	service_request = frappe.get_doc(
+		{
+			"doctype": "Service Request",
+			"order_date": today(),
+			"order_time": nowtime(),
+			"company": "_Test Company",
+			"patient": ip_record.patient,
+			"patient_name": patient.patient_name,
+			"patient_gender": patient.sex,
+			"practitioner": frappe.get_list("Healthcare Practitioner", pluck="name")[0],
+			"inpatient_record": ip_record.name,
+			"status": "draft-Request Status",
+			"quantity": 1,
+			"template_dt": "Lab Test Template",
+			"template_dn": "_Test Lab Test - with Sample",
+		}
+	)
+	service_request.insert(ignore_permissions=True, ignore_mandatory=True)
+	service_request.submit()
+	return service_request
+
+
+>>>>>>> 55b1143 (fix: add missing tests for inpatient record)
 def get_healthcare_service_unit(unit_name=None):
 	if not unit_name:
 		service_unit = get_random(
