@@ -1431,6 +1431,7 @@ let make_payment = function (frm, automate_invoicing) {
 	}
 
 	function show_payment_dialog(frm, fields) {
+		const supports_icon_button = Boolean(frappe.ui?.button?.dress);
 		let d = new frappe.ui.Dialog({
 			title: "Enter Payment Details",
 			fields: fields,
@@ -1469,9 +1470,11 @@ let make_payment = function (frm, automate_invoicing) {
 					},
 				});
 			},
-			secondary_action_label: __(`<svg class="icon  icon-sm" style="">
-				<use class="" href="#icon-printer"></use>
-			</svg>`),
+			secondary_action_label: supports_icon_button
+				? __("Print")
+				: __(`<svg class="icon  icon-sm" style="">
+					<use class="" href="#icon-printer"></use>
+				</svg>`),
 			secondary_action() {
 				window.open(
 					"/app/print/Sales Invoice/" + frm.doc.ref_sales_invoice,
@@ -1480,6 +1483,14 @@ let make_payment = function (frm, automate_invoicing) {
 				d.hide();
 			},
 		});
+		if (supports_icon_button) {
+			const secondary_btn = d.get_secondary_btn();
+			frappe.ui.button.dress(secondary_btn, {
+				icon: "printer",
+				title: __("Print"),
+			});
+			secondary_btn.attr("title", __("Print"));
+		}
 		d.fields_dict["mode_of_payment"].df.onchange = () => {
 			if (d.get_value("mode_of_payment")) {
 				frm.set_value("mode_of_payment", d.get_value("mode_of_payment"));
