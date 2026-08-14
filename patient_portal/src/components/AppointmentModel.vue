@@ -38,11 +38,11 @@
 						</p>
 
 						<p class="mt-1 mb-1 text-xs text-gray-600 leading-snug break-words whitespace-normal">
-							<FeatherIcon name="calendar" class="inline w-3 h-3 mr-1 text-gray-500" />
+							<FeatherIcon name="calendar" class="inline w-3 h-3 me-1 text-gray-500" />
 							{{ formatDate(item.appointment_date) }}
 						</p>
 						<p class="mt-1 text-xs text-gray-600 whitespace-nowrap">
-							<FeatherIcon name="clock" class="inline w-3 h-3 mr-1 text-gray-500" />
+							<FeatherIcon name="clock" class="inline w-3 h-3 me-1 text-gray-500" />
 							{{ item.appointment_time }} ({{ item.duration }} mins)
 						</p>
 					</Card>

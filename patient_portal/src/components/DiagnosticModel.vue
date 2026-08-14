@@ -32,7 +32,7 @@
 				</p>
 
 				<p class="mt-1 text-xs text-gray-600 whitespace-nowrap">
-					<FeatherIcon name="calendar" class="inline w-3 h-3 mr-1 text-gray-500" />
+					<FeatherIcon name="calendar" class="inline w-3 h-3 me-1 text-gray-500" />
 					{{ formatDate(item.order_date) }}
 				</p>
 			</Card>
@@ -133,7 +133,7 @@
 						</Tooltip>
 					</Button>
 				</div>
-				<div class="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+				<div class="space-y-2 max-h-[60vh] overflow-y-auto pe-2">
 					<div v-for="(order, index) in selectedOrder.tests" :key="index"
 						class="bg-white rounded-xl shadow-md border overflow-hidden">
 
