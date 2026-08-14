@@ -49,6 +49,7 @@
 								<img
 									v-if="selectedPractitioner.image"
 									:src="selectedPractitioner.image"
+									alt=""
 									class="w-full h-full rounded-full object-cover bg-gray-100"
 								/>
 								<div

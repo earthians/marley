@@ -28,7 +28,7 @@
 					<FeatherIcon name="check" class="w-4 h-4" />
 				</div>
 				<div class="flex flex-col items-center">
-					<img v-if="doc.image" :src="doc.image" class="w-full h-32 object-cover rounded-t-xl bg-gray-100" />
+					<img v-if="doc.image" :src="doc.image" alt="" class="w-full h-32 object-cover rounded-t-xl bg-gray-100" />
 					<div v-else
 						class="w-full h-32 flex items-center justify-center rounded-t-xl text-gray-700 text-3xl font-semibold bg-gray-100">
 						{{ doc.practitioner_name.charAt(0).toUpperCase() }}

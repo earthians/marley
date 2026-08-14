@@ -27,7 +27,7 @@
 					class="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 shadow-md z-20">
 					<FeatherIcon name="check" class="w-4 h-4" />
 				</div>
-				<img v-if="dept.portal_image" :src="dept.portal_image"
+				<img v-if="dept.portal_image" :src="dept.portal_image" alt=""
 					class="w-full h-32 object-cover rounded-t-xl bg-gray-100" />
 				<div v-else
 					class="w-full h-32 flex items-center justify-center rounded-t-xl text-gray-700 text-3xl font-semibold bg-gray-100">

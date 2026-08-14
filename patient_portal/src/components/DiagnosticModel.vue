@@ -81,8 +81,8 @@
 			<div class="p-4 bg-white rounded-xl shadow-md border space-y-4">
 				<div class="flex items-center gap-4">
 					<!-- Patient Photo -->
-					<img v-if="selectedOrder.patient_image" 
-						:src="selectedOrder.patient_image"
+					<img v-if="selectedOrder.patient_image"
+						:src="selectedOrder.patient_image" alt=""
 						class="w-16 h-16 rounded-full object-cover border" />
 					<div v-else
 						class="w-16 h-16 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-bold text-xl">
