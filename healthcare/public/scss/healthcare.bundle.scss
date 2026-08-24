@@ -7,7 +7,7 @@ $nursing-pane-top: 0.85rem;
 // Patient banner across the top of the dialog.
 .nursing-banner {
 	display: flex;
-	align-items: center;
+	align-items: flex-end;
 	gap: 0.75rem;
 	flex-wrap: wrap;
 	padding: 0.6rem 0.9rem;
@@ -16,9 +16,14 @@ $nursing-pane-top: 0.85rem;
 	min-height: 3rem;
 }
 
-.nursing-banner-who {
+// Patient and doctor names can be long, so they own the first line and the
+// remaining details wrap onto the second.
+.nursing-banner-primary {
 	display: flex;
-	flex-direction: column;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.6rem;
+	min-width: 0;
 	line-height: 1.3;
 }
 
@@ -27,16 +32,52 @@ $nursing-pane-top: 0.85rem;
 	color: var(--heading-color);
 }
 
-.nursing-banner-meta {
+.nursing-banner-doctor {
 	font-size: var(--text-sm);
-	color: var(--text-muted);
+	color: var(--text-color);
+
+	i {
+		font-style: normal;
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+}
+
+.nursing-banner-search {
+	margin-left: auto;
+	flex: 0 0 260px;
+	max-width: 260px;
+
+	// The control has no label, but frappe still renders the row it lives in.
+	.clearfix {
+		display: none;
+	}
+
+	.form-group,
+	.control-input-wrapper,
+	.control-input {
+		margin: 0;
+	}
+
+	input {
+		width: 100%;
+		text-overflow: ellipsis;
+	}
+}
+
+.nursing-banner-info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.3rem;
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 .nursing-banner-facts {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.35rem;
-	margin-left: auto;
 }
 
 .nursing-fact {
@@ -194,27 +235,32 @@ $nursing-pane-top: 0.85rem;
 	}
 }
 
+// Matches the desk sidebar: same tokens, same states.
 .nursing-rail-item {
 	display: flex;
 	align-items: center;
 	width: 100%;
+	min-height: 28px;
 	text-align: left;
 	gap: 0.5rem;
-	padding: 0.35rem 0.5rem;
+	padding: 0.25rem 0.5rem;
+	margin-bottom: 1px;
 	border: none;
-	border-radius: var(--radius);
+	border-radius: 8px;
 	background: none;
-	color: var(--text-color);
-	font-size: var(--text-md);
+	color: var(--ink-gray-6);
+	font-size: var(--text-sm);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-	&:hover:not(:disabled) {
-		background-color: var(--fg-color);
+	&:not(.selected):not(:disabled):hover {
+		background-color: var(--sidebar-hover-color);
+		text-decoration: none;
 	}
 
 	&.selected {
-		background-color: var(--fg-color);
-		font-weight: 500;
-		box-shadow: var(--shadow-base);
+		background: var(--sidebar-active-color);
+		box-shadow: var(--sidebar-active-shadow);
+		color: var(--text-color);
 	}
 
 	&:disabled {
@@ -249,14 +295,20 @@ $nursing-pane-top: 0.85rem;
 	}
 
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 	gap: 0.5rem 1rem;
+	align-items: start;
 }
 
 // Paired readings, such as systolic over diastolic, share one field.
 // Two columns wide so each input stays full size.
 .nursing-field-group {
 	grid-column: span 2;
+}
+
+.nursing-field > .control-label {
+	display: block;
+	margin-bottom: 4px;
 }
 
 .nursing-group {
@@ -269,8 +321,17 @@ $nursing-pane-top: 0.85rem;
 	flex: 1;
 	min-width: 0;
 
-	.form-group {
-		margin-bottom: 0;
+	// These controls carry no label of their own — the group is labelled once —
+	// but frappe still renders the row, which pushed the inputs out of line
+	// with the single fields beside them.
+	.clearfix {
+		display: none;
+	}
+
+	.form-group,
+	.control-input-wrapper,
+	.control-input {
+		margin: 0;
 	}
 }
 
@@ -278,6 +339,7 @@ $nursing-pane-top: 0.85rem;
 	color: var(--text-muted);
 	font-size: var(--text-lg);
 	line-height: 1;
+	align-self: center;
 }
 
 .nursing-group-unit {
@@ -369,6 +431,37 @@ $nursing-pane-top: 0.85rem;
 	margin-top: 0.25rem;
 }
 
+// Intake and output: staged rows above a running balance.
+.nursing-io-add {
+	margin: 0.5rem 0;
+}
+
+.nursing-io-table {
+	font-size: var(--text-sm);
+	margin-bottom: 0.5rem;
+
+	th {
+		font-weight: 500;
+		color: var(--text-muted);
+	}
+}
+
+.nursing-io-totals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.9rem;
+	align-items: baseline;
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--border-color);
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+
+	b {
+		color: var(--heading-color);
+		font-weight: 600;
+	}
+}
+
 .nursing-card {
 	margin-top: 0;
 	background-color: var(--fg-color);
@@ -395,8 +488,10 @@ $nursing-pane-top: 0.85rem;
 .nursing-vital-selector {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.25rem;
-	margin-bottom: 0.25rem;
+	gap: 0.2rem;
+	margin-bottom: 0.4rem;
+	max-height: 3.6rem;
+	overflow-y: auto;
 }
 
 .nursing-vital {
@@ -447,12 +542,6 @@ $nursing-pane-top: 0.85rem;
 .nursing-reading-time {
 	font-size: var(--text-sm);
 	color: var(--text-muted);
-}
-
-.nursing-reading-hint {
-	font-size: var(--text-xs);
-	color: var(--text-light);
-	padding-bottom: 0.4rem;
 }
 
 .nursing-row {

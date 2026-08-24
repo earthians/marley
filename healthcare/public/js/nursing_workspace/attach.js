@@ -54,6 +54,9 @@ healthcare.nursing.render_snapshot = function (frm) {
 	const field = frm.get_field("nursing_snapshot");
 	if (!field) return;
 
+	// The form refreshes more than once; drop the previous instance's observer.
+	if (frm.nursing_snapshot) frm.nursing_snapshot.stop_waiting();
+
 	frm.nursing_snapshot = new healthcare.nursing.Snapshot({
 		wrapper: field.$wrapper,
 		patient: frm.doc.patient,

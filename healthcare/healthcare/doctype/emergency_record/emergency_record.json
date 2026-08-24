@@ -323,8 +323,7 @@
   {
    "fieldname": "nursing_snapshot",
    "fieldtype": "HTML",
-   "label": "Nursing Snapshot",
-   "options": "<div class=\"nursing-snapshot nursing-snapshot-wide\"></div>"
+   "label": "Nursing Snapshot"
   },
   {
    "fieldname": "nursing_section",
@@ -346,7 +345,7 @@
    "link_fieldname": "emergency_record"
   }
  ],
- "modified": "2026-08-24 15:03:18.002539",
+ "modified": "2026-08-24 17:03:29.239365",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Emergency Record",
