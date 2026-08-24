@@ -39,6 +39,9 @@
   "default_intent",
   "column_break_1oy0",
   "default_priority",
+  "medication_administration_section",
+  "auto_schedule_medication_doses",
+  "medication_dose_lead_time",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -589,11 +592,31 @@
    "label": "On Moderate",
    "mandatory_depends_on": "enable_medication_alerts",
    "options": "Block\nWarn\nNotify"
+  },
+  {
+   "fieldname": "medication_administration_section",
+   "fieldtype": "Section Break",
+   "label": "Medication Administration"
+  },
+  {
+   "fieldname": "auto_schedule_medication_doses",
+   "fieldtype": "Check",
+   "label": "Automatically Schedule Medication Doses",
+   "description": "Create a Medication Administration record for each dose as it falls due",
+   "default": "0"
+  },
+  {
+   "fieldname": "medication_dose_lead_time",
+   "fieldtype": "Int",
+   "label": "Schedule Dose Before (Minutes)",
+   "default": "30",
+   "depends_on": "auto_schedule_medication_doses",
+   "description": "A dose due at 14:00 with 30 minutes here appears on the round at 13:30"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-11 19:06:48.509344",
+ "modified": "2026-09-17 15:11:07.253953",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
