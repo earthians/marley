@@ -174,3 +174,72 @@ def create_ipme(filters, update_stock=0):
 	ipme = ipme.get_medication_orders()
 
 	return ipme
+
+
+class TestInpatientMedicationOrderFromRequests(HealthcareTestSuite):
+	def setUp(self):
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.encounter = self.make_encounter()
+
+	def make_encounter(self):
+		return frappe.get_doc(
+			{
+				"doctype": "Patient Encounter",
+				"patient": self.patient,
+				"practitioner": self.practitioner,
+				"appointment_type": "_Test Appointment Type",
+				"encounter_date": add_days(getdate(), -1),
+			}
+		).insert(ignore_permissions=True)
+
+	def make_medication_request(self, drug="Dextromethorphan"):
+		return frappe.get_doc(
+			{
+				"doctype": "Medication Request",
+				"patient": self.patient,
+				"practitioner": self.practitioner,
+				"company": "_Test Company",
+				"order_group": self.encounter.name,
+				"order_date": add_days(getdate(), -1),
+				"medication_item": drug,
+				"dosage": "1-1-1",
+				"dosage_form": "Tablet",
+				"period": "2 Day",
+			}
+		).insert(ignore_permissions=True, ignore_mandatory=True)
+
+	def make_order(self):
+		order = frappe.new_doc("Inpatient Medication Order")
+		order.patient = self.patient
+		order.company = "_Test Company"
+		order.start_date = add_days(getdate(), -1)
+		return order
+
+	def test_schedule_is_built_from_medication_requests(self):
+		request = self.make_medication_request()
+		order = self.make_order()
+
+		order.get_from_encounter(self.encounter.name)
+
+		# 3 doses a day for 2 days
+		self.assertEqual(len(order.medication_orders), 6)
+		self.assertEqual(order.medication_orders[0].medication_request, request.name)
+
+	def test_pulling_twice_does_not_duplicate_doses(self):
+		self.make_medication_request()
+		order = self.make_order()
+
+		order.get_from_encounter(self.encounter.name)
+		order.get_from_encounter(self.encounter.name)
+
+		self.assertEqual(len(order.medication_orders), 6)
+
+	def test_requests_without_a_schedule_are_skipped(self):
+		request = self.make_medication_request()
+		frappe.db.set_value("Medication Request", request.name, "period", None)
+		order = self.make_order()
+
+		order.get_from_encounter(self.encounter.name)
+
+		self.assertEqual(len(order.medication_orders), 0)
