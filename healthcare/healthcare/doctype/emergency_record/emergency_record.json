@@ -48,7 +48,10 @@
   "column_break_billing",
   "insurance_policy",
   "insurance_payor",
-  "invoiced"
+  "invoiced",
+  "nursing_tab",
+  "nursing_section",
+  "nursing_snapshot"
  ],
  "fields": [
   {
@@ -312,6 +315,21 @@
    "fieldtype": "Check",
    "label": "Invoiced",
    "read_only": 1
+  },
+  {
+   "fieldname": "nursing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Nursing"
+  },
+  {
+   "fieldname": "nursing_snapshot",
+   "fieldtype": "HTML",
+   "label": "Nursing Snapshot",
+   "options": "<div class=\"nursing-snapshot nursing-snapshot-wide\"></div>"
+  },
+  {
+   "fieldname": "nursing_section",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -329,7 +347,11 @@
    "link_fieldname": "emergency_record"
   }
  ],
+<<<<<<< HEAD
  "modified": "2026-06-18 13:50:07.543590",
+=======
+ "modified": "2026-08-24 15:03:18.002539",
+>>>>>>> 8a21e05 (fix: alignments, ux)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Emergency Record",
