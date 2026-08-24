@@ -50,60 +50,99 @@ healthcare.nursing.Snapshot = class Snapshot {
 	// ---- vitals ----
 
 	render_vitals() {
-		const templates = this.get_recorded_vitals();
+		const entries = this.get_recorded_vitals();
 		const $body = this.add_card(__("Vitals"));
 
-		if (!templates.length) {
+		if (!entries.length) {
 			$body.html(this.get_empty(__("No vitals recorded yet")));
 			return;
 		}
 
-		this.selected_vital = templates.includes(this.selected_vital)
-			? this.selected_vital
-			: templates[0];
-		this.render_vital_selector($body, templates);
+		this.entry = this.get_selected_entry(entries);
+		this.selected_vital = this.entry.template;
+		this.render_vital_selector($body, entries);
 		this.$chart_area = $(`<div class="nursing-chart"></div>`).appendTo($body);
 		this.render_chart();
 	}
 
 	get_recorded_vitals() {
-		const vitals = this.data.vitals || {};
-		return Object.keys(vitals).filter(template => (vitals[template] || []).length);
+		return (this.data.vitals || []).filter(entry => entry.readings.length);
 	}
 
-	render_vital_selector($body, templates) {
+	get_selected_entry(entries) {
+		return (
+			entries.find(entry => entry.template === this.selected_vital) || entries[0]
+		);
+	}
+
+	render_vital_selector($body, entries) {
 		const $selector = $(`<div class="nursing-vital-selector"></div>`).appendTo(
 			$body,
 		);
-		templates.forEach(template => {
-			const selected = template === this.selected_vital ? "selected" : "";
+
+		entries.forEach(entry => {
+			const selected = entry.template === this.selected_vital ? "selected" : "";
 			$selector.append(`<button type="button" class="nursing-vital ${selected}"
-				data-template="${frappe.utils.escape_html(template)}">${__(template)}</button>`);
+				data-template="${frappe.utils.escape_html(entry.template)}">${__(
+					entry.label,
+				)}</button>`);
 		});
+
 		$selector.on("click", "[data-template]", event => {
 			this.selected_vital = $(event.currentTarget).attr("data-template");
 			this.render();
 		});
 	}
 
+	// A pain score is a bounded rating, so it reads as bars rather than a trend line.
+	is_rating() {
+		return this.entry.abbr === healthcare.nursing.PAIN_SCORE_ABBR;
+	}
+
 	render_chart() {
-		const readings = this.data.vitals[this.selected_vital] || [];
+		const readings = this.entry.readings;
+
+		// A line needs two points, so a lone reading is shown as a value.
+		if (readings.length < 2) {
+			this.render_single_reading(readings[0]);
+			return;
+		}
+
 		this.chart = new frappe.Chart(this.$chart_area.get(0), {
 			data: {
 				labels: readings.map(reading => this.format_time(reading.recorded_at)),
 				datasets: [
 					{
-						name: this.selected_vital,
+						name: this.entry.label,
 						values: readings.map(reading => Number(reading.value)),
 					},
 				],
 			},
-			type: "line",
+			type: this.is_rating() ? "bar" : "line",
 			height: this.layout === "rail" ? 150 : 200,
 			colors: ["#318AD8"],
 			axisOptions: { xIsSeries: true, xAxisMode: "tick" },
 			lineOptions: { hideDots: 0, regionFill: 1 },
+			barOptions: { spaceRatio: 0.4 },
+			valuesOverPoints: this.is_rating() ? 1 : 0,
 		});
+	}
+
+	render_single_reading(reading) {
+		if (!reading) {
+			this.$chart_area.html(this.get_empty(__("No readings yet")));
+			return;
+		}
+
+		this.$chart_area.html(`
+			<div class="nursing-reading">
+				<span class="nursing-reading-value">
+					${frappe.utils.escape_html(String(reading.value))}
+				</span>
+				<span class="nursing-reading-time">${this.format_time(reading.recorded_at)}</span>
+			</div>
+			<div class="nursing-reading-hint">${__("First reading — a trend needs two")}</div>
+		`);
 	}
 
 	format_time(value) {

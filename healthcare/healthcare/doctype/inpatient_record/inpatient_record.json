@@ -82,6 +82,9 @@
   "followup_date",
   "sb_discharge_note",
   "discharge_note",
+  "nursing_tab",
+  "nursing_section",
+  "nursing_snapshot",
   "connections_tab",
   "emergency_record"
  ],
@@ -591,6 +594,21 @@
    "label": "Emergency Record",
    "options": "Emergency Record",
    "read_only": 1
+  },
+  {
+   "fieldname": "nursing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Nursing"
+  },
+  {
+   "fieldname": "nursing_snapshot",
+   "fieldtype": "HTML",
+   "label": "Nursing Snapshot",
+   "options": "<div class=\"nursing-snapshot nursing-snapshot-wide\"></div>"
+  },
+  {
+   "fieldname": "nursing_section",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -608,7 +626,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2026-06-17 18:11:51.318190",
+ "modified": "2026-08-24 15:03:18.002539",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
