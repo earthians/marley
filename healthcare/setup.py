@@ -342,6 +342,7 @@ def create_custom_records():
 	create_sensitivity()
 	create_triage_levels()
 	create_vital_sign_observation_templates()
+	create_intake_output_types()
 	setup_patient_history_settings()
 	setup_service_request_masters()
 	setup_order_status_codes()
@@ -903,6 +904,30 @@ def create_triage_levels():
 		},
 	]
 	records = [{"doctype": "Triage Level", **level} for level in levels]
+	insert_record(records)
+
+
+def create_intake_output_types():
+	types = [
+		(_("Oral"), "Intake"),
+		(_("IV Fluid"), "Intake"),
+		(_("Nasogastric Feed"), "Intake"),
+		(_("Blood Product"), "Intake"),
+		(_("Urine"), "Output"),
+		(_("Drain"), "Output"),
+		(_("Emesis"), "Output"),
+		(_("Stool"), "Output"),
+		(_("Blood Loss"), "Output"),
+	]
+	records = [
+		{
+			"doctype": "Intake Output Type",
+			"intake_output_type": intake_output_type,
+			"direction": direction,
+			"default_uom": "Millilitre",
+		}
+		for intake_output_type, direction in types
+	]
 	insert_record(records)
 
 
