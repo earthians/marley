@@ -563,6 +563,30 @@ def create_antibiotics():
 
 def create_lab_test_uom():
 	records = [
+		{
+			"doctype": "Lab Test UOM",
+			"name": "/min",
+			"lab_test_uom": "/min",
+			"uom_description": "per minute (UCUM: /min)",
+		},
+		{
+			"doctype": "Lab Test UOM",
+			"name": "mmHg",
+			"lab_test_uom": "mmHg",
+			"uom_description": "millimetre of mercury (UCUM: mm[Hg])",
+		},
+		{
+			"doctype": "Lab Test UOM",
+			"name": "°C",
+			"lab_test_uom": "°C",
+			"uom_description": "degree Celsius (UCUM: Cel)",
+		},
+		{
+			"doctype": "Lab Test UOM",
+			"name": "Score",
+			"lab_test_uom": "Score",
+			"uom_description": "rating on a fixed scale, such as 0-10 (UCUM: {score})",
+		},
 		{"doctype": "Lab Test UOM", "name": "umol/L", "lab_test_uom": "umol/L", "uom_description": None},
 		{"doctype": "Lab Test UOM", "name": "mg/L", "lab_test_uom": "mg/L", "uom_description": None},
 		{
@@ -883,13 +907,15 @@ def create_triage_levels():
 
 
 def create_vital_sign_observation_templates():
+	# observation, abbreviation, unit — permitted_unit is mandatory for Quantity
 	vitals = [
-		(_("Pulse"), "PR"),
-		(_("Respiratory Rate"), "RR"),
-		(_("Temperature"), "TEMP"),
-		(_("BP Systolic"), "BPS"),
-		(_("BP Diastolic"), "BPD"),
-		(_("SpO2"), "SPO2"),
+		(_("Pulse"), "PR", "/min"),
+		(_("Respiratory Rate"), "RR", "/min"),
+		(_("Temperature"), "TEMP", "°C"),
+		(_("BP Systolic"), "BPS", "mmHg"),
+		(_("BP Diastolic"), "BPD", "mmHg"),
+		(_("SpO2"), "SPO2", "%"),
+		(_("Pain Score"), "PAIN", "Score"),
 	]
 	records = [
 		{
@@ -898,10 +924,20 @@ def create_vital_sign_observation_templates():
 			"abbr": abbr,
 			"observation_category": "Vital Signs",
 			"permitted_data_type": "Quantity",
+			"permitted_unit": unit,
 		}
-		for observation, abbr in vitals
+		for observation, abbr, unit in vitals
 	]
 	insert_record(records)
+	set_vital_sign_units(vitals)
+
+
+def set_vital_sign_units(vitals):
+	"""Templates seeded before units existed keep their blank permitted_unit."""
+	for _observation, abbr, unit in vitals:
+		name = frappe.db.get_value("Observation Template", {"abbr": abbr}, "name")
+		if name and not frappe.db.get_value("Observation Template", name, "permitted_unit"):
+			frappe.db.set_value("Observation Template", name, "permitted_unit", unit)
 
 
 def create_sensitivity():

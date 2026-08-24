@@ -10,7 +10,7 @@ import "./triage_indicator.js";
 import "./send_to_emergency.js";
 import "./sample_collection_tree.js";
 import "./medication_safety/medication_safety.js";
-import "./nursing_workspace/nursing_station.js";
+import "./nursing_workspace/nursing_workspace.js";
 import "./nursing_workspace/snapshot.js";
 import "./nursing_workspace/panes/vitals_pane.js";
 import "./nursing_workspace/attach.js";

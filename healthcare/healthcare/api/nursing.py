@@ -12,6 +12,14 @@ import erpnext
 VITAL_SIGNS_CATEGORY = "Vital Signs"
 OPEN_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready", "In Progress")
 
+# Each source document names its doctor differently.
+PRACTITIONER_FIELDS = (
+	"practitioner",
+	"primary_practitioner",
+	"attending_practitioner",
+	"triage_practitioner",
+)
+
 
 class VitalsRecorder:
 	"""Records vital sign readings as Observations of category Vital Signs."""
@@ -71,7 +79,16 @@ class PatientSnapshot:
 
 	def vitals(self):
 		"""Last `limit` readings per vital sign template, oldest first."""
-		return {template: self.readings_for(template) for template in vital_sign_templates()}
+		return [self.vital_entry(template) for template in vital_sign_templates()]
+
+	def vital_entry(self, template):
+		return {
+			"template": template.name,
+			"label": template.observation or template.name,
+			"abbr": template.abbr,
+			"unit": template.permitted_unit,
+			"readings": self.readings_for(template.name),
+		}
 
 	def readings_for(self, template):
 		readings = frappe.get_all(
@@ -103,12 +120,69 @@ class PatientSnapshot:
 		return notes[0] if notes else None
 
 
+class PatientBanner:
+	"""Who the nurse is looking at, and where they are."""
+
+	def __init__(self, patient, reference_doctype=None, reference_name=None):
+		self.patient = frappe.get_doc("Patient", patient)
+		self.reference_doctype = reference_doctype
+		self.reference_name = reference_name
+
+	def as_dict(self):
+		return {
+			"patient": self.patient.name,
+			"patient_name": self.patient.patient_name,
+			"gender": self.patient.sex,
+			"age": self.age(),
+			"blood_group": self.patient.blood_group,
+			"allergies": self.patient.allergies,
+			"identifier": self.patient.uid,
+			"practitioner": self.practitioner(),
+			"location": self.location(),
+		}
+
+	def age(self):
+		age = self.patient.calculate_age()
+		return age.get("age_in_string") if age else None
+
+	def practitioner(self):
+		"""The doctor named on the source document."""
+		if not self.reference_doctype or not self.reference_name:
+			return None
+
+		meta = frappe.get_meta(self.reference_doctype)
+		for fieldname in PRACTITIONER_FIELDS:
+			if not meta.has_field(fieldname):
+				continue
+
+			practitioner = frappe.db.get_value(self.reference_doctype, self.reference_name, fieldname)
+			if practitioner:
+				return (
+					frappe.db.get_value("Healthcare Practitioner", practitioner, "practitioner_name")
+					or practitioner
+				)
+
+		return None
+
+	def location(self):
+		"""Bed and ward, when the source document is an admission."""
+		if self.reference_doctype != "Inpatient Record" or not self.reference_name:
+			return None
+
+		record = frappe.get_doc("Inpatient Record", self.reference_name)
+		occupancy = [row for row in record.inpatient_occupancies if not row.left]
+		return {
+			"service_unit": occupancy[-1].service_unit if occupancy else None,
+			"status": record.status,
+		}
+
+
 def vital_sign_templates():
 	"""Observation Templates seeded under the Vital Signs category."""
 	return frappe.get_all(
 		"Observation Template",
 		filters={"observation_category": VITAL_SIGNS_CATEGORY},
-		pluck="name",
+		fields=["name", "observation", "abbr", "permitted_data_type", "permitted_unit"],
 		order_by="creation asc",
 	)
 
@@ -128,12 +202,12 @@ def default_company():
 
 @frappe.whitelist()
 def get_vital_sign_templates():
-	return frappe.get_all(
-		"Observation Template",
-		filters={"observation_category": VITAL_SIGNS_CATEGORY},
-		fields=["name", "observation", "abbr", "permitted_data_type", "permitted_unit"],
-		order_by="creation asc",
-	)
+	return vital_sign_templates()
+
+
+@frappe.whitelist()
+def get_banner(patient, reference_doctype=None, reference_name=None):
+	return PatientBanner(patient, reference_doctype, reference_name).as_dict()
 
 
 @frappe.whitelist()

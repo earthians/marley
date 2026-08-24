@@ -34,6 +34,10 @@ class TestNursing(HealthcareTestSuite):
 	def record(self, value, **kwargs):
 		return record_vitals(patient=self.patient, readings={self.template: value}, **kwargs)
 
+	def readings_for(self, snapshot_vitals):
+		entry = next(entry for entry in snapshot_vitals if entry["template"] == self.template)
+		return entry["readings"]
+
 	def test_record_vitals_creates_observation_under_vital_signs(self):
 		names = self.record(88)
 
@@ -67,7 +71,7 @@ class TestNursing(HealthcareTestSuite):
 		for value in (70, 80, 90):
 			self.record(value)
 
-		readings = PatientSnapshot(self.patient).vitals()[self.template]
+		readings = self.readings_for(PatientSnapshot(self.patient).vitals())
 
 		self.assertEqual([reading.value for reading in readings][-3:], ["70", "80", "90"])
 
@@ -75,9 +79,35 @@ class TestNursing(HealthcareTestSuite):
 		for value in range(12):
 			self.record(value)
 
-		readings = PatientSnapshot(self.patient, limit=10).vitals()[self.template]
+		readings = self.readings_for(PatientSnapshot(self.patient, limit=10).vitals())
 
 		self.assertEqual(len(readings), 10)
+
+	def test_seeder_backfills_units_on_existing_templates(self):
+		from healthcare.setup import create_vital_sign_observation_templates
+
+		frappe.db.set_value("Observation Template", {"abbr": "PR"}, "permitted_unit", None)
+
+		create_vital_sign_observation_templates()
+
+		self.assertEqual(
+			frappe.db.get_value("Observation Template", {"abbr": "PR"}, "permitted_unit"), "/min"
+		)
+
+	def test_pain_score_is_rated_on_a_score(self):
+		self.assertEqual(
+			frappe.db.get_value("Observation Template", {"abbr": "PAIN"}, "permitted_unit"), "Score"
+		)
+
+	def test_snapshot_vitals_carry_template_metadata(self):
+		self.record(88)
+
+		entry = next(
+			entry for entry in PatientSnapshot(self.patient).vitals() if entry["template"] == self.template
+		)
+
+		self.assertEqual(entry["abbr"], "TPR")
+		self.assertEqual(entry["label"], self.template)
 
 	def test_snapshot_payload_has_every_panel(self):
 		snapshot = get_snapshot(self.patient)
