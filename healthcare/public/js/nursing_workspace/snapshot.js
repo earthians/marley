@@ -26,6 +26,7 @@ healthcare.nursing.Snapshot = class Snapshot {
 	}
 
 	render() {
+		this.stop_waiting();
 		this.$wrapper.empty().addClass(`nursing-snapshot-${this.layout}`);
 		this.render_vitals();
 		this.render_next_tasks();
@@ -108,6 +109,34 @@ healthcare.nursing.Snapshot = class Snapshot {
 			return;
 		}
 
+		if (this.$chart_area.width() > 0) {
+			this.draw_chart(readings);
+			return;
+		}
+
+		// Inside a tab that is not open yet the container has no width, and the
+		// chart would size itself to NaN. Wait until it is laid out.
+		this.draw_when_visible(readings);
+	}
+
+	draw_when_visible(readings) {
+		this.observer = new ResizeObserver(() => {
+			if (this.$chart_area.width() <= 0) return;
+
+			this.stop_waiting();
+			this.draw_chart(readings);
+		});
+		this.observer.observe(this.$chart_area.get(0));
+	}
+
+	stop_waiting() {
+		if (!this.observer) return;
+
+		this.observer.disconnect();
+		this.observer = null;
+	}
+
+	draw_chart(readings) {
 		this.chart = new frappe.Chart(this.$chart_area.get(0), {
 			data: {
 				labels: readings.map(reading => this.format_time(reading.recorded_at)),
@@ -141,12 +170,12 @@ healthcare.nursing.Snapshot = class Snapshot {
 				</span>
 				<span class="nursing-reading-time">${this.format_time(reading.recorded_at)}</span>
 			</div>
-			<div class="nursing-reading-hint">${__("First reading — a trend needs two")}</div>
 		`);
 	}
 
+	// Axis labels only have a few pixels each, so full timestamps collide.
 	format_time(value) {
-		return value ? frappe.datetime.str_to_user(value) : "";
+		return value ? moment(value).format("DD/MM HH:mm") : "";
 	}
 
 	// ---- tasks, notes ----
