@@ -1,5 +1,70 @@
-// Nursing Station — desk dialog and the inline snapshot on Inpatient / Emergency Record.
+// Nursing Workspace — desk dialog and the inline snapshot on Inpatient / Emergency Record.
 // Colours come from desk variables so light and dark themes follow the user's setting.
+
+// Shared top offset so the rail, the form and the snapshot start on one line.
+$nursing-pane-top: 0.85rem;
+
+// Patient banner across the top of the dialog.
+.nursing-banner {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	padding: 0.6rem 0.9rem;
+	background-color: var(--subtle-fg);
+	border-bottom: 1px solid var(--border-color);
+	min-height: 3rem;
+}
+
+.nursing-banner-who {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.3;
+}
+
+.nursing-banner-name {
+	font-weight: 600;
+	color: var(--heading-color);
+}
+
+.nursing-banner-meta {
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+}
+
+.nursing-banner-facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-left: auto;
+}
+
+.nursing-fact {
+	font-size: var(--text-sm);
+	color: var(--text-color);
+	background-color: var(--fg-color);
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-full);
+	padding: 0.15rem 0.45rem;
+
+	i {
+		font-style: normal;
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+
+	&.nursing-fact-alert {
+		background-color: var(--bg-red);
+		border-color: transparent;
+		color: var(--text-on-red);
+		font-weight: 500;
+
+		i {
+			color: inherit;
+			opacity: 0.75;
+		}
+	}
+}
 
 // The panels run edge to edge, so this dialog drops the modal body padding
 // instead of pulling the grid out with negative margins.
@@ -13,48 +78,54 @@
 	}
 }
 
+// Three cards of equal height: tops and bottoms line up, each scrolls inside.
 .nursing-station {
 	display: grid;
 	grid-template-columns: 186px minmax(0, 1fr) 304px;
 	grid-template-areas: "rail pane snapshot";
-	min-height: 460px;
-	border-bottom: 1px solid var(--border-color);
+	gap: 0.6rem;
+	padding: 0.6rem;
+	height: 62vh;
+	min-height: 420px;
+
+	> * {
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-lg);
+		background-color: var(--fg-color);
+		min-height: 0;
+		overflow-y: auto;
+	}
 
 	.nursing-rail {
 		grid-area: rail;
-		border-right: 1px solid var(--border-color);
 		background-color: var(--subtle-fg);
-		padding: 0.75rem 0.5rem;
+		padding: $nursing-pane-top 0.5rem;
 	}
 
 	.nursing-pane {
 		grid-area: pane;
-		padding: 1rem 1.25rem;
+		padding: $nursing-pane-top 1.25rem;
 		min-width: 0;
 	}
 
 	.nursing-snapshot {
 		grid-area: snapshot;
-		border-left: 1px solid var(--border-color);
 		background-color: var(--subtle-fg);
-		padding: 0.75rem;
-		overflow-y: auto;
-		max-height: 70vh;
+		padding: $nursing-pane-top 0.75rem;
 	}
 }
 
 // Tablet: the snapshot drops below the form and spreads into columns.
 @media (max-width: 1080px) {
 	.nursing-station {
+		height: auto;
 		grid-template-columns: 170px minmax(0, 1fr);
 		grid-template-areas:
 			"rail pane"
 			"snapshot snapshot";
 
 		.nursing-snapshot {
-			border-left: none;
-			border-top: 1px solid var(--border-color);
-			max-height: none;
+			overflow: visible;
 			display: grid;
 			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 			gap: 0.6rem;
@@ -70,6 +141,7 @@
 // Phone: the rail becomes a scrolling strip of chips above the form.
 @media (max-width: 767px) {
 	.nursing-station {
+		height: auto;
 		grid-template-columns: minmax(0, 1fr);
 		grid-template-areas:
 			"rail"
@@ -84,8 +156,7 @@
 			display: flex;
 			gap: 0.25rem;
 			overflow-x: auto;
-			border-right: none;
-			border-bottom: 1px solid var(--border-color);
+			overflow-y: hidden;
 			padding: 0.5rem;
 			-webkit-overflow-scrolling: touch;
 		}
@@ -103,6 +174,7 @@
 		width: auto;
 		white-space: nowrap;
 		border: 1px solid var(--border-color);
+		border-radius: var(--radius-full);
 	}
 
 	.nursing-rail-soon {
@@ -116,6 +188,10 @@
 	letter-spacing: 0.06em;
 	color: var(--text-muted);
 	padding: 0.75rem 0.5rem 0.25rem;
+
+	&:first-child {
+		padding-top: 0;
+	}
 }
 
 .nursing-rail-item {
@@ -126,7 +202,7 @@
 	gap: 0.5rem;
 	padding: 0.35rem 0.5rem;
 	border: none;
-	border-radius: var(--border-radius);
+	border-radius: var(--radius);
 	background: none;
 	color: var(--text-color);
 	font-size: var(--text-md);
@@ -154,27 +230,150 @@
 }
 
 .nursing-pane-title {
+	margin-top: 0;
+	line-height: 1.3;
 	font-size: var(--text-lg);
 	font-weight: 600;
 	color: var(--heading-color);
 }
 
-.nursing-pane-subtitle {
-	font-size: var(--text-sm);
-	color: var(--text-muted);
+.nursing-pane-head {
 	margin-bottom: 0.75rem;
 }
 
 .nursing-fields {
+	.form-control,
+	.input-with-feedback,
+	select {
+		border-radius: var(--radius);
+	}
+
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 	gap: 0.5rem 1rem;
 }
 
-.nursing-card {
+// Paired readings, such as systolic over diastolic, share one field.
+// Two columns wide so each input stays full size.
+.nursing-field-group {
+	grid-column: span 2;
+}
+
+.nursing-group {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.nursing-group-slot {
+	flex: 1;
+	min-width: 0;
+
+	.form-group {
+		margin-bottom: 0;
+	}
+}
+
+.nursing-group-separator {
+	color: var(--text-muted);
+	font-size: var(--text-lg);
+	line-height: 1;
+}
+
+.nursing-group-unit {
+	font-size: var(--text-xs);
+	color: var(--text-muted);
+	margin-top: 0.15rem;
+}
+
+.nursing-section-break {
+	grid-column: 1 / -1;
+	border-top: 1px solid var(--border-color);
+	margin: 0.5rem 0 0.1rem;
+}
+
+// Pain score: picked on a scale rather than typed.
+.nursing-field-wide {
+	grid-column: 1 / -1;
+	margin-top: 0.35rem;
+}
+
+.nursing-scale {
+	display: flex;
+	gap: 0.25rem;
+	margin-top: 0.25rem;
+}
+
+.nursing-scale-step {
+	flex: 1;
+	min-width: 0;
+	padding: 0.3rem 0;
+	font-size: var(--text-sm);
+	color: var(--text-muted);
 	background-color: var(--fg-color);
 	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius-md);
+	border-radius: var(--radius);
+
+	&:hover {
+		border-color: var(--text-muted);
+	}
+
+	&.selected {
+		font-weight: 600;
+	}
+}
+
+// Severity bands: colour carries the same information as the number.
+.nursing-scale-step {
+	&.nursing-band-green:hover {
+		border-color: var(--green-400);
+	}
+
+	&.nursing-band-orange:hover {
+		border-color: var(--orange-400);
+	}
+
+	&.nursing-band-red:hover {
+		border-color: var(--red-400);
+	}
+
+	&.nursing-band-green.selected {
+		background-color: var(--bg-green);
+		border-color: var(--green-400);
+		color: var(--text-on-green);
+	}
+
+	&.nursing-band-orange.selected {
+		background-color: var(--bg-orange);
+		border-color: var(--orange-400);
+		color: var(--text-on-orange);
+	}
+
+	&.nursing-band-red.selected {
+		background-color: var(--bg-red);
+		border-color: var(--red-400);
+		color: var(--text-on-red);
+	}
+}
+
+.nursing-scale-band {
+	margin-left: 0.35rem;
+	font-size: var(--text-xs);
+}
+
+.nursing-scale-legend {
+	display: flex;
+	justify-content: space-between;
+	font-size: var(--text-xs);
+	color: var(--text-light);
+	margin-top: 0.25rem;
+}
+
+.nursing-card {
+	margin-top: 0;
+	background-color: var(--fg-color);
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-md);
 	padding: 0.6rem 0.75rem;
 	margin-bottom: 0.6rem;
 }
@@ -202,11 +401,11 @@
 
 .nursing-vital {
 	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius);
+	border-radius: var(--radius-full);
 	background: none;
 	color: var(--text-muted);
 	font-size: var(--text-xs);
-	padding: 0.1rem 0.4rem;
+	padding: 0.15rem 0.55rem;
 
 	&.selected {
 		background-color: var(--bg-blue);
@@ -215,9 +414,45 @@
 	}
 }
 
-.nursing-chart .chart-container {
-	margin: 0;
-	padding: 0;
+.nursing-chart {
+	min-height: 150px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+	.chart-container {
+		margin: 0;
+		padding: 0;
+	}
+}
+
+.nursing-snapshot-wide .nursing-chart {
+	min-height: 200px;
+}
+
+.nursing-reading {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	padding: 0.5rem 0 0.1rem;
+}
+
+.nursing-reading-value {
+	font-size: 1.75rem;
+	line-height: 1;
+	font-weight: 600;
+	color: var(--heading-color);
+}
+
+.nursing-reading-time {
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+}
+
+.nursing-reading-hint {
+	font-size: var(--text-xs);
+	color: var(--text-light);
+	padding-bottom: 0.4rem;
 }
 
 .nursing-row {
