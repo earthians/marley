@@ -1,0 +1,301 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-08-24 19:25:38.641760",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "patient",
+  "patient_name",
+  "column_break_patient",
+  "status",
+  "company",
+  "medication_section",
+  "medication",
+  "drug_code",
+  "drug_name",
+  "column_break_medication",
+  "dosage",
+  "dosage_form",
+  "route",
+  "schedule_section",
+  "scheduled_time",
+  "administered_time",
+  "site",
+  "column_break_schedule",
+  "administered_by",
+  "second_check_by",
+  "reason",
+  "order_section",
+  "order_doctype",
+  "order_name",
+  "order_entry",
+  "column_break_order",
+  "inpatient_record",
+  "service_unit",
+  "practitioner",
+  "dose_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HLC-MA-.YYYY.-",
+   "default": "HLC-MA-.YYYY.-",
+   "reqd": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "fetch_from": "patient.patient_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_patient",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Scheduled\nGiven\nHeld\nRefused\nNot Available\nCancelled",
+   "default": "Scheduled",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "medication_section",
+   "fieldtype": "Section Break",
+   "label": "Medication"
+  },
+  {
+   "fieldname": "medication",
+   "fieldtype": "Link",
+   "label": "Medication",
+   "options": "Medication"
+  },
+  {
+   "fieldname": "drug_code",
+   "fieldtype": "Link",
+   "label": "Drug",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "drug_name",
+   "fieldtype": "Data",
+   "label": "Drug Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_medication",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dosage",
+   "fieldtype": "Float",
+   "label": "Dose",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "dosage_form",
+   "fieldtype": "Link",
+   "label": "Dosage Form",
+   "options": "Dosage Form"
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Select",
+   "label": "Route",
+   "options": "\nOral\nIV\nIM\nSC\nSublingual\nTopical\nInhalation\nRectal\nNasogastric\nOther"
+  },
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Administration"
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Datetime",
+   "label": "Scheduled Time",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "administered_time",
+   "fieldtype": "Datetime",
+   "label": "Administered Time"
+  },
+  {
+   "fieldname": "site",
+   "fieldtype": "Data",
+   "label": "Site"
+  },
+  {
+   "fieldname": "column_break_schedule",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "administered_by",
+   "fieldtype": "Link",
+   "label": "Administered By",
+   "options": "User"
+  },
+  {
+   "fieldname": "second_check_by",
+   "fieldtype": "Link",
+   "label": "Second Check By",
+   "options": "User"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "depends_on": "eval:['Held','Refused','Not Available'].includes(doc.status)"
+  },
+  {
+   "fieldname": "order_section",
+   "fieldtype": "Section Break",
+   "label": "Order"
+  },
+  {
+   "fieldname": "order_doctype",
+   "fieldtype": "Link",
+   "label": "Order Document Type",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "order_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Order",
+   "options": "order_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "order_entry",
+   "fieldtype": "Data",
+   "label": "Order Entry Row",
+   "read_only": 1,
+   "description": "Row in Inpatient Medication Order Entry this dose came from"
+  },
+  {
+   "fieldname": "column_break_order",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
+  },
+  {
+   "fieldname": "practitioner",
+   "fieldtype": "Link",
+   "label": "Ordered By",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fieldname": "dose_key",
+   "fieldtype": "Data",
+   "label": "Dose Key",
+   "unique": 1,
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-24 19:59:42.821429",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Medication Administration",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Healthcare Administrator",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Physician",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Nursing User",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "scheduled_time",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient_name",
+ "show_title_field_in_link": 1,
+ "track_changes": 1
+}
