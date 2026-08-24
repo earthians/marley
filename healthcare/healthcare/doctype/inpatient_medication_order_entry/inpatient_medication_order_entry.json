@@ -13,7 +13,8 @@
   "column_break_4",
   "date",
   "time",
-  "is_completed"
+  "is_completed",
+  "medication_request"
  ],
  "fields": [
   {
@@ -76,12 +77,19 @@
    "fieldname": "instructions",
    "fieldtype": "Small Text",
    "label": "Instructions"
+  },
+  {
+   "fieldname": "medication_request",
+   "fieldtype": "Link",
+   "label": "Medication Request",
+   "options": "Medication Request",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-25 09:36:29.228721",
+ "modified": "2026-08-24 19:17:12.689147",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Medication Order Entry",
