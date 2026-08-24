@@ -115,3 +115,96 @@ class TestNursing(HealthcareTestSuite):
 		self.assertIn("vitals", snapshot)
 		self.assertIn("next_tasks", snapshot)
 		self.assertIn("last_note", snapshot)
+
+
+class TestNursingIntakeOutput(HealthcareTestSuite):
+	def setUp(self):
+		from healthcare.setup import create_intake_output_types
+
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		create_intake_output_types()
+		frappe.db.delete("Intake Output Entry", {"patient": self.patient})
+
+	def record(self, *entries):
+		from healthcare.healthcare.api.nursing import record_intake_output
+
+		return record_intake_output(patient=self.patient, entries=list(entries))
+
+	def summary(self):
+		from healthcare.healthcare.api.nursing import get_intake_output_summary
+
+		return get_intake_output_summary(self.patient)
+
+	def test_records_one_entry_per_row(self):
+		names = self.record(
+			{"intake_output_type": "Oral", "volume": 200},
+			{"intake_output_type": "Urine", "volume": 550},
+		)
+
+		self.assertEqual(len(names), 2)
+
+	def test_summary_totals_each_direction(self):
+		self.record(
+			{"intake_output_type": "Oral", "volume": 200},
+			{"intake_output_type": "IV Fluid", "volume": 600},
+			{"intake_output_type": "Urine", "volume": 550},
+		)
+
+		summary = self.summary()
+
+		self.assertEqual(summary["intake"], 800)
+		self.assertEqual(summary["output"], 550)
+
+	def test_summary_balance_is_intake_less_output(self):
+		self.record(
+			{"intake_output_type": "Oral", "volume": 900},
+			{"intake_output_type": "Urine", "volume": 400},
+		)
+
+		self.assertEqual(self.summary()["balance"], 500)
+
+	def test_recording_nothing_throws(self):
+		self.assertRaises(frappe.ValidationError, self.record)
+
+
+class TestNursingPatientSearch(HealthcareTestSuite):
+	def setUp(self):
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+
+	def find(self, term, admitted_only=0):
+		from healthcare.healthcare.api.nursing import find_patients
+
+		return find_patients(term, admitted_only)
+
+	def test_finds_a_patient_by_identifier(self):
+		names = [row.name for row in self.find(self.patient)]
+
+		self.assertIn(self.patient, names)
+
+	def test_finds_a_patient_by_name(self):
+		patient_name = frappe.db.get_value("Patient", self.patient, "patient_name")
+
+		names = [row.name for row in self.find(patient_name)]
+
+		self.assertIn(self.patient, names)
+
+	def test_blank_term_throws(self):
+		self.assertRaises(frappe.ValidationError, self.find, "   ")
+
+	def test_admitted_only_excludes_patients_without_a_bed(self):
+		frappe.db.delete("Inpatient Record", {"patient": self.patient})
+
+		names = [row.name for row in self.find(self.patient, admitted_only=1)]
+
+		self.assertNotIn(self.patient, names)
+
+	def test_finds_a_patient_by_inpatient_record_number(self):
+		record = frappe.get_all("Inpatient Record", filters={"patient": self.patient}, pluck="name", limit=1)
+		if not record:
+			self.skipTest("no inpatient record for the test patient")
+
+		matches = self.find(record[0])
+
+		self.assertEqual(matches[0]["name"], self.patient)
+		self.assertEqual(matches[0]["reference_doctype"], "Inpatient Record")
+		self.assertEqual(matches[0]["reference_name"], record[0])

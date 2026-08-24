@@ -324,8 +324,7 @@
   {
    "fieldname": "nursing_snapshot",
    "fieldtype": "HTML",
-   "label": "Nursing Snapshot",
-   "options": "<div class=\"nursing-snapshot nursing-snapshot-wide\"></div>"
+   "label": "Nursing Snapshot"
   },
   {
    "fieldname": "nursing_section",
@@ -348,10 +347,14 @@
   }
  ],
 <<<<<<< HEAD
+<<<<<<< HEAD
  "modified": "2026-06-18 13:50:07.543590",
 =======
  "modified": "2026-08-24 15:03:18.002539",
 >>>>>>> 8a21e05 (fix: alignments, ux)
+=======
+ "modified": "2026-08-24 17:03:29.239365",
+>>>>>>> 7ea8a84 (feat: i/o recorder, patient search, ux fixes)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Emergency Record",
