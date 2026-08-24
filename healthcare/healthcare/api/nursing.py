@@ -5,11 +5,22 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime
+from frappe.utils import add_to_date, now_datetime
 
 import erpnext
 
 VITAL_SIGNS_CATEGORY = "Vital Signs"
+IN_HOSPITAL_STATUSES = ("Admitted", "Discharge Scheduled")
+
+# Documents whose number a nurse might scan or type to reach a patient.
+PATIENT_DOCUMENTS = (
+	"Inpatient Record",
+	"Emergency Record",
+	"Patient Encounter",
+	"Clinical Procedure",
+	"Therapy Session",
+	"Patient Appointment",
+)
 OPEN_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready", "In Progress")
 
 # Each source document names its doctor differently.
@@ -142,8 +153,18 @@ class PatientBanner:
 		}
 
 	def age(self):
+		"""Short form for a banner chip: years, or months and days for infants."""
 		age = self.patient.calculate_age()
-		return age.get("age_in_string") if age else None
+		if not age:
+			return None
+
+		days = age.get("age_in_days") or 0
+		years = days // 365
+		if years:
+			return f"{years} Y"
+
+		months = days // 30
+		return f"{months} M" if months else f"{days} D"
 
 	def practitioner(self):
 		"""The doctor named on the source document."""
@@ -177,6 +198,159 @@ class PatientBanner:
 		}
 
 
+class IntakeOutputRecorder:
+	"""Records intake and output rows, one Intake Output Entry each."""
+
+	def __init__(self, patient, reference_doctype=None, reference_name=None, practitioner=None):
+		self.patient = patient
+		self.reference_doctype = reference_doctype
+		self.reference_name = reference_name
+		self.practitioner = practitioner
+		self.company = default_company()
+
+	def record(self, entries):
+		return [self.record_entry(entry) for entry in entries]
+
+	def record_entry(self, entry):
+		document = frappe.new_doc("Intake Output Entry")
+		document.update(
+			{
+				"patient": self.patient,
+				"intake_output_type": entry.get("intake_output_type"),
+				"volume": entry.get("volume"),
+				"description": entry.get("description"),
+				"recorded_at": entry.get("recorded_at") or now_datetime(),
+				"reference_doctype": self.reference_doctype,
+				"reference_name": self.reference_name,
+				"practitioner": self.practitioner,
+				"company": self.company,
+			}
+		)
+		document.insert(ignore_permissions=True)
+		return document.name
+
+
+class IntakeOutputSummary:
+	"""Totals and rows for the last `hours` of intake and output."""
+
+	def __init__(self, patient, hours=24):
+		self.patient = patient
+		self.hours = hours
+
+	def as_dict(self):
+		entries = self.entries()
+		intake = self.total(entries, "Intake")
+		output = self.total(entries, "Output")
+		return {
+			"entries": entries,
+			"intake": intake,
+			"output": output,
+			"balance": intake - output,
+			"hours": self.hours,
+		}
+
+	def entries(self):
+		return frappe.get_all(
+			"Intake Output Entry",
+			filters={
+				"patient": self.patient,
+				"docstatus": ["<", 2],
+				"recorded_at": [">", add_to_date(now_datetime(), hours=-self.hours)],
+			},
+			fields=[
+				"name",
+				"intake_output_type",
+				"direction",
+				"volume",
+				"uom",
+				"description",
+				"recorded_at",
+			],
+			order_by="recorded_at desc",
+		)
+
+	def total(self, entries, direction):
+		return sum(entry.volume or 0 for entry in entries if entry.direction == direction)
+
+
+class PatientFinder:
+	"""Resolves a scanned wristband, a record number, or a typed term to patients."""
+
+	FIELDS = ("name", "uid", "patient_name", "mobile")
+
+	def __init__(self, term, admitted_only=False):
+		self.term = (term or "").strip()
+		self.admitted_only = admitted_only
+
+	def find(self):
+		if not self.term:
+			frappe.throw(_("Scan a wristband or type a patient to search"))
+
+		# A record number identifies one patient exactly, so those come first.
+		matches = self.by_document() + self.by_patient()
+		return self.deduplicate(matches)
+
+	def by_document(self):
+		matches = []
+		for doctype in PATIENT_DOCUMENTS:
+			patient = self.patient_on(doctype)
+			if not patient:
+				continue
+
+			matches.append(
+				{
+					"name": patient,
+					"patient_name": frappe.db.get_value("Patient", patient, "patient_name"),
+					"matched_via": doctype,
+					"reference_doctype": doctype,
+					"reference_name": self.term,
+				}
+			)
+		return matches
+
+	def patient_on(self, doctype):
+		if not frappe.db.exists(doctype, self.term):
+			return None
+
+		return frappe.db.get_value(doctype, self.term, "patient")
+
+	def by_patient(self):
+		return frappe.get_all(
+			"Patient",
+			or_filters=[[field, "like", f"%{self.term}%"] for field in self.FIELDS],
+			filters=self.filters(),
+			fields=["name", "patient_name"],
+			order_by="patient_name asc",
+			limit=20,
+		)
+
+	def deduplicate(self, matches):
+		seen = set()
+		unique = []
+		for match in matches:
+			if match["name"] in seen:
+				continue
+
+			seen.add(match["name"])
+			unique.append(match)
+		return unique
+
+	def filters(self):
+		if not self.admitted_only:
+			return {}
+
+		return {"name": ["in", admitted_patients()]}
+
+
+def admitted_patients():
+	"""A patient pending discharge is still in a bed and still needs nursing care."""
+	return frappe.get_all(
+		"Inpatient Record",
+		filters={"status": ["in", IN_HOSPITAL_STATUSES]},
+		pluck="patient",
+	)
+
+
 def vital_sign_templates():
 	"""Observation Templates seeded under the Vital Signs category."""
 	return frappe.get_all(
@@ -206,8 +380,40 @@ def get_vital_sign_templates():
 
 
 @frappe.whitelist()
+def find_patients(term, admitted_only=0):
+	return PatientFinder(term, int(admitted_only)).find()
+
+
+@frappe.whitelist()
 def get_banner(patient, reference_doctype=None, reference_name=None):
 	return PatientBanner(patient, reference_doctype, reference_name).as_dict()
+
+
+@frappe.whitelist()
+def get_intake_output_types():
+	return frappe.get_all(
+		"Intake Output Type",
+		filters={"disabled": 0},
+		fields=["name", "direction", "default_uom"],
+		order_by="direction asc, name asc",
+	)
+
+
+@frappe.whitelist()
+def get_intake_output_summary(patient, hours=24):
+	return IntakeOutputSummary(patient, int(hours)).as_dict()
+
+
+@frappe.whitelist()
+def record_intake_output(patient, entries, reference_doctype=None, reference_name=None, practitioner=None):
+	if isinstance(entries, str):
+		entries = json.loads(entries)
+
+	if not entries:
+		frappe.throw(_("Add at least one row"))
+
+	recorder = IntakeOutputRecorder(patient, reference_doctype, reference_name, practitioner)
+	return recorder.record(entries)
 
 
 @frappe.whitelist()
