@@ -16,6 +16,10 @@ CLOSED_ADMISSION_STATUSES = ("Discharged", "Cancelled")
 # The round a nurse is working: how far back the pane and the snapshot look.
 ROUND_WINDOW_HOURS = 12
 
+# A dose that was given is done with. The exceptions stay in view, because a
+# held or refused dose is something the next nurse needs to know about.
+ROUND_STATUSES = ("Scheduled", "Held", "Refused", "Not Available")
+
 # A missed dose falls outside the round by definition, but it is the exception
 # that most needs attention, so it stays visible for a day.
 MISSED_LOOKBACK_HOURS = 24
@@ -209,7 +213,7 @@ def get_due_medications(patient, hours=ROUND_WINDOW_HOURS):
 	"""The round, plus any dose recently missed so it is not quietly forgotten."""
 	schedule_due_medications(patient)
 
-	doses = doses_on_the_round(patient, hours) + missed_doses(patient)
+	doses = doses_on_the_round(patient, hours, statuses=ROUND_STATUSES) + missed_doses(patient)
 	return sorted(doses, key=lambda dose: dose.scheduled_time)
 
 
