@@ -4,9 +4,9 @@
 frappe.provide("healthcare.nursing");
 
 healthcare.nursing.NURSING_TASKS_METHOD =
-	"healthcare.healthcare.api.nursing.get_nursing_tasks";
+	"healthcare.healthcare.api.nursing_tasks.get_nursing_tasks";
 healthcare.nursing.UPDATE_TASK_METHOD =
-	"healthcare.healthcare.api.nursing.update_nursing_task";
+	"healthcare.healthcare.api.nursing_tasks.update_nursing_task";
 
 healthcare.nursing.START_TASK = [
 	{ status: "In Progress", label: __("Start") },
@@ -29,58 +29,35 @@ healthcare.nursing.TASK_ACTIONS = {
 	Missed: healthcare.nursing.START_TASK,
 };
 
-healthcare.nursing.panes.nursing_tasks = class NursingTasksPane {
-	constructor({ wrapper, station }) {
-		this.$wrapper = $(wrapper);
-		this.station = station;
-	}
-
+healthcare.nursing.panes.nursing_tasks = class NursingTasksPane extends (
+	healthcare.nursing.Pane
+) {
 	async render() {
-		this.render_layout();
+		this.render_head(__("Nursing Tasks"));
 		await this.refresh_tasks();
-	}
-
-	render_layout() {
-		this.$wrapper.html(`
-			<div class="nursing-pane-head">
-				<div class="nursing-pane-title">${__("Nursing Tasks")}</div>
-			</div>
-			<div class="nursing-task-rows"></div>
-		`);
-		this.$rows = this.$wrapper.find(".nursing-task-rows");
 	}
 
 	async refresh_tasks() {
 		this.tasks = await frappe.xcall(healthcare.nursing.NURSING_TASKS_METHOD, {
-			patient: this.station.patient,
+			patient: this.patient,
 		});
 		this.render_tasks();
 	}
 
 	render_tasks() {
-		this.$rows.empty();
+		const $body = this.render_table(
+			[
+				{ label: __("Activity") },
+				{ label: __("Due"), align: "right" },
+				{ label: __("Status") },
+				{ label: __("Action") },
+			],
+			this.tasks,
+			task => this.get_task_html(task),
+			__("No tasks"),
+		);
+		if (!$body) return;
 
-		if (!this.tasks.length) {
-			this.$rows.html(`<div class="nursing-empty">${__("No tasks")}</div>`);
-			return;
-		}
-
-		const $table = $(`
-			<table class="table table-sm nursing-io-table">
-				<thead>
-					<tr>
-						<th>${__("Activity")}</th>
-						<th class="text-right">${__("Due")}</th>
-						<th>${__("Status")}</th>
-						<th>${__("Action")}</th>
-					</tr>
-				</thead>
-				<tbody></tbody>
-			</table>
-		`).appendTo(this.$rows);
-
-		const $body = $table.find("tbody");
-		this.tasks.forEach(task => $body.append(this.get_task_html(task)));
 		$body.on("click", "[data-status]", event =>
 			this.on_action($(event.currentTarget)),
 		);
@@ -139,7 +116,4 @@ healthcare.nursing.panes.nursing_tasks = class NursingTasksPane {
 		await this.refresh_tasks();
 		this.station.snapshot.refresh();
 	}
-
-	// Tasks move as they are actioned, so Save has nothing of its own to do.
-	async save() {}
 };
