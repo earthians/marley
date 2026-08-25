@@ -465,21 +465,25 @@ $nursing-pane-top: 0.85rem;
 	}
 }
 
-// Two even columns rather than letting four buttons wrap three-and-one.
-// Equal cells mean every row's buttons line up down the column.
+// One action plus a caret, so a row stays one line however many outcomes
+// there are.
 .nursing-row-actions {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.35rem;
-	// The floor belongs to the group, so the table column widens to fit. A
-	// minimum on the buttons themselves overflows the cell and they collide.
-	min-width: 250px;
-
 	.btn {
-		width: 100%;
-		padding-left: 0.4rem;
-		padding-right: 0.4rem;
 		white-space: nowrap;
+	}
+
+	.dropdown-item {
+		font-size: var(--text-sm);
+		padding: 0.25rem 0.75rem;
+		width: 100%;
+		text-align: left;
+		border: none;
+		background: none;
+		color: var(--text-color);
+
+		&:hover {
+			background-color: var(--sidebar-hover-color);
+		}
 	}
 }
 
