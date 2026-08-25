@@ -144,6 +144,50 @@ class TestMedicationScheduling(HealthcareTestSuite):
 
 		self.assertEqual(self.build(), [])
 
+	def test_a_dose_left_undone_lapses_to_missed(self):
+		"""It must not simply drop out of the round unrecorded."""
+		from healthcare.healthcare.api.medication import ROUND_WINDOW_HOURS, lapse_missed_doses
+
+		self.make_inpatient_order()
+		dose = self.build()[0]
+		frappe.db.set_value(
+			"Medication Administration",
+			dose,
+			"scheduled_time",
+			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(ROUND_WINDOW_HOURS + 1)),
+		)
+
+		lapse_missed_doses(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Medication Administration", dose, "status"), "Missed")
+
+	def test_a_dose_still_on_the_round_does_not_lapse(self):
+		from healthcare.healthcare.api.medication import lapse_missed_doses
+
+		self.make_inpatient_order()
+		dose = self.build()[0]
+
+		lapse_missed_doses(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Medication Administration", dose, "status"), "Scheduled")
+
+	def test_a_dose_already_given_never_lapses(self):
+		from healthcare.healthcare.api.medication import ROUND_WINDOW_HOURS, lapse_missed_doses
+
+		self.make_inpatient_order()
+		dose = self.build()[0]
+		frappe.db.set_value("Medication Administration", dose, "status", "Given")
+		frappe.db.set_value(
+			"Medication Administration",
+			dose,
+			"scheduled_time",
+			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(ROUND_WINDOW_HOURS + 1)),
+		)
+
+		lapse_missed_doses(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Medication Administration", dose, "status"), "Given")
+
 	def test_disabled_setting_creates_nothing(self):
 		self.make_inpatient_order()
 		frappe.db.set_single_value("Healthcare Settings", "auto_schedule_medication_doses", 0)
@@ -161,3 +205,36 @@ def MedicationSchedulerForPast(patient):
 			return super().build(until=frappe.utils.add_to_date(frappe.utils.now_datetime(), days=-30))
 
 	return PastBuilder(patient)
+
+
+class TestMissedDosesAreVisible(HealthcareTestSuite):
+	def setUp(self):
+		super().setUp()
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		frappe.db.delete("Medication Administration", {"patient": self.patient})
+
+	def make_missed_dose(self, hours_ago):
+		return frappe.get_doc(
+			{
+				"doctype": "Medication Administration",
+				"patient": self.patient,
+				"drug_code": frappe.get_list("Item", filters={"is_stock_item": 1}, pluck="name")[0],
+				"dosage": 1,
+				"status": "Missed",
+				"scheduled_time": frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-hours_ago),
+			}
+		).insert(ignore_permissions=True)
+
+	def test_a_recently_missed_dose_stays_on_the_pane(self):
+		from healthcare.healthcare.api.medication import missed_doses
+
+		dose = self.make_missed_dose(hours_ago=20)
+
+		self.assertIn(dose.name, [row.name for row in missed_doses(self.patient)])
+
+	def test_a_missed_dose_older_than_a_day_drops_off(self):
+		from healthcare.healthcare.api.medication import missed_doses
+
+		dose = self.make_missed_dose(hours_ago=30)
+
+		self.assertNotIn(dose.name, [row.name for row in missed_doses(self.patient)])

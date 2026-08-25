@@ -9,6 +9,9 @@ healthcare.nursing.RECORD_ADMINISTRATION_METHOD =
 	"healthcare.healthcare.api.medication.record_administration";
 
 // What a nurse can do with a dose, and whether it needs a reason.
+// A missed dose can still be acted on: a late dose is given late, not never.
+healthcare.nursing.ACTIONABLE_DOSE_STATUSES = ["Scheduled", "Missed"];
+
 healthcare.nursing.DOSE_OUTCOMES = [
 	{ status: "Given", label: __("Given"), needs_reason: false },
 	{ status: "Held", label: __("Held"), needs_reason: true },
@@ -100,13 +103,14 @@ healthcare.nursing.panes.medication = class MedicationPane {
 
 	// A dose already dealt with shows its outcome instead of the buttons.
 	get_actions_html(dose) {
-		if (dose.status !== "Scheduled") {
+		if (!healthcare.nursing.ACTIONABLE_DOSE_STATUSES.includes(dose.status)) {
 			return `<span class="text-muted">${__(dose.status)}${
 				dose.reason ? ` · ${frappe.utils.escape_html(dose.reason)}` : ""
 			}</span>`;
 		}
 
 		return `<div class="nursing-dose-actions">
+			${dose.status === "Missed" ? `<span class="text-danger">${__("Missed")}</span>` : ""}
 			${healthcare.nursing.DOSE_OUTCOMES.map(
 				outcome => `<button type="button" class="btn btn-xs btn-default"
 					data-status="${outcome.status}" data-dose="${dose.name}">${outcome.label}</button>`,

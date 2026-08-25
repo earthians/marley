@@ -183,25 +183,39 @@ healthcare.nursing.Snapshot = class Snapshot {
 
 	render_medications() {
 		const doses = this.data.medications || [];
-		const $body = this.add_card(__("Medication Due"));
+		const missed = this.data.missed_medications || [];
+		const $body = this.add_card(
+			__("Medication Due"),
+			this.get_missed_label(missed),
+		);
 
-		if (!doses.length) {
+		if (!doses.length && !missed.length) {
 			$body.html(this.get_empty(__("Nothing due")));
 			return;
 		}
+
 		doses.forEach(dose => $body.append(this.get_dose_row(dose)));
+		missed.forEach(dose => $body.append(this.get_dose_row(dose, true)));
 	}
 
-	get_dose_row(dose) {
-		const overdue = moment(dose.scheduled_time).isBefore(moment());
+	get_missed_label(missed) {
+		return missed.length
+			? `<span class="text-danger">${__("{0} missed", [missed.length])}</span>`
+			: "";
+	}
+
+	get_dose_row(dose, missed = false) {
+		const late = missed || moment(dose.scheduled_time).isBefore(moment());
 		return `<div class="nursing-row">
-			<span class="nursing-row-time ${overdue ? "text-danger" : ""}">
+			<span class="nursing-row-time ${late ? "text-danger" : ""}">
 				${moment(dose.scheduled_time).format("HH:mm")}
 			</span>
 			<span class="nursing-row-label">
 				${frappe.utils.escape_html(dose.drug_name || dose.drug_code)}
 			</span>
-			<span class="nursing-row-status">${format_number(dose.dosage)}</span>
+			<span class="nursing-row-status ${missed ? "text-danger" : ""}">
+				${missed ? __("Missed") : format_number(dose.dosage)}
+			</span>
 		</div>`;
 	}
 
