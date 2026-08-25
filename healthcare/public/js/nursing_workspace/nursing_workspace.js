@@ -91,6 +91,7 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		this.make_search();
 		this.$rail = this.dialog.$body.find(".nursing-rail");
 		this.$pane = this.dialog.$body.find(".nursing-pane");
+		this.$pane.attr({ role: "tabpanel", tabindex: "-1" });
 	}
 
 	// A wristband scanner types the value and presses Enter.
@@ -253,6 +254,9 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		this.$rail.on("click", "[data-action]", event => {
 			this.select_action($(event.currentTarget).attr("data-action"));
 		});
+		this.$rail.on("keydown", "[data-action]", event =>
+			this.handle_rail_keys(event),
+		);
 	}
 
 	render_rail_group(group) {
@@ -266,9 +270,33 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 			? ""
 			: `<span class="nursing-rail-soon">${__("Soon")}</span>`;
 		return `
-			<button type="button" class="nursing-rail-item" data-action="${action.name}"
+			<button type="button" class="nursing-rail-item" role="tab" tabindex="-1"
+				aria-selected="false" data-action="${action.name}"
 				${available ? "" : "disabled"}>${action.label}${suffix}</button>
 		`;
+	}
+
+	// The rail behaves as a tablist: one stop on the way through, arrows to
+	// move within it, so Tab reaches the form in two presses rather than nine.
+	handle_rail_keys(event) {
+		const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+		const step = keys[event.key];
+		if (!step && event.key !== "Home" && event.key !== "End") return;
+
+		event.preventDefault();
+		const $items = this.$rail.find("[data-action]:not(:disabled)");
+		const current = $items.index(this.$rail.find("[data-action]:focus"));
+		const last = $items.length - 1;
+		let next = current + (step || 0);
+
+		if (event.key === "Home") next = 0;
+		if (event.key === "End") next = last;
+		if (next < 0) next = last;
+		if (next > last) next = 0;
+
+		const $next = $items.eq(next);
+		$next.attr("tabindex", "0").trigger("focus");
+		this.select_action($next.attr("data-action"));
 	}
 
 	make_snapshot() {
@@ -305,8 +333,14 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		const PaneClass = healthcare.nursing.panes[name];
 		if (!PaneClass) return;
 
-		this.$rail.find("[data-action]").removeClass("selected");
-		this.$rail.find(`[data-action="${name}"]`).addClass("selected");
+		const $items = this.$rail.find("[data-action]");
+		$items
+			.removeClass("selected")
+			.attr({ "aria-selected": "false", tabindex: "-1" });
+		$items
+			.filter(`[data-action="${name}"]`)
+			.addClass("selected")
+			.attr({ "aria-selected": "true", tabindex: "0" });
 		this.$pane.empty();
 		this.pane = new PaneClass({ wrapper: this.$pane, station: this });
 		this.pane.render();
@@ -327,6 +361,12 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		frappe.show_alert({ message: __("Recorded"), indicator: "green" });
 		this.snapshot.refresh();
 		this.select_action(this.get_selected_action());
+		// the form was rebuilt under the cursor, so hand focus back to the rail
+		this.focus_rail();
+	}
+
+	focus_rail() {
+		this.$rail.find("[data-action].selected").trigger("focus");
 	}
 
 	get_selected_action() {
