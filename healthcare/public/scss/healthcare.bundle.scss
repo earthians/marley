@@ -297,6 +297,14 @@ $nursing-pane-top: 0.85rem;
 	margin-top: 0.9rem;
 	padding-top: 0.75rem;
 	border-top: 1px solid var(--border-color);
+
+	// Same treatment as the row actions, so every button in the workspace
+	// is wide enough for its own label.
+	.btn {
+		min-width: 7.5rem;
+		padding-left: 0.4rem;
+		padding-right: 0.4rem;
+	}
 }
 
 .nursing-fields {
@@ -457,10 +465,22 @@ $nursing-pane-top: 0.85rem;
 	}
 }
 
-.nursing-dose-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.25rem;
+// Two even columns rather than letting four buttons wrap three-and-one.
+// Equal cells mean every row's buttons line up down the column.
+.nursing-row-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.35rem;
+	// The floor belongs to the group, so the table column widens to fit. A
+	// minimum on the buttons themselves overflows the cell and they collide.
+	min-width: 250px;
+
+	.btn {
+		width: 100%;
+		padding-left: 0.4rem;
+		padding-right: 0.4rem;
+		white-space: nowrap;
+	}
 }
 
 // Intake and output: staged rows above a running balance.
