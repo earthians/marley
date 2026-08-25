@@ -188,6 +188,24 @@ class TestMedicationScheduling(HealthcareTestSuite):
 
 		self.assertEqual(frappe.db.get_value("Medication Administration", dose, "status"), "Given")
 
+	def test_a_given_dose_drops_off_the_round(self):
+		from healthcare.healthcare.api.medication import get_due_medications
+
+		self.make_inpatient_order()
+		dose = self.build()[0]
+		frappe.db.set_value("Medication Administration", dose, "status", "Given")
+
+		self.assertNotIn(dose, [row.name for row in get_due_medications(self.patient)])
+
+	def test_a_held_dose_stays_in_view(self):
+		from healthcare.healthcare.api.medication import get_due_medications
+
+		self.make_inpatient_order()
+		dose = self.build()[0]
+		frappe.db.set_value("Medication Administration", dose, "status", "Held")
+
+		self.assertIn(dose, [row.name for row in get_due_medications(self.patient)])
+
 	def test_disabled_setting_creates_nothing(self):
 		self.make_inpatient_order()
 		frappe.db.set_single_value("Healthcare Settings", "auto_schedule_medication_doses", 0)
