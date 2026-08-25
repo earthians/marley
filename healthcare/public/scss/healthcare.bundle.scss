@@ -431,6 +431,26 @@ $nursing-pane-top: 0.85rem;
 	margin-top: 0.25rem;
 }
 
+// Medication round: one row per dose, with its outcome on the right.
+.nursing-dose-table {
+	font-size: var(--text-sm);
+
+	th {
+		font-weight: 500;
+		color: var(--text-muted);
+	}
+
+	td {
+		vertical-align: middle;
+	}
+}
+
+.nursing-dose-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
 // Intake and output: staged rows above a running balance.
 .nursing-io-add {
 	margin: 0.5rem 0;

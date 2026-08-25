@@ -29,6 +29,7 @@ healthcare.nursing.Snapshot = class Snapshot {
 		this.stop_waiting();
 		this.$wrapper.empty().addClass(`nursing-snapshot-${this.layout}`);
 		this.render_vitals();
+		this.render_medications();
 		this.render_next_tasks();
 		this.render_last_note();
 		this.render_pending();
@@ -176,6 +177,32 @@ healthcare.nursing.Snapshot = class Snapshot {
 	// Axis labels only have a few pixels each, so full timestamps collide.
 	format_time(value) {
 		return value ? moment(value).format("DD/MM HH:mm") : "";
+	}
+
+	// ---- medication ----
+
+	render_medications() {
+		const doses = this.data.medications || [];
+		const $body = this.add_card(__("Medication Due"));
+
+		if (!doses.length) {
+			$body.html(this.get_empty(__("Nothing due")));
+			return;
+		}
+		doses.forEach(dose => $body.append(this.get_dose_row(dose)));
+	}
+
+	get_dose_row(dose) {
+		const overdue = moment(dose.scheduled_time).isBefore(moment());
+		return `<div class="nursing-row">
+			<span class="nursing-row-time ${overdue ? "text-danger" : ""}">
+				${moment(dose.scheduled_time).format("HH:mm")}
+			</span>
+			<span class="nursing-row-label">
+				${frappe.utils.escape_html(dose.drug_name || dose.drug_code)}
+			</span>
+			<span class="nursing-row-status">${format_number(dose.dosage)}</span>
+		</div>`;
 	}
 
 	// ---- tasks, notes ----
