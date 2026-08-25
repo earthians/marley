@@ -38,6 +38,7 @@ class PatientSnapshot:
 		return {
 			"vitals": self.vitals(),
 			"medications": self.medications(),
+			"care_plan": self.care_plan(),
 			"missed_medications": self.missed_medications(),
 			"next_tasks": self.next_tasks(),
 			"last_note": self.last_note(),
@@ -71,6 +72,11 @@ class PatientSnapshot:
 		from healthcare.healthcare.api.medication import doses_on_the_round
 
 		return doses_on_the_round(self.patient, statuses=["Scheduled"], limit=5)
+
+	def care_plan(self):
+		from healthcare.healthcare.api.nursing_care_plan import get_care_plan
+
+		return get_care_plan(self.patient)
 
 	def missed_medications(self):
 		from healthcare.healthcare.api.medication import missed_doses
