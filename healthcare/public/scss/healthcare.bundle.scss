@@ -144,7 +144,9 @@ $nursing-pane-top: 0.85rem;
 
 	.nursing-rail {
 		grid-area: rail;
-		background-color: var(--subtle-fg);
+		// The same ground the desk sidebar uses, so its hover and active
+		// tokens read against it. On --subtle-fg the hover grey is invisible.
+		background: var(--surface-sidebar);
 		padding: $nursing-pane-top 0.5rem;
 	}
 
