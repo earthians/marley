@@ -4,19 +4,16 @@
 frappe.provide("healthcare.nursing");
 
 healthcare.nursing.IO_TYPES_METHOD =
-	"healthcare.healthcare.api.nursing.get_intake_output_types";
+	"healthcare.healthcare.api.intake_output.get_intake_output_types";
 healthcare.nursing.IO_SUMMARY_METHOD =
-	"healthcare.healthcare.api.nursing.get_intake_output_summary";
+	"healthcare.healthcare.api.intake_output.get_intake_output_summary";
 healthcare.nursing.RECORD_IO_METHOD =
-	"healthcare.healthcare.api.nursing.record_intake_output";
+	"healthcare.healthcare.api.intake_output.record_intake_output";
 
 // Rows are saved as they are added, so the balance is always what is on record.
-healthcare.nursing.panes.intake_output = class IntakeOutputPane {
-	constructor({ wrapper, station }) {
-		this.$wrapper = $(wrapper);
-		this.station = station;
-	}
-
+healthcare.nursing.panes.intake_output = class IntakeOutputPane extends (
+	healthcare.nursing.Pane
+) {
 	async render() {
 		this.types = await frappe.xcall(healthcare.nursing.IO_TYPES_METHOD);
 		this.render_layout();
@@ -30,18 +27,18 @@ healthcare.nursing.panes.intake_output = class IntakeOutputPane {
 				<div class="nursing-pane-title">${__("Record Intake & Output")}</div>
 			</div>
 			<div class="nursing-fields"></div>
-			<div class="nursing-io-add"></div>
-			<div class="nursing-io-rows"></div>
+			<div class="nursing-pane-actions"></div>
+			<div class="nursing-rows"></div>
 		`);
 		this.$fields = this.$wrapper.find(".nursing-fields");
-		this.$rows = this.$wrapper.find(".nursing-io-rows");
+		this.$rows = this.$wrapper.find(".nursing-rows");
 
 		this.$add = $(
 			`<button type="button" class="btn btn-xs btn-primary">${__(
 				"Add Row",
 			)}</button>`,
 		)
-			.appendTo(this.$wrapper.find(".nursing-io-add"))
+			.appendTo(this.$wrapper.find(".nursing-pane-actions"))
 			.on("click", () => this.add_row());
 	}
 
@@ -81,15 +78,6 @@ healthcare.nursing.panes.intake_output = class IntakeOutputPane {
 		}));
 	}
 
-	make_control(df) {
-		const $field = $(`<div class="nursing-field"></div>`).appendTo(this.$fields);
-		return frappe.ui.form.make_control({
-			parent: $field,
-			df: df,
-			render_input: true,
-		});
-	}
-
 	read_controls() {
 		return {
 			intake_output_type: this.controls.intake_output_type.get_value(),
@@ -103,11 +91,6 @@ healthcare.nursing.panes.intake_output = class IntakeOutputPane {
 		this.controls.volume.set_value("");
 		this.controls.description.set_value("");
 		this.controls.recorded_at.set_value(frappe.datetime.now_datetime());
-	}
-
-	has_entry() {
-		const row = this.read_controls();
-		return Boolean(row.intake_output_type) && row.volume > 0;
 	}
 
 	async add_row() {
@@ -154,7 +137,7 @@ healthcare.nursing.panes.intake_output = class IntakeOutputPane {
 		}
 
 		const $table = $(`
-			<table class="table table-sm nursing-io-table">
+			<table class="table table-sm nursing-table">
 				<thead>
 					<tr>
 						<th>${__("Type")}</th>
@@ -187,19 +170,12 @@ healthcare.nursing.panes.intake_output = class IntakeOutputPane {
 		const { intake, output, balance, hours } = this.summary;
 
 		this.$rows.append(`
-			<div class="nursing-io-totals">
+			<div class="nursing-totals">
 				<span>${__("Intake")} <b>${format_number(intake)}</b></span>
 				<span>${__("Output")} <b>${format_number(output)}</b></span>
 				<span>${__("Balance")} <b>${format_number(balance)}</b></span>
 				<span class="text-muted">${__("last {0} hours", [hours])}</span>
 			</div>
 		`);
-	}
-
-	// Rows save as they are added; Save only picks up a row left in the form.
-	async save() {
-		if (!this.has_entry()) return;
-
-		return this.add_row();
 	}
 };

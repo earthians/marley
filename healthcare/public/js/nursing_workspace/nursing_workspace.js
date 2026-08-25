@@ -56,10 +56,6 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		this.dialog = new frappe.ui.Dialog({
 			title: __("Nursing Workspace"),
 			size: "extra-large",
-			primary_action_label: __("Save"),
-			primary_action: () => this.save(),
-			secondary_action_label: __("Close"),
-			secondary_action: () => this.dialog.hide(),
 		});
 		this.dialog.$wrapper.addClass("nursing-station-dialog");
 
@@ -291,8 +287,9 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		this.pane.render();
 	}
 
-	async save() {
-		if (!this.pane) return;
+	// Panes that collect a form call this when their own button is pressed.
+	async commit() {
+		if (!this.pane || !this.pane.save) return;
 
 		try {
 			await this.pane.save();

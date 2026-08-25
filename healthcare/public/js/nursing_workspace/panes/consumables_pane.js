@@ -11,12 +11,9 @@ healthcare.nursing.RECORD_CONSUMABLES_METHOD =
 	"healthcare.healthcare.api.consumables.record_consumables";
 
 // Items are issued from the ward as they are added, like intake and output.
-healthcare.nursing.panes.consumables = class ConsumablesPane {
-	constructor({ wrapper, station }) {
-		this.$wrapper = $(wrapper);
-		this.station = station;
-	}
-
+healthcare.nursing.panes.consumables = class ConsumablesPane extends (
+	healthcare.nursing.Pane
+) {
 	async render() {
 		this.context = await frappe.xcall(
 			healthcare.nursing.CONSUMABLE_CONTEXT_METHOD,
@@ -52,11 +49,11 @@ healthcare.nursing.panes.consumables = class ConsumablesPane {
 	make_controls() {
 		this.$body.html(`
 			<div class="nursing-fields"></div>
-			<div class="nursing-io-add"></div>
-			<div class="nursing-io-rows"></div>
+			<div class="nursing-pane-actions"></div>
+			<div class="nursing-rows"></div>
 		`);
 		this.$fields = this.$body.find(".nursing-fields");
-		this.$rows = this.$body.find(".nursing-io-rows");
+		this.$rows = this.$body.find(".nursing-rows");
 
 		this.controls = {
 			item_code: this.make_control({
@@ -94,17 +91,8 @@ healthcare.nursing.panes.consumables = class ConsumablesPane {
 				"Add Item",
 			)}</button>`,
 		)
-			.appendTo(this.$body.find(".nursing-io-add"))
+			.appendTo(this.$body.find(".nursing-pane-actions"))
 			.on("click", () => this.add_item());
-	}
-
-	make_control(df) {
-		const $field = $(`<div class="nursing-field"></div>`).appendTo(this.$fields);
-		return frappe.ui.form.make_control({
-			parent: $field,
-			df: df,
-			render_input: true,
-		});
 	}
 
 	read_controls() {
@@ -160,7 +148,7 @@ healthcare.nursing.panes.consumables = class ConsumablesPane {
 		}
 
 		const $table = $(`
-			<table class="table table-sm nursing-io-table">
+			<table class="table table-sm nursing-table">
 				<thead>
 					<tr>
 						<th>${__("Item")}</th>
@@ -185,7 +173,4 @@ healthcare.nursing.panes.consumables = class ConsumablesPane {
 			<td class="text-right text-muted">${row.invoiced ? __("Invoiced") : __("Pending")}</td>
 		</tr>`;
 	}
-
-	// Items are issued as they are added, so Save has nothing of its own to do.
-	async save() {}
 };
