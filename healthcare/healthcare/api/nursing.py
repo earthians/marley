@@ -96,7 +96,18 @@ class PatientSnapshot:
 		notes = frappe.get_all(
 			"Clinical Note",
 			filters={"patient": self.patient, "docstatus": ["<", 2]},
-			fields=["name", "note", "clinical_note_type", "posting_date", "practitioner"],
+			# an F-DAR entry leaves `note` empty, so its parts come back too
+			fields=[
+				"name",
+				"note",
+				"clinical_note_type",
+				"posting_date",
+				"practitioner",
+				"fdar_focus",
+				"fdar_data",
+				"fdar_action",
+				"fdar_response",
+			],
 			order_by="posting_date desc, creation desc",
 			limit=1,
 		)
