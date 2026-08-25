@@ -307,3 +307,69 @@ class TestNursingTasks(HealthcareTestSuite):
 		task = self.make_task(status="Requested")
 
 		self.assertIn(task.name, [row.name for row in self.tasks()])
+
+
+class TestClinicalNotes(HealthcareTestSuite):
+	def setUp(self):
+		super().setUp()
+		from healthcare.setup import create_clinical_note_types
+
+		create_clinical_note_types()
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+
+	def record(self, note_type="F-DAR", **values):
+		from healthcare.healthcare.api.clinical_notes import record_note
+
+		return record_note(self.patient, values, note_type=note_type)
+
+	def test_a_note_is_written_against_an_fdar_type(self):
+		name = self.record(fdar_focus="Acute pain", fdar_data="Rated 7/10")
+
+		note = frappe.get_doc("Clinical Note", name)
+		self.assertEqual(note.fdar_focus, "Acute pain")
+		self.assertTrue(frappe.db.get_value("Clinical Note Type", note.clinical_note_type, "is_fdar"))
+
+	def test_a_note_links_back_to_its_source_document(self):
+		from healthcare.healthcare.api.clinical_notes import record_note
+
+		name = record_note(
+			self.patient,
+			{"fdar_focus": "Wound care"},
+			note_type="F-DAR",
+			reference_doctype="Patient",
+			reference_name=self.patient,
+		)
+
+		note = frappe.get_doc("Clinical Note", name)
+		self.assertEqual(note.reference_doc, "Patient")
+		self.assertEqual(note.reference_name, self.patient)
+
+	def test_an_empty_note_throws(self):
+		self.assertRaises(frappe.ValidationError, self.record)
+
+	def test_a_free_text_type_writes_the_note_field(self):
+		name = self.record(note_type="Nursing Progress", note="Settled overnight")
+
+		self.assertEqual(frappe.get_doc("Clinical Note", name).note, "Settled overnight")
+
+	def test_recent_notes_come_back_newest_first(self):
+		from healthcare.healthcare.api.clinical_notes import get_recent_notes
+
+		self.record(fdar_focus="Earlier")
+		self.record(fdar_focus="Later")
+
+		focuses = [note.fdar_focus for note in get_recent_notes(self.patient)]
+		self.assertIn("Later", focuses)
+
+	def test_a_disabled_type_is_not_offered(self):
+		from healthcare.healthcare.api.clinical_notes import get_note_types
+
+		frappe.db.set_value("Clinical Note Type", "Incident Note", "disabled", 1)
+		self.addCleanup(frappe.db.set_value, "Clinical Note Type", "Incident Note", "disabled", 0)
+
+		self.assertNotIn("Incident Note", [row.name for row in get_note_types()])
+
+	def test_an_enabled_type_is_offered(self):
+		from healthcare.healthcare.api.clinical_notes import get_note_types
+
+		self.assertIn("Nursing Progress", [row.name for row in get_note_types()])

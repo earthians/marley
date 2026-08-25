@@ -17,6 +17,12 @@
   "posting_date",
   "practitioner",
   "user",
+  "is_fdar",
+  "fdar_section",
+  "fdar_focus",
+  "fdar_data",
+  "fdar_action",
+  "fdar_response",
   "note_section",
   "note",
   "reference_section",
@@ -116,11 +122,54 @@
    "fieldtype": "Link",
    "label": "Terms and Conditions",
    "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "is_fdar",
+   "fieldtype": "Check",
+   "label": "Is F-DAR",
+   "fetch_from": "clinical_note_type.is_fdar",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "fdar_section",
+   "fieldtype": "Section Break",
+   "label": "F-DAR",
+   "depends_on": "is_fdar"
+  },
+  {
+   "fieldname": "fdar_focus",
+   "fieldtype": "Data",
+   "label": "Focus",
+   "depends_on": "is_fdar",
+   "description": "The problem, symptom or concern this entry is about"
+  },
+  {
+   "fieldname": "fdar_data",
+   "fieldtype": "Small Text",
+   "label": "Data",
+   "depends_on": "is_fdar",
+   "description": "What was observed"
+  },
+  {
+   "fieldname": "fdar_action",
+   "fieldtype": "Small Text",
+   "label": "Action",
+   "depends_on": "is_fdar",
+   "description": "What was done"
+  },
+  {
+   "fieldname": "fdar_response",
+   "fieldtype": "Small Text",
+   "label": "Response",
+   "depends_on": "is_fdar",
+   "description": "How the patient responded"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-25 09:36:28.733994",
+ "modified": "2026-08-25 13:30:39.461546",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Note",

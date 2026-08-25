@@ -36,3 +36,4 @@ healthcare.patches.v16_0.set_medications_orderable
 healthcare.patches.v16_0.set_dynamic_reference_in_fee_validity
 healthcare.patches.v16_0.add_pain_score_and_vital_sign_units
 healthcare.patches.v16_0.create_intake_output_types
+healthcare.patches.v16_0.create_clinical_note_types

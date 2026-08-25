@@ -343,6 +343,7 @@ def create_custom_records():
 	create_triage_levels()
 	create_vital_sign_observation_templates()
 	create_intake_output_types()
+	create_clinical_note_types()
 	setup_patient_history_settings()
 	setup_service_request_masters()
 	setup_order_status_codes()
@@ -904,6 +905,23 @@ def create_triage_levels():
 		},
 	]
 	records = [{"doctype": "Triage Level", **level} for level in levels]
+	insert_record(records)
+
+
+def create_clinical_note_types():
+	# F-DAR carries its own four parts; the rest are written as free text.
+	# Shift Handover is its own pane, with SBAR and the items it carries
+	# forward, so it is not one of these.
+	types = [
+		_("Nursing Progress"),
+		_("Admission Note"),
+		_("Transfer Note"),
+		_("Discharge Note"),
+		_("Incident Note"),
+		_("Patient Education"),
+	]
+	records = [{"doctype": "Clinical Note Type", "clinical_note_type": _("F-DAR"), "is_fdar": 1}]
+	records += [{"doctype": "Clinical Note Type", "clinical_note_type": note_type} for note_type in types]
 	insert_record(records)
 
 
