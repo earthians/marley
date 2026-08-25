@@ -47,6 +47,13 @@ healthcare.nursing.Snapshot = class Snapshot {
 		this.render_next_tasks();
 		this.render_last_note();
 		this.render_care_plan();
+		this.skip_in_tab_order();
+	}
+
+	// The snapshot reports; it is not somewhere to tab through on the way to
+	// the form. Its controls stay clickable, just not reachable by Tab.
+	skip_in_tab_order() {
+		this.$wrapper.find("button, a, [tabindex]").attr("tabindex", "-1");
 	}
 
 	add_card(title, action = "") {
