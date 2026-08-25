@@ -46,6 +46,37 @@ healthcare.nursing.Pane = class Pane {
 			.on("click", action);
 	}
 
+	// A table row has no space for a button per outcome, so one Actions button
+	// carries them all. A lone action stays a plain button; putting it behind a
+	// menu would only add a click.
+	render_actions(actions, attributes) {
+		if (!actions.length) return "";
+
+		const data = Object.entries(attributes)
+			.map(([key, value]) => `data-${key}="${value}"`)
+			.join(" ");
+
+		if (actions.length === 1) {
+			return `<button type="button" class="btn btn-xs btn-default"
+				data-status="${actions[0].status}" ${data}>${actions[0].label}</button>`;
+		}
+
+		return `<div class="btn-group btn-group-xs nursing-row-actions">
+			<button type="button" class="btn btn-xs btn-default dropdown-toggle"
+				data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				${__("Actions")}
+			</button>
+			<div class="dropdown-menu dropdown-menu-right">
+				${actions
+					.map(
+						action => `<button type="button" class="dropdown-item"
+							data-status="${action.status}" ${data}>${action.label}</button>`,
+					)
+					.join("")}
+			</div>
+		</div>`;
+	}
+
 	empty(message) {
 		return `<div class="nursing-empty">${message}</div>`;
 	}

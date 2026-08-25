@@ -111,12 +111,9 @@ healthcare.nursing.panes.medication = class MedicationPane extends (
 			}</span>`;
 		}
 
-		return `<div class="nursing-row-actions">
-			${healthcare.nursing.DOSE_OUTCOMES.map(
-				outcome => `<button type="button" class="btn btn-xs btn-default"
-					data-status="${outcome.status}" data-dose="${dose.name}">${outcome.label}</button>`,
-			).join("")}
-		</div>`;
+		return this.render_actions(healthcare.nursing.DOSE_OUTCOMES, {
+			dose: dose.name,
+		});
 	}
 
 	on_action($button) {
