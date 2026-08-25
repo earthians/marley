@@ -34,8 +34,7 @@ healthcare.nursing.RAIL = [
 	{
 		label: __("Documentation"),
 		actions: [
-			{ name: "fdar", label: __("F-DAR Note") },
-			{ name: "progress_note", label: __("Progress Note") },
+			{ name: "notes", label: __("Notes") },
 			{ name: "handover", label: __("Shift Handover") },
 			{ name: "care_plan", label: __("Care Plan") },
 		],

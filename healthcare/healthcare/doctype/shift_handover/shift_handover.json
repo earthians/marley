@@ -1,0 +1,275 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-08-25 13:42:55.254222",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "patient",
+  "patient_name",
+  "column_break_patient",
+  "handover_time",
+  "status",
+  "shift_section",
+  "handed_over_by",
+  "from_shift",
+  "column_break_shift",
+  "handed_over_to",
+  "to_shift",
+  "sbar_section",
+  "situation",
+  "background",
+  "column_break_sbar",
+  "assessment",
+  "recommendation",
+  "acceptance_section",
+  "accepted_by",
+  "column_break_acceptance",
+  "accepted_at",
+  "source_section",
+  "inpatient_record",
+  "reference_doctype",
+  "column_break_source",
+  "reference_name",
+  "company"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HLC-HND-.YYYY.-",
+   "default": "HLC-HND-.YYYY.-",
+   "reqd": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "fetch_from": "patient.patient_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_patient",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "handover_time",
+   "fieldtype": "Datetime",
+   "label": "Handover Time",
+   "default": "Now",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Handed Over\nAccepted\nCancelled",
+   "default": "Handed Over",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "shift_section",
+   "fieldtype": "Section Break",
+   "label": "Shift"
+  },
+  {
+   "fieldname": "handed_over_by",
+   "fieldtype": "Link",
+   "label": "Handed Over By",
+   "options": "User",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_shift",
+   "fieldtype": "Data",
+   "label": "From Shift"
+  },
+  {
+   "fieldname": "column_break_shift",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "handed_over_to",
+   "fieldtype": "Link",
+   "label": "Handed Over To",
+   "options": "User",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The nurse taking over; they accept the handover"
+  },
+  {
+   "fieldname": "to_shift",
+   "fieldtype": "Data",
+   "label": "To Shift"
+  },
+  {
+   "fieldname": "sbar_section",
+   "fieldtype": "Section Break",
+   "label": "SBAR"
+  },
+  {
+   "fieldname": "situation",
+   "fieldtype": "Small Text",
+   "label": "Situation",
+   "description": "Why this patient needs attention now"
+  },
+  {
+   "fieldname": "background",
+   "fieldtype": "Small Text",
+   "label": "Background",
+   "description": "What the incoming nurse needs to know"
+  },
+  {
+   "fieldname": "column_break_sbar",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "assessment",
+   "fieldtype": "Small Text",
+   "label": "Assessment",
+   "description": "What you think is going on"
+  },
+  {
+   "fieldname": "recommendation",
+   "fieldtype": "Small Text",
+   "label": "Recommendation",
+   "description": "What you are asking them to do"
+  },
+  {
+   "fieldname": "acceptance_section",
+   "fieldtype": "Section Break",
+   "label": "Acceptance"
+  },
+  {
+   "fieldname": "accepted_by",
+   "fieldtype": "Link",
+   "label": "Accepted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_acceptance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "accepted_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Document Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "column_break_source",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Name",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 13:42:55.254222",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Shift Handover",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Healthcare Administrator",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Physician",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Nursing User",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "handover_time",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient_name",
+ "show_title_field_in_link": 1,
+ "track_changes": 1
+}

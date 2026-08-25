@@ -18,4 +18,5 @@ import "./nursing_workspace/panes/intake_output_pane.js";
 import "./nursing_workspace/panes/medication_pane.js";
 import "./nursing_workspace/panes/consumables_pane.js";
 import "./nursing_workspace/panes/nursing_tasks_pane.js";
+import "./nursing_workspace/panes/notes_pane.js";
 import "./nursing_workspace/attach.js";
