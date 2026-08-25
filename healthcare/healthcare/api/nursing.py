@@ -1,16 +1,12 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import json
-
 import frappe
 from frappe import _
-from frappe.utils import add_to_date, now_datetime
 
-import erpnext
-
-VITAL_SIGNS_CATEGORY = "Vital Signs"
-IN_HOSPITAL_STATUSES = ("Admitted", "Discharge Scheduled")
+from healthcare.healthcare.api.nursing_common import admitted_patients, has_value
+from healthcare.healthcare.api.nursing_tasks import OPEN_TASK_STATUSES
+from healthcare.healthcare.api.vitals import vital_sign_templates
 
 # Documents whose number a nurse might scan or type to reach a patient.
 PATIENT_DOCUMENTS = (
@@ -21,14 +17,6 @@ PATIENT_DOCUMENTS = (
 	"Therapy Session",
 	"Patient Appointment",
 )
-OPEN_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready", "In Progress")
-
-# Waiting on someone, so still lapsable. A task in progress or on hold is not:
-# somebody has it in hand, or has deliberately parked it.
-LAPSABLE_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready")
-
-# How long a task may sit past its start time before it counts as missed.
-TASK_LAPSE_HOURS = 12
 
 # Each source document names its doctor differently.
 PRACTITIONER_FIELDS = (
@@ -37,48 +25,6 @@ PRACTITIONER_FIELDS = (
 	"attending_practitioner",
 	"triage_practitioner",
 )
-
-
-class VitalsRecorder:
-	"""Records vital sign readings as Observations of category Vital Signs."""
-
-	def __init__(self, patient, reference_doctype=None, reference_name=None, practitioner=None):
-		self.patient = patient
-		self.reference_doctype = reference_doctype
-		self.reference_name = reference_name
-		self.practitioner = practitioner
-		self.company = default_company()
-
-	def record(self, readings):
-		"""Takes {observation_template: value} and returns the observations created."""
-		return [
-			self.record_reading(template, value) for template, value in readings.items() if has_value(value)
-		]
-
-	def record_reading(self, template, value):
-		observation = frappe.new_doc("Observation")
-		observation.update(self.observation_defaults(template))
-		self.set_result(observation, value)
-		observation.insert(ignore_permissions=True)
-		return observation.name
-
-	def observation_defaults(self, template):
-		return {
-			"patient": self.patient,
-			"observation_template": template,
-			"reference_doctype": self.reference_doctype,
-			"reference_docname": self.reference_name,
-			"healthcare_practitioner": self.practitioner,
-			"company": self.company,
-			"result_datetime": now_datetime(),
-		}
-
-	def set_result(self, observation, value):
-		data_type = observation.permitted_data_type or "Quantity"
-		if data_type == "Text":
-			observation.result_text = value
-		else:
-			observation.result_data = str(value)
 
 
 class PatientSnapshot:
@@ -218,81 +164,6 @@ class PatientBanner:
 		}
 
 
-class IntakeOutputRecorder:
-	"""Records intake and output rows, one Intake Output Entry each."""
-
-	def __init__(self, patient, reference_doctype=None, reference_name=None, practitioner=None):
-		self.patient = patient
-		self.reference_doctype = reference_doctype
-		self.reference_name = reference_name
-		self.practitioner = practitioner
-		self.company = default_company()
-
-	def record(self, entries):
-		return [self.record_entry(entry) for entry in entries]
-
-	def record_entry(self, entry):
-		document = frappe.new_doc("Intake Output Entry")
-		document.update(
-			{
-				"patient": self.patient,
-				"intake_output_type": entry.get("intake_output_type"),
-				"volume": entry.get("volume"),
-				"description": entry.get("description"),
-				"recorded_at": entry.get("recorded_at") or now_datetime(),
-				"reference_doctype": self.reference_doctype,
-				"reference_name": self.reference_name,
-				"practitioner": self.practitioner,
-				"company": self.company,
-			}
-		)
-		document.insert(ignore_permissions=True)
-		return document.name
-
-
-class IntakeOutputSummary:
-	"""Totals and rows for the last `hours` of intake and output."""
-
-	def __init__(self, patient, hours=24):
-		self.patient = patient
-		self.hours = hours
-
-	def as_dict(self):
-		entries = self.entries()
-		intake = self.total(entries, "Intake")
-		output = self.total(entries, "Output")
-		return {
-			"entries": entries,
-			"intake": intake,
-			"output": output,
-			"balance": intake - output,
-			"hours": self.hours,
-		}
-
-	def entries(self):
-		return frappe.get_all(
-			"Intake Output Entry",
-			filters={
-				"patient": self.patient,
-				"docstatus": ["<", 2],
-				"recorded_at": [">", add_to_date(now_datetime(), hours=-self.hours)],
-			},
-			fields=[
-				"name",
-				"intake_output_type",
-				"direction",
-				"volume",
-				"uom",
-				"description",
-				"recorded_at",
-			],
-			order_by="recorded_at desc",
-		)
-
-	def total(self, entries, direction):
-		return sum(entry.volume or 0 for entry in entries if entry.direction == direction)
-
-
 class PatientFinder:
 	"""Resolves a scanned wristband, a record number, or a typed term to patients."""
 
@@ -362,100 +233,9 @@ class PatientFinder:
 		return {"name": ["in", admitted_patients()]}
 
 
-def admitted_patients():
-	"""A patient pending discharge is still in a bed and still needs nursing care."""
-	return frappe.get_all(
-		"Inpatient Record",
-		filters={"status": ["in", IN_HOSPITAL_STATUSES]},
-		pluck="patient",
-	)
-
-
-def vital_sign_templates():
-	"""Observation Templates seeded under the Vital Signs category."""
-	return frappe.get_all(
-		"Observation Template",
-		filters={"observation_category": VITAL_SIGNS_CATEGORY},
-		fields=["name", "observation", "abbr", "permitted_data_type", "permitted_unit"],
-		order_by="creation asc",
-	)
-
-
-def has_value(value):
-	return value is not None and str(value).strip() != ""
-
-
-def default_company():
-	company = frappe.defaults.get_user_default("Company") or erpnext.get_default_company()
-	if company:
-		return company
-
-	companies = frappe.get_all("Company", pluck="name", limit=1)
-	return companies[0] if companies else None
-
-
-@frappe.whitelist()
-def get_vital_sign_templates():
-	return vital_sign_templates()
-
-
 @frappe.whitelist()
 def find_patients(term, admitted_only=0):
 	return PatientFinder(term, int(admitted_only)).find()
-
-
-def lapse_missed_tasks(patient=None):
-	"""A task nobody picked up was missed. Record that rather than leaving it
-	sitting on the worklist as though it were still due."""
-	filters = {
-		"status": ["in", LAPSABLE_TASK_STATUSES],
-		"docstatus": 1,
-		"requested_start_time": ["<", add_to_date(now_datetime(), hours=-TASK_LAPSE_HOURS)],
-	}
-	if patient:
-		filters["patient"] = patient
-
-	missed = frappe.get_all("Nursing Task", filters=filters, pluck="name")
-	for name in missed:
-		frappe.db.set_value("Nursing Task", name, "status", "Missed")
-
-	return missed
-
-
-@frappe.whitelist()
-def get_nursing_tasks(patient, hours=24):
-	"""Everything on this patient's worklist, plus what was closed this shift."""
-	lapse_missed_tasks(patient)
-	since = add_to_date(now_datetime(), hours=-int(hours))
-
-	return frappe.get_all(
-		"Nursing Task",
-		filters={"patient": patient, "docstatus": ["<", 2]},
-		or_filters=[
-			["status", "in", ("Draft", "Missed", *OPEN_TASK_STATUSES)],
-			["requested_start_time", ">", since],
-		],
-		fields=[
-			"name",
-			"activity",
-			"description",
-			"status",
-			"docstatus",
-			"requested_start_time",
-			"task_start_time",
-			"mandatory",
-		],
-		order_by="requested_start_time asc",
-	)
-
-
-@frappe.whitelist()
-def update_nursing_task(task, status):
-	"""Moves a task along its own workflow; the controller stamps the times."""
-	document = frappe.get_doc("Nursing Task", task)
-	document.status = status
-	document.save(ignore_permissions=True)
-	return document.status
 
 
 @frappe.whitelist()
@@ -464,44 +244,5 @@ def get_banner(patient, reference_doctype=None, reference_name=None):
 
 
 @frappe.whitelist()
-def get_intake_output_types():
-	return frappe.get_all(
-		"Intake Output Type",
-		filters={"disabled": 0},
-		fields=["name", "direction", "default_uom"],
-		order_by="direction asc, name asc",
-	)
-
-
-@frappe.whitelist()
-def get_intake_output_summary(patient, hours=24):
-	return IntakeOutputSummary(patient, int(hours)).as_dict()
-
-
-@frappe.whitelist()
-def record_intake_output(patient, entries, reference_doctype=None, reference_name=None, practitioner=None):
-	if isinstance(entries, str):
-		entries = json.loads(entries)
-
-	if not entries:
-		frappe.throw(_("Add at least one row"))
-
-	recorder = IntakeOutputRecorder(patient, reference_doctype, reference_name, practitioner)
-	return recorder.record(entries)
-
-
-@frappe.whitelist()
 def get_snapshot(patient, limit=10):
 	return PatientSnapshot(patient, int(limit)).as_dict()
-
-
-@frappe.whitelist()
-def record_vitals(patient, readings, reference_doctype=None, reference_name=None, practitioner=None):
-	if isinstance(readings, str):
-		readings = json.loads(readings)
-
-	if not readings:
-		frappe.throw(_("Enter at least one reading"))
-
-	recorder = VitalsRecorder(patient, reference_doctype, reference_name, practitioner)
-	return recorder.record(readings)

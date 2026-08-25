@@ -4,9 +4,9 @@
 frappe.provide("healthcare.nursing");
 
 healthcare.nursing.TEMPLATES_METHOD =
-	"healthcare.healthcare.api.nursing.get_vital_sign_templates";
+	"healthcare.healthcare.api.vitals.get_vital_sign_templates";
 healthcare.nursing.RECORD_VITALS_METHOD =
-	"healthcare.healthcare.api.nursing.record_vitals";
+	"healthcare.healthcare.api.vitals.record_vitals";
 
 healthcare.nursing.PAIN_SCALE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -33,10 +33,9 @@ healthcare.nursing.VITALS_GROUPS = [
 	},
 ];
 
-healthcare.nursing.panes.vitals = class VitalsPane {
-	constructor({ wrapper, station }) {
-		this.$wrapper = $(wrapper);
-		this.station = station;
+healthcare.nursing.panes.vitals = class VitalsPane extends healthcare.nursing.Pane {
+	constructor(options) {
+		super(options);
 		this.controls = {};
 	}
 
@@ -52,8 +51,20 @@ healthcare.nursing.panes.vitals = class VitalsPane {
 				<div class="nursing-pane-title">${__("Record Vitals")}</div>
 			</div>
 			<div class="nursing-fields"></div>
+			<div class="nursing-pane-actions"></div>
 		`);
 		this.$fields = this.$wrapper.find(".nursing-fields");
+		this.render_save();
+	}
+
+	render_save() {
+		this.$save = $(
+			`<button type="button" class="btn btn-sm btn-primary">${__(
+				"Save Vitals",
+			)}</button>`,
+		)
+			.appendTo(this.$wrapper.find(".nursing-pane-actions"))
+			.on("click", () => this.station.commit());
 	}
 
 	render_fields() {
@@ -76,7 +87,7 @@ healthcare.nursing.panes.vitals = class VitalsPane {
 
 	render_measurements(templates) {
 		const singles = templates.filter(template => !this.get_group(template.abbr));
-		singles.forEach(template => this.make_control(template));
+		singles.forEach(template => this.make_reading(template));
 
 		this.get_used_groups(templates).forEach(group =>
 			this.make_group(group, templates),
@@ -141,7 +152,7 @@ healthcare.nursing.panes.vitals = class VitalsPane {
 		this.make_scale(template);
 	}
 
-	make_control(template) {
+	make_reading(template) {
 		const $field = $(`<div class="nursing-field"></div>`).appendTo(this.$fields);
 		this.controls[template.name] = frappe.ui.form.make_control({
 			parent: $field,
