@@ -19,12 +19,9 @@ healthcare.nursing.DOSE_OUTCOMES = [
 	{ status: "Not Available", label: __("Not Available"), needs_reason: true },
 ];
 
-healthcare.nursing.panes.medication = class MedicationPane {
-	constructor({ wrapper, station }) {
-		this.$wrapper = $(wrapper);
-		this.station = station;
-	}
-
+healthcare.nursing.panes.medication = class MedicationPane extends (
+	healthcare.nursing.Pane
+) {
 	async render() {
 		this.render_layout();
 		await this.refresh_doses();
@@ -159,7 +156,4 @@ healthcare.nursing.panes.medication = class MedicationPane {
 		await this.refresh_doses();
 		this.station.snapshot.refresh();
 	}
-
-	// Doses are recorded as they happen, so Save has nothing of its own to do.
-	async save() {}
 };

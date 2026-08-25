@@ -117,6 +117,11 @@ $nursing-pane-top: 0.85rem;
 	.modal-body {
 		padding: 0;
 	}
+
+	// Nothing is saved from the footer; the header close is the way out.
+	.modal-footer {
+		display: none;
+	}
 }
 
 // Three cards of equal height: tops and bottoms line up, each scrolls inside.
@@ -287,6 +292,13 @@ $nursing-pane-top: 0.85rem;
 	margin-bottom: 0.75rem;
 }
 
+// A pane that collects a form carries its own save; the others record as they go.
+.nursing-pane-actions {
+	margin-top: 0.9rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--border-color);
+}
+
 .nursing-fields {
 	.form-control,
 	.input-with-feedback,
@@ -452,11 +464,11 @@ $nursing-pane-top: 0.85rem;
 }
 
 // Intake and output: staged rows above a running balance.
-.nursing-io-add {
+.nursing-pane-actions {
 	margin: 0.5rem 0;
 }
 
-.nursing-io-table {
+.nursing-table {
 	font-size: var(--text-sm);
 	margin-bottom: 0.5rem;
 
@@ -466,7 +478,7 @@ $nursing-pane-top: 0.85rem;
 	}
 }
 
-.nursing-io-totals {
+.nursing-totals {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.9rem;
