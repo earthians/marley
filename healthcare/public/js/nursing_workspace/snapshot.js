@@ -14,8 +14,22 @@ healthcare.nursing.Snapshot = class Snapshot {
 		this.selected_vital = null;
 	}
 
+	// Switching patient resets what the card is showing: a vital chosen for one
+	// patient means nothing for the next.
+	set_patient(patient) {
+		this.patient = patient;
+		this.selected_vital = null;
+		return this.refresh();
+	}
+
 	async refresh() {
-		this.data = await this.fetch();
+		const patient = this.patient;
+		const data = await this.fetch();
+
+		// A slower fetch for the previous patient must not overwrite this one.
+		if (patient !== this.patient) return;
+
+		this.data = data;
 		this.render();
 	}
 
