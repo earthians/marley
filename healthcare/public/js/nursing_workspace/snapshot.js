@@ -232,16 +232,32 @@ healthcare.nursing.Snapshot = class Snapshot {
 		tasks.forEach(task => $body.append(this.get_task_row(task)));
 	}
 
+	// The rail is narrow, so the activity takes its own line and the time and
+	// status sit under it rather than competing for width.
 	get_task_row(task) {
-		const time = task.requested_start_time
-			? frappe.datetime.str_to_user(task.requested_start_time)
-			: __("Unscheduled");
 		const label = task.activity || task.description || task.name;
-		return `<div class="nursing-row">
-			<span class="nursing-row-time">${time}</span>
-			<span class="nursing-row-label">${frappe.utils.escape_html(label)}</span>
-			<span class="nursing-row-status">${__(task.status)}</span>
+		return `<div class="nursing-stacked-row">
+			<div class="nursing-stacked-label">${frappe.utils.escape_html(label)}</div>
+			<div class="nursing-stacked-meta">
+				<span class="${this.is_overdue(task) ? "text-danger" : ""}">${this.get_task_time(
+					task,
+				)}</span>
+				<span>${__(task.status)}</span>
+			</div>
 		</div>`;
+	}
+
+	get_task_time(task) {
+		return task.requested_start_time
+			? moment(task.requested_start_time).format("DD/MM HH:mm")
+			: __("Unscheduled");
+	}
+
+	is_overdue(task) {
+		return (
+			task.requested_start_time &&
+			moment(task.requested_start_time).isBefore(moment())
+		);
 	}
 
 	render_last_note() {

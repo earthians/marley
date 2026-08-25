@@ -21,6 +21,10 @@ healthcare.nursing.RAIL = [
 		],
 	},
 	{
+		label: __("Worklist"),
+		actions: [{ name: "nursing_tasks", label: __("Nursing Tasks") }],
+	},
+	{
 		label: __("Administration"),
 		actions: [
 			{ name: "medication", label: __("Medication") },

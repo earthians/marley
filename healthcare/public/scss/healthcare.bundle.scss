@@ -591,6 +591,30 @@ $nursing-pane-top: 0.85rem;
 	}
 }
 
+// Narrow rail: label on one line, its details on the next.
+.nursing-stacked-row {
+	padding: 0.25rem 0;
+	border-bottom: 1px solid var(--border-color);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.nursing-stacked-label {
+	font-size: var(--text-sm);
+	color: var(--text-color);
+	line-height: 1.35;
+}
+
+.nursing-stacked-meta {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: var(--text-xs);
+	color: var(--text-muted);
+}
+
 .nursing-note {
 	font-size: var(--text-sm);
 	color: var(--text-color);
