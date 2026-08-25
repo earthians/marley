@@ -208,3 +208,95 @@ class TestNursingPatientSearch(HealthcareTestSuite):
 		self.assertEqual(matches[0]["name"], self.patient)
 		self.assertEqual(matches[0]["reference_doctype"], "Inpatient Record")
 		self.assertEqual(matches[0]["reference_name"], record[0])
+
+
+class TestNursingTasks(HealthcareTestSuite):
+	def setUp(self):
+		super().setUp()
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.activity = frappe.get_list("Healthcare Activity", pluck="name")[0]
+		frappe.db.delete("Nursing Task", {"patient": self.patient})
+
+	def make_task(self, status="Draft"):
+		return frappe.get_doc(
+			{
+				"doctype": "Nursing Task",
+				"patient": self.patient,
+				"activity": self.activity,
+				"status": status,
+				"company": frappe.get_list("Company", pluck="name")[0],
+				"requested_start_time": frappe.utils.now_datetime(),
+			}
+		).insert(ignore_permissions=True)
+
+	def tasks(self):
+		from healthcare.healthcare.api.nursing import get_nursing_tasks
+
+		return get_nursing_tasks(self.patient)
+
+	def test_a_draft_task_is_listed_so_it_can_be_found(self):
+		task = self.make_task()
+
+		self.assertIn(task.name, [row.name for row in self.tasks()])
+
+	def test_sending_a_draft_to_the_worklist_submits_it(self):
+		from healthcare.healthcare.api.nursing import update_nursing_task
+
+		task = self.make_task()
+
+		update_nursing_task(task.name, "Requested")
+
+		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "docstatus"), 1)
+
+	def test_starting_a_task_stamps_its_start_time(self):
+		from healthcare.healthcare.api.nursing import update_nursing_task
+
+		task = self.make_task(status="Requested")
+
+		update_nursing_task(task.name, "In Progress")
+
+		self.assertTrue(frappe.db.get_value("Nursing Task", task.name, "task_start_time"))
+
+	def test_a_task_nobody_picked_up_lapses_to_missed(self):
+		from healthcare.healthcare.api.nursing import TASK_LAPSE_HOURS, lapse_missed_tasks
+
+		task = self.make_task(status="Requested")
+		frappe.db.set_value(
+			"Nursing Task",
+			task.name,
+			"requested_start_time",
+			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(TASK_LAPSE_HOURS + 1)),
+		)
+
+		lapse_missed_tasks(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Missed")
+
+	def test_a_task_in_progress_never_lapses(self):
+		from healthcare.healthcare.api.nursing import (
+			TASK_LAPSE_HOURS,
+			lapse_missed_tasks,
+			update_nursing_task,
+		)
+
+		task = self.make_task(status="Requested")
+		update_nursing_task(task.name, "In Progress")
+		frappe.db.set_value(
+			"Nursing Task",
+			task.name,
+			"requested_start_time",
+			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(TASK_LAPSE_HOURS + 1)),
+		)
+
+		lapse_missed_tasks(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "In Progress")
+
+	def test_a_task_still_within_its_window_does_not_lapse(self):
+		from healthcare.healthcare.api.nursing import lapse_missed_tasks
+
+		task = self.make_task(status="Requested")
+
+		lapse_missed_tasks(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
