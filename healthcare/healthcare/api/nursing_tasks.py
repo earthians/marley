@@ -34,13 +34,14 @@ def lapse_missed_tasks(patient=None):
 
 @frappe.whitelist()
 def get_nursing_tasks(patient, hours=24):
-	"""Everything on this patient's worklist, plus what was closed this shift."""
+	"""The worklist: what is still outstanding, plus anything that fell over
+	this shift. A completed task is done with, so it drops off."""
 	lapse_missed_tasks(patient)
 	since = add_to_date(now_datetime(), hours=-int(hours))
 
 	return frappe.get_all(
 		"Nursing Task",
-		filters={"patient": patient, "docstatus": ["<", 2]},
+		filters={"patient": patient, "docstatus": ["<", 2], "status": ["!=", "Completed"]},
 		or_filters=[
 			["status", "in", ("Draft", "Missed", *OPEN_TASK_STATUSES)],
 			["requested_start_time", ">", since],
