@@ -86,6 +86,11 @@ healthcare.nursing.panes.medication = class MedicationPane extends (
 			<td class="text-right">${format_number(dose.dosage)}</td>
 			<td class="text-right ${this.is_overdue(dose) ? "text-danger" : ""}">
 				${moment(dose.scheduled_time).format("DD/MM HH:mm")}
+				${
+					dose.status === "Missed"
+						? `<span class="sub text-danger">${__("Missed")}</span>`
+						: ""
+				}
 			</td>
 			<td>${this.get_actions_html(dose)}</td>
 		</tr>`;
@@ -106,8 +111,7 @@ healthcare.nursing.panes.medication = class MedicationPane extends (
 			}</span>`;
 		}
 
-		return `<div class="nursing-dose-actions">
-			${dose.status === "Missed" ? `<span class="text-danger">${__("Missed")}</span>` : ""}
+		return `<div class="nursing-row-actions">
 			${healthcare.nursing.DOSE_OUTCOMES.map(
 				outcome => `<button type="button" class="btn btn-xs btn-default"
 					data-status="${outcome.status}" data-dose="${dose.name}">${outcome.label}</button>`,
