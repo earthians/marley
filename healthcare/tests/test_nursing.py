@@ -296,3 +296,14 @@ class TestNursingTasks(HealthcareTestSuite):
 		lapse_missed_tasks(self.patient)
 
 		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
+
+	def test_a_completed_task_drops_off_the_worklist(self):
+		task = self.make_task(status="Requested")
+		frappe.db.set_value("Nursing Task", task.name, "status", "Completed")
+
+		self.assertNotIn(task.name, [row.name for row in self.tasks()])
+
+	def test_an_open_task_stays_on_the_worklist(self):
+		task = self.make_task(status="Requested")
+
+		self.assertIn(task.name, [row.name for row in self.tasks()])
