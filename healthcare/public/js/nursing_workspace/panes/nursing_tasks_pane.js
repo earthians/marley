@@ -97,14 +97,7 @@ healthcare.nursing.panes.nursing_tasks = class NursingTasksPane extends (
 	get_actions_html(task) {
 		const actions = healthcare.nursing.TASK_ACTIONS[task.status] || [];
 
-		return `<div class="nursing-row-actions">
-			${actions
-				.map(
-					action => `<button type="button" class="btn btn-xs btn-default"
-						data-status="${action.status}" data-task="${task.name}">${action.label}</button>`,
-				)
-				.join("")}
-		</div>`;
+		return this.render_actions(actions, { task: task.name });
 	}
 
 	async on_action($button) {
