@@ -282,15 +282,28 @@ healthcare.nursing.Snapshot = class Snapshot {
 			$body.html(this.get_empty(__("No notes yet")));
 			return;
 		}
-		$body.append(
-			`<div class="nursing-note">${frappe.utils.html2text(
-				note.note || "",
-			)}</div>`,
-		);
+		$body.append(`<div class="nursing-note">${this.get_note_text(note)}</div>`);
 		$body.append(`<div class="nursing-note-meta">
-			${frappe.utils.escape_html(note.practitioner || "")} ·
-			${note.posting_date ? frappe.datetime.str_to_user(note.posting_date) : ""}
+			${frappe.utils.escape_html(note.clinical_note_type || "")} ·
+			${frappe.utils.escape_html(note.practitioner || note.user || "")} ·
+			${note.posting_date ? moment(note.posting_date).format("DD/MM HH:mm") : ""}
 		</div>`);
+	}
+
+	// An F-DAR entry has no single note field, so its parts are read in order.
+	get_note_text(note) {
+		const parts = [
+			note.fdar_focus,
+			note.fdar_data,
+			note.fdar_action,
+			note.fdar_response,
+		]
+			.filter(part => part && String(part).trim())
+			.join(" · ");
+
+		return frappe.utils.escape_html(
+			parts || frappe.utils.html2text(note.note || ""),
+		);
 	}
 
 	render_care_plan() {
