@@ -69,7 +69,12 @@ class TestMedicationScheduling(HealthcareTestSuite):
 		)
 		order.insert(ignore_permissions=True)
 		order.submit()
+		self.issue_from_pharmacy(order)
 		return order
+
+	def issue_from_pharmacy(self, order):
+		"""Inpatient Medication Entry sets this when it transfers the stock."""
+		frappe.db.set_value("Inpatient Medication Order Entry", {"parent": order.name}, "is_completed", 1)
 
 	def build(self, until=None):
 		from healthcare.healthcare.api.medication import MedicationScheduler
@@ -119,6 +124,25 @@ class TestMedicationScheduling(HealthcareTestSuite):
 		created = MedicationScheduler(self.patient).build()
 
 		self.assertEqual(created, [])
+
+	def test_a_discharged_patient_is_not_scheduled(self):
+		order = self.make_inpatient_order()
+		frappe.db.set_value("Inpatient Record", order.inpatient_record, "status", "Discharged")
+
+		self.assertEqual(self.build(), [])
+
+	def test_an_admission_still_open_is_scheduled(self):
+		"""Anything short of discharged means the patient is on a ward."""
+		order = self.make_inpatient_order()
+		frappe.db.set_value("Inpatient Record", order.inpatient_record, "status", "Admission Scheduled")
+
+		self.assertTrue(self.build())
+
+	def test_doses_not_yet_issued_by_pharmacy_are_not_scheduled(self):
+		order = self.make_inpatient_order()
+		frappe.db.set_value("Inpatient Medication Order Entry", {"parent": order.name}, "is_completed", 0)
+
+		self.assertEqual(self.build(), [])
 
 	def test_disabled_setting_creates_nothing(self):
 		self.make_inpatient_order()

@@ -84,6 +84,7 @@ class PatientSnapshot:
 	def as_dict(self):
 		return {
 			"vitals": self.vitals(),
+			"medications": self.medications(),
 			"next_tasks": self.next_tasks(),
 			"last_note": self.last_note(),
 		}
@@ -110,6 +111,16 @@ class PatientSnapshot:
 			limit=self.limit,
 		)
 		return list(reversed([reading for reading in readings if has_value(reading.value)]))
+
+	def medications(self):
+		"""Doses still waiting to be given, soonest first."""
+		return frappe.get_all(
+			"Medication Administration",
+			filters={"patient": self.patient, "status": "Scheduled"},
+			fields=["name", "drug_name", "drug_code", "dosage", "scheduled_time"],
+			order_by="scheduled_time asc",
+			limit=5,
+		)
 
 	def next_tasks(self):
 		return frappe.get_all(

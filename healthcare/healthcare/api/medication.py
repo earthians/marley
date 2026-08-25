@@ -3,16 +3,15 @@
 
 import frappe
 from frappe import _
-from frappe.utils import add_to_date, get_datetime, getdate, now_datetime
-
-from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
-	get_prescription_dates,
-)
+from frappe.utils import add_to_date, get_datetime, now_datetime
 
 # Used when the setting has never been saved. A Single doctype does not write
 # its declared default until the form is saved once, and a null there would
 # otherwise read as zero minutes, hiding a dose until the moment it is due.
 DEFAULT_LEAD_TIME_MINUTES = 30
+
+# An admission in any other state still has the patient on a ward.
+CLOSED_ADMISSION_STATUSES = ("Discharged", "Cancelled")
 
 # How far back a run will reach. Without a floor, switching the setting on
 # would materialise every dose since each order began; with one, a missed
@@ -36,7 +35,11 @@ class MedicationScheduleSettings:
 
 
 class MedicationSchedule:
-	"""Doses falling due for a patient between two moments."""
+	"""Doses falling due for a patient between two moments.
+
+	Only inpatient orders are scheduled: administration is a ward activity, and
+	an outpatient takes their own medication.
+	"""
 
 	def __init__(self, patient, until, since=None):
 		self.patient = patient
@@ -44,7 +47,7 @@ class MedicationSchedule:
 		self.since = get_datetime(since) if since else None
 
 	def due(self):
-		return self.from_inpatient_orders() + self.from_medication_requests()
+		return self.from_inpatient_orders()
 
 	def in_window(self, scheduled_time):
 		if scheduled_time > self.until:
@@ -60,12 +63,19 @@ class MedicationSchedule:
 			filters={"patient": self.patient, "docstatus": 1},
 			fields=["name", "inpatient_record", "practitioner", "company"],
 		)
-		return [dose for order in orders for dose in self.doses_on(order)]
+		return [dose for order in orders if self.on_the_ward(order) for dose in self.doses_on(order)]
+
+	def on_the_ward(self, order):
+		"""Doses are given at the bedside, so the admission has to be open."""
+		status = frappe.db.get_value("Inpatient Record", order.inpatient_record, "status")
+		return bool(status) and status not in CLOSED_ADMISSION_STATUSES
 
 	def doses_on(self, order):
 		entries = frappe.get_all(
 			"Inpatient Medication Order Entry",
-			filters={"parent": order.name, "is_completed": 0},
+			# is_completed is set when Inpatient Medication Entry issues the stock;
+			# a drug that has not reached the ward cannot be administered.
+			filters={"parent": order.name, "is_completed": 1},
 			fields=["name", "drug", "drug_name", "dosage", "dosage_form", "date", "time"],
 		)
 
@@ -90,61 +100,6 @@ class MedicationSchedule:
 					"company": order.company,
 				}
 			)
-		return doses
-
-	# ---- standalone medication requests ----
-
-	def from_medication_requests(self):
-		requests = frappe.get_all(
-			"Medication Request",
-			filters={"patient": self.patient, "docstatus": ["<", 2]},
-			fields=[
-				"name",
-				"medication",
-				"medication_item",
-				"dosage",
-				"dosage_form",
-				"period",
-				"order_date",
-				"practitioner",
-				"company",
-				"inpatient_record",
-			],
-		)
-		return [dose for request in requests for dose in self.doses_for(request)]
-
-	def doses_for(self, request):
-		if not (request.medication_item and request.dosage and request.period):
-			return []
-
-		strengths = frappe.get_all(
-			"Dosage Strength",
-			filters={"parent": request.dosage},
-			fields=["strength", "strength_time"],
-		)
-		dates = get_prescription_dates(request.period, request.order_date)
-
-		doses = []
-		for date in dates:
-			for strength in strengths:
-				scheduled_time = get_datetime(f"{getdate(date)} {strength.strength_time}")
-				if not self.in_window(scheduled_time):
-					continue
-
-				doses.append(
-					{
-						"drug_code": request.medication_item,
-						"medication": request.medication,
-						"dosage": strength.strength,
-						"dosage_form": request.dosage_form,
-						"scheduled_time": scheduled_time,
-						"order_doctype": "Medication Request",
-						"order_name": request.name,
-						"inpatient_record": request.inpatient_record,
-						"practitioner": request.practitioner,
-						"company": request.company,
-					}
-				)
 		return doses
 
 
@@ -191,12 +146,7 @@ def schedule_due_medications(patient=None):
 
 
 def patients_with_open_orders():
-	return list(
-		set(
-			frappe.get_all("Inpatient Medication Order", filters={"docstatus": 1}, pluck="patient")
-			+ frappe.get_all("Medication Request", filters={"docstatus": ["<", 2]}, pluck="patient")
-		)
-	)
+	return list(set(frappe.get_all("Inpatient Medication Order", filters={"docstatus": 1}, pluck="patient")))
 
 
 @frappe.whitelist()

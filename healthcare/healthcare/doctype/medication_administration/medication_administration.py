@@ -19,9 +19,6 @@ class MedicationAdministration(Document):
 		self.validate_reason()
 		self.set_administered()
 
-	def on_update(self):
-		self.update_order_entry()
-
 	def set_dose_key(self):
 		"""One dose per patient, drug and slot, whichever order produced it."""
 		self.dose_key = f"{self.patient}::{self.drug_code}::{self.scheduled_time}"
@@ -42,15 +39,3 @@ class MedicationAdministration(Document):
 			self.administered_time = now_datetime()
 		if not self.administered_by:
 			self.administered_by = frappe.session.user
-
-	def update_order_entry(self):
-		"""Given doses close the row on the inpatient order sheet."""
-		if not self.order_entry or self.order_doctype != "Inpatient Medication Order":
-			return
-
-		frappe.db.set_value(
-			"Inpatient Medication Order Entry",
-			self.order_entry,
-			"is_completed",
-			1 if self.status == "Given" else 0,
-		)
