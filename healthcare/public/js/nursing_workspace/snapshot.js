@@ -46,7 +46,7 @@ healthcare.nursing.Snapshot = class Snapshot {
 		this.render_medications();
 		this.render_next_tasks();
 		this.render_last_note();
-		this.render_pending();
+		this.render_care_plan();
 	}
 
 	add_card(title, action = "") {
@@ -293,9 +293,35 @@ healthcare.nursing.Snapshot = class Snapshot {
 		</div>`);
 	}
 
-	render_pending() {
-		const $body = this.add_card(__("Care Plan"));
-		$body.html(this.get_empty(__("Care plan is not built yet")));
+	render_care_plan() {
+		const plan = this.data.care_plan;
+		const goals = (plan && plan.goals) || [];
+		const met = goals.filter(goal => goal.status === "Met").length;
+		const $body = this.add_card(
+			__("Care Plan"),
+			goals.length ? `${met}/${goals.length}` : "",
+		);
+
+		if (!goals.length) {
+			$body.html(this.get_empty(__("No care plan started")));
+			return;
+		}
+		goals.forEach(goal => $body.append(this.get_goal_row(goal)));
+	}
+
+	get_goal_row(goal) {
+		return `<div class="nursing-stacked-row">
+			<div class="nursing-stacked-label">${frappe.utils.escape_html(goal.goal)}</div>
+			<div class="nursing-stacked-meta">
+				<span>${goal.target_date ? moment(goal.target_date).format("DD/MM") : ""}</span>
+				<span class="${this.get_goal_indicator(goal)}">${__(goal.status)}</span>
+			</div>
+		</div>`;
+	}
+
+	get_goal_indicator(goal) {
+		if (goal.status === "Met") return "text-success";
+		return goal.status === "Not Met" ? "text-danger" : "text-muted";
 	}
 
 	get_empty(message) {
