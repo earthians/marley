@@ -13,6 +13,13 @@ DEFAULT_LEAD_TIME_MINUTES = 30
 # An admission in any other state still has the patient on a ward.
 CLOSED_ADMISSION_STATUSES = ("Discharged", "Cancelled")
 
+# The round a nurse is working: how far back the pane and the snapshot look.
+ROUND_WINDOW_HOURS = 12
+
+# A missed dose falls outside the round by definition, but it is the exception
+# that most needs attention, so it stays visible for a day.
+MISSED_LOOKBACK_HOURS = 24
+
 # How far back a run will reach. Without a floor, switching the setting on
 # would materialise every dose since each order began; with one, a missed
 # scheduler run is still caught up within a shift.
@@ -134,12 +141,31 @@ class MedicationScheduler:
 		return f"{self.patient}::{dose['drug_code']}::{dose['scheduled_time']}"
 
 
+def lapse_missed_doses(patient=None):
+	"""A dose still waiting once it leaves the round was never given. Mark it
+	so, rather than letting it drop out of sight as though it never existed."""
+	filters = {
+		"status": "Scheduled",
+		"scheduled_time": ["<", add_to_date(now_datetime(), hours=-ROUND_WINDOW_HOURS)],
+	}
+	if patient:
+		filters["patient"] = patient
+
+	missed = frappe.get_all("Medication Administration", filters=filters, pluck="name")
+	for name in missed:
+		frappe.db.set_value("Medication Administration", name, "status", "Missed")
+
+	return missed
+
+
 @frappe.whitelist()
 def schedule_due_medications(patient=None):
 	"""Called by the scheduler for every patient, and by the pane for one."""
 	settings = MedicationScheduleSettings()
 	if not settings.enabled:
 		return []
+
+	lapse_missed_doses(patient)
 
 	patients = [patient] if patient else patients_with_open_orders()
 	return [name for one in patients for name in MedicationScheduler(one, settings).build()]
@@ -149,17 +175,18 @@ def patients_with_open_orders():
 	return list(set(frappe.get_all("Inpatient Medication Order", filters={"docstatus": 1}, pluck="patient")))
 
 
-@frappe.whitelist()
-def get_due_medications(patient, hours=12):
-	"""Doses to show on the round: everything still open, plus what was just done."""
-	schedule_due_medications(patient)
+def doses_on_the_round(patient, hours=ROUND_WINDOW_HOURS, statuses=None, limit=None):
+	"""One definition of the round, so the pane and the snapshot agree."""
+	filters = {
+		"patient": patient,
+		"scheduled_time": [">", add_to_date(now_datetime(), hours=-int(hours))],
+	}
+	if statuses:
+		filters["status"] = ["in", statuses]
 
 	return frappe.get_all(
 		"Medication Administration",
-		filters={
-			"patient": patient,
-			"scheduled_time": [">", add_to_date(now_datetime(), hours=-int(hours))],
-		},
+		filters=filters,
 		fields=[
 			"name",
 			"drug_code",
@@ -173,7 +200,21 @@ def get_due_medications(patient, hours=12):
 			"reason",
 		],
 		order_by="scheduled_time asc",
+		limit=limit,
 	)
+
+
+@frappe.whitelist()
+def get_due_medications(patient, hours=ROUND_WINDOW_HOURS):
+	"""The round, plus any dose recently missed so it is not quietly forgotten."""
+	schedule_due_medications(patient)
+
+	doses = doses_on_the_round(patient, hours) + missed_doses(patient)
+	return sorted(doses, key=lambda dose: dose.scheduled_time)
+
+
+def missed_doses(patient, hours=MISSED_LOOKBACK_HOURS):
+	return doses_on_the_round(patient, hours, statuses=["Missed"])
 
 
 @frappe.whitelist()
