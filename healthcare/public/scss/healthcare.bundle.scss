@@ -282,6 +282,17 @@ $nursing-pane-top: 0.85rem;
 	color: var(--text-light);
 }
 
+// Something on this pane is waiting for the nurse looking at it. Flagged, not
+// enforced: nothing clinical is held up by an administrative step.
+.nursing-rail-dot {
+	margin-left: auto;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background-color: var(--red-500);
+	flex: none;
+}
+
 .nursing-pane-title {
 	margin-top: 0;
 	line-height: 1.3;

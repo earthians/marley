@@ -8,6 +8,8 @@ healthcare.nursing.panes = healthcare.nursing.panes || {};
 healthcare.nursing.BANNER_METHOD = "healthcare.healthcare.api.nursing.get_banner";
 healthcare.nursing.FIND_PATIENTS_METHOD =
 	"healthcare.healthcare.api.nursing.find_patients";
+healthcare.nursing.HANDOVER_WAITING_METHOD =
+	"healthcare.healthcare.api.handover.is_handover_waiting";
 
 // Matched on abbreviation, which is not translated.
 healthcare.nursing.PAIN_SCORE_ABBR = "PAIN";
@@ -70,6 +72,7 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		this.render_rail();
 		this.make_snapshot();
 		this.select_action("vitals");
+		this.mark_attention();
 	}
 
 	render_layout() {
@@ -172,10 +175,11 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 			reference_name || (same_patient ? this.source_name : null);
 
 		this.search.set_value("");
-		this.snapshot.patient = patient;
-		this.snapshot.refresh();
+		this.snapshot.set_patient(patient);
 		this.render_banner();
 		this.select_action(this.get_selected_action());
+		// the rail flags belong to the patient, not the dialog
+		this.mark_attention();
 	}
 
 	async render_banner() {
@@ -275,6 +279,28 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		this.snapshot.refresh();
 	}
 
+	// A handover waiting on this nurse is flagged rather than enforced: nothing
+	// clinical is held up by an administrative step.
+	async mark_attention() {
+		const waiting = await frappe.xcall(healthcare.nursing.HANDOVER_WAITING_METHOD, {
+			patient: this.patient,
+		});
+		this.set_attention("handover", waiting);
+	}
+
+	set_attention(action, needed) {
+		const $item = this.$rail.find(`[data-action="${action}"]`);
+		$item.find(".nursing-rail-dot").remove();
+
+		if (needed) {
+			$item.append(
+				`<span class="nursing-rail-dot" title="${__(
+					"Waiting for you",
+				)}"></span>`,
+			);
+		}
+	}
+
 	select_action(name) {
 		const PaneClass = healthcare.nursing.panes[name];
 		if (!PaneClass) return;
@@ -293,6 +319,8 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 		try {
 			await this.pane.save();
 		} catch (error) {
+			// frappe shows the server's message; nothing was recorded, so stop
+			// rather than reporting success and refreshing over the form.
 			return;
 		}
 

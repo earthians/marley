@@ -82,11 +82,13 @@ healthcare.nursing.Pane = class Pane {
 	}
 
 	// columns: [{label, align}], rows rendered by the caller's row builder.
-	render_table(columns, rows, build_row, empty_message) {
-		this.$rows.empty();
+	// A pane with more than one table passes its own target.
+	render_table(columns, rows, build_row, empty_message, $target) {
+		const $into = $target || this.$rows;
+		$into.empty();
 
 		if (!rows.length) {
-			this.$rows.html(this.empty(empty_message));
+			$into.html(this.empty(empty_message));
 			return null;
 		}
 
@@ -104,7 +106,7 @@ healthcare.nursing.Pane = class Pane {
 				<thead><tr>${headings}</tr></thead>
 				<tbody></tbody>
 			</table>
-		`).appendTo(this.$rows);
+		`).appendTo($into);
 
 		const $body = $table.find("tbody");
 		rows.forEach(row => $body.append(build_row(row)));
