@@ -691,17 +691,24 @@ $nursing-pane-top: 0.85rem;
 }
 
 // Inline on Inpatient Record and Emergency Record: cards flow into columns.
-// On a form there is a whole page of width, so the cards stack and each one
-// gets all of it rather than being squeezed into columns.
+// On a form there is a whole page of width, so the cards sit two abreast and
+// fall back to one column when the page is too narrow to divide.
 .nursing-snapshot-wide {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	// cards in a row share a bottom edge, so the two columns stay level
+	align-items: stretch;
 	gap: 0.6rem;
 	width: 100%;
+
+	@media (max-width: 991px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
 
 	.nursing-card {
 		margin-bottom: 0;
 		width: 100%;
+		height: 100%;
 	}
 
 	// Time on the left, what it is in the middle, the figure on the right edge.
