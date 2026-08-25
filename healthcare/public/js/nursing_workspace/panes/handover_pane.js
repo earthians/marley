@@ -101,7 +101,10 @@ healthcare.nursing.panes.handover = class HandoverPane extends healthcare.nursin
 			this.add_button(__("Hand Over"), () => this.station.commit());
 		}
 
-		this.render_outstanding();
+		// Read what is being passed on, then commit to it: the button sits after
+		// the carried-forward list rather than above it.
+		const $outstanding = this.render_outstanding();
+		this.$actions.insertAfter($outstanding);
 		this.render_handovers();
 	}
 
@@ -214,12 +217,14 @@ healthcare.nursing.panes.handover = class HandoverPane extends healthcare.nursin
 		const $body = $card.find(".nursing-card-body");
 		if (!items.length) {
 			$body.html(this.empty(__("Nothing outstanding")));
-			return;
+			return $card;
 		}
 
 		items
 			.sort((one, other) => (one.when > other.when ? 1 : -1))
 			.forEach(item => $body.append(this.get_item_html(item)));
+
+		return $card;
 	}
 
 	get_item_html(item) {
