@@ -20,4 +20,5 @@ import "./nursing_workspace/panes/consumables_pane.js";
 import "./nursing_workspace/panes/nursing_tasks_pane.js";
 import "./nursing_workspace/panes/notes_pane.js";
 import "./nursing_workspace/panes/handover_pane.js";
+import "./nursing_workspace/panes/care_plan_pane.js";
 import "./nursing_workspace/attach.js";
