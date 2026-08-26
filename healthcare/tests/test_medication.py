@@ -258,3 +258,124 @@ class TestMissedDosesAreVisible(HealthcareTestSuite):
 		dose = self.make_missed_dose(hours_ago=30)
 
 		self.assertNotIn(dose.name, [row.name for row in missed_doses(self.patient)])
+
+
+class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
+	"""The dose is issued from the bed and billed when a nurse gives it."""
+
+	def setUp(self):
+		super().setUp()
+		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
+		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
+			create_inpatient,
+			get_healthcare_service_unit,
+		)
+
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
+		frappe.clear_cache(doctype="Healthcare Settings")
+
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
+		self.bed.save()  # the setting is on, so the bed gets a warehouse
+
+		record = create_inpatient(self.patient)
+		record.expected_length_of_stay = 0
+		record.save()
+		record.reload()
+		admit_patient(record, self.bed.name, frappe.utils.now_datetime())
+		self.admission = record.name
+		self.stock_the_bed()
+
+	def tearDown(self):
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
+		frappe.clear_cache(doctype="Healthcare Settings")
+		self.close_the_admission()
+
+	def close_the_admission(self):
+		"""Leave no admission behind, and no patient pointing at one that is gone."""
+		frappe.db.set_value(
+			"Patient",
+			self.patient,
+			{"inpatient_record": None, "inpatient_status": None},
+			update_modified=False,
+		)
+		frappe.db.delete("Inpatient Record", {"name": self.admission})
+
+	def stock_the_bed(self):
+		"""Stands in for the Inpatient Medication Entry transfer."""
+		from healthcare.healthcare.doctype.inpatient_medication_entry.test_inpatient_medication_entry import (
+			make_stock_entry,
+		)
+
+		make_stock_entry()
+		transfer = frappe.new_doc("Stock Entry")
+		transfer.stock_entry_type = "Material Transfer"
+		transfer.company = "_Test Company"
+		row = transfer.append("items")
+		row.item_code = "Dextromethorphan"
+		row.qty = 2
+		row.conversion_factor = 1
+		row.s_warehouse = "Stores - _TC"
+		row.t_warehouse = self.bed.warehouse
+		transfer.submit()
+
+	def give_a_dose(self):
+		dose = frappe.get_doc(
+			{
+				"doctype": "Medication Administration",
+				"patient": self.patient,
+				"company": "_Test Company",
+				"drug_code": "Dextromethorphan",
+				"dosage": 1,
+				"scheduled_time": frappe.utils.now_datetime(),
+				"inpatient_record": self.admission,
+				"status": "Scheduled",
+			}
+		).insert(ignore_permissions=True)
+
+		dose.status = "Given"
+		dose.save(ignore_permissions=True)
+		return dose.reload()
+
+	def test_a_given_dose_is_issued_from_the_bed_and_billed(self):
+		dose = self.give_a_dose()
+
+		self.assertTrue(dose.stock_entry)
+		stock_entry = frappe.get_doc("Stock Entry", dose.stock_entry)
+		self.assertEqual(stock_entry.purpose, "Material Issue")
+		self.assertEqual(stock_entry.items[0].s_warehouse, self.bed.warehouse)
+		self.assertEqual(stock_entry.items[0].qty, 1)
+
+		billable = frappe.get_all(
+			"Inpatient Record Item",
+			filters={"parent": self.admission, "stock_entry": dose.stock_entry},
+			fields=["item_code", "quantity", "invoiced"],
+		)
+		self.assertEqual(len(billable), 1)
+		self.assertEqual(billable[0].item_code, "Dextromethorphan")
+		self.assertEqual(billable[0].quantity, 1)
+		self.assertEqual(billable[0].invoiced, 0)
+
+	def test_a_dose_that_was_given_cannot_be_taken_back(self):
+		dose = self.give_a_dose()
+
+		dose.status = "Held"
+		dose.reason = "changed my mind"
+		self.assertRaises(frappe.ValidationError, dose.save)
+
+	def test_a_dose_is_issued_once_however_often_it_is_saved(self):
+		dose = self.give_a_dose()
+
+		dose.site = "left arm"
+		dose.save(ignore_permissions=True)
+		dose.reload()
+
+		issued = frappe.get_all("Stock Entry", filters={"name": dose.stock_entry})
+		self.assertEqual(len(issued), 1)
+		self.assertEqual(
+			frappe.db.count(
+				"Inpatient Record Item", {"parent": self.admission, "stock_entry": dose.stock_entry}
+			),
+			1,
+		)

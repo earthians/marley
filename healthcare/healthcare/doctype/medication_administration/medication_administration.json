@@ -36,7 +36,8 @@
   "inpatient_record",
   "service_unit",
   "practitioner",
-  "dose_key"
+  "dose_key",
+  "stock_entry"
  ],
  "fields": [
   {
@@ -232,11 +233,19 @@
    "hidden": 1,
    "no_copy": 1,
    "print_hide": 1
+  },
+  {
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Entry",
+   "no_copy": 1,
+   "options": "Stock Entry",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-08-25 11:21:53.126170",
+ "modified": "2026-08-26 10:39:18.570880",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication Administration",
