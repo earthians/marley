@@ -10,6 +10,9 @@ from frappe.contacts.address_and_contact import load_address_and_contact
 from frappe.utils import cint, cstr
 from frappe.utils.nestedset import NestedSet
 
+# Group warehouse under which one warehouse per inpatient bed is created.
+BED_WAREHOUSE_GROUP = "Inpatient Beds"
+
 
 class HealthcareServiceUnit(NestedSet):
 	nsm_parent_field = "parent_healthcare_service_unit"
@@ -20,6 +23,7 @@ class HealthcareServiceUnit(NestedSet):
 
 	def validate(self):
 		self.set_service_unit_properties()
+		self.set_bed_warehouse()
 
 	def autoname(self):
 		if self.company:
@@ -67,6 +71,84 @@ class HealthcareServiceUnit(NestedSet):
 					_("Please set a valid Service Unit Capacity to enable Overlapping Appointments"),
 					title=_("Mandatory"),
 				)
+
+	def set_bed_warehouse(self):
+		"""Medication is transferred to the warehouse of the bed it was prescribed
+		for, so a bed needs a warehouse of its own. One picked while creating beds
+		in bulk would be shared by all of them, leaving no way to tell one bed's
+		stock from another's, so it is replaced rather than kept."""
+		if cint(self.is_group) or not cint(self.inpatient_occupancy):
+			return
+
+		if not self.company or not manages_medication_stock():
+			return
+
+		if self.warehouse and not self.is_new():
+			return
+
+		self.warehouse = create_bed_warehouse(self)
+
+
+def manages_medication_stock():
+	return frappe.db.get_single_value("Healthcare Settings", "manage_inpatient_medication_stock")
+
+
+def create_bed_warehouses():
+	"""Give every occupancy unit that has no warehouse one. Returns how many."""
+	beds = frappe.get_all(
+		"Healthcare Service Unit",
+		filters={"is_group": 0, "inpatient_occupancy": 1, "warehouse": ["in", ["", None]]},
+		fields=["name", "healthcare_service_unit_name", "company"],
+	)
+
+	for bed in beds:
+		if not bed.company:
+			continue
+
+		frappe.db.set_value(
+			"Healthcare Service Unit", bed.name, "warehouse", create_bed_warehouse(bed), update_modified=False
+		)
+
+	return len(beds)
+
+
+def create_bed_warehouse(service_unit):
+	"""Warehouse named after the bed, kept together under a per company group."""
+	name = warehouse_name_for(service_unit.healthcare_service_unit_name, service_unit.company)
+	if frappe.db.exists("Warehouse", name):
+		return name
+
+	warehouse = frappe.new_doc("Warehouse")
+	warehouse.warehouse_name = service_unit.healthcare_service_unit_name
+	warehouse.company = service_unit.company
+	warehouse.parent_warehouse = get_bed_warehouse_group(service_unit.company)
+	warehouse.insert(ignore_permissions=True)
+	return warehouse.name
+
+
+def get_bed_warehouse_group(company):
+	name = warehouse_name_for(BED_WAREHOUSE_GROUP, company)
+	if frappe.db.exists("Warehouse", name):
+		return name
+
+	group = frappe.new_doc("Warehouse")
+	group.warehouse_name = BED_WAREHOUSE_GROUP
+	group.company = company
+	group.is_group = 1
+	group.parent_warehouse = get_root_warehouse(company)
+	group.insert(ignore_permissions=True)
+	return group.name
+
+
+def get_root_warehouse(company):
+	return frappe.db.get_value(
+		"Warehouse", {"company": company, "is_group": 1, "parent_warehouse": ["in", ["", None]]}
+	)
+
+
+def warehouse_name_for(warehouse_name, company):
+	abbr = frappe.get_cached_value("Company", company, "abbr")
+	return f"{warehouse_name} - {abbr}"
 
 
 @frappe.whitelist()
