@@ -10,7 +10,13 @@ from frappe.utils import flt, get_link_to_form, get_time, getdate
 
 from erpnext.stock.utils import get_latest_stock_qty
 
+from healthcare.healthcare.doctype.healthcare_service_unit.healthcare_service_unit import (
+	manages_medication_stock,
+)
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
+from healthcare.healthcare.doctype.inpatient_medication_entry.medication_stock_entry import (
+	make_stock_entry,
+)
 
 
 class InpatientMedicationEntry(Document):
@@ -65,8 +71,8 @@ class InpatientMedicationEntry(Document):
 
 	def validate_medication_orders(self):
 		for entry in self.medication_orders:
-			docstatus, is_completed = frappe.db.get_value(
-				"Inpatient Medication Order Entry", entry.against_imoe, ["docstatus", "is_completed"]
+			docstatus, status = frappe.db.get_value(
+				"Inpatient Medication Order Entry", entry.against_imoe, ["docstatus", "status"]
 			)
 
 			if docstatus == 2:
@@ -76,9 +82,11 @@ class InpatientMedicationEntry(Document):
 					).format(entry.idx, get_link_to_form(entry.against_imo))
 				)
 
-			if is_completed:
+			if status and status != "Pending":
 				frappe.throw(
-					_("Row {0}: This Medication Order is already marked as completed").format(entry.idx)
+					_("Row {0}: This Medication Order is already {1}").format(
+						entry.idx, frappe.bold(_(status))
+					)
 				)
 
 	def on_cancel(self):
@@ -90,57 +98,38 @@ class InpatientMedicationEntry(Document):
 		if not allow_negative_stock:
 			self.check_stock_qty()
 
-		return self.make_stock_entry()
+		return make_stock_entry(self)
 
 	def update_medication_orders(self, on_cancel=False):
-		orders, order_entry_map = self.get_order_entry_map()
+		orders, medication_orders = self.get_order_entry_map()
 
 		if not orders:
 			return
 
-		is_completed = 0 if on_cancel else 1
+		self.set_order_entry_status("Pending" if on_cancel else self.status_after_entry(), orders)
 
+		for order in medication_orders:
+			frappe.get_doc("Inpatient Medication Order", order).update_completed_orders()
+
+	def status_after_entry(self):
+		"""Where medication is managed at the bed, this entry has only moved the
+		drug there. The dose is completed when a nurse administers it."""
+		return "Transferred" if manages_medication_stock() else "Completed"
+
+	def set_order_entry_status(self, status, orders):
 		order_entry = frappe.qb.DocType("Inpatient Medication Order Entry")
 
 		(
 			frappe.qb.update(order_entry)
-			.set(order_entry.is_completed, is_completed)
+			.set(order_entry.status, status)
+			.set(order_entry.is_completed, 1 if status == "Completed" else 0)
 			.where(order_entry.name.isin(orders))
 		).run()
 
-		# update status and completed orders count
-		for order, count in order_entry_map.items():
-			medication_order = frappe.get_doc("Inpatient Medication Order", order)
-			completed_orders = flt(count)
-			current_value = frappe.db.get_value(
-				"Inpatient Medication Order",
-				order,
-				"completed_orders",
-			)
-
-			if on_cancel:
-				completed_orders = flt(current_value) - flt(count)
-			else:
-				completed_orders = flt(current_value) + flt(count)
-
-			medication_order.db_set("completed_orders", completed_orders)
-			medication_order.set_status()
-
 	def get_order_entry_map(self):
-		# for marking order completion status
-		orders = []
-		# orders mapped
-		order_entry_map = dict()
-
-		for entry in self.medication_orders:
-			orders.append(entry.against_imoe)
-			parent = entry.against_imo
-			if not order_entry_map.get(parent):
-				order_entry_map[parent] = 0
-
-			order_entry_map[parent] += 1
-
-		return orders, order_entry_map
+		orders = [entry.against_imoe for entry in self.medication_orders]
+		medication_orders = {entry.against_imo for entry in self.medication_orders}
+		return orders, medication_orders
 
 	def check_stock_qty(self):
 		drug_shortage = get_drug_shortage_map(self.medication_orders, self.warehouse)
@@ -174,34 +163,6 @@ class InpatientMedicationEntry(Document):
 
 			frappe.throw(message, title=_("Insufficient Stock"), is_minimizable=True, wide=True)
 
-	def make_stock_entry(self):
-		stock_entry = frappe.new_doc("Stock Entry")
-		stock_entry.purpose = "Material Issue"
-		stock_entry.set_stock_entry_type()
-		stock_entry.from_warehouse = self.warehouse
-		stock_entry.company = self.company
-		stock_entry.inpatient_medication_entry = self.name
-		cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
-		expense_account = get_account(None, "expense_account", "Healthcare Settings", self.company)
-
-		for entry in self.medication_orders:
-			se_child = stock_entry.append("items")
-			se_child.item_code = entry.drug_code
-			se_child.item_name = entry.drug_name
-			se_child.uom = frappe.db.get_value("Item", entry.drug_code, "stock_uom")
-			se_child.stock_uom = se_child.uom
-			se_child.qty = flt(entry.dosage)
-			# in stock uom
-			se_child.conversion_factor = 1
-			se_child.cost_center = cost_center
-			se_child.expense_account = expense_account
-			# references
-			se_child.patient = entry.patient
-			se_child.inpatient_medication_entry_child = entry.name
-
-		stock_entry.submit()
-		return stock_entry.name
-
 	def cancel_stock_entries(self):
 		stock_entries = frappe.get_all("Stock Entry", {"inpatient_medication_entry": self.name})
 		for entry in stock_entries:
@@ -233,7 +194,7 @@ def get_pending_medication_orders(entry):
 		)
 		.where(inpatient_medication_order.docstatus == 1)
 		.where(inpatient_medication_order.company == entry.company)
-		.where(medication_order_entry.is_completed == 0)
+		.where(medication_order_entry.status == "Pending")
 		.orderby(medication_order_entry.date)
 		.orderby(medication_order_entry.time)
 	)
