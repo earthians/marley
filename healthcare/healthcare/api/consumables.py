@@ -5,10 +5,8 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import flt
 
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
-from healthcare.healthcare.ward_stock import WardStore, set_batch
+from healthcare.healthcare.ward_stock import WardIssue, WardStore
 
 # Consumables bill through Inpatient Record Item, so they need an admission.
 RECENT_ROWS = 20
@@ -18,7 +16,7 @@ class ConsumableRecorder:
 	"""Issues stock from the ward and adds the items to the patient's billables."""
 
 	def __init__(self, inpatient_record):
-		self.admission = frappe.get_doc("Inpatient Record", inpatient_record)
+		self.inpatient_record = inpatient_record
 		self.store = WardStore(inpatient_record)
 
 	def record(self, items):
@@ -26,51 +24,7 @@ class ConsumableRecorder:
 		if not warehouse:
 			frappe.throw(_("No warehouse found for this patient's service unit"))
 
-		stock_entry = self.issue_stock(items, warehouse)
-		self.add_to_billables(items, stock_entry)
-		return stock_entry
-
-	def issue_stock(self, items, warehouse):
-		stock_entry = frappe.new_doc("Stock Entry")
-		stock_entry.stock_entry_type = "Material Issue"
-		stock_entry.from_warehouse = warehouse
-		stock_entry.company = self.admission.company
-
-		cost_center = frappe.get_cached_value("Company", self.admission.company, "cost_center")
-		expense_account = get_account(None, "expense_account", "Healthcare Settings", self.admission.company)
-
-		for item in items:
-			row = stock_entry.append("items")
-			row.item_code = item.get("item_code")
-			row.qty = flt(item.get("quantity"))
-			row.s_warehouse = warehouse
-			row.cost_center = cost_center
-			row.expense_account = expense_account
-			if item.get("batch_no"):
-				set_batch(row, item.get("batch_no"))
-			row.patient = self.admission.patient
-
-		stock_entry.save(ignore_permissions=True)
-		stock_entry.submit()
-		return stock_entry.name
-
-	def add_to_billables(self, items, stock_entry):
-		"""A billable row only invoices once it carries its stock entry."""
-		for item in items:
-			stock_uom = frappe.db.get_value("Item", item.get("item_code"), "stock_uom")
-			self.admission.append(
-				"items",
-				{
-					"item_code": item.get("item_code"),
-					"item_name": frappe.db.get_value("Item", item.get("item_code"), "item_name"),
-					"quantity": flt(item.get("quantity")),
-					"uom": stock_uom,
-					"stock_uom": stock_uom,
-					"conversion_factor": 1,
-					"stock_entry": stock_entry,
-				},
-			)
-		self.admission.save(ignore_permissions=True)
+		return WardIssue(self.inpatient_record, warehouse).record(items)
 
 
 def inpatient_record_for(patient):
