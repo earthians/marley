@@ -140,12 +140,8 @@ class ServiceUnitTransfer(MedicationStockEntry):
 			get_auto_batch_nos,
 		)
 
+		# Availability is read as of now, to match the Stock Entry this builds:
+		# the entry carries no posting time, and a date without one is rejected.
 		return get_auto_batch_nos(
-			frappe._dict(
-				item_code=drug,
-				warehouse=self.source,
-				qty=required,
-				based_on="Expiry",
-				posting_date=self.medication_entry.posting_date,
-			)
+			frappe._dict(item_code=drug, warehouse=self.source, qty=required, based_on="Expiry")
 		)
