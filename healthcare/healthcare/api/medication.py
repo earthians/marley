@@ -84,9 +84,9 @@ class MedicationSchedule:
 	def doses_on(self, order):
 		entries = frappe.get_all(
 			"Inpatient Medication Order Entry",
-			# is_completed is set when Inpatient Medication Entry issues the stock;
+			# Inpatient Medication Entry sets the status when it moves the stock;
 			# a drug that has not reached the ward cannot be administered.
-			filters={"parent": order.name, "is_completed": 1},
+			filters={"parent": order.name, "status": ["in", ["Transferred", "Completed"]]},
 			fields=["name", "drug", "drug_name", "dosage", "dosage_form", "date", "time"],
 		)
 
