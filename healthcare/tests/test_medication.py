@@ -74,7 +74,9 @@ class TestMedicationScheduling(HealthcareTestSuite):
 
 	def issue_from_pharmacy(self, order):
 		"""Inpatient Medication Entry sets this when it transfers the stock."""
-		frappe.db.set_value("Inpatient Medication Order Entry", {"parent": order.name}, "is_completed", 1)
+		frappe.db.set_value(
+			"Inpatient Medication Order Entry", {"parent": order.name}, "status", "Transferred"
+		)
 
 	def build(self, until=None):
 		from healthcare.healthcare.api.medication import MedicationScheduler
@@ -140,7 +142,7 @@ class TestMedicationScheduling(HealthcareTestSuite):
 
 	def test_doses_not_yet_issued_by_pharmacy_are_not_scheduled(self):
 		order = self.make_inpatient_order()
-		frappe.db.set_value("Inpatient Medication Order Entry", {"parent": order.name}, "is_completed", 0)
+		frappe.db.set_value("Inpatient Medication Order Entry", {"parent": order.name}, "status", "Pending")
 
 		self.assertEqual(self.build(), [])
 

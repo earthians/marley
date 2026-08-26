@@ -102,6 +102,58 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 			stock_entry.items[0].inpatient_medication_entry_child, ipme.medication_orders[0].name
 		)
 
+	def test_entry_completes_the_order_when_stock_is_not_managed_at_the_bed(self):
+		ipme = self.submit_entry_for_yesterday()
+
+		entry = frappe.db.get_value(
+			"Inpatient Medication Order Entry",
+			ipme.medication_orders[0].against_imoe,
+			["status", "is_completed"],
+			as_dict=True,
+		)
+		self.assertEqual(entry.status, "Completed")
+		self.assertEqual(entry.is_completed, 1)
+
+	def test_entry_transfers_to_the_bed_when_stock_is_managed_there(self):
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
+		bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
+		bed.save()  # gives the bed a warehouse, now that the setting is on
+
+		ipme = self.submit_entry_for_yesterday()
+
+		stock_entry = frappe.get_last_doc("Stock Entry", filters={"inpatient_medication_entry": ipme.name})
+		self.assertEqual(stock_entry.purpose, "Material Transfer")
+		self.assertEqual(stock_entry.items[0].s_warehouse, "Stores - _TC")
+		self.assertEqual(stock_entry.items[0].t_warehouse, bed.warehouse)
+
+		entry = frappe.db.get_value(
+			"Inpatient Medication Order Entry",
+			ipme.medication_orders[0].against_imoe,
+			["status", "is_completed"],
+			as_dict=True,
+		)
+		self.assertEqual(entry.status, "Transferred")
+		self.assertEqual(entry.is_completed, 0)
+
+	def submit_entry_for_yesterday(self):
+		ipmo = create_ipmo(self.patient)
+		ipmo.submit()
+		ipmo.reload()
+
+		date = add_days(getdate(), -1)
+		filters = frappe._dict(
+			from_date=date,
+			to_date=date,
+			from_time="",
+			to_time="",
+			item_code="Dextromethorphan",
+			patient=self.patient,
+		)
+		ipme = create_ipme(filters, update_stock=1)
+		ipme.save()
+		ipme.submit()
+		return ipme
+
 	def test_drug_shortage_stock_entry(self):
 		ipmo = create_ipmo(self.patient)
 		ipmo.submit()
@@ -136,6 +188,8 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		ipme.submit()
 
 	def tearDown(self):
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
+
 		# cleanup - Discharge
 		schedule_discharge(frappe.as_json({"patient": self.patient}))
 		self.ip_record.reload()

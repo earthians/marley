@@ -8,29 +8,10 @@ from frappe import _
 from frappe.utils import flt
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
+from healthcare.healthcare.ward_stock import WardStore, set_batch
 
 # Consumables bill through Inpatient Record Item, so they need an admission.
 RECENT_ROWS = 20
-
-
-class WardStore:
-	"""Where a patient's consumables are drawn from."""
-
-	def __init__(self, inpatient_record):
-		self.admission = frappe.get_doc("Inpatient Record", inpatient_record)
-
-	def warehouse(self):
-		return self.service_unit_warehouse() or self.company_warehouse()
-
-	def service_unit_warehouse(self):
-		occupancy = [row for row in self.admission.inpatient_occupancies if not row.left]
-		if not occupancy:
-			return None
-
-		return frappe.db.get_value("Healthcare Service Unit", occupancy[-1].service_unit, "warehouse")
-
-	def company_warehouse(self):
-		return frappe.db.get_value("Company", self.admission.company, "default_warehouse")
 
 
 class ConsumableRecorder:
@@ -41,7 +22,7 @@ class ConsumableRecorder:
 		self.store = WardStore(inpatient_record)
 
 	def record(self, items):
-		warehouse = self.store.warehouse()
+		warehouse = self.store.warehouse() or self.store.company_warehouse()
 		if not warehouse:
 			frappe.throw(_("No warehouse found for this patient's service unit"))
 
@@ -66,26 +47,12 @@ class ConsumableRecorder:
 			row.cost_center = cost_center
 			row.expense_account = expense_account
 			if item.get("batch_no"):
-				self.set_batch(row, item.get("batch_no"))
+				set_batch(row, item.get("batch_no"))
 			row.patient = self.admission.patient
 
 		stock_entry.save(ignore_permissions=True)
 		stock_entry.submit()
 		return stock_entry.name
-
-	def set_batch(self, row, batch_no):
-		"""ERPNext reads batch_no only when the row opts out of batch bundles.
-		Where a site uses bundles instead, say so rather than quietly dropping
-		the batch the nurse picked."""
-		if not frappe.db.get_single_value("Stock Settings", "use_serial_batch_fields"):
-			frappe.throw(
-				_("Enable {0} in Stock Settings to record a batch against a consumable").format(
-					frappe.bold(_("Use Serial / Batch fields"))
-				)
-			)
-
-		row.use_serial_batch_fields = 1
-		row.batch_no = batch_no
 
 	def add_to_billables(self, items, stock_entry):
 		"""A billable row only invoices once it carries its stock entry."""
@@ -117,9 +84,10 @@ def get_consumable_context(patient):
 	if not inpatient_record:
 		return {"inpatient_record": None, "warehouse": None}
 
+	store = WardStore(inpatient_record)
 	return {
 		"inpatient_record": inpatient_record,
-		"warehouse": WardStore(inpatient_record).warehouse(),
+		"warehouse": store.warehouse() or store.company_warehouse(),
 	}
 
 

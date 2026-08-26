@@ -53,6 +53,13 @@ class InpatientMedicationOrder(Document):
 	def set_total_orders(self):
 		self.db_set("total_orders", len(self.medication_orders))
 
+	def update_completed_orders(self):
+		"""Counted from the entries rather than tallied up and down, so cancelling
+		or amending an Inpatient Medication Entry cannot drift the total."""
+		completed = [entry for entry in self.medication_orders if entry.status == "Completed"]
+		self.db_set("completed_orders", len(completed))
+		self.set_status()
+
 	def set_status(self):
 		status = {"0": "Draft", "1": "Submitted", "2": "Cancelled"}[cstr(self.docstatus or 0)]
 
