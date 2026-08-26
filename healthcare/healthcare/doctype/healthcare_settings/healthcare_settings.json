@@ -42,6 +42,7 @@
   "medication_administration_section",
   "auto_schedule_medication_doses",
   "medication_dose_lead_time",
+  "manage_inpatient_medication_stock",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -612,11 +613,18 @@
    "default": "30",
    "depends_on": "auto_schedule_medication_doses",
    "description": "A dose due at 14:00 with 30 minutes here appears on the round at 13:30"
+  },
+  {
+   "default": "0",
+   "description": "Transfer medication to the warehouse of the bed the patient occupies, and issue it when a dose is administered. A warehouse is created for every inpatient bed that does not have one",
+   "fieldname": "manage_inpatient_medication_stock",
+   "fieldtype": "Check",
+   "label": "Manage Inpatient Medication Stock at the Bed"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-17 15:11:07.253953",
+ "modified": "2026-09-17 15:11:28.071790",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
