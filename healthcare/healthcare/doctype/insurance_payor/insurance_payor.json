@@ -16,6 +16,8 @@
   "insurance_claim_credit_days",
   "column_break_3",
   "disabled",
+  "show_on_website",
+  "website_category",
   "code_system",
   "image",
   "address_and_contacts_section",
@@ -112,6 +114,20 @@
    "fieldname": "disabled",
    "fieldtype": "Check",
    "label": "Disabled"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_on_website",
+   "fieldtype": "Check",
+   "label": "Show on Website"
+  },
+  {
+   "fieldname": "website_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Website Category",
+   "options": "\ninsurance\nhealthcare\nspecial\nbank"
   },
   {
    "fieldname": "column_break_3",

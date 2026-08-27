@@ -33,7 +33,18 @@
   "appointments",
   "practitioner_schedules",
   "google_calendar",
+  "website_profile_tab",
+  "website_profile_section",
   "show_in_portal",
+  "website_credentials",
+  "website_role",
+  "website_specialty",
+  "column_break_website",
+  "website_languages",
+  "website_branches",
+  "website_bio",
+  "website_certifications",
+  "website_expertise",
   "charges",
   "op_consulting_charge_item",
   "op_consulting_charge",
@@ -390,9 +401,70 @@
   },
   {
    "default": "0",
+   "description": "Required for the public website Doctors page. Unchecked practitioners stay in Desk only.",
    "fieldname": "show_in_portal",
    "fieldtype": "Check",
-   "label": "Show in Portal"
+   "label": "Show on Website"
+  },
+  {
+   "fieldname": "website_profile_tab",
+   "fieldtype": "Tab Break",
+   "label": "Website Profile"
+  },
+  {
+   "fieldname": "website_profile_section",
+   "fieldtype": "Section Break",
+   "label": "Public Website Profile"
+  },
+  {
+   "fieldname": "website_credentials",
+   "fieldtype": "Data",
+   "label": "Website Credentials"
+  },
+  {
+   "fieldname": "website_role",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Website Role"
+  },
+  {
+   "fieldname": "website_specialty",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Website Specialty"
+  },
+  {
+   "fieldname": "column_break_website",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "One language per line",
+   "fieldname": "website_languages",
+   "fieldtype": "Small Text",
+   "label": "Website Languages"
+  },
+  {
+   "description": "One public branch label per line (must match Healthcare Service Unit names shown on the website)",
+   "fieldname": "website_branches",
+   "fieldtype": "Small Text",
+   "label": "Website Branches"
+  },
+  {
+   "fieldname": "website_bio",
+   "fieldtype": "Text",
+   "label": "Website Bio"
+  },
+  {
+   "description": "One certification per line",
+   "fieldname": "website_certifications",
+   "fieldtype": "Text",
+   "label": "Website Certifications"
+  },
+  {
+   "description": "One expertise item per line",
+   "fieldname": "website_expertise",
+   "fieldtype": "Text",
+   "label": "Website Expertise"
   }
  ],
  "grid_page_length": 50,
