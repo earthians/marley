@@ -925,7 +925,32 @@ def create_clinical_note_types():
 	insert_record(records)
 
 
+INTAKE_OUTPUT_UOM = "Millilitre"
+
+
+def create_intake_output_uom():
+	"""The UOM every intake and output volume links to.
+
+	ERPNext seeds its UOMs from the setup wizard, so a site that installs
+	Healthcare before finishing setup has none of them yet.
+	"""
+	records = [
+		{"doctype": "UOM Category", "category_name": "Volume"},
+		{
+			"doctype": "UOM",
+			"uom_name": INTAKE_OUTPUT_UOM,
+			"symbol": "ml",
+			"common_code": "MLT",
+			"category": "Volume",
+			"must_be_whole_number": 0,
+		},
+	]
+	insert_record(records)
+
+
 def create_intake_output_types():
+	create_intake_output_uom()
+
 	types = [
 		(_("Oral"), "Intake"),
 		(_("IV Fluid"), "Intake"),
@@ -942,7 +967,7 @@ def create_intake_output_types():
 			"doctype": "Intake Output Type",
 			"intake_output_type": intake_output_type,
 			"direction": direction,
-			"default_uom": "Millilitre",
+			"default_uom": INTAKE_OUTPUT_UOM,
 		}
 		for intake_output_type, direction in types
 	]
