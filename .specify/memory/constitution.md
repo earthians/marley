@@ -1,8 +1,8 @@
 <!--
   Sync Impact Report
-  Version change: 1.0.1 → 1.1.0
+  Version change: 1.1.0 → 1.2.0
   Modified principles: none renamed
-  Added sections: VI. Website-safe enquiry writes
+  Added sections: VII. Website-safe booking writes; VIII. Stable public error kinds
   Removed sections: none
   Follow-up TODOs: none
 -->
@@ -41,12 +41,23 @@ Public Contact and Medical Tourism submissions MUST succeed for Guest with no Au
 
 **Rationale**: Enquiry writes are the public conversion path beside booking. Requiring a website token repeats the stale-key failure mode of catalog reads.
 
+### VII. Website-safe booking writes
+Public appointment requests MUST succeed for Guest with no Authorization header, MUST be rate-limited at least as strictly as enquiry writes (10 per 60 seconds), MUST ignore DocType permissions for Patient and Patient Appointment inserts, MUST require name, phone, gender, condition, service, branch, date, and time, and MUST reuse an existing Patient when the mobile number already exists. Token auth MAY still work; it MUST NOT be required. No new DocType.
+
+**Rationale**: Booking is the primary conversion path. The website token path fails when the key is rotated or the role cannot write clinical records.
+
+### VIII. Stable public error kinds
+Public website methods MUST label failures as `validation`, `rate_limit` (HTTP 429), or `server_error`. Empty catalog lists MUST return `[]`, not an error. Guest responses MUST NOT include HTML stack traces.
+
+**Rationale**: The website maps each kind to bilingual recovery copy. Mixed shapes force the site to guess.
+
 ## Healthcare API Constraints
 
 - Target site for local work: `senlite.localhost`.
 - No payment or claims-settlement APIs in this public-catalog program.
 - Do not log API secrets. Do not put tokens in query strings.
 - Enquiry methods MUST reject missing name or phone with a validation error (not a silent Lead).
+- Booking write methods MUST reject missing required fields, Friday dates, and past dates with a validation error (not a silent Appointment).
 
 ## Delivery Workflow
 
@@ -58,4 +69,4 @@ Public Contact and Medical Tourism submissions MUST succeed for Guest with no Au
 
 This constitution supersedes informal practice for Healthcare website APIs on this project. Amendments MUST bump the version (MAJOR for incompatible principle changes, MINOR for new principles, PATCH for wording). Pull requests that add whitelist methods or seed scripts MUST be reviewable against these principles.
 
-**Version**: 1.1.0 | **Ratified**: 2026-08-26 | **Last Amended**: 2026-08-26
+**Version**: 1.2.0 | **Ratified**: 2026-08-26 | **Last Amended**: 2026-08-27

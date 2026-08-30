@@ -46,7 +46,7 @@ Anything else → validation error, no Lead.
 | `creation` | Lead creation datetime |
 | `status` | Dashboard key: `Lead`/`Open` → `new`; `Replied`/`Interested` → `contacted`; `Opportunity`/`Quotation`/`Lost Quotation` → `appointment`; `Converted` → `patient` |
 | `erpnext_status` | Desk status (`Lead`, `Converted`, …) |
-| `phone` | `mobile_no` |
-| `email` | `email_id` when stored |
+
+Guest list MUST NOT include `phone`, `mobile_no`, `email`, or `email_id`. Public `/crm` is unauthenticated.
 
 Empty clinic → `[]`, not an error.

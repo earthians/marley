@@ -6,6 +6,8 @@ from frappe import _
 from frappe.rate_limiter import rate_limit
 from frappe.utils import now, validate_email_address
 
+from healthcare.healthcare.api.website_errors import throw_validation
+
 SOURCE_MAP = {
 	"website-contact": ("Website Contact", "website-contact"),
 	"website-medical-tourism": ("Website Medical Tourism", "website-medical-tourism"),
@@ -53,7 +55,7 @@ def _email_allowed(email):
 	if not email:
 		return ""
 	if not validate_email_address(email, throw=False):
-		frappe.throw(_("Please enter a valid email address."))
+		throw_validation("Please enter a valid email address.")
 	if frappe.db.get_single_value("CRM Settings", "allow_lead_duplication_based_on_emails"):
 		return email
 	if frappe.db.exists("Lead", {"email_id": email}):
@@ -101,14 +103,14 @@ def create_enquiry(
 ):
 	source_key = _clean(source)
 	if source_key not in SOURCE_MAP:
-		frappe.throw(_("Unknown enquiry source."))
+		throw_validation("Unknown enquiry source.")
 
 	full_name = _clean(lead_name)
 	phone = _clean(mobile_no)
 	if not full_name:
-		frappe.throw(_("Name is required."))
+		throw_validation("Name is required.")
 	if not phone:
-		frappe.throw(_("Phone is required."))
+		throw_validation("Phone is required.")
 
 	utm_name, utm_slug = SOURCE_MAP[source_key]
 	utm_source = _ensure_utm_source(utm_name, utm_slug)
@@ -209,8 +211,6 @@ def list_enquiries(limit=50):
 		"name",
 		"lead_name",
 		"first_name",
-		"mobile_no",
-		"email_id",
 		"utm_source",
 		"status",
 		"creation",
@@ -251,18 +251,18 @@ def list_enquiries(limit=50):
 				condition = _condition_from_note(html)
 				if condition:
 					break
+		display_name = row.lead_name or row.first_name or ""
 		enquiries.append(
 			{
 				"id": row.name,
-				"name": row.lead_name or row.first_name or row.name,
+				"name": display_name or row.name,
+				"lead_name": display_name,
 				"source": row.utm_source or "",
 				"condition": condition,
 				"branch": "",
 				"creation": str(row.creation) if row.creation else "",
 				"status": DASHBOARD_STATUS.get(row.status or "Lead", "new"),
 				"erpnext_status": row.status or "Lead",
-				"phone": row.mobile_no or "",
-				"email": row.email_id or "",
 			}
 		)
 	return enquiries
