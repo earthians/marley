@@ -1,0 +1,45 @@
+name: Portal Tests
+
+on:
+  pull_request:
+    paths:
+      - "patient_portal/**"
+      - "frappe-ui/**"
+      - ".github/workflows/portal-tests.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "patient_portal/**"
+      - "frappe-ui/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-tests-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portal-tests:
+    name: Portal Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          check-latest: true
+
+      - name: Install
+        working-directory: patient_portal
+        run: yarn install
+
+      - name: Run Tests
+        working-directory: patient_portal
+        run: yarn test

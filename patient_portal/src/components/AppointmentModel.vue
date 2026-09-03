@@ -3,7 +3,7 @@
 		<div class="flex justify-end m-2">
 			<Button
 				variant="solid"
-				:label="'Book'"
+				:label="__('Book')"
 				@click="make_appointment_dialog = true"
 			>
 				<template #prefix>
@@ -29,7 +29,7 @@
 							<h3 class="text-xs font-medium text-gray-500 truncate">{{ item.name }}</h3>
 							<Badge :variant="'outline'"
 								:theme="getStatusColor(item.status)">
-								{{ item.status }}
+								{{ __(item.status) }}
 							</Badge>
 						</div>
 
@@ -43,7 +43,7 @@
 						</p>
 						<p class="mt-1 text-xs text-gray-600 whitespace-nowrap">
 							<FeatherIcon name="clock" class="inline w-3 h-3 me-1 text-gray-500" />
-							{{ item.appointment_time }} ({{ item.duration }} mins)
+							{{ formatTime(item.appointment_time) }} ({{ item.duration }} {{ __('mins') }})
 						</p>
 					</Card>
 				</div>
@@ -54,22 +54,22 @@
 				class="flex flex-col items-center justify-center flex-grow text-center p-6"
 			>
 				<FeatherIcon name="file-text" class="w-12 h-12 text-gray-400 mb-3" />
-				<h2 class="text-lg font-semibold text-gray-700">No Records Found</h2>
-				<p class="text-sm text-gray-500">Looks like you don't have any appointments yet.</p>
+				<h2 class="text-lg font-semibold text-gray-700">{{ __('No Records Found') }}</h2>
+				<p class="text-sm text-gray-500">{{ __("Looks like you don't have any appointments yet.") }}</p>
 			</div>
 
 			<!-- Pagination -->
 			<div v-if="paginatedAppointments.length" class="flex justify-center items-center space-x-2 mt-auto pt-2">
 				<Button variant="subtle" :disabled="currentPage === 1" @click="currentPage--">
-					Prev
+					{{ __('Prev') }}
 				</Button>
 
 				<span class="text-sm text-gray-600">
-					Page {{ currentPage }} of {{ totalPages }}
+					{{ __('Page {0} of {1}', [currentPage, totalPages]) }}
 				</span>
 
 				<Button variant="subtle" :disabled="currentPage === totalPages" @click="currentPage++">
-					Next
+					{{ __('Next') }}
 				</Button>
 			</div>
 		</div>
@@ -86,7 +86,7 @@
 	}">
 		<template #body-title>
 			<div>
-				<h2 class="text-xl font-semibold text-gray-900">Appointment Details</h2>
+				<h2 class="text-xl font-semibold text-gray-900">{{ __('Appointment Details') }}</h2>
 			</div>
 			<div class="py-2 flex items-center justify-between gap-2">
 				<p class="text-sm text-gray-500"># {{ selectedAppointment.name }}</p>
@@ -94,7 +94,7 @@
 					:variant="'outline'"
 					size="sm"
 					:theme="getStatusColor(selectedAppointment.status)">
-					{{ selectedAppointment.status }}
+					{{ __(selectedAppointment.status) }}
 				</Badge>
 			</div>
 		</template>
@@ -110,7 +110,7 @@
 								{{ selectedAppointment.patient_name?.charAt(0)?.toUpperCase() }}
 							</div>
 							<div>
-								<h3 class="text-gray-700 font-medium">Patient</h3>
+								<h3 class="text-gray-700 font-medium">{{ __('Patient') }}</h3>
 								<p class="mt-1 text-lg font-semibold text-gray-900">
 									{{ selectedAppointment.patient_name }}
 								</p>
@@ -123,12 +123,12 @@
 
 					<section class="md:col-start-2 md:row-start-1">
 						<div>
-							<h3 class="text-gray-700 font-medium">When</h3>
+							<h3 class="text-gray-700 font-medium">{{ __('When') }}</h3>
 							<p class="mt-1 text-lg font-semibold text-gray-900">
 								{{ formatDate(selectedAppointment.appointment_date) }}
 							</p>
 							<p class="mt-1 text-sm text-gray-600">
-								{{ selectedAppointment.appointment_time }} ({{ selectedAppointment.duration }} mins)
+								{{ formatTime(selectedAppointment.appointment_time) }} ({{ selectedAppointment.duration }} {{ __('mins') }})
 							</p>
 						</div>
 					</section>
@@ -143,7 +143,7 @@
 								{{ selectedAppointment.practitioner_name?.charAt(0)?.toUpperCase() }}
 							</div>
 							<div>
-								<h3 class="text-gray-700 font-medium">Practitioner</h3>
+								<h3 class="text-gray-700 font-medium">{{ __('Practitioner') }}</h3>
 								<p class="mt-1 text-lg font-semibold text-gray-900">
 									{{ selectedAppointment.practitioner_name }}
 								</p>
@@ -157,15 +157,15 @@
 					<section class="md:col-start-2 md:row-start-2">
 						<div>
 							<div class="flex items-center justify-between">
-								<h3 class="text-gray-700 font-medium">Fee</h3>
+								<h3 class="text-gray-700 font-medium">{{ __('Fee') }}</h3>
 								<div class="flex items-center justify-between gap-2">
 									<Badge :variant="'outline'"
 										:theme="selectedAppointment.invoiced == 1 ? 'green' : 'red'">
-										{{ selectedAppointment.invoiced ? 'Paid' : 'Unpaid' }}
+										{{ selectedAppointment.invoiced ? __('Paid') : __('Unpaid') }}
 									</Badge>
 									<Button v-if="selectedAppointment.ref_sales_invoice" :ref_for="true" theme="gray" size="md"
 										@click="print('Sales Invoice', selectedAppointment.ref_sales_invoice)">
-										<Tooltip :text="'Print Invoice'" placement="top">
+										<Tooltip :text="__('Print Invoice')" placement="top">
 											<slot name="icon">
 												<FeatherIcon :name="'printer'" class="size-4 text-ink-white-7" />
 											</slot>
@@ -186,14 +186,14 @@
 						<div class="flex items-start gap-4 px-2">
 							<div class="w-20"></div>
 							<div>
-								<h3 class="text-gray-700 font-medium">Prescription ID</h3>
+								<h3 class="text-gray-700 font-medium">{{ __('Prescription ID') }}</h3>
 								<div class="flex items-center justify-between gap-10">
 									<p class="mt-1 text-lg font-semibold text-gray-900">
 										{{ selectedAppointment.encounter }}
 									</p>
 									<Button :ref_for="true" theme="gray" size="md"
 										@click="print('Patient Encounter', selectedAppointment.encounter)">
-										<Tooltip :text="'Print Prescription'" placement="top">
+										<Tooltip :text="__('Print Prescription')" placement="top">
 											<slot name="icon">
 												<FeatherIcon :name="'printer'" class="size-4 text-ink-white-7" />
 											</slot>
@@ -218,7 +218,7 @@
 		},
 		actions: [
 			{
-				label: 'OK',
+				label: __('OK'),
 				variant: 'solid',
 			},
 		],
@@ -229,6 +229,7 @@
 import { ref, computed } from 'vue'
 import BookAppointmentModel from '@/components/BookAppointmentModel.vue'
 import { formatCurrency } from "@/utils/formatters"
+import { getLocale } from "@/translation"
 
 import {
 	createResource,
@@ -260,8 +261,8 @@ let get_appointments = createResource({
 		}
 	},
 	onError(error) {
-		dialog_message = error.messages?.[0] || error;
-		dialog_title = "Failed to load appointments";
+		dialog_message.value = error.messages?.[0] || error;
+		dialog_title.value = __('Failed to load appointments');
 		alert_dialog.value = true;
 	}
 });
@@ -314,7 +315,7 @@ function print(doctype, docname) {
 				);
 
 				if (!w) {
-					alert("Please enable pop-ups");
+					alert(__('Please enable pop-ups'));
 					return;
 				}
 			}
@@ -323,8 +324,18 @@ function print(doctype, docname) {
 	get_print_format.fetch();
 }
 
+function formatTime(timeStr) {
+	if (!timeStr) return ''
+
+	const [hours, minutes] = String(timeStr).split(':')
+	const date = new Date()
+	date.setHours(Number(hours), Number(minutes), 0, 0)
+
+	return date.toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })
+}
+
 function formatDate(dateStr) {
-	return new Date(dateStr).toLocaleDateString("en-IN", {
+	return new Date(dateStr).toLocaleDateString(getLocale(), {
 		weekday: "long",
 		year: "numeric",
 		month: "long",

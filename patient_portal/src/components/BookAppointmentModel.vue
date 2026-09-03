@@ -3,7 +3,7 @@
 		size: '6xl',
 	}" :disable-outside-click-to-close="true">
 		<template #body-title>
-			<h3 class="text-ink-gray-8">Book an Appointment</h3>
+			<h3 class="text-ink-gray-8">{{ __('Book an Appointment') }}</h3>
 		</template>
 		<template #body-content>
 			<div class="flex flex-col h-[65vh] border-b">
@@ -65,7 +65,7 @@
 
 							<div class="flex items-center w-full py-5">
 								<div class="flex-grow border-t border-gray-200"></div>
-								<span class="mx-3 text-xs text-gray-400 uppercase tracking-wider">For Patient</span>
+								<span class="mx-3 text-xs text-gray-400 uppercase tracking-wider">{{ __('For Patient') }}</span>
 								<div class="flex-grow border-t border-gray-200"></div>
 							</div>
 
@@ -74,7 +74,7 @@
 									v-model="selectedPatient"
 									type="autocomplete"
 									:options="patientOptions"
-									:placeholder="'Choose a patient'"
+									:placeholder="__('Choose a patient')"
 									size="lg"
 									:disabled="patientOptions.length == 1"
 								/>
@@ -90,7 +90,7 @@
 						<div class="flex flex-col items-center justify-center h-full min-h-[350px]">
 							<div class="flex flex-col items-center justify-center w-full max-w-md">
 								<div v-if="slots && slots.length > 0" class="flex flex-col items-center py-3 px-4">
-									<h3 class="text-md font-semibold mb-3 text-center">Available Slots</h3>
+									<h3 class="text-md font-semibold mb-3 text-center">{{ __('Available Slots') }}</h3>
 									<div class="flex justify-center mb-2 w-full">
 										<Select
 											:options="timezones"
@@ -101,17 +101,17 @@
 								</div>
 
 								<div v-else class="flex items-center justify-center text-gray-500 text-sm h-24">
-									No slots available
+									{{ __('No slots available') }}
 								</div>
 
 								<!-- Scrollable slots list -->
 								<div v-if="slots && slots.length > 0" class="overflow-y-auto max-h-80 px-4 py-2 w-full">
-									<div v-for="(group, label) in groupedSlots" :key="label">
-										<div v-if="group && group.length > 0" class="mb-4">
-											<h4 class="text-sm font-medium text-gray-600 mb-2">{{ label }}</h4>
+									<div v-for="group in groupedSlots" :key="group.name">
+										<div v-if="group.slots && group.slots.length > 0" class="mb-4">
+											<h4 class="text-sm font-medium text-gray-600 mb-2">{{ group.label }}</h4>
 											<div class="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2">
 												<Button
-													v-for="slot in group"
+													v-for="slot in group.slots"
 													:key="slot.slot"
 													size="md"
 													:label="slot.formattedTime"
@@ -141,8 +141,8 @@
 					</div>
 					<div v-if="success" class="flex flex-col items-center justify-center h-[99%] text-center space-y-4 animate-fade-in">
 						<FeatherIcon name="check-circle" class="text-green-500 w-20 h-20" />
-						<h2 class="text-xl font-semibold text-gray-800">Payment Successful</h2>
-						<p class="text-gray-600">Your appointment with {{ selectedPractitioner.practitioner_name }} has been confirmed.</p>
+						<h2 class="text-xl font-semibold text-gray-800">{{ __('Payment Successful') }}</h2>
+						<p class="text-gray-600">{{ __('Your appointment with {0} has been confirmed.', [selectedPractitioner.practitioner_name]) }}</p>
 					</div>
 				</div>
 				<div class="min-h-[10px]">
@@ -159,7 +159,7 @@
 					variant="subtle"
 					@click="goToPrevious()"
 				>
-					Previous
+					{{ __('Previous') }}
 				</Button>
 				<Button
 					v-if="!show_calendar && !booked && !success"
@@ -168,7 +168,7 @@
 					variant="solid"
 					@click="goToNext()"
 				>
-					Next
+					{{ __('Next') }}
 				</Button>
 				<Button
 					v-if="show_calendar && !booked && !success"
@@ -178,7 +178,7 @@
 					:loading="bookingLoading"
 					@click="bookSlot()"
 				>
-					Book
+					{{ __('Book') }}
 				</Button>
 				<Button
 					v-if="booked && !success"
@@ -186,7 +186,7 @@
 					variant="solid"
 					@click="generatePaymentLink()"
 				>
-					Pay
+					{{ __('Pay') }}
 				</Button>
 				<Button
 					v-if="success"
@@ -194,7 +194,7 @@
 					variant="solid"
 					@click="reload_appointments"
 				>
-					Close
+					{{ __('Close') }}
 				</Button>
 			</div>
 		</template>
@@ -211,7 +211,7 @@
 			},
 			actions: [
 				{
-					label: 'OK',
+					label: __('OK'),
 					variant: 'solid',
 				},
 			],
@@ -521,10 +521,14 @@ watch(selectedTimezone, async (timezone) => {
 
 // Group slots by time of day
 const groupedSlots = computed(() => {
-	let groups = { "Morning": [], "Afternoon": [], "Evening": [] }
+	let groups = { Morning: [], Afternoon: [], Evening: [] }
 
 	if (!slots.value || !selectedTimezone.value) {
-		return groups;
+		return [
+			{ name: 'morning', label: __('Morning'), slots: groups.Morning },
+			{ name: 'afternoon', label: __('Afternoon'), slots: groups.Afternoon },
+			{ name: 'evening', label: __('Evening'), slots: groups.Evening },
+		];
 	}
 
 	slots.value.forEach(slot => {
@@ -545,7 +549,11 @@ const groupedSlots = computed(() => {
 		else groups.Evening.push(slotes_with_formatted);
 	});
 
-	return groups;
+	return [
+		{ name: 'morning', label: __('Morning'), slots: groups.Morning },
+		{ name: 'afternoon', label: __('Afternoon'), slots: groups.Afternoon },
+		{ name: 'evening', label: __('Evening'), slots: groups.Evening },
+	];
 });
 
 const timezones = Intl.supportedValuesOf("timeZone")
