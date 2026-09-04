@@ -30,3 +30,4 @@ healthcare.patches.v16_0.set_template_dn_and_template_dt_in_appointment
 healthcare.patches.v15_0.add_discharge_summary_to_patient_history
 healthcare.patches.v15_0.add_custom_fields_if_not_exists
 healthcare.patches.v16_0.create_emergency_masters
+healthcare.patches.v16_0.rebuild_medication_class_tree
