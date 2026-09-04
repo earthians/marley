@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "hash",
+ "creation": "2026-09-04 11:20:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "patient",
+  "patient_name",
+  "column_break_patient",
+  "status",
+  "recorded_on",
+  "substance_section",
+  "substance_type",
+  "substance",
+  "column_break_substance",
+  "severity",
+  "details_section",
+  "reaction",
+  "note"
+ ],
+ "fields": [
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_patient",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nInactive",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "recorded_on",
+   "fieldtype": "Date",
+   "label": "Recorded On"
+  },
+  {
+   "fieldname": "substance_section",
+   "fieldtype": "Section Break",
+   "label": "Substance"
+  },
+  {
+   "default": "Medication",
+   "description": "Record against a Medication Class to cover every medication in that class, and every class under it",
+   "fieldname": "substance_type",
+   "fieldtype": "Select",
+   "label": "Substance Type",
+   "options": "Medication\nMedication Class",
+   "reqd": 1
+  },
+  {
+   "fieldname": "substance",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Substance",
+   "options": "substance_type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_substance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Severity",
+   "options": "\nMild\nModerate\nSevere"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "description": "How the patient reacted, for example rash, angioedema, anaphylaxis",
+   "fieldname": "reaction",
+   "fieldtype": "Small Text",
+   "label": "Reaction"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-04 17:16:36.828954",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Patient Allergy",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "patient, substance",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient",
+ "track_changes": 1
+}

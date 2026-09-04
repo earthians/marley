@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-09-04 11:20:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "severity",
+  "column_break_header",
+  "disabled",
+  "interactants_section",
+  "interactant_a_type",
+  "interactant_a",
+  "column_break_interactants",
+  "interactant_b_type",
+  "interactant_b",
+  "advice_section",
+  "advice"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Title",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "default": "Major",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Severity",
+   "options": "Contraindicated\nMajor\nModerate\nMinor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "description": "Record against a Medication Class to cover every medication in that class, and every class under it",
+   "fieldname": "interactants_section",
+   "fieldtype": "Section Break",
+   "label": "Interactants"
+  },
+  {
+   "default": "Medication Class",
+   "fieldname": "interactant_a_type",
+   "fieldtype": "Select",
+   "label": "Interactant A Type",
+   "options": "Medication\nMedication Class",
+   "reqd": 1
+  },
+  {
+   "fieldname": "interactant_a",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Interactant A",
+   "options": "interactant_a_type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_interactants",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Medication Class",
+   "fieldname": "interactant_b_type",
+   "fieldtype": "Select",
+   "label": "Interactant B Type",
+   "options": "Medication\nMedication Class",
+   "reqd": 1
+  },
+  {
+   "fieldname": "interactant_b",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Interactant B",
+   "options": "interactant_b_type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "advice_section",
+   "fieldtype": "Section Break",
+   "label": "Advice"
+  },
+  {
+   "description": "Shown to the prescriber when this interaction is detected",
+   "fieldname": "advice",
+   "fieldtype": "Small Text",
+   "label": "Advice"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-04 11:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Medication Interaction",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Physician"
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title",
+ "track_changes": 1
+}
