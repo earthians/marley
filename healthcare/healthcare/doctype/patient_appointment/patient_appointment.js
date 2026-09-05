@@ -289,7 +289,7 @@ frappe.ui.form.on("Patient Appointment", {
 						await frappe.call(
 							"healthcare.healthcare.doctype.fee_validity.fee_validity.get_fee_validity",
 							{
-								appointment_name: frm.doc.name,
+								reference_dn: frm.doc.name,
 								date: frm.doc.appointment_date,
 								ignore_status: true,
 							},
@@ -350,7 +350,7 @@ frappe.ui.form.on("Patient Appointment", {
 					.then(val => {
 						frappe.call({
 							method: "healthcare.healthcare.doctype.fee_validity.fee_validity.check_fee_validity",
-							args: { appointment: frm.doc },
+							args: { visit: frm.doc },
 							callback: r => {
 								if (val && !r.message && !frm.doc.invoiced) {
 									make_payment(frm, val);
@@ -807,7 +807,7 @@ let check_and_set_availability = function (frm) {
 						.then(val => {
 							frappe.call({
 								method: "healthcare.healthcare.doctype.fee_validity.fee_validity.check_fee_validity",
-								args: { appointment: frm.doc },
+								args: { visit: frm.doc },
 								callback: r => {
 									if (val && !r.message && !frm.doc.invoiced) {
 										make_payment(frm, val);
