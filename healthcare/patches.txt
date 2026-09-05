@@ -31,3 +31,4 @@ healthcare.patches.v15_0.add_discharge_summary_to_patient_history
 healthcare.patches.v15_0.add_custom_fields_if_not_exists
 healthcare.patches.v16_0.create_emergency_masters
 healthcare.patches.v16_0.rebuild_medication_class_tree
+healthcare.patches.v16_0.create_allergy_and_medication_class_masters
