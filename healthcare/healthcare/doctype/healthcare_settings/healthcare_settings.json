@@ -20,6 +20,7 @@
   "enable_free_follow_ups",
   "max_visits",
   "valid_days",
+  "apply_free_follow_ups_on_encounters",
   "medication_alerts_section",
   "enable_medication_alerts",
   "contraindicated_alert_action",
@@ -119,6 +120,14 @@
    "fieldtype": "Int",
    "label": "Valid Number of Days",
    "mandatory_depends_on": "eval:doc.enable_free_follow_ups == 1"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.enable_free_follow_ups == 1",
+   "description": "Apply free follow ups to Patient Encounters created without an Appointment",
+   "fieldname": "apply_free_follow_ups_on_encounters",
+   "fieldtype": "Check",
+   "label": "Apply Free Follow-ups on Encounters"
   },
   {
    "description": "You can configure default Items for billing consultation charges, procedure consumption items and inpatient visits",
@@ -584,7 +593,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-10 10:00:00.000000",
+ "modified": "2026-09-11 19:06:48.509344",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
