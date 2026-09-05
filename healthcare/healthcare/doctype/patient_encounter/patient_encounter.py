@@ -10,6 +10,7 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_days, get_link_to_form, getdate
 
+from healthcare.healthcare.doctype.medication.medication import validate_medication_is_orderable
 from healthcare.healthcare.utils import get_medical_codes
 
 
@@ -176,6 +177,10 @@ class PatientEncounter(Document):
 					)
 					if medication:
 						item.medication = medication
+
+			validate_medication_is_orderable(
+				item.medication, _("Row #{0} (Drug Prescription)").format(item.idx)
+			)
 
 	def validate_sessions(self, table, label):
 		"""validate sessions in child tables"""

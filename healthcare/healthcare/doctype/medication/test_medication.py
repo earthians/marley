@@ -4,6 +4,7 @@
 import frappe
 from frappe.utils.make_random import get_random
 
+from healthcare.healthcare.doctype.medication.medication import validate_medication_is_orderable
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -21,6 +22,33 @@ class TestMedication(HealthcareTestSuite):
 			),
 			25,
 		)
+
+	def test_ingredient_only_medication_cannot_link_an_item(self):
+		medication = create_ingredient_medication("_Test Clavulanic Acid")
+		medication.append("linked_items", {"item_code": "_Test Clavulanic Acid", "item_group": "Drug"})
+
+		self.assertRaises(frappe.ValidationError, medication.save)
+
+	def test_ingredient_only_medication_cannot_be_ordered(self):
+		medication = create_ingredient_medication("_Test Carbidopa")
+
+		self.assertRaises(frappe.ValidationError, validate_medication_is_orderable, medication.name, "Row #1")
+
+	def test_orderable_medication_passes_the_order_guard(self):
+		medication = create_ingredient_medication("_Test Levodopa", is_orderable=1)
+
+		self.assertIsNone(validate_medication_is_orderable(medication.name, "Row #1"))
+
+
+def create_ingredient_medication(generic_name, is_orderable=0):
+	medication = frappe.new_doc("Medication")
+	medication.generic_name = generic_name
+	medication.medication_class = "Analgesics"
+	medication.strength = 125
+	medication.strength_uom = "Milligram"
+	medication.dosage_form = "Tablet"
+	medication.is_orderable = is_orderable
+	return medication.insert()
 
 
 def create_medication(medication, is_billable=False, price_list=None):
