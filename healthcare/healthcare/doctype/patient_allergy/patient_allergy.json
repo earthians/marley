@@ -87,11 +87,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Decides how strongly a prescription of this substance is alerted",
    "fieldname": "severity",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Severity",
-   "options": "\nMild\nModerate\nSevere"
+   "options": "Mild\nModerate\nSevere",
+   "reqd": 1
   },
   {
    "fieldname": "details_section",
@@ -111,7 +113,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-05 10:00:00.000000",
+ "modified": "2026-09-05 21:30:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Allergy",

@@ -10,6 +10,8 @@ from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
 from frappe.utils import get_link_to_form
 
+from healthcare.healthcare.doctype.medication_class.medication_class import get_ancestor_map
+
 
 class Medication(Document):
 	def after_insert(self):
@@ -211,3 +213,88 @@ def validate_medication_is_orderable(medication, label):
 		),
 		title=_("Not Orderable"),
 	)
+
+
+def expand(medication: str) -> set[tuple[str, str]]:
+	"""Everything one medication should be matched against"""
+	return expand_many([medication])[medication]
+
+
+def expand_many(medications: list[str]) -> dict[str, set[tuple[str, str]]]:
+	"""Everything each medication should be matched against: itself, the medications it is
+	made of, and every class those sit under.
+
+	Returned as (doctype, name) pairs, the same shape an allergy substance or an interactant
+	is recorded in, so a check is a set intersection. Expanded as a batch because a save is
+	checked against the patient's whole current list, and a query per medication does not
+	scale on a busy round.
+	"""
+	medications = [name for name in dict.fromkeys(medications) if name]
+	if not medications:
+		return {}
+
+	ingredients = get_ingredient_map(medications)
+	families = {name: collect_family(name, ingredients) for name in medications}
+	classes = get_medication_classes({n for family in families.values() for n in family})
+
+	return {name: build_interactants(family, classes) for name, family in families.items()}
+
+
+def build_interactants(family, classes):
+	interactants = {("Medication", name) for name in family}
+	ancestors = get_ancestor_map()
+
+	for name in family:
+		medication_class = classes.get(name)
+		if not medication_class:
+			continue
+		interactants.add(("Medication Class", medication_class))
+		interactants.update(("Medication Class", a) for a in ancestors.get(medication_class, []))
+
+	return interactants
+
+
+def collect_family(medication, ingredients):
+	"""A medication and, for a combination, every medication beneath it"""
+	family, pending = set(), [medication]
+
+	while pending:
+		name = pending.pop()
+		if name in family:
+			continue
+		family.add(name)
+		pending.extend(ingredients.get(name, []))
+
+	return family
+
+
+def get_ingredient_map(medications):
+	"""parent medication -> its ingredient medications, followed to any depth"""
+	ingredients, frontier, seen = {}, set(medications), set()
+
+	while frontier:
+		seen |= frontier
+		rows = frappe.get_all(
+			"Medication Ingredient",
+			filters={"parent": ("in", list(frontier)), "parenttype": "Medication"},
+			fields=["parent", "medication"],
+		)
+		frontier = set()
+
+		for row in rows:
+			if not row.medication:
+				continue
+			ingredients.setdefault(row.parent, []).append(row.medication)
+			if row.medication not in seen:
+				frontier.add(row.medication)
+
+	return ingredients
+
+
+def get_medication_classes(medications):
+	rows = frappe.get_all(
+		"Medication",
+		filters={"name": ("in", list(medications))},
+		fields=["name", "medication_class"],
+	)
+	return {row.name: row.medication_class for row in rows if row.medication_class}
