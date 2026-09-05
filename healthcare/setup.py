@@ -5,6 +5,11 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 from erpnext.setup.utils import insert_record
 
+from healthcare.healthcare.doctype.allergy.allergy_seed import create_allergies
+from healthcare.healthcare.doctype.medication_class.medication_class_seed import (
+	create_medication_classes,
+)
+
 
 data = {
 	"desktop_icons": [
@@ -327,6 +332,8 @@ def create_default_root_service_units():
 def create_custom_records():
 	create_medical_departments()
 	create_antibiotics()
+	create_medication_classes()
+	create_allergies()
 	create_lab_test_uom()
 	create_duration()
 	create_dosage()
