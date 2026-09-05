@@ -20,6 +20,8 @@ class Medication(Document):
 			self.update_item_and_item_price()
 
 	def validate(self):
+		self.validate_orderable()
+
 		if not self.price_list and self.linked_items:
 			price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
 			if price_list:
@@ -44,6 +46,17 @@ class Medication(Document):
 							"Item <b>{}</b> has been already used in <b><a href='/app/medication/{}'>Medication</a></b>"
 						).format(item.item_code, exist_medication)
 					)
+
+	def validate_orderable(self):
+		"""An ingredient-only record must stay unlinked to an Item, so it can never be
+		prescribed, searched for or billed. It remains visible to allergy and interaction checks"""
+		if self.is_orderable or not self.linked_items:
+			return
+
+		frappe.throw(
+			_("{0} is not orderable and cannot be linked to an Item").format(frappe.bold(self.name)),
+			title=_("Not Orderable"),
+		)
 
 	def update_item_and_item_price(self):
 		for item in self.linked_items:
@@ -184,3 +197,17 @@ def get_children(parent=None, is_root=False, **filters):
 			medication_item.currency = frappe.db.get_single_value("Global Defaults", "default_currency")
 
 		return medication_items
+
+
+def validate_medication_is_orderable(medication, label):
+	"""Ordering paths accept only orderable medications. The link filter is a browser
+	convenience, this is the guard that holds for imports and API writes"""
+	if not medication or frappe.db.get_value("Medication", medication, "is_orderable"):
+		return
+
+	frappe.throw(
+		_("{0}: {1} exists only as an ingredient and cannot be ordered").format(
+			label, frappe.bold(medication)
+		),
+		title=_("Not Orderable"),
+	)
