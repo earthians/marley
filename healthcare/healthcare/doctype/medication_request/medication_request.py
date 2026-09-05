@@ -6,6 +6,7 @@ import frappe
 from frappe import _
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
+from healthcare.healthcare.doctype.medication.medication import validate_medication_is_orderable
 
 
 class MedicationRequest(ServiceRequestController):
@@ -25,6 +26,7 @@ class MedicationRequest(ServiceRequestController):
 
 	def set_order_details(self):
 		if self.medication:
+			validate_medication_is_orderable(self.medication, _("Medication"))
 			medication = frappe.get_doc("Medication", self.medication)
 			# set item code
 			self.item_code = medication.get("item")
