@@ -13,6 +13,7 @@
   "abbr",
   "national_drug_code",
   "is_combination",
+  "is_orderable",
   "column_break_4",
   "disabled",
   "strength",
@@ -212,11 +213,18 @@
    "fieldtype": "Link",
    "label": "Price List",
    "options": "Price List"
+  },
+  {
+   "default": "1",
+   "description": "Uncheck for a record that exists only as an ingredient of a combination. It stays available for allergy and interaction checking, but cannot be prescribed or linked to an Item",
+   "fieldname": "is_orderable",
+   "fieldtype": "Check",
+   "label": "Is Orderable"
   }
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-02-20 19:58:49.408370",
+ "modified": "2026-09-05 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
