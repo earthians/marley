@@ -12,10 +12,10 @@
   "column_break_patient",
   "status",
   "recorded_on",
-  "substance_section",
-  "substance_type",
-  "substance",
-  "column_break_substance",
+  "allergy_section",
+  "allergy",
+  "allergy_category",
+  "column_break_allergy",
   "severity",
   "details_section",
   "reaction",
@@ -60,30 +60,30 @@
    "label": "Recorded On"
   },
   {
-   "fieldname": "substance_section",
+   "fieldname": "allergy_section",
    "fieldtype": "Section Break",
-   "label": "Substance"
+   "label": "Allergy"
   },
   {
-   "default": "Medication",
-   "description": "Record against a Medication Class to cover every medication in that class, and every class under it",
-   "fieldname": "substance_type",
-   "fieldtype": "Select",
-   "label": "Substance Type",
-   "options": "Medication\nMedication Class",
-   "reqd": 1
-  },
-  {
-   "fieldname": "substance",
-   "fieldtype": "Dynamic Link",
+   "fieldname": "allergy",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Substance",
-   "options": "substance_type",
+   "in_standard_filter": 1,
+   "label": "Allergy",
+   "options": "Allergy",
    "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "column_break_substance",
+   "fetch_from": "allergy.category",
+   "fieldname": "allergy_category",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_allergy",
    "fieldtype": "Column Break"
   },
   {
@@ -111,7 +111,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-04 17:16:36.828954",
+ "modified": "2026-09-05 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Allergy",
@@ -163,7 +163,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "patient, substance",
+ "search_fields": "patient, allergy",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
