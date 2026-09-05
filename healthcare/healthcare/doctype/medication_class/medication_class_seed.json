@@ -1,0 +1,301 @@
+[
+  {
+    "medication_class": "Anti-infectives",
+    "children": [
+      {
+        "medication_class": "Antibacterials",
+        "children": [
+          {
+            "medication_class": "Beta-Lactam Antibacterials",
+            "children": [
+              { "medication_class": "Penicillins" },
+              { "medication_class": "Cephalosporins" },
+              { "medication_class": "Carbapenems" },
+              { "medication_class": "Monobactams" },
+              { "medication_class": "Beta-Lactamase Inhibitors" }
+            ]
+          },
+          { "medication_class": "Macrolides" },
+          { "medication_class": "Tetracyclines" },
+          { "medication_class": "Aminoglycosides" },
+          { "medication_class": "Quinolones" },
+          { "medication_class": "Sulfonamides and Trimethoprim" },
+          { "medication_class": "Glycopeptides" },
+          { "medication_class": "Lincosamides" },
+          { "medication_class": "Nitroimidazoles" },
+          { "medication_class": "Oxazolidinones" },
+          { "medication_class": "Polymyxins" },
+          { "medication_class": "Antimycobacterials" }
+        ]
+      },
+      { "medication_class": "Antifungals" },
+      { "medication_class": "Antivirals" },
+      { "medication_class": "Antiprotozoals" },
+      { "medication_class": "Anthelmintics" },
+      { "medication_class": "Antimalarials" }
+    ]
+  },
+  {
+    "medication_class": "Cardiovascular Agents",
+    "children": [
+      {
+        "medication_class": "Antihypertensives",
+        "children": [
+          { "medication_class": "ACE Inhibitors" },
+          { "medication_class": "Angiotensin II Receptor Blockers" },
+          { "medication_class": "Calcium Channel Blockers" },
+          { "medication_class": "Beta Blockers" },
+          { "medication_class": "Alpha Blockers" },
+          { "medication_class": "Centrally Acting Antihypertensives" },
+          { "medication_class": "Direct Vasodilators" }
+        ]
+      },
+      {
+        "medication_class": "Diuretics",
+        "children": [
+          { "medication_class": "Loop Diuretics" },
+          { "medication_class": "Thiazide Diuretics" },
+          { "medication_class": "Potassium Sparing Diuretics" },
+          { "medication_class": "Carbonic Anhydrase Inhibitors" }
+        ]
+      },
+      {
+        "medication_class": "Lipid Lowering Agents",
+        "children": [
+          { "medication_class": "Statins" },
+          { "medication_class": "Fibrates" },
+          { "medication_class": "Bile Acid Sequestrants" },
+          { "medication_class": "Cholesterol Absorption Inhibitors" }
+        ]
+      },
+      { "medication_class": "Antiarrhythmics" },
+      { "medication_class": "Nitrates" },
+      { "medication_class": "Cardiac Glycosides" },
+      { "medication_class": "Inotropes and Vasopressors" }
+    ]
+  },
+  {
+    "medication_class": "Central Nervous System Agents",
+    "children": [
+      {
+        "medication_class": "Antidepressants",
+        "children": [
+          { "medication_class": "Selective Serotonin Reuptake Inhibitors" },
+          { "medication_class": "Serotonin Norepinephrine Reuptake Inhibitors" },
+          { "medication_class": "Tricyclic Antidepressants" },
+          { "medication_class": "Monoamine Oxidase Inhibitors" }
+        ]
+      },
+      {
+        "medication_class": "Antipsychotics",
+        "children": [
+          { "medication_class": "Typical Antipsychotics" },
+          { "medication_class": "Atypical Antipsychotics" }
+        ]
+      },
+      {
+        "medication_class": "Anxiolytics and Sedatives",
+        "children": [
+          { "medication_class": "Benzodiazepines" },
+          { "medication_class": "Non-Benzodiazepine Hypnotics" },
+          { "medication_class": "Barbiturates" }
+        ]
+      },
+      {
+        "medication_class": "Antimigraine Agents",
+        "children": [
+          { "medication_class": "Triptans" },
+          { "medication_class": "Ergot Alkaloids" }
+        ]
+      },
+      { "medication_class": "Antiepileptics" },
+      { "medication_class": "Antiparkinson Agents" },
+      { "medication_class": "Central Nervous System Stimulants" },
+      { "medication_class": "Anti-Dementia Agents" }
+    ]
+  },
+  {
+    "medication_class": "Analgesics and Anti-inflammatory Agents",
+    "children": [
+      {
+        "medication_class": "Non-Steroidal Anti-Inflammatory Drugs",
+        "children": [
+          { "medication_class": "Salicylates" },
+          { "medication_class": "Propionic Acid Derivatives" },
+          { "medication_class": "Acetic Acid Derivatives" },
+          { "medication_class": "Oxicams" },
+          { "medication_class": "Fenamates" },
+          { "medication_class": "COX-2 Inhibitors" }
+        ]
+      },
+      { "medication_class": "Opioid Analgesics" },
+      { "medication_class": "Non-Opioid Analgesics" },
+      { "medication_class": "Antigout Agents" },
+      { "medication_class": "Disease Modifying Antirheumatic Drugs" }
+    ]
+  },
+  {
+    "medication_class": "Respiratory Agents",
+    "children": [
+      {
+        "medication_class": "Bronchodilators",
+        "children": [
+          { "medication_class": "Beta-2 Agonists" },
+          { "medication_class": "Anticholinergic Bronchodilators" },
+          { "medication_class": "Xanthines" }
+        ]
+      },
+      { "medication_class": "Inhaled Corticosteroids" },
+      { "medication_class": "Leukotriene Receptor Antagonists" },
+      { "medication_class": "Antihistamines" },
+      { "medication_class": "Antitussives and Expectorants" }
+    ]
+  },
+  {
+    "medication_class": "Gastrointestinal Agents",
+    "children": [
+      {
+        "medication_class": "Antacids and Antiulcerants",
+        "children": [
+          { "medication_class": "Proton Pump Inhibitors" },
+          { "medication_class": "H2 Receptor Antagonists" },
+          { "medication_class": "Antacids" }
+        ]
+      },
+      { "medication_class": "Antiemetics" },
+      { "medication_class": "Laxatives" },
+      { "medication_class": "Antidiarrhoeals" },
+      { "medication_class": "Antispasmodics" },
+      { "medication_class": "Aminosalicylates" }
+    ]
+  },
+  {
+    "medication_class": "Endocrine and Metabolic Agents",
+    "children": [
+      {
+        "medication_class": "Antidiabetic Agents",
+        "children": [
+          { "medication_class": "Insulins" },
+          { "medication_class": "Biguanides" },
+          { "medication_class": "Sulfonylureas" },
+          { "medication_class": "Thiazolidinediones" },
+          { "medication_class": "DPP-4 Inhibitors" },
+          { "medication_class": "SGLT2 Inhibitors" },
+          { "medication_class": "GLP-1 Receptor Agonists" }
+        ]
+      },
+      {
+        "medication_class": "Thyroid Agents",
+        "children": [
+          { "medication_class": "Thyroid Hormones" },
+          { "medication_class": "Antithyroid Agents" }
+        ]
+      },
+      { "medication_class": "Corticosteroids" },
+      { "medication_class": "Sex Hormones" },
+      { "medication_class": "Bisphosphonates" },
+      { "medication_class": "Pituitary and Hypothalamic Hormones" }
+    ]
+  },
+  {
+    "medication_class": "Haematological Agents",
+    "children": [
+      {
+        "medication_class": "Anticoagulants",
+        "children": [
+          { "medication_class": "Vitamin K Antagonists" },
+          { "medication_class": "Heparins" },
+          { "medication_class": "Direct Oral Anticoagulants" }
+        ]
+      },
+      { "medication_class": "Antiplatelet Agents" },
+      { "medication_class": "Thrombolytics" },
+      { "medication_class": "Haemostatics" },
+      { "medication_class": "Haematopoietic Agents" }
+    ]
+  },
+  {
+    "medication_class": "Antineoplastic and Immunomodulating Agents",
+    "children": [
+      {
+        "medication_class": "Cytotoxic Agents",
+        "children": [
+          { "medication_class": "Alkylating Agents" },
+          { "medication_class": "Antimetabolites" },
+          { "medication_class": "Cytotoxic Antibiotics" },
+          { "medication_class": "Platinum Compounds" },
+          { "medication_class": "Vinca Alkaloids" },
+          { "medication_class": "Taxanes" }
+        ]
+      },
+      { "medication_class": "Targeted Antineoplastic Agents" },
+      { "medication_class": "Monoclonal Antibodies" },
+      { "medication_class": "Immunosuppressants" }
+    ]
+  },
+  {
+    "medication_class": "Musculoskeletal Agents",
+    "children": [
+      { "medication_class": "Muscle Relaxants" },
+      { "medication_class": "Neuromuscular Blocking Agents" }
+    ]
+  },
+  {
+    "medication_class": "Anaesthetic Agents",
+    "children": [
+      {
+        "medication_class": "Local Anaesthetics",
+        "children": [
+          { "medication_class": "Amide Local Anaesthetics" },
+          { "medication_class": "Ester Local Anaesthetics" }
+        ]
+      },
+      { "medication_class": "General Anaesthetics" }
+    ]
+  },
+  {
+    "medication_class": "Dermatological Agents",
+    "children": [
+      { "medication_class": "Topical Corticosteroids" },
+      { "medication_class": "Topical Antifungals" },
+      { "medication_class": "Topical Antibacterials" },
+      { "medication_class": "Retinoids" },
+      { "medication_class": "Emollients and Keratolytics" },
+      { "medication_class": "Antiseptics and Disinfectants" }
+    ]
+  },
+  {
+    "medication_class": "Ophthalmic and Otological Agents",
+    "children": [
+      { "medication_class": "Ophthalmic Anti-infectives" },
+      { "medication_class": "Antiglaucoma Agents" },
+      { "medication_class": "Ophthalmic Anti-inflammatories" }
+    ]
+  },
+  {
+    "medication_class": "Genitourinary Agents",
+    "children": [
+      { "medication_class": "Urinary Antispasmodics" },
+      { "medication_class": "Benign Prostatic Hyperplasia Agents" },
+      { "medication_class": "Erectile Dysfunction Agents" },
+      { "medication_class": "Uterotonics and Tocolytics" }
+    ]
+  },
+  {
+    "medication_class": "Diagnostic Agents",
+    "children": [
+      { "medication_class": "Iodinated Contrast Media" },
+      { "medication_class": "Gadolinium Contrast Media" },
+      { "medication_class": "Radiopharmaceuticals" }
+    ]
+  },
+  {
+    "medication_class": "Antidotes and Detoxifying Agents"
+  },
+  {
+    "medication_class": "Vitamins and Minerals"
+  },
+  {
+    "medication_class": "Intravenous Fluids and Electrolytes"
+  }
+]
