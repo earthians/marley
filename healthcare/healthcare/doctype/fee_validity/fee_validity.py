@@ -66,16 +66,11 @@ def create_fee_validity(visit):
 
 	settings = frappe.get_single("Healthcare Settings")
 	valid_days, max_visits = settings.valid_days, settings.max_visits
-	pract_enabled = False
-	if visit.practitioner:
-		pract_enabled = frappe.get_cached_value(
-			"Healthcare Practitioner", visit.practitioner, "enable_free_follow_ups"
+	# a visit always has a practitioner here, free follow ups are never enabled without one
+	if frappe.get_cached_value("Healthcare Practitioner", visit.practitioner, "enable_free_follow_ups"):
+		valid_days, max_visits = frappe.get_cached_value(
+			"Healthcare Practitioner", visit.practitioner, ["valid_days", "max_visits"]
 		)
-
-		if pract_enabled:
-			valid_days, max_visits = frappe.get_cached_value(
-				"Healthcare Practitioner", visit.practitioner, ["valid_days", "max_visits"]
-			)
 
 	visit_date = get_visit_date(visit)
 
