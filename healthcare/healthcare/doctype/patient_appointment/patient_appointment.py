@@ -24,6 +24,7 @@ from erpnext.setup.doctype.employee.employee import is_holiday
 
 from healthcare.healthcare.api.patient_portal import update_payment_record
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
+	cancel_fee_validity,
 	check_fee_validity,
 	get_fee_validity,
 	manage_fee_validity,
@@ -667,12 +668,10 @@ def cancel_appointment(appointment_id):
 			msg = _("Appointment Cancelled. Please review and cancel the invoice {0}").format(
 				sales_invoice.name
 			)
-		fee_validity = frappe.db.get_value("Fee Validity", {"patient_appointment": appointment.name})
-		if fee_validity:
-			frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
+		cancel_fee_validity(appointment)
 
 	else:
-		fee_validity = manage_fee_validity(appointment)
+		fee_validity = cancel_fee_validity(appointment)
 		msg = _("Appointment Cancelled.")
 		if fee_validity:
 			msg += _("Fee Validity {0} updated.").format(fee_validity.name)
