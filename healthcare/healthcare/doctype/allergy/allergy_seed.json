@@ -1,0 +1,632 @@
+[
+ {
+  "allergy_name": "Penicillin",
+  "category": "Medication",
+  "substance": "Penicillins"
+ },
+ {
+  "allergy_name": "Cephalosporin",
+  "category": "Medication",
+  "substance": "Cephalosporins"
+ },
+ {
+  "allergy_name": "Carbapenem",
+  "category": "Medication",
+  "substance": "Carbapenems"
+ },
+ {
+  "allergy_name": "Monobactam",
+  "category": "Medication",
+  "substance": "Monobactams"
+ },
+ {
+  "allergy_name": "Sulfonamide Antibacterial",
+  "category": "Medication",
+  "substance": "Sulfonamides and Trimethoprim"
+ },
+ {
+  "allergy_name": "Macrolide",
+  "category": "Medication",
+  "substance": "Macrolides"
+ },
+ {
+  "allergy_name": "Tetracycline",
+  "category": "Medication",
+  "substance": "Tetracyclines"
+ },
+ {
+  "allergy_name": "Aminoglycoside",
+  "category": "Medication",
+  "substance": "Aminoglycosides"
+ },
+ {
+  "allergy_name": "Quinolone",
+  "category": "Medication",
+  "substance": "Quinolones"
+ },
+ {
+  "allergy_name": "Glycopeptide",
+  "category": "Medication",
+  "substance": "Glycopeptides"
+ },
+ {
+  "allergy_name": "Lincosamide",
+  "category": "Medication",
+  "substance": "Lincosamides"
+ },
+ {
+  "allergy_name": "Nitroimidazole",
+  "category": "Medication",
+  "substance": "Nitroimidazoles"
+ },
+ {
+  "allergy_name": "Oxazolidinone",
+  "category": "Medication",
+  "substance": "Oxazolidinones"
+ },
+ {
+  "allergy_name": "Polymyxin",
+  "category": "Medication",
+  "substance": "Polymyxins"
+ },
+ {
+  "allergy_name": "Antimycobacterial",
+  "category": "Medication",
+  "substance": "Antimycobacterials"
+ },
+ {
+  "allergy_name": "Antifungal",
+  "category": "Medication",
+  "substance": "Antifungals"
+ },
+ {
+  "allergy_name": "Antiviral",
+  "category": "Medication",
+  "substance": "Antivirals"
+ },
+ {
+  "allergy_name": "Antimalarial",
+  "category": "Medication",
+  "substance": "Antimalarials"
+ },
+ {
+  "allergy_name": "Anthelmintic",
+  "category": "Medication",
+  "substance": "Anthelmintics"
+ },
+ {
+  "allergy_name": "Non-Steroidal Anti-Inflammatory Drug",
+  "category": "Medication",
+  "substance": "Non-Steroidal Anti-Inflammatory Drugs"
+ },
+ {
+  "allergy_name": "Salicylate",
+  "category": "Medication",
+  "substance": "Salicylates"
+ },
+ {
+  "allergy_name": "Propionic Acid Derivative",
+  "category": "Medication",
+  "substance": "Propionic Acid Derivatives"
+ },
+ {
+  "allergy_name": "Acetic Acid Derivative",
+  "category": "Medication",
+  "substance": "Acetic Acid Derivatives"
+ },
+ {
+  "allergy_name": "Oxicam",
+  "category": "Medication",
+  "substance": "Oxicams"
+ },
+ {
+  "allergy_name": "COX-2 Inhibitor",
+  "category": "Medication",
+  "substance": "COX-2 Inhibitors"
+ },
+ {
+  "allergy_name": "Opioid Analgesic",
+  "category": "Medication",
+  "substance": "Opioid Analgesics"
+ },
+ {
+  "allergy_name": "Non-Opioid Analgesic",
+  "category": "Medication",
+  "substance": "Non-Opioid Analgesics"
+ },
+ {
+  "allergy_name": "Antigout Agent",
+  "category": "Medication",
+  "substance": "Antigout Agents"
+ },
+ {
+  "allergy_name": "Disease Modifying Antirheumatic Drug",
+  "category": "Medication",
+  "substance": "Disease Modifying Antirheumatic Drugs"
+ },
+ {
+  "allergy_name": "ACE Inhibitor",
+  "category": "Medication",
+  "substance": "ACE Inhibitors"
+ },
+ {
+  "allergy_name": "Angiotensin II Receptor Blocker",
+  "category": "Medication",
+  "substance": "Angiotensin II Receptor Blockers"
+ },
+ {
+  "allergy_name": "Beta Blocker",
+  "category": "Medication",
+  "substance": "Beta Blockers"
+ },
+ {
+  "allergy_name": "Calcium Channel Blocker",
+  "category": "Medication",
+  "substance": "Calcium Channel Blockers"
+ },
+ {
+  "allergy_name": "Statin",
+  "category": "Medication",
+  "substance": "Statins"
+ },
+ {
+  "allergy_name": "Thiazide Diuretic",
+  "category": "Medication",
+  "substance": "Thiazide Diuretics"
+ },
+ {
+  "allergy_name": "Loop Diuretic",
+  "category": "Medication",
+  "substance": "Loop Diuretics"
+ },
+ {
+  "allergy_name": "Antiarrhythmic",
+  "category": "Medication",
+  "substance": "Antiarrhythmics"
+ },
+ {
+  "allergy_name": "Antiepileptic",
+  "category": "Medication",
+  "substance": "Antiepileptics"
+ },
+ {
+  "allergy_name": "Benzodiazepine",
+  "category": "Medication",
+  "substance": "Benzodiazepines"
+ },
+ {
+  "allergy_name": "Barbiturate",
+  "category": "Medication",
+  "substance": "Barbiturates"
+ },
+ {
+  "allergy_name": "Tricyclic Antidepressant",
+  "category": "Medication",
+  "substance": "Tricyclic Antidepressants"
+ },
+ {
+  "allergy_name": "Selective Serotonin Reuptake Inhibitor",
+  "category": "Medication",
+  "substance": "Selective Serotonin Reuptake Inhibitors"
+ },
+ {
+  "allergy_name": "Monoamine Oxidase Inhibitor",
+  "category": "Medication",
+  "substance": "Monoamine Oxidase Inhibitors"
+ },
+ {
+  "allergy_name": "Typical Antipsychotic",
+  "category": "Medication",
+  "substance": "Typical Antipsychotics"
+ },
+ {
+  "allergy_name": "Atypical Antipsychotic",
+  "category": "Medication",
+  "substance": "Atypical Antipsychotics"
+ },
+ {
+  "allergy_name": "Triptan",
+  "category": "Medication",
+  "substance": "Triptans"
+ },
+ {
+  "allergy_name": "Ergot Alkaloid",
+  "category": "Medication",
+  "substance": "Ergot Alkaloids"
+ },
+ {
+  "allergy_name": "Antihistamine",
+  "category": "Medication",
+  "substance": "Antihistamines"
+ },
+ {
+  "allergy_name": "Beta-2 Agonist",
+  "category": "Medication",
+  "substance": "Beta-2 Agonists"
+ },
+ {
+  "allergy_name": "Xanthine",
+  "category": "Medication",
+  "substance": "Xanthines"
+ },
+ {
+  "allergy_name": "Leukotriene Receptor Antagonist",
+  "category": "Medication",
+  "substance": "Leukotriene Receptor Antagonists"
+ },
+ {
+  "allergy_name": "Corticosteroid",
+  "category": "Medication",
+  "substance": "Corticosteroids"
+ },
+ {
+  "allergy_name": "Inhaled Corticosteroid",
+  "category": "Medication",
+  "substance": "Inhaled Corticosteroids"
+ },
+ {
+  "allergy_name": "Topical Corticosteroid",
+  "category": "Medication",
+  "substance": "Topical Corticosteroids"
+ },
+ {
+  "allergy_name": "Proton Pump Inhibitor",
+  "category": "Medication",
+  "substance": "Proton Pump Inhibitors"
+ },
+ {
+  "allergy_name": "H2 Receptor Antagonist",
+  "category": "Medication",
+  "substance": "H2 Receptor Antagonists"
+ },
+ {
+  "allergy_name": "Aminosalicylate",
+  "category": "Medication",
+  "substance": "Aminosalicylates"
+ },
+ {
+  "allergy_name": "Antiemetic",
+  "category": "Medication",
+  "substance": "Antiemetics"
+ },
+ {
+  "allergy_name": "Insulin",
+  "category": "Medication",
+  "substance": "Insulins"
+ },
+ {
+  "allergy_name": "Sulfonylurea",
+  "category": "Medication",
+  "substance": "Sulfonylureas"
+ },
+ {
+  "allergy_name": "Biguanide",
+  "category": "Medication",
+  "substance": "Biguanides"
+ },
+ {
+  "allergy_name": "Thiazolidinedione",
+  "category": "Medication",
+  "substance": "Thiazolidinediones"
+ },
+ {
+  "allergy_name": "Antithyroid Agent",
+  "category": "Medication",
+  "substance": "Antithyroid Agents"
+ },
+ {
+  "allergy_name": "Bisphosphonate",
+  "category": "Medication",
+  "substance": "Bisphosphonates"
+ },
+ {
+  "allergy_name": "Sex Hormone",
+  "category": "Medication",
+  "substance": "Sex Hormones"
+ },
+ {
+  "allergy_name": "Heparin",
+  "category": "Medication",
+  "substance": "Heparins"
+ },
+ {
+  "allergy_name": "Vitamin K Antagonist",
+  "category": "Medication",
+  "substance": "Vitamin K Antagonists"
+ },
+ {
+  "allergy_name": "Direct Oral Anticoagulant",
+  "category": "Medication",
+  "substance": "Direct Oral Anticoagulants"
+ },
+ {
+  "allergy_name": "Antiplatelet Agent",
+  "category": "Medication",
+  "substance": "Antiplatelet Agents"
+ },
+ {
+  "allergy_name": "Thrombolytic",
+  "category": "Medication",
+  "substance": "Thrombolytics"
+ },
+ {
+  "allergy_name": "Platinum Compound",
+  "category": "Medication",
+  "substance": "Platinum Compounds"
+ },
+ {
+  "allergy_name": "Taxane",
+  "category": "Medication",
+  "substance": "Taxanes"
+ },
+ {
+  "allergy_name": "Vinca Alkaloid",
+  "category": "Medication",
+  "substance": "Vinca Alkaloids"
+ },
+ {
+  "allergy_name": "Monoclonal Antibody",
+  "category": "Medication",
+  "substance": "Monoclonal Antibodies"
+ },
+ {
+  "allergy_name": "Immunosuppressant",
+  "category": "Medication",
+  "substance": "Immunosuppressants"
+ },
+ {
+  "allergy_name": "Muscle Relaxant",
+  "category": "Medication",
+  "substance": "Muscle Relaxants"
+ },
+ {
+  "allergy_name": "Neuromuscular Blocking Agent",
+  "category": "Medication",
+  "substance": "Neuromuscular Blocking Agents"
+ },
+ {
+  "allergy_name": "Local Anaesthetic",
+  "category": "Medication",
+  "substance": "Local Anaesthetics"
+ },
+ {
+  "allergy_name": "Amide Local Anaesthetic",
+  "category": "Medication",
+  "substance": "Amide Local Anaesthetics"
+ },
+ {
+  "allergy_name": "Ester Local Anaesthetic",
+  "category": "Medication",
+  "substance": "Ester Local Anaesthetics"
+ },
+ {
+  "allergy_name": "General Anaesthetic",
+  "category": "Medication",
+  "substance": "General Anaesthetics"
+ },
+ {
+  "allergy_name": "Chlorhexidine",
+  "category": "Medication",
+  "substance": "Antiseptics and Disinfectants"
+ },
+ {
+  "allergy_name": "Povidone-Iodine",
+  "category": "Medication",
+  "substance": "Antiseptics and Disinfectants"
+ },
+ {
+  "allergy_name": "Retinoid",
+  "category": "Medication",
+  "substance": "Retinoids"
+ },
+ {
+  "allergy_name": "Iodinated Contrast Medium",
+  "category": "Medication",
+  "substance": "Iodinated Contrast Media"
+ },
+ {
+  "allergy_name": "Gadolinium Contrast Medium",
+  "category": "Medication",
+  "substance": "Gadolinium Contrast Media"
+ },
+ {
+  "allergy_name": "Peanut",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Tree Nut",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Cow's Milk",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Hen's Egg",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Soy",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Wheat",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Gluten",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Fish",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Crustacean Shellfish",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Molluscan Shellfish",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Sesame",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Mustard",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Celery",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Lupin",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Sulphites",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Maize",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Strawberry",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Kiwi Fruit",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Banana",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Tomato",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Peach",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Chocolate",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Food Colouring",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Monosodium Glutamate",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Yeast",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "Buckwheat",
+  "category": "Food"
+ },
+ {
+  "allergy_name": "House Dust Mite",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Grass Pollen",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Tree Pollen",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Weed Pollen",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Mould Spores",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Cat Dander",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Dog Dander",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Horse Dander",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Cockroach",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Bee Venom",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Wasp Venom",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Fire Ant Venom",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Latex",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Nickel",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Chromium",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Cobalt",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Formaldehyde",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Fragrance Mix",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Adhesive Tape",
+  "category": "Environment"
+ },
+ {
+  "allergy_name": "Blood Product",
+  "category": "Biologic"
+ },
+ {
+  "allergy_name": "Gelatin",
+  "category": "Biologic"
+ },
+ {
+  "allergy_name": "Immunoglobulin",
+  "category": "Biologic"
+ },
+ {
+  "allergy_name": "Anti-Venom",
+  "category": "Biologic"
+ },
+ {
+  "allergy_name": "Vaccine Component",
+  "category": "Biologic"
+ }
+]

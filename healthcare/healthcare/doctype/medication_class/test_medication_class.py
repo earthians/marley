@@ -22,6 +22,11 @@ class TestMedicationClass(HealthcareTestSuite):
 			frappe.ValidationError, create_medication_class, "_Test Furosemides", parent=leaf.name
 		)
 
+	def test_seeded_tree_nests_a_leaf_under_its_therapeutic_group(self):
+		ancestors = get_ancestors_of("Medication Class", "Penicillins")
+
+		self.assertEqual(ancestors, ["Anti-infectives", "Antibacterials", "Beta-Lactam Antibacterials"][::-1])
+
 	def test_group_with_children_cannot_become_a_leaf(self):
 		group = create_medication_class("_Test NSAIDs", is_group=1)
 		create_medication_class("_Test Propionic Acid Derivatives", parent=group.name)
