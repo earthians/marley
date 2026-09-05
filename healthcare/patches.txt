@@ -33,3 +33,4 @@ healthcare.patches.v16_0.create_emergency_masters
 healthcare.patches.v16_0.rebuild_medication_class_tree
 healthcare.patches.v16_0.create_allergy_and_medication_class_masters
 healthcare.patches.v16_0.set_medications_orderable
+healthcare.patches.v16_0.set_dynamic_reference_in_fee_validity
