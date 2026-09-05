@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import get_link_to_form
 
 
 class PatientAllergy(Document):
@@ -15,8 +16,7 @@ class PatientAllergy(Document):
 			"Patient Allergy",
 			{
 				"patient": self.patient,
-				"substance_type": self.substance_type,
-				"substance": self.substance,
+				"allergy": self.allergy,
 				"status": "Active",
 				"name": ("!=", self.name),
 			},
@@ -25,7 +25,7 @@ class PatientAllergy(Document):
 		if duplicate:
 			frappe.throw(
 				_("{0} is already recorded as an active allergy for this patient in {1}").format(
-					frappe.bold(self.substance), frappe.utils.get_link_to_form("Patient Allergy", duplicate)
+					frappe.bold(self.allergy), get_link_to_form("Patient Allergy", duplicate)
 				),
 				title=_("Duplicate Allergy"),
 			)
