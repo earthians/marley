@@ -3,44 +3,39 @@
 
 import frappe
 
+from healthcare.healthcare.doctype.allergy.test_allergy import create_allergy
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestPatientAllergy(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.medication = frappe.db.get_value("Medication", {"generic_name": "Paracetamol"})
+		self.allergen = create_allergy("_Test Analgesic Allergy", substance="Analgesics").name
 
 	def test_duplicate_active_allergy_is_blocked(self):
-		create_patient_allergy("_Test Patient", "Medication", self.medication)
+		create_patient_allergy("_Test Patient", self.allergen)
 
-		self.assertRaises(
-			frappe.ValidationError,
-			create_patient_allergy,
-			"_Test Patient",
-			"Medication",
-			self.medication,
-		)
+		self.assertRaises(frappe.ValidationError, create_patient_allergy, "_Test Patient", self.allergen)
 
 	def test_inactive_allergy_does_not_block_a_new_record(self):
-		create_patient_allergy("_Test Patient 0", "Medication", self.medication, status="Inactive")
-		allergy = create_patient_allergy("_Test Patient 0", "Medication", self.medication)
+		create_patient_allergy("_Test Patient 0", self.allergen, status="Inactive")
+		allergy = create_patient_allergy("_Test Patient 0", self.allergen)
 
 		self.assertEqual(allergy.status, "Active")
 
-	def test_allergy_can_be_recorded_against_a_class(self):
-		allergy = create_patient_allergy("_Test Patient 1", "Medication Class", "Analgesics")
+	def test_category_is_fetched_from_the_allergen(self):
+		peanut = create_allergy("_Test Peanut Allergy", category="Food").name
+		allergy = create_patient_allergy("_Test Patient 1", peanut)
 
-		self.assertEqual(allergy.substance, "Analgesics")
+		self.assertEqual(allergy.allergy_category, "Food")
 
 
-def create_patient_allergy(patient, substance_type, substance, status="Active"):
+def create_patient_allergy(patient, allergy, status="Active"):
 	return frappe.get_doc(
 		{
 			"doctype": "Patient Allergy",
 			"patient": patient,
-			"substance_type": substance_type,
-			"substance": substance,
+			"allergy": allergy,
 			"status": status,
 			"severity": "Severe",
 		}
