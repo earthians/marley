@@ -7,9 +7,23 @@ from frappe import _
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
 from healthcare.healthcare.doctype.medication.medication import validate_medication_is_orderable
+from healthcare.healthcare.doctype.medication_alert_log.medication_alert_log import (
+	check_document,
+	log_document_alerts,
+)
 
 
 class MedicationRequest(ServiceRequestController):
+	def validate(self):
+		super().validate()
+		self.validate_medication_safety()
+
+	def validate_medication_safety(self):
+		check_document(self, [self.medication])
+
+	def on_update(self):
+		log_document_alerts(self)
+
 	def on_update_after_submit(self):
 		self.validate_invoiced_qty()
 
