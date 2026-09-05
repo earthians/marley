@@ -20,6 +20,13 @@
   "enable_free_follow_ups",
   "max_visits",
   "valid_days",
+  "medication_alerts_section",
+  "enable_medication_alerts",
+  "contraindicated_alert_action",
+  "major_alert_action",
+  "minor_alert_action",
+  "column_break_medication_alerts",
+  "record_alerts_from",
   "inpatient_settings_section",
   "allow_discharge_despite_unbilled_services",
   "allow_discharge_despite_pending_healthcare_services",
@@ -509,11 +516,65 @@
    "label": "Registration Item",
    "mandatory_depends_on": "eval:doc.collect_registration_fee == 1",
    "options": "Item"
+  },
+  {
+   "default": "0",
+   "description": "Check allergies and interactions when medication is ordered. Off until a site has reviewed its interaction rules",
+   "fieldname": "enable_medication_alerts",
+   "fieldtype": "Check",
+   "label": "Enable Medication Alerts"
+  },
+  {
+   "default": "Block",
+   "depends_on": "enable_medication_alerts",
+   "description": "Block refuses the order. Warn shows the alert and saves. Notify is an indicator only",
+   "fieldname": "contraindicated_alert_action",
+   "fieldtype": "Select",
+   "label": "On Contraindicated",
+   "mandatory_depends_on": "enable_medication_alerts",
+   "options": "Block\nWarn\nNotify"
+  },
+  {
+   "default": "Warn",
+   "depends_on": "enable_medication_alerts",
+   "fieldname": "major_alert_action",
+   "fieldtype": "Select",
+   "label": "On Major",
+   "mandatory_depends_on": "enable_medication_alerts",
+   "options": "Block\nWarn\nNotify"
+  },
+  {
+   "default": "Notify",
+   "depends_on": "enable_medication_alerts",
+   "fieldname": "minor_alert_action",
+   "fieldtype": "Select",
+   "label": "On Minor",
+   "mandatory_depends_on": "enable_medication_alerts",
+   "options": "Block\nWarn\nNotify"
+  },
+  {
+   "depends_on": "enable_medication_alerts",
+   "fieldname": "column_break_medication_alerts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Contraindicated",
+   "depends_on": "enable_medication_alerts",
+   "description": "Keep a log of alerts at this severity and above. Leave blank to log nothing",
+   "fieldname": "record_alerts_from",
+   "fieldtype": "Select",
+   "label": "Record Alerts From",
+   "options": "\nContraindicated\nMajor\nMinor"
+  },
+  {
+   "fieldname": "medication_alerts_section",
+   "fieldtype": "Section Break",
+   "label": "Medication Alerts"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-12-25 09:36:33.073374",
+ "modified": "2026-09-05 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
