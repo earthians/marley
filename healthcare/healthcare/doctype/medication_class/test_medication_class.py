@@ -4,6 +4,10 @@
 import frappe
 from frappe.utils.nestedset import get_ancestors_of
 
+from healthcare.healthcare.doctype.medication_class.medication_class_seed import (
+	get_seeded_class_names,
+	read_ingredients,
+)
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -26,6 +30,17 @@ class TestMedicationClass(HealthcareTestSuite):
 		ancestors = get_ancestors_of("Medication Class", "Penicillins")
 
 		self.assertEqual(ancestors, ["Anti-infectives", "Antibacterials", "Beta-Lactam Antibacterials"][::-1])
+
+	def test_seeded_tree_nests_an_ingredient_under_its_chemical_subgroup(self):
+		ancestors = get_ancestors_of("Medication Class", "Amoxicillin")
+
+		self.assertEqual(
+			ancestors,
+			["Anti-infectives", "Antibacterials", "Beta-Lactam Antibacterials", "Penicillins"][::-1],
+		)
+
+	def test_every_ingredient_hangs_off_a_seeded_class(self):
+		self.assertEqual(set(read_ingredients()) - get_seeded_class_names(), set())
 
 	def test_group_with_children_cannot_become_a_leaf(self):
 		group = create_medication_class("_Test NSAIDs", is_group=1)
