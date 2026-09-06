@@ -18,6 +18,7 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	get_fee_validity,
 	is_free_follow_up_enabled,
 	manage_fee_validity,
+	set_sales_invoice_reference,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
@@ -1042,9 +1043,14 @@ def manage_invoice_submit_cancel(doc, method):
 				set_invoiced(item, method, doc.name)
 
 				# update Fee validity with Sales Invoice Reference if exists
-				# an encounter manages its fee validity on submit, and only then
 				if item.reference_dt == "Patient Appointment":
 					manage_fee_validity(frappe.get_doc("Patient Appointment", item.reference_dn))
+				elif item.reference_dt == "Patient Encounter":
+					# an encounter manages its fee validity on submit, and only then, so the
+					# invoice is only stamped on a validity that already exists
+					set_sales_invoice_reference(
+						item.reference_dt, item.reference_dn, doc.name if method == "on_submit" else None
+					)
 
 				# set patient as active if registration invoice
 				if item.get("reference_dt") == "Patient":
