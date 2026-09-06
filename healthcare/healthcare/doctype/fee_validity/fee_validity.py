@@ -238,15 +238,19 @@ def manage_fee_validity(visit):
 
 
 def cancel_fee_validity(visit):
-	"""Cancel the fee validity an invoiced visit created, or give back the visit it consumed"""
-	if not visit.get("invoiced"):
-		return manage_fee_validity(visit)
+	"""Cancel the validity this visit opened, or give back the visit it consumed.
 
+	The validity exists only because of the visit that opened it, so it goes with it. An
+	encounter is invoiced after it is submitted, so its invoiced state says nothing here.
+	"""
 	fee_validity = frappe.db.get_value(
 		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}
 	)
 	if fee_validity:
 		frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
+		return
+
+	return manage_fee_validity(visit)
 
 
 @frappe.whitelist()
