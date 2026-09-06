@@ -541,3 +541,23 @@ class TestFeeValidity(HealthcareTestSuite):
 		)
 		self.assertEqual(len(active), 1)
 		self.assertNotEqual(active[0].name, fee_validity)
+
+	def test_cannot_cancel_a_visit_whose_free_visits_were_taken(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4)
+		source = create_encounter(patient, practitioner, submit=True)
+		follow_up = create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 1)
+
+		self.assertRaises(frappe.ValidationError, source.cancel)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Active")
+		self.assertEqual(frappe.db.get_value("Patient Encounter", source.name, "docstatus"), 1)
+
+		# giving the free visit back releases the source
+		follow_up.reload()
+		follow_up.cancel()
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 0)
+
+		source.reload()
+		source.cancel()
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
