@@ -452,3 +452,31 @@ class TestFeeValidity(HealthcareTestSuite):
 		# the budget is spent, so the next visit of either kind is billed again
 		billed = create_appointment(patient, practitioner, add_days(nowdate(), 2), invoice=1)
 		self.assertEqual(frappe.db.get_value("Patient Appointment", billed.name, "invoiced"), 1)
+
+	def test_only_one_active_validity_per_patient_and_practitioner(self):
+		"""A visit before an active validity must not open a second, overlapping one"""
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=30)
+
+		# the appointment is booked for tomorrow, so its validity starts tomorrow
+		appointment = create_appointment(patient, practitioner, add_days(nowdate(), 1))
+		fee_validity = self.get_fee_validity(patient, practitioner)
+		self.assertEqual(
+			frappe.db.get_value("Fee Validity", fee_validity, "start_date"), getdate(add_days(nowdate(), 1))
+		)
+
+		# an encounter recorded today falls before that start date
+		encounter = create_encounter(patient, practitioner, submit=True)
+
+		validities = frappe.get_all(
+			"Fee Validity", {"patient": patient, "practitioner": practitioner, "status": "Active"}
+		)
+		self.assertEqual(len(validities), 1)
+		self.assertEqual(validities[0].name, fee_validity)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "reference_dn"), appointment.name)
+
+		# it consumes the one validity rather than being billed for nothing
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 1)
+		self.assertNotIn(encounter.name, self.encounters_to_invoice(patient))
+
+		# and the window stretches back to cover it
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "start_date"), getdate(nowdate()))
