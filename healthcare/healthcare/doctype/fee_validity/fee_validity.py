@@ -93,16 +93,14 @@ def create_fee_validity(visit):
 
 
 def patient_has_validity(visit):
-	visit_date = get_visit_date(visit)
-
+	"""A patient can hold only one active validity per practitioner at a time."""
 	validity_exists = frappe.db.exists(
 		"Fee Validity",
 		{
 			"practitioner": visit.practitioner,
 			"patient": visit.patient,
 			"status": "Active",
-			"valid_till": [">=", visit_date],
-			"start_date": ["<=", visit_date],
+			"valid_till": [">=", get_visit_date(visit)],
 		},
 	)
 
@@ -128,7 +126,6 @@ def check_fee_validity(visit, date=None, practitioner=None):
 		"practitioner": practitioner,
 		"patient": visit.patient,
 		"valid_till": (">=", date),
-		"start_date": ("<=", date),
 	}
 	if not is_visit_cancelled(visit):
 		filters["status"] = "Active"
@@ -204,6 +201,9 @@ def manage_fee_validity(visit):
 			fee_validity.append(
 				"reference_visits", {"reference_dt": visit.doctype, "reference_dn": visit.name}
 			)
+			if visit_date < fee_validity.start_date:
+				# the validity now serves a visit earlier than the one that opened it
+				fee_validity.start_date = visit_date
 
 		if not fee_validity.sales_invoice_ref:
 			# an encounter is invoiced after the validity is created, unlike an appointment
@@ -273,7 +273,6 @@ def get_fee_validity(reference_dn, date, ignore_status=False, reference_dt="Pati
 		.inner_join(child)
 		.on(fee_validity.name == child.parent)
 		.select(fee_validity.name, fee_validity.valid_till)
-		.where(fee_validity.start_date <= date)
 		.where(fee_validity.valid_till >= date)
 		.where(fee_validity.patient == visit_details.patient)
 		.where(fee_validity.practitioner == visit_details.practitioner)
