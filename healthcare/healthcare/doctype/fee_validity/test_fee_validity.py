@@ -523,3 +523,21 @@ class TestFeeValidity(HealthcareTestSuite):
 		frappe.db.set_value("Patient", patient, "inpatient_record", inpatient_record.name)
 		self.addCleanup(frappe.db.set_value, "Patient", patient, "inpatient_record", None)
 		return inpatient_record.name
+
+	def test_cancel_source_encounter_cancels_its_validity(self):
+		patient, practitioner = self.enable_free_follow_ups()
+		encounter = create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Active")
+
+		encounter.cancel()
+
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
+
+		# the cancelled validity must not block the next one
+		create_encounter(patient, practitioner, submit=True)
+		active = frappe.get_all(
+			"Fee Validity", {"patient": patient, "practitioner": practitioner, "status": "Active"}
+		)
+		self.assertEqual(len(active), 1)
+		self.assertNotEqual(active[0].name, fee_validity)
