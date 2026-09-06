@@ -811,7 +811,7 @@ let check_and_set_availability = function (frm) {
 								callback: r => {
 									if (val && !r.message && !frm.doc.invoiced) {
 										make_payment(frm, val);
-									} else {
+									} else if (val) {
 										frappe.call({
 											method: "healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_fee_validity",
 											args: { appointment: frm.doc },
@@ -819,6 +819,9 @@ let check_and_set_availability = function (frm) {
 												frm.reload_doc();
 											},
 										});
+									} else {
+										// fee validity is already managed server side, in on_update
+										frm.reload_doc();
 									}
 								},
 							});
