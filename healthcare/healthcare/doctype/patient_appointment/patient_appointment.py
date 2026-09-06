@@ -28,6 +28,7 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	check_fee_validity,
 	get_fee_validity,
 	manage_fee_validity,
+	validate_fee_validity_cancellation,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
@@ -1050,6 +1051,9 @@ def check_in_appointment(
 
 @frappe.whitelist()
 def update_status(appointment_id: str, status: str) -> None:
+	if status == "Cancelled":
+		validate_fee_validity_cancellation(frappe.get_doc("Patient Appointment", appointment_id))
+
 	frappe.db.set_value("Patient Appointment", appointment_id, "status", status)
 	appointment_booked = True
 	if status == "Cancelled":
