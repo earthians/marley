@@ -14,6 +14,10 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	manage_fee_validity,
 	update_validity_status,
 )
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
+	get_income_account,
+	get_receivable_account,
+)
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
@@ -561,3 +565,136 @@ class TestFeeValidity(HealthcareTestSuite):
 		source.reload()
 		source.cancel()
 		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
+
+	def test_encounter_validity_period_and_expiry(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=7)
+		create_encounter(patient, practitioner, submit=True, encounter_date=nowdate())
+		fee_validity = self.get_fee_validity(patient, practitioner)
+
+		start_date, valid_till = frappe.db.get_value(
+			"Fee Validity", fee_validity, ["start_date", "valid_till"]
+		)
+		self.assertEqual(start_date, getdate(nowdate()))
+		self.assertEqual(date_diff(valid_till, start_date), 7)
+
+		# inside the window the encounter is free
+		inside = create_encounter(patient, practitioner, submit=True, encounter_date=add_days(nowdate(), 4))
+		self.assertNotIn(inside.name, self.encounters_to_invoice(patient))
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 1)
+
+		# past valid_till it is billed and opens its own validity
+		outside = create_encounter(patient, practitioner, submit=True, encounter_date=add_days(nowdate(), 10))
+		self.assertIn(outside.name, self.encounters_to_invoice(patient))
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 1)
+		self.assertTrue(
+			frappe.db.exists(
+				"Fee Validity", {"reference_dt": "Patient Encounter", "reference_dn": outside.name}
+			)
+		)
+
+	def test_encounter_uses_practitioner_validity_period(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=1, valid_days=7)
+		frappe.db.set_value(
+			"Healthcare Practitioner",
+			practitioner,
+			{"enable_free_follow_ups": 1, "max_visits": 3, "valid_days": 5},
+		)
+
+		create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+
+		start_date, valid_till, max_visits = frappe.db.get_value(
+			"Fee Validity", fee_validity, ["start_date", "valid_till", "max_visits"]
+		)
+		self.assertEqual(max_visits, 3)
+		self.assertEqual(date_diff(valid_till, start_date), 5)
+
+	def test_backdated_visit_opens_its_own_validity(self):
+		"""A validity must not stretch back to a visit made before it existed"""
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=30)
+		create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+
+		backdated = create_encounter(
+			patient, practitioner, submit=True, encounter_date=add_days(nowdate(), -60)
+		)
+
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 0)
+		self.assertTrue(
+			frappe.db.exists(
+				"Fee Validity", {"reference_dt": "Patient Encounter", "reference_dn": backdated.name}
+			)
+		)
+
+	def test_amended_encounter_opens_a_new_validity(self):
+		patient, practitioner = self.enable_free_follow_ups()
+		encounter = create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+
+		encounter.cancel()
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
+
+		amended = frappe.copy_doc(encounter)
+		amended.amended_from = encounter.name
+		amended.docstatus = 0
+		amended.save()
+		amended.submit()
+
+		active = frappe.get_all(
+			"Fee Validity", {"patient": patient, "practitioner": practitioner, "status": "Active"}
+		)
+		self.assertEqual(len(active), 1)
+		self.assertNotEqual(active[0].name, fee_validity)
+		self.assertEqual(frappe.db.get_value("Fee Validity", active[0].name, "reference_dn"), amended.name)
+
+	def test_encounter_validity_records_its_sales_invoice(self):
+		patient, practitioner = self.enable_free_follow_ups()
+		encounter = create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+
+		# the encounter is invoiced after it is submitted, so the validity starts without one
+		self.assertFalse(frappe.db.get_value("Fee Validity", fee_validity, "sales_invoice_ref"))
+
+		sales_invoice = self.invoice_encounter(encounter)
+		self.assertEqual(
+			frappe.db.get_value("Fee Validity", fee_validity, "sales_invoice_ref"), sales_invoice.name
+		)
+
+		sales_invoice.cancel()
+		self.assertFalse(frappe.db.get_value("Fee Validity", fee_validity, "sales_invoice_ref"))
+
+	def invoice_encounter(self, encounter):
+		sales_invoice = frappe.new_doc("Sales Invoice")
+		sales_invoice.patient = encounter.patient
+		sales_invoice.customer = frappe.db.get_value("Patient", encounter.patient, "customer")
+		sales_invoice.due_date = getdate()
+		sales_invoice.company = "_Test Company"
+		sales_invoice.debit_to = get_receivable_account("_Test Company")
+		sales_invoice.append(
+			"items",
+			{
+				"item_code": "HLC-SI-001",
+				"qty": 1,
+				"uom": "Nos",
+				"conversion_factor": 1,
+				"income_account": get_income_account(None, "_Test Company"),
+				"rate": 300,
+				"amount": 300,
+				"reference_dt": "Patient Encounter",
+				"reference_dn": encounter.name,
+			},
+		)
+		sales_invoice.set_missing_values()
+		sales_invoice.submit()
+		return sales_invoice
+
+	def test_invoicing_an_encounter_never_opens_a_validity(self):
+		"""The invoice only stamps a validity that already exists, it never creates one"""
+		patient, practitioner = self.enable_free_follow_ups(apply_on_encounters=0)
+		encounter = create_encounter(patient, practitioner, submit=True)
+		reference = {"reference_dt": "Patient Encounter", "reference_dn": encounter.name}
+		self.assertFalse(frappe.db.exists("Fee Validity", reference))
+
+		self.invoice_encounter(encounter)
+
+		self.assertFalse(frappe.db.exists("Fee Validity", reference))
