@@ -14,6 +14,7 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	manage_fee_validity,
 	update_validity_status,
 )
+from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
 	update_status,
@@ -480,3 +481,45 @@ class TestFeeValidity(HealthcareTestSuite):
 
 		# and the window stretches back to cover it
 		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "start_date"), getdate(nowdate()))
+
+	def test_inpatient_encounter_is_left_out_of_fee_validity(self):
+		patient, practitioner = self.enable_free_follow_ups()
+		inpatient_record = self.admit(patient)
+
+		create_encounter(patient, practitioner, submit=True, inpatient_record=inpatient_record)
+
+		self.assertFalse(frappe.db.exists("Fee Validity", {"patient": patient, "practitioner": practitioner}))
+
+	def test_inpatient_appointment_is_left_out_of_fee_validity(self):
+		patient, practitioner = self.enable_free_follow_ups()
+		self.admit(patient)
+
+		create_appointment(patient, practitioner, nowdate())
+
+		self.assertFalse(frappe.db.exists("Fee Validity", {"patient": patient, "practitioner": practitioner}))
+
+	def test_inpatient_encounter_does_not_consume_an_active_validity(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4)
+		create_encounter(patient, practitioner, submit=True)
+		fee_validity = self.get_fee_validity(patient, practitioner)
+
+		inpatient_record = self.admit(patient)
+		inpatient_encounter = create_encounter(
+			patient, practitioner, submit=True, inpatient_record=inpatient_record
+		)
+
+		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "visited"), 0)
+		self.assertFalse(
+			frappe.db.exists(
+				"Fee Validity Reference",
+				{"reference_dt": "Patient Encounter", "reference_dn": inpatient_encounter.name},
+			)
+		)
+
+	def admit(self, patient):
+		inpatient_record = create_inpatient(patient)
+		inpatient_record.expected_length_of_stay = 0
+		inpatient_record.save(ignore_permissions=True)
+		frappe.db.set_value("Patient", patient, "inpatient_record", inpatient_record.name)
+		self.addCleanup(frappe.db.set_value, "Patient", patient, "inpatient_record", None)
+		return inpatient_record.name
