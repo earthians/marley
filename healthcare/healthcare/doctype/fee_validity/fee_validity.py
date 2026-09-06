@@ -40,6 +40,15 @@ def is_visit_cancelled(visit):
 	return visit.status == "Cancelled"
 
 
+def covers_visit_date(fee_validity, date):
+	"""A validity may serve a visit made before it started, but not one made before it existed.
+
+	A future dated appointment opens a validity that starts tomorrow, and today's encounter
+	should still use it. A visit backdated to last year should not.
+	"""
+	return date >= fee_validity.start_date or date >= getdate(fee_validity.creation)
+
+
 def is_inpatient_visit(visit):
 	"""Inpatient visits are billed with the admission, they are not outpatient follow ups."""
 	if visit.get("inpatient_record"):
@@ -65,6 +74,10 @@ def is_free_follow_up_enabled(practitioner, doctype="Patient Appointment"):
 
 
 def create_fee_validity(visit):
+	# lock the patient for the rest of the transaction, so that two visits submitted at the
+	# same time cannot both find no validity and open one each
+	frappe.db.get_value("Patient", visit.patient, "name", for_update=True)
+
 	if patient_has_validity(visit):
 		return
 
@@ -98,17 +111,20 @@ def create_fee_validity(visit):
 
 def patient_has_validity(visit):
 	"""A patient can hold only one active validity per practitioner at a time."""
-	validity_exists = frappe.db.exists(
+	visit_date = get_visit_date(visit)
+	validity = frappe.db.get_value(
 		"Fee Validity",
 		{
 			"practitioner": visit.practitioner,
 			"patient": visit.patient,
 			"status": "Active",
-			"valid_till": [">=", get_visit_date(visit)],
+			"valid_till": [">=", visit_date],
 		},
+		["name", "start_date", "creation"],
+		as_dict=True,
 	)
 
-	return validity_exists
+	return bool(validity and covers_visit_date(validity, visit_date))
 
 
 @frappe.whitelist()
@@ -137,13 +153,10 @@ def check_fee_validity(visit, date=None, practitioner=None):
 		filters["reference_dt"] = visit.doctype
 		filters["reference_dn"] = visit.name
 
-	validity = frappe.db.exists(
-		"Fee Validity",
-		filters,
-	)
+	validity = frappe.db.get_value("Fee Validity", filters, ["name", "start_date", "creation"], as_dict=True)
 
-	if validity:
-		return frappe.get_doc("Fee Validity", validity)
+	if validity and covers_visit_date(validity, date):
+		return frappe.get_doc("Fee Validity", validity.name)
 
 	# Fallback for rescheduled visits
 	if visit.get("__islocal"):
@@ -253,6 +266,15 @@ def cancel_fee_validity(visit):
 		return
 
 	return manage_fee_validity(visit)
+
+
+def set_sales_invoice_reference(reference_dt, reference_dn, sales_invoice=None):
+	"""Stamp the invoice on the validity a visit opened, without ever opening one"""
+	fee_validity = frappe.db.get_value(
+		"Fee Validity", {"reference_dt": reference_dt, "reference_dn": reference_dn}
+	)
+	if fee_validity:
+		frappe.db.set_value("Fee Validity", fee_validity, "sales_invoice_ref", sales_invoice)
 
 
 def validate_fee_validity_cancellation(visit):
