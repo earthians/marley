@@ -1042,8 +1042,9 @@ def manage_invoice_submit_cancel(doc, method):
 				set_invoiced(item, method, doc.name)
 
 				# update Fee validity with Sales Invoice Reference if exists
-				if item.reference_dt in ("Patient Appointment", "Patient Encounter"):
-					manage_fee_validity(frappe.get_doc(item.reference_dt, item.reference_dn))
+				# an encounter manages its fee validity on submit, and only then
+				if item.reference_dt == "Patient Appointment":
+					manage_fee_validity(frappe.get_doc("Patient Appointment", item.reference_dn))
 
 				# set patient as active if registration invoice
 				if item.get("reference_dt") == "Patient":
