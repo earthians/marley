@@ -31,7 +31,6 @@ def get_visit_date(visit):
 def get_visit_department(visit):
 	if visit.doctype == "Patient Encounter":
 		return visit.medical_department
-	return visit.department
 
 
 def is_visit_cancelled(visit):
@@ -40,12 +39,16 @@ def is_visit_cancelled(visit):
 	return visit.status == "Cancelled"
 
 
-def is_free_follow_up_enabled(practitioner, doctype="Patient Appointment"):
-	"""Free follow ups apply when enabled for the practitioner or in Healthcare Settings.
+def is_inpatient_visit(visit):
+	"""Inpatient visits are billed with the admission, they are not outpatient follow ups."""
+	if visit.get("inpatient_record"):
+		return True
 
-	Encounters additionally require the opt-in Healthcare Settings switch, so that existing
-	installations keep billing encounters exactly as before until it is turned on.
-	"""
+	return bool(frappe.db.get_value("Patient", visit.patient, "inpatient_record"))
+
+
+def is_free_follow_up_enabled(practitioner, doctype="Patient Appointment"):
+	"""Free follow ups apply when enabled for the practitioner or in Healthcare Settings."""
 	if not practitioner:
 		return False
 
@@ -113,7 +116,7 @@ def check_fee_validity(visit, date=None, practitioner=None):
 		visit = frappe.get_doc(json.loads(visit))
 
 	practitioner = practitioner if practitioner else visit.practitioner
-	if not practitioner:
+	if not practitioner or is_inpatient_visit(visit):
 		return
 
 	# Check if free follow-ups are enabled
@@ -155,7 +158,7 @@ def check_fee_validity(visit, date=None, practitioner=None):
 
 
 def manage_fee_validity(visit):
-	if not is_free_follow_up_enabled(visit.practitioner, visit.doctype):
+	if is_inpatient_visit(visit) or not is_free_follow_up_enabled(visit.practitioner, visit.doctype):
 		return
 
 	pract_enabled = frappe.db.get_value(
