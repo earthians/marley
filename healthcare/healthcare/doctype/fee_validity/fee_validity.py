@@ -5,8 +5,9 @@ import datetime
 import json
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
+from frappe.utils import get_link_to_form, getdate
 
 
 class FeeValidity(Document):
@@ -247,10 +248,41 @@ def cancel_fee_validity(visit):
 		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}
 	)
 	if fee_validity:
+		validate_free_visits_not_taken(fee_validity)
 		frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
 		return
 
 	return manage_fee_validity(visit)
+
+
+def validate_fee_validity_cancellation(visit):
+	"""A visit cannot be cancelled while free visits stand against the validity it opened.
+
+	This runs before anything is written, so the cancellation is refused rather than rolled back.
+	"""
+	fee_validity = frappe.db.get_value(
+		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+	)
+	if fee_validity:
+		validate_free_visits_not_taken(fee_validity)
+
+
+def validate_free_visits_not_taken(fee_validity):
+	"""Free visits already taken would be left without the validity that made them free"""
+	free_visits = frappe.get_all(
+		"Fee Validity Reference", {"parent": fee_validity}, ["reference_dt", "reference_dn"]
+	)
+	if not free_visits:
+		return
+
+	frappe.throw(
+		_("Cannot cancel, {0} taken against Fee Validity {1}. Cancel {2} first.").format(
+			frappe.bold(_("free visits")),
+			get_link_to_form("Fee Validity", fee_validity),
+			", ".join(get_link_to_form(visit.reference_dt, visit.reference_dn) for visit in free_visits),
+		),
+		title=_("Free Visits Taken"),
+	)
 
 
 @frappe.whitelist()
