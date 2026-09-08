@@ -1,10 +1,12 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import json
-import os
-
 import frappe
+from frappe.utils import get_file_json
+
+SEED_DIRECTORY = ("healthcare", "healthcare", "doctype", "medication_class")
+TAXONOMY_FILE = "medication_class_seed.json"
+INGREDIENTS_FILE = "medication_class_ingredients.json"
 
 
 def create_medication_classes():
@@ -16,16 +18,16 @@ def create_medication_classes():
 
 
 def read_seed():
-	return read_seed_file("medication_class_seed.json")
+	return read_seed_file(TAXONOMY_FILE)
 
 
 def read_ingredients():
-	return read_seed_file("medication_class_ingredients.json")
+	return read_seed_file(INGREDIENTS_FILE)
 
 
 def read_seed_file(filename):
-	with open(os.path.join(os.path.dirname(__file__), filename)) as seed:
-		return json.load(seed)
+	"""Read one of this folder's seed files. `filename` is only ever a module constant"""
+	return get_file_json(frappe.get_app_path(*SEED_DIRECTORY, filename))
 
 
 def create_class(node, parent=None):

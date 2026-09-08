@@ -1,10 +1,10 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import json
-import os
-
 import frappe
+from frappe.utils import get_file_json
+
+SEED_FILE = ("healthcare", "healthcare", "doctype", "allergy", "allergy_seed.json")
 
 
 def create_allergies():
@@ -14,8 +14,7 @@ def create_allergies():
 
 
 def read_seed():
-	with open(os.path.join(os.path.dirname(__file__), "allergy_seed.json")) as seed:
-		return json.load(seed)
+	return get_file_json(frappe.get_app_path(*SEED_FILE))
 
 
 def create_allergy(record):
