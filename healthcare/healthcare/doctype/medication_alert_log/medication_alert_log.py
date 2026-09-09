@@ -290,10 +290,22 @@ def as_item(alert):
 def get_alerts(patient: str, medications: str | list[str]):
 	frappe.has_permission("Patient", doc=patient, throw=True)
 
-	if isinstance(medications, str):
-		medications = frappe.parse_json(medications)
+	return {"alerts": check(patient, as_medication_list(medications))}
 
-	return {"alerts": check(patient, medications)}
+
+def as_medication_list(medications):
+	if isinstance(medications, str):
+		medications = parse_medications(medications)
+
+	return list(medications) if isinstance(medications, list | tuple) else [medications]
+
+
+def parse_medications(medications):
+	try:
+		return frappe.parse_json(medications)
+	except ValueError:
+		# not JSON, so it is a single medication name
+		return [medications]
 
 
 def get_allergy_flagged(patient, medications):
