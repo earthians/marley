@@ -512,9 +512,15 @@ def get_medications_query(
 	linked_items = get_linked_medication_items(txt, start, page_len, filters)
 	warehouse = get_default_warehouse(filters.get("company"))
 	quantities = get_actual_quantities([row.item for row in linked_items], warehouse)
-	flagged = get_allergy_flagged(filters.get("patient"), {row.parent for row in linked_items})
+	patient = get_permitted_patient(filters)
+	flagged = get_allergy_flagged(patient, {row.parent for row in linked_items})
 
 	return tuple(get_search_columns(row, warehouse, quantities, flagged) for row in linked_items)
+
+
+def get_permitted_patient(filters):
+	patient = filters.get("patient")
+	return patient if patient and frappe.has_permission("Patient", doc=patient) else None
 
 
 def get_linked_medication_items(txt, start, page_len, filters):
