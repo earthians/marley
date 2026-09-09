@@ -26,11 +26,14 @@ class TestMedication(HealthcareTestSuite):
 			25,
 		)
 
-	def test_ingredient_only_medication_cannot_link_an_item(self):
+	def test_ingredient_only_medication_drops_its_item_links(self):
 		medication = create_ingredient_medication("_Test Clavulanic Acid")
 		medication.append("linked_items", {"item_code": "_Test Clavulanic Acid", "item_group": "Drug"})
+		medication.save()
 
-		self.assertRaises(frappe.ValidationError, medication.save)
+		self.assertEqual(medication.linked_items, [])
+		self.assertIsNone(medication.price_list)
+		self.assertFalse(frappe.db.exists("Item", "_Test Clavulanic Acid"))
 
 	def test_ingredient_only_medication_cannot_be_ordered(self):
 		medication = create_ingredient_medication("_Test Carbidopa")
@@ -152,3 +155,16 @@ def create_combination(generic_name, ingredients):
 		)
 
 	return medication.insert().name
+
+
+class TestOrderableTransition(HealthcareTestSuite):
+	def test_disabling_orderable_disables_a_previously_linked_item(self):
+		price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
+		medication, item = create_medication("_Test Retired Drug", is_billable=True, price_list=price_list)
+		self.assertEqual(frappe.db.get_value("Item", item, "disabled"), 0)
+
+		medication.is_orderable = 0
+		medication.linked_items = []
+		medication.save()
+
+		self.assertEqual(frappe.db.get_value("Item", item, "disabled"), 1)
