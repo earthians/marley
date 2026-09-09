@@ -12,7 +12,7 @@ class PatientAllergy(Document):
 		self.validate_duplicate()
 
 	def validate_duplicate(self):
-		duplicate = frappe.db.exists(
+		duplicate = frappe.db.get_value(
 			"Patient Allergy",
 			{
 				"patient": self.patient,
@@ -20,6 +20,8 @@ class PatientAllergy(Document):
 				"status": "Active",
 				"name": ("!=", self.name),
 			},
+			"name",
+			for_update=True,
 		)
 
 		if duplicate:
