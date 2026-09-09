@@ -848,6 +848,7 @@ frappe.ui.form.on("Drug Prescription", {
 		healthcare.medication_safety.show_for_medication(
 			frm,
 			frappe.get_doc(cdt, cdn).medication,
+			cdn,
 		);
 		// to set drug_code(item) if Medication Item table have only one item
 		let child = locals[cdt][cdn];
