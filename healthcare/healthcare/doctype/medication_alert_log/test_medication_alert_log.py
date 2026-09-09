@@ -8,6 +8,7 @@ from healthcare.healthcare.doctype.medication.test_medication import (
 )
 from healthcare.healthcare.doctype.medication_alert_log.medication_alert_log import (
 	check,
+	get_alerts,
 	get_allergy_flagged,
 )
 from healthcare.tests.utils import HealthcareTestSuite
@@ -312,3 +313,21 @@ class TestAlertLogIsReadOnly(MedicationSafetyCase):
 		]
 
 		self.assertEqual(writable, [])
+
+
+class TestEndpointInput(MedicationSafetyCase):
+	def test_a_single_medication_name_is_not_read_character_by_character(self):
+		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
+
+		one = get_alerts(PATIENT, self.ibuprofen)
+		both = get_alerts(PATIENT, [self.ibuprofen, self.warfarin])
+
+		self.assertEqual(one["alerts"], [])
+		self.assertEqual(len(both["alerts"]), 1)
+
+	def test_a_json_array_is_still_understood(self):
+		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
+
+		alerts = get_alerts(PATIENT, frappe.as_json([self.ibuprofen, self.warfarin]))
+
+		self.assertEqual(len(alerts["alerts"]), 1)
