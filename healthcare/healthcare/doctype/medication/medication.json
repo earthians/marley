@@ -83,6 +83,7 @@
    "label": "Defaults"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "default_prescription_dosage",
    "fieldtype": "Link",
    "label": "Default Prescription Dosage",
@@ -90,6 +91,7 @@
    "options": "Prescription Dosage"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "default_prescription_duration",
    "fieldtype": "Link",
    "label": "Default Prescription Duration",
@@ -97,12 +99,14 @@
    "options": "Prescription Duration"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "default_interval",
    "fieldtype": "Int",
    "label": "Default Interval",
    "mandatory_depends_on": "dosage_by_interval"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "default_interval_uom",
    "fieldtype": "Select",
    "label": "Default Interval UOM",
@@ -155,12 +159,14 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "is_orderable",
    "description": "Properties of the linked Item, you may further configure Batch Number and Expiry, Serial Number, Shelf Life etc. in the Item master",
    "fieldname": "item_details",
    "fieldtype": "Section Break",
    "label": "Linked Item"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "staff_role",
    "fieldtype": "Link",
    "label": "Staff Role",
@@ -224,7 +230,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-09-05 12:00:00.000000",
+ "modified": "2026-09-09 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
