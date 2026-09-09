@@ -18,11 +18,13 @@ class Medication(Document):
 		create_item_from_medication(self)
 
 	def on_update(self):
+		self.disable_unlinked_items()
+
 		if self.linked_items:
 			self.update_item_and_item_price()
 
 	def validate(self):
-		self.validate_orderable()
+		self.clear_orderable_only_fields()
 
 		if not self.price_list and self.linked_items:
 			price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
@@ -49,16 +51,41 @@ class Medication(Document):
 						).format(item.item_code, exist_medication)
 					)
 
-	def validate_orderable(self):
+	def clear_orderable_only_fields(self):
 		"""An ingredient-only record must stay unlinked to an Item, so it can never be
-		prescribed, searched for or billed. It remains visible to allergy and interaction checks"""
+		prescribed, searched for or billed. It remains visible to allergy and interaction
+		checks. The Items themselves are disabled once the record has saved"""
 		if self.is_orderable or not self.linked_items:
 			return
 
-		frappe.throw(
-			_("{0} is not orderable and cannot be linked to an Item").format(frappe.bold(self.name)),
+		frappe.msgprint(
+			_("{0} is not orderable, so its linked Items have been removed and disabled").format(
+				frappe.bold(self.generic_name)
+			),
 			title=_("Not Orderable"),
+			indicator="orange",
 		)
+		self.linked_items = []
+		self.price_list = None
+
+	def disable_unlinked_items(self):
+		"""An Item outlives the row that linked it. Clearing linked_items while marking a
+		medication ingredient-only would otherwise leave that Item enabled, and an enabled
+		Item is still reachable from the prescriber's drug search"""
+		if self.is_orderable:
+			return
+
+		for item_code in self.unlinked_item_codes():
+			if frappe.db.exists("Item", item_code):
+				frappe.db.set_value("Item", item_code, "disabled", 1)
+
+	def unlinked_item_codes(self):
+		previous = self.get_doc_before_save()
+		if not previous:
+			return []
+
+		linked = {row.item_code for row in self.linked_items}
+		return [row.item_code for row in previous.linked_items if row.item_code not in linked]
 
 	def update_item_and_item_price(self):
 		for item in self.linked_items:
