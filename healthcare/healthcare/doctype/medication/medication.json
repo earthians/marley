@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "format:{dosage_form} {generic_name} {strength}{strength_uom}",
- "creation": "2020-03-24 15:56:36.583587",
+ "creation": "2026-09-09 16:22:34.821370",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -192,6 +192,7 @@
    "label": "Is Combination"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "linked_items",
    "fieldtype": "Table",
    "label": "Linked Items",
@@ -215,6 +216,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "is_orderable",
    "fieldname": "price_list",
    "fieldtype": "Link",
    "label": "Price List",
@@ -230,7 +232,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-09-09 10:00:00.000000",
+ "modified": "2026-09-09 17:23:28.174740",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Medication",
