@@ -10,17 +10,34 @@ healthcare.medication_safety = {
 	 * A blocked or warned alert is raised by the server when the order is saved. This is only
 	 * to tell the prescriber at the moment of choosing, before they have built the order.
 	 */
-	async show_for_medication(frm, medication) {
+	async show_for_medication(frm, medication, source = "medication") {
 		if (!frm.doc.patient || !medication) return;
+
+		const token = this.next_token(frm, source);
 
 		const response = await frappe.call({
 			method: "healthcare.healthcare.doctype.medication_alert_log.medication_alert_log.get_alerts",
 			args: { patient: frm.doc.patient, medications: [medication] },
 		});
 
+		// responses can land out of order, so drop one the prescriber has already moved past
+		if (this.latest_token(frm, source) !== token) return;
+
 		(response.message?.alerts || [])
 			.filter(alert => alert.subject === medication)
 			.forEach(alert => this.toast(alert));
+	},
+
+	next_token(frm, source) {
+		frm.__medication_alert_tokens = frm.__medication_alert_tokens || {};
+		frm.__medication_alert_tokens[source] =
+			(frm.__medication_alert_tokens[source] || 0) + 1;
+
+		return frm.__medication_alert_tokens[source];
+	},
+
+	latest_token(frm, source) {
+		return (frm.__medication_alert_tokens || {})[source];
 	},
 
 	toast(alert) {
