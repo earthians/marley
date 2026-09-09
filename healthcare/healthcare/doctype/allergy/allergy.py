@@ -20,7 +20,8 @@ class Allergy(Document):
 		self.substance = None
 
 	def validate_substance(self):
-		"""mandatory_depends_on is enforced in the browser only, and an allergen without a
-		substance would silently never match a prescription"""
-		if self.category == "Medication" and not self.substance:
-			frappe.throw(_("Substance is mandatory for a medication allergen"))
+		if self.category != "Medication":
+			return
+
+		if not self.substance_type or not self.substance:
+			frappe.throw(_("Substance Type and Substance are mandatory for a medication allergen"))
