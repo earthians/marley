@@ -845,6 +845,7 @@ frappe.ui.form.on("Drug Prescription", {
 			frm,
 			frappe.get_doc(cdt, cdn).medication,
 			cdn,
+			(frm.doc.drug_prescription || []).map(row => row.medication),
 		);
 		// to set drug_code(item) if Medication Item table have only one item
 		let child = locals[cdt][cdn];
