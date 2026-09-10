@@ -24,6 +24,7 @@
   "enable_medication_alerts",
   "contraindicated_alert_action",
   "major_alert_action",
+  "moderate_alert_action",
   "minor_alert_action",
   "column_break_medication_alerts",
   "record_alerts_from",
@@ -564,17 +565,26 @@
    "fieldname": "record_alerts_from",
    "fieldtype": "Select",
    "label": "Record Alerts From",
-   "options": "\nContraindicated\nMajor\nMinor"
+   "options": "\nContraindicated\nMajor\nModerate\nMinor"
   },
   {
    "fieldname": "medication_alerts_section",
    "fieldtype": "Section Break",
    "label": "Medication Alerts"
+  },
+  {
+   "default": "Notify",
+   "depends_on": "enable_medication_alerts",
+   "fieldname": "moderate_alert_action",
+   "fieldtype": "Select",
+   "label": "On Moderate",
+   "mandatory_depends_on": "enable_medication_alerts",
+   "options": "Block\nWarn\nNotify"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-05 23:30:00.000000",
+ "modified": "2026-09-10 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",
