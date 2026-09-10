@@ -9,14 +9,15 @@ from frappe.utils import escape_html
 from healthcare.healthcare.doctype.medication.medication import expand_many
 
 # most serious first
-SEVERITY_ORDER = ["Contraindicated", "Major", "Minor"]
+SEVERITY_ORDER = ["Contraindicated", "Major", "Moderate", "Minor"]
 
 # what a severity does, weakest first. Block refuses the order, Warn is shown and the order
 # saves, Notify is only ever an indicator
 ACTIONS = ["Notify", "Warn", "Block"]
 
-# a recorded allergy lines up with these severities, so the same actions govern both
-ALLERGY_SEVERITY = {"Severe": "Contraindicated", "Moderate": "Major", "Mild": "Minor"}
+# an allergy is graded on the same scale, one to one, except at the top: it is recorded as
+# Severe, and a prescription against one is contraindicated
+SEVERE_ALLERGY = "Severe"
 
 ACTIVE_REQUEST_STATUS = ["active-Medication Request Status", "on-hold-Medication Request Status"]
 
@@ -40,8 +41,7 @@ class MedicationAlertLog(Document):
 def allergy_alert(medication, allergen):
 	return frappe._dict(
 		kind="Allergy",
-		# a severity nobody recorded is treated as the most serious, never downgraded
-		severity=ALLERGY_SEVERITY.get(allergen.severity, SEVERITY_ORDER[0]),
+		severity=allergy_severity(allergen.severity),
 		subject=medication,
 		against=allergen.allergy,
 		advice=allergen.reaction or "",
@@ -64,6 +64,14 @@ def interaction_alert(rule, medication, other):
 		message=_("{0} interacts with {1}").format(medication, other),
 		action="Notify",
 	)
+
+
+def allergy_severity(recorded):
+	if recorded == SEVERE_ALLERGY:
+		return SEVERITY_ORDER[0]
+
+	# a severity nobody recorded is treated as the most serious, never downgraded
+	return recorded if recorded in SEVERITY_ORDER else SEVERITY_ORDER[0]
 
 
 def rank(alert):
