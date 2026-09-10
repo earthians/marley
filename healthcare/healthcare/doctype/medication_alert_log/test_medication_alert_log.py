@@ -331,3 +331,30 @@ class TestEndpointInput(MedicationSafetyCase):
 		alerts = get_alerts(PATIENT, frappe.as_json([self.ibuprofen, self.warfarin]))
 
 		self.assertEqual(len(alerts["alerts"]), 1)
+
+
+class TestBlockedAttemptLogging(MedicationSafetyCase):
+	def test_a_refused_order_is_still_recorded(self):
+		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
+		encounter = build_encounter([self.ibuprofen, self.warfarin])
+
+		self.assertRaises(frappe.ValidationError, encounter.insert)
+
+		logged = frappe.get_all(
+			"Medication Alert Log",
+			filters={"patient": PATIENT, "action": "Block"},
+			fields=["severity", "kind", "reference_name"],
+		)
+		self.assertEqual(len(logged), 1)
+		self.assertEqual(logged[0].severity, "Contraindicated")
+		self.assertEqual(logged[0].kind, "Interaction")
+		self.assertIsNone(logged[0].reference_name)
+
+	def test_a_refused_order_is_not_recorded_when_the_site_keeps_no_log(self):
+		frappe.db.set_single_value("Healthcare Settings", "record_alerts_from", None)
+		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
+		encounter = build_encounter([self.ibuprofen, self.warfarin])
+
+		self.assertRaises(frappe.ValidationError, encounter.insert)
+
+		self.assertFalse(frappe.db.exists("Medication Alert Log", {"patient": PATIENT}))
