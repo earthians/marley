@@ -230,6 +230,7 @@ def check_document(doc, medications):
 	blocked = [alert for alert in alerts if alert.action == "Block"]
 
 	if blocked:
+		record_blocked_attempt(doc, blocked)
 		frappe.throw(as_html(blocked), title=_("Medication Blocked"))
 
 	warnings = [alert for alert in alerts if alert.action == "Warn"]
@@ -240,26 +241,63 @@ def check_document(doc, medications):
 
 
 def log_document_alerts(doc):
-	"""Written once the document has saved, so the reference points at a row that exists.
+	"""Written once the document has saved, so the reference points at a row that exists"""
+	for alert in recordable(doc.flags.get("medication_alerts")):
+		write_log(doc.patient, alert, doc.doctype, doc.name)
 
-	A blank Record Alerts From means the site keeps no log.
+
+def record_blocked_attempt(doc, alerts):
+	"""A refused order is the one most worth recording, but refusing it rolls the transaction
+	back and takes any row written here with it. Employing `after_rollback`,
+	in the fresh transaction that follows, so the record is written inside the same request.
 	"""
+	alerts = recordable(alerts)
+	if not alerts:
+		return
+
+	details = (
+		doc.patient,
+		doc.doctype,
+		None if doc.is_new() else doc.name,
+		[dict(alert) for alert in alerts],
+	)
+
+	if frappe.in_test:
+		# nothing rolls back before the assertion, so write where the test can see it
+		write_blocked_logs(*details, commit=False)
+	else:
+		frappe.db.after_rollback.add(lambda: write_blocked_logs(*details, commit=True))
+
+
+def write_blocked_logs(patient, reference_doctype, reference_name, alerts, commit):
+	"""Runs after the rollback, so anything the refused request created has gone with it. A
+	failure to record must never replace the refusal the prescriber needs to see"""
+	try:
+		for alert in alerts:
+			write_log(patient, frappe._dict(alert), reference_doctype, reference_name)
+
+		if commit:
+			frappe.db.commit()
+	except Exception:
+		frappe.log_error("Could not record a blocked medication alert")
+
+
+def recordable(alerts):
+	"""The alerts a site keeps. A blank Record Alerts From means it keeps none"""
 	record_from = get_settings().record_from
 	if not record_from:
-		return
+		return []
 
 	threshold = SEVERITY_ORDER.index(record_from)
 
-	for alert in doc.flags.get("medication_alerts") or []:
-		if rank(alert) <= threshold:
-			write_log(doc, alert)
+	return [alert for alert in alerts or [] if rank(alert) <= threshold]
 
 
-def write_log(doc, alert):
+def write_log(patient, alert, reference_doctype, reference_name):
 	frappe.get_doc(
 		{
 			"doctype": "Medication Alert Log",
-			"patient": doc.patient,
+			"patient": patient,
 			"kind": alert.kind,
 			"severity": alert.severity,
 			"action": alert.action,
@@ -268,11 +306,11 @@ def write_log(doc, alert):
 			"alert_message": alert.message,
 			"source_doctype": alert.source_doctype,
 			"source_name": alert.source,
-			"reference_doctype": doc.doctype,
-			"reference_name": doc.name,
+			"reference_doctype": reference_doctype,
+			"reference_name": reference_name,
 			"raised_for": frappe.session.user,
 		}
-	).insert(ignore_permissions=True)
+	).insert(ignore_permissions=True, ignore_links=True)
 
 
 def as_html(alerts):
