@@ -42,9 +42,22 @@ class TestAllergyAlerts(MedicationSafetyCase):
 		self.assertEqual(alerts[0].action, "Block")
 
 	def test_allergy_severity_follows_the_configured_actions(self):
-		record_allergy("_Test Penicillin Allergy", severity="Mild")
+		record_allergy("_Test Penicillin Allergy", severity="Minor")
 
-		self.assertEqual(check(PATIENT, [self.amoxicillin])[0].severity, "Minor")
+		alert = check(PATIENT, [self.amoxicillin])[0]
+
+		self.assertEqual(alert.severity, "Minor")
+		self.assertEqual(alert.action, "Notify")
+
+	def test_a_severe_allergy_is_contraindicated(self):
+		record_allergy("_Test Penicillin Allergy", severity="Severe")
+
+		self.assertEqual(check(PATIENT, [self.amoxicillin])[0].severity, "Contraindicated")
+
+	def test_a_moderate_allergy_stays_moderate(self):
+		record_allergy("_Test Penicillin Allergy", severity="Moderate")
+
+		self.assertEqual(check(PATIENT, [self.amoxicillin])[0].severity, "Moderate")
 
 	def test_an_inactive_allergy_is_ignored(self):
 		record_allergy("_Test Dormant Allergy", status="Inactive")
@@ -111,14 +124,14 @@ class TestAlertActions(MedicationSafetyCase):
 		self.assertIsNotNone(build_encounter([self.ibuprofen, self.warfarin]).insert().name)
 
 	def test_a_site_can_block_on_a_minor_interaction(self):
-		save_actions("Block", "Block", "Block")
+		save_actions("Block", "Block", "Block", "Block")
 		create_interaction("Ibuprofen", "Warfarin", "Minor")
 		encounter = build_encounter([self.ibuprofen, self.warfarin])
 
 		self.assertRaises(frappe.ValidationError, encounter.insert)
 
 	def test_a_site_can_downgrade_a_contraindication_to_a_notice(self):
-		save_actions("Notify", "Notify", "Notify")
+		save_actions("Notify", "Notify", "Notify", "Notify")
 		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
 
 		self.assertIsNotNone(build_encounter([self.ibuprofen, self.warfarin]).insert().name)
@@ -126,7 +139,7 @@ class TestAlertActions(MedicationSafetyCase):
 
 class TestAlertLogging(MedicationSafetyCase):
 	def test_a_contraindicated_alert_is_logged(self):
-		save_actions("Warn", "Warn", "Notify")
+		save_actions("Warn", "Warn", "Notify", "Notify")
 		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
 		encounter = build_encounter([self.ibuprofen, self.warfarin]).insert()
 
@@ -164,16 +177,19 @@ class TestAlertSettings(HealthcareTestSuite):
 		set_actions()
 
 	def test_the_defaults_escalate(self):
-		self.assertIsNotNone(save_actions("Block", "Warn", "Notify"))
+		self.assertIsNotNone(save_actions("Block", "Warn", "Notify", "Notify"))
 
 	def test_equal_actions_across_severities_are_allowed(self):
-		self.assertIsNotNone(save_actions("Warn", "Warn", "Warn"))
+		self.assertIsNotNone(save_actions("Warn", "Warn", "Warn", "Warn"))
 
 	def test_a_minor_may_not_act_more_strongly_than_a_contraindication(self):
-		self.assertRaises(frappe.ValidationError, save_actions, "Notify", "Notify", "Block")
+		self.assertRaises(frappe.ValidationError, save_actions, "Notify", "Notify", "Notify", "Block")
 
 	def test_a_blank_action_is_refused_while_enabled(self):
-		self.assertRaises(frappe.ValidationError, save_actions, None, "Warn", "Notify")
+		self.assertRaises(frappe.ValidationError, save_actions, None, "Warn", "Notify", "Notify")
+
+	def test_moderate_sits_between_major_and_minor(self):
+		self.assertRaises(frappe.ValidationError, save_actions, "Block", "Notify", "Warn", "Notify")
 
 	def test_a_blank_action_is_allowed_while_disabled(self):
 		settings = frappe.get_doc("Healthcare Settings")
@@ -189,6 +205,7 @@ def set_actions(enabled=1, record_from="Contraindicated"):
 		"enable_medication_alerts": enabled,
 		"contraindicated_alert_action": "Block",
 		"major_alert_action": "Warn",
+		"moderate_alert_action": "Notify",
 		"minor_alert_action": "Notify",
 		"record_alerts_from": record_from,
 	}
@@ -196,12 +213,13 @@ def set_actions(enabled=1, record_from="Contraindicated"):
 		frappe.db.set_single_value("Healthcare Settings", fieldname, value)
 
 
-def save_actions(contraindicated, major, minor):
+def save_actions(contraindicated, major, moderate, minor):
 	"""Go through the document, so a test only ever configures a reachable state"""
 	settings = frappe.get_doc("Healthcare Settings")
 	settings.enable_medication_alerts = 1
 	settings.contraindicated_alert_action = contraindicated
 	settings.major_alert_action = major
+	settings.moderate_alert_action = moderate
 	settings.minor_alert_action = minor
 
 	return settings.save()
@@ -281,7 +299,7 @@ class TestAlertLoggingDisabled(MedicationSafetyCase):
 	def test_a_blank_recording_setting_logs_nothing(self):
 		set_actions(record_from=None)
 		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
-		save_actions("Warn", "Warn", "Notify")
+		save_actions("Warn", "Warn", "Notify", "Notify")
 		encounter = build_encounter([self.ibuprofen, self.warfarin]).insert()
 
 		self.assertFalse(frappe.db.exists("Medication Alert Log", {"reference_name": encounter.name}))
@@ -291,7 +309,7 @@ class TestAlertLogIsReadOnly(MedicationSafetyCase):
 	def setUp(self):
 		super().setUp()
 		create_interaction("Ibuprofen", "Warfarin", "Contraindicated")
-		save_actions("Warn", "Warn", "Notify")
+		save_actions("Warn", "Warn", "Notify", "Notify")
 		encounter = build_encounter([self.ibuprofen, self.warfarin]).insert()
 		self.log = frappe.get_last_doc("Medication Alert Log", {"reference_name": encounter.name})
 
@@ -358,3 +376,28 @@ class TestBlockedAttemptLogging(MedicationSafetyCase):
 		self.assertRaises(frappe.ValidationError, encounter.insert)
 
 		self.assertFalse(frappe.db.exists("Medication Alert Log", {"patient": PATIENT}))
+
+
+class TestModerateSeverity(MedicationSafetyCase):
+	def test_a_moderate_interaction_notifies_by_default(self):
+		create_interaction("Ibuprofen", "Warfarin", "Moderate")
+
+		alerts = check(PATIENT, [self.ibuprofen, self.warfarin])
+
+		self.assertEqual(alerts[0].severity, "Moderate")
+		self.assertEqual(alerts[0].action, "Notify")
+
+	def test_a_moderate_interaction_outranks_a_minor_one(self):
+		create_interaction("Non-Steroidal Anti-Inflammatory Drugs", "Vitamin K Antagonists", "Minor")
+		create_interaction("Ibuprofen", "Warfarin", "Moderate")
+
+		alerts = check(PATIENT, [self.ibuprofen, self.warfarin])
+
+		self.assertEqual(len(alerts), 1)
+		self.assertEqual(alerts[0].severity, "Moderate")
+
+	def test_a_site_can_make_moderate_warn(self):
+		save_actions("Block", "Warn", "Warn", "Notify")
+		create_interaction("Ibuprofen", "Warfarin", "Moderate")
+
+		self.assertEqual(check(PATIENT, [self.ibuprofen, self.warfarin])[0].action, "Warn")
