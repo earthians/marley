@@ -92,7 +92,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Severity",
-   "options": "Mild\nModerate\nSevere",
+   "options": "Severe\nMajor\nModerate\nMinor",
    "reqd": 1
   },
   {
@@ -113,7 +113,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-05 21:30:00.000000",
+ "modified": "2026-09-10 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Allergy",
