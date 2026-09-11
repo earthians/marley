@@ -260,6 +260,7 @@ class PatientEncounter(Document):
 					if drug.medication:
 						medication = frappe.get_doc("Medication", drug.medication)
 					order = self.get_order_details(medication, drug, True)
+					order.flags.medication_safety_checked = True
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
 					drug.medication_request = order.name
