@@ -54,7 +54,11 @@ def is_inpatient_visit(visit):
 	if visit.get("inpatient_record"):
 		return True
 
-	return bool(frappe.db.get_value("Patient", visit.patient, "inpatient_record"))
+	inpatient_record = frappe.db.get_value("Patient", visit.patient, "inpatient_record")
+	if not inpatient_record:
+		return False
+
+	return frappe.db.get_value("Inpatient Record", inpatient_record, "status") == "Admitted"
 
 
 def is_free_follow_up_enabled(practitioner, doctype="Patient Appointment"):
