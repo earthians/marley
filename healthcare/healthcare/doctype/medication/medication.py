@@ -10,16 +10,22 @@ from frappe.model.document import Document
 from frappe.model.rename_doc import rename_doc
 from frappe.utils import get_link_to_form
 
+from healthcare.healthcare.doctype.medication_class.medication_class import get_ancestor_map
+
 
 class Medication(Document):
 	def after_insert(self):
 		create_item_from_medication(self)
 
 	def on_update(self):
+		self.disable_unlinked_items()
+
 		if self.linked_items:
 			self.update_item_and_item_price()
 
 	def validate(self):
+		self.clear_orderable_only_fields()
+
 		if not self.price_list and self.linked_items:
 			price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
 			if price_list:
@@ -44,6 +50,42 @@ class Medication(Document):
 							"Item <b>{}</b> has been already used in <b><a href='/app/medication/{}'>Medication</a></b>"
 						).format(item.item_code, exist_medication)
 					)
+
+	def clear_orderable_only_fields(self):
+		"""An ingredient-only record must stay unlinked to an Item, so it can never be
+		prescribed, searched for or billed. It remains visible to allergy and interaction
+		checks. The Items themselves are disabled once the record has saved"""
+		if self.is_orderable or not self.linked_items:
+			return
+
+		frappe.msgprint(
+			_("{0} is not orderable, so its linked Items have been removed and disabled").format(
+				frappe.bold(self.generic_name)
+			),
+			title=_("Not Orderable"),
+			indicator="orange",
+		)
+		self.linked_items = []
+		self.price_list = None
+
+	def disable_unlinked_items(self):
+		"""An Item outlives the row that linked it. Clearing linked_items while marking a
+		medication ingredient-only would otherwise leave that Item enabled, and an enabled
+		Item is still reachable from the prescriber's drug search"""
+		if self.is_orderable:
+			return
+
+		for item_code in self.unlinked_item_codes():
+			if frappe.db.exists("Item", item_code):
+				frappe.db.set_value("Item", item_code, "disabled", 1)
+
+	def unlinked_item_codes(self):
+		previous = self.get_doc_before_save()
+		if not previous:
+			return []
+
+		linked = {row.item_code for row in self.linked_items}
+		return [row.item_code for row in previous.linked_items if row.item_code not in linked]
 
 	def update_item_and_item_price(self):
 		for item in self.linked_items:
@@ -184,3 +226,102 @@ def get_children(parent=None, is_root=False, **filters):
 			medication_item.currency = frappe.db.get_single_value("Global Defaults", "default_currency")
 
 		return medication_items
+
+
+def validate_medication_is_orderable(medication, label):
+	"""Ordering paths accept only orderable medications. The link filter is a browser
+	convenience, this is the guard that holds for imports and API writes"""
+	if not medication or frappe.db.get_value("Medication", medication, "is_orderable"):
+		return
+
+	frappe.throw(
+		_("{0}: {1} exists only as an ingredient and cannot be ordered").format(
+			label, frappe.bold(medication)
+		),
+		title=_("Not Orderable"),
+	)
+
+
+def expand(medication: str) -> set[tuple[str, str]]:
+	"""Everything one medication should be matched against"""
+	return expand_many([medication])[medication]
+
+
+def expand_many(medications: list[str]) -> dict[str, set[tuple[str, str]]]:
+	"""Everything each medication should be matched against: itself, the medications it is
+	made of, and every class those sit under.
+
+	Returned as (doctype, name) pairs, the same shape an allergy substance or an interactant
+	is recorded in, so a check is a set intersection. Expanded as a batch because a save is
+	checked against the patient's whole current list, and a query per medication does not
+	scale on a busy round.
+	"""
+	medications = [name for name in dict.fromkeys(medications) if name]
+	if not medications:
+		return {}
+
+	ingredients = get_ingredient_map(medications)
+	families = {name: collect_family(name, ingredients) for name in medications}
+	classes = get_medication_classes({n for family in families.values() for n in family})
+
+	return {name: build_interactants(family, classes) for name, family in families.items()}
+
+
+def build_interactants(family, classes):
+	interactants = {("Medication", name) for name in family}
+	ancestors = get_ancestor_map()
+
+	for name in family:
+		medication_class = classes.get(name)
+		if not medication_class:
+			continue
+		interactants.add(("Medication Class", medication_class))
+		interactants.update(("Medication Class", a) for a in ancestors.get(medication_class, []))
+
+	return interactants
+
+
+def collect_family(medication, ingredients):
+	"""A medication and, for a combination, every medication beneath it"""
+	family, pending = set(), [medication]
+
+	while pending:
+		name = pending.pop()
+		if name in family:
+			continue
+		family.add(name)
+		pending.extend(ingredients.get(name, []))
+
+	return family
+
+
+def get_ingredient_map(medications):
+	"""parent medication -> its ingredient medications, followed to any depth"""
+	ingredients, frontier, seen = {}, set(medications), set()
+
+	while frontier:
+		seen |= frontier
+		rows = frappe.get_all(
+			"Medication Ingredient",
+			filters={"parent": ("in", list(frontier)), "parenttype": "Medication"},
+			fields=["parent", "medication"],
+		)
+		frontier = set()
+
+		for row in rows:
+			if not row.medication:
+				continue
+			ingredients.setdefault(row.parent, []).append(row.medication)
+			if row.medication not in seen:
+				frontier.add(row.medication)
+
+	return ingredients
+
+
+def get_medication_classes(medications):
+	rows = frappe.get_all(
+		"Medication",
+		filters={"name": ("in", list(medications))},
+		fields=["name", "medication_class"],
+	)
+	return {row.name: row.medication_class for row in rows if row.medication_class}
