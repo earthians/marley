@@ -401,3 +401,53 @@ class TestModerateSeverity(MedicationSafetyCase):
 		create_interaction("Ibuprofen", "Warfarin", "Moderate")
 
 		self.assertEqual(check(PATIENT, [self.ibuprofen, self.warfarin])[0].action, "Warn")
+
+
+class TestAlertIsShownOnce(MedicationSafetyCase):
+	def test_an_interaction_alerts_once_on_submit(self):
+		create_interaction("Ibuprofen", "Warfarin", "Major")
+		encounter = build_encounter([self.ibuprofen, self.warfarin]).insert()
+
+		frappe.clear_messages()
+		encounter.submit()
+
+		self.assertEqual(len(alerts_shown()), 1)
+
+	def test_an_allergy_alerts_once_for_every_prescription(self):
+		record_allergy("_Test Penicillin Allergy", severity="Major")
+		encounter = build_encounter([self.amoxicillin]).insert()
+
+		frappe.clear_messages()
+		encounter.submit()
+
+		self.assertEqual(len(alerts_shown()), 1)
+
+	def test_a_request_of_its_own_alerts_once_across_insert_and_submit(self):
+		record_allergy("_Test Penicillin Allergy", severity="Major")
+
+		frappe.clear_messages()
+		request = build_request(self.amoxicillin).insert()
+		request.submit()
+
+		self.assertEqual(len(alerts_shown()), 1)
+
+
+def alerts_shown():
+	"""The medication alerts msgprinted since the message log was last cleared"""
+	return [message for message in frappe.get_message_log() if message.get("title") == "Medication Alerts"]
+
+
+def build_request(medication):
+	request = frappe.new_doc("Medication Request")
+	request.patient = PATIENT
+	request.medication = medication
+	request.practitioner = frappe.db.get_value("Healthcare Practitioner", {}, "name")
+	request.company = "_Test Company"
+	request.order_date = frappe.utils.nowdate()
+	request.order_time = frappe.utils.nowtime()
+	request.medication_item = frappe.db.get_value("Item", {"item_name": "Paracetamol"})
+	request.dosage = frappe.db.get_value("Prescription Dosage", {}, "name")
+	request.dosage_form = frappe.db.get_value("Dosage Form", {}, "name")
+	request.quantity = 1
+
+	return request
