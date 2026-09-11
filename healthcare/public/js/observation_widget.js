@@ -295,7 +295,13 @@ healthcare.ObservationWidget = class {
 
 	render_note_html(html) {
 		if (!html) return "";
-		return `<div class="text-muted observation-note" style="font-size:11px; line-height:1.5; padding-top:5px;">${html}</div>`;
+		return `<div class="observation-note" style="margin-top:6px; padding:6px 8px;
+			background-color: var(--subtle-fg, var(--bg-color));
+			border-radius: var(--border-radius-sm, 4px);">
+			<div class="text-muted" style="font-size:9px; font-weight:600; text-transform:uppercase;
+				letter-spacing:0.5px; margin-bottom:3px;">${__("Note")}</div>
+			<div class="text-muted" style="font-size:11px; line-height:1.5;">${html}</div>
+		</div>`;
 	}
 
 	set_values(th, obs_data) {
