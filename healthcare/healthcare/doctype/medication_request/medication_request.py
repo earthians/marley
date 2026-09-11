@@ -19,7 +19,11 @@ class MedicationRequest(ServiceRequestController):
 		self.validate_medication_safety()
 
 	def validate_medication_safety(self):
+		if self.flags.medication_safety_checked:  # the encounter checked
+			return
+
 		check_document(self, [self.medication])
+		self.flags.medication_safety_checked = True
 
 	def on_update(self):
 		log_document_alerts(self)
