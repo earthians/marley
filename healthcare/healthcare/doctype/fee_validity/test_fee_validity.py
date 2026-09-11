@@ -3,7 +3,7 @@
 
 
 import frappe
-from frappe.utils import add_days, date_diff, getdate, nowdate
+from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 
@@ -18,7 +18,11 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
+from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
+from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
+	create_inpatient,
+	get_healthcare_service_unit,
+)
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
 	update_status,
@@ -245,6 +249,9 @@ class TestFeeValidity(HealthcareTestSuite):
 	def enable_free_follow_ups(self, apply_on_encounters=1, max_visits=1, valid_days=7):
 		patient = frappe.get_list("Patient", pluck="name")[0]
 		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+
+		# another suite may have left this shared patient flagged as admitted
+		frappe.db.set_value("Patient", patient, {"inpatient_record": None, "inpatient_status": None})
 
 		healthcare_settings = frappe.get_single("Healthcare Settings")
 		healthcare_settings.enable_free_follow_ups = 1
@@ -524,8 +531,13 @@ class TestFeeValidity(HealthcareTestSuite):
 		inpatient_record = create_inpatient(patient)
 		inpatient_record.expected_length_of_stay = 0
 		inpatient_record.save(ignore_permissions=True)
-		frappe.db.set_value("Patient", patient, "inpatient_record", inpatient_record.name)
-		self.addCleanup(frappe.db.set_value, "Patient", patient, "inpatient_record", None)
+		admit_patient(inpatient_record, get_healthcare_service_unit(), now_datetime())
+		self.addCleanup(
+			frappe.db.set_value,
+			"Patient",
+			patient,
+			{"inpatient_record": None, "inpatient_status": None},
+		)
 		return inpatient_record.name
 
 	def test_cancel_source_encounter_cancels_its_validity(self):
