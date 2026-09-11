@@ -253,8 +253,7 @@ healthcare.ObservationWidget = class {
 				},
 				{
 					fieldname: "note_text",
-					fieldtype: "Text",
-					read_only: 1,
+					fieldtype: "HTML",
 				},
 				{
 					fieldtype: "Section Break",
@@ -268,8 +267,7 @@ healthcare.ObservationWidget = class {
 				},
 				{
 					fieldname: "findings_text",
-					fieldtype: "Text",
-					read_only: 1,
+					fieldtype: "HTML",
 				},
 				{
 					fieldtype: "Column Break",
@@ -283,8 +281,7 @@ healthcare.ObservationWidget = class {
 				},
 				{
 					fieldname: "result_interpretation",
-					fieldtype: "Text",
-					read_only: 1,
+					fieldtype: "HTML",
 				},
 			],
 			body: wrapper,
@@ -294,6 +291,11 @@ healthcare.ObservationWidget = class {
 		setTimeout(() => {
 			me._is_rendering_result_field[obs_data.name] = false;
 		}, 0);
+	}
+
+	render_note_html(html) {
+		if (!html) return "";
+		return `<div class="text-muted observation-note" style="font-size:11px; line-height:1.5; padding-top:5px;">${html}</div>`;
 	}
 
 	set_values(th, obs_data) {
@@ -389,19 +391,22 @@ healthcare.ObservationWidget = class {
 			`add-note-observation-btn-${obs_data.name}`,
 		);
 		myButton.addEventListener("click", function () {
-			me.add_note(obs_data.name, obs_data.note);
+			me.add_note(obs_data);
 		});
 
 		if (obs_data.note) {
-			me[obs_data.name].set_value("note_text", obs_data.note);
+			me[obs_data.name]
+				.get_field("note_text")
+				.html(me.render_note_html(obs_data.note));
 		}
 
 		if (obs_data.observation_category == "Imaging") {
-			me[obs_data.name].set_value("findings_text", obs_data.result_text);
-			me[obs_data.name].set_value(
-				"result_interpretation",
-				obs_data.result_interpretation,
-			);
+			me[obs_data.name]
+				.get_field("findings_text")
+				.html(me.render_note_html(obs_data.result_text));
+			me[obs_data.name]
+				.get_field("result_interpretation")
+				.html(me.render_note_html(obs_data.result_interpretation));
 		}
 	}
 
@@ -420,11 +425,9 @@ healthcare.ObservationWidget = class {
 		}
 	}
 
-	add_note(observation, note) {
+	add_note(obs_data) {
 		var me = this;
-		let observation_name = observation;
-		let note_text = me[observation].get_value("note_text") || note;
-		// let result = note;
+		let observation = obs_data.name;
 		var d = new frappe.ui.Dialog({
 			title: __("Add Note"),
 			static: true,
@@ -434,26 +437,26 @@ healthcare.ObservationWidget = class {
 					fieldname: "observation",
 					fieldtype: "Link",
 					options: "Observation",
-					default: observation_name,
+					default: observation,
 					hidden: 1,
 				},
 				{
 					label: __("Note"),
 					fieldname: "note",
 					fieldtype: "Text Editor",
-					default: note_text,
+					default: obs_data.note,
 				},
 			],
 			primary_action: function () {
 				me.frm.dirty();
 				var data = d.get_values();
-				me[observation].set_value("note_text", data.note);
-				if (me.result.length > 0) {
-					me.result.forEach(function (res) {
-						if (res.observation == observation) {
-							res["note"] = data.note;
-						}
-					});
+				obs_data.note = data.note;
+				me[observation]
+					.get_field("note_text")
+					.html(me.render_note_html(data.note));
+				let existing = me.result.find(res => res.observation === observation);
+				if (existing) {
+					existing.note = data.note;
 				} else {
 					me.result.push({ observation: observation, note: data.note });
 				}
@@ -528,12 +531,10 @@ healthcare.ObservationWidget = class {
 		let note = "";
 		if (type == "Findings") {
 			template = obs_data.result_template;
-			note = me[obs_data.name].get_value("result_text") || obs_data.result_text;
+			note = obs_data.result_text;
 		} else if (type == "Interpretation") {
 			template = obs_data.interpretation_template;
-			note =
-				me[obs_data.name].get_value("result_interpretation") ||
-				obs_data.result_interpretation;
+			note = obs_data.result_interpretation;
 		}
 		var d = new frappe.ui.Dialog({
 			title: __(type),
@@ -571,10 +572,16 @@ healthcare.ObservationWidget = class {
 				val_dict["result"] = "";
 				if (type == "Findings") {
 					val_dict["result"] = data.note;
-					me[obs_data.name].set_value("findings_text", data.note);
+					obs_data.result_text = data.note;
+					me[obs_data.name]
+						.get_field("findings_text")
+						.html(me.render_note_html(data.note));
 				} else if (type == "Interpretation") {
 					val_dict["interpretation"] = data.note;
-					me[obs_data.name].set_value("result_interpretation", data.note);
+					obs_data.result_interpretation = data.note;
+					me[obs_data.name]
+						.get_field("result_interpretation")
+						.html(me.render_note_html(data.note));
 				}
 				d.hide();
 				values.push(val_dict);
