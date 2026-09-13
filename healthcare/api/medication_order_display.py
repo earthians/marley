@@ -71,7 +71,11 @@ def medication_entry_display_fields(
 	)
 	display_frequency = _text(data.get("patient_frequency")) or _text(data.get("written_frequency"))
 	line_date = data.get("date") or parent_start_date
-	line_end = data.get("end_date") or parent_end_date
+	# Non-legacy: only the line's own end date. Parent/header end_date is never a fallback.
+	# Legacy imports may omit line end dates — allow parent only then.
+	line_end = data.get("end_date")
+	if not line_end and legacy:
+		line_end = parent_end_date
 
 	return {
 		"display_drug": display_drug or None,

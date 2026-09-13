@@ -22,7 +22,7 @@ import {
   isClinicalNoteEditableWithin24h,
 } from '../../constants/nursingShift'
 import { toast } from '../../hooks/useToast'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react'
 import { PaginationControls, DEFAULT_PAGE_SIZE, type PageSize } from '../ui/PaginationControls'
 import { useSlideOverListNav } from '../../hooks/useSlideOverListNav'
 import { formatLinkedVisitClinicalNoteDate } from '../../utils/formatDate'
@@ -428,18 +428,6 @@ export const ClinicalNotesList = ({
   }
 
   const renderNoteActions = (note: ClinicalNote) => {
-    if (!allowEditWithin24h) {
-      return (
-        <PrintFormatDropdown
-          doctype="Clinical Note"
-          docName={note.name}
-          noLetterhead={0}
-          triggerPrint={1}
-          className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-300 bg-white text-primary hover:bg-slate-50"
-        />
-      )
-    }
-
     return (
       <div className="inline-flex items-center justify-center gap-1">
         <div className="relative" ref={openActionRow === note.name ? actionMenuRef : undefined}>
@@ -460,7 +448,18 @@ export const ClinicalNotesList = ({
             triggerRef={actionMenuRef}
             minWidth={160}
           >
-            {canEditNote(note) ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpenActionRow(null)
+                setDetailName(note.name)
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+            >
+              <Eye className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden />
+              View
+            </button>
+            {allowEditWithin24h && canEditNote(note) ? (
               <>
                 <button
                   type="button"
@@ -482,22 +481,7 @@ export const ClinicalNotesList = ({
                   Delete
                 </button>
               </>
-            ) : (
-              <div
-                className="px-3 py-2 text-xs text-slate-500"
-                title={
-                  note.note_locked
-                    ? 'This note is locked'
-                    : CLINICAL_NOTE_EDIT_LOCKED_MESSAGE
-                }
-              >
-                {note.note_locked
-                  ? 'Locked'
-                  : therapyNoteUneditableIn24Hour
-                    ? 'Locked (24h)'
-                    : 'Unavailable'}
-              </div>
-            )}
+            ) : null}
           </PortalActionsMenu>
         </div>
         <PrintFormatDropdown

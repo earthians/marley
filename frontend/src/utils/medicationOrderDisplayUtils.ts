@@ -131,10 +131,16 @@ export function displayMedicationStartDate(
 }
 
 export function displayMedicationEndDate(
-  order: MedicationOrderLike,
+  order: MedicationOrderLike & { is_legacy?: boolean | null },
   parentEndDate?: string | null
 ): string {
-  return text(order.end_date) || text(parentEndDate) || '-'
+  const lineEnd = text(order.end_date)
+  if (lineEnd) return lineEnd
+  // Parent/header end date is only a fallback for legacy lines without a line end date.
+  if (order.is_legacy || isLegacyMedicationOrderRow(order)) {
+    return text(parentEndDate) || '-'
+  }
+  return '-'
 }
 
 export function displayMedicationRoute(order: MedicationOrderLike): string {

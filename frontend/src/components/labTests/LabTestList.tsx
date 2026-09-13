@@ -2415,6 +2415,8 @@ export const LabTestList = ({
   addButtonTitle = 'New Lab Test',
   headerExtra,
   focusLabTest,
+  focusLabTests,
+  focusLabGroupLabel,
   focusOpenSampleCollection = false,
   focusOpenReview = false,
   focusOpenResults = false,
@@ -2442,6 +2444,9 @@ export const LabTestList = ({
   headerExtra?: ReactNode
   /** When set, scroll to this lab test and optionally open sample collection, review, or results. */
   focusLabTest?: string
+  /** Comma-separated lab test names — opens group/bulk review when focusOpenReview. */
+  focusLabTests?: string
+  focusLabGroupLabel?: string
   focusOpenSampleCollection?: boolean
   focusOpenReview?: boolean
   focusOpenResults?: boolean
@@ -2934,11 +2939,55 @@ export const LabTestList = ({
 
   const focusLabTestHandledRef = useRef<string | null>(null)
   useEffect(() => {
-    const target = (focusLabTest || '').trim()
-    if (!target || loading || focusLabTestHandledRef.current === target) return
+    const multiTargets = (focusLabTests || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    const singleTarget = (focusLabTest || '').trim()
+    const focusKey = multiTargets.length > 1
+      ? `bulk:${multiTargets.join(',')}`
+      : singleTarget || (multiTargets[0] || '')
+    if (!focusKey || loading || focusLabTestHandledRef.current === focusKey) return
+
+    if (multiTargets.length > 1 && focusOpenReview) {
+      focusLabTestHandledRef.current = focusKey
+      const fromList = displayLabTests.filter((lt) => {
+        const docName = resolveLabTestDocName(lt)
+        return multiTargets.includes(docName) || multiTargets.includes(lt.name)
+      })
+      const openBulk = (tests: LabTest[]) => {
+        if (!tests.length) {
+          toast.error('Could not load group tests for review')
+          return
+        }
+        const first = tests[0]
+        openBulkReviewModal(
+          first.service_request || '',
+          focusLabGroupLabel || first.lab_test_group_name || first.lab_test_group || 'Group',
+          tests
+        )
+      }
+      if (fromList.length >= multiTargets.length) {
+        openBulk(fromList)
+        return
+      }
+      Promise.all(multiTargets.map((name) => fetchLabTest(name).catch(() => null)))
+        .then((docs) => {
+          const tests = docs.filter(Boolean) as LabTest[]
+          openBulk(tests.length ? tests : fromList)
+        })
+        .catch(() => {
+          focusLabTestHandledRef.current = null
+          toast.error('Failed to load group tests for review')
+        })
+      return
+    }
+
+    const target = singleTarget || multiTargets[0] || ''
+    if (!target) return
 
     const openForTest = (labTest: LabTest) => {
-      focusLabTestHandledRef.current = target
+      focusLabTestHandledRef.current = focusKey
       const docName = resolveLabTestDocName(labTest)
       window.requestAnimationFrame(() => {
         document.getElementById(`lab-test-row-${docName}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
@@ -2966,7 +3015,7 @@ export const LabTestList = ({
 
     if (labTests.length === 0) return
 
-    focusLabTestHandledRef.current = target
+    focusLabTestHandledRef.current = focusKey
     fetchLabTest(target)
       .then((doc) => {
         if (focusOpenSampleCollection) {
@@ -2983,7 +3032,17 @@ export const LabTestList = ({
         focusLabTestHandledRef.current = null
         toast.error(e instanceof Error ? e.message : 'Failed to load lab test')
       })
-  }, [focusLabTest, focusOpenSampleCollection, focusOpenReview, focusOpenResults, loading, displayLabTests, labTests.length])
+  }, [
+    focusLabTest,
+    focusLabTests,
+    focusLabGroupLabel,
+    focusOpenSampleCollection,
+    focusOpenReview,
+    focusOpenResults,
+    loading,
+    displayLabTests,
+    labTests.length,
+  ])
 
   // ── Remarks modal ──────────────────────────────────────────────────────────
   const [remarksModalOpen, setRemarksModalOpen] = useState(false)

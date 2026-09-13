@@ -1,5 +1,10 @@
 import type { NurseBriefingLabTest } from '../services/nurseBriefing'
 
+export type LabBriefingSelectPayload<T extends NurseBriefingLabTest = NurseBriefingLabTest> = {
+  tests: T[]
+  groupLabel?: string
+}
+
 export type LabBriefingDisplayRow<T extends NurseBriefingLabTest = NurseBriefingLabTest> =
   | {
       kind: 'group'

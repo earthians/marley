@@ -29,7 +29,7 @@ import {
 export interface LabTestReviewModalProps {
   /** Single-test review */
   labTestName?: string
-  /** Bulk group review — confirm tests and results first, then the review form */
+  /** Bulk / group review — confirm results first, then the review form */
   bulkTests?: LabTest[]
   groupLabel?: string
   serviceRequest?: string
@@ -59,6 +59,7 @@ export const LabTestReviewModal = ({
   onSuccess,
 }: LabTestReviewModalProps) => {
   const isBulk = Boolean(bulkTests?.length)
+  /** Step 1 = results first; step 2 = confirm review answers (single and group). */
   const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -84,6 +85,7 @@ export const LabTestReviewModal = ({
       try {
         setLoading(true)
         setError(null)
+        setStep(1)
         if (isBulk) {
           const opts = await fetchDoctorReviewFormOptions()
           if (cancelled) return
@@ -292,14 +294,18 @@ export const LabTestReviewModal = ({
     .filter(Boolean)
     .join(' · ') || undefined
 
-  const singleMeta = !isBulk ? (
+  const singleMeta = (
     <div className="grid grid-cols-1 gap-4 rounded-xl border border-emerald-100/80 bg-white/70 p-4 text-sm shadow-sm sm:grid-cols-2">
       <div>
         <span className="text-xs font-medium uppercase tracking-wide text-emerald-800/60">
           Sample / investigation
         </span>
         <p className="mt-1 font-medium text-emerald-950">
-          {formatDt(labTest?.result_date || labTest?.submitted_date)}
+          {formatDt(
+            isBulk
+              ? resultTests[0]?.result_date || resultTests[0]?.submitted_date
+              : labTest?.result_date || labTest?.submitted_date
+          )}
         </p>
       </div>
       <div>
@@ -307,35 +313,32 @@ export const LabTestReviewModal = ({
           Results entered
         </span>
         <p className="mt-1 font-medium text-emerald-950">
-          {formatDt(labTest?.results_entered_datetime || labTest?.submitted_date)}
+          {formatDt(
+            isBulk
+              ? resultTests[0]?.results_entered_datetime || resultTests[0]?.submitted_date
+              : labTest?.results_entered_datetime || labTest?.submitted_date
+          )}
         </p>
       </div>
     </div>
-  ) : step === 2 ? (
-    <p className="rounded-xl border border-emerald-100/80 bg-white/70 px-4 py-3 text-sm text-slate-600">
-      These answers will be applied to {buckets?.toReview.length ?? 0} pending test
-      {buckets?.toReview.length === 1 ? '' : 's'} in this group.
+  )
+
+  const resultsStepCopy = isBulk ? (
+    <p className="text-sm text-slate-600">
+      Check the results below, then continue to file the review. It will apply to{' '}
+      <span className="font-medium text-emerald-800">{buckets?.toReview.length ?? 0}</span> test
+      {(buckets?.toReview.length ?? 0) !== 1 ? 's' : ''} with status Pending Review.
+      {buckets && buckets.awaitingResults.length + buckets.alreadyReviewed.length > 0
+        ? ` ${buckets.awaitingResults.length + buckets.alreadyReviewed.length} test${
+            buckets.awaitingResults.length + buckets.alreadyReviewed.length === 1 ? '' : 's'
+          } will be skipped (awaiting results or already reviewed).`
+        : ''}
     </p>
-  ) : null
-
-  const renderBulkConfirmList = () => {
-    if (!buckets) return null
-
-    const skipped = buckets.awaitingResults.length + buckets.alreadyReviewed.length
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-slate-600">
-          Check the results below, then continue to file the review. It will apply to{' '}
-          <span className="font-medium text-emerald-800">{buckets.toReview.length}</span> test
-          {buckets.toReview.length !== 1 ? 's' : ''} with status Pending Review.
-          {skipped > 0
-            ? ` ${skipped} test${skipped === 1 ? '' : 's'} will be skipped (awaiting results or already reviewed).`
-            : ''}
-        </p>
-        {resultTests.length > 0 ? <LabTestReviewResultsPanel tests={resultTests} /> : null}
-      </div>
-    )
-  }
+  ) : (
+    <p className="text-sm text-slate-600">
+      Review the result below, then continue to confirm the doctor review.
+    </p>
+  )
 
   return (
     <div className={CREATE_MODAL_OVERLAY} onClick={onClose}>
@@ -360,7 +363,7 @@ export const LabTestReviewModal = ({
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              if (isBulk && step === 1) goToReviewFormStep()
+              if (step === 1) goToReviewFormStep()
               else if (isBulk) void saveBulkReview(initialOutcome)
               else if (initialOutcome === 'Rejected') requestRejection()
               else void saveSingleReview(initialOutcome)
@@ -377,21 +380,33 @@ export const LabTestReviewModal = ({
                 </div>
               )}
 
-              {isBulk && (
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                  <span className={step === 1 ? 'text-emerald-700' : ''}>1. Confirm tests</span>
-                  <span>→</span>
-                  <span className={step === 2 ? 'text-emerald-700' : ''}>2. Review details</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                <span className={step === 1 ? 'text-emerald-700' : ''}>1. Results</span>
+                <span>→</span>
+                <span className={step === 2 ? 'text-emerald-700' : ''}>2. Confirm review</span>
+              </div>
 
-              {isBulk && step === 1 ? (
-                renderBulkConfirmList()
+              {step === 1 ? (
+                <div className="space-y-4">
+                  {resultsStepCopy}
+                  {resultTests.length > 0 ? (
+                    <LabTestReviewResultsPanel tests={resultTests} />
+                  ) : (
+                    <p className="rounded-lg border border-dashed border-slate-200 bg-white/70 px-4 py-6 text-center text-sm text-slate-500">
+                      No results loaded for this test yet.
+                    </p>
+                  )}
+                </div>
               ) : (
                 <>
-                  {!isBulk && resultTests.length > 0 ? (
-                    <LabTestReviewResultsPanel tests={resultTests} />
-                  ) : null}
+                  {isBulk ? (
+                    <p className="rounded-xl border border-emerald-100/80 bg-white/70 px-4 py-3 text-sm text-slate-600">
+                      These answers will be applied to {buckets?.toReview.length ?? 0} pending test
+                      {buckets?.toReview.length === 1 ? '' : 's'} in this group.
+                    </p>
+                  ) : (
+                    singleMeta
+                  )}
                   {failures.length > 0 && (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 space-y-1">
                       {failures.map((f) => (
@@ -406,7 +421,6 @@ export const LabTestReviewModal = ({
                     values={formValues}
                     onChange={patchForm}
                     onToggleFollowUp={toggleFollowUp}
-                    meta={singleMeta}
                   />
                 </>
               )}
@@ -417,7 +431,7 @@ export const LabTestReviewModal = ({
                 Cancel
               </button>
 
-              {isBulk && step === 2 && (
+              {step === 2 && (
                 <button
                   type="button"
                   disabled={submitting}
@@ -431,7 +445,7 @@ export const LabTestReviewModal = ({
                 </button>
               )}
 
-              {isBulk && step === 1 ? (
+              {step === 1 ? (
                 <button type="submit" disabled={submitting} className={CM_BTN_PRIMARY}>
                   Next — review
                 </button>

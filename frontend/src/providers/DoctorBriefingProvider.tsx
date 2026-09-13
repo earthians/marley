@@ -259,7 +259,10 @@ export function DoctorBriefingProvider({ children }: { children: ReactNode }) {
   )
 
   const handleLabTestSelect = useCallback(
-    (labTest: DoctorBriefingLabTest) => {
+    (payload: { tests: DoctorBriefingLabTest[]; groupLabel?: string }) => {
+      const labTest = payload.tests[0]
+      if (!labTest) return
+
       if (labTest.inpatient_record) {
         applyIpCareContext({
           patient: labTest.patient,
@@ -277,7 +280,12 @@ export function DoctorBriefingProvider({ children }: { children: ReactNode }) {
       const params = new URLSearchParams()
       params.set('screen', 'lab')
       params.set('patient', labTest.patient)
-      params.set('lab_test', labTest.name)
+      if (payload.tests.length > 1) {
+        params.set('lab_tests', payload.tests.map((t) => t.name).filter(Boolean).join(','))
+        if (payload.groupLabel) params.set('lab_group_label', payload.groupLabel)
+      } else {
+        params.set('lab_test', labTest.name)
+      }
       navigate(`/doctor?${params.toString()}`)
     },
     [

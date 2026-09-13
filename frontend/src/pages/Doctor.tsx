@@ -776,6 +776,8 @@ export const DoctorPage = () => {
   // Laboratory: Lab Request on top, Tests & Results next (+ Lab Trends on tests)
   if (screen === 'lab') {
     const focusLabTest = searchParams.get('lab_test') || undefined
+    const focusLabTests = searchParams.get('lab_tests') || undefined
+    const focusLabGroupLabel = searchParams.get('lab_group_label') || undefined
     return (
       <div className="flex flex-col">
         <PatientCareHeader selectedPatient={selectedPatient || ''} onPatientSelect={handlePatientSelect} patients={[]} />
@@ -816,8 +818,10 @@ export const DoctorPage = () => {
                 defaultStatus="Pending Review"
                 doctorLabDefaults
                 focusLabTest={focusLabTest}
+                focusLabTests={focusLabTests}
+                focusLabGroupLabel={focusLabGroupLabel}
                 focusOpenReview
-                key={`${labTestRefreshKey}-${focusLabTest || ''}`}
+                key={`${labTestRefreshKey}-${focusLabTest || ''}-${focusLabTests || ''}`}
                 onPatientClick={handlePatientSelect}
                 onOpenLabTrends={openLabTrends}
               />

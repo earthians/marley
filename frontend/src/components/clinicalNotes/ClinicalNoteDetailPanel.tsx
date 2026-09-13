@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   Building2,
   Calendar,
@@ -24,10 +24,18 @@ import {
 import {
   displayMedicationDosageWithUom,
   displayMedicationDrugName,
+  displayMedicationEndDate,
   displayMedicationFrequency,
   displayMedicationInstructions,
   displayMedicationStartDate,
 } from '../../utils/medicationOrderDisplayUtils'
+import {
+  getMedicationTypeColor,
+  isHexColor,
+  MEDICATION_TYPES,
+  medicationRowStyle,
+} from '../../utils/medicationTypeColors'
+import { normalizePrescriptionType } from '../../utils/prescriptionType'
 import { DetailSlideOver } from '../ui/DetailSlideOver'
 import { CareModeBadges } from '../ui/CareModeBadges'
 import type { CareMode } from '../../providers/CareContextProvider'
@@ -39,6 +47,78 @@ import { toast } from '../../hooks/useToast'
 import { formatDateTime, formatLinkedVisitClinicalNoteDate } from '../../utils/formatDate'
 
 type ClinicalNoteDoc = ClinicalNote & Record<string, unknown>
+
+const NOTE_MED_TYPE_FILTERS = [
+  { key: 'All', label: 'All', color: '#64748b' },
+  ...MEDICATION_TYPES.map((t) => ({ key: t.key, label: t.label, color: t.color })),
+] as const
+
+function ThinMedTypeChip({
+  label,
+  color,
+  count,
+  active,
+  onClick,
+}: {
+  label: string
+  color: string
+  count: number
+  active: boolean
+  onClick: () => void
+}) {
+  const style: CSSProperties = isHexColor(color)
+    ? active
+      ? { backgroundColor: color, borderColor: color, color: '#1e293b' }
+      : { backgroundColor: `${color}22`, borderColor: `${color}66`, color: '#334155' }
+    : {}
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold leading-tight transition-colors ${
+        count === 0 && !active ? 'opacity-50' : ''
+      }`}
+      style={style}
+      title={label}
+    >
+      <span className="max-w-[5.5rem] truncate">{label}</span>
+      <span
+        className="rounded-full px-1 text-[9px] font-bold"
+        style={
+          isHexColor(color)
+            ? active
+              ? { backgroundColor: 'rgba(0,0,0,0.12)' }
+              : { backgroundColor: `${color}40` }
+            : undefined
+        }
+      >
+        {count}
+      </span>
+    </button>
+  )
+}
+
+function medicationMatchesTypeFilter(
+  med: ClinicalNoteDayMedication,
+  typeKey: string,
+): boolean {
+  if (typeKey === 'All') return true
+  const normalized = normalizePrescriptionType(med.medication_type)
+  if (typeKey === 'PRN') {
+    return normalized === 'PRN' || Boolean(med.is_prn)
+  }
+  return normalized === typeKey
+}
+
+function resolveMedicationTypeLabel(med: ClinicalNoteDayMedication): string {
+  const normalized = normalizePrescriptionType(med.medication_type)
+  if (normalized) {
+    return MEDICATION_TYPES.find((t) => t.key === normalized)?.label || normalized
+  }
+  if (med.is_prn) return 'PRN'
+  return ''
+}
 
 interface ClinicalNoteDetailPanelProps {
   name: string
@@ -198,6 +278,7 @@ export function ClinicalNoteDetailPanel({
   const [visitIsIOP, setVisitIsIOP] = useState(false)
   const [dayMedications, setDayMedications] = useState<ClinicalNoteDayMedication[]>([])
   const [loadingMedications, setLoadingMedications] = useState(false)
+  const [medTypeFilter, setMedTypeFilter] = useState<string>('Regular - Psy (Active)')
   const [showDuplicatePrescription, setShowDuplicatePrescription] = useState(false)
   const [duplicateMedications, setDuplicateMedications] = useState<MedicationOrderRow[]>([])
   const [loadingDuplicate, setLoadingDuplicate] = useState(false)
@@ -229,6 +310,7 @@ export function ClinicalNoteDetailPanel({
     const noteDay = noteCalendarDay(source?.posting_date)
     if (!patient || !noteDay) {
       setDayMedications([])
+      setMedTypeFilter('Regular - Psy (Active)')
       return
     }
 
@@ -320,6 +402,21 @@ export function ClinicalNoteDetailPanel({
     doc?.clinical_note_type === 'Patient Progress Note'
       ? 'Progress note'
       : 'Clinical note'
+
+  const medTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: dayMedications.length }
+    for (const typeDef of MEDICATION_TYPES) {
+      counts[typeDef.key] = dayMedications.filter((m) =>
+        medicationMatchesTypeFilter(m, typeDef.key),
+      ).length
+    }
+    return counts
+  }, [dayMedications])
+
+  const filteredDayMedications = useMemo(
+    () => dayMedications.filter((m) => medicationMatchesTypeFilter(m, medTypeFilter)),
+    [dayMedications, medTypeFilter],
+  )
 
   const isLocked = doc?.note_locked === 1 || doc?.note_locked === true
 
@@ -500,6 +597,22 @@ export function ClinicalNoteDetailPanel({
                 {loadingDuplicate ? 'Loading…' : 'Duplicate Prescription'}
               </button>
             </div>
+
+            {!loadingMedications && dayMedications.length > 0 ? (
+              <div className="mb-3 flex flex-wrap gap-1">
+                {NOTE_MED_TYPE_FILTERS.map((typeDef) => (
+                  <ThinMedTypeChip
+                    key={typeDef.key}
+                    label={typeDef.label}
+                    color={typeDef.color}
+                    count={medTypeCounts[typeDef.key] || 0}
+                    active={medTypeFilter === typeDef.key}
+                    onClick={() => setMedTypeFilter(typeDef.key)}
+                  />
+                ))}
+              </div>
+            ) : null}
+
             {loadingMedications ? (
               <div className="flex items-center gap-2 py-3 text-sm text-slate-500">
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-600" />
@@ -509,41 +622,77 @@ export function ClinicalNoteDetailPanel({
               <p className="text-sm italic text-slate-400">
                 No medications prescribed or started on this day.
               </p>
+            ) : filteredDayMedications.length === 0 ? (
+              <p className="text-sm italic text-slate-400">
+                No medications in this category for this day.
+              </p>
             ) : (
-              <ul className="divide-y divide-emerald-50 overflow-hidden rounded-lg border border-emerald-100 bg-white">
-                {dayMedications.map((med, idx) => {
+              <ul className="space-y-1.5">
+                {filteredDayMedications.map((med, idx) => {
                   const drugName = displayMedicationDrugName(med) || med.display_drug_name || 'Medication'
                   const dosage = displayMedicationDosageWithUom(med) || med.display_dosage
                   const frequency = displayMedicationFrequency(med) || med.frequency
                   const instructions = displayMedicationInstructions(med)
                   const startDate = displayMedicationStartDate(med) || med.start_date || med.date
+                  const endDateRaw = displayMedicationEndDate(med)
+                  const endDate = endDateRaw && endDateRaw !== '-' ? endDateRaw : ''
+                  const typeLabel = resolveMedicationTypeLabel(med)
+                  const typeColor = getMedicationTypeColor(
+                    med.medication_type || (med.is_prn ? 'PRN' : ''),
+                  )
+                  const isPink = med.is_pink === 1 || med.is_pink === true
                   return (
                     <li
                       key={med.name || `${med.order_name}-${idx}`}
-                      className="px-3 py-3 sm:px-4"
+                      className="rounded-md border px-2.5 py-2"
+                      style={medicationRowStyle(
+                        med.medication_type || (med.is_prn ? 'PRN' : ''),
+                        isPink,
+                      )}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-900">{drugName}</p>
-                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-600">
-                            {dosage && dosage !== '-' ? <span>Dose: {dosage}</span> : null}
-                            {frequency && frequency !== '-' ? <span>Freq: {frequency}</span> : null}
-                            {med.dosage_form ? <span>Form: {med.dosage_form}</span> : null}
-                            {med.is_prn ? (
-                              <span className="font-semibold text-amber-700">PRN</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-sm font-semibold text-slate-900">{drugName}</p>
+                            {typeLabel ? (
+                              <span
+                                className="inline-flex rounded px-1 py-px text-[9px] font-bold uppercase tracking-wide"
+                                style={
+                                  isHexColor(typeColor)
+                                    ? {
+                                        backgroundColor: typeColor,
+                                        color: '#1e293b',
+                                      }
+                                    : undefined
+                                }
+                              >
+                                {typeLabel}
+                              </span>
                             ) : null}
                           </div>
+                          <div className="mt-0.5 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-slate-600">
+                            {dosage && dosage !== '-' ? <span>{dosage}</span> : null}
+                            {frequency && frequency !== '-' ? <span>{frequency}</span> : null}
+                            {med.dosage_form ? <span>{med.dosage_form}</span> : null}
+                          </div>
                           {instructions ? (
-                            <p className="mt-1 text-xs text-slate-500 whitespace-pre-wrap">{instructions}</p>
+                            <p className="mt-1 text-[11px] text-slate-500 whitespace-pre-wrap line-clamp-3">
+                              {instructions}
+                            </p>
                           ) : null}
                         </div>
-                        <div className="shrink-0 text-right text-xs text-slate-400">
-                          {startDate ? <div>Start: {formatShortDate(startDate)}</div> : null}
+                        <div className="shrink-0 text-right text-[10px] leading-snug text-slate-500">
+                          {startDate && startDate !== '-' ? (
+                            <div>Start {formatShortDate(startDate)}</div>
+                          ) : null}
+                          <div>End {endDate ? formatShortDate(endDate) : '—'}</div>
                           {med.order_name ? (
-                            <div className="mt-0.5 font-mono text-[11px]">{med.order_name}</div>
+                            <div className="mt-0.5 font-mono text-[10px] text-slate-400">
+                              {med.order_name}
+                            </div>
                           ) : null}
                           {med.practitioner_name ? (
-                            <div className="mt-0.5">Dr: {med.practitioner_name}</div>
+                            <div className="mt-0.5">Dr {med.practitioner_name}</div>
                           ) : null}
                         </div>
                       </div>

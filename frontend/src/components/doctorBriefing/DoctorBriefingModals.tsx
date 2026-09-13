@@ -3,7 +3,7 @@ import { Beaker, Loader2, X } from 'lucide-react'
 import type { DoctorBriefingLabTest, DoctorShiftBriefing } from '../../services/doctorBriefing'
 import type { NurseBriefingAdmission } from '../../services/nurseBriefing'
 import { NurseAdmissionsBriefingModal } from '../nurseBriefing/NurseBriefingModals'
-import { labBriefingChildPreview, labBriefingDisplayRows, labBriefingPatientGroups, labBriefingTestLabel } from '../../utils/labBriefingGroups'
+import { labBriefingChildPreview, labBriefingDisplayRows, labBriefingPatientGroups, labBriefingTestLabel, type LabBriefingSelectPayload } from '../../utils/labBriefingGroups'
 import { StatusPill } from '../ui/StatusPill'
 import { labTestStatusColor } from '../labTests/labTestDisplayUtils'
 
@@ -73,7 +73,7 @@ export function DoctorLabReviewBriefingModal({
   labTests: DoctorBriefingLabTest[]
   loading?: boolean
   onClose: () => void
-  onLabTestSelect?: (labTest: DoctorBriefingLabTest) => void
+  onLabTestSelect?: (payload: LabBriefingSelectPayload<DoctorBriefingLabTest>) => void
   closeLabel?: string
 }) {
   const patients = useMemo(() => labBriefingPatientGroups(labTests), [labTests])
@@ -81,7 +81,7 @@ export function DoctorLabReviewBriefingModal({
   return (
     <BriefingModalShell
       title="Lab Tests — Pending Review"
-      subtitle="Pending review grouped by patient. Open a test to review it."
+      subtitle="Pending review grouped by patient. Open a test or group to review results."
       onClose={onClose}
       closeLabel={closeLabel}
     >
@@ -121,13 +121,15 @@ export function DoctorLabReviewBriefingModal({
                 <div className="mt-3 space-y-1.5">
                   {rows.map((row) => {
                     if (row.kind === 'group') {
-                      const { representative, tests, label, key } = row
+                      const { tests, label, key, representative } = row
                       const preview = labBriefingChildPreview(tests, 2)
                       return (
                         <button
                           key={key}
                           type="button"
-                          onClick={() => onLabTestSelect?.(representative)}
+                          onClick={() =>
+                            onLabTestSelect?.({ tests, groupLabel: label })
+                          }
                           className={`w-full rounded-md border border-amber-100 bg-white/80 px-2 py-1.5 text-left ${
                             onLabTestSelect ? 'cursor-pointer hover:border-amber-300 hover:bg-amber-50/70' : ''
                           }`}
@@ -166,7 +168,7 @@ export function DoctorLabReviewBriefingModal({
                       <button
                         key={test.name}
                         type="button"
-                        onClick={() => onLabTestSelect?.(test)}
+                        onClick={() => onLabTestSelect?.({ tests: [test] })}
                         className={`w-full rounded-md border border-amber-100 bg-white/80 px-2 py-1.5 text-left ${
                           onLabTestSelect ? 'cursor-pointer hover:border-amber-300 hover:bg-amber-50/70' : ''
                         }`}
@@ -214,7 +216,7 @@ export function DoctorBriefingModals({
   loading: boolean
   onAdvance: () => void
   onAdmissionSelect?: (admission: NurseBriefingAdmission) => void
-  onLabTestSelect?: (labTest: DoctorBriefingLabTest) => void
+  onLabTestSelect?: (payload: LabBriefingSelectPayload<DoctorBriefingLabTest>) => void
   admissionsOnly?: boolean
   labsOnly?: boolean
 }) {

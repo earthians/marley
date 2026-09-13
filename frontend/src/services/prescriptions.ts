@@ -152,6 +152,8 @@ export type ClinicalNoteDayMedication = {
   end_date?: string
   time?: string
   is_prn?: number | boolean
+  medication_type?: string
+  is_pink?: number | boolean
   route_of_administration?: string
   display_drug_name?: string
   display_dosage?: string
