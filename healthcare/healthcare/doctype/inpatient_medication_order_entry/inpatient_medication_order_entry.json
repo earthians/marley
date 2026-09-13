@@ -230,8 +230,7 @@
    "fieldname": "transferred_to_visit",
    "fieldtype": "Link",
    "label": "Transferred to Visit",
-   "options": "Patient Visit",
-   "read_only": 1
+   "options": "Patient Visit"
   },
   {
    "default": "0",
@@ -468,7 +467,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-08 15:13:09.496108",
+ "modified": "2026-09-14 00:45:19.769007",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Medication Order Entry",

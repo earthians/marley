@@ -355,6 +355,16 @@ export const CreatePrescriptionModal = ({
   const [medications, setMedications] = useState<MedicationOrderRow[]>(() => [
     emptyMedicationRow(new Date().toISOString().split('T')[0]),
   ])
+  /** After the user adds/removes rows, ignore late initialMedications resolve overwrites. */
+  const medicationsUserEditedRef = useRef(false)
+  const medicationRowKeysRef = useRef<string[]>(['med-0'])
+  const medicationKeySeqRef = useRef(1)
+
+  const nextMedicationRowKey = () => {
+    const key = `med-${medicationKeySeqRef.current}`
+    medicationKeySeqRef.current += 1
+    return key
+  }
 
   const [drugQueries, setDrugQueries] = useState<Record<number, string>>({})
   // Scientific / generic name of the drug selected per row (for display under the field).
@@ -802,18 +812,20 @@ export const CreatePrescriptionModal = ({
 
   useEffect(() => {
     if (!initialMedications || initialMedications.length === 0) return
+    if (medicationsUserEditedRef.current) return
 
     let cancelled = false
     const applyRows = (rows: MedicationOrderRow[]) => {
-      if (cancelled) return
+      if (cancelled || medicationsUserEditedRef.current) return
       setMedications(rows)
+      medicationRowKeysRef.current = rows.map(() => nextMedicationRowKey())
       const queries: Record<number, string> = {}
       const nextFreq: Record<number, string> = {}
       const nextRoute: Record<number, string> = {}
       const nextUom: Record<number, string> = {}
       const nextLongActing: Record<number, string> = {}
       rows.forEach((med, idx) => {
-        queries[idx] = med.drug_name || med.drug
+        queries[idx] = (med.drug_name || med.drug || '').trim()
         if (med.patient_frequency) nextFreq[idx] = med.patient_frequency
         if (med.route_of_administration) nextRoute[idx] = med.route_of_administration
         if (med.uom) nextUom[idx] = med.uom
@@ -844,6 +856,7 @@ export const CreatePrescriptionModal = ({
     applyRows(initialMedications)
     resolveMedicationsForDuplicate(initialMedications)
       .then((resolved) => {
+        if (cancelled || medicationsUserEditedRef.current) return
         // Merge only mapped drug fields so dosage/frequency/etc. from the
         // original duplicate payload are never dropped by the resolve API.
         const merged = initialMedications.map((orig, i) => {
@@ -902,8 +915,10 @@ export const CreatePrescriptionModal = ({
   }
 
   const addMedicationRow = () => {
+    medicationsUserEditedRef.current = true
     const newIndex = medications.length
     setMedications((prev) => [...prev, emptyMedicationRow(formData.start_date)])
+    medicationRowKeysRef.current = [...medicationRowKeysRef.current, nextMedicationRowKey()]
     // Collapse previous rows and expand the newly added one (2nd medication onward).
     if (newIndex >= 1) {
       setExpandedMedications(new Set([newIndex]))
@@ -911,24 +926,47 @@ export const CreatePrescriptionModal = ({
   }
 
   const removeMedicationRow = (index: number) => {
-    setMedications((prev) => prev.filter((_, i) => i !== index))
-    setDrugQueries((prev) => { const n = { ...prev }; delete n[index]; return n })
-    setDrugOptions((prev) => { const n = { ...prev }; delete n[index]; return n })
-    setFrequencyQueries((prev) => { const n = { ...prev }; delete n[index]; return n })
-    setRouteQueries((prev) => { const n = { ...prev }; delete n[index]; return n })
-    setUomQueries((prev) => { const n = { ...prev }; delete n[index]; return n })
-    setMedicationStock((prev) => {
-      const next: Record<number, PrescriptionDrugStockCheck> = {}
+    medicationsUserEditedRef.current = true
+    setMedications((prev) => {
+      const nextMeds = prev.filter((_, i) => i !== index)
+      setDrugQueries((prevQ) => {
+        const next: Record<number, string> = {}
+        nextMeds.forEach((med, i) => {
+          const oldIndex = i < index ? i : i + 1
+          next[i] = (prevQ[oldIndex] || med.drug_name || med.drug || '').trim()
+        })
+        return next
+      })
+      return nextMeds
+    })
+    medicationRowKeysRef.current = medicationRowKeysRef.current.filter((_, i) => i !== index)
+
+    const reindexRecord = <T,>(prev: Record<number, T>): Record<number, T> => {
+      const next: Record<number, T> = {}
       Object.entries(prev).forEach(([key, val]) => {
         const i = Number(key)
-        if (i < index) next[i] = val
-        else if (i > index) next[i - 1] = val
+        if (Number.isNaN(i) || i === index) return
+        next[i < index ? i : i - 1] = val
       })
       return next
-    })
+    }
+
+    setDrugScientific((prev) => reindexRecord(prev))
+    setDrugOptions((prev) => reindexRecord(prev))
+    setDrugLoading((prev) => reindexRecord(prev))
+    setFrequencyQueries((prev) => reindexRecord(prev))
+    setRouteQueries((prev) => reindexRecord(prev))
+    setUomQueries((prev) => reindexRecord(prev))
+    setLongActingFrequencyQueries((prev) => reindexRecord(prev))
+    setNurseTaskRows((prev) => reindexRecord(prev))
+    setMedicationStock((prev) => reindexRecord(prev))
+    setCheckingDoseRows((prev) => reindexRecord(prev))
     setExpandedMedications((prev) => {
-      const next = new Set(prev)
-      next.delete(index)
+      const next = new Set<number>()
+      prev.forEach((i) => {
+        if (i === index) return
+        next.add(i < index ? i : i - 1)
+      })
       return next
     })
   }
@@ -1454,9 +1492,16 @@ export const CreatePrescriptionModal = ({
                       ? formatMedicationStockInline(medicationStock[index])
                       : null
                     const isStoppedRow = Boolean(String(row.reason_stopped || '').trim())
+                    const collapsedDrugTitle = (
+                      row.drug_name ||
+                      row.drug ||
+                      drugQueries[index] ||
+                      ''
+                    ).trim()
+                    const rowKey = medicationRowKeysRef.current[index] || `med-fallback-${index}`
                     return (
                     <div
-                      key={index}
+                      key={rowKey}
                       className={`rounded-lg border bg-white shadow-sm overflow-hidden transition-all ${
                         isStoppedRow
                           ? 'border-rose-300 ring-1 ring-rose-200'
@@ -1487,11 +1532,11 @@ export const CreatePrescriptionModal = ({
                               Stopped
                             </span>
                           ) : null}
-                          {row.drug && drugQueries[index] && (
+                          {collapsedDrugTitle ? (
                             <span className={`font-normal truncate ${isStoppedRow ? 'text-rose-700' : 'text-slate-400'}`}>
-                              — {drugQueries[index]}
+                              — {collapsedDrugTitle}
                             </span>
-                          )}
+                          ) : null}
                           {stockLabel ? (
                             <span
                               className={`font-medium shrink-0 ${
