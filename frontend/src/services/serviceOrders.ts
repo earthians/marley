@@ -115,9 +115,12 @@ export interface PaymentEntryRow {
   name: string
   docstatus?: number
   posting_date: string
+  /** Frappe creation datetime — used to consolidate multi-mode advances. */
+  creation?: string | null
   payment_type?: string
   mode_of_payment: string
   paid_amount: number
+  party?: string | null
   party_name?: string
   reference_no?: string
   cost_center?: string | null
@@ -131,6 +134,8 @@ export interface PaymentEntryRow {
   custom_op_or_ip?: string | null
   /** Advance visit / admission name */
   custom_case_no?: string | null
+  /** Shared id when one UI payment creates multiple PEs (multi mode-of-payment). */
+  custom_unique_identity?: string | null
 }
 
 export interface PaymentModeSummary {

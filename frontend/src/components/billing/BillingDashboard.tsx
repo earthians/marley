@@ -90,19 +90,129 @@ function normalizePatientId(value?: string | null): string | undefined {
   return trimmed || undefined
 }
 
-/** UI-only consolidation: one row per invoice when multiple PEs settle it. */
+/** UI-only consolidation: shared custom_unique_identity (multi-mode), else invoice,
+ * else advances created together within a short window (legacy rows). */
 type PaymentDisplayRow = PaymentEntryRow & {
   _memberNames: string[]
   _consolidatedCount: number
 }
 
+/** Fallback for advances created before custom_unique_identity existed. */
+const ADVANCE_CONSOLIDATE_WINDOW_MS = 5 * 60 * 1000
+
+function paymentCreationMs(p: PaymentEntryRow): number {
+  const raw = (p.creation || '').trim()
+  if (!raw) return 0
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T')
+  const t = Date.parse(normalized)
+  return Number.isFinite(t) ? t : 0
+}
+
+function isAdvancePaymentRow(p: PaymentEntryRow): boolean {
+  if (Number(p.docstatus) === 0) return false
+  if ((p.payment_type || 'Receive').trim() === 'Pay') return false
+  if ((p.custom_unique_identity || '').trim()) return false
+  return !(p.invoice_name || '').trim()
+}
+
+function advanceConsolidateIdentity(p: PaymentEntryRow): string {
+  const party = (p.party || p.party_name || '').trim().toLowerCase()
+  const caseNo = (p.custom_case_no || '').trim()
+  const opIp = (p.custom_op_or_ip || '').trim()
+  const cashier = (p.cashier || '').trim()
+  const type = (p.payment_type || 'Receive').trim() || 'Receive'
+  return `${party}||${caseNo}||${opIp}||${cashier}||${type}`
+}
+
 function paymentConsolidateGroupKey(p: PaymentEntryRow): string | null {
+  if (Number(p.docstatus) === 0) return null
+  const uid = (p.custom_unique_identity || '').trim()
+  if (uid) return `uid:${uid}`
   const inv = (p.invoice_name || '').trim()
   if (!inv) return null
-  // Keep drafts and advances as individual rows
-  if (Number(p.docstatus) === 0) return null
   const type = (p.payment_type || 'Receive').trim() || 'Receive'
-  return `${inv}||${type}`
+  return `inv:${inv}||${type}`
+}
+
+function mergePaymentMembers(members: PaymentEntryRow[]): PaymentDisplayRow {
+  if (members.length <= 1) {
+    const p = members[0]
+    return {
+      ...p,
+      _memberNames: [p.name],
+      _consolidatedCount: 1,
+    }
+  }
+
+  const sorted = [...members].sort((a, b) => {
+    const byCreation = paymentCreationMs(b) - paymentCreationMs(a)
+    if (byCreation) return byCreation
+    const byDate = (b.posting_date || '').localeCompare(a.posting_date || '')
+    if (byDate) return byDate
+    return b.name.localeCompare(a.name)
+  })
+  const primary = sorted[0]
+  const paid_amount = members.reduce((sum, m) => sum + (Number(m.paid_amount) || 0), 0)
+  const modes = [
+    ...new Set(members.map((m) => (m.mode_of_payment || '').trim()).filter(Boolean)),
+  ]
+  const cashiers = [...new Set(members.map((m) => (m.cashier || '').trim()).filter(Boolean))]
+  const cashierNames = [
+    ...new Set(members.map((m) => (m.cashier_name || m.cashier || '').trim()).filter(Boolean)),
+  ]
+
+  return {
+    ...primary,
+    paid_amount,
+    mode_of_payment: modes.length <= 1 ? modes[0] || primary.mode_of_payment || '' : 'Multiple',
+    cashier: cashiers.length === 1 ? cashiers[0] : primary.cashier,
+    cashier_name:
+      cashiers.length === 1
+        ? primary.cashier_name || cashiers[0]
+        : cashierNames.length > 1
+          ? 'Multiple'
+          : primary.cashier_name,
+    _memberNames: members.map((m) => m.name),
+    _consolidatedCount: members.length,
+  }
+}
+
+/** Cluster same-case advances whose creation times fall within a 5-minute window. */
+function clusterAdvancePayments(advances: PaymentEntryRow[]): PaymentEntryRow[][] {
+  const byIdentity = new Map<string, PaymentEntryRow[]>()
+  for (const p of advances) {
+    const key = advanceConsolidateIdentity(p)
+    if (!byIdentity.has(key)) byIdentity.set(key, [])
+    byIdentity.get(key)!.push(p)
+  }
+
+  const clusters: PaymentEntryRow[][] = []
+  for (const group of byIdentity.values()) {
+    const withTime = group.filter((p) => paymentCreationMs(p) > 0)
+    const withoutTime = group.filter((p) => paymentCreationMs(p) <= 0)
+    for (const p of withoutTime) clusters.push([p])
+
+    const sorted = [...withTime].sort((a, b) => paymentCreationMs(a) - paymentCreationMs(b))
+    let current: PaymentEntryRow[] = []
+    let windowStart = 0
+    for (const p of sorted) {
+      const t = paymentCreationMs(p)
+      if (!current.length) {
+        current = [p]
+        windowStart = t
+        continue
+      }
+      if (t - windowStart <= ADVANCE_CONSOLIDATE_WINDOW_MS) {
+        current.push(p)
+      } else {
+        clusters.push(current)
+        current = [p]
+        windowStart = t
+      }
+    }
+    if (current.length) clusters.push(current)
+  }
+  return clusters
 }
 
 /** Default consolidated list for the Payments table only (PDF/Excel/summary use raw rows). */
@@ -115,58 +225,49 @@ function buildPaymentDisplayRows(rows: PaymentEntryRow[], expanded: boolean): Pa
     }))
   }
 
-  const groups = new Map<string, PaymentEntryRow[]>()
-  const order: string[] = []
+  const invoiceGroups = new Map<string, PaymentEntryRow[]>()
+  const advances: PaymentEntryRow[] = []
+
   for (const p of rows) {
-    const key = paymentConsolidateGroupKey(p) || `solo:${p.name}`
-    if (!groups.has(key)) {
-      groups.set(key, [])
-      order.push(key)
+    const invKey = paymentConsolidateGroupKey(p)
+    if (invKey) {
+      if (!invoiceGroups.has(invKey)) invoiceGroups.set(invKey, [])
+      invoiceGroups.get(invKey)!.push(p)
+      continue
     }
-    groups.get(key)!.push(p)
+    if (isAdvancePaymentRow(p)) advances.push(p)
   }
 
-  return order.map((key) => {
-    const members = groups.get(key) || []
-    if (members.length <= 1) {
-      const p = members[0]
-      return {
-        ...p,
-        _memberNames: [p.name],
-        _consolidatedCount: 1,
-      }
+  const advanceClusterByName = new Map<string, PaymentEntryRow[]>()
+  for (const cluster of clusterAdvancePayments(advances)) {
+    for (const m of cluster) advanceClusterByName.set(m.name, cluster)
+  }
+
+  const output: PaymentDisplayRow[] = []
+  const emitted = new Set<string>()
+  for (const p of rows) {
+    if (emitted.has(p.name)) continue
+
+    const invKey = paymentConsolidateGroupKey(p)
+    if (invKey) {
+      const members = invoiceGroups.get(invKey) || [p]
+      for (const m of members) emitted.add(m.name)
+      output.push(mergePaymentMembers(members))
+      continue
     }
 
-    const sorted = [...members].sort((a, b) => {
-      const byDate = (b.posting_date || '').localeCompare(a.posting_date || '')
-      if (byDate) return byDate
-      return b.name.localeCompare(a.name)
-    })
-    const primary = sorted[0]
-    const paid_amount = members.reduce((sum, m) => sum + (Number(m.paid_amount) || 0), 0)
-    const modes = [
-      ...new Set(members.map((m) => (m.mode_of_payment || '').trim()).filter(Boolean)),
-    ]
-    const cashiers = [...new Set(members.map((m) => (m.cashier || '').trim()).filter(Boolean))]
-    const cashierNames = [
-      ...new Set(members.map((m) => (m.cashier_name || m.cashier || '').trim()).filter(Boolean)),
-    ]
-
-    return {
-      ...primary,
-      paid_amount,
-      mode_of_payment: modes.length <= 1 ? modes[0] || primary.mode_of_payment || '' : 'Multiple',
-      cashier: cashiers.length === 1 ? cashiers[0] : primary.cashier,
-      cashier_name:
-        cashiers.length === 1
-          ? primary.cashier_name || cashiers[0]
-          : cashierNames.length > 1
-            ? 'Multiple'
-            : primary.cashier_name,
-      _memberNames: members.map((m) => m.name),
-      _consolidatedCount: members.length,
+    if (isAdvancePaymentRow(p)) {
+      const cluster = advanceClusterByName.get(p.name) || [p]
+      for (const m of cluster) emitted.add(m.name)
+      output.push(mergePaymentMembers(cluster))
+      continue
     }
-  })
+
+    emitted.add(p.name)
+    output.push(mergePaymentMembers([p]))
+  }
+
+  return output
 }
 
 type CcBreakdownDisplayRow = PatientBillingCcRow & {
@@ -1507,7 +1608,7 @@ const handleMakePayment = async (
                       : ''
                   const isConsolidated = p._consolidatedCount > 1
                   return (
-                  <tr key={isConsolidated ? `c:${p.invoice_name}:${p.payment_type}:${p.name}` : p.name}>
+                  <tr key={isConsolidated ? `c:${p.custom_unique_identity || p.invoice_name || p.custom_case_no || 'adv'}:${p.payment_type}:${p.name}` : p.name}>
                     <td className="px-3 py-2 font-mono text-xs">
                       <div className="flex flex-col gap-0.5">
                         <span>{p.name}</span>
@@ -1570,7 +1671,9 @@ const handleMakePayment = async (
                           ariaLabel={`Print payment ${p.name}`}
                           title={
                             isConsolidated
-                              ? 'Print consolidated payment (covers all entries for this invoice)'
+                              ? p.invoice_name
+                                ? 'Print consolidated payment (covers all entries for this invoice)'
+                                : 'Print consolidated advance (covers all modes created together)'
                               : 'Print payment entry'
                           }
                         />

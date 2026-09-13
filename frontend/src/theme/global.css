@@ -253,3 +253,69 @@
 .dashboard-card:nth-child(16n) { background-color: #fefce8; }
 .dashboard-card:nth-child(16n) .dashboard-card-head { background-color: #fef9c3; }
 
+/*
+ * Listing card filters: keep every field the same width as the date controls.
+ * Long option labels (e.g. receptionist names) must not stretch the filter.
+ * Mark a slot with data-filter-grow / .card-filter-grow to allow search fields to expand.
+ */
+.card-filter-bar {
+  --card-filter-field-width: 9rem;
+}
+
+.card-filter-bar > div:has(label),
+.card-filter-bar > [data-filter-dropdown]:has(label) {
+  flex: 0 0 var(--card-filter-field-width) !important;
+  width: var(--card-filter-field-width) !important;
+  min-width: var(--card-filter-field-width) !important;
+  max-width: var(--card-filter-field-width) !important;
+  box-sizing: border-box;
+}
+
+.card-filter-bar > div:has(label) > input,
+.card-filter-bar > div:has(label) > select,
+.card-filter-bar > div:has(label) > [data-datefilter],
+.card-filter-bar > div:has(label) > .relative,
+.card-filter-bar > [data-filter-dropdown]:has(label) > input,
+.card-filter-bar > [data-filter-dropdown]:has(label) > select,
+.card-filter-bar > [data-filter-dropdown]:has(label) > [data-datefilter],
+.card-filter-bar > [data-filter-dropdown]:has(label) > .relative {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.card-filter-bar > div:has(label) input,
+.card-filter-bar > div:has(label) select,
+.card-filter-bar > [data-filter-dropdown]:has(label) input,
+.card-filter-bar > [data-filter-dropdown]:has(label) select {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.card-filter-bar select {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Clear-filters / action rows stay auto-sized */
+.card-filter-bar > div:not(:has(label)),
+.card-filter-bar > [data-filter-actions],
+.card-filter-bar > .card-filter-actions {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.card-filter-bar > [data-filter-grow],
+.card-filter-bar > .card-filter-grow {
+  flex: 1 1 12rem !important;
+  width: auto !important;
+  min-width: 12rem !important;
+  max-width: none !important;
+}
+

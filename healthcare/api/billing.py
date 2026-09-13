@@ -791,8 +791,14 @@ def get_payment_entries(
     pe_meta = frappe.get_meta("Payment Entry")
     has_op_or_ip = pe_meta.has_field("custom_op_or_ip")
     has_case_no = pe_meta.has_field("custom_case_no")
+    has_unique_identity = pe_meta.has_field("custom_unique_identity")
     op_or_ip_select = "MAX(pe.custom_op_or_ip) AS custom_op_or_ip" if has_op_or_ip else "NULL AS custom_op_or_ip"
     case_no_select = "MAX(pe.custom_case_no) AS custom_case_no" if has_case_no else "NULL AS custom_case_no"
+    unique_identity_select = (
+        "MAX(pe.custom_unique_identity) AS custom_unique_identity"
+        if has_unique_identity
+        else "NULL AS custom_unique_identity"
+    )
 
     if cashier:
         conditions.append(f"{credited_expr} = %(cashier)s")
@@ -880,9 +886,11 @@ def get_payment_entries(
             pe.name,
             pe.docstatus,
             pe.posting_date,
+            pe.creation,
             pe.payment_type,
             pe.mode_of_payment,
             pe.paid_amount,
+            pe.party,
             pe.party_name,
             pe.reference_no,
             pe.cost_center,
@@ -893,7 +901,8 @@ def get_payment_entries(
             MAX(si.custom_reference_type) AS invoice_reference_type,
             MAX(si.custom_reference_name) AS invoice_reference_name,
             {op_or_ip_select},
-            {case_no_select}
+            {case_no_select},
+            {unique_identity_select}
         FROM `tabPayment Entry` pe
         LEFT JOIN `tabUser` u
             ON u.name = {credited_expr}
@@ -2005,6 +2014,10 @@ def create_payment_entry(
 
         from healthcare.api.receptionist_shift import stamp_receptionist_shift_on_doc
 
+        group_identity = None
+        if len(modes) > 1 and frappe.get_meta("Payment Entry").has_field("custom_unique_identity"):
+            group_identity = f"PEGRP-{frappe.generate_hash(length=12).upper()}"
+
         created = []
         for mode_row in modes:
             # Refresh outstanding after each PE so allocations stay accurate.
@@ -2045,6 +2058,8 @@ def create_payment_entry(
             if cost_center:
                 payment_entry.cost_center = cost_center
             payment_entry.currency = company.default_currency
+            if group_identity:
+                payment_entry.custom_unique_identity = group_identity
 
             allocated = min(pay_amt, outstanding) if outstanding > 0 else pay_amt
             payment_entry.append(

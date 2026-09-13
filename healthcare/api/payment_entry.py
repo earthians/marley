@@ -17,6 +17,18 @@ def _money_gt(a, b) -> bool:
 	return _money(a) > _money(b)
 
 
+def _new_payment_group_identity() -> str:
+	"""Shared id stamped on every Payment Entry created from one multi-mode submit."""
+	return f"PEGRP-{frappe.generate_hash(length=12).upper()}"
+
+
+def _apply_unique_identity(pe, identity: str | None) -> None:
+	if not identity:
+		return
+	if pe.meta.has_field("custom_unique_identity"):
+		pe.custom_unique_identity = identity
+
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _payment_search_cost_center_filter(filters: dict) -> bool:
@@ -351,6 +363,7 @@ def create_payment_entry(data: dict) -> dict:
 
     _validate_input(data)
     modes = _parse_payment_modes(data)
+    group_identity = _new_payment_group_identity() if len(modes) > 1 else None
     results = []
     for mode in modes:
         payload = dict(data)
@@ -358,6 +371,8 @@ def create_payment_entry(data: dict) -> dict:
         payload["paid_amount"] = mode["amount"]
         if mode.get("reference_no"):
             payload["reference_no"] = mode["reference_no"]
+        if group_identity:
+            payload["custom_unique_identity"] = group_identity
         results.append(_create_single_payment_entry(payload))
     return _combine_multi_mode_results(results)
 
@@ -402,6 +417,7 @@ def _create_single_payment_entry(data: dict) -> dict:
     pe.custom_insurance_claim = data.get("custom_insurance_claim")
     if data.get("custom_insurance_company") and pe.meta.has_field("custom_insurance_company"):
         pe.custom_insurance_company = data.get("custom_insurance_company")
+    _apply_unique_identity(pe, data.get("custom_unique_identity"))
 
     reference_no, reference_date = _default_transaction_reference(reference_name, data)
     pe.reference_no = reference_no
@@ -787,6 +803,7 @@ def create_patient_advance_payment(data: dict) -> dict:
 		remarks_parts.append(data["remarks"])
 	remarks = " | ".join(remarks_parts)
 
+	group_identity = _new_payment_group_identity() if len(modes) > 1 else None
 	results = []
 	for mode in modes:
 		pe = _new_receive_payment_entry(
@@ -799,6 +816,7 @@ def create_patient_advance_payment(data: dict) -> dict:
 			data.get("reference_date"),
 		)
 		_apply_advance_case_fields(pe, data)
+		_apply_unique_identity(pe, group_identity)
 		results.append(_submit_payment_entry(pe))
 	return _combine_multi_mode_results(results, label="Advance payment")
 
@@ -854,6 +872,7 @@ def create_multi_invoice_payment(data: dict) -> dict:
 		remarks_base.append(data["remarks"])
 
 	mode_payloads = _split_allocations_across_modes(modes, allocations)
+	group_identity = _new_payment_group_identity() if len(mode_payloads) > 1 else None
 	results = []
 	for mp in mode_payloads:
 		invoice_names = []
@@ -893,6 +912,7 @@ def create_multi_invoice_payment(data: dict) -> dict:
 
 		if invoice_names:
 			pe.remarks += f" | Invoices: {', '.join(invoice_names)}"
+		_apply_unique_identity(pe, group_identity)
 		results.append(_submit_payment_entry(pe))
 
 	return _combine_multi_mode_results(results, label="Multi-invoice payment")
@@ -929,6 +949,7 @@ def create_patient_refund(data: dict) -> dict:
 	remarks = " | ".join(remarks_parts)
 	draft = _is_reception_portal_user()
 
+	group_identity = _new_payment_group_identity() if len(modes) > 1 else None
 	results = []
 	for mode in modes:
 		receivable, bank_or_cash = _resolve_accounts(company, mode["mode_of_payment"])
@@ -955,6 +976,7 @@ def create_patient_refund(data: dict) -> dict:
 			or f"REFUND-{patient}"[:140]
 		)
 		pe.reference_date = data.get("reference_date") or frappe.utils.today()
+		_apply_unique_identity(pe, group_identity)
 		results.append(_save_payment_entry(pe, draft=draft))
 
 	return _combine_multi_mode_results(results, label="Refund")

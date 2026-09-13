@@ -650,7 +650,7 @@ export const AdmissionList = ({
               }}
               onFocus={() => setPractitionerOpen(true)}
               placeholder="Search doctor..."
-              className={`${inputClass} w-48`}
+              className={inputClass}
             />
             {practitionerOpen && practitionerOptions.length > 0 && (
               <div className="absolute z-20 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
