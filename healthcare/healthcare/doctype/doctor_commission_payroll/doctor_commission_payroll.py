@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate
+from frappe.utils import cint, flt, getdate
 
 
 class DoctorCommissionPayroll(Document):
@@ -34,10 +34,20 @@ class DoctorCommissionPayroll(Document):
 			frappe.throw(_("No doctor commission rows to submit. Generate first."))
 		self.status = "Approved"
 
+	def on_submit(self):
+		self._set_linked_sales_orders_commission_flag(1)
+
 	def on_cancel(self):
 		self._cancel_linked_additional_salaries()
+		self._set_linked_sales_orders_commission_flag(0)
 		self.status = "Cancelled"
 		self.additional_salaries_created = 0
+
+	def _set_linked_sales_orders_commission_flag(self, value: int):
+		from healthcare.api.doctor_commission import set_sales_orders_commission_generated
+
+		sales_orders = [row.sales_order for row in (self.items or []) if row.sales_order]
+		set_sales_orders_commission_generated(sales_orders, value)
 
 	def _cancel_linked_additional_salaries(self):
 		if not frappe.db.exists("DocType", "Additional Salary"):
@@ -83,7 +93,7 @@ class DoctorCommissionPayroll(Document):
 		return fetch_doctors_for_period(self)
 
 	@frappe.whitelist()
-	def generate_commission(self):
+	def generate_commission(self, include_backdated=0):
 		"""Populate doctors and service lines for this payroll period."""
 		from healthcare.api.doctor_commission import generate_doctor_commission_period
 
@@ -93,7 +103,7 @@ class DoctorCommissionPayroll(Document):
 			frappe.throw(_("Approved documents cannot be regenerated"))
 
 		self.flags.ignore_permissions = True
-		return generate_doctor_commission_period(self)
+		return generate_doctor_commission_period(self, include_backdated=cint(include_backdated))
 
 	@frappe.whitelist()
 	def create_additional_salary(self):

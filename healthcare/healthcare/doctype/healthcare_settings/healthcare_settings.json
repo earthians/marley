@@ -157,6 +157,7 @@
   "whatsapp_appointment_reminder_template",
   "calculate_doctors_commission_from_op_only",
   "calculate_doctors_comission_on_paid_service_only",
+  "backdated_days_for_unpaid_commission",
   "cb_serene_automations",
   "remind_upcoming_nurse_tasks",
   "nurse_task_reminder_lead_minutes",
@@ -1138,11 +1139,17 @@
    "fieldname": "discharge_stamp",
    "fieldtype": "Attach",
    "label": "Discharge Stamp"
+  },
+  {
+   "description": "When generating Doctor Commission Payroll, optionally include paid Sales Orders from this many days before To Date that still have Commission Generated unticked (late-paid past services).",
+   "fieldname": "backdated_days_for_unpaid_commission",
+   "fieldtype": "Int",
+   "label": "Backdated Days For Unpaid Commission"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-10 11:15:41.504615",
+ "modified": "2026-09-13 22:56:22.131899",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

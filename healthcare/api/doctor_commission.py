@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, getdate, now_datetime
+from frappe.utils import add_days, cint, flt, getdate, now_datetime
 
 
 GENERIC_PRACTITIONER_FIELDS = [
@@ -59,6 +59,11 @@ def get_doctor_commission_generation_settings() -> dict[str, int]:
 				"Healthcare Settings", "calculate_doctors_comission_on_paid_service_only"
 			)
 		),
+		"backdated_days": cint(
+			frappe.db.get_single_value(
+				"Healthcare Settings", "backdated_days_for_unpaid_commission"
+			)
+		),
 	}
 
 
@@ -75,11 +80,12 @@ def filter_commission_sources_for_settings(sources, *, op_only: bool = False):
 	return filtered
 
 
-def generate_doctor_commission_period(period_doc):
+def generate_doctor_commission_period(period_doc, include_backdated: bool | int = False):
 	"""Fill Doctor Commission Payroll child tables from Sales Order service lines."""
 	period_doc = period_doc if hasattr(period_doc, "doctors") else frappe.get_doc(
 		"Doctor Commission Payroll", period_doc
 	)
+	include_backdated = cint(include_backdated)
 
 	sources = get_enabled_commission_sources()
 	gen_settings = get_doctor_commission_generation_settings()
@@ -102,16 +108,39 @@ def generate_doctor_commission_period(period_doc):
 	source_doctypes = [s.source_doctype for s in sources]
 	rules = load_active_commission_rules(period_doc.from_date, period_doc.to_date)
 	allowed_branches = resolve_payroll_cost_centers(period_doc, rules)
-	service_rows = fetch_commissionable_sales_order_items(
-		from_date=period_doc.from_date,
-		to_date=period_doc.to_date,
+	fetch_kwargs = dict(
 		company=period_doc.company,
 		cost_center=period_doc.cost_center,
 		cost_centers=None if (period_doc.cost_center or "").strip() else allowed_branches,
 		source_doctypes=source_doctypes,
 		op_only=gen_settings["op_only"],
 		paid_only=gen_settings["paid_only"],
+		exclude_commission_generated=True,
 	)
+	service_rows = fetch_commissionable_sales_order_items(
+		from_date=period_doc.from_date,
+		to_date=period_doc.to_date,
+		**fetch_kwargs,
+	)
+
+	backdated_count = 0
+	if include_backdated:
+		backdated_rows = fetch_backdated_paid_commission_items(
+			period_from=period_doc.from_date,
+			period_to=period_doc.to_date,
+			backdated_days=gen_settings["backdated_days"],
+			**fetch_kwargs,
+		)
+		if backdated_rows:
+			seen = {(r.sales_order, cint(r.idx or 0)) for r in service_rows}
+			for row in backdated_rows:
+				key = (row.sales_order, cint(row.idx or 0))
+				if key in seen:
+					continue
+				service_rows.append(row)
+				seen.add(key)
+				backdated_count += 1
+
 	if not service_rows:
 		period_doc.set("doctors", [])
 		period_doc.set("items", [])
@@ -122,7 +151,7 @@ def generate_doctor_commission_period(period_doc):
 		period_doc.generated_on = now_datetime()
 		period_doc.generated_by = frappe.session.user
 		period_doc.save(ignore_permissions=True)
-		return {"doctors": 0, "items": 0}
+		return {"doctors": 0, "items": 0, "backdated_items": 0}
 
 	practitioner_by_base = resolve_practitioners_for_sources(service_rows, sources)
 	eligible = get_commission_eligible_practitioners(
@@ -266,17 +295,42 @@ def generate_doctor_commission_period(period_doc):
 	return {
 		"doctors": len(period_doc.doctors or []),
 		"items": len(period_doc.items or []),
+		"backdated_items": backdated_count,
 		"skipped_no_practitioner": skipped_no_practitioner,
 		"skipped_not_eligible": skipped_not_eligible,
 	}
 
 
-def get_enabled_commission_sources():
-	return frappe.get_all(
-		"Doctor Commission Source",
-		filters={"enabled": 1},
-		fields=["name", "source_doctype", "practitioner_field"],
-		order_by="source_doctype asc",
+def fetch_backdated_paid_commission_items(
+	period_from,
+	period_to,
+	backdated_days: int = 0,
+	**fetch_kwargs,
+):
+	"""Paid Sales Orders before the payroll period whose commission was never generated.
+
+	Window: [to_date - backdated_days, from_date) — services offered earlier that only
+	became paid (or remained unmarked) by the time this payroll runs.
+	"""
+	days = cint(backdated_days)
+	if days <= 0:
+		return []
+
+	period_from = getdate(period_from)
+	period_to = getdate(period_to)
+	back_from = add_days(period_to, -days)
+	back_to = add_days(period_from, -1)
+	if back_from > back_to:
+		return []
+
+	# Always require paid for late-paid catch-up, regardless of period paid_only setting.
+	kwargs = dict(fetch_kwargs)
+	kwargs["paid_only"] = True
+	kwargs["exclude_commission_generated"] = True
+	return fetch_commissionable_sales_order_items(
+		from_date=back_from,
+		to_date=back_to,
+		**kwargs,
 	)
 
 
@@ -289,6 +343,7 @@ def fetch_commissionable_sales_order_items(
 	source_doctypes=None,
 	op_only: bool = False,
 	paid_only: bool = False,
+	exclude_commission_generated: bool = False,
 ):
 	"""Sales Order item lines billed against configured commission source DocTypes."""
 	if not source_doctypes:
@@ -301,6 +356,7 @@ def fetch_commissionable_sales_order_items(
 	if not source_doctypes:
 		return []
 
+	so_meta = frappe.get_meta("Sales Order")
 	conditions = [
 		"so.docstatus = 1",
 		"so.transaction_date >= %(from_date)s",
@@ -321,8 +377,11 @@ def fetch_commissionable_sales_order_items(
 			"(COALESCE(so.grand_total, 0) <= 0 OR COALESCE(so.advance_paid, 0) >= COALESCE(so.grand_total, 0))"
 		)
 
+	if exclude_commission_generated and so_meta.has_field("custom_commission_generated"):
+		conditions.append("IFNULL(so.custom_commission_generated, 0) = 0")
+
 	# cost_center may be on SO header and/or item; prefer header then item
-	has_so_cc = frappe.get_meta("Sales Order").has_field("cost_center")
+	has_so_cc = so_meta.has_field("cost_center")
 	has_soi_cc = frappe.get_meta("Sales Order Item").has_field("cost_center")
 
 	if company:
@@ -394,6 +453,35 @@ def fetch_commissionable_sales_order_items(
 		""",
 		values,
 		as_dict=True,
+	)
+
+
+def set_sales_orders_commission_generated(sales_orders, value: int = 1):
+	"""Tick/untick Sales Order.custom_commission_generated for payroll submit/cancel."""
+	if not frappe.get_meta("Sales Order").has_field("custom_commission_generated"):
+		return
+	names = sorted({(so or "").strip() for so in (sales_orders or []) if (so or "").strip()})
+	if not names:
+		return
+	flag = 1 if cint(value) else 0
+	for chunk_start in range(0, len(names), 200):
+		chunk = names[chunk_start : chunk_start + 200]
+		frappe.db.sql(
+			"""
+			UPDATE `tabSales Order`
+			SET custom_commission_generated = %(flag)s
+			WHERE name IN %(names)s
+			""",
+			{"flag": flag, "names": tuple(chunk)},
+		)
+
+
+def get_enabled_commission_sources():
+	return frappe.get_all(
+		"Doctor Commission Source",
+		filters={"enabled": 1},
+		fields=["name", "source_doctype", "practitioner_field"],
+		order_by="source_doctype asc",
 	)
 
 

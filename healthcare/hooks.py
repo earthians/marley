@@ -133,7 +133,8 @@ fixtures = [
                    
                    "Cost Center-custom_is_hospital",
                    "Cost Center-custom_stamp",
-                   "Payment Entry-custom_unique_identity"
+                   "Payment Entry-custom_unique_identity",
+                   "Sales Order-custom_commission_generated"
 
                 ),
             ]

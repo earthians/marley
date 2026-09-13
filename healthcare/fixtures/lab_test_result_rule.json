@@ -3,6 +3,78 @@
   "docstatus": 0,
   "doctype": "Lab Test Result Rule",
   "enabled": 1,
+  "lab_test_name": "GLOMERULAR FILTRATION RATE (eGFR)",
+  "lab_test_template": "LAB-091-001",
+  "modified": "2026-09-02 17:43:25.126527",
+  "name": "LAB-091-001",
+  "rule_lines": [
+   {
+    "denominator_event": null,
+    "formula": "142 * min(S.creatinine/@Kappa, 1)**@Alpha * max(S.creatinine/@Kappa, 1)**(-1.200) * (0.9938)**@Age",
+    "numerator_event": null,
+    "readonly": 1,
+    "rule_type": "Formula",
+    "source_events": null,
+    "target_event": "GLOMERULAR FILTRATION RATE (eGFR)"
+   }
+  ],
+  "sum_block_save": 0,
+  "sum_events": [],
+  "sum_target": 0.0,
+  "sum_tolerance": 0.0
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Lab Test Result Rule",
+  "enabled": 1,
+  "lab_test_name": "Neutrophils Abdolute Count (ANC)",
+  "lab_test_template": "LAB-001-015",
+  "modified": "2026-09-03 12:17:54.462431",
+  "name": "LAB-001-015",
+  "rule_lines": [
+   {
+    "denominator_event": null,
+    "formula": "WBC * NEUTROPHILS /100",
+    "numerator_event": null,
+    "readonly": 1,
+    "rule_type": "Formula",
+    "source_events": null,
+    "target_event": "Neutrophils Abdolute Count (ANC)"
+   }
+  ],
+  "sum_block_save": 0,
+  "sum_events": [],
+  "sum_target": 100.0,
+  "sum_tolerance": 0.5
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Lab Test Result Rule",
+  "enabled": 1,
+  "lab_test_name": "Urine Albumin-Creatinine Ratio(Random)",
+  "lab_test_template": "LAB-116",
+  "modified": "2026-09-02 17:59:44.402752",
+  "name": "LAB-116",
+  "rule_lines": [
+   {
+    "denominator_event": "Creatinine In Urine",
+    "formula": null,
+    "numerator_event": "URINE MICROALBUMIN",
+    "readonly": 1,
+    "rule_type": "Ratio",
+    "source_events": null,
+    "target_event": "Urine Albumin-Creatinine Ratio(Random)"
+   }
+  ],
+  "sum_block_save": 0,
+  "sum_events": [],
+  "sum_target": 100.0,
+  "sum_tolerance": 0.5
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Lab Test Result Rule",
+  "enabled": 1,
   "lab_test_name": "CBC",
   "lab_test_template": "LAB-001",
   "modified": "2026-05-17 15:22:20.767082",
