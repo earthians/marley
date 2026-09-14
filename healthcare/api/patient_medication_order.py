@@ -250,15 +250,17 @@ def get_medication_orders(
 			'name', 'parent', 'drug', 'drug_name', 'dosage', 'dosage_form',
 			'route_of_administration', 'patient_frequency', 'date', 'end_date',
 			'instructions', 'medication_status', 'is_prn', 'medication_type',
-			'reason_stopped', 'stopped', 'quantity', 'uom', 'medication', 'medicine_no',
+			'reason_stopped', 'stopped', 'stopped_date', 'quantity', 'uom', 'medication', 'medicine_no',
 			'written_frequency', 'old_medicine_code', 'old_medicine_name',
 			'no_of_days', 'time', 'is_pink', 'reference_no',
-			'is_long_acting_medicine',
+			'is_long_acting_medicine', 'modified',
 		]
 		if frappe.db.has_column('Inpatient Medication Order Entry', 'healthcare_practitioner'):
 			entry_fields.append('healthcare_practitioner')
 		if frappe.db.has_column('Inpatient Medication Order Entry', 'healthcare_practitioner_name'):
 			entry_fields.append('healthcare_practitioner_name')
+		if frappe.db.has_column('Inpatient Medication Order Entry', 'effective_status'):
+			entry_fields.append('effective_status')
 		entries = frappe.get_all(
 			'Inpatient Medication Order Entry',
 			filters={
@@ -345,6 +347,37 @@ def get_medication_orders(
 			if not e.get('patient_frequency') and e.get('written_frequency'):
 				e['patient_frequency'] = e['written_frequency']
 			entries_by_parent.setdefault(e.pop('parent'), []).append(e)
+
+		# Stopped lines with blank end_date/stopped_date: recover date from
+		# Medication Status Log (Discontinue), else child row modified.
+		# Never parse free-text comments/instructions.
+		from healthcare.api.medication_order_display import medication_entry_is_stopped
+
+		need_stop_date = [
+			e
+			for rows in entries_by_parent.values()
+			for e in rows
+			if medication_entry_is_stopped(e) and not e.get('end_date') and not e.get('stopped_date')
+		]
+		log_by_entry = {}
+		if need_stop_date and frappe.db.exists('DocType', 'Medication Status Log'):
+			for log in frappe.get_all(
+				'Medication Status Log',
+				filters={
+					'medication_entry': ['in', [e['name'] for e in need_stop_date]],
+					'action': 'Discontinue',
+				},
+				fields=['medication_entry', 'creation'],
+				order_by='creation asc',
+				limit_page_length=0,
+			):
+				entry_name = log.get('medication_entry')
+				if entry_name and entry_name not in log_by_entry and log.get('creation'):
+					log_by_entry[entry_name] = str(log['creation'])[:10]
+		for e in need_stop_date:
+			e['discontinued_on'] = log_by_entry.get(e['name']) or (
+				str(e['modified'])[:10] if e.get('modified') else None
+			)
 
 	from healthcare.api.common import fill_missing_patient_names
 	fill_missing_patient_names(orders)
@@ -481,6 +514,8 @@ def _set_medication_row(doc, row):
 			entry.stopped = 1
 		if hasattr(entry, 'stopped_date') and not getattr(entry, 'stopped_date', None):
 			entry.stopped_date = nowdate()
+		if entry.meta.has_field('end_date') and not getattr(entry, 'end_date', None):
+			entry.end_date = nowdate()
 
 	# Prescribing doctor on the line (defaults to parent practitioner on create)
 	_apply_entry_healthcare_practitioner(
@@ -1148,6 +1183,17 @@ def set_medication_entry_status(order, entry, action, reason=None):
 		new_status = "Discontinued"
 
 	frappe.db.set_value("Inpatient Medication Order Entry", entry, "medication_status", new_status)
+	if new_status == "Discontinued":
+		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped"):
+			frappe.db.set_value("Inpatient Medication Order Entry", entry, "stopped", 1)
+		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped_date"):
+			frappe.db.set_value("Inpatient Medication Order Entry", entry, "stopped_date", nowdate())
+		if frappe.db.has_column("Inpatient Medication Order Entry", "stop_by"):
+			frappe.db.set_value("Inpatient Medication Order Entry", entry, "stop_by", frappe.session.user)
+		if frappe.db.has_column("Inpatient Medication Order Entry", "end_date"):
+			frappe.db.set_value("Inpatient Medication Order Entry", entry, "end_date", nowdate())
+		if reason and frappe.db.has_column("Inpatient Medication Order Entry", "reason_stopped"):
+			frappe.db.set_value("Inpatient Medication Order Entry", entry, "reason_stopped", reason)
 
 	log = frappe.new_doc("Medication Status Log")
 	log.patient_medication_order = order
@@ -1573,15 +1619,42 @@ def save_medication_order_entry_stop_reason(
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stopped_date", None)
 		if frappe.db.has_column("Inpatient Medication Order Entry", "stop_by"):
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stop_by", None)
+		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped"):
+			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stopped", 0)
 	else:
 		reason = (reason_stopped or "").strip()
 		if not reason:
 			frappe.throw(_("Stop reason is required."))
 		frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "reason_stopped", reason)
+		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped"):
+			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stopped", 1)
 		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped_date"):
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stopped_date", nowdate())
 		if frappe.db.has_column("Inpatient Medication Order Entry", "stop_by"):
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stop_by", frappe.session.user)
+		# End date = day the medicine was stopped/discontinued.
+		if frappe.db.has_column("Inpatient Medication Order Entry", "end_date"):
+			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "end_date", nowdate())
+
+		# Same audit trail as Hold/Continue/Discontinue API (who/when via owner/creation).
+		if frappe.db.exists("DocType", "Medication Status Log"):
+			entry_row = frappe.db.get_value(
+				"Inpatient Medication Order Entry",
+				order_entry_name,
+				["drug", "drug_name", "parent"],
+				as_dict=True,
+			) or {}
+			patient = frappe.db.get_value("Patient Medication Order", patient_medication_order, "patient")
+			log = frappe.new_doc("Medication Status Log")
+			log.patient_medication_order = patient_medication_order
+			log.medication_entry = order_entry_name
+			log.patient = patient
+			log.drug = entry_row.get("drug")
+			log.drug_name = entry_row.get("drug_name")
+			log.action = "Discontinue"
+			log.new_status = "Discontinued"
+			log.reason = reason
+			log.insert(ignore_permissions=True)
 
 	frappe.db.commit()
 	return {"ok": True}
@@ -1995,6 +2068,7 @@ def get_prescriptions_by_inpatient_record(inpatient_record: str):
                 "stopped": cint(getattr(item, "stopped", 0)),
                 "stopped_date": str(item.stopped_date) if getattr(item, "stopped_date", None) else None,
                 "reason_stopped": getattr(item, "reason_stopped", None),
+                "effective_status": getattr(item, "effective_status", None),
                 "status": item.status if hasattr(item, 'status') else "Active",
                 "display_drug_name": display["display_drug_name"],
                 "display_dosage": display["display_dosage"],
@@ -2095,6 +2169,11 @@ def get_medications_for_clinical_note_day(
 			child.written_frequency,
 			child.date,
 			child.end_date,
+			child.modified,
+			child.reason_stopped,
+			child.stopped,
+			child.stopped_date,
+			child.medication_status,
 			child.time,
 			child.is_prn,
 			child.medication_type,
@@ -2310,6 +2389,9 @@ def _discontinue_medication_entry(doc, entry, reason):
 		entry.stopped_date = nowdate()
 	if hasattr(entry, "stop_by"):
 		entry.stop_by = frappe.session.user
+	# End the line on the discontinue day (UI inactive/period uses end_date).
+	if entry.meta.has_field("end_date"):
+		entry.end_date = nowdate()
 
 
 @frappe.whitelist()

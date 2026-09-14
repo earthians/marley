@@ -3,12 +3,15 @@ import { createPortal } from 'react-dom'
 import {
   fetchPrescriptionByInpatientOrEncounter,
   fetchPrescriptions,
+  fetchPrescription,
   saveMedicationOrderEntryStopReason,
   updateMedicationOrderEntry,
   checkMedicineGivenForEntry,
   addMedicationOrderEntry,
   getGivenStatusForPrescription,
   previewPrescriptionDoseValidation,
+  createPrescriptionSalesOrder,
+  mapOrderToDuplicateMedication,
   type Prescription,
   type PrescriptionDoseValidationPreview,
 } from '../../services/prescriptions'
@@ -19,11 +22,12 @@ import {
   normalizeMedicationOrderForSave,
   normalizePrescriptionType,
   isFuturePlanByStartDate,
+  isMedicationStopped,
   SELECTABLE_PRESCRIPTION_TYPES,
   syncPrescriptionEndDateAndDays,
 } from '../../utils/prescriptionType'
 import { prescriptionNeedsSignature, prescriptionIsSigned } from '../../utils/prescriptionSigning'
-import { RefreshCw, MoreVertical, Pencil, Plus, X, ChevronDown, History } from 'lucide-react'
+import { RefreshCw, MoreVertical, Plus, X, ChevronDown, History } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { CreatePrescriptionModal } from './CreatePrescriptionModal'
 import { SignPrescriptionModal } from './SignPrescriptionModal'
@@ -60,6 +64,7 @@ import {
   resolvePrescriptionDrugRoute,
   fetchHealthcarePractitioners,
   getCurrentUserPractitioner,
+  getCurrentUserPractitionerOption,
   type LinkFieldOption,
 } from '../../services/common'
 import {
@@ -67,6 +72,11 @@ import {
   type CreateFrequencyKind,
 } from './CreateFrequencyMiniModal'
 import { DateFilterInput } from '../ui/DateFilterInput'
+import {
+  getMedicationTypeLabel,
+  medicationTypeBadgeStyle,
+  resolveMedicationTypeForDisplay,
+} from '../../utils/medicationTypeColors'
 
 function addDaysToDate(dateStr: string, days: number): string {
   const d = new Date(dateStr)
@@ -362,6 +372,29 @@ export const EditMedicationEntryModal = ({
   useEffect(() => {
     fetchDosageForms().then(setDosageFormOptions).catch(() => setDosageFormOptions([]))
     fetchStandardUoms(undefined, { medicalOnly: true }).then(setUomOptions).catch(() => setUomOptions([]))
+  }, [])
+
+  // Editing creates a new medicine line when clinical fields change — stamp the
+  // logged-in doctor's practitioner on that new line (same as Add Medication).
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const pract = await getCurrentUserPractitionerOption()
+        if (cancelled || !pract?.name) return
+        setForm((f) => ({ ...f, healthcare_practitioner: pract.name }))
+        setPractitioners((prev) => {
+          if (prev.some((p) => p.name === pract.name)) return prev
+          return [pract, ...prev]
+        })
+        setPractQuery(pract.label || pract.name)
+      } catch {
+        /* keep original line doctor if user has no linked practitioner */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const searchUoms = async (q: string) => {
@@ -1430,10 +1463,15 @@ const MedicationRow = ({
   historyPrescriptionName?: string
 }) => {
   const isFuture = isFuturePlanByStartDate(order)
-  const color = getTypeColor(isFuture ? 'Future Plan' : order.medication_type)
+  const typeForDisplay = resolveMedicationTypeForDisplay(
+    isFuture ? 'Future Plan' : order.medication_type,
+    order.is_prn,
+  )
+  const typeLabel = getMedicationTypeLabel(typeForDisplay, order.is_prn)
+  const color = getTypeColor(typeForDisplay || (isFuture ? 'Future Plan' : order.medication_type))
   const rowStyle = isHex(color) ? hexRowStyle(color) : {}
   const reasonStopped = String(order.reason_stopped || '').trim()
-  const isStopped = Boolean(reasonStopped)
+  const isStopped = isMedicationStopped(order)
   const isLegacyRow = isLegacyMedicationOrderRow(order)
   const displayDrugName = displayMedicationDrugName(order)
   const displayDrugCode = displayMedicationDrugCode(order)
@@ -1566,9 +1604,20 @@ const MedicationRow = ({
               {order.is_pink && order.reference_no ? (
                 <SmallBadge cls="bg-pink-50 text-pink-800 border border-pink-200">Ref: {order.reference_no}</SmallBadge>
               ) : null}
-              {order.is_prn && <SmallBadge cls="bg-amber-100 text-amber-700">PRN</SmallBadge>}
-              {order.is_long_acting_medicine && <SmallBadge cls="bg-teal-100 text-teal-700">⏳ Long Acting</SmallBadge>}
-              {isFuture && <SmallBadge cls="bg-indigo-100 text-indigo-800 border border-indigo-200">📅 Future Plan</SmallBadge>}
+              {typeLabel ? (
+                <span
+                  className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                  style={medicationTypeBadgeStyle(typeForDisplay)}
+                >
+                  {typeLabel}
+                </span>
+              ) : null}
+              {order.is_long_acting_medicine && typeForDisplay !== 'Long Acting Medicine' ? (
+                <SmallBadge cls="bg-teal-100 text-teal-700">⏳ Long Acting</SmallBadge>
+              ) : null}
+              {isFuture && typeForDisplay !== 'Future Plan' ? (
+                <SmallBadge cls="bg-indigo-100 text-indigo-800 border border-indigo-200">📅 Future Plan</SmallBadge>
+              ) : null}
             </div>
             {displayDrugCode && displayDrugCode !== '-' ? (
               <div className="hidden w-full text-xs text-slate-400 tabular-nums" aria-hidden="true">
@@ -1583,9 +1632,18 @@ const MedicationRow = ({
             </div>
           )}
           {isStopped && (
-            <div className="mt-1.5 text-xs text-rose-800 bg-rose-50/80 border border-rose-100 rounded px-2 py-1 max-w-md" title={reasonStopped}>
-              <span className="font-semibold text-rose-900">Reason: </span>
-              {reasonStopped}
+            <div
+              className="mt-1.5 text-xs text-rose-800 bg-rose-50/80 border border-rose-100 rounded px-2 py-1 max-w-md"
+              title={reasonStopped || undefined}
+            >
+              {reasonStopped ? (
+                <>
+                  <span className="font-semibold text-rose-900">Reason: </span>
+                  {reasonStopped}
+                </>
+              ) : (
+                <span className="font-semibold text-rose-900">Discontinued / stopped</span>
+              )}
             </div>
           )}
         </td>
@@ -1623,17 +1681,6 @@ const MedicationRow = ({
         {!readOnly && (
         <td className="px-3 py-2.5 text-right align-middle">
           <div className="inline-flex items-center gap-1">
-            {!givenInfo?.has_given && (
-              <button
-                type="button"
-                onClick={onEdit}
-                className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
-                title="Edit medication"
-                aria-label="Edit medication"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-            )}
             <button
               ref={triggerRef}
               type="button"
@@ -1647,6 +1694,16 @@ const MedicationRow = ({
             </button>
           </div>
           <PortalActionsMenu open={menuOpen} onClose={() => setMenuOpen(false)} triggerRef={triggerRef} placement="below-right">
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false)
+                onEdit()
+              }}
+              className="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+            >
+              Edit Prescription
+            </button>
             <button
               type="button"
               disabled={isStopped}
@@ -1704,6 +1761,9 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
   const [showTypeFilters, setShowTypeFilters] = useState(true)
   const [showCreatePrescriptionModal, setShowCreatePrescriptionModal] = useState(false)
   const [showEditPrescriptionModal, setShowEditPrescriptionModal] = useState(false)
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [duplicateSource, setDuplicateSource] = useState<Prescription | null>(null)
+  const [salesOrderLoading, setSalesOrderLoading] = useState(false)
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false)
   const headerMenuRef = useRef<HTMLButtonElement>(null)
 
@@ -2044,6 +2104,40 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
   const showSignedIpAddButton = (rx?: Prescription | null) =>
     Boolean(rx && !readOnly && prescriptionIsSigned(rx) && isIpPrescription(rx))
 
+  const openDuplicatePrescription = (rx: Prescription) => {
+    setHeaderMenuOpen(false)
+    void (async () => {
+      try {
+        const full = await fetchPrescription(rx.name)
+        setDuplicateSource(full || rx)
+      } catch {
+        setDuplicateSource(rx)
+      }
+      setShowDuplicateModal(true)
+    })()
+  }
+
+  const handleCreateSalesOrder = async (rx: Prescription) => {
+    try {
+      setSalesOrderLoading(true)
+      setHeaderMenuOpen(false)
+      const res = await createPrescriptionSalesOrder(rx.name)
+      await load()
+      toast.success(`Sales Order ${res.sales_order} created as Draft`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to create Service Bill'
+      toast.error(msg)
+    } finally {
+      setSalesOrderLoading(false)
+    }
+  }
+
+  const handleEditSalesOrder = (rx: Prescription) => {
+    if (!rx.reference_document_name) return
+    setHeaderMenuOpen(false)
+    window.open(`/app/sales-order/${encodeURIComponent(rx.reference_document_name)}`, '_blank')
+  }
+
   const renderHeaderActions = (hasPrescription: boolean, rx?: Prescription | null) => (
     <div className="flex items-center gap-2">
       <IpMedicationPlanPrintButton />
@@ -2155,6 +2249,48 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
               >
                 Add Medication
               </button>
+            )}
+            {rx && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => openDuplicatePrescription(rx)}
+                  className="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  Duplicate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHeaderMenuOpen(false)
+                    window.open(
+                      `/app/patient-medication-order/${encodeURIComponent(rx.name)}`,
+                      '_blank',
+                    )
+                  }}
+                  className="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                >
+                  Open in Form
+                </button>
+                {rx.reference_doctype === 'Sales Order' && rx.reference_document_name ? (
+                  <button
+                    type="button"
+                    onClick={() => handleEditSalesOrder(rx)}
+                    className="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Edit Sales Order
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={salesOrderLoading}
+                    onClick={() => void handleCreateSalesOrder(rx)}
+                    className="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    {salesOrderLoading ? 'Creating Service Bill…' : 'Create Service Bill'}
+                  </button>
+                )}
+              </>
             )}
           </PortalActionsMenu>
         </div>
@@ -2467,6 +2603,29 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
             setShowEditPrescriptionModal(false)
             load()
           }}
+        />
+      )}
+
+      {showDuplicateModal && duplicateSource && selectedPatient && (
+        <CreatePrescriptionModal
+          onClose={() => {
+            setShowDuplicateModal(false)
+            setDuplicateSource(null)
+          }}
+          onSuccess={() => {
+            setShowDuplicateModal(false)
+            setDuplicateSource(null)
+            toast.success('Prescription duplicated successfully')
+            load()
+          }}
+          initialPatient={selectedPatient}
+          initialCareContext={mode === 'IP' ? 'Inpatient Admission' : 'Patient Visit'}
+          initialPatientEncounter={mode === 'OP' ? activeVisit ?? undefined : undefined}
+          initialInpatientRecord={mode === 'IP' ? activeAdmission ?? undefined : undefined}
+          initialMedications={(duplicateSource.medication_orders || []).map(
+            mapOrderToDuplicateMedication,
+          )}
+          initialPractitioner={duplicateSource.practitioner || duplicateSource.healthcare_practitioner}
         />
       )}
     </div>

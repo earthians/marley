@@ -154,6 +154,36 @@ export function isMedicationEndDatePassed(
   return end < todayDateString(asOf)
 }
 
+/**
+ * Stopped / discontinued line for listing filters (Current Prescription Stopped tab).
+ *
+ * Covers new UI stops and legacy imports — not free-text comments (too ambiguous).
+ */
+export function isMedicationStopped(
+  order:
+    | {
+        reason_stopped?: string | null
+        stopped?: boolean | 0 | 1 | null
+        medication_status?: string | null
+        stopped_date?: string | null
+        effective_status?: string | null
+        status?: string | null
+      }
+    | null
+    | undefined,
+): boolean {
+  if (!order) return false
+  if (String(order.reason_stopped || '').trim()) return true
+  if (order.stopped === true || order.stopped === 1) return true
+  if (String(order.medication_status || '').trim() === 'Discontinued') return true
+  if (String(order.stopped_date || '').trim()) return true
+  const effective = String(order.effective_status || '').trim().toLowerCase()
+  if (effective === 'stopped' || effective === 'discontinued') return true
+  const status = String(order.status || '').trim().toLowerCase()
+  if (status === 'stopped' || status === 'discontinued') return true
+  return false
+}
+
 /** Filter/count helper for Current Prescription type cards (incl. computed Future Plan). */
 export function matchesPrescriptionTypeFilter(
   order: {
@@ -163,11 +193,17 @@ export function matchesPrescriptionTypeFilter(
     end_date?: string | null
     _rx_end?: string | null
     reason_stopped?: string | null
+    stopped?: boolean | 0 | 1 | null
+    medication_status?: string | null
+    stopped_date?: string | null
+    effective_status?: string | null
+    status?: string | null
+    is_prn?: boolean | 0 | 1 | null
   },
   filterKey: string,
   asOf: Date = new Date()
 ): boolean {
-  const isStopped = Boolean(String(order.reason_stopped || '').trim())
+  const isStopped = isMedicationStopped(order)
   // Stopped lines belong only under the Stopped tab — not All / Reg Psy / etc.
   if (filterKey === '__stopped__') return isStopped
   if (isStopped) return false
@@ -178,6 +214,13 @@ export function matchesPrescriptionTypeFilter(
   if (filterKey === 'Future Plan') return future
   // Real types only include lines that have started (not future-dated)
   if (future) return false
+  if (filterKey === 'PRN') {
+    return (
+      normalizePrescriptionType(order.medication_type) === 'PRN' ||
+      order.is_prn === true ||
+      order.is_prn === 1
+    )
+  }
   return normalizePrescriptionType(order.medication_type) === filterKey
 }
 

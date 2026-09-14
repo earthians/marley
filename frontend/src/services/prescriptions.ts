@@ -432,6 +432,8 @@ export interface MedicationOrderEntry {
   stopped?: 0 | 1 | boolean
   stopped_date?: string
   stop_by?: string
+  /** Legacy import status (e.g. stopped) */
+  effective_status?: string
   /** Doctor who prescribed / added this medication line */
   healthcare_practitioner?: string
   healthcare_practitioner_name?: string

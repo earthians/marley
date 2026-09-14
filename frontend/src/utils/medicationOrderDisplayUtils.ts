@@ -20,6 +20,15 @@ export type MedicationOrderLike = {
   date?: string | null
   start_date?: string | null
   end_date?: string | null
+  stopped_date?: string | null
+  /** Recovered discontinue day (status log / modified) when end_date & stopped_date blank */
+  discontinued_on?: string | null
+  modified?: string | null
+  reason_stopped?: string | null
+  stopped?: boolean | 0 | 1 | null
+  medication_status?: string | null
+  effective_status?: string | null
+  status?: string | null
   route_of_administration?: string | null
   old_route?: string | null
   username?: string | null
@@ -130,12 +139,36 @@ export function displayMedicationStartDate(
   return text(order.date) || text(order.start_date) || text(parentStartDate) || '-'
 }
 
+function orderLooksStopped(order: MedicationOrderLike): boolean {
+  if (text(order.reason_stopped)) return true
+  if (order.stopped === true || order.stopped === 1) return true
+  if (text(order.medication_status) === 'Discontinued') return true
+  if (text(order.stopped_date)) return true
+  const effective = text(order.effective_status).toLowerCase()
+  if (effective === 'stopped' || effective === 'discontinued') return true
+  const status = text(order.status).toLowerCase()
+  if (status === 'stopped' || status === 'discontinued') return true
+  return false
+}
+
+/**
+ * End date for listing: line end_date, else discontinue sources when stopped.
+ * Do not parse comments/instructions — use real timestamps only:
+ * stopped_date → discontinued_on (status log) → modified (approx).
+ */
 export function displayMedicationEndDate(
   order: MedicationOrderLike & { is_legacy?: boolean | null },
   parentEndDate?: string | null
 ): string {
   const lineEnd = text(order.end_date)
   if (lineEnd) return lineEnd
+  if (orderLooksStopped(order)) {
+    const stopped =
+      text(order.stopped_date).slice(0, 10) ||
+      text(order.discontinued_on).slice(0, 10) ||
+      text(order.modified).slice(0, 10)
+    if (stopped) return stopped
+  }
   // Parent/header end date is only a fallback for legacy lines without a line end date.
   if (order.is_legacy || isLegacyMedicationOrderRow(order)) {
     return text(parentEndDate) || '-'

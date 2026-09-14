@@ -439,10 +439,11 @@ export const PatientVisitList = ({
   }
 
   const detailIndex = visits.findIndex((v) => v.value === detailVisit)
-  const hasPrevVisit = Boolean(detailVisit) && (detailIndex > 0 || page > 1)
-  const hasNextVisit = Boolean(detailVisit) && (
+  // Newest-first list: left = older (down), right = newer / latest (up).
+  const hasPrevVisit = Boolean(detailVisit) && (
     (detailIndex >= 0 && detailIndex < visits.length - 1) || page * pageSize < totalCount
   )
+  const hasNextVisit = Boolean(detailVisit) && (detailIndex > 0 || page > 1)
   const visitNavLabel =
     detailVisit && detailIndex >= 0 && totalCount > 0
       ? `${(page - 1) * pageSize + detailIndex + 1} of ${totalCount}`
@@ -454,20 +455,8 @@ export const PatientVisitList = ({
         detailVisitTypeRaw)) ||
     undefined
 
+  /** Older (left): down the newest-first list / next page. */
   const goToPrevVisit = useCallback(() => {
-    const list = visitsRef.current
-    const idx = list.findIndex((v) => v.value === detailVisit)
-    if (idx > 0) {
-      setDetailVisit(list[idx - 1].value)
-      return
-    }
-    if (page > 1) {
-      pendingVisitNavRef.current = 'last'
-      setPage((p) => p - 1)
-    }
-  }, [detailVisit, page])
-
-  const goToNextVisit = useCallback(() => {
     const list = visitsRef.current
     const idx = list.findIndex((v) => v.value === detailVisit)
     if (idx >= 0 && idx < list.length - 1) {
@@ -479,6 +468,20 @@ export const PatientVisitList = ({
       setPage((p) => p + 1)
     }
   }, [detailVisit, page, pageSize, totalCount])
+
+  /** Newer (right): up toward latest / previous page. */
+  const goToNextVisit = useCallback(() => {
+    const list = visitsRef.current
+    const idx = list.findIndex((v) => v.value === detailVisit)
+    if (idx > 0) {
+      setDetailVisit(list[idx - 1].value)
+      return
+    }
+    if (page > 1) {
+      pendingVisitNavRef.current = 'last'
+      setPage((p) => p - 1)
+    }
+  }, [detailVisit, page])
 
   const visitMetaOptions = { patient }
 

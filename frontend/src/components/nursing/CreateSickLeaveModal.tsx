@@ -411,7 +411,7 @@ import {
   CREATE_MODAL_OVERLAY,
   createModalShellClass,
 } from '../ui/CreateModalChrome'
-import { createSickLeave, type CreateSickLeaveInput } from '../../services/sickLeave'
+import { createSickLeave, updateSickLeave, type CreateSickLeaveInput, type SickLeaveRow } from '../../services/sickLeave'
 import {
   fetchHealthcarePractitioners,
   fetchInpatientAdmissions,
@@ -426,15 +426,21 @@ import {
   LOCKED_PRACTITIONER_INPUT_CLASS,
   useLockedLinkedPractitioner,
 } from '../../hooks/useLockedLinkedPractitioner'
+import { useRejectEditModeWhenLocked } from '../../hooks/useRejectEditModeWhenLocked'
 import { DateFilterInput } from '../ui/DateFilterInput'
 
 interface CreateSickLeaveModalProps {
   onClose: () => void
   onSuccess: () => void
   patient?: string
+  /** When set, modal edits this existing Patient Sick Leave. */
+  editRow?: SickLeaveRow | null
 }
 
-export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSickLeaveModalProps) => {
+export const CreateSickLeaveModal = ({ onClose, onSuccess, patient, editRow }: CreateSickLeaveModalProps) => {
+  const isEdit = Boolean(editRow?.name)
+  useRejectEditModeWhenLocked(isEdit, onClose)
+
   // Get context from CareContextProvider
   const { mode, activeVisit, activeAdmission, selectedPatient: contextPatient, userCostCenter } = useCareContext()
   
@@ -446,32 +452,36 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
   const [error, setError] = useState<string | null>(null)
 
   // Form values
-  const [patientId, setPatientId] = useState(patient || contextPatient || '')
-  const [patientName, setPatientName] = useState('')
+  const [patientId, setPatientId] = useState(editRow?.patient || patient || contextPatient || '')
+  const [patientName, setPatientName] = useState(editRow?.patient_name || '')
   const [admissionNo, setAdmissionNo] = useState(() => {
+    if (editRow?.admission_no) return editRow.admission_no
     if (isIPMode && activeAdmission) return activeAdmission
     return ''
   })
   const [patientVisitNo, setPatientVisitNo] = useState(() => {
+    if (editRow?.patient_visit) return editRow.patient_visit
     if (isOPMode && activeVisit) return activeVisit
     return ''
   })
-  const [fromDate, setFromDate] = useState(new Date().toISOString().split('T')[0])
-  const [toDate, setToDate] = useState('')
-  const [days, setDays] = useState('')
-  const [diagnosis, setDiagnosis] = useState('')
-  const [doctorId, setDoctorId] = useState('')
-  const [doctorName, setDoctorName] = useState('')
-  const [branch, setBranch] = useState('')
+  const [fromDate, setFromDate] = useState(
+    editRow?.from_date || new Date().toISOString().split('T')[0]
+  )
+  const [toDate, setToDate] = useState(editRow?.to_date || '')
+  const [days, setDays] = useState(editRow?.days || '')
+  const [diagnosis, setDiagnosis] = useState(editRow?.diagnosis || '')
+  const [doctorId, setDoctorId] = useState(editRow?.doctor || '')
+  const [doctorName, setDoctorName] = useState(editRow?.doctor_name || '')
+  const [branch, setBranch] = useState(editRow?.cost_center || '')
   const [srNo, setSrNo] = useState('')
 
   // Flag fields — Patient Sick Leave doctype uses Check (boolean 0/1)
-  const [sickFlag, setSickFlag] = useState(false)
-  const [fitFlag, setFitFlag] = useState(false)
-  const [unfitFlag, setUnfitFlag] = useState(false)
-  const [lightDuty, setLightDuty] = useState(false)
-  const [needsFlag, setNeedsFlag] = useState(false)
-  const [accPatient, setAccPatient] = useState(false)
+  const [sickFlag, setSickFlag] = useState(Boolean(editRow?.sick_flag))
+  const [fitFlag, setFitFlag] = useState(Boolean(editRow?.fit_flag))
+  const [unfitFlag, setUnfitFlag] = useState(Boolean(editRow?.unfit_flag))
+  const [lightDuty, setLightDuty] = useState(Boolean(editRow?.light_duty))
+  const [needsFlag, setNeedsFlag] = useState(Boolean(editRow?.needs_flag))
+  const [accPatient, setAccPatient] = useState(Boolean(editRow?.acc_patient))
 
   const addDaysToDate = (dateStr: string, dayCount: number) => {
     const d = new Date(`${dateStr}T00:00:00`)
@@ -549,43 +559,67 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
   // Doctor dropdown
   const [doctorOptions, setDoctorOptions] = useState<LinkFieldOption[]>([])
   const [doctorOpen, setDoctorOpen] = useState(false)
-  const [doctorQuery, setDoctorQuery] = useState('')
+  const [doctorQuery, setDoctorQuery] = useState(editRow?.doctor_name || editRow?.doctor || '')
   const {
     locked: practitionerLocked,
     practitionerId: linkedPractitionerId,
     practitionerLabel: linkedPractitionerLabel,
   } = useLockedLinkedPractitioner()
-  const [selectedDoctor, setSelectedDoctor] = useState<LinkFieldOption | null>(null)
+  const [selectedDoctor, setSelectedDoctor] = useState<LinkFieldOption | null>(() =>
+    editRow?.doctor
+      ? { name: editRow.doctor, label: editRow.doctor_name || editRow.doctor }
+      : null
+  )
 
   // Branch — Cost Center dropdown
   const [branchOptions, setBranchOptions] = useState<LinkFieldOption[]>([])
   const [branchOpen, setBranchOpen] = useState(false)
-  const [branchQuery, setBranchQuery] = useState('')
-  const [selectedBranch, setSelectedBranch] = useState<LinkFieldOption | null>(null)
+  const [branchQuery, setBranchQuery] = useState(editRow?.cost_center || '')
+  const [selectedBranch, setSelectedBranch] = useState<LinkFieldOption | null>(() =>
+    editRow?.cost_center ? { name: editRow.cost_center, label: editRow.cost_center } : null
+  )
 
   // Global branch is the default; care-episode sync overrides it when set.
   useEffect(() => {
-    if (!userCostCenter) return
+    if (isEdit || !userCostCenter) return
     setBranch((prev) => {
       if (prev) return prev
       setBranchQuery((q) => q || userCostCenter)
       setSelectedBranch((s) => s || { name: userCostCenter, label: userCostCenter })
       return userCostCenter
     })
-  }, [userCostCenter])
+  }, [userCostCenter, isEdit])
 
   // Load initial patient label
   useEffect(() => {
-    const patientToLoad = patient || contextPatient
+    if (editRow?.patient_name) {
+      setPatientQuery(editRow.patient_name)
+      return
+    }
+    const patientToLoad = editRow?.patient || patient || contextPatient
     if (patientToLoad) {
       fetchPatients(1, 0, patientToLoad).then((res) => {
         if (res.length > 0) setPatientQuery(res[0].patient_name)
       }).catch(() => {})
     }
-  }, [patient, contextPatient])
+  }, [patient, contextPatient, editRow])
+
+  // Prefill admission/visit labels when editing
+  useEffect(() => {
+    if (!isEdit || !editRow) return
+    if (editRow.admission_no) {
+      setSelectedAdmission({ name: editRow.admission_no, label: editRow.admission_no })
+      setAdmissionQuery(editRow.admission_no)
+    }
+    if (editRow.patient_visit) {
+      setSelectedVisit({ name: editRow.patient_visit, label: editRow.patient_visit })
+      setVisitQuery(editRow.patient_visit)
+    }
+  }, [isEdit, editRow])
 
   // Auto-load admission/visit label if context exists
   useEffect(() => {
+    if (isEdit) return
     if (isIPMode && activeAdmission && patientId) {
       const loadAdmissionLabel = async () => {
         try {
@@ -615,7 +649,7 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
       }
       loadVisitLabel()
     }
-  }, [isIPMode, isOPMode, activeAdmission, activeVisit, patientId])
+  }, [isEdit, isIPMode, isOPMode, activeAdmission, activeVisit, patientId])
 
   useEffect(() => {
     if (!patientOpen) return
@@ -632,9 +666,9 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
     return () => { cancelled = true; clearTimeout(t) }
   }, [patientQuery, patientOpen])
 
-  // Fetch admissions on open / query change (IP mode)
+  // Fetch admissions on open / query change (IP mode or edit with admission)
   useEffect(() => {
-    if (!isIPMode) return
+    if (!isIPMode && !(isEdit && Boolean(admissionNo))) return
     if (!admissionOpen) return
     let cancelled = false
     const run = async () => {
@@ -645,11 +679,11 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
     }
     const t = setTimeout(run, admissionQuery.trim() ? 300 : 0)
     return () => { cancelled = true; clearTimeout(t) }
-  }, [admissionQuery, admissionOpen, patientId, isIPMode])
+  }, [admissionQuery, admissionOpen, patientId, isIPMode, isEdit, admissionNo])
 
-  // Fetch visits on open / query change (OP mode)
+  // Fetch visits on open / query change (OP mode or edit with visit)
   useEffect(() => {
-    if (!isOPMode) return
+    if (!isOPMode && !(isEdit && Boolean(patientVisitNo))) return
     if (!visitOpen) return
     let cancelled = false
     const run = async () => {
@@ -660,9 +694,10 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
     }
     const t = setTimeout(run, visitQuery.trim() ? 300 : 0)
     return () => { cancelled = true; clearTimeout(t) }
-  }, [visitQuery, visitOpen, patientId, isOPMode])
+  }, [visitQuery, visitOpen, patientId, isOPMode, isEdit, patientVisitNo])
 
   useEffect(() => {
+    if (isEdit) return
     const patientVisit = isOPMode ? patientVisitNo : undefined
     const inpatientRecord = isIPMode ? admissionNo : undefined
     if (!patientVisit && !inpatientRecord) return
@@ -682,7 +717,7 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
     return () => {
       cancelled = true
     }
-  }, [isIPMode, isOPMode, patientVisitNo, admissionNo, visitOptions, admissionOptions])
+  }, [isEdit, isIPMode, isOPMode, patientVisitNo, admissionNo, visitOptions, admissionOptions])
 
   useEffect(() => {
     if (!branchOpen) return
@@ -739,6 +774,9 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
 
   // Get mode-specific help text
   const getModeHelpText = () => {
+    if (isEdit) {
+      return `Editing sick leave${editRow?.name ? `: ${editRow.name}` : ''}`
+    }
     if (isIPMode) {
       return `Creating sick leave for IP${admissionNo ? `: ${admissionNo}` : ' (admission optional)'}`
     }
@@ -767,6 +805,7 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
         admission_no: admissionNo || undefined,
         patient: patientId || undefined,
         patient_name: patientName || patientQuery || undefined,
+        patient_visit: patientVisitNo || undefined,
         sr_no: srNo || undefined,
         // Flag fields stored as Check (0/1) on Patient Sick Leave
         sick_flag: sickFlag ? 1 : 0,
@@ -776,14 +815,16 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
         needs_flag: needsFlag ? 1 : 0,
         acc_patient: accPatient ? 1 : 0,
       }
-      const result = await createSickLeave(payload)
+      const result = isEdit && editRow?.name
+        ? await updateSickLeave({ ...payload, name: editRow.name })
+        : await createSickLeave(payload)
       if (result.success) {
         onSuccess()
       } else {
-        setError(result.message || 'Failed to create sick leave')
+        setError(result.message || (isEdit ? 'Failed to update sick leave' : 'Failed to create sick leave'))
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create sick leave')
+      setError(e instanceof Error ? e.message : (isEdit ? 'Failed to update sick leave' : 'Failed to create sick leave'))
     } finally {
       setSaving(false)
     }
@@ -890,10 +931,12 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
         <div className="relative shrink-0 border-b border-emerald-100/60 bg-gradient-to-r from-emerald-100 via-teal-50 to-sky-100 p-4 sm:px-5 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight text-emerald-950">New Sick Leave</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-emerald-950">
+                {isEdit ? 'Edit Sick Leave' : 'New Sick Leave'}
+              </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                {isIPMode && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-medium mr-2">IP Mode Active</span>}
-                {isOPMode && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-medium mr-2">OP Mode Active</span>}
+                {!isEdit && isIPMode && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-medium mr-2">IP Mode Active</span>}
+                {!isEdit && isOPMode && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-medium mr-2">OP Mode Active</span>}
                 {getModeHelpText()}
               </p>
             </div>
@@ -918,10 +961,18 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
           {/* Mode indicator box */}
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
             <p className="text-xs font-semibold text-primary mb-1">
-              {isIPMode ? '🏥 Creating Sick Leave for Inpatient' : isOPMode ? '👤 Creating Sick Leave for Outpatient' : '📋 Select Context'}
+              {isEdit
+                ? '✏️ Editing Sick Leave'
+                : isIPMode
+                  ? '🏥 Creating Sick Leave for Inpatient'
+                  : isOPMode
+                    ? '👤 Creating Sick Leave for Outpatient'
+                    : '📋 Select Context'}
             </p>
             <p className="text-xs text-slate-600">
-              {isIPMode 
+              {isEdit
+                ? 'Update the leave period, doctor, diagnosis, or flags, then save.'
+                : isIPMode 
                 ? `Admission can be linked if available; it is optional.`
                 : isOPMode
                 ? `Patient visit is optional — you can save without selecting a visit.`
@@ -947,13 +998,15 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
                     onFocus={() => setPatientOpen(true)}
                     placeholder="Search patient…"
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    disabled={Boolean(contextPatient)}
+                    disabled={Boolean(contextPatient) || isEdit}
                   />
-                  {contextPatient && (
-                    <p className="text-xs text-slate-400 mt-1 absolute -bottom-5 left-0">Patient auto-selected from context</p>
+                  {(contextPatient || isEdit) && (
+                    <p className="text-xs text-slate-400 mt-1 absolute -bottom-5 left-0">
+                      {isEdit ? 'Patient cannot be changed when editing' : 'Patient auto-selected from context'}
+                    </p>
                   )}
                   {patientLoading && <span className="absolute right-3 top-2.5 text-xs text-slate-400">Loading…</span>}
-                  {patientOpen && !contextPatient && patientOptions.length > 0 && (
+                  {patientOpen && !contextPatient && !isEdit && patientOptions.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto top-full">
                       {patientOptions.map((p) => (
                         <button key={p.name} type="button"
@@ -969,7 +1022,7 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
               </div>
 
               {/* Admission No (IP mode) — side-by-side with Patient */}
-              {isIPMode && (
+              {(isIPMode || (isEdit && Boolean(admissionNo))) && (
                 <div>
                   <LinkField
                     label="Admission No"
@@ -982,16 +1035,16 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
                     onSelect={(a) => { setAdmissionNo(a.name); setSelectedAdmission(a); setAdmissionQuery(a.label); setAdmissionOpen(false) }}
                     onClear={() => { setAdmissionNo(''); setSelectedAdmission(null); setAdmissionQuery(''); setAdmissionOpen(false) }}
                     placeholder="Search admission (optional)…"
-                    disabled={!!activeAdmission}
+                    disabled={!isEdit && !!activeAdmission}
                   />
-                  {activeAdmission && (
+                  {!isEdit && activeAdmission && (
                     <p className="text-xs text-slate-400 mt-1">Auto-selected from IP context</p>
                   )}
                 </div>
               )}
 
               {/* Patient Visit (OP mode) — side-by-side with Patient */}
-              {isOPMode && (
+              {(isOPMode || (isEdit && Boolean(patientVisitNo))) && (
                 <div>
                   <LinkField
                     label="Patient Visit"
@@ -1212,7 +1265,7 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient }: CreateSick
               disabled={saving || !patientId || !fromDate}
               className={CM_BTN_PRIMARY}
             >
-              {saving ? 'Saving…' : 'Save Sick Leave'}
+              {saving ? 'Saving…' : isEdit ? 'Update Sick Leave' : 'Save Sick Leave'}
             </button>
           </div>
         </form>

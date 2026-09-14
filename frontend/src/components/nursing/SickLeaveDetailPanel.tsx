@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { Calendar, CalendarDays, FileText, Link2, Stethoscope, User } from 'lucide-react'
+import { Calendar, CalendarDays, FileText, Link2, Pencil, Stethoscope, User } from 'lucide-react'
 import { type SickLeaveRow } from '../../services/sickLeave'
 import { DetailSlideOver } from '../ui/DetailSlideOver'
 import { PrintFormatDropdown } from '../ui/PrintFormatDropdown'
@@ -9,6 +9,7 @@ interface SickLeaveDetailPanelProps {
   row: SickLeaveRow
   onClose: () => void
   onPatientClick?: (patient: string) => void
+  onEdit?: () => void
 }
 
 function displayValue(value: unknown): string {
@@ -72,7 +73,7 @@ function InfoTile({
   )
 }
 
-export function SickLeaveDetailPanel({ row, onClose, onPatientClick }: SickLeaveDetailPanelProps) {
+export function SickLeaveDetailPanel({ row, onClose, onPatientClick, onEdit }: SickLeaveDetailPanelProps) {
   const headerSubtitle = useMemo(() => {
     const parts = [
       row.patient_name || row.patient,
@@ -90,6 +91,16 @@ export function SickLeaveDetailPanel({ row, onClose, onPatientClick }: SickLeave
       maxWidthClass="max-w-2xl"
       headerActions={
         <div className="flex items-center gap-2">
+          {onEdit ? (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200/80 bg-white/80 px-2.5 py-1.5 text-xs font-medium text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+            >
+              <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+              Edit
+            </button>
+          ) : null}
           <a
             href={`/app/patient-sick-leave/${encodeURIComponent(row.name)}`}
             target="_blank"
@@ -140,7 +151,7 @@ export function SickLeaveDetailPanel({ row, onClose, onPatientClick }: SickLeave
           <div className="mb-3 grid grid-cols-2 gap-4">
             <div>
               <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Doctor</div>
-              <div className="text-sm font-semibold text-slate-800">{row.doctor || '—'}</div>
+              <div className="text-sm font-semibold text-slate-800">{row.doctor_name || row.doctor || '—'}</div>
             </div>
           </div>
           {row.diagnosis ? (
@@ -178,7 +189,7 @@ export function SickLeaveDetailPanel({ row, onClose, onPatientClick }: SickLeave
             <InfoTile
               icon={<Stethoscope className="h-4 w-4" strokeWidth={2} />}
               label="Doctor Name"
-              value={displayValue(row.doctor)}
+              value={displayValue(row.doctor_name || row.doctor)}
             />
             <InfoTile
               icon={<FileText className="h-4 w-4" strokeWidth={2} />}

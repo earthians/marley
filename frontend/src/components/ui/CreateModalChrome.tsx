@@ -216,9 +216,9 @@ export type DetailSlideOverProps = {
   footer?: ReactNode
   /** Tailwind max-width fragment, e.g. `max-w-2xl` or `max-w-md` */
   maxWidthClass?: string
-  /** Move to the previous record in the current list */
+  /** Older record (left / ←). Newest-first lists: down the list. */
   onPrev?: () => void
-  /** Move to the next record in the current list */
+  /** Newer / latest record (right / →). Newest-first lists: up the list. */
   onNext?: () => void
   hasPrev?: boolean
   hasNext?: boolean
@@ -236,7 +236,8 @@ function RecordNavButton({
   disabled?: boolean
 }) {
   const Icon = direction === 'prev' ? ChevronLeft : ChevronRight
-  const label = direction === 'prev' ? 'Previous' : 'Next'
+  // Newest-first lists: left = older, right = newer/latest
+  const label = direction === 'prev' ? 'Older' : 'Newer'
   return (
     <button
       type="button"

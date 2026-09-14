@@ -20,6 +20,7 @@ import {
   type MultiLabRequestPricing,
   type UpdateServiceRequestData
 } from '../../services/serviceRequests'
+import { fetchLabRequestActions } from '../../services/labRequestActions'
 import { LabTestLineDiscountTable } from './LabTestLineDiscountTable'
 import {
   isOtherServiceRequest,
@@ -30,10 +31,11 @@ import {
   extractLineDiscountsFromBasket,
   mergeDiscountsIntoBasket,
   parseLabRequestItems,
+  serializeLabRequestItemsForSave,
   type LabLineDiscount,
 } from '../../utils/labTestDiscounts'
 import { toast } from '../../hooks/useToast'
-import { X } from 'lucide-react'
+import { ChevronDown, Trash2, X } from 'lucide-react'
 import { DateFilterInput } from '../ui/DateFilterInput'
 
 type SRTab = 'patient_order' | 'service_details' | 'billing_pricing'
@@ -133,6 +135,8 @@ export const EditServiceRequestModal = ({
   const [lineDiscounts, setLineDiscounts] = useState<Record<string, LabLineDiscount>>({})
   const [generalLabDiscount, setGeneralLabDiscount] = useState(0)
   const [basketPricing, setBasketPricing] = useState<MultiLabRequestPricing>({ lines: [], subtotal: 0 })
+  const [expandedLabGroups, setExpandedLabGroups] = useState<Record<string, boolean>>({})
+  const [startedWithMultiLab, setStartedWithMultiLab] = useState(false)
 
   const hasMultiLabItems = labBasket.length > 0
   const basketWithDiscounts = useMemo(
@@ -157,6 +161,40 @@ export const EditServiceRequestModal = ({
   const isLabRequest = formData.template_dt === 'Lab Test Template'
   const isOtherService = isOtherServiceRequest(formData.template_dt)
   const orderingClinicianLabel = serviceRequestPractitionerLabel(formData.template_dt)
+
+  const labTemplateLabel = (template: string) => {
+    const fromLine = basketPricing.lines?.find((l) => l.template === template)
+    if (fromLine?.lab_test_name) return fromLine.lab_test_name
+    return templates.find((t) => t.name === template)?.label || template
+  }
+
+  const removeBasketChild = (basketIndex: number, childTemplate: string) => {
+    setLabBasket((prev) => {
+      const next = [...prev]
+      const item = next[basketIndex]
+      if (!item || item.kind !== 'group') return prev
+      const children = item.children.filter((c) => c !== childTemplate)
+      if (children.length === 0) {
+        setError('A group must keep at least one child test. Remove the whole group instead.')
+        return prev
+      }
+      setError(null)
+      const child_discounts = item.child_discounts ? { ...item.child_discounts } : undefined
+      if (child_discounts) delete child_discounts[childTemplate]
+      next[basketIndex] = {
+        ...item,
+        children,
+        child_discounts:
+          child_discounts && Object.keys(child_discounts).length ? child_discounts : undefined,
+      }
+      return next
+    })
+  }
+
+  const removeBasketItem = (basketIndex: number) => {
+    setLabBasket((prev) => prev.filter((_, i) => i !== basketIndex))
+    setError(null)
+  }
 
   /* ────────────── INITIAL LOAD ────────────── */
 
@@ -233,8 +271,24 @@ export const EditServiceRequestModal = ({
 
         const parsedLabItems = parseLabRequestItems(doc.lab_request_items)
         setLabBasket(parsedLabItems)
+        setStartedWithMultiLab(parsedLabItems.length > 0)
         setLineDiscounts(extractLineDiscountsFromBasket(parsedLabItems))
         setGeneralLabDiscount(Number(doc.general_discount_amount || 0))
+        if ((doc.template_dt as string) === 'Lab Test Template') {
+          setActiveTab('patient_order')
+          try {
+            const actions = await fetchLabRequestActions(serviceRequestName)
+            if (!actions.can_edit_lab_request) {
+              toast.error('This lab request cannot be edited after sample collection.')
+              onClose()
+              return
+            }
+          } catch {
+            toast.error('Unable to verify if this lab request can be edited.')
+            onClose()
+            return
+          }
+        }
 
         // Load patient category for pricing highlight
         const patientId = (doc.patient as string) || ''
@@ -480,7 +534,7 @@ export const EditServiceRequestModal = ({
     
     if (!formData.template_dt || !formData.template_dn) {
       setError('Please select template type and template')
-      setActiveTab('service_details')
+      setActiveTab(isLabRequest ? 'patient_order' : 'service_details')
       return
     }
 
@@ -492,6 +546,11 @@ export const EditServiceRequestModal = ({
     ) {
       setError('Enter an amount for this item/service (no price configured).')
       setActiveTab('billing_pricing')
+      return
+    }
+    if (startedWithMultiLab && labBasket.length === 0) {
+      setError('Keep at least one lab test in the request, or cancel instead.')
+      setActiveTab('patient_order')
       return
     }
     if (
@@ -544,8 +603,8 @@ export const EditServiceRequestModal = ({
         grand_total: formData.grand_total
       }
 
-      if (hasMultiLabItems) {
-        payload.lab_request_items = basketWithDiscounts
+      if (hasMultiLabItems || startedWithMultiLab) {
+        payload.lab_request_items = serializeLabRequestItemsForSave(basketWithDiscounts)
         payload.cost = basketPricing.subtotal
         payload.general_discount_amount = generalLabDiscount
         payload.discount_amount = (basketPricing.discount_amount || 0) + generalLabDiscount
@@ -555,12 +614,28 @@ export const EditServiceRequestModal = ({
         payload.discount_value = 'Amount'
       }
       
-      await updateServiceRequest(serviceRequestName, payload)
-      toast.success('Service request updated')
+      const result = await updateServiceRequest(serviceRequestName, payload)
+      if (isLabRequest && result.sales_order_recreated && result.sales_order) {
+        const previous = result.previous_sales_order
+          ? ` Previous order ${result.previous_sales_order} was cancelled.`
+          : ''
+        toast.success(
+          `Lab request saved. Billing was updated — new Sales Order ${result.sales_order}.${previous}`
+        )
+      } else if (isLabRequest) {
+        toast.success('Lab request saved successfully.')
+      } else {
+        toast.success('Service request updated')
+      }
       onSuccess()
       onClose()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update service request'
+      const msg =
+        err instanceof Error && err.message.trim()
+          ? err.message
+          : isLabRequest
+            ? 'Could not save the lab request. Please try again.'
+            : 'Failed to update service request'
       setError(msg)
       toast.error(msg)
     } finally {
@@ -585,11 +660,16 @@ export const EditServiceRequestModal = ({
     )
   }
 
-  const tabs: { id: SRTab; label: string }[] = [
-    { id: 'patient_order', label: 'Patient & Order' },
-    { id: 'service_details', label: 'Service & Details' },
-    { id: 'billing_pricing', label: 'Billing & Pricing' }
-  ]
+  const tabs: { id: SRTab; label: string }[] = isLabRequest
+    ? [
+        { id: 'patient_order', label: 'Patient & Tests' },
+        { id: 'billing_pricing', label: 'Billing & Pricing' },
+      ]
+    : [
+        { id: 'patient_order', label: 'Patient & Order' },
+        { id: 'service_details', label: 'Service & Details' },
+        { id: 'billing_pricing', label: 'Billing & Pricing' },
+      ]
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -681,6 +761,108 @@ export const EditServiceRequestModal = ({
                   </div>
                 </div>
 
+                {isLabRequest ? (
+                  hasMultiLabItems || startedWithMultiLab ? (
+                    <div className="rounded-lg border border-violet-200 bg-violet-50/40 p-4">
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">
+                        Lab tests in this request
+                      </label>
+                      <p className="mb-3 text-xs text-slate-600">
+                        Expand a group to remove individual child tests. Saving updates the request
+                        and deletes matching draft Lab Tests that are still in Requested status.
+                      </p>
+                      <ul className="space-y-2">
+                        {labBasket.map((item, index) => {
+                          const template = item.kind === 'single' ? item.template : item.parent
+                          const itemKey = `${item.kind}-${template}-${index}`
+                          const isExpanded = item.kind === 'group' && !!expandedLabGroups[itemKey]
+                          return (
+                            <li
+                              key={itemKey}
+                              className="rounded-xl border border-slate-200/90 bg-white px-3 py-2.5"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <button
+                                  type="button"
+                                  disabled={item.kind !== 'group'}
+                                  onClick={() => {
+                                    if (item.kind !== 'group') return
+                                    setExpandedLabGroups((prev) => ({
+                                      ...prev,
+                                      [itemKey]: !prev[itemKey],
+                                    }))
+                                  }}
+                                  className={`flex min-w-0 flex-1 items-center gap-2 text-left ${
+                                    item.kind === 'group' ? 'cursor-pointer' : 'cursor-default'
+                                  }`}
+                                  aria-expanded={item.kind === 'group' ? isExpanded : undefined}
+                                >
+                                  {item.kind === 'group' && (
+                                    <ChevronDown
+                                      className={`h-4 w-4 shrink-0 text-violet-600 transition-transform ${
+                                        isExpanded ? 'rotate-180' : ''
+                                      }`}
+                                    />
+                                  )}
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-sm font-medium text-slate-900">
+                                      {labTemplateLabel(template)}
+                                      {item.kind === 'group' ? ` (${item.children.length} tests)` : ''}
+                                    </span>
+                                    <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                      ID: {template}
+                                    </span>
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeBasketItem(index)}
+                                  className="shrink-0 text-xs font-semibold text-red-600 hover:text-red-800"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              {item.kind === 'group' && isExpanded && (
+                                <ul className="mt-2 space-y-1.5 border-t border-slate-100 pt-2 pl-6">
+                                  {item.children.map((child) => (
+                                    <li
+                                      key={child}
+                                      className="flex items-center justify-between gap-2 rounded-lg bg-violet-50/60 px-3 py-2"
+                                    >
+                                      <span className="min-w-0">
+                                        <span className="block truncate text-sm font-medium text-slate-800">
+                                          {labTemplateLabel(child)}
+                                        </span>
+                                        <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                          ID: {child}
+                                        </span>
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeBasketChild(index, child)}
+                                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                                        title="Remove this child test from the group"
+                                      >
+                                        <Trash2 className="h-3 w-3" strokeWidth={2} />
+                                        Remove
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+                      No lab test lines on this request.
+                    </div>
+                  )
+                ) : null}
+
+                {!isLabRequest ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-900 mb-2">Patient Visit</label>
@@ -709,7 +891,10 @@ export const EditServiceRequestModal = ({
                     </select>
                   </div>
                 </div>
+                ) : null}
 
+                {!isLabRequest ? (
+                <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-900 mb-2">Order Date <span className="text-red-500">*</span></label>
@@ -860,11 +1045,13 @@ export const EditServiceRequestModal = ({
                     <input type="text" value={formData.order_group} onChange={(e) => set('order_group', e.target.value)} placeholder="Optional" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent" />
                   </div>
                 </div>
+                </>
+                ) : null}
               </div>
             )}
 
             {/* ═══════════ TAB 2: SERVICE & DETAILS ═══════════ */}
-            {activeTab === 'service_details' && (
+            {activeTab === 'service_details' && !isLabRequest && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -1201,6 +1388,8 @@ export const EditServiceRequestModal = ({
                   </div>
                 )}
 
+                {!isLabRequest ? (
+                  <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-900 mb-2">Reference Document Type</label>
@@ -1245,6 +1434,8 @@ export const EditServiceRequestModal = ({
                     <input type="text" value={formData.order_reference_name} readOnly className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600" />
                   </div>
                 </div>
+                  </>
+                ) : null}
               </div>
             )}
           </div>

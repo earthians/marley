@@ -22,6 +22,39 @@ export function getMedicationTypeColor(medicationType?: string | null): string {
   return typeDef?.color ?? '#94a3b8'
 }
 
+/** Short label for inline type chips (e.g. Reg Psy Active). */
+export function getMedicationTypeLabel(
+  medicationType?: string | null,
+  fallbackPrn?: boolean | 0 | 1 | null,
+): string {
+  const normalized = normalizePrescriptionType(medicationType)
+  if (normalized) {
+    return MEDICATION_TYPES.find((t) => t.key === normalized)?.label || normalized
+  }
+  if (fallbackPrn === true || fallbackPrn === 1) return 'PRN'
+  return ''
+}
+
+/** Resolve type used for color/label when medication_type may be empty but is_prn is set. */
+export function resolveMedicationTypeForDisplay(
+  medicationType?: string | null,
+  isPrn?: boolean | 0 | 1 | null,
+): string {
+  const normalized = normalizePrescriptionType(medicationType)
+  if (normalized) return normalized
+  if (isPrn === true || isPrn === 1) return 'PRN'
+  return ''
+}
+
+export function medicationTypeBadgeStyle(medicationType?: string | null): CSSProperties | undefined {
+  const color = getMedicationTypeColor(medicationType)
+  if (!isHexColor(color)) return undefined
+  return {
+    backgroundColor: color,
+    color: '#1e293b',
+  }
+}
+
 export function medicationRowStyle(medicationType?: string | null, isPink?: boolean): CSSProperties {
   if (isPink) {
     return { backgroundColor: 'rgba(253, 242, 248, 0.85)' }

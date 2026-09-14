@@ -1141,15 +1141,14 @@
    "label": "Discharge Stamp"
   },
   {
-   "description": "When generating Doctor Commission Payroll, optionally include paid Sales Orders from this many days before To Date that still have Commission Generated unticked (late-paid past services).",
    "fieldname": "backdated_days_for_unpaid_commission",
    "fieldtype": "Int",
-   "label": "Backdated Days For Unpaid Commission"
+   "label": "backdated_days_for_unpaid_commission"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-13 22:56:22.131899",
+ "modified": "2026-09-14 14:37:00.639131",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

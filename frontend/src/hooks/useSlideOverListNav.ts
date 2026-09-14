@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, type Dispatch, type SetStateAction } fr
 
 /**
  * Previous / next navigation for a right-hand detail slide-over bound to a paginated list.
+ *
+ * Lists are newest-first (top row = latest). Arrow / chrome directions follow time, not list index:
+ * - Left (Prev) → older (down the list / next page)
+ * - Right (Next) → newer / latest (up the list / previous page)
+ *
+ * So opening the top row means you can only move left.
  */
 export function useSlideOverListNav<T>(opts: {
   items: T[]
@@ -53,31 +59,19 @@ export function useSlideOverListNav<T>(opts: {
   }, [items, loading, refreshing])
 
   const index = selectedKey ? items.findIndex((item) => getKey(item) === selectedKey) : -1
-  const hasPrev = Boolean(selectedKey) && (index > 0 || page > 1)
-  const hasNext =
+  // Left = older: further down the newest-first list, or next page
+  const hasPrev =
     Boolean(selectedKey) &&
     ((index >= 0 && index < items.length - 1) || page * pageSize < totalCount)
+  // Right = newer: toward top of list / previous page
+  const hasNext = Boolean(selectedKey) && (index > 0 || page > 1)
   const navLabel =
     selectedKey && index >= 0 && totalCount > 0
       ? `${(page - 1) * pageSize + index + 1} of ${totalCount}`
       : undefined
 
+  /** Older (left): move down the list, then onto the next page. */
   const goPrev = useCallback(() => {
-    const list = itemsRef.current
-    const key = selectedKey
-    const idx = key ? list.findIndex((item) => getKeyRef.current(item) === key) : -1
-    if (idx > 0) {
-      onSelectRef.current(list[idx - 1])
-      return
-    }
-    if (page > 1) {
-      pendingNavRef.current = 'last'
-      waitForFetchRef.current = true
-      setPage((p) => p - 1)
-    }
-  }, [selectedKey, page, setPage])
-
-  const goNext = useCallback(() => {
     const list = itemsRef.current
     const key = selectedKey
     const idx = key ? list.findIndex((item) => getKeyRef.current(item) === key) : -1
@@ -91,6 +85,22 @@ export function useSlideOverListNav<T>(opts: {
       setPage((p) => p + 1)
     }
   }, [selectedKey, page, pageSize, totalCount, setPage])
+
+  /** Newer (right): move up the list, then onto the previous page. */
+  const goNext = useCallback(() => {
+    const list = itemsRef.current
+    const key = selectedKey
+    const idx = key ? list.findIndex((item) => getKeyRef.current(item) === key) : -1
+    if (idx > 0) {
+      onSelectRef.current(list[idx - 1])
+      return
+    }
+    if (page > 1) {
+      pendingNavRef.current = 'last'
+      waitForFetchRef.current = true
+      setPage((p) => p - 1)
+    }
+  }, [selectedKey, page, setPage])
 
   return { hasPrev, hasNext, navLabel, goPrev, goNext }
 }

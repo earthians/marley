@@ -82,6 +82,18 @@ function messageFromExceptionString(exc: string): string | null {
   const mandatory = messageFromMandatoryExc(text)
   if (mandatory) return mandatory
 
+  const linkExists = text.match(
+    /Cannot delete or cancel because\s+(.+?)\s+is linked with\s+(.+?)(?:\n|$)/i
+  )
+  if (linkExists?.[1] && linkExists?.[2]) {
+    const source = stripHtml(linkExists[1]).trim()
+    const target = stripHtml(linkExists[2]).trim()
+    if (/sales order/i.test(source) && /service request/i.test(target)) {
+      return `Could not replace the Sales Order because it is still linked to ${target}. Unlink it from the lab request and try again.`
+    }
+    return `Cannot cancel ${source} because it is still linked to ${target}.`
+  }
+
   const patterns = [
     /ValidationError:\s*(.+?)(?:\n|$)/s,
     /frappe\.exceptions\.ValidationError:\s*(.+?)(?:\n|$)/s,

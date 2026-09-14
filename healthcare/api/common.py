@@ -5780,6 +5780,7 @@ def get_sick_leaves(
 				"name", "admission", "patient", "patient_name",
 				"start_date", "end_date", "diagnosis",
 				"practitioner", "practitioner_name", "trans_source",
+				"cost_center", "patient_visit",
 				"sick_flag", "fit_flag", "unfit_flag", "light_duty",
 				"needs_flag", "acc_patient",
 				"creation",
@@ -5810,13 +5811,12 @@ def get_sick_leaves(
 					r["days"] = None
 			else:
 				r["days"] = None
+			# Keep practitioner id for edit; expose display name separately.
+			practitioner = r.pop("practitioner", None) or None
 			practitioner_name = r.pop("practitioner_name", None) or None
-			r["doctor"] = r.pop("practitioner", None) or None
-			# Keep the display name for doctor when the raw practitioner id is used in UI.
-			if r["doctor"] and practitioner_name:
-				r["doctor"] = practitioner_name
-			# Remove any leftover fields the UI doesn't consume.
-			r.pop("practitioner_name", None)
+			r["doctor"] = practitioner
+			r["doctor_name"] = practitioner_name or practitioner
+			# cost_center / patient_visit already match UI field names when selected.
 
 		total = frappe.db.count("Patient Sick Leave", filters=filters)
 		return {"success": True, "data": records, "page": page, "page_size": page_size, "total": total}
@@ -5921,6 +5921,94 @@ def create_sick_leave(data):
 		return {"success": True, "name": doc.name, "trans_no": doc.trans_no}
 	except Exception as e:
 		frappe.logger().error(f"Error creating sick leave: {str(e)}")
+		return {"success": False, "message": str(e)}
+
+
+@frappe.whitelist()
+def update_sick_leave(data):
+	"""Update an existing Patient Sick Leave. Same legacy field mapping as create_sick_leave."""
+	assert_editing_allowed()
+	try:
+		if isinstance(data, str):
+			data = frappe.parse_json(data)
+		data = data or {}
+
+		name = (data.get("name") or "").strip()
+		if not name:
+			return {"success": False, "message": "Sick leave name is required"}
+
+		if not frappe.db.exists("Patient Sick Leave", name):
+			return {"success": False, "message": f"Sick leave {name} not found"}
+
+		doc = frappe.get_doc("Patient Sick Leave", name)
+
+		if "admission_no" in data or "admission" in data:
+			doc.admission = data.get("admission_no") or data.get("admission") or None
+		if data.get("patient"):
+			doc.patient = data["patient"]
+			doc.patient_name = (
+				data.get("patient_name")
+				or frappe.db.get_value("Patient", doc.patient, "patient_name")
+			)
+		elif "patient_name" in data and data.get("patient_name"):
+			doc.patient_name = data["patient_name"]
+
+		from_date = data.get("from_date") or data.get("start_date")
+		to_date = data.get("to_date") or data.get("end_date")
+		days = data.get("days")
+		if from_date:
+			doc.start_date = from_date
+		if not to_date and from_date and days:
+			try:
+				d_start = frappe.utils.getdate(from_date)
+				to_date = str(frappe.utils.add_days(d_start, (frappe.utils.cint(days) or 1) - 1))
+			except Exception:
+				pass
+		if to_date is not None:
+			doc.end_date = to_date or None
+
+		if "doctor" in data or "practitioner" in data or "doctor_name" in data:
+			doc.practitioner = data.get("doctor") or data.get("practitioner") or None
+			if doc.practitioner:
+				doc.practitioner_name = (
+					data.get("doctor_name")
+					or data.get("practitioner_name")
+					or frappe.db.get_value("Healthcare Practitioner", doc.practitioner, "practitioner_name")
+				)
+			else:
+				doc.practitioner_name = data.get("doctor_name") or data.get("practitioner_name") or None
+
+		if "diagnosis" in data:
+			doc.diagnosis = data.get("diagnosis") or None
+
+		if "source" in data or "trans_source" in data:
+			doc.trans_source = data.get("source") or data.get("trans_source") or None
+
+		if "patient_visit" in data:
+			doc.patient_visit = data.get("patient_visit") or None
+
+		if "cost_center" in data or "branch" in data:
+			cc = (data.get("cost_center") or data.get("branch") or "").strip()
+			doc.cost_center = cc or None
+
+		for flag_field in (
+			"sick_flag",
+			"fit_flag",
+			"unfit_flag",
+			"light_duty",
+			"needs_flag",
+			"acc_patient",
+			"patient_needs",
+			"employees_care",
+		):
+			if flag_field in data and data.get(flag_field) not in (None, ""):
+				doc.set(flag_field, frappe.utils.cint(data.get(flag_field)))
+
+		doc.save(ignore_permissions=True)
+		frappe.db.commit()
+		return {"success": True, "name": doc.name}
+	except Exception as e:
+		frappe.logger().error(f"Error updating sick leave: {str(e)}")
 		return {"success": False, "message": str(e)}
 
 

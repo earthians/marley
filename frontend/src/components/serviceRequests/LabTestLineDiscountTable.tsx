@@ -1,6 +1,7 @@
 import { useFormatMoney } from '../../hooks/useFormatMoney'
 import type { MultiLabPricingLine } from '../../services/serviceRequests'
 import {
+  computeLineNet,
   defaultLineDiscount,
   type LabLineDiscount,
 } from '../../utils/labTestDiscounts'
@@ -37,8 +38,8 @@ export function LabTestLineDiscountTable({
           <tbody>
             {lines.map((line) => {
               const d = lineDiscounts[line.template] || defaultLineDiscount()
-              const net = line.net_amount ?? line.amount
-              const applied = line.discount_applied ?? 0
+              // Prefer live input discount so Net updates before pricing refetch.
+              const { net, applied } = computeLineNet(line.amount || 0, d)
               // Included-in-group children are covered by the group charge line.
               if (line.price_included_in_group && !(line.amount > 0)) {
                 return null

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, ChevronDown, ClipboardList, Layers, Stethoscope, User, Wallet } from 'lucide-react'
+import { Calendar, ChevronDown, ClipboardList, Layers, Stethoscope, Trash2, User, Wallet } from 'lucide-react'
 import { fetchPatients, searchPatients, type PatientListItem } from '../../services/patients'
 import {
   fetchCostCenters,
@@ -283,6 +283,29 @@ export const CreateServiceRequestModal = ({
     setGroupRows([])
     setSelectedGroupTemplates([])
     setError(null)
+  }
+
+  const removeBasketChild = (basketIndex: number, childTemplate: string) => {
+    setLabBasket((prev) => {
+      const next = [...prev]
+      const item = next[basketIndex]
+      if (!item || item.kind !== 'group') return prev
+      const children = item.children.filter((c) => c !== childTemplate)
+      if (children.length === 0) {
+        setError('A group must keep at least one child test. Remove the whole group instead.')
+        return prev
+      }
+      setError(null)
+      const child_discounts = item.child_discounts ? { ...item.child_discounts } : undefined
+      if (child_discounts) delete child_discounts[childTemplate]
+      next[basketIndex] = {
+        ...item,
+        children,
+        child_discounts:
+          child_discounts && Object.keys(child_discounts).length ? child_discounts : undefined,
+      }
+      return next
+    })
   }
 
   useEffect(() => {
@@ -1146,11 +1169,27 @@ export const CreateServiceRequestModal = ({
                         {item.kind === 'group' && isExpanded && (
                           <ul className="mt-2 space-y-1.5 border-t border-slate-100 pt-2 pl-6">
                             {item.children.map((child) => (
-                              <li key={child} className="rounded-lg bg-violet-50/60 px-3 py-2">
-                                <span className="block text-sm font-medium text-slate-800">
-                                  {labTemplateLabel(child)}
+                              <li
+                                key={child}
+                                className="flex items-center justify-between gap-2 rounded-lg bg-violet-50/60 px-3 py-2"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm font-medium text-slate-800">
+                                    {labTemplateLabel(child)}
+                                  </span>
+                                  <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                    ID: {child}
+                                  </span>
                                 </span>
-                                <span className="mt-0.5 block text-xs text-slate-500">ID: {child}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeBasketChild(index, child)}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                                  title="Remove this child test from the group"
+                                >
+                                  <Trash2 className="h-3 w-3" strokeWidth={2} />
+                                  Remove
+                                </button>
                               </li>
                             ))}
                           </ul>
@@ -1276,35 +1315,54 @@ export const CreateServiceRequestModal = ({
                   Tests in this group
                 </div>
                 <p className="mb-3 text-xs text-slate-600">
-                  Tick the child lab tests to include in this request. Tests marked “included in group”
-                  are covered by the group price; other children add their own price on top.
+                  Untick or remove child lab tests you do not want in this request. Tests marked
+                  “included in group” are covered by the group price; other children add their own
+                  price on top.
                 </p>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGroupTemplates(groupRows.map((r) => r.template_dn))}
+                    className="rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50"
+                  >
+                    Select all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGroupTemplates([])}
+                    className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Clear all
+                  </button>
+                </div>
                 <div className="space-y-2.5">
                   {groupRows.map((row) => {
                     const checked = selectedGroupTemplates.includes(row.template_dn)
                     const included = Boolean(row.price_included_in_group)
                     const price = included ? 0 : getBestPrice(row.pricing) || 0
                     return (
-                      <label
+                      <div
                         key={row.template_dn}
-                        className={`flex cursor-pointer flex-col gap-2 rounded-xl border px-3 py-3 transition sm:flex-row sm:items-center sm:justify-between ${
+                        className={`flex flex-col gap-2 rounded-xl border px-3 py-3 transition sm:flex-row sm:items-center sm:justify-between ${
                           checked
                             ? 'border-emerald-400 bg-emerald-50/80 ring-2 ring-emerald-400/30'
                             : 'border-slate-200/90 bg-white hover:border-emerald-200'
                         }`}
                       >
-                        <span className="flex items-start gap-3 text-sm">
+                        <label className="flex min-w-0 cursor-pointer items-start gap-3 text-sm">
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={(e) => {
                               setSelectedGroupTemplates((prev) =>
-                                e.target.checked ? [...prev, row.template_dn] : prev.filter((name) => name !== row.template_dn)
+                                e.target.checked
+                                  ? [...prev, row.template_dn]
+                                  : prev.filter((name) => name !== row.template_dn)
                               )
                             }}
                             className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                           />
-                          <span>
+                          <span className="min-w-0">
                             <span className="font-medium text-slate-900">{row.template_label}</span>
                             {included ? (
                               <span className="mt-0.5 block text-[11px] font-medium text-slate-500">
@@ -1312,11 +1370,28 @@ export const CreateServiceRequestModal = ({
                               </span>
                             ) : null}
                           </span>
-                        </span>
-                        <span className="shrink-0 rounded-lg bg-emerald-100/80 px-3 py-1.5 text-right text-sm font-semibold tabular-nums text-emerald-900">
-                          {included ? 'Included' : formatMoney(price)}
-                        </span>
-                      </label>
+                        </label>
+                        <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+                          <span className="rounded-lg bg-emerald-100/80 px-3 py-1.5 text-right text-sm font-semibold tabular-nums text-emerald-900">
+                            {included ? 'Included' : formatMoney(price)}
+                          </span>
+                          {checked ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedGroupTemplates((prev) =>
+                                  prev.filter((name) => name !== row.template_dn)
+                                )
+                              }
+                              className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                              title="Remove this child test"
+                            >
+                              <Trash2 className="h-3 w-3" strokeWidth={2} />
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
                     )
                   })}
                 </div>

@@ -10,7 +10,7 @@ import { SignPrescriptionModal } from './SignPrescriptionModal'
 import { CreatePrescriptionModal } from './CreatePrescriptionModal'
 import { AddMedicationEntryModal, EditMedicationEntryModal } from './SinglePrescription'
 import { prescriptionNeedsSignature, prescriptionIsSigned } from '../../utils/prescriptionSigning'
-import { isFuturePlanByStartDate, isMedicationEndDatePassed } from '../../utils/prescriptionType'
+import { isFuturePlanByStartDate, isMedicationEndDatePassed, isMedicationStopped, normalizePrescriptionType } from '../../utils/prescriptionType'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { useCardFilters } from '../../contexts/CardFilterContext'
 import {
@@ -19,6 +19,13 @@ import {
 } from '../ui/dashboardCardListing'
 import { ClearFiltersButton } from '../ui/ClearFiltersButton'
 import { DateFilterInput } from '../ui/DateFilterInput'
+import {
+  getMedicationTypeColor,
+  getMedicationTypeLabel,
+  medicationRowStyle,
+  medicationTypeBadgeStyle,
+  resolveMedicationTypeForDisplay,
+} from '../../utils/medicationTypeColors'
 
 
 const statusColors: Record<string, string> = {
@@ -26,6 +33,9 @@ const statusColors: Record<string, string> = {
   Inactive: 'default',
   Discontinued: 'danger',
   Future: 'info',
+  // Pale type-chip yellow is unreadable on StatusPill (white text) — use warning amber.
+  PRN: 'warning',
+  STAT: getMedicationTypeColor('STAT'),
 }
 
 const STATUS_OPTIONS = [
@@ -34,19 +44,26 @@ const STATUS_OPTIONS = [
   { value: 'Inactive', label: 'Inactive' },
   { value: 'Discontinued', label: 'Discontinued' },
   { value: 'Future', label: 'Future' },
+  { value: 'PRN', label: 'PRN' },
+  { value: 'STAT', label: 'STAT' },
 ] as const
 
-type LineListingStatus = 'Active' | 'Inactive' | 'Discontinued' | 'Future'
+type LineListingStatus = 'Active' | 'Inactive' | 'Discontinued' | 'Future' | 'PRN' | 'STAT'
 
 function prescriptionLineListingStatus(
   m: MedicationOrderEntry | null,
   row: Prescription,
 ): LineListingStatus {
-  const discontinued =
-    String(m?.medication_status || '').trim() === 'Discontinued' ||
-    Boolean(m?.stopped) ||
-    Boolean(String(m?.reason_stopped || '').trim())
+  const discontinued = isMedicationStopped(m)
   if (discontinued) return 'Discontinued'
+
+  // UI statuses from prescription type (same idea as Active / Future — display only).
+  const typeKey = normalizePrescriptionType(
+    resolveMedicationTypeForDisplay(m?.medication_type, m?.is_prn),
+  )
+  if (typeKey === 'STAT') return 'STAT'
+  if (typeKey === 'PRN') return 'PRN'
+
   if (isFuturePlanByStartDate({ date: m?.date || row.start_date })) return 'Future'
   if (
     isMedicationEndDatePassed({
@@ -644,19 +661,34 @@ export const PrescriptionList = ({
               setDetailName(row.name)
               onPrescriptionSelect?.(row.name)
             }
+            const typeForDisplay = resolveMedicationTypeForDisplay(m?.medication_type, m?.is_prn)
+            const typeLabel = getMedicationTypeLabel(typeForDisplay, m?.is_prn)
+            const isPink = Boolean(row.is_pink || m?.is_pink)
             return (
-            <tr key={rowKey} className={`${dashboardCardRowHoverClass} cursor-pointer`} onClick={openDetail}>
+            <tr
+              key={rowKey}
+              className={`${dashboardCardRowHoverClass} cursor-pointer`}
+              style={typeForDisplay || isPink ? medicationRowStyle(typeForDisplay, isPink) : undefined}
+              onClick={openDetail}
+            >
               <td className="hidden px-3 py-2 text-slate-800 font-medium whitespace-nowrap">
                 {m?.drug || '-'}
               </td>
               <td className="px-3 py-2 text-slate-800">
-                {m?.drug_name || '-'}
-                {row.is_pink ? (
-                  <span className="ml-1.5 text-[10px] font-semibold text-pink-600">Pink</span>
-                ) : null}
-                {m?.is_prn ? (
-                  <span className="ml-1.5 text-[10px] font-semibold text-amber-600">PRN</span>
-                ) : null}
+                <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                  <span>{m?.drug_name || '-'}</span>
+                  {isPink ? (
+                    <span className="text-[10px] font-semibold text-pink-600">Pink</span>
+                  ) : null}
+                  {typeLabel ? (
+                    <span
+                      className="inline-flex rounded px-1 py-px text-[9px] font-bold uppercase tracking-wide"
+                      style={medicationTypeBadgeStyle(typeForDisplay)}
+                    >
+                      {typeLabel}
+                    </span>
+                  ) : null}
+                </span>
                 <CardRowMetaHint fields={metaFields} />
               </td>
               <td className="px-3 py-2 text-slate-700 whitespace-nowrap">

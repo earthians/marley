@@ -1580,7 +1580,7 @@ def _serialize_discharge_draft_for_portal(discharge_doc) -> dict:
 				"upload_remarks": row.upload_remarks or "",
 				"document": row.document or "",
 				"patient_relation": getattr(row, "patient_relation", None) or "",
-				"signee_name": getattr(row, "signee_name", None) or "",
+				"signee_name": _discharge_document_signee_name(row),
 			}
 			for row in (discharge_doc.get("patient_documents") or [])
 		],
@@ -1608,6 +1608,22 @@ def _serialize_discharge_draft_for_portal(discharge_doc) -> dict:
 			for row in (discharge_doc.get("extra_charges") or [])
 		],
 	}
+
+
+def _discharge_document_signee_name(row) -> str:
+	"""Signee name for discharge document rows (with legacy file_name fallback)."""
+	signee = (getattr(row, "signee_name", None) or "").strip()
+	if signee:
+		return signee
+	doc_type = (getattr(row, "document_type", None) or "").strip().lower()
+	relation = (getattr(row, "patient_relation", None) or "").strip()
+	is_signature = "signature" in doc_type or bool(relation)
+	if not is_signature:
+		return ""
+	from_file = (getattr(row, "file_name", None) or "").strip()
+	if not from_file or from_file.lower().startswith("signature"):
+		return ""
+	return from_file
 
 
 def _get_or_create_draft_discharge(admission_name: str):

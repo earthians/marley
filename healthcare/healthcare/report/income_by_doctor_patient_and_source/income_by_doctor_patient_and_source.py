@@ -290,14 +290,18 @@ def resolve_order_practitioners(orders):
 
 
 def get_doctor_practitioners(practitioner_ids):
-	"""Only Healthcare Practitioners with the Doctor checkbox ticked."""
+	"""Practitioners eligible for doctor income (same flag as commission when present)."""
 	if not practitioner_ids:
 		return {}
+	meta = frappe.get_meta("Healthcare Practitioner")
 	filters = {"name": ["in", list(practitioner_ids)]}
-	if frappe.get_meta("Healthcare Practitioner").has_field("doctor"):
+	# Prefer Receive Commission (same as Doctor Commission Payroll). Fall back to Doctor.
+	if meta.has_field("receive_commision"):
+		filters["receive_commision"] = 1
+	elif meta.has_field("doctor"):
 		filters["doctor"] = 1
 	fields = ["name", "practitioner_name"]
-	if frappe.get_meta("Healthcare Practitioner").has_field("doctors_id"):
+	if meta.has_field("doctors_id"):
 		fields.append("doctors_id")
 	rows = frappe.get_all(
 		"Healthcare Practitioner",

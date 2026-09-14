@@ -6,7 +6,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, nowdate
+from frappe.utils import cint, cstr, flt, nowdate, strip_html
 
 from healthcare.api.portal_errors import portal_mandatory_message, portal_validation_message
 from healthcare.api.sales_order_cost_center import (
@@ -1819,9 +1819,10 @@ def get_service_request(name):
 			enrich_lab_request_items_for_display,
 			lab_request_items_summary,
 			parse_lab_request_items,
+			sort_lab_request_display_items,
 		)
 
-		request_items = parse_lab_request_items(doc)
+		request_items = sort_lab_request_display_items(parse_lab_request_items(doc))
 		data["lab_request_items"] = enrich_lab_request_items_for_display(request_items)
 		data["general_discount_amount"] = _get_general_lab_discount(doc, request_items)
 		data["template_name"] = (
@@ -1869,6 +1870,40 @@ def update_service_request(name, data):
 	doc = frappe.get_doc("Service Request", name)
 	if doc.docstatus == 2:
 		frappe.throw(_("Cannot update a cancelled Service Request"))
+
+	# Lab requests: block edits once any linked lab test has sample collection.
+	if (getattr(doc, "template_dt", None) or "") == "Lab Test Template":
+		from healthcare.api.lab_request_actions import (
+			_can_edit_lab_request,
+			_lab_request_phase,
+			_linked_lab_tests,
+		)
+
+		lab_tests = _linked_lab_tests(doc.name)
+		phase = _lab_request_phase(doc, lab_tests)
+		if not _can_edit_lab_request(phase, lab_tests):
+			frappe.throw(
+				_("This lab request cannot be edited because sample collection has already started.")
+			)
+
+	from healthcare.healthcare.lab_request_items import (
+		normalize_lab_request_items_for_storage,
+		parse_lab_request_items,
+	)
+
+	# Snapshot billing so we know whether IP Sales Order must be recreated.
+	billing_before = {
+		"cost": flt(doc.cost),
+		"grand_total": flt(doc.grand_total),
+		"discount_amount": flt(doc.discount_amount),
+		"discount": flt(doc.discount),
+		"items": frappe.as_json(
+			normalize_lab_request_items_for_storage(parse_lab_request_items(doc))
+		),
+		"patient_accepted_cost": cint(getattr(doc, "patient_accepted_cost", 0)),
+		"reference_document_name": (getattr(doc, "reference_document_name", None) or "").strip(),
+	}
+
 	general_discount_amount = data.pop("general_discount_amount", None)
 	if general_discount_amount is None:
 		general_discount_amount = _get_general_lab_discount(doc)
@@ -1893,8 +1928,14 @@ def update_service_request(name, data):
 		elif key == "discount_value" and hasattr(doc, "discount_margin"):
 			doc.discount_margin = value
 		elif key == "lab_request_items":
+			if isinstance(value, str):
+				value = frappe.parse_json(value) or []
 			if isinstance(value, list):
-				doc.lab_request_items = frappe.as_json(value) if value else None
+				normalized = normalize_lab_request_items_for_storage(value)
+				existing = normalize_lab_request_items_for_storage(parse_lab_request_items(doc))
+				# Avoid no-op writes that still fail update-after-submit when enrichment keys differ.
+				if frappe.as_json(normalized) != frappe.as_json(existing):
+					doc.lab_request_items = frappe.as_json(normalized) if normalized else None
 			else:
 				doc.lab_request_items = value
 		elif key == "patient_care_type":
@@ -1909,6 +1950,7 @@ def update_service_request(name, data):
 			apply_discounts_to_specs,
 			expand_lab_test_specs,
 			parse_lab_request_items,
+			templates_in_lab_request_items,
 			totals_from_specs,
 		)
 
@@ -1932,8 +1974,250 @@ def update_service_request(name, data):
 		if request_items:
 			doc.discount = 0
 			doc.discount_margin = "Amount"
+
+		# Drop linked Lab Tests whose templates were removed from the basket
+		# (only Requested drafts with no sample collection).
+		desired = templates_in_lab_request_items(request_items)
+		if desired:
+			from healthcare.api.lab_request_actions import (
+				_can_delete_requested_lab_test,
+				_delete_or_cancel_lab_test,
+				_remove_lab_tests_from_visit,
+			)
+
+			orphans = frappe.get_all(
+				"Lab Test",
+				filters={
+					"service_request": doc.name,
+					"docstatus": ["!=", 2],
+					"template": ["not in", list(desired)],
+				},
+				fields=["name", "status", "docstatus", "template"],
+			)
+			removed_names = []
+			for lt in orphans:
+				if _can_delete_requested_lab_test(lt):
+					_delete_or_cancel_lab_test(lt.name)
+					removed_names.append(lt.name)
+			if removed_names:
+				visit_name = getattr(doc, "order_group", None) or getattr(doc, "patient_visit", None)
+				_remove_lab_tests_from_visit(visit_name, removed_names)
+
+	# Submitted SRs block non-allow_on_submit fields (lab_request_items, cost, discounts)
+	# via Document.save(). This whitelist API is the intentional edit path — do not change
+	# Service Request JSON; only bypass the check here.
+	if cint(doc.docstatus) == 1:
+		doc.flags.ignore_validate_update_after_submit = True
 	doc.save()
-	return {"name": doc.name, "status": doc.status}
+
+	out = {"name": doc.name, "status": doc.status}
+
+	# Lab requests that already have a Sales Order must be re-billed when amounts,
+	# discounts, or tests change (cancel old SI/SO, create a fresh Sales Order).
+	if (getattr(doc, "template_dt", None) or "") == "Lab Test Template" and (
+		billing_before["patient_accepted_cost"]
+		or billing_before["reference_document_name"]
+		or cint(getattr(doc, "patient_accepted_cost", 0))
+		or (
+			(getattr(doc, "reference_document_type", None) or "") == "Sales Order"
+			and (getattr(doc, "reference_document_name", None) or "").strip()
+		)
+	):
+		items_after = frappe.as_json(
+			normalize_lab_request_items_for_storage(parse_lab_request_items(doc))
+		)
+		billing_changed = (
+			flt(doc.cost) != billing_before["cost"]
+			or flt(doc.grand_total) != billing_before["grand_total"]
+			or flt(doc.discount_amount) != billing_before["discount_amount"]
+			or flt(doc.discount) != billing_before["discount"]
+			or items_after != billing_before["items"]
+		)
+		if billing_changed:
+			out.update(_recreate_lab_request_sales_order(doc.name))
+
+	return out
+
+
+def _cancel_or_delete_sales_invoice(si_name: str) -> str | None:
+	"""Cancel submitted or delete draft Sales Invoice. Returns the handled name."""
+	if not si_name or not frappe.db.exists("Sales Invoice", si_name):
+		return None
+	si = frappe.get_doc("Sales Invoice", si_name)
+	if cint(si.docstatus) == 2:
+		return None
+	if cint(si.docstatus) == 1:
+		si.cancel()
+	else:
+		frappe.delete_doc("Sales Invoice", si_name, ignore_permissions=True, force=1)
+	return si_name
+
+
+def _sales_invoices_for_sales_order(so_name: str) -> list[str]:
+	if not so_name:
+		return []
+	parents = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"sales_order": so_name},
+		pluck="parent",
+	)
+	names: list[str] = []
+	seen: set[str] = set()
+	for parent in parents:
+		if not parent or parent in seen:
+			continue
+		seen.add(parent)
+		if frappe.db.exists("Sales Invoice", parent) and cint(
+			frappe.db.get_value("Sales Invoice", parent, "docstatus")
+		) != 2:
+			names.append(parent)
+	return names
+
+
+def _unlink_service_requests_from_sales_order(so_name: str, preferred_sr=None) -> None:
+	"""Clear SR → Sales Order links so the order can be cancelled/deleted.
+
+	ERPNext blocks cancel when a Dynamic Link (Service Request.reference_document_*)
+	still points at the Sales Order.
+	"""
+	so_name = (so_name or "").strip()
+	if not so_name:
+		return
+
+	# Prefer the SR we are editing (in-memory + DB).
+	if preferred_sr is not None:
+		sr_name = getattr(preferred_sr, "name", None)
+		if sr_name and (
+			(getattr(preferred_sr, "reference_document_type", None) or "") == "Sales Order"
+			and (getattr(preferred_sr, "reference_document_name", None) or "").strip() == so_name
+		):
+			frappe.db.set_value(
+				"Service Request",
+				sr_name,
+				{
+					"patient_accepted_cost": 0,
+					"reference_document_type": None,
+					"reference_document_name": None,
+				},
+				update_modified=False,
+			)
+			preferred_sr.patient_accepted_cost = 0
+			preferred_sr.reference_document_type = None
+			preferred_sr.reference_document_name = None
+
+	# Any other SRs that still point at this Sales Order.
+	linked = frappe.get_all(
+		"Service Request",
+		filters={
+			"reference_document_type": "Sales Order",
+			"reference_document_name": so_name,
+		},
+		pluck="name",
+	)
+	for sr_name in linked:
+		frappe.db.set_value(
+			"Service Request",
+			sr_name,
+			{
+				"patient_accepted_cost": 0,
+				"reference_document_type": None,
+				"reference_document_name": None,
+			},
+			update_modified=False,
+		)
+
+
+def _retire_lab_request_sales_order(sr) -> dict:
+	"""Unlink SR, cancel linked Sales Invoices, then cancel/delete the Sales Order."""
+	result = {
+		"previous_sales_order": None,
+		"cancelled_sales_invoices": [],
+	}
+	if (getattr(sr, "reference_document_type", None) or "") != "Sales Order":
+		return result
+	so_name = (getattr(sr, "reference_document_name", None) or "").strip()
+	if not so_name:
+		return result
+	if not frappe.db.exists("Sales Order", so_name):
+		# Still clear stale link on the SR.
+		_unlink_service_requests_from_sales_order(so_name, preferred_sr=sr)
+		return result
+
+	for si_name in _sales_invoices_for_sales_order(so_name):
+		handled = _cancel_or_delete_sales_invoice(si_name)
+		if handled:
+			result["cancelled_sales_invoices"].append(handled)
+
+	# Must unlink before cancel — Dynamic Link from Service Request blocks SO cancel.
+	_unlink_service_requests_from_sales_order(so_name, preferred_sr=sr)
+
+	so = frappe.get_doc("Sales Order", so_name)
+	if cint(so.docstatus) == 1:
+		so.cancel()
+	elif cint(so.docstatus) == 0:
+		frappe.delete_doc("Sales Order", so_name, ignore_permissions=True, force=1)
+	result["previous_sales_order"] = so_name
+	return result
+
+
+def _recreate_lab_request_sales_order(service_request_name: str) -> dict:
+	"""After lab request amount/discount edits: retire old SO/SI and create a new SO."""
+	sr = frappe.get_doc("Service Request", service_request_name)
+	if (getattr(sr, "template_dt", None) or "") != "Lab Test Template":
+		return {"sales_order_recreated": False}
+
+	try:
+		retired = _retire_lab_request_sales_order(sr)
+
+		# Ensure billing flags are clear so confirm_payment creates a fresh Sales Order.
+		# (Usually already cleared in _retire via unlink.)
+		frappe.db.set_value(
+			"Service Request",
+			sr.name,
+			{
+				"patient_accepted_cost": 0,
+				"reference_document_type": None,
+				"reference_document_name": None,
+			},
+			update_modified=False,
+		)
+
+		payment = confirm_payment(service_request_name)
+	except Exception as e:
+		detail = strip_html(cstr(getattr(e, "message", None) or e)).strip()
+		if "is linked with" in detail.lower():
+			frappe.throw(
+				_(
+					"Could not update billing for this lab request because the existing Sales Order "
+					"is still linked to another document. Please unlink it and try saving again."
+				),
+				title=_("Could not update Sales Order"),
+			)
+		# Keep clear ValidationError text from confirm_payment / retire helpers.
+		if isinstance(e, frappe.ValidationError) and detail and "Traceback" not in detail:
+			raise
+		frappe.log_error(
+			title=f"Failed to recreate Sales Order for lab request {service_request_name}",
+			message=frappe.get_traceback(),
+		)
+		frappe.throw(
+			_(
+				"Could not update the Sales Order for this lab request{0}. "
+				"Please check billing documents and try again."
+			).format(f": {detail}" if detail and "Traceback" not in detail else ""),
+			title=_("Could not update Sales Order"),
+		)
+
+	return {
+		"sales_order_recreated": True,
+		"previous_sales_order": retired.get("previous_sales_order"),
+		"cancelled_sales_invoices": retired.get("cancelled_sales_invoices") or [],
+		"sales_order": payment.get("sales_order"),
+	}
+
+
+# Backwards-compatible alias
+_recreate_ip_lab_sales_order = _recreate_lab_request_sales_order
 
 
 def _service_request_visit_admission_refs(sr):

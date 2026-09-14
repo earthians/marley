@@ -292,8 +292,19 @@ export interface UpdateServiceRequestData {
 }
 
 /** Update an existing Service Request. */
-export async function updateServiceRequest(name: string, data: UpdateServiceRequestData): Promise<{ name: string; status?: string }> {
+export async function updateServiceRequest(
+  name: string,
+  data: UpdateServiceRequestData
+): Promise<{
+  name: string
+  status?: string
+  sales_order_recreated?: boolean
+  sales_order?: string
+  previous_sales_order?: string | null
+  cancelled_sales_invoices?: string[]
+}> {
   const { ensureCSRF } = await import('./apiClient')
+  const { frappeErrorMessage } = await import('../utils/frappeErrorMessage')
   const csrf = await ensureCSRF()
   const response = await fetch(
     '/api/method/healthcare.api.service_request.update_service_request',
@@ -309,13 +320,15 @@ export async function updateServiceRequest(name: string, data: UpdateServiceRequ
     }
   )
   const resData = await response.json()
-  if (resData?.message && typeof resData.message === 'object') {
-    return resData.message as { name: string; status?: string }
+  if (resData?.message && typeof resData.message === 'object' && !resData?.exc) {
+    return resData.message
   }
-  if (resData?.exc) {
-    throw new Error(resData?.message || resData?.exc || 'Failed to update service request')
+  if (resData?.exc || !response.ok) {
+    throw new Error(
+      frappeErrorMessage(resData ?? {}, 'Could not update the lab request. Please try again.')
+    )
   }
-  throw new Error('Failed to update service request')
+  throw new Error('Could not update the lab request. Please try again.')
 }
 
 export type CreateLabTestResult =
@@ -363,7 +376,7 @@ export type LabRequestItem =
       parent: string
       children: string[]
       child_discounts?: Record<string, LabLineDiscountFields>
-    })
+    } & LabLineDiscountFields)
 
 export interface CreateServiceRequestData {
   patient: string

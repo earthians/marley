@@ -5,7 +5,9 @@ import { useCardFilters } from '../../contexts/CardFilterContext'
 import { ClearFiltersButton } from '../ui/ClearFiltersButton'
 import { PrintFormatDropdown } from '../ui/PrintFormatDropdown'
 import { SickLeaveDetailPanel } from './SickLeaveDetailPanel'
+import { CreateSickLeaveModal } from './CreateSickLeaveModal'
 import { DateFilterInput } from '../ui/DateFilterInput'
+import { Pencil } from 'lucide-react'
 
 interface SickLeaveListProps {
   patient?: string
@@ -59,6 +61,7 @@ export const SickLeaveList = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<SickLeaveRow | null>(null)
+  const [editRow, setEditRow] = useState<SickLeaveRow | null>(null)
 
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -280,18 +283,29 @@ export const SickLeaveList = ({
                       '—'
                     )}
                   </td>
-                  <td className="px-3 py-2 text-slate-700">{r.doctor || '—'}</td>
+                  <td className="px-3 py-2 text-slate-700">{r.doctor_name || r.doctor || '—'}</td>
                   <td className="max-w-[200px] truncate px-3 py-2 text-slate-600" title={r.diagnosis || ''}>
                     {r.diagnosis || '—'}
                   </td>
                   <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <PrintFormatDropdown
-                      doctype="Patient Sick Leave"
-                      docName={r.name}
-                      noLetterhead={0}
-                      triggerPrint={1}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-primary hover:bg-slate-50"
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setEditRow(r)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-primary"
+                        title="Edit sick leave"
+                        aria-label="Edit sick leave"
+                      >
+                        <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                      </button>
+                      <PrintFormatDropdown
+                        doctype="Patient Sick Leave"
+                        docName={r.name}
+                        noLetterhead={0}
+                        triggerPrint={1}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-primary hover:bg-slate-50"
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -305,6 +319,22 @@ export const SickLeaveList = ({
           row={selected}
           onClose={() => setSelected(null)}
           onPatientClick={onPatientClick}
+          onEdit={() => {
+            setEditRow(selected)
+            setSelected(null)
+          }}
+        />
+      ) : null}
+
+      {editRow ? (
+        <CreateSickLeaveModal
+          editRow={editRow}
+          patient={editRow.patient || patient}
+          onClose={() => setEditRow(null)}
+          onSuccess={() => {
+            setEditRow(null)
+            load()
+          }}
         />
       ) : null}
     </div>

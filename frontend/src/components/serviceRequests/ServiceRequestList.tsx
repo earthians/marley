@@ -178,6 +178,7 @@ export const ServiceRequestList = ({
   const [detailName, setDetailName] = useState<string | null>(null)
   const [openActionRow, setOpenActionRow] = useState<string | null>(null)
   const [editServiceRequestName, setEditServiceRequestName] = useState<string | null>(null)
+  const [detailCanEdit, setDetailCanEdit] = useState(true)
   const [bookingSessionSR, setBookingSessionSR] = useState<ServiceRequest | null>(null)
   const [labActionsBySr, setLabActionsBySr] = useState<Record<string, LabRequestActions>>({})
   const [labRequestModal, setLabRequestModal] = useState<{
@@ -261,11 +262,37 @@ export const ServiceRequestList = ({
             can_cancel_sample_handling: false,
             can_delete_lab_tests: false,
             can_delete_lab_request: false,
+            can_edit_lab_request: false,
             lab_tests: [],
           },
         }))
       })
   }, [openActionRow, serviceRequests])
+
+  useEffect(() => {
+    if (!detailName) {
+      setDetailCanEdit(true)
+      return
+    }
+    const sr = serviceRequests.find((row) => row.name === detailName)
+    if (!sr || sr.template_dt !== 'Lab Test Template') {
+      setDetailCanEdit(true)
+      return
+    }
+    let cancelled = false
+    fetchLabRequestActions(sr.name)
+      .then((actions) => {
+        if (cancelled) return
+        setLabActionsBySr((prev) => ({ ...prev, [sr.name]: actions }))
+        setDetailCanEdit(Boolean(actions.can_edit_lab_request))
+      })
+      .catch(() => {
+        if (!cancelled) setDetailCanEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [detailName, serviceRequests])
 
   // Reset page when filters change
   useEffect(() => {
@@ -453,6 +480,13 @@ export const ServiceRequestList = ({
 
   const handleEdit = (sr: ServiceRequest) => {
     setOpenActionRow(null)
+    if (sr.template_dt === 'Lab Test Template') {
+      const actions = labActionsBySr[sr.name]
+      if (actions && actions.can_edit_lab_request === false) {
+        toast.error('This lab request cannot be edited after sample collection.')
+        return
+      }
+    }
     setEditServiceRequestName(sr.name)
   }
 
@@ -963,6 +997,7 @@ export const ServiceRequestList = ({
                           </button>
                         )}
 
+                        {(!isLab || labActions?.can_edit_lab_request) && (
                         <button
                           type="button"
                           onClick={() => handleEdit(sr)}
@@ -970,6 +1005,7 @@ export const ServiceRequestList = ({
                         >
                           Edit
                         </button>
+                        )}
                       </PortalActionsMenu>
                     </div>
 
@@ -1011,10 +1047,14 @@ export const ServiceRequestList = ({
           name={detailName}
           onClose={() => setDetailName(null)}
           practitionerFieldLabel={isOtherServicesList ? 'Nurse' : practitionerFieldLabel}
-          onEdit={() => {
-            setDetailName(null)
-            setEditServiceRequestName(detailName)
-          }}
+          onEdit={
+            detailCanEdit
+              ? () => {
+                  setDetailName(null)
+                  setEditServiceRequestName(detailName)
+                }
+              : undefined
+          }
         />
       )}
 

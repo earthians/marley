@@ -115,6 +115,19 @@ def _can_delete_requested_lab_test(lab_test: dict | str) -> bool:
 	return not _lab_test_has_sample_collected(lab_test["name"])
 
 
+def _can_edit_lab_request(phase: str, lab_tests: list[dict]) -> bool:
+	"""Edit is allowed only before any linked lab test has sample collection."""
+	if phase in ("sample_collected", "post_sample", "cancelled"):
+		return False
+	for lt in lab_tests or []:
+		name = lt.get("name")
+		if not name:
+			continue
+		if _lab_test_has_sample_collected(name) or _lab_test_past_sample_collection(lt):
+			return False
+	return True
+
+
 def _lab_request_action_flags(phase: str, lab_tests: list[dict]) -> dict:
 	return {
 		"can_delete": phase == "draft_unpaid",
@@ -122,6 +135,7 @@ def _lab_request_action_flags(phase: str, lab_tests: list[dict]) -> dict:
 		"can_cancel_sample_handling": phase == "sample_collected",
 		"can_delete_lab_tests": any(_can_delete_requested_lab_test(lt) for lt in lab_tests),
 		"can_delete_lab_request": phase in ("draft_unpaid", "booked_pre_sample"),
+		"can_edit_lab_request": _can_edit_lab_request(phase, lab_tests),
 	}
 
 
@@ -451,6 +465,24 @@ def delete_requested_lab_test(lab_test_name: str) -> dict:
 	sr = _get_lab_service_request(sr_name)
 	linked_before = _linked_lab_tests(sr_name)
 	visit_name = getattr(sr, "order_group", None) or getattr(sr, "patient_visit", None)
+
+	# Keep lab_request_items JSON in sync when a child/single is removed.
+	from healthcare.healthcare.lab_request_items import (
+		parse_lab_request_items,
+		remove_template_from_lab_request_items,
+	)
+
+	template = (frappe.db.get_value("Lab Test", lab_test_name, "template") or "").strip()
+	if template and getattr(sr, "lab_request_items", None):
+		items = remove_template_from_lab_request_items(parse_lab_request_items(sr), template)
+		sr.lab_request_items = frappe.as_json(items) if items else None
+		# Keep legacy selected_group_templates aligned for single-group requests.
+		if hasattr(sr, "selected_group_templates"):
+			if len(items) == 1 and (items[0].get("kind") or "").strip().lower() == "group":
+				sr.selected_group_templates = frappe.as_json(items[0].get("children") or [])
+			elif not items:
+				sr.selected_group_templates = None
+		sr.save(ignore_permissions=True)
 
 	_delete_or_cancel_lab_test(lab_test_name)
 	_remove_lab_tests_from_visit(visit_name, [lab_test_name])

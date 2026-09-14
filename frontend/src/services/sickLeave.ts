@@ -7,8 +7,13 @@ export interface SickLeaveRow {
   to_date: string | null
   days: string | null
   diagnosis: string | null
+  /** Healthcare Practitioner id */
   doctor: string | null
+  /** Display name for doctor */
+  doctor_name?: string | null
   source: string | null
+  cost_center?: string | null
+  patient_visit?: string | null
   /** Flag fields — Check (0/1) on Patient Sick Leave */
   sick_flag?: number
   fit_flag?: number
@@ -46,6 +51,10 @@ export interface CreateSickLeaveInput {
   acc_patient?: number
 }
 
+export interface UpdateSickLeaveInput extends CreateSickLeaveInput {
+  name: string
+}
+
 export interface SickLeaveFilters {
   search?: string
   dateFrom?: string
@@ -79,6 +88,22 @@ export async function createSickLeave(
 ): Promise<{ success: boolean; name?: string; message?: string }> {
   const csrfToken = (window as unknown as Record<string, string>).csrf_token || ''
   const res = await fetch('/api/method/healthcare.api.common.create_sick_leave', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Frappe-CSRF-Token': csrfToken,
+    },
+    body: JSON.stringify({ data: JSON.stringify(input) }),
+  })
+  const data = await res.json()
+  return data?.message ?? { success: false, message: 'Unknown error' }
+}
+
+export async function updateSickLeave(
+  input: UpdateSickLeaveInput
+): Promise<{ success: boolean; name?: string; message?: string }> {
+  const csrfToken = (window as unknown as Record<string, string>).csrf_token || ''
+  const res = await fetch('/api/method/healthcare.api.common.update_sick_leave', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

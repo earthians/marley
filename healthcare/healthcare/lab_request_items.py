@@ -186,6 +186,121 @@ def enrich_lab_request_items_for_display(items: list[dict[str, Any]]) -> list[di
 		enriched.append(row)
 	return enriched
 
+
+def normalize_lab_request_items_for_storage(items: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+	"""Strip display-only keys and keep a stable shape for persisted JSON.
+
+	UI enrichment (``parent_label``, ``child_labels``, ``template_label``) must never
+	be written back — that alone can fail update-after-submit checks.
+	"""
+	out: list[dict[str, Any]] = []
+	for item in items or []:
+		if not isinstance(item, dict):
+			continue
+		kind = (item.get("kind") or "").strip().lower()
+		if kind == "single":
+			tpl = (item.get("template") or "").strip()
+			if not tpl:
+				continue
+			row: dict[str, Any] = {"kind": "single", "template": tpl}
+			for key in ("discount_type", "discount_rate", "discount"):
+				if key in item and item.get(key) not in (None, ""):
+					row[key] = item.get(key)
+			if cint(item.get("finished")):
+				row["finished"] = 1
+			out.append(row)
+		elif kind == "group":
+			parent = (item.get("parent") or "").strip()
+			if not parent:
+				continue
+			children = sort_lab_template_codes(
+				[str(c).strip() for c in (item.get("children") or []) if str(c).strip()]
+			)
+			row = {"kind": "group", "parent": parent, "children": children}
+			# Group-charge (parent) line discount — separate from per-child discounts.
+			for key in ("discount_type", "discount_rate", "discount"):
+				if key in item and item.get(key) not in (None, ""):
+					row[key] = item.get(key)
+			raw_discounts = item.get("child_discounts")
+			if isinstance(raw_discounts, dict) and raw_discounts:
+				clean_discounts: dict[str, Any] = {}
+				for child, disc in raw_discounts.items():
+					child_key = str(child).strip()
+					if not child_key or child_key not in children or not isinstance(disc, dict):
+						continue
+					clean_discounts[child_key] = {
+						"discount_type": disc.get("discount_type") or "Amount",
+						"discount_rate": flt(disc.get("discount_rate") or 0),
+						"discount": flt(disc.get("discount") or 0),
+					}
+				if clean_discounts:
+					row["child_discounts"] = clean_discounts
+			if cint(item.get("finished")):
+				row["finished"] = 1
+			out.append(row)
+	return out
+
+
+def templates_in_lab_request_items(items: list[dict[str, Any]] | None) -> set[str]:
+	"""Concrete lab templates that should exist for the basket (singles + group children)."""
+	out: set[str] = set()
+	for item in items or []:
+		kind = (item.get("kind") or "").strip().lower()
+		if kind == "single":
+			tpl = (item.get("template") or "").strip()
+			if tpl:
+				out.add(tpl)
+		elif kind == "group":
+			parent = (item.get("parent") or "").strip()
+			children = resolve_group_child_templates(parent, item.get("children"))
+			for child in children:
+				if child:
+					out.add(child)
+	return out
+
+
+def remove_template_from_lab_request_items(
+	items: list[dict[str, Any]] | None,
+	template: str,
+) -> list[dict[str, Any]]:
+	"""Drop a child/single template from the basket. Removes empty groups.
+
+	Parent group codes are never deleted by this helper — only the listed child/single.
+	"""
+	template = (template or "").strip()
+	if not template:
+		return list(items or [])
+
+	next_items: list[dict[str, Any]] = []
+	for item in items or []:
+		row = dict(item)
+		kind = (row.get("kind") or "").strip().lower()
+		if kind == "single":
+			if (row.get("template") or "").strip() == template:
+				continue
+			next_items.append(row)
+			continue
+		if kind == "group":
+			children = [str(c).strip() for c in (row.get("children") or []) if str(c).strip()]
+			if not children:
+				# Explicit empty means "all children" at resolve time — materialize then prune.
+				parent = (row.get("parent") or "").strip()
+				children = resolve_group_child_templates(parent, None)
+			children = [c for c in children if c != template]
+			if not children:
+				continue
+			row["children"] = children
+			discounts = row.get("child_discounts")
+			if isinstance(discounts, dict) and template in discounts:
+				discounts = dict(discounts)
+				discounts.pop(template, None)
+				row["child_discounts"] = discounts or None
+			next_items.append(row)
+			continue
+		next_items.append(row)
+	return next_items
+
+
 def expand_lab_test_specs(
 	items: list[dict[str, Any]],
 	patient: str,
@@ -374,12 +489,16 @@ def primary_template_dn_for_items(items: list[dict[str, Any]]) -> str:
 
 
 def _normalize_discount(source: dict[str, Any] | None) -> dict[str, Any]:
-	"""Normalize per-test discount fields (Percentage or Amount)."""
+	"""Normalize per-test discount fields (Percentage or Amount).
+
+	UI lab discounts are Amount-based; default to Amount so a bare ``discount``
+	value is not ignored when ``discount_type`` is omitted.
+	"""
 	if not source:
-		return {"discount_type": "Percentage", "discount_rate": 0.0, "discount": 0.0}
-	discount_type = (source.get("discount_type") or "Percentage").strip()
+		return {"discount_type": "Amount", "discount_rate": 0.0, "discount": 0.0}
+	discount_type = (source.get("discount_type") or "Amount").strip()
 	if discount_type not in ("Percentage", "Amount"):
-		discount_type = "Percentage"
+		discount_type = "Amount"
 	return {
 		"discount_type": discount_type,
 		"discount_rate": flt(source.get("discount_rate") or 0),
@@ -396,6 +515,10 @@ def discount_for_template(
 		if kind == "single" and (item.get("template") or "").strip() == template:
 			return _normalize_discount(item)
 		if kind == "group":
+			parent = (item.get("parent") or "").strip()
+			# Parent / group-charge SO line uses the group row's own discount fields.
+			if parent and template == parent:
+				return _normalize_discount(item)
 			child_discounts = item.get("child_discounts") or {}
 			if isinstance(child_discounts, dict) and template in child_discounts:
 				return _normalize_discount(child_discounts.get(template))

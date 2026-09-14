@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "patient_relation",
+  "signee_name",
   "transaction_no",
   "document_name",
   "file_name",
@@ -22,6 +23,13 @@
    "in_global_search": 1,
    "label": "Patient Relation",
    "options": "Patient Relation"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "signee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Signee Name"
   },
   {
    "allow_on_submit": 1,
@@ -79,8 +87,8 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-08-25 19:12:15.755734",
- "modified_by": "mania@beverensoftware.com",
+ "modified": "2026-09-14 18:00:00.000000",
+ "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient Upload Document",
  "owner": "Administrator",

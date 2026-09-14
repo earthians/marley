@@ -16,6 +16,8 @@ export interface LabRequestActions {
   can_cancel_sample_handling: boolean
   can_delete_lab_tests: boolean
   can_delete_lab_request: boolean
+  /** False once any linked lab test has sample collection. */
+  can_edit_lab_request?: boolean
   lab_tests: Array<{
     name: string
     status?: string

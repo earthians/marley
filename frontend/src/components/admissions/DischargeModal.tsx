@@ -30,6 +30,7 @@ import {
   type DischargePrescriptionSections,
 } from '../../services/medicineGiven'
 import { DocumentTypeSelect } from '../ui/DocumentTypeSelect'
+import { SignaturePad, attachFileDisplayUrl } from '../ui/SignaturePad'
 import {
   fetchDischargeDoctorPractitioners,
   fetchDischargeNursePractitioners,
@@ -348,209 +349,12 @@ function YesNoField({
 
 // ─── Signature Pad Component ────────────────────────────────────────────────
 
-interface SignaturePadProps {
-  onSave: (file: File) => void
-  onClear?: () => void
-  existingUrl?: string
-  uploading?: boolean
-}
-
 interface MedicineSalesData {
   prescriptions: any[]
   given_medicines: any[]
   prescription_total: number
   given_total: number
   grand_total: number
-}
-
-const SignaturePad = ({ onSave, onClear, existingUrl, uploading }: SignaturePadProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const isDrawing = useRef(false)
-  const [hasStrokes, setHasStrokes] = useState(false)
-  const [mode, setMode] = useState<'idle' | 'drawing' | 'done'>(existingUrl ? 'done' : 'idle')
-
-  const initCtx = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    ctx.strokeStyle = '#1e293b'
-    ctx.lineWidth = 2.2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    return ctx
-  }, [])
-
-  const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    if ('touches' in e) {
-      const t = e.touches[0]
-      return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY }
-    }
-    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY }
-  }
-
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault()
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = initCtx()
-    if (!ctx) return
-    isDrawing.current = true
-    const pos = getPos(e, canvas)
-    ctx.beginPath()
-    ctx.moveTo(pos.x, pos.y)
-  }
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault()
-    if (!isDrawing.current) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = initCtx()
-    if (!ctx) return
-    const pos = getPos(e, canvas)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.stroke()
-    setHasStrokes(true)
-  }
-
-  const endDraw = () => {
-    isDrawing.current = false
-  }
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    setHasStrokes(false)
-    onClear?.()
-  }
-
-  const saveSignature = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    canvas.toBlob((blob) => {
-      if (!blob) return
-      const file = new File([blob], `signature_${Date.now()}.png`, { type: 'image/png' })
-      onSave(file)
-      setMode('done')
-    }, 'image/png')
-  }
-
-  useEffect(() => {
-    if (mode !== 'drawing') return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * window.devicePixelRatio
-    canvas.height = rect.height * window.devicePixelRatio
-    const ctx = canvas.getContext('2d')
-    if (ctx) ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-    setHasStrokes(false)
-  }, [mode])
-
-  if (mode === 'idle') {
-    return (
-      <button
-        type="button"
-        onClick={() => setMode('drawing')}
-        className="w-full h-full min-h-[96px] flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 text-slate-400 hover:border-green-400 hover:text-green-600 hover:bg-green-50/50 transition-all group"
-      >
-        <PenLine className="w-5 h-5 group-hover:scale-110 transition-transform" />
-        <span className="text-xs font-medium">Add Signature</span>
-      </button>
-    )
-  }
-
-  if (mode === 'done' && existingUrl) {
-    return (
-      <div className="w-full h-full min-h-[96px] flex flex-col items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 p-2">
-        <img
-          src={existingUrl}
-          alt="Signature"
-          className="max-h-16 object-contain"
-        />
-        <button
-          type="button"
-          onClick={() => { setMode('drawing'); clearCanvas() }}
-          className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
-        >
-          <Trash2 className="w-3 h-3" /> Re-sign
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="w-full rounded-lg border border-slate-300 bg-white overflow-hidden flex flex-col">
-      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 bg-slate-50">
-        <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-          <PenLine className="w-3 h-3" /> Draw signature
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={clearCanvas}
-            disabled={!hasStrokes}
-            className="text-xs text-slate-400 hover:text-red-500 disabled:opacity-30 flex items-center gap-0.5 transition-colors px-1.5 py-0.5 rounded hover:bg-red-50"
-          >
-            <Trash2 className="w-3 h-3" /> Clear
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode('idle'); clearCanvas() }}
-            className="text-xs text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-
-      <div className="relative" style={{ touchAction: 'none' }}>
-        <canvas
-          ref={canvasRef}
-          style={{ width: '100%', height: '96px', display: 'block', cursor: 'crosshair' }}
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={endDraw}
-        />
-        {!hasStrokes && (
-          <span className="absolute inset-0 flex items-center justify-center text-xs text-slate-300 pointer-events-none select-none">
-            Sign here
-          </span>
-        )}
-      </div>
-
-      <div className="px-2.5 py-2 border-t border-slate-100 flex justify-end">
-        <button
-          type="button"
-          onClick={saveSignature}
-          disabled={!hasStrokes || uploading}
-          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {uploading ? (
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              Saving…
-            </span>
-          ) : (
-            <>
-              <Check className="w-3 h-3" /> Save Signature
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  )
 }
 
 /** Patient relation on e-signature rows (Patient Upload Document.patient_relation) */
@@ -581,13 +385,35 @@ function resolveSignatureDocumentType(
 
 function isSignatureDocumentRow(row: PatientDocumentRow, signatureDocType: string): boolean {
   const dt = (row.document_type || '').trim()
-  if (!dt && !(row.patient_relation || '').trim() && !(row.signee_name || '').trim()) {
+  if (
+    !dt &&
+    !(row.patient_relation || '').trim() &&
+    !(row.signee_name || '').trim() &&
+    !(row.file_name || '').trim()
+  ) {
     return false
   }
   const lower = dt.toLowerCase()
   if (lower.includes('signature') || dt === signatureDocType) return true
   if ((row.patient_relation || '').trim() || (row.signee_name || '').trim()) return true
   return false
+}
+
+/** Restore signee_name after reload — historically only stored on file_name. */
+function hydrateSignatureRow(row: PatientDocumentRow): PatientDocumentRow {
+  const signee = (row.signee_name || '').trim()
+  const fromFile = (row.file_name || '').trim()
+  // Skip generic placeholders written when signee was empty at upload time.
+  const placeholder = /^signature(\s+\d+)?$/i.test(fromFile)
+  return {
+    ...row,
+    signee_name: signee || (placeholder ? '' : fromFile) || '',
+    patient_relation: row.patient_relation || '',
+    document_type: row.document_type || '',
+    upload_remarks: row.upload_remarks || '',
+    document: row.document || '',
+    file_name: row.file_name || '',
+  }
 }
 
 function splitPatientDocumentRows(
@@ -598,7 +424,7 @@ function splitPatientDocumentRows(
   const documents: PatientDocumentRow[] = []
   const signatures: PatientDocumentRow[] = []
   for (const row of rows) {
-    if (isSignatureDocumentRow(row, signatureDocType)) signatures.push(row)
+    if (isSignatureDocumentRow(row, signatureDocType)) signatures.push(hydrateSignatureRow(row))
     else documents.push(row)
   }
   return { documents, signatures }
@@ -2141,7 +1967,12 @@ const presTotal = items.reduce((sum: number, d: any) => sum + (d.amount || 0), 0
   const updateSignatureRow = (idx: number, field: keyof PatientDocumentRow, value: string) => {
     setSignatures((prev) => {
       const next = [...prev]
-      next[idx] = { ...next[idx], [field]: value }
+      const updated = { ...next[idx], [field]: value }
+      // Keep file_name aligned — historically the only persisted place for the name.
+      if (field === 'signee_name') {
+        updated.file_name = value.trim() || updated.file_name || ''
+      }
+      next[idx] = updated
       return next
     })
   }
@@ -5061,7 +4892,8 @@ const presTotal = items.reduce((sum: number, d: any) => sum + (d.amount || 0), 0
                           <div className="flex-1">
                             <SignaturePad
                               onSave={(file) => handleSignatureFile(idx, file)}
-                              existingUrl={row.document || undefined}
+                              onClear={() => updateSignatureRow(idx, 'document', '')}
+                              existingUrl={attachFileDisplayUrl(row.document)}
                               uploading={signatureUploading === idx}
                             />
                           </div>
@@ -5069,7 +4901,7 @@ const presTotal = items.reduce((sum: number, d: any) => sum + (d.amount || 0), 0
                             <p className="text-xs text-slate-500 text-center">Uploading signature...</p>
                           )}
                           <p className="text-xs text-slate-400 leading-relaxed">
-                            Draw above, then tap <strong>Save Signature</strong>.
+                            Draw and save, or upload a signature image.
                           </p>
                         </div>
                       </div>
