@@ -118,16 +118,24 @@ export const doctorScreenGroups: ScreenGroup[] = [
     ],
   },
   {
+    groupTitle: 'Lab',
+    hubScreenId: 'lab',
+    screens: [
+      { id: 'lab', title: 'Laboratory' },
+      { id: 'd-pending-lab-review', title: 'Pending Lab Review' },
+    ],
+  },
+  {
+    groupTitle: 'Medical Report',
+    hubScreenId: 'd-ip-medical-report',
+    screens: [
+      { id: 'd-ip-medical-report', title: 'Medical Report' },
+      { id: 'd-report-requests', title: 'Report Request' },
+    ],
+  },
+  {
     groupTitle: '',
     screens: [{ id: 'tpr', title: 'Vital Sign' }],
-  },
-  {
-    groupTitle: '',
-    screens: [{ id: 'lab', title: 'Laboratory' }],
-  },
-  {
-    groupTitle: '',
-    screens: [{ id: 'd-pending-lab-review', title: 'Pending Lab Review' }],
   },
   {
     groupTitle: '',
@@ -148,14 +156,6 @@ export const doctorScreenGroups: ScreenGroup[] = [
   {
     groupTitle: '',
     screens: [{ id: 'pvh', title: 'Patients History' }],
-  },
-  {
-    groupTitle: '',
-    screens: [{ id: 'd-ip-medical-report', title: 'Medical Report' }],
-  },
-  {
-    groupTitle: '',
-    screens: [{ id: 'd-report-requests', title: 'Report Requests' }],
   },
   {
     groupTitle: '',
