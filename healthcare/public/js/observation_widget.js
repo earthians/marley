@@ -52,6 +52,8 @@ healthcare.ObservationWidget = class {
 						font-size: 11px;
 						padding-left: 15px;
 						margin-right: 15px;
+						padding-bottom: 14px;
+						margin-bottom: 3px;
 						border-radius: var(--border-radius-md);
 						background-color: var(--fg-color);
 						box-shadow: var(--card-shadow);"
