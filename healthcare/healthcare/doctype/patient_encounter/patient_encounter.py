@@ -506,10 +506,6 @@ def create_medication_request(encounter):
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-<<<<<<< HEAD
-def get_medications_query(doctype, txt, searchfield, start, page_len, filters):
-	medication_name = filters.get("medication")
-=======
 def get_medications_query(
 	doctype: str, txt: str, searchfield: str, start: int, page_len: int, filters: dict | None
 ):
@@ -521,12 +517,7 @@ def get_medications_query(
 	flagged = get_allergy_flagged(patient, {row.parent for row in linked_items})
 
 	return tuple(get_search_columns(row, warehouse, quantities, flagged) for row in linked_items)
->>>>>>> 0c00ce2 (feat: medication allergy and interaction alerts)
 
-<<<<<<< HEAD
-	medication_child = frappe.qb.DocType("Medication Linked Item")
-	medication = frappe.qb.DocType("Medication")
-=======
 
 def get_permitted_patient(filters):
 	patient = filters.get("patient")
@@ -535,48 +526,18 @@ def get_permitted_patient(filters):
 
 def get_linked_medication_items(txt, start, page_len, filters):
 	linked_item = frappe.qb.DocType("Medication Linked Item")
->>>>>>> 22ce62c (fix: ensure access perms to patient)
 	item = frappe.qb.DocType("Item")
 	query = (
-<<<<<<< HEAD
-		frappe.qb.select(medication_child.brand, medication_child.manufacturer, medication_child.item)
-		.from_(medication_child)
-		.left_join(medication)
-		.on(medication.name == medication_child.parent)
-		.left_join(item)
-		.on(item.name == medication_child.item)
-=======
 		frappe.qb.select(linked_item.item, linked_item.brand, linked_item.manufacturer, linked_item.parent)
 		.from_(linked_item)
 		.inner_join(item)
 		.on(item.name == linked_item.item)
->>>>>>> 0c00ce2 (feat: medication allergy and interaction alerts)
 		.where(item.disabled == 0)
+		.orderby(linked_item.item)
+		.limit(page_len)
+		.offset(start)
 	)
-	if medication_name:
-		query = query.where(medication.name == medication_name)
 
-<<<<<<< HEAD
-	data = query.run(as_dict=True)
-	data_list = []
-	for d in data:
-		display_list = []
-		if d.get("item"):
-			display_list.append(d.get("item"))
-		if d.get("brand"):
-			display_list.append(d.get("brand"))
-		if d.get("manufacturer"):
-			display_list.append(d.get("manufacturer"))
-		default_warehouse = frappe.get_cached_value("Stock Settings", None, "default_warehouse")
-		if default_warehouse:
-			actual_qty = frappe.db.get_value(
-				"Bin", {"warehouse": default_warehouse, "item_code": d.get("item")}, "actual_qty"
-			)
-			display_list.append("<br>Actual Qty : " + (str(actual_qty) if actual_qty else "0"))
-		data_list.append(display_list)
-	res = tuple(tuple(sub) for sub in data_list)
-	return res
-=======
 	medication = filters.get("medication") or filters.get("name")
 	if medication:
 		query = query.where(linked_item.parent == medication)
@@ -629,7 +590,6 @@ def get_search_columns(row, warehouse, quantities, flagged=None):
 	if row.parent in (flagged or set()):
 		columns.append(f"<br><span class='indicator-pill red'>{_('Allergy recorded')}</span>")
 	return tuple(columns)
->>>>>>> 0c00ce2 (feat: medication allergy and interaction alerts)
 
 
 @frappe.whitelist()
