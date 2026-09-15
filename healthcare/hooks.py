@@ -134,7 +134,14 @@ fixtures = [
                    "Cost Center-custom_is_hospital",
                    "Cost Center-custom_stamp",
                    "Payment Entry-custom_unique_identity",
-                   "Sales Order-custom_commission_generated"
+                   "Sales Order-custom_commission_generated",
+                   
+                   "Item-custom_long_acting_dose_remarks",
+                   "Item-custom_maximum_dose_within_the_period_long_acting",
+                   "Item-custom_dosing_period_long_acting",
+                   "Item-custom_maximum_single_dose_long_acting",
+                   "Item-custom_long_acting",
+                   
 
                 ),
             ]
