@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_copy": 1,
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:no",
@@ -110,8 +109,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Test Name",
-   "no_copy": 1
+   "label": "Test Name"
   },
   {
    "depends_on": "eval: !doc.__islocal || doc.link_existing_item",
@@ -678,7 +676,7 @@
    "link_fieldname": "template"
   }
  ],
- "modified": "2026-08-09 19:17:51.883538",
+ "modified": "2026-09-16 00:54:36.279901",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Lab Test Template",

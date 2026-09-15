@@ -789,6 +789,137 @@ def book_lab_and_forward(service_request_name):
 		"inpatient_record": sr.inpatient_record,
 	}
 
+
+def create_missing_lab_tests_for_booked_request(service_request_name):
+	"""
+	When editing a booked lab Service Request, create Lab Tests for templates
+	that were newly added to lab_request_items (existing templates are left alone).
+	"""
+	if not service_request_name:
+		return []
+	sr = frappe.get_doc("Service Request", service_request_name)
+	if sr.template_dt != "Lab Test Template" or not cint(sr.booked):
+		return []
+
+	request_items = parse_lab_request_items(sr)
+	if not request_items:
+		return []
+
+	patient_care_type = (
+		"OP" if sr.patient_visit else "IP" if sr.inpatient_record else None
+	)
+	specs = expand_lab_test_specs(
+		request_items, sr.patient, patient_care_type=patient_care_type
+	)
+	specs = apply_discounts_to_specs(specs, request_items)
+
+	existing_templates = set(
+		frappe.get_all(
+			"Lab Test",
+			filters={"service_request": sr.name, "docstatus": ["!=", 2]},
+			pluck="template",
+		)
+	)
+
+	admission = resolve_inpatient_admission_name(
+		sr.inpatient_record or sr.get("inpatient_admission"),
+		sr.patient,
+	)
+
+	created_names = []
+	for spec in specs:
+		if cint(spec.get("billing_only")):
+			continue
+		tpl = spec.get("template")
+		if not tpl or tpl in existing_templates:
+			continue
+
+		amount = spec.get("amount")
+		parent_group = spec.get("parent_group")
+		net = spec.get("net_amount") if spec.get("net_amount") is not None else amount
+		disc_type = (spec.get("discount_type") or "Percentage").strip()
+
+		lt = frappe.new_doc("Lab Test")
+		lt.template = tpl
+		lt.service_request = sr.name
+		lt.trans_num = generate_lab_test_trans_num(format_type="prefixed", prefix="LT-", padding=6)
+		lt.company = sr.company
+		lt.patient = sr.patient
+		lt.patient_name = sr.patient_name
+		lt.patient_sex = sr.patient_gender
+		lt.patient_age = sr.patient_age_data
+		lt.patient_visit = sr.patient_visit
+		lt.inpatient_record = admission
+		lt.inpatient_admission = admission
+		lt.email = sr.patient_email
+		lt.mobile = sr.patient_mobile
+		if parent_group:
+			lt.lab_test_group = parent_group
+			lt.is_group_lab_test = 1
+		lt.practitioner = sr.practitioner
+		if getattr(sr, "assigned_healthcare_practioner", None) and lt.meta.has_field(
+			"assigned_healthcare_practioner"
+		):
+			lt.assigned_healthcare_practioner = sr.assigned_healthcare_practioner
+		lt.date = sr.occurrence_date
+		lt.time = sr.occurrence_time
+		lt.invoiced = sr.get("invoiced") or 0
+		if getattr(sr, "cost_center", None):
+			lt.cost_center = sr.cost_center
+		if amount is not None:
+			lt.amount = amount
+		elif getattr(sr, "cost", None) is not None:
+			lt.amount = sr.cost
+		elif getattr(sr, "amount", None) is not None:
+			lt.amount = sr.amount
+		if getattr(lt, "amount", None) is not None:
+			disc_rate = flt(spec.get("discount_rate") or 0)
+			disc_amt = flt(spec.get("discount") or 0)
+			applied = flt(spec.get("discount_applied") or 0)
+			lt.discount_margin = disc_type
+			if disc_type == "Percentage":
+				lt.discount = disc_rate
+				lt.discount_amount = applied
+			else:
+				lt.discount = 0
+				lt.discount_amount = disc_amt
+			lt.grand_total = flt(net)
+		lt.lab_test_name = frappe.db.get_value("Lab Test Template", tpl, "lab_test_name") or tpl
+		lt.status = "Requested"
+		try:
+			lt.insert(ignore_permissions=True)
+		except Exception as e:
+			frappe.log_error(
+				title="Lab Test Creation Error (edit add)",
+				message=f"Service Request {sr.name}\nTemplate {tpl}\n{frappe.get_traceback()}",
+			)
+			frappe.throw(_("Failed to create lab test for {0}: {1}").format(tpl, str(e)))
+
+		created_names.append(lt.name)
+		existing_templates.add(tpl)
+
+		patient_visit = sr.patient_visit or sr.order_group
+		if patient_visit and frappe.db.exists("Patient Visit", patient_visit):
+			visit = frappe.get_doc("Patient Visit", patient_visit)
+			visit.append(
+				"lab_tests_charges",
+				{
+					"test_code": lt.name,
+					"test_name": lt.lab_test_name or tpl,
+					"lab_test_template": tpl,
+					"lab_test_group": parent_group,
+					"amount": amount or 0,
+					"discount_type": disc_type,
+					"discount_rate": flt(spec.get("discount_rate") or 0) if disc_type == "Percentage" else 0,
+					"discount": flt(spec.get("discount") or 0) if disc_type == "Amount" else 0,
+					"net_amount": net or 0,
+				},
+			)
+			visit.save(ignore_permissions=True)
+
+	return created_names
+
+
 @frappe.whitelist()
 def make_therapy_session(service_request):
 	if isinstance(service_request, string_types):

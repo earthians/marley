@@ -34,6 +34,24 @@ _ALLOWED_CALLS = {
 }
 _PATIENT_FORMULA_TOKENS = ("@Age", "@Kappa", "@Alpha")
 
+# Operators pasted from Word/Excel/UI that are not valid Python/JS arithmetic.
+_UNICODE_FORMULA_OPS = str.maketrans(
+	{
+		"÷": "/",
+		"×": "*",
+		"∙": "*",
+		"∗": "*",
+		"−": "-",  # U+2212 minus
+		"–": "-",  # en dash
+		"—": "-",  # em dash
+	}
+)
+
+
+def normalize_formula_operators(formula: str) -> str:
+	"""Map Unicode math symbols to ASCII operators the evaluator understands."""
+	return (formula or "").translate(_UNICODE_FORMULA_OPS)
+
 
 def _norm_key(value: str | None) -> str:
 	return (value or "").strip().casefold()
@@ -738,6 +756,23 @@ def _formula_name_boundary_pattern(name: str) -> str:
 	return r"(?<![\w./-])" + re.escape(name) + r"(?![\w.-])"
 
 
+def _formula_name_flexible_pattern(name: str) -> str:
+	"""Like boundary pattern but spaces may vary (including inside parentheses)."""
+	parts = re.split(r"(\s+)", (name or "").strip())
+	out: list[str] = []
+	for part in parts:
+		if not part:
+			continue
+		if part.isspace():
+			out.append(r"\s*")
+		else:
+			# Allow optional spaces just inside parentheses: (FBS) vs (FBS )
+			escaped = re.escape(part)
+			escaped = escaped.replace(r"\(", r"\(\s*").replace(r"\)", r"\s*\)")
+			out.append(escaped)
+	return r"(?<![\w./-])" + "".join(out) + r"(?![\w.-])"
+
+
 def _formula_name_variants(name: str) -> list[str]:
 	raw = (name or "").strip()
 	if not raw:
@@ -758,13 +793,19 @@ def _formula_name_in_formula(name: str, formula: str) -> bool:
 	for variant in _formula_name_variants(name):
 		if re.search(_formula_name_boundary_pattern(variant), formula, re.IGNORECASE):
 			return True
+		if re.search(_formula_name_flexible_pattern(variant), formula, re.IGNORECASE):
+			return True
 	return False
 
 
 def _formula_operator_split(formula: str) -> list[str]:
-	"""Split a formula into operand labels using math operators only (not spaces)."""
+	"""Split a formula into operand labels using + - * / only.
+
+	Do not split on parentheses — they are part of names like ``Insulin (Fasting)``.
+	"""
 	parts: list[str] = []
-	for part in re.split(r"[+\-*/()]+", formula or ""):
+	normalized = normalize_formula_operators(formula or "")
+	for part in re.split(r"[+\-*/]+", normalized):
 		part = part.strip()
 		if part:
 			parts.append(part)
@@ -938,7 +979,7 @@ def substitute_formula(
 	patient_context: dict[str, float] | None = None,
 ) -> str | None:
 	"""Replace event names with numeric literals; return None if a name is missing."""
-	text = (formula or "").strip()
+	text = normalize_formula_operators((formula or "").strip())
 	if not text:
 		return None
 	if patient_context:
@@ -952,15 +993,15 @@ def substitute_formula(
 			continue
 		matched = False
 		for variant in _formula_name_variants(name):
-			if not re.search(_formula_name_boundary_pattern(variant), text, re.IGNORECASE):
+			pattern = None
+			if re.search(_formula_name_boundary_pattern(variant), text, re.IGNORECASE):
+				pattern = _formula_name_boundary_pattern(variant)
+			elif re.search(_formula_name_flexible_pattern(variant), text, re.IGNORECASE):
+				pattern = _formula_name_flexible_pattern(variant)
+			if not pattern:
 				continue
 			ph = f"#{i}#"
-			text = re.sub(
-				_formula_name_boundary_pattern(variant),
-				ph,
-				text,
-				flags=re.IGNORECASE,
-			)
+			text = re.sub(pattern, ph, text, flags=re.IGNORECASE)
 			placeholders[ph] = f"({val})"
 			matched = True
 			break
@@ -1035,6 +1076,22 @@ def get_enabled_rule_doc(template: str):
 		)
 		if name:
 			break
+		display = _display_name_for_template(candidate)
+		if display and display != candidate:
+			name = frappe.db.get_value(
+				"Lab Test Result Rule",
+				{"lab_test_name": display, "enabled": 1},
+				"name",
+			)
+			if name:
+				break
+			name = frappe.db.get_value(
+				"Lab Test Result Rule",
+				{"lab_test_template": display, "enabled": 1},
+				"name",
+			)
+			if name:
+				break
 	if not name:
 		return None
 	return frappe.get_doc("Lab Test Result Rule", name)
@@ -1086,16 +1143,39 @@ def get_enabled_rule_docs_for_panel(template: str, service_request: str | None =
 
 	docs = []
 	seen_rules: set[str] = set()
-	for cand in candidates:
-		name = frappe.db.get_value(
-			"Lab Test Result Rule",
-			{"lab_test_template": cand, "enabled": 1},
-			"name",
-		)
+
+	def _add_rule_name(name: str | None):
 		if not name or name in seen_rules:
-			continue
+			return
 		seen_rules.add(name)
 		docs.append(frappe.get_doc("Lab Test Result Rule", name))
+
+	for cand in candidates:
+		_add_rule_name(
+			frappe.db.get_value(
+				"Lab Test Result Rule",
+				{"lab_test_template": cand, "enabled": 1},
+				"name",
+			)
+		)
+		# Also match rules saved under an alternate template id with the same
+		# display name (e.g. rule on LAB-124-001 while request uses LAB-124).
+		display = _display_name_for_template(cand)
+		if display:
+			for row in frappe.get_all(
+				"Lab Test Result Rule",
+				filters={"enabled": 1, "lab_test_name": display},
+				fields=["name", "lab_test_template"],
+				limit=20,
+			):
+				_add_rule_name(row.name)
+			_add_rule_name(
+				frappe.db.get_value(
+					"Lab Test Result Rule",
+					{"lab_test_template": display, "enabled": 1},
+					"name",
+				)
+			)
 	return docs
 
 

@@ -18,6 +18,17 @@ function formulaNameVariants(name: string): string[] {
   return variants
 }
 
+/**
+ * Allow flexible whitespace so "Glucose (FBS)" matches "Glucose (FBS )"
+ * (including odd spaces inside parentheses).
+ */
+function flexibleNamePattern(name: string): string {
+  return escapeRegExp(name.trim())
+    .replace(/\s+/g, '\\s*')
+    .replace(/\\\(/g, '\\(\\s*')
+    .replace(/\\\)/g, '\\s*\\)')
+}
+
 const PATIENT_FORMULA_TOKENS = ['@Age', '@Kappa', '@Alpha'] as const
 
 /** Parse display age strings like "50 Years" into whole years. */
@@ -65,13 +76,72 @@ function formulaHasUnresolvedIdentifiers(text: string): boolean {
   return /[a-zA-Z_]/.test(scrubbed)
 }
 
+/** Map Unicode math symbols (÷ × −) to ASCII so Function/eval can parse them. */
+export function normalizeFormulaOperators(formula: string): string {
+  return (formula || '')
+    .replace(/÷/g, '/')
+    .replace(/[×∙∗]/g, '*')
+    .replace(/[−–—]/g, '-')
+}
+
+/**
+ * Copy values onto the exact spellings used in the formula (space-insensitive).
+ * e.g. result key "Glucose (FBS)" → formula text "Glucose (FBS )".
+ */
+export function alignFormulaValues(
+  formula: string,
+  values: Record<string, number>,
+): Record<string, number> {
+  const text = normalizeFormulaOperators(formula || '')
+  const aligned: Record<string, number> = { ...values }
+  const names = Object.keys(values).sort((a, b) => b.length - a.length)
+  for (const name of names) {
+    const val = values[name]
+    if (val == null || Number.isNaN(val)) continue
+    for (const variant of formulaNameVariants(name)) {
+      const flexible = new RegExp(
+        `(?<![\\w./@-])${flexibleNamePattern(variant)}(?![\\w.-])`,
+        'gi',
+      )
+      const match = flexible.exec(text)
+      if (!match?.[0]) continue
+      aligned[match[0]] = val
+      break
+    }
+  }
+  return aligned
+}
+
+function substituteNameInFormula(text: string, name: string, val: number): string | null {
+  for (const variant of formulaNameVariants(name)) {
+    const exact = new RegExp(`(?<![\\w./@-])${escapeRegExp(variant)}(?![\\w.-])`, 'gi')
+    if (exact.test(text)) {
+      return text.replace(
+        new RegExp(`(?<![\\w./@-])${escapeRegExp(variant)}(?![\\w.-])`, 'gi'),
+        `(${val})`,
+      )
+    }
+    const flexible = new RegExp(
+      `(?<![\\w./@-])${flexibleNamePattern(variant)}(?![\\w.-])`,
+      'gi',
+    )
+    if (flexible.test(text)) {
+      return text.replace(
+        new RegExp(`(?<![\\w./@-])${flexibleNamePattern(variant)}(?![\\w.-])`, 'gi'),
+        `(${val})`,
+      )
+    }
+  }
+  return null
+}
+
 /** Evaluate a lab result formula like `T.Bilirubin - D. Bilirubin`. */
 export function evaluateLabResultFormula(
   formula: string,
   values: Record<string, number>,
   patientContext?: Record<string, number>,
 ): number | null {
-  let text = (formula || '').trim()
+  let text = normalizeFormulaOperators((formula || '').trim())
   if (!text) return null
 
   if (patientContext && Object.keys(patientContext).length) {
@@ -80,19 +150,13 @@ export function evaluateLabResultFormula(
     text = withPatient
   }
 
-  const names = Object.keys(values).sort((a, b) => b.length - a.length)
+  const aligned = alignFormulaValues(text, values)
+  const names = Object.keys(aligned).sort((a, b) => b.length - a.length)
   for (const name of names) {
-    const val = values[name]
+    const val = aligned[name]
     if (val == null || Number.isNaN(val)) continue
-    for (const variant of formulaNameVariants(name)) {
-      const re = new RegExp(`(?<![\\w./@-])${escapeRegExp(variant)}(?![\\w.-])`, 'gi')
-      if (!re.test(text)) continue
-      text = text.replace(
-        new RegExp(`(?<![\\w./@-])${escapeRegExp(variant)}(?![\\w.-])`, 'gi'),
-        `(${val})`,
-      )
-      break
-    }
+    const next = substituteNameInFormula(text, name, val)
+    if (next != null) text = next
   }
 
   text = text.replace(/\bmin\s*\(/gi, 'Math.min(').replace(/\bmax\s*\(/gi, 'Math.max(')

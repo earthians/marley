@@ -2010,7 +2010,24 @@ def update_service_request(name, data):
 		doc.flags.ignore_validate_update_after_submit = True
 	doc.save()
 
+	# Booked requests: create Lab Tests for templates newly added on edit
+	# (after save so create_missing reads the updated lab_request_items).
+	added_lab_tests = []
+	if (getattr(doc, "template_dt", None) or "") == "Lab Test Template" and cint(
+		getattr(doc, "booked", 0)
+	):
+		from healthcare.healthcare.doctype.service_request.service_request import (
+			create_missing_lab_tests_for_booked_request,
+		)
+
+		added_lab_tests = create_missing_lab_tests_for_booked_request(doc.name) or []
+		if added_lab_tests:
+			doc.reload()
+
 	out = {"name": doc.name, "status": doc.status}
+	if added_lab_tests:
+		out["lab_tests_added"] = added_lab_tests
+		out["lab_tests_added_count"] = len(added_lab_tests)
 
 	# Lab requests that already have a Sales Order must be re-billed when amounts,
 	# discounts, or tests change (cancel old SI/SO, create a fresh Sales Order).

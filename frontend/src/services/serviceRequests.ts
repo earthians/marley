@@ -302,6 +302,8 @@ export async function updateServiceRequest(
   sales_order?: string
   previous_sales_order?: string | null
   cancelled_sales_invoices?: string[]
+  lab_tests_added?: string[]
+  lab_tests_added_count?: number
 }> {
   const { ensureCSRF } = await import('./apiClient')
   const { frappeErrorMessage } = await import('../utils/frappeErrorMessage')

@@ -46,3 +46,29 @@ class TestLabTestResultRuleFormulas(UnitTestCase):
 		self.assertIsNotNone(result)
 		self.assertGreater(result, 50)
 		self.assertLess(result, 120)
+
+	def test_homa_ir_unicode_division(self):
+		"""HOMA-IR style formula often uses ÷ pasted from Excel/Word."""
+		values = {
+			"Insulin (Fasting)": 12.0,
+			"Glucose (FBS )": 5.0,
+		}
+		result = evaluate_formula(
+			"Insulin (Fasting) * Glucose (FBS ) ÷ 405",
+			values,
+		)
+		self.assertIsNotNone(result)
+		self.assertAlmostEqual(result, 12.0 * 5.0 / 405.0, places=6)
+
+	def test_homa_ir_whitespace_mismatch(self):
+		"""Result labels may omit the odd trailing space inside parentheses."""
+		values = {
+			"Insulin (Fasting)": 12.0,
+			"Glucose (FBS)": 5.0,
+		}
+		result = evaluate_formula(
+			"Insulin (Fasting) * Glucose (FBS ) / 405",
+			values,
+		)
+		self.assertIsNotNone(result)
+		self.assertAlmostEqual(result, 12.0 * 5.0 / 405.0, places=6)

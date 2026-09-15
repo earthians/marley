@@ -55,6 +55,15 @@ interface PricingRow {
   rate?: number | null
 }
 
+interface GroupTemplateRow {
+  template_dn: string
+  template_label: string
+  price_included_in_group?: number | boolean
+  pricing?: PricingRow[]
+}
+
+type LabTemplateGroupFilter = 'all' | 'group' | 'single'
+
 const defaultFormData = {
   template_dt: '',
   template_dn: '',
@@ -136,9 +145,16 @@ export const EditServiceRequestModal = ({
   const [generalLabDiscount, setGeneralLabDiscount] = useState(0)
   const [basketPricing, setBasketPricing] = useState<MultiLabRequestPricing>({ lines: [], subtotal: 0 })
   const [expandedLabGroups, setExpandedLabGroups] = useState<Record<string, boolean>>({})
-  const [startedWithMultiLab, setStartedWithMultiLab] = useState(false)
+  const [pendingTemplateDn, setPendingTemplateDn] = useState('')
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('')
+  const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false)
+  const [labTemplateFilter, setLabTemplateFilter] = useState<LabTemplateGroupFilter>('all')
+  const [groupRows, setGroupRows] = useState<GroupTemplateRow[]>([])
+  const [selectedGroupTemplates, setSelectedGroupTemplates] = useState<string[]>([])
+  const [labTemplateLabels, setLabTemplateLabels] = useState<Record<string, string>>({})
 
   const hasMultiLabItems = labBasket.length > 0
+  const isGroupTemplate = groupRows.length > 0
   const basketWithDiscounts = useMemo(
     () => mergeDiscountsIntoBasket(labBasket, lineDiscounts),
     [labBasket, lineDiscounts]
@@ -163,9 +179,31 @@ export const EditServiceRequestModal = ({
   const orderingClinicianLabel = serviceRequestPractitionerLabel(formData.template_dt)
 
   const labTemplateLabel = (template: string) => {
+    if (labTemplateLabels[template]) return labTemplateLabels[template]
     const fromLine = basketPricing.lines?.find((l) => l.template === template)
     if (fromLine?.lab_test_name) return fromLine.lab_test_name
     return templates.find((t) => t.name === template)?.label || template
+  }
+
+  const addPendingToBasket = () => {
+    if (!pendingTemplateDn) return
+    if (isGroupTemplate) {
+      if (selectedGroupTemplates.length === 0) {
+        setError('Select at least one child test for this group.')
+        return
+      }
+      setLabBasket((prev) => [
+        ...prev,
+        { kind: 'group', parent: pendingTemplateDn, children: [...selectedGroupTemplates] },
+      ])
+    } else {
+      setLabBasket((prev) => [...prev, { kind: 'single', template: pendingTemplateDn }])
+    }
+    setPendingTemplateDn('')
+    setTemplateSearchQuery('')
+    setGroupRows([])
+    setSelectedGroupTemplates([])
+    setError(null)
   }
 
   const removeBasketChild = (basketIndex: number, childTemplate: string) => {
@@ -270,9 +308,18 @@ export const EditServiceRequestModal = ({
         setAllowManualCost(!(initialCost != null && initialCost > 0))
 
         const parsedLabItems = parseLabRequestItems(doc.lab_request_items)
-        setLabBasket(parsedLabItems)
-        setStartedWithMultiLab(parsedLabItems.length > 0)
-        setLineDiscounts(extractLineDiscountsFromBasket(parsedLabItems))
+        const templateDn = (doc.template_dn as string) || ''
+        const seededBasket =
+          parsedLabItems.length > 0
+            ? parsedLabItems
+            : (doc.template_dt as string) === 'Lab Test Template' && templateDn
+              ? [{ kind: 'single' as const, template: templateDn }]
+              : []
+        setLabBasket(seededBasket)
+        setLineDiscounts(extractLineDiscountsFromBasket(seededBasket))
+        if (templateDn) {
+          setLabTemplateLabels((prev) => ({ ...prev, [templateDn]: templateDn }))
+        }
         setGeneralLabDiscount(Number(doc.general_discount_amount || 0))
         if ((doc.template_dt as string) === 'Lab Test Template') {
           setActiveTab('patient_order')
@@ -366,10 +413,79 @@ export const EditServiceRequestModal = ({
       setTemplates([])
       return
     }
-    fetchServiceRequestTemplates(formData.template_dt)
-      .then(setTemplates)
-      .catch(() => setTemplates([]))
-  }, [formData.template_dt])
+    const isGroupParam =
+      formData.template_dt === 'Lab Test Template' && labTemplateFilter !== 'all'
+        ? labTemplateFilter === 'group'
+          ? 1
+          : 0
+        : undefined
+
+    const run = () => {
+      fetchServiceRequestTemplates(
+        formData.template_dt,
+        isLabRequest ? templateSearchQuery.trim() || undefined : undefined,
+        undefined,
+        isGroupParam,
+      )
+        .then(setTemplates)
+        .catch(() => setTemplates([]))
+    }
+
+    const delay = isLabRequest && templateSearchQuery.trim() ? 280 : 0
+    const t = setTimeout(run, delay)
+    return () => clearTimeout(t)
+  }, [formData.template_dt, templateSearchQuery, labTemplateFilter, isLabRequest])
+
+  /* Load group children when a pending lab template is selected for add */
+  useEffect(() => {
+    if (!isLabRequest || !pendingTemplateDn) {
+      setGroupRows([])
+      setSelectedGroupTemplates([])
+      return
+    }
+    const careType = formData.patient_visit ? 'OP' : formData.inpatient_record ? 'IP' : ''
+    const params = new URLSearchParams({
+      template_dt: 'Lab Test Template',
+      template_dn: pendingTemplateDn,
+      patient_care_type: careType,
+    })
+    if (selectedPatient?.name) {
+      params.set('patient', selectedPatient.name)
+    }
+    fetch(
+      `/api/method/healthcare.api.service_request.get_service_request_template_pricing?${params}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const payload = data?.message || {}
+        const groups: GroupTemplateRow[] = Array.isArray(payload.group_templates)
+          ? payload.group_templates
+          : []
+        setGroupRows(groups)
+        if (groups.length > 0) {
+          setLabTemplateLabels((prev) => {
+            const next = { ...prev }
+            for (const group of groups) {
+              next[group.template_dn] = group.template_label || group.template_dn
+            }
+            return next
+          })
+          setSelectedGroupTemplates(groups.map((row) => row.template_dn))
+        } else {
+          setSelectedGroupTemplates([])
+        }
+      })
+      .catch(() => {
+        setGroupRows([])
+        setSelectedGroupTemplates([])
+      })
+  }, [
+    isLabRequest,
+    pendingTemplateDn,
+    formData.patient_visit,
+    formData.inpatient_record,
+    selectedPatient?.name,
+  ])
 
   /* ────────────── LOAD PRICING WHEN TEMPLATE CHANGES ────────────── */
 
@@ -531,10 +647,16 @@ export const EditServiceRequestModal = ({
       setActiveTab('patient_order')
       return
     }
-    
-    if (!formData.template_dt || !formData.template_dn) {
+
+    if (isLabRequest) {
+      if (labBasket.length === 0) {
+        setError('Add at least one lab test to the request, or cancel instead.')
+        setActiveTab('patient_order')
+        return
+      }
+    } else if (!formData.template_dt || !formData.template_dn) {
       setError('Please select template type and template')
-      setActiveTab(isLabRequest ? 'patient_order' : 'service_details')
+      setActiveTab('service_details')
       return
     }
 
@@ -548,11 +670,6 @@ export const EditServiceRequestModal = ({
       setActiveTab('billing_pricing')
       return
     }
-    if (startedWithMultiLab && labBasket.length === 0) {
-      setError('Keep at least one lab test in the request, or cancel instead.')
-      setActiveTab('patient_order')
-      return
-    }
     if (
       hasMultiLabItems &&
       (basketPricing.grand_total ?? basketPricing.subtotal) - generalLabDiscount < 0
@@ -564,10 +681,16 @@ export const EditServiceRequestModal = ({
     
     try {
       setSubmitting(true)
+      const primaryDn = isLabRequest
+        ? labBasket[0].kind === 'single'
+          ? labBasket[0].template
+          : labBasket[0].parent
+        : formData.template_dn
+
       const payload: UpdateServiceRequestData = {
         patient: selectedPatient.name,
         template_dt: formData.template_dt,
-        template_dn: formData.template_dn,
+        template_dn: primaryDn,
         practitioner: formData.practitioner || undefined,
         patient_visit: formData.patient_visit || undefined,
         inpatient_record: formData.inpatient_record || undefined,
@@ -603,7 +726,7 @@ export const EditServiceRequestModal = ({
         grand_total: formData.grand_total
       }
 
-      if (hasMultiLabItems || startedWithMultiLab) {
+      if (isLabRequest) {
         payload.lab_request_items = serializeLabRequestItemsForSave(basketWithDiscounts)
         payload.cost = basketPricing.subtotal
         payload.general_discount_amount = generalLabDiscount
@@ -619,11 +742,19 @@ export const EditServiceRequestModal = ({
         const previous = result.previous_sales_order
           ? ` Previous order ${result.previous_sales_order} was cancelled.`
           : ''
+        const added =
+          result.lab_tests_added_count && result.lab_tests_added_count > 0
+            ? ` ${result.lab_tests_added_count} new lab test${result.lab_tests_added_count === 1 ? '' : 's'} booked.`
+            : ''
         toast.success(
-          `Lab request saved. Billing was updated — new Sales Order ${result.sales_order}.${previous}`
+          `Lab request saved. Billing was updated — new Sales Order ${result.sales_order}.${previous}${added}`
         )
       } else if (isLabRequest) {
-        toast.success('Lab request saved successfully.')
+        const added =
+          result.lab_tests_added_count && result.lab_tests_added_count > 0
+            ? ` ${result.lab_tests_added_count} new lab test${result.lab_tests_added_count === 1 ? '' : 's'} booked.`
+            : ''
+        toast.success(`Lab request saved successfully.${added}`)
       } else {
         toast.success('Service request updated')
       }
@@ -762,104 +893,288 @@ export const EditServiceRequestModal = ({
                 </div>
 
                 {isLabRequest ? (
-                  hasMultiLabItems || startedWithMultiLab ? (
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/30 p-4">
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">
+                        Add lab test
+                      </label>
+                      <p className="mb-3 text-xs text-slate-600">
+                        Search and pick a test, configure group children if needed, then add to
+                        this request.
+                      </p>
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-medium text-slate-500">Show</span>
+                        {(
+                          [
+                            { key: 'all' as const, label: 'All' },
+                            { key: 'group' as const, label: 'Group tests' },
+                            { key: 'single' as const, label: 'Single tests' },
+                          ] as const
+                        ).map(({ key, label }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                              setLabTemplateFilter(key)
+                              setPendingTemplateDn('')
+                              setTemplateSearchQuery('')
+                            }}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                              labTemplateFilter === key
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'border border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={templateSearchQuery}
+                          onChange={(e) => {
+                            setTemplateSearchQuery(e.target.value)
+                            setPendingTemplateDn('')
+                            setTemplateDropdownOpen(true)
+                          }}
+                          onFocus={() => setTemplateDropdownOpen(true)}
+                          onBlur={() => {
+                            window.setTimeout(() => setTemplateDropdownOpen(false), 180)
+                          }}
+                          placeholder="Search template name…"
+                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+                        />
+                        {templateDropdownOpen && (
+                          <div className="absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                            {templates.length === 0 ? (
+                              <div className="px-3 py-2.5 text-xs text-slate-500">
+                                NO TEMPLATES MATCH. TRY ANOTHER SEARCH OR FILTER.
+                              </div>
+                            ) : (
+                              templates.map((item) => {
+                                const group = Number(item.is_group) === 1
+                                return (
+                                  <button
+                                    key={item.name}
+                                    type="button"
+                                    className="flex w-full items-center justify-between gap-2 border-b border-slate-50 px-3 py-2.5 text-left text-sm last:border-0 hover:bg-emerald-50/80"
+                                    onMouseDown={() => {
+                                      setLabTemplateLabels((prev) => ({
+                                        ...prev,
+                                        [item.name]: item.label || item.name,
+                                      }))
+                                      setPendingTemplateDn(item.name)
+                                      setTemplateSearchQuery(item.label || item.name)
+                                      setTemplateDropdownOpen(false)
+                                    }}
+                                  >
+                                    <span className="min-w-0">
+                                      <span className="block truncate font-medium text-slate-900">
+                                        {item.label || item.name}
+                                      </span>
+                                      <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                        ID: {item.name}
+                                      </span>
+                                    </span>
+                                    <span
+                                      className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                        group
+                                          ? 'bg-violet-100 text-violet-800'
+                                          : 'bg-slate-100 text-slate-600'
+                                      }`}
+                                    >
+                                      {group ? 'Group' : 'Single'}
+                                    </span>
+                                  </button>
+                                )
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {pendingTemplateDn && isGroupTemplate && (
+                        <div className="mt-3 rounded-lg border border-emerald-200 bg-white p-3">
+                          <div className="mb-2 text-xs font-semibold text-slate-800">
+                            Tests in this group
+                          </div>
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedGroupTemplates(groupRows.map((r) => r.template_dn))
+                              }
+                              className="rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50"
+                            >
+                              Select all
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedGroupTemplates([])}
+                              className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                              Clear all
+                            </button>
+                          </div>
+                          <div className="max-h-48 space-y-2 overflow-y-auto">
+                            {groupRows.map((row) => {
+                              const checked = selectedGroupTemplates.includes(row.template_dn)
+                              return (
+                                <label
+                                  key={row.template_dn}
+                                  className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 text-sm ${
+                                    checked
+                                      ? 'border-emerald-400 bg-emerald-50/80'
+                                      : 'border-slate-200 bg-white'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      setSelectedGroupTemplates((prev) =>
+                                        e.target.checked
+                                          ? [...prev, row.template_dn]
+                                          : prev.filter((name) => name !== row.template_dn)
+                                      )
+                                    }}
+                                    className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                  />
+                                  <span className="min-w-0">
+                                    <span className="font-medium text-slate-900">
+                                      {row.template_label}
+                                    </span>
+                                    {row.price_included_in_group ? (
+                                      <span className="mt-0.5 block text-[11px] font-medium text-slate-500">
+                                        Price included in group
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                </label>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {pendingTemplateDn && (
+                        <button
+                          type="button"
+                          onClick={addPendingToBasket}
+                          className="mt-3 w-full rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                        >
+                          Add to lab request
+                        </button>
+                      )}
+                    </div>
+
                     <div className="rounded-lg border border-violet-200 bg-violet-50/40 p-4">
                       <label className="mb-1 block text-sm font-semibold text-slate-900">
                         Lab tests in this request
+                        {labBasket.length > 0 ? ` (${labBasket.length})` : ''}
                       </label>
                       <p className="mb-3 text-xs text-slate-600">
-                        Expand a group to remove individual child tests. Saving updates the request
-                        and deletes matching draft Lab Tests that are still in Requested status.
+                        Expand a group to remove individual child tests. Saving updates the
+                        request
+                        {Number(readOnly.booked) === 1
+                          ? ' and books new Lab Tests for added templates (Requested status).'
+                          : '.'}
                       </p>
-                      <ul className="space-y-2">
-                        {labBasket.map((item, index) => {
-                          const template = item.kind === 'single' ? item.template : item.parent
-                          const itemKey = `${item.kind}-${template}-${index}`
-                          const isExpanded = item.kind === 'group' && !!expandedLabGroups[itemKey]
-                          return (
-                            <li
-                              key={itemKey}
-                              className="rounded-xl border border-slate-200/90 bg-white px-3 py-2.5"
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <button
-                                  type="button"
-                                  disabled={item.kind !== 'group'}
-                                  onClick={() => {
-                                    if (item.kind !== 'group') return
-                                    setExpandedLabGroups((prev) => ({
-                                      ...prev,
-                                      [itemKey]: !prev[itemKey],
-                                    }))
-                                  }}
-                                  className={`flex min-w-0 flex-1 items-center gap-2 text-left ${
-                                    item.kind === 'group' ? 'cursor-pointer' : 'cursor-default'
-                                  }`}
-                                  aria-expanded={item.kind === 'group' ? isExpanded : undefined}
-                                >
-                                  {item.kind === 'group' && (
-                                    <ChevronDown
-                                      className={`h-4 w-4 shrink-0 text-violet-600 transition-transform ${
-                                        isExpanded ? 'rotate-180' : ''
-                                      }`}
-                                    />
-                                  )}
-                                  <span className="min-w-0">
-                                    <span className="block truncate text-sm font-medium text-slate-900">
-                                      {labTemplateLabel(template)}
-                                      {item.kind === 'group' ? ` (${item.children.length} tests)` : ''}
-                                    </span>
-                                    <span className="mt-0.5 block truncate text-xs text-slate-500">
-                                      ID: {template}
-                                    </span>
-                                  </span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeBasketItem(index)}
-                                  className="shrink-0 text-xs font-semibold text-red-600 hover:text-red-800"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                              {item.kind === 'group' && isExpanded && (
-                                <ul className="mt-2 space-y-1.5 border-t border-slate-100 pt-2 pl-6">
-                                  {item.children.map((child) => (
-                                    <li
-                                      key={child}
-                                      className="flex items-center justify-between gap-2 rounded-lg bg-violet-50/60 px-3 py-2"
-                                    >
-                                      <span className="min-w-0">
-                                        <span className="block truncate text-sm font-medium text-slate-800">
-                                          {labTemplateLabel(child)}
-                                        </span>
-                                        <span className="mt-0.5 block truncate text-xs text-slate-500">
-                                          ID: {child}
-                                        </span>
+                      {labBasket.length === 0 ? (
+                        <div className="rounded-md border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
+                          No lab tests yet. Add at least one above.
+                        </div>
+                      ) : (
+                        <ul className="space-y-2">
+                          {labBasket.map((item, index) => {
+                            const template = item.kind === 'single' ? item.template : item.parent
+                            const itemKey = `${item.kind}-${template}-${index}`
+                            const isExpanded =
+                              item.kind === 'group' && !!expandedLabGroups[itemKey]
+                            return (
+                              <li
+                                key={itemKey}
+                                className="rounded-xl border border-slate-200/90 bg-white px-3 py-2.5"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <button
+                                    type="button"
+                                    disabled={item.kind !== 'group'}
+                                    onClick={() => {
+                                      if (item.kind !== 'group') return
+                                      setExpandedLabGroups((prev) => ({
+                                        ...prev,
+                                        [itemKey]: !prev[itemKey],
+                                      }))
+                                    }}
+                                    className={`flex min-w-0 flex-1 items-center gap-2 text-left ${
+                                      item.kind === 'group' ? 'cursor-pointer' : 'cursor-default'
+                                    }`}
+                                    aria-expanded={
+                                      item.kind === 'group' ? isExpanded : undefined
+                                    }
+                                  >
+                                    {item.kind === 'group' && (
+                                      <ChevronDown
+                                        className={`h-4 w-4 shrink-0 text-violet-600 transition-transform ${
+                                          isExpanded ? 'rotate-180' : ''
+                                        }`}
+                                      />
+                                    )}
+                                    <span className="min-w-0">
+                                      <span className="block truncate text-sm font-medium text-slate-900">
+                                        {labTemplateLabel(template)}
+                                        {item.kind === 'group'
+                                          ? ` (${item.children.length} tests)`
+                                          : ''}
                                       </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => removeBasketChild(index, child)}
-                                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
-                                        title="Remove this child test from the group"
+                                      <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                        ID: {template}
+                                      </span>
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeBasketItem(index)}
+                                    className="shrink-0 text-xs font-semibold text-red-600 hover:text-red-800"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                                {item.kind === 'group' && isExpanded && (
+                                  <ul className="mt-2 space-y-1.5 border-t border-slate-100 pt-2 pl-6">
+                                    {item.children.map((child) => (
+                                      <li
+                                        key={child}
+                                        className="flex items-center justify-between gap-2 rounded-lg bg-violet-50/60 px-3 py-2"
                                       >
-                                        <Trash2 className="h-3 w-3" strokeWidth={2} />
-                                        Remove
-                                      </button>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </li>
-                          )
-                        })}
-                      </ul>
+                                        <span className="min-w-0">
+                                          <span className="block truncate text-sm font-medium text-slate-800">
+                                            {labTemplateLabel(child)}
+                                          </span>
+                                          <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                            ID: {child}
+                                          </span>
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeBasketChild(index, child)}
+                                          className="inline-flex shrink-0 items-center gap-1 rounded-md border border-red-200 bg-white px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                                          title="Remove this child test from the group"
+                                        >
+                                          <Trash2 className="h-3 w-3" strokeWidth={2} />
+                                          Remove
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
                     </div>
-                  ) : (
-                    <div className="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-                      No lab test lines on this request.
-                    </div>
-                  )
+                  </div>
                 ) : null}
 
                 {!isLabRequest ? (
