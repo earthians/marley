@@ -4,15 +4,11 @@
 
 import frappe
 
-<<<<<<< HEAD
-from healthcare.healthcare.doctype.patient_encounter.patient_encounter import PatientEncounter
-=======
 from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
 	PatientEncounter,
 	get_medications_query,
 	get_permitted_patient,
 )
->>>>>>> 22ce62c (fix: ensure access perms to patient)
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -98,8 +94,6 @@ class TestPatientEncounter(HealthcareTestSuite):
 		).insert()
 		plans = PatientEncounter.get_applicable_treatment_plans(encounter.as_dict())
 		self.assertEqual(plans[0]["name"], self.care_plan_female.template_name)
-<<<<<<< HEAD
-=======
 
 	def test_get_medications_query(self):
 		medication = frappe.db.get_value("Medication", {"generic_name": "Paracetamol"})
@@ -144,4 +138,3 @@ class TestAllergyAnnotationPermission(HealthcareTestSuite):
 
 	def test_no_patient_filter_annotates_nothing(self):
 		self.assertIsNone(get_permitted_patient({}))
->>>>>>> 22ce62c (fix: ensure access perms to patient)
