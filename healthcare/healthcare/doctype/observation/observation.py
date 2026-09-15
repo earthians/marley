@@ -461,7 +461,7 @@ def record_observation_result(values):
 
 
 @frappe.whitelist()
-def add_note(note, observation):
+def add_note(note: str, observation: str) -> None:
 	if note and observation:
 		frappe.db.set_value("Observation", observation, "note", frappe.utils.sanitize_html(note))
 
