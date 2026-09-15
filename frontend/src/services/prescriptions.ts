@@ -1010,6 +1010,7 @@ export async function checkPrescriptionDrugStock(
 export interface PrescriptionDoseValidationPreview {
   ok: boolean
   has_limit?: boolean
+  is_long_acting?: boolean
   weight_based?: boolean
   requires_weight?: boolean
   patient_weight?: number | null
@@ -1018,12 +1019,33 @@ export interface PrescriptionDoseValidationPreview {
   ceiling?: number | null
   single_dose_ceiling?: number | null
   daily_dose_ceiling?: number | null
+  period_dose_ceiling?: number | null
+  period_days?: number | null
+  period_label?: string | null
+  long_acting_remarks?: string | null
   entered_dose?: number | null
   parsed_dose?: number | null
   exceeds_single_dose?: boolean
   exceeds_cumulative_24h?: boolean
+  exceeds_period?: boolean
   frequency_style_dosage?: boolean
   message?: string
+}
+
+export interface MedicineDoseLimitInfo {
+  medicine_code: string
+  is_long_acting: boolean
+  max_dose_per_single_dose?: string | null
+  max_dose_per_day?: string | null
+  long_acting_maximum_single_dose?: string | null
+  long_acting_dosing_period?: string | null
+  long_acting_maximum_dose_within_period?: string | null
+  long_acting_dose_remarks?: string | null
+  long_acting_period_days?: number | null
+  display_single_dose?: string | null
+  display_period_or_day?: string | null
+  display_period_label?: string | null
+  display_remarks?: string | null
 }
 
 export async function previewPrescriptionDoseValidation(args: {
@@ -1034,6 +1056,7 @@ export async function previewPrescriptionDoseValidation(args: {
   inpatient_record?: string
   patient_weight?: number | string
   route_of_administration?: string
+  is_long_acting?: boolean | number
 }): Promise<PrescriptionDoseValidationPreview> {
   const { apiRequest } = await import('./apiClient')
   return apiRequest<PrescriptionDoseValidationPreview>(
@@ -1042,6 +1065,20 @@ export async function previewPrescriptionDoseValidation(args: {
       method: 'POST',
       body: JSON.stringify(args),
     }
+  )
+}
+
+export async function fetchMedicineDoseLimitInfo(
+  medicineCode: string,
+  isLongActing = false,
+): Promise<MedicineDoseLimitInfo> {
+  const { apiRequest } = await import('./apiClient')
+  const params = new URLSearchParams({
+    medicine_code: medicineCode,
+    is_long_acting: isLongActing ? '1' : '0',
+  })
+  return apiRequest<MedicineDoseLimitInfo>(
+    `/api/method/healthcare.api.dose_limit_validation.get_medicine_dose_limit_info?${params.toString()}`,
   )
 }
 

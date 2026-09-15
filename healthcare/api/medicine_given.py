@@ -1039,8 +1039,6 @@ def preview_medicine_given_dose_validation(
 		dose_limit_validation_message,
 		evaluate_medicine_given_dose,
 		extract_dose_numeric,
-		get_item_max_dose_per_day,
-		get_item_max_dose_per_single_dose,
 	)
 
 	admission_detail_name = frappe.db.get_value("Admission Detail", {"admission": admission}, "name")
@@ -1075,19 +1073,14 @@ def preview_medicine_given_dose_validation(
 		patient=patient,
 		admission=admission,
 		route_of_administration=route_of_administration,
+		order_entry=order_entry,
 	)
 	return {
 		**evaluation,
 		"parsed_dose": extract_dose_numeric(dose),
-		"max_dose_per_single_dose": get_item_max_dose_per_single_dose(
-			medicine_code, patient_weight, route_of_administration
-		),
-		"max_dose_per_day": get_item_max_dose_per_day(
-			medicine_code, patient_weight, route_of_administration
-		),
-		"maximum_dose_limit": get_item_max_dose_per_single_dose(
-			medicine_code, patient_weight, route_of_administration
-		),
+		"max_dose_per_single_dose": evaluation.get("max_dose_per_single_dose"),
+		"max_dose_per_day": evaluation.get("max_dose_per_day"),
+		"maximum_dose_limit": evaluation.get("maximum_dose_limit"),
 		"message": dose_limit_validation_message(evaluation),
 	}
 
@@ -1343,6 +1336,7 @@ def create_medicine_given(
 			admission=admission,
 			patient=frappe.db.get_value("Inpatient Admission", admission, "patient"),
 			route_of_administration=given_route,
+			order_entry=order_entry,
 		)
 		if dose_evaluation.get("override_required"):
 			apply_dose_limit_override_audit(row, dose_evaluation, (override_reason or "").strip())
@@ -1729,6 +1723,7 @@ def update_medicine_given(
 		)
 		if getattr(row, "medication_order", None)
 		else None,
+		order_entry=getattr(row, "order_entry", None) or getattr(row, "medication_order_entry", None),
 	)
 	if dose_evaluation.get("override_required"):
 		apply_dose_limit_override_audit(row, dose_evaluation, (override_reason or "").strip())

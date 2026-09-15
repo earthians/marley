@@ -57,6 +57,8 @@
   "validate_dose_per_session_on_prescription",
   "lock_doctors_name_choosing",
   "use_old_approach_soa",
+  "validate_long_acting_dose_period_on_given_medicine",
+  "validate_long_acting_dose_period_on_prescription",
   "discount_section",
   "discount_limit",
   "orders_tab",
@@ -1144,11 +1146,25 @@
    "fieldname": "backdated_days_for_unpaid_commission",
    "fieldtype": "Int",
    "label": "backdated_days_for_unpaid_commission"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, long-acting / depot prescriptions are checked against Item long-acting max single dose and max dose within the dosing period (not Max Per Day).",
+   "fieldname": "validate_long_acting_dose_period_on_given_medicine",
+   "fieldtype": "Check",
+   "label": "Validate Long-Acting Dose Period on Given Medicine"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, long-acting / depot prescriptions are checked against Item long-acting max single dose and max dose within the dosing period (not Max Per Day).",
+   "fieldname": "validate_long_acting_dose_period_on_prescription",
+   "fieldtype": "Check",
+   "label": "Validate Long-Acting Dose Period on Prescription"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-14 14:37:00.639131",
+ "modified": "2026-09-15 11:47:12.777456",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

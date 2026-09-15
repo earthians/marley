@@ -10,10 +10,12 @@ import {
   addMedicationOrderEntry,
   getGivenStatusForPrescription,
   previewPrescriptionDoseValidation,
+  fetchMedicineDoseLimitInfo,
   createPrescriptionSalesOrder,
   mapOrderToDuplicateMedication,
   type Prescription,
   type PrescriptionDoseValidationPreview,
+  type MedicineDoseLimitInfo,
 } from '../../services/prescriptions'
 import {
   flagsFromPrescriptionType,
@@ -32,6 +34,7 @@ import { useCareContext } from '../../providers/CareContextProvider'
 import { CreatePrescriptionModal } from './CreatePrescriptionModal'
 import { SignPrescriptionModal } from './SignPrescriptionModal'
 import { PrescriptionDoseLimitConfirmModal } from './PrescriptionDoseLimitConfirmModal'
+import { DoseLimitHint } from './DoseLimitHint'
 import { IpMedicationPlanPrintButton } from './IpMedicationPlanPrintButton'
 import { PortalActionsMenu } from '../ui/PortalActionsMenu'
 import { toast } from '../../hooks/useToast'
@@ -348,6 +351,8 @@ export const EditMedicationEntryModal = ({
   const [givenCheck, setGivenCheck] = useState<{ loading: boolean; given: boolean }>({ loading: true, given: false })
   const [doseWarning, setDoseWarning] = useState<PrescriptionDoseValidationPreview | null>(null)
   const [checkingDose, setCheckingDose] = useState(false)
+  const [doseLimitInfo, setDoseLimitInfo] = useState<MedicineDoseLimitInfo | null>(null)
+  const [loadingDoseLimitInfo, setLoadingDoseLimitInfo] = useState(false)
   const [doseLimitConfirmOpen, setDoseLimitConfirmOpen] = useState(false)
 
   const [freqQuery, setFreqQuery] = useState(order.patient_frequency || '')
@@ -368,6 +373,9 @@ export const EditMedicationEntryModal = ({
   const [practQuery, setPractQuery] = useState(
     order.healthcare_practitioner_name || order.healthcare_practitioner || ''
   )
+
+  const formIsLongActing =
+    Boolean(form.is_long_acting) || isLongActingPrescriptionType(String(form.medication_type || ''))
 
   useEffect(() => {
     fetchDosageForms().then(setDosageFormOptions).catch(() => setDosageFormOptions([]))
@@ -462,6 +470,7 @@ export const EditMedicationEntryModal = ({
         patient_encounter: patientEncounter,
         inpatient_record: inpatientRecord,
         route_of_administration: form.route_of_administration || undefined,
+        is_long_acting: formIsLongActing ? 1 : 0,
       })
         .then((preview) => {
           if (!cancelled) {
@@ -479,7 +488,38 @@ export const EditMedicationEntryModal = ({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [form.drug, form.dosage, form.route_of_administration, patient, patientEncounter, inpatientRecord])
+  }, [
+    form.drug,
+    form.dosage,
+    form.route_of_administration,
+    formIsLongActing,
+    patient,
+    patientEncounter,
+    inpatientRecord,
+  ])
+
+  useEffect(() => {
+    const drug = (form.drug || '').trim()
+    if (!drug) {
+      setDoseLimitInfo(null)
+      return
+    }
+    let cancelled = false
+    setLoadingDoseLimitInfo(true)
+    fetchMedicineDoseLimitInfo(drug, formIsLongActing)
+      .then((info) => {
+        if (!cancelled) setDoseLimitInfo(info)
+      })
+      .catch(() => {
+        if (!cancelled) setDoseLimitInfo(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDoseLimitInfo(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [form.drug, formIsLongActing])
 
   const handleSave = async () => {
     if (isDiscontinued) return
@@ -634,11 +674,15 @@ export const EditMedicationEntryModal = ({
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500" />
               {checkingDose ? (
                 <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
-              ) : doseWarning?.message ? (
-                <div className="mt-1 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 whitespace-pre-line">
-                  {doseWarning.message}
-                </div>
-              ) : null}
+              ) : (
+                <DoseLimitHint
+                  info={doseLimitInfo}
+                  loading={loadingDoseLimitInfo}
+                  hasWarning={Boolean(doseWarning?.message)}
+                  warningMessage={doseWarning?.message}
+                  enteredDose={form.dosage}
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Unit of Measure</label>
@@ -929,6 +973,8 @@ export const AddMedicationEntryModal = ({
   const [saving, setSaving] = useState(false)
   const [doseWarning, setDoseWarning] = useState<PrescriptionDoseValidationPreview | null>(null)
   const [checkingDose, setCheckingDose] = useState(false)
+  const [doseLimitInfo, setDoseLimitInfo] = useState<MedicineDoseLimitInfo | null>(null)
+  const [loadingDoseLimitInfo, setLoadingDoseLimitInfo] = useState(false)
   const [doseLimitConfirmOpen, setDoseLimitConfirmOpen] = useState(false)
   const [drugQuery, setDrugQuery] = useState('')
   const [drugOpts, setDrugOpts] = useState<LinkFieldOption[]>([])
@@ -950,6 +996,9 @@ export const AddMedicationEntryModal = ({
   const [addDosageForms, setAddDosageForms] = useState<LinkFieldOption[]>([])
   const [practitioners, setPractitioners] = useState<LinkFieldOption[]>([])
   const [practQuery, setPractQuery] = useState('')
+
+  const formIsLongActing =
+    Boolean(form.is_long_acting) || isLongActingPrescriptionType(String(form.medication_type || ''))
 
   useEffect(() => {
     fetchDosageForms().then(setAddDosageForms).catch(() => setAddDosageForms([]))
@@ -1040,6 +1089,7 @@ export const AddMedicationEntryModal = ({
         patient_encounter: patientEncounter,
         inpatient_record: inpatientRecord,
         route_of_administration: form.route_of_administration || undefined,
+        is_long_acting: formIsLongActing ? 1 : 0,
       })
         .then((preview) => {
           if (!cancelled) {
@@ -1057,7 +1107,38 @@ export const AddMedicationEntryModal = ({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [form.drug, form.dosage, form.route_of_administration, patient, patientEncounter, inpatientRecord])
+  }, [
+    form.drug,
+    form.dosage,
+    form.route_of_administration,
+    formIsLongActing,
+    patient,
+    patientEncounter,
+    inpatientRecord,
+  ])
+
+  useEffect(() => {
+    const drug = (form.drug || '').trim()
+    if (!drug) {
+      setDoseLimitInfo(null)
+      return
+    }
+    let cancelled = false
+    setLoadingDoseLimitInfo(true)
+    fetchMedicineDoseLimitInfo(drug, formIsLongActing)
+      .then((info) => {
+        if (!cancelled) setDoseLimitInfo(info)
+      })
+      .catch(() => {
+        if (!cancelled) setDoseLimitInfo(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDoseLimitInfo(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [form.drug, formIsLongActing])
 
   const handleSave = async () => {
     if (!form.drug || !form.dosage || !form.date) {
@@ -1210,11 +1291,15 @@ export const AddMedicationEntryModal = ({
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               {checkingDose ? (
                 <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
-              ) : doseWarning?.message ? (
-                <div className="mt-1 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 whitespace-pre-line">
-                  {doseWarning.message}
-                </div>
-              ) : null}
+              ) : (
+                <DoseLimitHint
+                  info={doseLimitInfo}
+                  loading={loadingDoseLimitInfo}
+                  hasWarning={Boolean(doseWarning?.message)}
+                  warningMessage={doseWarning?.message}
+                  enteredDose={form.dosage}
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Unit of Measure</label>

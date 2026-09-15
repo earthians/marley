@@ -3358,6 +3358,63 @@ frappe.ui.form.on('Healthcare Settings', {
 			});
 		}, __('Direct Upload'));
 
+		frm.add_custom_button(__('Injection / Long-Acting Max Dose'), () => {
+			open_direct_sync_excel_upload({
+				dialog_title: __('Injection / Long-Acting Max Dose'),
+				preview_method:
+					'healthcare.api.injection_max_dose_import.preview_injection_max_dose_import',
+				import_method:
+					'healthcare.api.injection_max_dose_import.run_injection_max_dose_import',
+				build_confirm_message: (counts) => {
+					const sheetLines = Object.entries(counts.sheet_row_counts || {})
+						.map(([name, n]) => `${name}: ${n}`)
+						.join('\n');
+					return __(
+						'Update Item dose fields from injection Excel?\n\n'
+							+ 'Sheets read:\n{0}\n'
+							+ 'Rows: {1}\n'
+							+ 'Matched Items: {2}\n'
+							+ 'Missing Items: {3}\n'
+							+ 'Daily rows: {4}\n'
+							+ 'Long-acting rows: {5}\n\n'
+							+ 'Daily → Max Single Dose + Max Per Day.\n'
+							+ 'Long-acting → Maximum Single Dose Long Acting, Dosing Period, '
+							+ 'Max Within Period, Remarks (does NOT write depot totals into Max Per Day).\n\n'
+							+ 'Sample codes: {6}\n'
+							+ 'Sample missing: {7}\n\nContinue?',
+						[
+							sheetLines || __('(none)'),
+							counts.excel_rows || 0,
+							counts.matched_items || 0,
+							counts.missing_items || 0,
+							counts.daily_rows || 0,
+							counts.long_acting_rows || 0,
+							(counts.sample_item_codes || []).join(', ') || __('(none)'),
+							(counts.sample_missing_codes || []).join(', ') || __('(none)'),
+						]
+					);
+				},
+				build_result_message: (result) =>
+					__(
+						'Import complete.\n\n'
+							+ 'Total: {0}\n'
+							+ 'Updated: {1} (daily {2}, long-acting {3})\n'
+							+ 'Not found: {4}\n'
+							+ 'Skipped: {5}\n'
+							+ 'Errors: {6}',
+						[
+							result.total || 0,
+							result.updated || 0,
+							result.daily_updated || 0,
+							result.long_acting_updated || 0,
+							result.not_found || 0,
+							result.skipped || 0,
+							result.errors || 0,
+						]
+					),
+			});
+		}, __('Direct Upload'));
+
 		frm.add_custom_button(__('Patient appointment - APPOINTMENTS_INFO_01'), () => {
 			open_direct_excel_upload({
 				dialog_title: __('Patient Appointment (APPOINTMENTS_INFO_01)'),

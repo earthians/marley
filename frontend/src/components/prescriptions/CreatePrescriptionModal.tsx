@@ -37,7 +37,9 @@ import {
   checkPrescriptionDrugStock,
   type PrescriptionDrugStockCheck,
   previewPrescriptionDoseValidation,
+  fetchMedicineDoseLimitInfo,
   type PrescriptionDoseValidationPreview,
+  type MedicineDoseLimitInfo,
 } from '../../services/prescriptions'
 import { isLegacyMedicationOrderRow } from '../../utils/medicationOrderDisplayUtils'
 import { createVisitAndPrescriptionOnDischarge } from '../../services/medicineGiven'
@@ -67,6 +69,7 @@ import {
   PrescriptionDoseLimitConfirmModal,
   type PrescriptionDoseLimitIssue,
 } from './PrescriptionDoseLimitConfirmModal'
+import { DoseLimitHint } from './DoseLimitHint'
 import { DateFilterInput } from '../ui/DateFilterInput'
 import { localDateInputValue } from '../../utils/formatDate'
 
@@ -406,19 +409,24 @@ export const CreatePrescriptionModal = ({
     Record<number, PrescriptionDoseValidationPreview>
   >({})
   const [checkingDoseRows, setCheckingDoseRows] = useState<Record<number, boolean>>({})
+  const [medicationDoseLimits, setMedicationDoseLimits] = useState<Record<number, MedicineDoseLimitInfo | null>>(
+    {},
+  )
+  const [loadingDoseLimits, setLoadingDoseLimits] = useState<Record<number, boolean>>({})
   const [doseLimitConfirmOpen, setDoseLimitConfirmOpen] = useState(false)
   const [doseLimitConfirmIssues, setDoseLimitConfirmIssues] = useState<PrescriptionDoseLimitIssue[]>([])
 
   const isEditing = editMode
 
-  // Only re-check max dose when drug or dosage changes — not frequency, route, etc.
+  // Re-check max dose when drug, dosage, route, or long-acting mode changes.
   const doseValidationKey = useMemo(
     () =>
       medications
-        .map(
-          (row) =>
-            `${(row.drug || '').trim()}\u0001${(row.dosage || '').trim()}\u0001${(row.route_of_administration || '').trim()}`,
-        )
+        .map((row) => {
+          const longActing =
+            Boolean(row.is_long_acting) || isLongActingPrescriptionType(String(row.medication_type))
+          return `${(row.drug || '').trim()}\u0001${(row.dosage || '').trim()}\u0001${(row.route_of_administration || '').trim()}\u0001${longActing ? '1' : '0'}`
+        })
         .join('\u0002'),
     [medications],
   )
@@ -430,6 +438,8 @@ export const CreatePrescriptionModal = ({
     medications.forEach((row, index) => {
       const drug = (row.drug || '').trim()
       const dosage = (row.dosage || '').trim()
+      const longActing =
+        Boolean(row.is_long_acting) || isLongActingPrescriptionType(String(row.medication_type))
       if (!drug || !dosage) {
         setMedicationDoseWarnings((prev) => {
           if (!(index in prev)) return prev
@@ -453,6 +463,7 @@ export const CreatePrescriptionModal = ({
               ? formData.inpatient_record || undefined
               : undefined,
           route_of_administration: row.route_of_administration || undefined,
+          is_long_acting: longActing ? 1 : 0,
         })
           .then((preview) => {
             if (cancelled) return
@@ -500,6 +511,44 @@ export const CreatePrescriptionModal = ({
     formData.patient_encounter,
     formData.inpatient_record,
   ])
+
+  useEffect(() => {
+    let cancelled = false
+    medications.forEach((row, index) => {
+      const drug = (row.drug || '').trim()
+      const longActing =
+        Boolean(row.is_long_acting) || isLongActingPrescriptionType(String(row.medication_type))
+      if (!drug) {
+        setMedicationDoseLimits((prev) => {
+          if (!(index in prev)) return prev
+          const next = { ...prev }
+          delete next[index]
+          return next
+        })
+        return
+      }
+      setLoadingDoseLimits((prev) => ({ ...prev, [index]: true }))
+      fetchMedicineDoseLimitInfo(drug, longActing)
+        .then((info) => {
+          if (!cancelled) setMedicationDoseLimits((prev) => ({ ...prev, [index]: info }))
+        })
+        .catch(() => {
+          if (!cancelled) setMedicationDoseLimits((prev) => ({ ...prev, [index]: null }))
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoadingDoseLimits((prev) => {
+              const next = { ...prev }
+              delete next[index]
+              return next
+            })
+          }
+        })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [doseValidationKey])
 
   const searchFrequencies = async (query: string) => {
     setLoadingFrequency(true)
@@ -1661,11 +1710,15 @@ export const CreatePrescriptionModal = ({
                               />
                               {checkingDoseRows[index] ? (
                                 <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
-                              ) : medicationDoseWarnings[index]?.message ? (
-                                <div className="mt-1 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 whitespace-pre-line">
-                                  {medicationDoseWarnings[index].message}
-                                </div>
-                              ) : null}
+                              ) : (
+                                <DoseLimitHint
+                                  info={medicationDoseLimits[index] || null}
+                                  loading={Boolean(loadingDoseLimits[index])}
+                                  hasWarning={Boolean(medicationDoseWarnings[index]?.message)}
+                                  warningMessage={medicationDoseWarnings[index]?.message}
+                                  enteredDose={row.dosage}
+                                />
+                              )}
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
