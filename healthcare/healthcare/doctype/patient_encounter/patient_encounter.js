@@ -261,15 +261,11 @@ frappe.ui.form.on("Patient Encounter", {
 		) {
 			frm.set_query("drug_code", "drug_prescription", function (doc, cdt, cdn) {
 				let row = frappe.get_doc(cdt, cdn);
-<<<<<<< HEAD
-				let filters = { is_stock_item: 1 };
-=======
 				let filters = {
 					is_stock_item: 1,
 					company: doc.company,
 					patient: doc.patient,
 				};
->>>>>>> 5a7a433 (feat: show medication alerts while prescribing)
 				if (row.medication) {
 					filters.medication = row.medication;
 				}
