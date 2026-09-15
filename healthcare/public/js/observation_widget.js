@@ -293,13 +293,13 @@ healthcare.ObservationWidget = class {
 		}, 0);
 	}
 
-	render_note_html(html) {
+	render_note_html(html, label = __("Note")) {
 		if (!html) return "";
 		return `<div class="observation-note" style="margin-top:6px; padding:6px 8px;
 			background-color: var(--subtle-fg, var(--bg-color));
 			border-radius: var(--border-radius-sm, 4px);">
 			<div class="text-muted" style="font-size:9px; font-weight:600; text-transform:uppercase;
-				letter-spacing:0.5px; margin-bottom:3px;">${__("Note")}</div>
+				letter-spacing:0.5px; margin-bottom:3px;">${label}</div>
 			<div class="text-muted" style="font-size:11px; line-height:1.5;">${html}</div>
 		</div>`;
 	}
@@ -409,10 +409,15 @@ healthcare.ObservationWidget = class {
 		if (obs_data.observation_category == "Imaging") {
 			me[obs_data.name]
 				.get_field("findings_text")
-				.html(me.render_note_html(obs_data.result_text));
+				.html(me.render_note_html(obs_data.result_text, __("Findings")));
 			me[obs_data.name]
 				.get_field("result_interpretation")
-				.html(me.render_note_html(obs_data.result_interpretation));
+				.html(
+					me.render_note_html(
+						obs_data.result_interpretation,
+						__("Interpretation"),
+					),
+				);
 		}
 	}
 
@@ -581,13 +586,13 @@ healthcare.ObservationWidget = class {
 					obs_data.result_text = data.note;
 					me[obs_data.name]
 						.get_field("findings_text")
-						.html(me.render_note_html(data.note));
+						.html(me.render_note_html(data.note, __(type)));
 				} else if (type == "Interpretation") {
 					val_dict["interpretation"] = data.note;
 					obs_data.result_interpretation = data.note;
 					me[obs_data.name]
 						.get_field("result_interpretation")
-						.html(me.render_note_html(data.note));
+						.html(me.render_note_html(data.note, __(type)));
 				}
 				d.hide();
 				values.push(val_dict);
