@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import get_file_json
 
 SEED_FILE = ("healthcare", "healthcare", "doctype", "allergy", "allergy_seed.json")
 
@@ -14,7 +13,7 @@ def create_allergies():
 
 
 def read_seed():
-	return get_file_json(frappe.get_app_path(*SEED_FILE))
+	return frappe.get_file_json(frappe.get_app_path(*SEED_FILE))
 
 
 def create_allergy(record):

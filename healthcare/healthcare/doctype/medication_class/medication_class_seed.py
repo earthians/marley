@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import get_file_json
 
 SEED_DIRECTORY = ("healthcare", "healthcare", "doctype", "medication_class")
 TAXONOMY_FILE = "medication_class_seed.json"
@@ -27,7 +26,7 @@ def read_ingredients():
 
 def read_seed_file(filename):
 	"""Read one of this folder's seed files. `filename` is only ever a module constant"""
-	return get_file_json(frappe.get_app_path(*SEED_DIRECTORY, filename))
+	return frappe.get_file_json(frappe.get_app_path(*SEED_DIRECTORY, filename))
 
 
 def create_class(node, parent=None):
