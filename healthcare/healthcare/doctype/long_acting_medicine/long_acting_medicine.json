@@ -79,10 +79,10 @@
   {
    "allow_on_submit": 1,
    "fieldname": "frequency",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Frequency",
-   "options": "\nWeekly\nBiweekly\nMonthly\nEvery 2 Months\nEvery 3 Months\nevery 2 weeks"
+   "options": "Long Acting Frequency"
   },
   {
    "fieldname": "start_date",
@@ -195,7 +195,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-08-24 21:02:00.718999",
+ "modified": "2026-09-15 11:18:45.914786",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Long Acting Medicine",
