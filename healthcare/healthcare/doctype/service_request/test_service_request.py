@@ -14,7 +14,10 @@ from healthcare.healthcare.doctype.lab_test.test_lab_test import create_lab_test
 from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
 	create_patient_referral,
 )
-from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
+from healthcare.healthcare.doctype.service_request.service_request import (
+	make_appointment,
+	make_clinical_procedure,
+)
 from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -147,6 +150,24 @@ class TestServiceRequest(HealthcareTestSuite):
 			),
 			practitioner_2,
 		)
+
+		service_request = frappe.db.get_value(
+			"Service Request",
+			{
+				"order_group": encounter.name,
+				"template_dt": "Appointment Type",
+				"template_dn": appointment_type.name,
+			},
+			"name",
+		)
+		frappe.db.set_value("Service Request", service_request, "source", "Direct")
+		appointment = make_appointment(service_request)
+		self.assertEqual(appointment.practitioner, practitioner_2)
+		self.assertEqual(
+			appointment.practitioner_name,
+			frappe.db.get_value("Healthcare Practitioner", practitioner_2, "practitioner_name"),
+		)
+		self.assertFalse(appointment.source)
 
 
 def create_encounter(

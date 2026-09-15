@@ -449,6 +449,9 @@ def make_appointment(
 		target.department = frappe.db.get_value(
 			"Healthcare Practitioner", source.referred_to_practitioner, "department"
 		)
+		target.practitioner_name = frappe.db.get_value(
+			"Healthcare Practitioner", source.referred_to_practitioner, "practitioner_name"
+		)
 
 	doc = get_mapped_doc(
 		"Service Request",
@@ -463,7 +466,7 @@ def make_appointment(
 					"source_doc": "reference_doctype",
 					"order_group": "reference_docname",
 				},
-				"field_no_map": ["naming_series", "status"],
+				"field_no_map": ["naming_series", "status", "source", "practitioner_name"],
 			},
 		},
 		target_doc,
