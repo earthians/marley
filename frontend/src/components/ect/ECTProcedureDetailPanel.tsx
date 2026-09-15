@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ClipboardList, Stethoscope, Zap } from 'lucide-react'
+import { Activity, ClipboardList, Pencil, Stethoscope, Trash2, Zap } from 'lucide-react'
 import { fetchDoc } from '../../services/common'
+import { deleteDoctypeRow } from '../../services/doctypeResource'
+import { useCareContext } from '../../providers/CareContextProvider'
+import { toast } from '../../hooks/useToast'
 import { DetailSlideOver } from '../ui/DetailSlideOver'
 import { PrintFormatDropdown } from '../ui/PrintFormatDropdown'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { MODAL_SECTION_CLASS, MODAL_SECTION_TITLE_CLASS } from '../ui/CreateModalChrome'
+import { CreateECTProcedureModal } from './CreateECTProcedureModal'
+import {
+  canMutateEctForm,
+  ECT_FORM_EDIT_LOCKED_MESSAGE,
+  ECT_FORM_MUTATE_HINT,
+} from './ectForm24h'
 import {
   AttachBlock,
   DataTile,
@@ -21,12 +31,23 @@ interface ECTProcedureDetailPanelProps {
   name: string
   subtitle?: string
   onClose: () => void
+  onChanged?: () => void
 }
 
-export function ECTProcedureDetailPanel({ name, subtitle, onClose }: ECTProcedureDetailPanelProps) {
+export function ECTProcedureDetailPanel({
+  name,
+  subtitle,
+  onClose,
+  onChanged,
+}: ECTProcedureDetailPanelProps) {
+  const { lockEditingData, guardClinicalEdit } = useCareContext()
   const [doc, setDoc] = useState<DocRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -45,7 +66,40 @@ export function ECTProcedureDetailPanel({ name, subtitle, onClose }: ECTProcedur
     return () => {
       cancelled = true
     }
-  }, [name])
+  }, [name, reloadKey])
+
+  const canMutate = canMutateEctForm(doc?.creation ? String(doc.creation) : null, lockEditingData)
+
+  const openEdit = () => {
+    if (!canMutate) {
+      toast.error(lockEditingData ? 'Editing is locked in Healthcare Settings.' : ECT_FORM_EDIT_LOCKED_MESSAGE)
+      return
+    }
+    guardClinicalEdit(() => setShowEdit(true))
+  }
+
+  const openDelete = () => {
+    if (!canMutate) {
+      toast.error(lockEditingData ? 'Editing is locked in Healthcare Settings.' : ECT_FORM_EDIT_LOCKED_MESSAGE)
+      return
+    }
+    guardClinicalEdit(() => setShowDelete(true))
+  }
+
+  const confirmDelete = async () => {
+    setDeleting(true)
+    try {
+      await deleteDoctypeRow('ECT Procedure', name)
+      toast.success('ECT Procedure deleted')
+      setShowDelete(false)
+      onChanged?.()
+      onClose()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete ECT Procedure')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const headerSubtitle = useMemo(() => {
     if (!doc) return subtitle ?? name
@@ -73,6 +127,7 @@ export function ECTProcedureDetailPanel({ name, subtitle, onClose }: ECTProcedur
   ].filter((f) => doc && hasValue(doc[f.key]))
 
   return (
+    <>
     <DetailSlideOver
       title="ECT Procedure"
       subtitle={headerSubtitle}
@@ -80,13 +135,37 @@ export function ECTProcedureDetailPanel({ name, subtitle, onClose }: ECTProcedur
       onClose={onClose}
       maxWidthClass="max-w-2xl"
       headerActions={
-        <PrintFormatDropdown
-          doctype="ECT Procedure"
-          docName={name}
-          noLetterhead={0}
-          triggerPrint={1}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-sky-200/80 bg-white/80 text-sky-700 shadow-sm transition hover:bg-sky-50"
-        />
+        <div className="flex items-center gap-1.5">
+          {canMutate ? (
+            <>
+              <button
+                type="button"
+                onClick={openEdit}
+                className="inline-flex h-9 items-center gap-1 rounded-lg border border-emerald-200/80 bg-white/80 px-2.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+                title="Edit (within 24 hours of creation)"
+              >
+                <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={openDelete}
+                className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 bg-white/80 px-2.5 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50"
+                title="Delete (within 24 hours of creation)"
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                Delete
+              </button>
+            </>
+          ) : null}
+          <PrintFormatDropdown
+            doctype="ECT Procedure"
+            docName={name}
+            noLetterhead={0}
+            triggerPrint={1}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-sky-200/80 bg-white/80 text-sky-700 shadow-sm transition hover:bg-sky-50"
+          />
+        </div>
       }
     >
       {loading ? (
@@ -232,8 +311,38 @@ export function ECTProcedureDetailPanel({ name, subtitle, onClose }: ECTProcedur
               <DataTile label="Modified" value={formatDateTime(doc.modified)} />
             ) : null}
           </MetaFooter>
+          {!canMutate && doc.creation ? (
+            <p className="text-[11px] text-slate-500">{ECT_FORM_MUTATE_HINT}</p>
+          ) : null}
         </div>
       ) : null}
     </DetailSlideOver>
+
+    {showEdit && doc ? (
+      <CreateECTProcedureModal
+        editName={name}
+        initialPatient={String(doc.patient || '')}
+        onClose={() => setShowEdit(false)}
+        onSuccess={() => {
+          setShowEdit(false)
+          setReloadKey((k) => k + 1)
+          onChanged?.()
+        }}
+      />
+    ) : null}
+
+    {showDelete ? (
+      <ConfirmDialog
+        open
+        title="Delete ECT Procedure?"
+        message={`Delete ${name}? This cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+        loading={deleting}
+        onCancel={() => setShowDelete(false)}
+        onConfirm={confirmDelete}
+      />
+    ) : null}
+    </>
   )
 }

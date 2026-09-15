@@ -861,8 +861,9 @@ import { CM_BTN_CANCEL, CM_BTN_PRIMARY, CREATE_MODAL_BODY_GRADIENT, CREATE_MODAL
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { apiRequest } from '../../services/apiClient'
+import { updateDoctypeRow } from '../../services/doctypeResource'
 import { uploadPatientFile } from '../../services/patients'
-import { fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, type LinkFieldOption } from '../../services/common'
+import { fetchDoc, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
 import { ChevronDown, PenLine, Check , FileText } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
@@ -1135,6 +1136,8 @@ async function fetchTermsContent(termName: string): Promise<string> {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ECTAnesthesiaConsentModalProps {
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
   admissionNo?: string
   patient?: string
   patientName?: string
@@ -1160,12 +1163,14 @@ const secTitle = 'text-sm font-semibold text-slate-800 mb-3 pb-1.5 border-b bord
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export const ECTAnesthesiaConsentModal = ({
+  editName,
   admissionNo = '',
   patient = '',
   patientName = '',
   onClose,
   onSuccess,
 }: ECTAnesthesiaConsentModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   // Get context from CareContextProvider
   const { mode, activeVisit, activeAdmission, selectedPatient: contextPatient } = useCareContext()
   
@@ -1175,6 +1180,7 @@ export const ECTAnesthesiaConsentModal = ({
   
   const [activeTab, setActiveTab] = useState<TabId>('general')
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   // ── General
   const [admissionField, setAdmissionField] = useState(() => {
@@ -1189,7 +1195,54 @@ export const ECTAnesthesiaConsentModal = ({
   const [patientField, setPatientField] = useState(patient || contextPatient || '')
   const [patientNameField, setPatientNameField] = useState(patientName || '')
   
-  const isPatientLocked = Boolean(patient) || Boolean(contextPatient)
+  const isPatientLocked = Boolean(patient) || Boolean(contextPatient) || isEdit
+
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('ECT Anesthesia Consent', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setAdmissionField(String(doc.inpatient_admission || ''))
+        const visit = String(doc.patient_visit || '')
+        setPatientVisit(visit)
+        setPatientVisitLabel(visit)
+        setPatientField(String(doc.patient || ''))
+        setPatientNameField(String(doc.patient_name || ''))
+        setTermsEnglishName(String(doc.termsenglish || ''))
+        setTermsEnglishContent(String(doc.conscious_sedation_consent_form || ''))
+        setTermsArabicName(String(doc.termsarabic || ''))
+        setTermsArabicContent(String(doc.conscious || ''))
+        setAnesthesiologist(String(doc.anesthesiologist || ''))
+        setAnesthesiologistName(String(doc.anesthesiologit_name || doc.anesthesiologist_name || ''))
+        if (doc.date) setAnesthesiaDate(String(doc.date).slice(0, 10))
+        if (doc.time) setAnesthesiaTime(String(doc.time).slice(0, 8))
+        if (doc.signature) setAnesthesiaSignatureUrl(String(doc.signature))
+        if (doc.signature_of_the_patient) setPatientSignatureUrl(String(doc.signature_of_the_patient))
+        setCprNo(String(doc.cpr_no || ''))
+        setGuardianName(String(doc.patients_legal_guardian || ''))
+        setRelationToPatient(String(doc.relation_to_patient || ''))
+        setGuardianCprNo(String(doc.guardian_cpr_no || ''))
+        if (doc.guardian_signature) setGuardianSignatureUrl(String(doc.guardian_signature))
+        if (doc.guardian_sign_date) setGuardianSignDate(String(doc.guardian_sign_date).slice(0, 10))
+        if (doc.guardian_sign_time) setGuardianSignTime(String(doc.guardian_sign_time).slice(0, 8))
+        setWitnessName(String(doc.witness_name || ''))
+        if (doc.witness_signature) setWitnessSignatureUrl(String(doc.witness_signature))
+        setWitnessCprNo(String(doc.witness_cpr_no || ''))
+        if (doc.witness_sign_date) setWitnessSignDate(String(doc.witness_sign_date).slice(0, 10))
+        if (doc.witness_sign_time) setWitnessSignTime(String(doc.witness_sign_time).slice(0, 8))
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load consent')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
 
   // ── Consent Terms
   const [termsEnglishName, setTermsEnglishName] = useState('')
@@ -1286,16 +1339,17 @@ export const ECTAnesthesiaConsentModal = ({
     e.preventDefault()
     e.stopPropagation()
     
-    // Validate based on mode
-    if (isIPMode && !admissionField) {
-      toast.error('Please select an inpatient admission (IP mode active)')
-      return
+    if (!isEdit) {
+      if (isIPMode && !admissionField) {
+        toast.error('Please select an inpatient admission (IP mode active)')
+        return
+      }
+      if (isOPMode && !patientVisit) {
+        toast.error('Please select a patient visit (OP mode active)')
+        return
+      }
     }
-    if (isOPMode && !patientVisit) {
-      toast.error('Please select a patient visit (OP mode active)')
-      return
-    }
-    
+
     setSubmitting(true)
     try {
       const payload = {
@@ -1326,11 +1380,15 @@ export const ECTAnesthesiaConsentModal = ({
         witness_sign_date: witnessSignDate || undefined,
         witness_sign_time: witnessSignTime || undefined,
       }
-      await apiRequest('/api/resource/ECT%20Anesthesia%20Consent', {
-        method: 'POST',
-        body: JSON.stringify({ data: payload }),
-      })
-      toast.success('ECT Anesthesia Consent saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('ECT Anesthesia Consent', editName.trim(), payload)
+      } else {
+        await apiRequest('/api/resource/ECT%20Anesthesia%20Consent', {
+          method: 'POST',
+          body: JSON.stringify({ data: payload }),
+        })
+      }
+      toast.success(isEdit ? 'ECT Anesthesia Consent updated.' : 'ECT Anesthesia Consent saved successfully.')
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -1354,7 +1412,7 @@ export const ECTAnesthesiaConsentModal = ({
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('w-full max-w-3xl max-h-[92vh] overflow-hidden')}>
         <CreateModalHeader
-          title="ECT Anesthesia Consent"
+          title={isEdit ? 'Edit ECT Anesthesia Consent' : 'ECT Anesthesia Consent'}
           icon={<FileText className="h-5 w-5 text-emerald-700" strokeWidth={2} />}
           subtitle={
             <>
@@ -1384,7 +1442,10 @@ export const ECTAnesthesiaConsentModal = ({
         {/* Body */}
         <form onSubmit={handleSubmit} noValidate className={`${CREATE_MODAL_BODY_GRADIENT} flex-1 overflow-y-auto`}>
           <div className="px-6 py-5 space-y-6">
-
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading consent…</div>
+            ) : (
+            <>
             {/* ── Tab 1: General ── */}
             {activeTab === 'general' && (
               <div className="space-y-5">
@@ -1738,6 +1799,8 @@ export const ECTAnesthesiaConsentModal = ({
                 </div>
               </div>
             )}
+            </>
+            )}
 
           </div>
 
@@ -1763,9 +1826,17 @@ export const ECTAnesthesiaConsentModal = ({
                 </button>
               )}
               <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
-              <button type="submit" disabled={submitting || (!isIPMode && !isOPMode) || (isIPMode && !admissionField) || (isOPMode && !patientVisit)}
+              <button type="submit"
+                disabled={
+                  submitting ||
+                  loadingEdit ||
+                  (!isEdit &&
+                    ((!isIPMode && !isOPMode) ||
+                      (isIPMode && !admissionField) ||
+                      (isOPMode && !patientVisit)))
+                }
                 className={CM_BTN_PRIMARY}>
-                {submitting ? 'Saving...' : 'Save Consent'}
+                {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Consent'}
               </button>
             </div>
           </div>

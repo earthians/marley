@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { apiRequest } from '../../services/apiClient'
+import { updateDoctypeRow } from '../../services/doctypeResource'
 import { uploadPatientFile } from '../../services/patients'
-import { fetchHealthcarePractitioners, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, getCurrentUserPractitioner, type LinkFieldOption } from '../../services/common'
+import { fetchDoc, fetchHealthcarePractitioners, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, getCurrentUserPractitioner, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
 import { PenLine, Trash2, Check, ChevronDown, Plus, AlertCircle , ClipboardList } from 'lucide-react'
 
@@ -244,11 +245,26 @@ const LinkCombobox = ({ label, value, onSelect, onClear, fetchOptions, placehold
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PreEctChecklistModalProps {
-  admissionNo: string
-  patient: string
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
+  admissionNo?: string
+  patient?: string
   patientName?: string
   onClose: () => void
   onSuccess?: () => void
+}
+
+function toDateInput(value?: string | null): string {
+  if (!value) return ''
+  return String(value).trim().slice(0, 10)
+}
+
+function toTimeInput(value?: string | null): string {
+  if (!value) return ''
+  const s = String(value).trim()
+  if (s.includes('T')) return (s.split('T')[1] || '').slice(0, 8)
+  if (s.length === 5) return `${s}:00`
+  return s.slice(0, 8)
 }
 
 interface ChecklistRow {
@@ -287,7 +303,15 @@ const sectionTitleClass = 'text-sm font-semibold text-slate-800 mb-3 pb-1.5 bord
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
-export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClose, onSuccess }: PreEctChecklistModalProps) => {
+export const PreEctChecklistModal = ({
+  editName,
+  admissionNo = '',
+  patient = '',
+  patientName,
+  onClose,
+  onSuccess,
+}: PreEctChecklistModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   const [activeTab, setActiveTab] = useState<TabId>('general')
   const [form, setFormState] = useState<FormState>({
     patient_visit: '',
@@ -301,6 +325,7 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
   const [signatureUrl, setSignatureUrl] = useState('')
   const [signatureUploading, setSignatureUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   // Link display labels
   const [patientVisitLabel, setPatientVisitLabel] = useState('')
@@ -312,7 +337,55 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
   const [currentAdmission, setCurrentAdmission] = useState(admissionNo)
   const [currentPatient, setCurrentPatient] = useState(patient)
   const [currentPatientName, setCurrentPatientName] = useState(patientName || '')
-  const isLockedContext = Boolean(admissionNo)
+  const isLockedContext = Boolean(admissionNo) || isEdit
+
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('Pre-ECT Checklist', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setCurrentAdmission(String(doc.inpatient_admission || doc.admission || ''))
+        setCurrentPatient(String(doc.patient || ''))
+        setCurrentPatientName(String(doc.patient_name || ''))
+        const visit = String(doc.patient_visit || '')
+        setFormState((prev) => ({
+          ...prev,
+          patient_visit: visit,
+          date: toDateInput(doc.date as string) || prev.date,
+          time: toTimeInput(doc.time as string) || prev.time,
+          staff_nurse: String(doc.staff_nurse || prev.staff_nurse),
+          nurse_name: String(doc.nurse_name || prev.nurse_name),
+          sign_time: toTimeInput(doc.sign_time as string) || prev.sign_time,
+        }))
+        setPatientVisitLabel(visit)
+        if (doc.staff_nurse) setNurseLabel(String(doc.nurse_name || doc.staff_nurse))
+        const sig = doc.signature
+        if (typeof sig === 'string' && sig.trim()) setSignatureUrl(sig.trim())
+        const tpl = String(doc.template || '')
+        setTemplateName(tpl)
+        setTemplateLabel(tpl)
+        const rows: Record<string, unknown>[] = Array.isArray(doc.checklist) ? doc.checklist : []
+        setChecklist(
+          rows.map((r) => ({
+            _key: Math.random().toString(36).slice(2),
+            checklist: String(r.checklist ?? ''),
+            answer: (String(r.answer ?? '') as '' | 'Yes' | 'No' | 'N/A'),
+            remarks: String(r.remarks ?? ''),
+          }))
+        )
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load checklist')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
 
   const fetchPatientOpts = useCallback((s: string) => fetchPatientOptions(s || undefined), [])
   const fetchAdmissionOpts = useCallback(
@@ -416,6 +489,7 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
 
   // If a template is marked Default, load it when creating a new checklist.
   useEffect(() => {
+    if (isEdit) return
     let cancelled = false
     ;(async () => {
       try {
@@ -442,7 +516,7 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
     return () => {
       cancelled = true
     }
-  }, [applyTemplate])
+  }, [applyTemplate, isEdit])
 
   const addRow = () =>
     setChecklist(prev => [...prev, { _key: Math.random().toString(36).slice(2), checklist: '', answer: '', remarks: '' }])
@@ -482,11 +556,16 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
         signature: signatureUrl || undefined,
         checklist: checklist.map(({ _key: _unused, ...rest }) => rest),
       }
-      await apiRequest('/api/resource/Pre-ECT%20Checklist', {
-        method: 'POST',
-        body: JSON.stringify({ data: payload }),
-      })
-      toast.success('Pre-ECT Checklist saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('Pre-ECT Checklist', editName.trim(), payload)
+        toast.success('Pre-ECT Checklist updated.')
+      } else {
+        await apiRequest('/api/resource/Pre-ECT%20Checklist', {
+          method: 'POST',
+          body: JSON.stringify({ data: payload }),
+        })
+        toast.success('Pre-ECT Checklist saved successfully.')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -503,7 +582,7 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('w-full max-w-3xl max-h-[92vh] overflow-hidden')}>
         <CreateModalHeader
-          title="Pre-ECT Checklist"
+          title={isEdit ? 'Edit Pre-ECT Checklist' : 'Pre-ECT Checklist'}
           icon={<ClipboardList className="h-5 w-5 text-emerald-700" strokeWidth={2} />}
           subtitle={<>{patientName ? `${patientName} · ` : ''}{admissionNo}</>}
           onClose={onClose}
@@ -531,7 +610,10 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate className={`${CREATE_MODAL_BODY_GRADIENT} flex-1 overflow-y-auto`}>
           <div className="px-6 py-5">
-
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading checklist…</div>
+            ) : (
+            <>
             {/* ── Tab 1: General ── */}
             {activeTab === 'general' && (
               <div className="space-y-6">
@@ -823,6 +905,8 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
                 </div>
               </div>
             )}
+            </>
+            )}
           </div>
 
           <div className={`${CREATE_MODAL_FOOTER_STICKY} items-center justify-between`}>
@@ -846,8 +930,8 @@ export const PreEctChecklistModal = ({ admissionNo, patient, patientName, onClos
                 </button>
               )}
               <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
-              <button type="submit" disabled={submitting} className={CM_BTN_PRIMARY}>
-                {submitting ? 'Saving...' : 'Save Checklist'}
+              <button type="submit" disabled={submitting || loadingEdit} className={CM_BTN_PRIMARY}>
+                {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Checklist'}
               </button>
             </div>
           </div>

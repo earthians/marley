@@ -259,6 +259,8 @@ export const ServiceRequestList = ({
             phase: 'post_sample',
             can_delete: false,
             can_cancel_with_settlement: false,
+            can_cancel_simple: false,
+            requires_settlement: false,
             can_cancel_sample_handling: false,
             can_delete_lab_tests: false,
             can_delete_lab_request: false,
@@ -412,17 +414,21 @@ export const ServiceRequestList = ({
 
   const handleCancelBookedLabRequest = async (
     sr: ServiceRequest,
-    settlementMode: 'refund' | 'patient_credit'
+    settlementMode?: 'refund' | 'patient_credit' | null
   ) => {
     setOpenActionRow(null)
     setActionLoading(sr.name)
     try {
       const result = await cancelBookedLabRequest(sr.name, settlementMode)
-      toast.success(
-        settlementMode === 'patient_credit'
-          ? `Lab request cancelled. Patient credit recorded${result.payment_entry ? ` (${result.payment_entry})` : ''}.`
-          : 'Lab request cancelled. Refund the patient at reception if cash was collected.'
-      )
+      if (settlementMode === 'patient_credit') {
+        toast.success(
+          `Lab request cancelled. Patient credit recorded${result.payment_entry ? ` (${result.payment_entry})` : ''}.`
+        )
+      } else if (settlementMode === 'refund') {
+        toast.success('Lab request cancelled. Refund the patient at reception if cash was collected.')
+      } else {
+        toast.success('Lab request cancelled')
+      }
       setLabRequestModal(null)
       setLabActionsBySr((prev) => {
         const next = { ...prev }
@@ -969,6 +975,20 @@ export const ServiceRequestList = ({
                           </button>
                         )}
 
+                        {isLab && labActions?.can_cancel_simple && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenActionRow(null)
+                              setLabRequestModal({ action: 'cancel', sr })
+                            }}
+                            disabled={loadingThis}
+                            className="block w-full text-left px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Cancel Lab Request
+                          </button>
+                        )}
+
                         {isLab && labActions?.can_cancel_with_settlement && (
                           <button
                             type="button"
@@ -1085,6 +1105,7 @@ export const ServiceRequestList = ({
           }}
           onDeleteConfirm={() => handleDeleteDraftLabRequest(labRequestModal.sr)}
           onSampleHandlingConfirm={() => handleCancelLabSampleHandling(labRequestModal.sr)}
+          onCancelConfirm={() => handleCancelBookedLabRequest(labRequestModal.sr)}
           onSettlementChoice={(mode) => handleCancelBookedLabRequest(labRequestModal.sr, mode)}
         />
       )}

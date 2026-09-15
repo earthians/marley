@@ -696,7 +696,8 @@ import { CM_BTN_CANCEL, CM_BTN_PRIMARY, CREATE_MODAL_BODY_GRADIENT, CREATE_MODAL
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { apiRequest } from '../../services/apiClient'
-import { fetchInpatientAdmissionOptions, fetchPatientVisits, type LinkFieldOption } from '../../services/common'
+import { updateDoctypeRow } from '../../services/doctypeResource'
+import { fetchDoc, fetchInpatientAdmissionOptions, fetchPatientVisits, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
 import { Plus, Trash2, ChevronDown , FileText } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
@@ -708,11 +709,29 @@ import {
 import { DateFilterInput } from '../ui/DateFilterInput'
 
 interface RecoveryRoomRecordModalProps {
-  admissionNo: string
-  patient: string
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
+  admissionNo?: string
+  patient?: string
   patientName?: string
   onClose: () => void
   onSuccess?: () => void
+}
+
+function toDateInput(value?: string | null): string {
+  if (!value) return ''
+  return String(value).trim().slice(0, 10)
+}
+
+function toTimeInput(value?: string | null): string {
+  if (!value) return ''
+  const s = String(value).trim()
+  if (s.includes('T')) {
+    const part = s.split('T')[1] || ''
+    return part.slice(0, 8)
+  }
+  if (s.length === 5) return `${s}:00`
+  return s.slice(0, 8)
 }
 
 type TabId = 'general' | 'events'
@@ -1248,8 +1267,14 @@ function EventsTab({
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 export const RecoveryRoomRecordModal = ({
-  admissionNo, patient, patientName, onClose, onSuccess
+  editName,
+  admissionNo = '',
+  patient = '',
+  patientName,
+  onClose,
+  onSuccess,
 }: RecoveryRoomRecordModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   // Get context from CareContextProvider
   const { mode, activeAdmission, selectedPatient: contextPatient } = useCareContext()
   
@@ -1261,6 +1286,7 @@ export const RecoveryRoomRecordModal = ({
   const [form, setForm] = useState<FormState>(emptyForm())
   const [events, setEvents] = useState<EventRow[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   const setField = (k: keyof FormState, v: string) => setForm(prev => ({ ...prev, [k]: v }))
 
@@ -1269,8 +1295,55 @@ export const RecoveryRoomRecordModal = ({
     if (isIPMode && activeAdmission) return activeAdmission
     return admissionNo || ''
   })
-  const [currentPatient] = useState(patient || contextPatient || '')
-  const [currentPatientName] = useState(patientName || '')
+  const [currentPatient, setCurrentPatient] = useState(patient || contextPatient || '')
+  const [currentPatientName, setCurrentPatientName] = useState(patientName || '')
+
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('Recovery Room Record', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setCurrentAdmission(String(doc.admission || doc.inpatient_admission || ''))
+        setCurrentPatient(String(doc.patient || ''))
+        setCurrentPatientName(String(doc.patient_name || ''))
+        setForm({
+          date: toDateInput(doc.date as string) || nowDate(),
+          time: toTimeInput(doc.time as string) || nowTime(),
+          level_of_conciousness: String(doc.level_of_conciousness || ''),
+          respiration: String(doc.respiration || ''),
+          oxygen_support: String(doc.oxygen_support || ''),
+          oxygen: String(doc.oxygen || ''),
+          special_notes_remarks: String(doc.special_notes_remarks || ''),
+          pos_anesthesia_visit: String(doc.pos_anesthesia_visit || ''),
+          nurse_notes: String(doc.nurse_notes || ''),
+        })
+        const rawEvents = Array.isArray(doc.events) ? doc.events : []
+        setEvents(
+          rawEvents.map((row: Record<string, unknown>) => ({
+            _key: Math.random().toString(36).slice(2),
+            time: toTimeInput(row.time as string) || nowTime(),
+            bp: String(row.bp ?? ''),
+            pulse: String(row.pulse ?? ''),
+            rr: String(row.rr ?? ''),
+            temp: String(row.temp ?? ''),
+            spo2: String(row.spo2 ?? ''),
+          }))
+        )
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          toast.error(err instanceof Error ? err.message : 'Failed to load record')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
 
   const fetchAdmissionOpts = useCallback(
     (s: string) => fetchInpatientAdmissionOptions(s || undefined, currentPatient || undefined),
@@ -1281,10 +1354,11 @@ export const RecoveryRoomRecordModal = ({
     e.preventDefault()
     e.stopPropagation()
 
-    // Validate based on mode
-    if (isIPMode && !currentAdmission) {
-      toast.error('Please select an inpatient admission (IP mode active)')
-      return
+    if (!isEdit) {
+      if (isIPMode && !currentAdmission) {
+        toast.error('Please select an inpatient admission (IP mode active)')
+        return
+      }
     }
 
     setSubmitting(true)
@@ -1305,12 +1379,16 @@ export const RecoveryRoomRecordModal = ({
         events: events.map(({ _key: _unused, ...rest }) => rest),
       }
 
-      await apiRequest('/api/resource/Recovery%20Room%20Record', {
-        method: 'POST',
-        body: JSON.stringify({ data: payload }),
-      })
-
-      toast.success('Recovery Room Record saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('Recovery Room Record', editName.trim(), payload)
+        toast.success('Recovery Room Record updated.')
+      } else {
+        await apiRequest('/api/resource/Recovery%20Room%20Record', {
+          method: 'POST',
+          body: JSON.stringify({ data: payload }),
+        })
+        toast.success('Recovery Room Record saved successfully.')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -1327,7 +1405,7 @@ export const RecoveryRoomRecordModal = ({
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('w-full max-w-4xl max-h-[92vh] overflow-hidden')}>
         <CreateModalHeader
-          title="Recovery Room Record"
+          title={isEdit ? 'Edit Recovery Room Record' : 'Recovery Room Record'}
           icon={<FileText className="h-5 w-5 text-emerald-700" strokeWidth={2} />}
           subtitle={
             <>
@@ -1357,7 +1435,10 @@ export const RecoveryRoomRecordModal = ({
         {/* Form body */}
         <form onSubmit={handleSubmit} noValidate className={`${CREATE_MODAL_BODY_GRADIENT} flex-1 overflow-y-auto`}>
           <div className="px-6 py-5">
-            {activeTab === 'general' && (
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading record…</div>
+            ) : null}
+            {!loadingEdit && activeTab === 'general' && (
               <GeneralTab
                 form={form}
                 setField={setField}
@@ -1368,7 +1449,7 @@ export const RecoveryRoomRecordModal = ({
                 setCurrentAdmission={setCurrentAdmission}
               />
             )}
-            {activeTab === 'events' && (
+            {!loadingEdit && activeTab === 'events' && (
               <EventsTab events={events} setEvents={setEvents} />
             )}
           </div>
@@ -1396,9 +1477,13 @@ export const RecoveryRoomRecordModal = ({
               )}
               <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
               <button type="submit"
-                disabled={submitting || (!isIPMode && !isOPMode) || (isIPMode && !currentAdmission)}
+                disabled={
+                  submitting ||
+                  loadingEdit ||
+                  (!isEdit && ((!isIPMode && !isOPMode) || (isIPMode && !currentAdmission)))
+                }
                 className={CM_BTN_PRIMARY}>
-                {submitting ? 'Saving...' : 'Save Record'}
+                {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Record'}
               </button>
             </div>
           </div>

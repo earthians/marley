@@ -1836,11 +1836,9 @@ export const AppointmentList = ({
 
       {/* ── Filters + Bulk Reminder bar ── */}
       {showFilters && (
-      <div className="card-filter-bar mb-3 space-y-2">
-        {/* Top row: filters */}
-        <div className="flex flex-wrap items-end gap-3">
+      <div className="card-filter-bar mb-3 flex flex-wrap items-end gap-3">
           {/* From Date */}
-          <div className="flex flex-col gap-1 min-w-[120px]">
+          <div className="flex flex-col gap-1">
             <label className={FILTER_LABEL_CLASS}>From Date</label>
             <DateFilterInput
               value={filterDateFrom}
@@ -1850,7 +1848,7 @@ export const AppointmentList = ({
           </div>
 
           {/* To Date */}
-          <div className="flex flex-col gap-1 min-w-[120px]">
+          <div className="flex flex-col gap-1">
             <label className={FILTER_LABEL_CLASS}>To Date</label>
             <DateFilterInput
               value={filterDateTo}
@@ -1861,7 +1859,7 @@ export const AppointmentList = ({
 
           {/* Doctor */}
           {useAllAppointmentsApi && (
-            <div data-filter-dropdown className="flex flex-col gap-1 min-w-[220px]">
+            <div data-filter-dropdown className="flex flex-col gap-1">
               <label className={FILTER_LABEL_CLASS}>Doctor</label>
               <div className="relative">
                 <input
@@ -1934,7 +1932,7 @@ export const AppointmentList = ({
           )}
 
           {/* Branch */}
-          <div className="flex flex-col gap-1 min-w-[150px]">
+          <div className="flex flex-col gap-1">
             <label className={FILTER_LABEL_CLASS}>Branch</label>
             <select
               value={filterBranch}
@@ -1949,7 +1947,7 @@ export const AppointmentList = ({
           </div>
 
           {/* Status */}
-          <div className="flex flex-col gap-1 min-w-[120px]">
+          <div className="flex flex-col gap-1">
             <label className={FILTER_LABEL_CLASS}>Status</label>
             <select
               value={filterStatus}
@@ -1968,8 +1966,8 @@ export const AppointmentList = ({
           {/* Spacer + Bulk Reminder (full listing only) */}
           {!cardCompactLayout && (
           <>
-          <div className="flex-1" />
-          <div className="relative self-end" ref={bulkMenuRef}>
+          <div className="card-filter-grow" aria-hidden />
+          <div className="card-filter-actions relative self-end" ref={bulkMenuRef}>
             <button
               type="button"
               onClick={() => setBulkChannelMenuOpen((p) => !p)}
@@ -2014,11 +2012,10 @@ export const AppointmentList = ({
           </div>
           </>
           )}
-        </div>
 
         {/* Result count — full listing only */}
         {!cardCompactLayout && (
-        <p className="text-xs text-slate-500">
+        <p className="basis-full w-full text-xs text-slate-500">
           Showing {appointments.length} of {totalCount} appointment{totalCount !== 1 ? 's' : ''}
           {hasActiveFilters && ' (filtered)'}
         </p>

@@ -28,7 +28,7 @@ export function PrintFormatDropdown({
   title = 'Print',
 }: PrintFormatDropdownProps) {
   const [open, setOpen] = useState(false)
-  const [formats, setFormats] = useState<string[]>(['Standard'])
+  const [formats, setFormats] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [position, setPosition] = useState<{ top: number; right: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -39,7 +39,11 @@ export function PrintFormatDropdown({
     setLoading(true)
     fetchPrintFormats(doctype)
       .then(setFormats)
-      .catch(() => setFormats(['Standard']))
+      .catch(() =>
+        setFormats(
+          doctype === 'Clinical Note' || doctype === 'Main Nursing Note' ? [] : ['Standard'],
+        ),
+      )
       .finally(() => setLoading(false))
   }, [open, doctype])
 
@@ -108,6 +112,8 @@ export function PrintFormatDropdown({
         </div>
         {loading ? (
           <div className="px-3 py-2 text-sm text-slate-500">Loading…</div>
+        ) : formats.length === 0 ? (
+          <div className="px-3 py-2 text-sm text-slate-500">No print formats</div>
         ) : (
           formats.map((format) => (
             <button

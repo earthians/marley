@@ -21,6 +21,7 @@ export const ECTAnesthesiaConsentList = ({ patient, refreshKey, onPatientClick }
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [detailName, setDetailName] = useState<string | null>(null)
+  const [listRefreshKey, setListRefreshKey] = useState(0)
 
   useEffect(() => {
     const load = async () => {
@@ -46,7 +47,7 @@ export const ECTAnesthesiaConsentList = ({ patient, refreshKey, onPatientClick }
       }
     }
     load()
-  }, [patient, refreshKey])
+  }, [patient, refreshKey, listRefreshKey])
 
   if (loading) {
     return (
@@ -130,7 +131,11 @@ export const ECTAnesthesiaConsentList = ({ patient, refreshKey, onPatientClick }
       </div>
 
       {detailName ? (
-        <ECTAnesthesiaConsentDetailPanel name={detailName} onClose={() => setDetailName(null)} />
+        <ECTAnesthesiaConsentDetailPanel
+          name={detailName}
+          onClose={() => setDetailName(null)}
+          onChanged={() => setListRefreshKey((k) => k + 1)}
+        />
       ) : null}
     </>
   )

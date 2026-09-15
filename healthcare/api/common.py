@@ -137,6 +137,15 @@ def get_current_user_practitioner_option():
 	}
 
 
+# Print formats where "Standard" should not appear in the healthcare UI dropdown.
+_HIDE_STANDARD_PRINT_FORMAT_DOCTYPES = frozenset(
+	{
+		"Clinical Note",
+		"Main Nursing Note",
+	}
+)
+
+
 @frappe.whitelist()
 def get_print_formats(doctype):
 	"""Return list of print format names for the given doctype (for print dropdown).
@@ -144,6 +153,8 @@ def get_print_formats(doctype):
 	For Sales Invoice: if Healthcare Settings → UI Print Formats has any rows,
 	only those formats (that apply to Sales Invoice) are returned. If the table
 	is empty, behave as usual and return all enabled formats for the doctype.
+
+	For Clinical Note / nursing notes: omit the built-in ``Standard`` format.
 	"""
 	if not doctype:
 		return ["Standard"]
@@ -159,12 +170,16 @@ def get_print_formats(doctype):
 		pluck="name",
 		order_by="name",
 	)
-	result = ["Standard"]
-	seen = {"Standard"}
+	hide_standard = doctype in _HIDE_STANDARD_PRINT_FORMAT_DOCTYPES
+	result = [] if hide_standard else ["Standard"]
+	seen = set(result)
 	for name in formats:
-		if name and name not in seen:
-			result.append(name)
-			seen.add(name)
+		if not name or name in seen:
+			continue
+		if hide_standard and name.strip().lower() == "standard":
+			continue
+		result.append(name)
+		seen.add(name)
 	return result
 
 

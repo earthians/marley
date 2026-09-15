@@ -628,7 +628,8 @@ import { CM_BTN_CANCEL, CM_BTN_PRIMARY, CREATE_MODAL_BODY_GRADIENT, CREATE_MODAL
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { apiRequest } from '../../services/apiClient'
-import { fetchPatientVisits, fetchInpatientAdmissionOptions, type LinkFieldOption } from '../../services/common'
+import { updateDoctypeRow } from '../../services/doctypeResource'
+import { fetchDoc, fetchPatientVisits, fetchInpatientAdmissionOptions, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
 import { ChevronDown, Plus, Trash2, AlertCircle, FileText, ClipboardList } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
@@ -719,8 +720,10 @@ const LinkCombobox = ({ label, value, onSelect, onClear, fetchOptions, placehold
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ModifiedAldereteScoreModalProps {
-  admissionNo: string
-  patient: string
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
+  admissionNo?: string
+  patient?: string
   patientName?: string
   onClose: () => void
   onSuccess?: () => void
@@ -758,7 +761,15 @@ function scoreColor(total: number) {
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
-export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, onClose, onSuccess }: ModifiedAldereteScoreModalProps) => {
+export const ModifiedAldereteScoreModal = ({
+  editName,
+  admissionNo = '',
+  patient = '',
+  patientName,
+  onClose,
+  onSuccess,
+}: ModifiedAldereteScoreModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   // Get context from CareContextProvider
   const { mode, activeVisit, activeAdmission, selectedPatient: contextPatient } = useCareContext()
   
@@ -779,14 +790,56 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
   const [description, setDescription] = useState('')
   const [footerDescription, setFooterDescription] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   // Use context values if available, otherwise use props
   const [currentAdmission, setCurrentAdmission] = useState(() => {
     if (isIPMode && activeAdmission) return activeAdmission
     return admissionNo || ''
   })
-  const [currentPatient] = useState(patient || contextPatient || '')
-  const [currentPatientName] = useState(patientName || '')
+  const [currentPatient, setCurrentPatient] = useState(patient || contextPatient || '')
+  const [currentPatientName, setCurrentPatientName] = useState(patientName || '')
+
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('Modified Alderete Score', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setCurrentAdmission(String(doc.inpatient_admission || doc.admission || ''))
+        setCurrentPatient(String(doc.patient || ''))
+        setCurrentPatientName(String(doc.patient_name || ''))
+        setPatientVisit(String(doc.patient_visit || ''))
+        setPatientVisitLabel(String(doc.patient_visit || ''))
+        const tpl = String(doc.template || '')
+        setTemplateName(tpl)
+        setTemplateLabel(tpl)
+        if (doc.description) setDescription(String(doc.description))
+        if (doc.footer_description) setFooterDescription(String(doc.footer_description))
+        const items: Record<string, unknown>[] = Array.isArray(doc.alderete_score) ? doc.alderete_score : []
+        setRows(
+          items.map((r) => ({
+            _key: Math.random().toString(36).slice(2),
+            attribute: String(r.attribute ?? ''),
+            option_0: String(r.option_0 ?? ''),
+            option_1: String(r.option_1 ?? ''),
+            option_2: String(r.option_2 ?? ''),
+            selected_score: (String(r.selected_score ?? '') as '' | '0' | '1' | '2'),
+            score: typeof r.score === 'number' ? r.score : Number(r.score) || 0,
+          }))
+        )
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load record')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
 
   const fetchAdmissionOpts = useCallback(
     (s: string) => fetchInpatientAdmissionOptions(s || undefined, currentPatient || undefined),
@@ -890,16 +943,17 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
     e.preventDefault()
     e.stopPropagation()
     
-    // Validate based on mode
-    if (isIPMode && !currentAdmission) {
-      toast.error('Please select an inpatient admission (IP mode active)')
-      return
+    if (!isEdit) {
+      if (isIPMode && !currentAdmission) {
+        toast.error('Please select an inpatient admission (IP mode active)')
+        return
+      }
+      if (isOPMode && !patientVisit) {
+        toast.error('Please select a patient visit (OP mode active)')
+        return
+      }
     }
-    if (isOPMode && !patientVisit) {
-      toast.error('Please select a patient visit (OP mode active)')
-      return
-    }
-    
+
     setSubmitting(true)
     try {
       const payload = {
@@ -918,11 +972,16 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
           score: rest.score,
         })),
       }
-      await apiRequest('/api/resource/Modified%20Alderete%20Score', {
-        method: 'POST',
-        body: JSON.stringify({ data: payload }),
-      })
-      toast.success('Modified Alderete Score saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('Modified Alderete Score', editName.trim(), payload)
+        toast.success('Modified Alderete Score updated.')
+      } else {
+        await apiRequest('/api/resource/Modified%20Alderete%20Score', {
+          method: 'POST',
+          body: JSON.stringify({ data: payload }),
+        })
+        toast.success('Modified Alderete Score saved successfully.')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -939,7 +998,7 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('w-full max-w-4xl max-h-[92vh] overflow-hidden')}>
         <CreateModalHeader
-          title="Modified Alderete Score"
+          title={isEdit ? 'Edit Modified Alderete Score' : 'Modified Alderete Score'}
           icon={<ClipboardList className="h-5 w-5 text-emerald-700" strokeWidth={2} />}
           subtitle={
             <>
@@ -985,7 +1044,10 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate className={`${CREATE_MODAL_BODY_GRADIENT} flex-1 overflow-y-auto`}>
           <div className="px-6 py-5">
-
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading record…</div>
+            ) : (
+            <>
             {/* ── Tab 1: General ── */}
             {activeTab === 'general' && (
               <div className="space-y-6">
@@ -1269,6 +1331,8 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
                 </div>
               </div>
             )}
+            </>
+            )}
           </div>
 
           <div className={`${CREATE_MODAL_FOOTER_STICKY} items-center justify-between`}>
@@ -1292,9 +1356,17 @@ export const ModifiedAldereteScoreModal = ({ admissionNo, patient, patientName, 
                 </button>
               )}
               <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
-              <button type="submit" disabled={submitting || (!isIPMode && !isOPMode) || (isIPMode && !currentAdmission) || (isOPMode && !patientVisit)}
+              <button type="submit"
+                disabled={
+                  submitting ||
+                  loadingEdit ||
+                  (!isEdit &&
+                    ((!isIPMode && !isOPMode) ||
+                      (isIPMode && !currentAdmission) ||
+                      (isOPMode && !patientVisit)))
+                }
                 className={CM_BTN_PRIMARY}>
-                {submitting ? 'Saving...' : 'Save Score'}
+                {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Score'}
               </button>
             </div>
           </div>

@@ -13,6 +13,8 @@ export interface LabRequestActions {
   phase: LabRequestPhase
   can_delete: boolean
   can_cancel_with_settlement: boolean
+  can_cancel_simple?: boolean
+  requires_settlement?: boolean
   can_cancel_sample_handling: boolean
   can_delete_lab_tests: boolean
   can_delete_lab_request: boolean
@@ -50,17 +52,18 @@ export async function deleteDraftLabRequest(serviceRequestName: string): Promise
 
 export async function cancelBookedLabRequest(
   serviceRequestName: string,
-  settlementMode: 'refund' | 'patient_credit'
+  settlementMode?: 'refund' | 'patient_credit' | null
 ): Promise<{
   ok: boolean
-  settlement_mode: string
+  settlement_mode?: string | null
+  requires_settlement?: boolean
   payment_entry?: string | null
 }> {
   return apiRequest('/api/method/healthcare.api.lab_request_actions.cancel_booked_lab_request', {
     method: 'POST',
     body: JSON.stringify({
       service_request_name: serviceRequestName,
-      settlement_mode: settlementMode,
+      settlement_mode: settlementMode || undefined,
     }),
   })
 }

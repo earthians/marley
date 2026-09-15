@@ -29,6 +29,7 @@ export const PreAnesthesiaAssessmentList = ({ patient, refreshKey, onPatientClic
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [detailName, setDetailName] = useState<string | null>(null)
+  const [listRefreshKey, setListRefreshKey] = useState(0)
 
   useEffect(() => {
     const load = async () => {
@@ -53,7 +54,7 @@ export const PreAnesthesiaAssessmentList = ({ patient, refreshKey, onPatientClic
       }
     }
     load()
-  }, [patient, refreshKey])
+  }, [patient, refreshKey, listRefreshKey])
 
   if (loading) {
     return <div className="flex items-center justify-center p-4 text-sm text-slate-500">Loading Pre Anesthesia Assessments...</div>
@@ -131,7 +132,11 @@ export const PreAnesthesiaAssessmentList = ({ patient, refreshKey, onPatientClic
       </div>
 
       {detailName ? (
-        <PreAnesthesiaAssessmentDetailPanel name={detailName} onClose={() => setDetailName(null)} />
+        <PreAnesthesiaAssessmentDetailPanel
+          name={detailName}
+          onClose={() => setDetailName(null)}
+          onChanged={() => setListRefreshKey((k) => k + 1)}
+        />
       ) : null}
     </>
   )

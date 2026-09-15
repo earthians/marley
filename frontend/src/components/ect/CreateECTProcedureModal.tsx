@@ -4,6 +4,8 @@ import {
   createModalShellClass,
 } from '../ui/CreateModalChrome'
 import { createECTProcedure } from '../../services/ectProcedure'
+import { updateDoctypeRow } from '../../services/doctypeResource'
+import { fetchDoc } from '../../services/common'
 import { searchPatients, fetchPatients, type PatientListItem } from '../../services/patients'
 import { fetchHealthcarePractitioners, fetchAnaesthesiaTypes, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
@@ -16,6 +18,8 @@ import { DateFilterInput } from '../ui/DateFilterInput'
 interface CreateECTProcedureModalProps {
   onClose: () => void
   onSuccess?: () => void
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
   initialPatient?: string
 }
 
@@ -107,8 +111,10 @@ ComboboxField.displayName = 'ComboboxField'
 export const CreateECTProcedureModal = ({
   onClose,
   onSuccess,
+  editName,
   initialPatient,
 }: CreateECTProcedureModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   const now = new Date()
   const [formData, setFormData] = useState({
     patient: initialPatient || '',
@@ -138,6 +144,7 @@ export const CreateECTProcedureModal = ({
     consultant_sign_date: '',
   })
   const [loading, setLoading] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
   const [error, setError] = useState<string | null>(null)
 
   const [patientOptions, setPatientOptions] = useState<PatientListItem[]>([])
@@ -176,6 +183,59 @@ export const CreateECTProcedureModal = ({
     })
   }, [])
 
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('ECT Procedure', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setFormData({
+          patient: String(doc.patient || ''),
+          patient_name: String(doc.patient_name || ''),
+          date: doc.date ? String(doc.date).slice(0, 10) : now.toISOString().slice(0, 10),
+          npo_since: doc.npo_since ? String(doc.npo_since).slice(0, 10) : '',
+          consultant_doctor: String(doc.consultant_doctor || ''),
+          assistant_doctor: String(doc.assistant_doctor || ''),
+          anaesthetist: String(doc.anaesthetist || ''),
+          type_of_anaesthesia: String(doc.type_of_anaesthesia || ''),
+          date_of_session: doc.date_of_session ? String(doc.date_of_session).slice(0, 10) : '',
+          no_of_session: doc.no_of_session != null ? String(doc.no_of_session) : '',
+          bp: String(doc.bp || ''),
+          hr: String(doc.hr || ''),
+          temp: String(doc.temp || ''),
+          resp_rate: String(doc.resp_rate || ''),
+          spo2: String(doc.spo2 || ''),
+          energy: String(doc.energy || ''),
+          gtcs_for: String(doc.gtcs_for || ''),
+          bp_after: String(doc.bp_after || ''),
+          hr_after: String(doc.hr_after || ''),
+          resp_rate_after: String(doc.resp_rate_after || ''),
+          spo2_after: String(doc.spo2_after || ''),
+          progress_plan: String(doc.progress_plan || ''),
+          other_complications: String(doc.other_complications || ''),
+          sign_date: doc.sign_date ? String(doc.sign_date).slice(0, 10) : '',
+          consultant_sign_date: doc.consultant_sign_date ? String(doc.consultant_sign_date).slice(0, 10) : '',
+        })
+        setPatientQuery(String(doc.patient_name || doc.patient || ''))
+        setConsultantQuery(String(doc.consultant_doctor || ''))
+        setAssistantQuery(String(doc.assistant_doctor || ''))
+        setAnaesthetistQuery(String(doc.anaesthetist || ''))
+        setAnaesthesiaQuery(String(doc.type_of_anaesthesia || ''))
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load ECT procedure')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -188,7 +248,7 @@ export const CreateECTProcedureModal = ({
       setLoading(true)
       setError(null)
 
-      await createECTProcedure({
+      const payload = {
         patient: formData.patient,
         patient_name: formData.patient_name || undefined,
         date: formData.date || undefined,
@@ -214,9 +274,15 @@ export const CreateECTProcedureModal = ({
         other_complications: formData.other_complications || undefined,
         sign_date: formData.sign_date || undefined,
         consultant_sign_date: formData.consultant_sign_date || undefined,
-      })
+      }
 
-      toast.success('ECT Procedure created successfully')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('ECT Procedure', editName.trim(), payload)
+        toast.success('ECT Procedure updated successfully')
+      } else {
+        await createECTProcedure(payload)
+        toast.success('ECT Procedure created successfully')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -386,7 +452,9 @@ export const CreateECTProcedureModal = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-slate-50 flex-shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Create ECT Procedure</h2>
+            <h2 className="text-xl font-bold text-slate-900">
+              {isEdit ? 'Edit ECT Procedure' : 'Create ECT Procedure'}
+            </h2>
             <p className="text-xs text-slate-500 mt-0.5">Fill in the procedure details and vital signs</p>
           </div>
           <button
@@ -411,6 +479,10 @@ export const CreateECTProcedureModal = ({
           )}
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading procedure…</div>
+            ) : (
+            <>
             {/* Patient & Session Info */}
             <section>
               <div className="grid grid-cols-2 gap-4">
@@ -689,6 +761,8 @@ export const CreateECTProcedureModal = ({
                 </FormField>
               </div>
             </section>
+            </>
+            )}
           </div>
 
           {/* Footer */}
@@ -703,7 +777,7 @@ export const CreateECTProcedureModal = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingEdit}
               className="px-6 py-2.5 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
             >
               {loading ? (
@@ -714,6 +788,8 @@ export const CreateECTProcedureModal = ({
                   </svg>
                   Saving...
                 </span>
+              ) : isEdit ? (
+                'Save Changes'
               ) : (
                 'Save ECT Procedure'
               )}

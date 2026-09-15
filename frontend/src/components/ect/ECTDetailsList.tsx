@@ -14,6 +14,7 @@ export const ECTDetailsList = ({ patient, refreshKey, onPatientClick }: ECTDetai
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [detailEct, setDetailEct] = useState<string | null>(null)
+  const [listRefreshKey, setListRefreshKey] = useState(0)
 
   useEffect(() => {
     const loadECTDetails = async () => {
@@ -30,7 +31,7 @@ export const ECTDetailsList = ({ patient, refreshKey, onPatientClick }: ECTDetai
     }
 
     loadECTDetails()
-  }, [patient, refreshKey])
+  }, [patient, refreshKey, listRefreshKey])
 
   if (loading) {
     return (
@@ -159,7 +160,11 @@ export const ECTDetailsList = ({ patient, refreshKey, onPatientClick }: ECTDetai
       </div>
 
       {detailEct ? (
-        <ECTDetailsDetailPanel name={detailEct} onClose={() => setDetailEct(null)} />
+        <ECTDetailsDetailPanel
+          name={detailEct}
+          onClose={() => setDetailEct(null)}
+          onChanged={() => setListRefreshKey((k) => k + 1)}
+        />
       ) : null}
     </>
   )

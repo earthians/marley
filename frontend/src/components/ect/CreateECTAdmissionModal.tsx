@@ -4,6 +4,8 @@ import {
   createModalShellClass,
 } from '../ui/CreateModalChrome'
 import { createECTAdmission } from '../../services/ectAdmission'
+import { updateDoctypeRow } from '../../services/doctypeResource'
+import { fetchDoc } from '../../services/common'
 import { searchPatients, fetchPatients, type PatientListItem } from '../../services/patients'
 import { fetchHealthcarePractitioners, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
@@ -17,14 +19,18 @@ import { DateFilterInput } from '../ui/DateFilterInput'
 interface CreateECTAdmissionModalProps {
   onClose: () => void
   onSuccess?: () => void
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
   initialPatient?: string
 }
 
 export const CreateECTAdmissionModal = ({
   onClose,
   onSuccess,
+  editName,
   initialPatient,
 }: CreateECTAdmissionModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   const now = new Date()
   const { mode, activeAdmission, activeVisit } = useCareContext()
   const [formData, setFormData] = useState({
@@ -46,6 +52,7 @@ export const CreateECTAdmissionModal = ({
     doctors_name: '',
   })
   const [loading, setLoading] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
   const [error, setError] = useState<string | null>(null)
 
   const [patientOptions, setPatientOptions] = useState<PatientListItem[]>([])
@@ -66,6 +73,47 @@ export const CreateECTAdmissionModal = ({
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('ECT Admission', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setFormData({
+          patient: String(doc.patient || ''),
+          patient_name: String(doc.patient_name || ''),
+          inpatient_admission: String(doc.inpatient_admission || ''),
+          patient_visit: String(doc.patient_visit || ''),
+          date: doc.date ? String(doc.date).slice(0, 10) : now.toISOString().slice(0, 10),
+          bp: String(doc.bp || ''),
+          hr: String(doc.hr || ''),
+          resp_rate: String(doc.resp_rate || ''),
+          spo2: String(doc.spo2 || ''),
+          psychiatric_diagnosis: String(doc.psychiatric_diagnosis || ''),
+          medical_history: String(doc.medical_history || ''),
+          patient_allergy_history: String(doc.patient_allergy_history || ''),
+          other_complications: String(doc.other_complications || ''),
+          instructions: String(doc.instructions || ''),
+          doctor: String(doc.doctor || ''),
+          doctors_name: String(doc.doctors_name || ''),
+        })
+        setPatientQuery(String(doc.patient_name || doc.patient || ''))
+        setDoctorQuery(String(doc.doctors_name || doc.doctor || ''))
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load ECT admission')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -78,7 +126,7 @@ export const CreateECTAdmissionModal = ({
       setLoading(true)
       setError(null)
 
-      await createECTAdmission({
+      const payload = {
         patient: formData.patient,
         patient_name: formData.patient_name || undefined,
         inpatient_admission: formData.inpatient_admission || undefined,
@@ -95,9 +143,15 @@ export const CreateECTAdmissionModal = ({
         instructions: formData.instructions || undefined,
         doctor: formData.doctor || undefined,
         doctors_name: formData.doctors_name || undefined,
-      })
+      }
 
-      toast.success('ECT Admission created successfully')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('ECT Admission', editName.trim(), payload)
+        toast.success('ECT Admission updated successfully')
+      } else {
+        await createECTAdmission(payload)
+        toast.success('ECT Admission created successfully')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -175,7 +229,7 @@ export const CreateECTAdmissionModal = ({
 
   // Auto-fill current user's linked practitioner
   useEffect(() => {
-    if (!linkedPractitionerId) return
+    if (isEdit || !linkedPractitionerId) return
     setFormData((prev) =>
       prev.doctor ? prev : { ...prev, doctor: linkedPractitionerId, doctors_name: linkedPractitionerLabel || linkedPractitionerId },
     )
@@ -206,7 +260,9 @@ export const CreateECTAdmissionModal = ({
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('max-w-2xl w-full max-h-[90vh] overflow-hidden')}>
         <div className="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-lg font-semibold tracking-tight text-emerald-950">Create ECT Admission</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-emerald-950">
+            {isEdit ? 'Edit ECT Admission' : 'Create ECT Admission'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -226,6 +282,10 @@ export const CreateECTAdmissionModal = ({
           )}
 
           <div className="p-4 overflow-y-auto flex-1 min-h-0 space-y-4">
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading admission…</div>
+            ) : (
+            <>
             {(formData.inpatient_admission || formData.patient_visit) && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -429,6 +489,8 @@ export const CreateECTAdmissionModal = ({
                 )}
               </div>
             </div>
+            </>
+            )}
           </div>
 
           <div className="px-4 py-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-2 flex-shrink-0">
@@ -442,10 +504,10 @@ export const CreateECTAdmissionModal = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingEdit}
               className="px-4 py-2 text-sm rounded-md bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
             >
-              {loading ? 'Saving...' : 'Save ECT Admission'}
+              {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save ECT Admission'}
             </button>
           </div>
         </form>

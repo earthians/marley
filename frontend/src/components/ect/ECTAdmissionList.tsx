@@ -13,6 +13,7 @@ export const ECTAdmissionList = ({ patient, onPatientClick }: ECTAdmissionListPr
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [detailName, setDetailName] = useState<string | null>(null)
+  const [listRefreshKey, setListRefreshKey] = useState(0)
 
   useEffect(() => {
     const load = async () => {
@@ -29,7 +30,7 @@ export const ECTAdmissionList = ({ patient, onPatientClick }: ECTAdmissionListPr
     }
 
     load()
-  }, [patient])
+  }, [patient, listRefreshKey])
 
   if (loading) {
     return (
@@ -126,7 +127,11 @@ export const ECTAdmissionList = ({ patient, onPatientClick }: ECTAdmissionListPr
       </div>
 
       {detailName ? (
-        <ECTAdmissionDetailPanel name={detailName} onClose={() => setDetailName(null)} />
+        <ECTAdmissionDetailPanel
+          name={detailName}
+          onClose={() => setDetailName(null)}
+          onChanged={() => setListRefreshKey((k) => k + 1)}
+        />
       ) : null}
     </>
   )

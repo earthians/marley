@@ -262,8 +262,8 @@
   --card-filter-field-width: 9rem;
 }
 
-.card-filter-bar > div:has(label),
-.card-filter-bar > [data-filter-dropdown]:has(label) {
+.card-filter-bar > div:has(> label),
+.card-filter-bar > [data-filter-dropdown]:has(> label) {
   flex: 0 0 var(--card-filter-field-width) !important;
   width: var(--card-filter-field-width) !important;
   min-width: var(--card-filter-field-width) !important;
@@ -271,24 +271,24 @@
   box-sizing: border-box;
 }
 
-.card-filter-bar > div:has(label) > input,
-.card-filter-bar > div:has(label) > select,
-.card-filter-bar > div:has(label) > [data-datefilter],
-.card-filter-bar > div:has(label) > .relative,
-.card-filter-bar > [data-filter-dropdown]:has(label) > input,
-.card-filter-bar > [data-filter-dropdown]:has(label) > select,
-.card-filter-bar > [data-filter-dropdown]:has(label) > [data-datefilter],
-.card-filter-bar > [data-filter-dropdown]:has(label) > .relative {
+.card-filter-bar > div:has(> label) > input,
+.card-filter-bar > div:has(> label) > select,
+.card-filter-bar > div:has(> label) > [data-datefilter],
+.card-filter-bar > div:has(> label) > .relative,
+.card-filter-bar > [data-filter-dropdown]:has(> label) > input,
+.card-filter-bar > [data-filter-dropdown]:has(> label) > select,
+.card-filter-bar > [data-filter-dropdown]:has(> label) > [data-datefilter],
+.card-filter-bar > [data-filter-dropdown]:has(> label) > .relative {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box;
 }
 
-.card-filter-bar > div:has(label) input,
-.card-filter-bar > div:has(label) select,
-.card-filter-bar > [data-filter-dropdown]:has(label) input,
-.card-filter-bar > [data-filter-dropdown]:has(label) select {
+.card-filter-bar > div:has(> label) input,
+.card-filter-bar > div:has(> label) select,
+.card-filter-bar > [data-filter-dropdown]:has(> label) input,
+.card-filter-bar > [data-filter-dropdown]:has(> label) select {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;

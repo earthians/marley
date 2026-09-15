@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, ClipboardList, Stethoscope } from 'lucide-react'
+import { Activity, ClipboardList, Pencil, Stethoscope, Trash2 } from 'lucide-react'
 import { fetchDoc } from '../../services/common'
+import { deleteDoctypeRow } from '../../services/doctypeResource'
+import { useCareContext } from '../../providers/CareContextProvider'
+import { toast } from '../../hooks/useToast'
 import { DetailSlideOver } from '../ui/DetailSlideOver'
 import { PrintFormatDropdown } from '../ui/PrintFormatDropdown'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { MODAL_SECTION_CLASS, MODAL_SECTION_TITLE_CLASS } from '../ui/CreateModalChrome'
+import { RecoveryRoomRecordModal } from '../admissions/RecoveryRoomRecordModal'
+import { AnesthesiaRecordModal } from '../admissions/AnesthesiaRecordModal'
+import { ModifiedAldereteScoreModal } from '../admissions/ModifiedAldereteScoreModal'
+import { TimeOutProcedureModal } from '../admissions/TimeOutProcedureModal'
+import { PreEctChecklistModal } from '../admissions/PreEctChecklistModal'
+import { ECTProcedureConsentModal } from './ECTProcedureConsentModal'
+import { ECTPatientHealthHistoryModal } from './ECTPatientHealthHistoryModal'
+import {
+  canMutateEctForm,
+  ECT_FORM_EDIT_LOCKED_MESSAGE,
+  ECT_FORM_MUTATE_HINT,
+} from './ectForm24h'
 import {
   AttachBlock,
   ChipList,
@@ -27,6 +43,7 @@ interface EctClinicalFormDetailPanelProps {
   doctypeLabel: string
   name: string
   onClose: () => void
+  onChanged?: () => void
 }
 
 function asRows(value: unknown): Record<string, unknown>[] {
@@ -547,10 +564,16 @@ export function EctClinicalFormDetailPanel({
   doctypeLabel,
   name,
   onClose,
+  onChanged,
 }: EctClinicalFormDetailPanelProps) {
+  const { lockEditingData, guardClinicalEdit } = useCareContext()
   const [doc, setDoc] = useState<DocRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -569,7 +592,9 @@ export function EctClinicalFormDetailPanel({
     return () => {
       cancelled = true
     }
-  }, [doctype, doctypeLabel, name])
+  }, [doctype, doctypeLabel, name, reloadKey])
+
+  const canMutate = canMutateEctForm(doc?.creation ? String(doc.creation) : null, lockEditingData)
 
   const headerSubtitle = useMemo(() => {
     if (!doc) return name
@@ -580,60 +605,229 @@ export function EctClinicalFormDetailPanel({
     return parts.join(' · ') || name
   }, [doc, name])
 
-  return (
-    <DetailSlideOver
-      title={doctypeLabel}
-      subtitle={headerSubtitle}
-      icon={<ClipboardList className="h-5 w-5 text-slate-700" strokeWidth={2} />}
-      onClose={onClose}
-      maxWidthClass="max-w-2xl"
-      headerActions={
-        <PrintFormatDropdown
-          doctype={doctype}
-          docName={name}
-          noLetterhead={0}
-          triggerPrint={1}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white/80 text-slate-700 shadow-sm transition hover:bg-slate-50"
+  const openEdit = () => {
+    if (!canMutate) {
+      toast.error(lockEditingData ? 'Editing is locked in Healthcare Settings.' : ECT_FORM_EDIT_LOCKED_MESSAGE)
+      return
+    }
+    guardClinicalEdit(() => setShowEdit(true))
+  }
+
+  const openDelete = () => {
+    if (!canMutate) {
+      toast.error(lockEditingData ? 'Editing is locked in Healthcare Settings.' : ECT_FORM_EDIT_LOCKED_MESSAGE)
+      return
+    }
+    guardClinicalEdit(() => setShowDelete(true))
+  }
+
+  const confirmDelete = async () => {
+    setDeleting(true)
+    try {
+      await deleteDoctypeRow(doctype, name)
+      toast.success(`${doctypeLabel} deleted`)
+      setShowDelete(false)
+      onChanged?.()
+      onClose()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : `Failed to delete ${doctypeLabel}`)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const admissionNo = String(doc?.inpatient_admission || doc?.admission || '')
+  const patientId = String(doc?.patient || '')
+  const patientName = String(doc?.patient_name || '')
+
+  const editModal =
+    showEdit && doc ? (
+      doctype === 'Recovery Room Record' ? (
+        <RecoveryRoomRecordModal
+          editName={name}
+          admissionNo={admissionNo}
+          patient={patientId}
+          patientName={patientName}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
         />
-      }
-    >
-      {loading ? (
-        <div className="flex items-center justify-center py-12 text-sm text-slate-500">Loading…</div>
-      ) : null}
-      {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
-      ) : null}
+      ) : doctype === 'Anesthesia Record' ? (
+        <AnesthesiaRecordModal
+          editName={name}
+          admissionNo={admissionNo}
+          patient={patientId}
+          patientName={patientName}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      ) : doctype === 'Modified Alderete Score' ? (
+        <ModifiedAldereteScoreModal
+          editName={name}
+          admissionNo={admissionNo}
+          patient={patientId}
+          patientName={patientName}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      ) : doctype === 'Time Out Procedure' ? (
+        <TimeOutProcedureModal
+          editName={name}
+          admissionNo={admissionNo}
+          patient={patientId}
+          patientName={patientName}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      ) : doctype === 'Pre-ECT Checklist' ? (
+        <PreEctChecklistModal
+          editName={name}
+          admissionNo={admissionNo}
+          patient={patientId}
+          patientName={patientName}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      ) : doctype === 'ECT Procedure Consent' ? (
+        <ECTProcedureConsentModal
+          editName={name}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      ) : doctype === 'Patient Health History' ? (
+        <ECTPatientHealthHistoryModal
+          editName={name}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false)
+            setReloadKey((k) => k + 1)
+            onChanged?.()
+          }}
+        />
+      ) : null
+    ) : null
 
-      {doc && !loading && !error ? (
-        <div className="flex flex-col gap-5 pb-2">
-          {doctype === 'Anesthesia Record' ? <AnesthesiaRecordBody doc={doc} /> : null}
-          {doctype === 'Recovery Room Record' ? <RecoveryRoomBody doc={doc} /> : null}
-          {doctype === 'Modified Alderete Score' ? <AldereteBody doc={doc} /> : null}
-          {doctype === 'Time Out Procedure' ? <TimeOutBody doc={doc} /> : null}
-          {doctype === 'Pre-ECT Checklist' ? <PreEctBody doc={doc} /> : null}
-          {doctype === 'Patient Health History' ? <PatientHealthHistoryBody doc={doc} /> : null}
-          {doctype === 'ECT Procedure Consent' ? <ECTProcedureConsentBody doc={doc} /> : null}
+  return (
+    <>
+      <DetailSlideOver
+        title={doctypeLabel}
+        subtitle={headerSubtitle}
+        icon={<ClipboardList className="h-5 w-5 text-slate-700" strokeWidth={2} />}
+        onClose={onClose}
+        maxWidthClass="max-w-2xl"
+        headerActions={
+          <div className="flex items-center gap-1.5">
+            {canMutate ? (
+              <>
+                <button
+                  type="button"
+                  onClick={openEdit}
+                  className="inline-flex h-9 items-center gap-1 rounded-lg border border-emerald-200/80 bg-white/80 px-2.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+                  title="Edit (within 24 hours of creation)"
+                >
+                  <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={openDelete}
+                  className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 bg-white/80 px-2.5 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50"
+                  title="Delete (within 24 hours of creation)"
+                >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
+                  Delete
+                </button>
+              </>
+            ) : null}
+            <PrintFormatDropdown
+              doctype={doctype}
+              docName={name}
+              noLetterhead={0}
+              triggerPrint={1}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white/80 text-slate-700 shadow-sm transition hover:bg-slate-50"
+            />
+          </div>
+        }
+      >
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-sm text-slate-500">Loading…</div>
+        ) : null}
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        ) : null}
 
-          <MetaFooter>
-            <DataTile label="Patient" value={displayValue(doc.patient_name || doc.patient)} />
-            <DataTile label="Record ID" value={displayValue(doc.name)} />
-            {hasValue(doc.inpatient_admission || doc.admission) ? (
-              <DataTile
-                label="Admission"
-                value={displayValue(doc.inpatient_admission || doc.admission)}
-              />
+        {doc && !loading && !error ? (
+          <div className="flex flex-col gap-5 pb-2">
+            {doctype === 'Anesthesia Record' ? <AnesthesiaRecordBody doc={doc} /> : null}
+            {doctype === 'Recovery Room Record' ? <RecoveryRoomBody doc={doc} /> : null}
+            {doctype === 'Modified Alderete Score' ? <AldereteBody doc={doc} /> : null}
+            {doctype === 'Time Out Procedure' ? <TimeOutBody doc={doc} /> : null}
+            {doctype === 'Pre-ECT Checklist' ? <PreEctBody doc={doc} /> : null}
+            {doctype === 'Patient Health History' ? <PatientHealthHistoryBody doc={doc} /> : null}
+            {doctype === 'ECT Procedure Consent' ? <ECTProcedureConsentBody doc={doc} /> : null}
+
+            <MetaFooter>
+              <DataTile label="Patient" value={displayValue(doc.patient_name || doc.patient)} />
+              <DataTile label="Record ID" value={displayValue(doc.name)} />
+              {hasValue(doc.inpatient_admission || doc.admission) ? (
+                <DataTile
+                  label="Admission"
+                  value={displayValue(doc.inpatient_admission || doc.admission)}
+                />
+              ) : null}
+              {hasValue(doc.patient_visit) ? (
+                <DataTile label="Visit" value={displayValue(doc.patient_visit)} />
+              ) : null}
+              {hasValue(doc.date) ? <DataTile label="Date" value={formatDate(doc.date)} /> : null}
+              {hasValue(doc.time) ? <DataTile label="Time" value={formatTime(doc.time)} /> : null}
+              {hasValue(doc.creation) ? (
+                <DataTile label="Created" value={formatDateTime(doc.creation)} />
+              ) : null}
+            </MetaFooter>
+            {!canMutate && doc.creation ? (
+              <p className="text-[11px] text-slate-500">{ECT_FORM_MUTATE_HINT}</p>
             ) : null}
-            {hasValue(doc.patient_visit) ? (
-              <DataTile label="Visit" value={displayValue(doc.patient_visit)} />
-            ) : null}
-            {hasValue(doc.date) ? <DataTile label="Date" value={formatDate(doc.date)} /> : null}
-            {hasValue(doc.time) ? <DataTile label="Time" value={formatTime(doc.time)} /> : null}
-            {hasValue(doc.creation) ? (
-              <DataTile label="Created" value={formatDateTime(doc.creation)} />
-            ) : null}
-          </MetaFooter>
-        </div>
+          </div>
+        ) : null}
+      </DetailSlideOver>
+
+      {editModal}
+
+      {showDelete ? (
+        <ConfirmDialog
+          open
+          title={`Delete ${doctypeLabel}?`}
+          message={`Delete ${name}? This cannot be undone.`}
+          confirmLabel="Delete"
+          variant="danger"
+          loading={deleting}
+          onCancel={() => setShowDelete(false)}
+          onConfirm={confirmDelete}
+        />
       ) : null}
-    </DetailSlideOver>
+    </>
   )
 }

@@ -44,6 +44,7 @@ export const AdmissionAssessmentList = ({
   const [error, setError] = useState<Error | null>(null)
   const [detailName, setDetailName] = useState<string | null>(null)
   const [detailRow, setDetailRow] = useState<SuicidalAssessment | undefined>(undefined)
+  const [listVersion, setListVersion] = useState(0)
 
   const isSuicidal = doctype === SUICIDAL_DOCTYPE
 
@@ -90,7 +91,7 @@ export const AdmissionAssessmentList = ({
       }
     }
     load()
-  }, [doctype, patient, refreshKey, isSuicidal])
+  }, [doctype, patient, refreshKey, isSuicidal, listVersion])
 
   const handleView = (row: AssessmentRecord) => {
     setDetailName(row.name)
@@ -224,6 +225,7 @@ export const AdmissionAssessmentList = ({
           doctypeLabel={doctypeLabel}
           name={detailName}
           onClose={() => setDetailName(null)}
+          onChanged={() => setListVersion((v) => v + 1)}
         />
       ) : null}
     </>

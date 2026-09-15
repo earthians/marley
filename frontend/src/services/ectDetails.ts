@@ -34,6 +34,7 @@ export interface ECTDetail {
   anaesthetic_doctor?: string
   reference_doctype?: string
   reference_name?: string
+  creation?: string
 }
 
 export async function fetchECTDetails(

@@ -163,6 +163,10 @@ export type ClinicalNoteDayMedication = {
   practitioner?: string
   practitioner_name?: string
   care_context?: string
+  /** 1 when the line was prescribed/started on the note calendar day. */
+  started_on_note_day?: number | boolean
+  /** 1 when continuing from an earlier day and still active on the note day. */
+  is_ongoing?: number | boolean
 }
 
 export type ClinicalNoteDayMedicationsResult = {
@@ -172,7 +176,7 @@ export type ClinicalNoteDayMedicationsResult = {
   count: number
 }
 
-/** Medications prescribed on the calendar day of a clinical / doctor progress note. */
+/** Medications for a clinical note day: started that day, plus still-active continuing meds. */
 export async function fetchMedicationsForClinicalNoteDay(opts: {
   patient: string
   noteDate: string

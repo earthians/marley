@@ -947,12 +947,13 @@ import { CM_BTN_CANCEL, CM_BTN_PRIMARY, CREATE_MODAL_BODY_GRADIENT, CREATE_MODAL
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { apiRequest } from '../../services/apiClient'
+import { updateDoctypeRow } from '../../services/doctypeResource'
 import { uploadPatientFile } from '../../services/patients'
-import { fetchHealthcarePractitioners, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, type LinkFieldOption } from '../../services/common'
+import { fetchDoc, fetchHealthcarePractitioners, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
 import { ChevronDown, PenLine, Check , FileText } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
-import { toDatetimeLocalValue } from '../../utils/datetimeLocal'
+import { parseToDatetimeLocalValue, toDatetimeLocalValue } from '../../utils/datetimeLocal'
 import { localDateInputValue } from '../../utils/formatDate'
 import {
   linkComboboxDropdownClass,
@@ -1177,11 +1178,17 @@ function nowDatetime() {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PreAnesthesiaAssessmentModalProps {
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
   admissionNo?: string
   patient?: string
   patientName?: string
   onClose: () => void
   onSuccess?: () => void
+}
+
+function docCheck(value: unknown): boolean {
+  return value === 1 || value === true
 }
 
 type TabId = 'general' | 'cardio_pulm' | 'hepatic_renal_endo' | 'hemat_neuro_gi' | 'history_final' | 'signature'
@@ -1198,12 +1205,14 @@ const TABS: { id: TabId; label: string }[] = [
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export const PreAnesthesiaAssessmentModal = ({
+  editName,
   admissionNo = '',
   patient = '',
   patientName = '',
   onClose,
   onSuccess,
 }: PreAnesthesiaAssessmentModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   // Get context from CareContextProvider
   const { mode, activeVisit, activeAdmission, selectedPatient: contextPatient } = useCareContext()
   
@@ -1213,6 +1222,7 @@ export const PreAnesthesiaAssessmentModal = ({
   
   const [activeTab, setActiveTab] = useState<TabId>('general')
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   // ── General
   const [admissionField, setAdmissionField] = useState(() => {
@@ -1226,7 +1236,7 @@ export const PreAnesthesiaAssessmentModal = ({
   const [patientVisitLabel, setPatientVisitLabel] = useState('')
   const [patientField, setPatientField] = useState(patient || contextPatient || '')
   const [patientNameField, setPatientNameField] = useState(patientName || '')
-  const isPatientLocked = Boolean(patient) || Boolean(contextPatient)
+  const isPatientLocked = Boolean(patient) || Boolean(contextPatient) || isEdit
   
   const [assessmentDate, setAssessmentDate] = useState(nowDatetime())
   const [asaClass, setAsaClass] = useState('')
@@ -1329,6 +1339,108 @@ export const PreAnesthesiaAssessmentModal = ({
   const [signUrl, setSignUrl] = useState('')
   const [signUploading, setSignUploading] = useState(false)
 
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('Pre Anesthesia Assessment', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setAdmissionField(String(doc.inpatient_admission || ''))
+        const visit = String(doc.patient_visit || '')
+        setPatientVisit(visit)
+        setPatientVisitLabel(visit)
+        setPatientField(String(doc.patient || ''))
+        setPatientNameField(String(doc.patient_name || ''))
+        if (doc.assessment_date) {
+          setAssessmentDate(parseToDatetimeLocalValue(String(doc.assessment_date)))
+        }
+        setAsaClass(String(doc.asa_class || ''))
+        setExerciseTolerance(docCheck(doc.exercise_tolerance))
+        setCvNormal(docCheck(doc.cv_normal))
+        setHypertension(docCheck(doc.hypertension_dysrhythmia))
+        setAnginaMi(docCheck(doc.angina_mi))
+        setCcf(docCheck(doc.ccf))
+        setVascularValvular(docCheck(doc.vascular_valvular))
+        setPacemaker(docCheck(doc.pacemaker))
+        setCvNotes(String(doc.cv_notes || ''))
+        setRespNormal(docCheck(doc.resp_normal))
+        setSmoker(docCheck(doc.smoker))
+        setSmokingYears(String(doc.smoking_years || ''))
+        setChronicCough(docCheck(doc.chronic_cough))
+        setSob(docCheck(doc.sob))
+        setCopdEmphysema(docCheck(doc.copd_emphysema))
+        setAsthmaBronchitis(docCheck(doc.asthma_bronchitis))
+        setUrtiTb(docCheck(doc.urti_tb))
+        setRespNotes(String(doc.resp_notes || ''))
+        setJaundiceHepatitis(docCheck(doc.jaundice_hepatitis))
+        setCirrhosis(docCheck(doc.cirrhosis))
+        setGallBladder(docCheck(doc.gall_bladder))
+        setEtoh(docCheck(doc.etoh_consumption))
+        setChemical(docCheck(doc.chemical_substances))
+        setHepaticNotes(String(doc.hepatic_notes || ''))
+        setRenalFailure(docCheck(doc.renal_failure))
+        setDialysis(docCheck(doc.dialysis))
+        setRenalCalculi(docCheck(doc.renal_calculi))
+        setRecentUti(docCheck(doc.recent_uti))
+        setRenalNotes(String(doc.renal_notes || ''))
+        setDiabetes(docCheck(doc.diabetes))
+        setDietControl(docCheck(doc.diet_control))
+        setOralAgent(docCheck(doc.oral_agent))
+        setInsulin(docCheck(doc.insulin))
+        setDmComplications(docCheck(doc.dm_complications))
+        setThyroid(docCheck(doc.thyroid))
+        setEndocrineNotes(String(doc.endocrine_notes || ''))
+        setCoagulopathy(docCheck(doc.coagulopathy))
+        setAnemia(docCheck(doc.anemia))
+        setSickleCell(docCheck(doc.sickle_cell))
+        setG6pd(docCheck(doc.g6pd))
+        setAnticoagulation(docCheck(doc.anticoagulation))
+        setBloodTransfusion(docCheck(doc.blood_transfusion))
+        setHematologyNotes(String(doc.hematology_notes || ''))
+        setSeizure(docCheck(doc.seizure))
+        setStrokeTia(docCheck(doc.stroke_tia))
+        setHeadInjury(docCheck(doc.head_injury))
+        setParaesthesia(docCheck(doc.paraesthesia))
+        setMentalStatus(docCheck(doc.mental_status))
+        setNeurologyNotes(String(doc.neurology_notes || ''))
+        setPregnancyLmp(docCheck(doc.pregnancy_lmp))
+        setIllnessPregnancy(docCheck(doc.illness_and_pregnancy))
+        setCongenital(docCheck(doc.congenital))
+        setHivHbsag(docCheck(doc.hiv_hbsag))
+        setDrugAllergy(docCheck(doc.drug_allergy))
+        setMiscNotes(String(doc.miscellaneous_notes || ''))
+        setReflux(docCheck(doc.reflux))
+        setNauseaVomiting(docCheck(doc.nausea_vomiting))
+        setUlcer(docCheck(doc.ulcer))
+        setGiNotes(String(doc.gi_notes || ''))
+        setSurgicalHistory(String(doc.surgical_history || ''))
+        setAnesthesiaHistory(String(doc.anesthesia_history || ''))
+        setAnesthesiaComplications(String(doc.anesthesia_complications || ''))
+        setFitForAnesthesia(String(doc.fit_for_anesthesia || ''))
+        setRiskLevel(String(doc.risk_level || ''))
+        setAllergies(String(doc.allergies || ''))
+        setCurrentMedications(String(doc.current_medications || ''))
+        setPrevAnesthesiaComplications(String(doc.previous_anesthesia_complications || ''))
+        setRemarks(String(doc.remarks || ''))
+        setAnesthesiologistId(String(doc.anesthesiologist || ''))
+        setAnesthesiologistName(String(doc.anesthesiologist_name || ''))
+        setAnesthesiologistLabel(String(doc.anesthesiologist_name || doc.anesthesiologist || ''))
+        if (doc.date) setSignDate(String(doc.date).slice(0, 10))
+        if (doc.time) setSignTime(String(doc.time).slice(0, 8))
+        if (doc.sign) setSignUrl(String(doc.sign))
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load assessment')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
+
   const fetchVisits = useCallback(
     (search: string) => fetchPatientVisits(patientField, search || undefined),
     [patientField]
@@ -1367,16 +1479,17 @@ export const PreAnesthesiaAssessmentModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); e.stopPropagation()
     
-    // Validate based on mode
-    if (isIPMode && !admissionField) {
-      toast.error('Please select an inpatient admission (IP mode active)')
-      return
+    if (!isEdit) {
+      if (isIPMode && !admissionField) {
+        toast.error('Please select an inpatient admission (IP mode active)')
+        return
+      }
+      if (isOPMode && !patientVisit) {
+        toast.error('Please select a patient visit (OP mode active)')
+        return
+      }
     }
-    if (isOPMode && !patientVisit) {
-      toast.error('Please select a patient visit (OP mode active)')
-      return
-    }
-    
+
     if (!asaClass) { toast.error('ASA Classification is required.'); setActiveTab('general'); return }
     setSubmitting(true)
     try {
@@ -1472,11 +1585,16 @@ export const PreAnesthesiaAssessmentModal = ({
         date: signDate || undefined,
         time: signTime || undefined,
       }
-      await apiRequest('/api/resource/Pre%20Anesthesia%20Assessment', {
-        method: 'POST',
-        body: JSON.stringify({ data: payload }),
-      })
-      toast.success('Pre Anesthesia Assessment saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('Pre Anesthesia Assessment', editName.trim(), payload)
+        toast.success('Pre Anesthesia Assessment updated.')
+      } else {
+        await apiRequest('/api/resource/Pre%20Anesthesia%20Assessment', {
+          method: 'POST',
+          body: JSON.stringify({ data: payload }),
+        })
+        toast.success('Pre Anesthesia Assessment saved successfully.')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -1509,7 +1627,7 @@ export const PreAnesthesiaAssessmentModal = ({
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('w-full max-w-3xl max-h-[92vh] overflow-hidden')}>
         <CreateModalHeader
-          title="Pre-Anesthesia Assessment"
+          title={isEdit ? 'Edit Pre-Anesthesia Assessment' : 'Pre-Anesthesia Assessment'}
           icon={<FileText className="h-5 w-5 text-emerald-700" strokeWidth={2} />}
           subtitle={
             <>
@@ -1547,7 +1665,10 @@ export const PreAnesthesiaAssessmentModal = ({
         {/* Body */}
         <form onSubmit={handleSubmit} noValidate className={`${CREATE_MODAL_BODY_GRADIENT} flex-1 overflow-y-auto`}>
           <div className="px-6 py-5">
-
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading assessment…</div>
+            ) : (
+            <>
             {/* ── Tab 1: General ── */}
             {activeTab === 'general' && (
               <div className="space-y-5">
@@ -1915,6 +2036,8 @@ export const PreAnesthesiaAssessmentModal = ({
                 </div>
               </div>
             )}
+            </>
+            )}
           </div>
 
           {/* Footer */}
@@ -1939,9 +2062,17 @@ export const PreAnesthesiaAssessmentModal = ({
                 </button>
               )}
               <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
-              <button type="submit" disabled={submitting || (!isIPMode && !isOPMode) || (isIPMode && !admissionField) || (isOPMode && !patientVisit)}
+              <button type="submit"
+                disabled={
+                  submitting ||
+                  loadingEdit ||
+                  (!isEdit &&
+                    ((!isIPMode && !isOPMode) ||
+                      (isIPMode && !admissionField) ||
+                      (isOPMode && !patientVisit)))
+                }
                 className={CM_BTN_PRIMARY}>
-                {submitting ? 'Saving...' : 'Save Assessment'}
+                {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Assessment'}
               </button>
             </div>
           </div>

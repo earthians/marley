@@ -2101,13 +2101,13 @@ def get_medications_for_clinical_note_day(
 	patient_visit=None,
 ):
 	"""
-	Medications prescribed for the calendar day of a clinical / doctor progress note.
+	Medications for the calendar day of a clinical / doctor progress note.
 
-	Includes child lines when:
-	- Parent Patient Medication Order was posted/created that day and the line
-	  starts that day (or has no line start date), OR
-	- The child line Start Date (`date`) equals that day (even if the parent
-	  order was created earlier — e.g. meds added mid-admission).
+	Includes:
+	1. Started on this day — lines prescribed/started on the note calendar day.
+	2. Ongoing (active) — lines started earlier that were still active on the note day
+	   (not ended, not stopped/discontinued as of that day). Stopped/ended meds are excluded
+	   from the ongoing set.
 	"""
 	from frappe.utils import getdate
 
@@ -2125,17 +2125,58 @@ def get_medications_for_clinical_note_day(
 	inpatient_admission = (inpatient_admission or "").strip() or None
 	patient_visit = (patient_visit or "").strip() or None
 
-	conditions = [
-		"parent.patient = %(patient)s",
-		"parent.docstatus != 2",
-		"IFNULL(parent.status, '') != 'Cancelled'",
-		"""(
+	# Effective line start: child.date, else parent posting/creation date.
+	line_start_sql = """
+		DATE(
+			IFNULL(
+				NULLIF(child.date, ''),
+				DATE(IFNULL(parent.posting_date, parent.creation))
+			)
+		)
+	"""
+	started_or_prescribed_on_note_day = f"""
+		(
 			(
 				DATE(IFNULL(parent.posting_date, parent.creation)) = %(note_day)s
 				AND (child.date IS NULL OR child.date = '' OR child.date = %(note_day)s)
 			)
 			OR child.date = %(note_day)s
-		)""",
+		)
+	"""
+	# Stopped / discontinued as of the note day (exclude from ongoing).
+	stopped_as_of_note_day = """
+		(
+			IFNULL(child.stopped, 0) = 1
+			OR IFNULL(TRIM(child.reason_stopped), '') != ''
+			OR LOWER(IFNULL(child.medication_status, '')) IN ('discontinued', 'stopped')
+		)
+		AND (
+			child.stopped_date IS NULL
+			OR child.stopped_date = ''
+			OR child.stopped_date <= %(note_day)s
+		)
+	"""
+	# Ongoing only: started before the note day, still active, not stopped/ended.
+	# Use line end_date only — parent end_date is often filled from other lines.
+	ongoing_active_on_note_day = f"""
+		(
+			{line_start_sql} < %(note_day)s
+			AND (
+				child.end_date IS NULL
+				OR child.end_date = ''
+				OR child.end_date >= %(note_day)s
+			)
+			AND NOT ({stopped_as_of_note_day})
+			AND IFNULL(parent.status, '') NOT IN ('Cancelled', 'Discontinued')
+			AND IFNULL(child.medication_type, '') NOT LIKE '%%Inactive%%'
+		)
+	"""
+
+	conditions = [
+		"parent.patient = %(patient)s",
+		"parent.docstatus != 2",
+		"IFNULL(parent.status, '') != 'Cancelled'",
+		f"({started_or_prescribed_on_note_day} OR {ongoing_active_on_note_day})",
 	]
 	params = {
 		"patient": patient,
@@ -2143,10 +2184,28 @@ def get_medications_for_clinical_note_day(
 	}
 
 	if inpatient_admission:
-		conditions.append("parent.inpatient_record = %(inpatient_admission)s")
+		# Prefer this admission; still include patient lines with no care-link
+		# (legacy / continuations missing inpatient_record).
+		conditions.append(
+			"""(
+				parent.inpatient_record = %(inpatient_admission)s
+				OR (
+					IFNULL(parent.inpatient_record, '') = ''
+					AND IFNULL(parent.patient_encounter, '') = ''
+				)
+			)"""
+		)
 		params["inpatient_admission"] = inpatient_admission
 	elif patient_visit:
-		conditions.append("parent.patient_encounter = %(patient_visit)s")
+		conditions.append(
+			"""(
+				parent.patient_encounter = %(patient_visit)s
+				OR (
+					IFNULL(parent.patient_encounter, '') = ''
+					AND IFNULL(parent.inpatient_record, '') = ''
+				)
+			)"""
+		)
 		params["patient_visit"] = patient_visit
 
 	where_sql = " AND ".join(conditions)
@@ -2190,13 +2249,24 @@ def get_medications_for_clinical_note_day(
 			parent.user_name,
 			parent.inpatient_record,
 			parent.patient_encounter,
-			parent.care_context
+			parent.care_context,
+			CASE
+				WHEN (
+					DATE(IFNULL(parent.posting_date, parent.creation)) = %(note_day)s
+					AND (child.date IS NULL OR child.date = '' OR child.date = %(note_day)s)
+				) OR child.date = %(note_day)s
+				THEN 1 ELSE 0
+			END AS started_on_note_day
 		FROM `tabInpatient Medication Order Entry` AS child
 		INNER JOIN `tabPatient Medication Order` AS parent
 			ON child.parent = parent.name
 			AND child.parenttype = 'Patient Medication Order'
 		WHERE {where_sql}
-		ORDER BY IFNULL(child.date, parent.posting_date) ASC, parent.creation ASC, child.idx ASC
+		ORDER BY
+			started_on_note_day DESC,
+			IFNULL(child.date, parent.posting_date) ASC,
+			parent.creation ASC,
+			child.idx ASC
 		""",
 		params,
 		as_dict=True,
@@ -2212,6 +2282,34 @@ def get_medications_for_clinical_note_day(
 			continue
 		if entry_name:
 			seen.add(entry_name)
+
+		started_on_note_day = cint(row.get("started_on_note_day"))
+		# Ongoing path: only line-level stop / end. Do NOT use parent PMO end_date —
+		# header end_date is often set from another line and would hide open-ended actives.
+		if not started_on_note_day:
+			stopped_flag = (
+				cint(row.get("stopped"))
+				or bool((row.get("reason_stopped") or "").strip())
+				or (row.get("medication_status") or "").strip().lower()
+				in ("discontinued", "stopped")
+			)
+			if stopped_flag:
+				stopped_on = row.get("stopped_date")
+				try:
+					stopped_day = getdate(stopped_on) if stopped_on else None
+				except Exception:
+					stopped_day = None
+				# No stop date → currently stopped. Stop date on/before note day → not active then.
+				if not stopped_day or stopped_day <= note_day:
+					continue
+			# Line end only (ignore parent order_end_date).
+			end_raw = row.get("end_date")
+			try:
+				end_day = getdate(end_raw) if end_raw else None
+			except Exception:
+				end_day = None
+			if end_day and end_day < note_day:
+				continue
 
 		display = medication_entry_display_fields(
 			row,
@@ -2255,6 +2353,8 @@ def get_medications_for_clinical_note_day(
 				"practitioner": row.get("practitioner"),
 				"practitioner_name": row.get("healthcare_practitioner_name") or row.get("user_name"),
 				"care_context": row.get("care_context"),
+				"started_on_note_day": started_on_note_day,
+				"is_ongoing": 0 if started_on_note_day else 1,
 			}
 		)
 

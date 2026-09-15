@@ -1,12 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { apiRequest } from '../../services/apiClient'
+import { updateDoctypeRow } from '../../services/doctypeResource'
 import { uploadPatientFile } from '../../services/patients'
-import { fetchHealthcarePractitioners, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, getCurrentUserPractitioner, type LinkFieldOption } from '../../services/common'
+import { fetchDoc, fetchHealthcarePractitioners, fetchPatientVisits, fetchPatientOptions, fetchInpatientAdmissionOptions, getCurrentUserPractitioner, type LinkFieldOption } from '../../services/common'
 import { toast } from '../../hooks/useToast'
 import { PenLine, Trash2, Check, ChevronDown, Plus, AlertCircle , ClipboardList } from 'lucide-react'
 
 import { CM_BTN_CANCEL, CM_BTN_PRIMARY, CREATE_MODAL_BODY_GRADIENT, CREATE_MODAL_FOOTER_STICKY, CREATE_MODAL_OVERLAY, CreateModalHeader, createModalShellClass, createModalTabButtonClass } from '../ui/CreateModalChrome'
-import { toDatetimeLocalValue } from '../../utils/datetimeLocal'
+import { parseToDatetimeLocalValue, toDatetimeLocalValue } from '../../utils/datetimeLocal'
 import { localDateInputValue } from '../../utils/formatDate'
 import { DateFilterInput } from '../ui/DateFilterInput'
 
@@ -247,11 +248,18 @@ const LinkCombobox = ({ label, value, onSelect, onClear, fetchOptions, placehold
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TimeOutProcedureModalProps {
-  admissionNo: string
-  patient: string
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
+  admissionNo?: string
+  patient?: string
   patientName?: string
   onClose: () => void
   onSuccess?: () => void
+}
+
+function toDateInput(value?: string | null): string {
+  if (!value) return ''
+  return String(value).trim().slice(0, 10)
 }
 
 interface ProcedureRow {
@@ -291,7 +299,15 @@ const sectionTitleClass = 'text-sm font-semibold text-slate-800 mb-3 pb-1.5 bord
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
 
-export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClose, onSuccess }: TimeOutProcedureModalProps) => {
+export const TimeOutProcedureModal = ({
+  editName,
+  admissionNo = '',
+  patient = '',
+  patientName,
+  onClose,
+  onSuccess,
+}: TimeOutProcedureModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   const [activeTab, setActiveTab] = useState<TabId>('general')
   const [form, setFormState] = useState<FormState>({
     date: nowDate(),
@@ -306,6 +322,7 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
   const [signatureUrl, setSignatureUrl] = useState('')
   const [signatureUploading, setSignatureUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
 
   // Link field display labels
   const [patientVisitLabel, setPatientVisitLabel] = useState('')
@@ -317,7 +334,55 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
   const [currentAdmission, setCurrentAdmission] = useState(admissionNo)
   const [currentPatient, setCurrentPatient] = useState(patient)
   const [currentPatientName, setCurrentPatientName] = useState(patientName || '')
-  const isLockedContext = Boolean(admissionNo)
+  const isLockedContext = Boolean(admissionNo) || isEdit
+
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('Time Out Procedure', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setCurrentAdmission(String(doc.inpatient_admission || doc.admission || ''))
+        setCurrentPatient(String(doc.patient || ''))
+        setCurrentPatientName(String(doc.patient_name || ''))
+        const visit = String(doc.patient_visit || '')
+        setFormState((prev) => ({
+          ...prev,
+          date: toDateInput(doc.date as string) || prev.date,
+          patient_visit: visit,
+          time_out_time: doc.time_out_time ? parseToDatetimeLocalValue(String(doc.time_out_time)) : prev.time_out_time,
+          procedure_start_time: String(doc.procedure_start_time || prev.procedure_start_time),
+          nurse: String(doc.nurse || prev.nurse),
+          nurse_name: String(doc.nurse_name || prev.nurse_name),
+          sign_time: String(doc.sign_time || prev.sign_time),
+        }))
+        setPatientVisitLabel(visit)
+        const tpl = String(doc.template || '')
+        setTemplateName(tpl)
+        setTemplateLabel(tpl)
+        if (doc.nurse) setNurseLabel(String(doc.nurse_name || doc.nurse))
+        const sig = doc.signature
+        if (typeof sig === 'string' && sig.trim()) setSignatureUrl(sig.trim())
+        const procRows: Record<string, unknown>[] = Array.isArray(doc.procedures) ? doc.procedures : []
+        setProcedures(
+          procRows.map((r) => ({
+            _key: Math.random().toString(36).slice(2),
+            criteria: String(r.criteria ?? ''),
+            selection: (String(r.selection ?? '') as '' | 'Yes' | 'No' | 'N/A'),
+          }))
+        )
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load record')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
 
   const fetchPatientOpts = useCallback((s: string) => fetchPatientOptions(s || undefined), [])
   const fetchAdmissionOpts = useCallback(
@@ -411,6 +476,7 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
   }
 
   useEffect(() => {
+    if (isEdit) return
     let cancelled = false
     ;(async () => {
       try {
@@ -437,7 +503,7 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
     return () => {
       cancelled = true
     }
-  }, [applyTemplate])
+  }, [applyTemplate, isEdit])
 
   const addRow = () => setProcedures(prev => [...prev, { _key: Math.random().toString(36).slice(2), criteria: '', selection: '' }])
   const removeRow = (key: string) => setProcedures(prev => prev.filter(r => r._key !== key))
@@ -476,11 +542,16 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
         signature: signatureUrl || undefined,
         procedures: procedures.map(({ _key: _unused, ...rest }) => rest),
       }
-      await apiRequest('/api/resource/Time%20Out%20Procedure', {
-        method: 'POST',
-        body: JSON.stringify({ data: payload }),
-      })
-      toast.success('Time Out Procedure saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('Time Out Procedure', editName.trim(), payload)
+        toast.success('Time Out Procedure updated.')
+      } else {
+        await apiRequest('/api/resource/Time%20Out%20Procedure', {
+          method: 'POST',
+          body: JSON.stringify({ data: payload }),
+        })
+        toast.success('Time Out Procedure saved successfully.')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -497,7 +568,7 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('w-full max-w-3xl max-h-[92vh] overflow-hidden')}>
         <CreateModalHeader
-          title="Time-Out Procedure"
+          title={isEdit ? 'Edit Time-Out Procedure' : 'Time-Out Procedure'}
           icon={<ClipboardList className="h-5 w-5 text-emerald-700" strokeWidth={2} />}
           subtitle={<>{patientName ? `${patientName} · ` : ''}{admissionNo}</>}
           onClose={onClose}
@@ -525,7 +596,10 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate className={`${CREATE_MODAL_BODY_GRADIENT} flex-1 overflow-y-auto`}>
           <div className="px-6 py-5">
-
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading record…</div>
+            ) : (
+            <>
             {/* ── Tab 1: General ── */}
             {activeTab === 'general' && (
               <div className="space-y-6">
@@ -799,6 +873,8 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
                 </div>
               </div>
             )}
+            </>
+            )}
           </div>
 
           <div className={`${CREATE_MODAL_FOOTER_STICKY} items-center justify-between`}>
@@ -822,8 +898,8 @@ export const TimeOutProcedureModal = ({ admissionNo, patient, patientName, onClo
                 </button>
               )}
               <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
-              <button type="submit" disabled={submitting} className={CM_BTN_PRIMARY}>
-                {submitting ? 'Saving...' : 'Save Record'}
+              <button type="submit" disabled={submitting || loadingEdit} className={CM_BTN_PRIMARY}>
+                {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Record'}
               </button>
             </div>
           </div>

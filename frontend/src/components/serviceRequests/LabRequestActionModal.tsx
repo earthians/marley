@@ -8,7 +8,7 @@ import {
 } from '../ui/CreateModalChrome'
 import type { ServiceRequest } from '../../services/serviceRequests'
 
-export type LabRequestModalAction = 'delete' | 'settlement' | 'sample_handling'
+export type LabRequestModalAction = 'delete' | 'cancel' | 'settlement' | 'sample_handling'
 
 export interface LabRequestActionModalProps {
   action: LabRequestModalAction
@@ -17,6 +17,7 @@ export interface LabRequestActionModalProps {
   onClose: () => void
   onDeleteConfirm: () => void
   onSampleHandlingConfirm: () => void
+  onCancelConfirm: () => void
   onSettlementChoice: (mode: 'refund' | 'patient_credit') => void
 }
 
@@ -116,6 +117,7 @@ export function LabRequestActionModal({
   onClose,
   onDeleteConfirm,
   onSampleHandlingConfirm,
+  onCancelConfirm,
   onSettlementChoice,
 }: LabRequestActionModalProps) {
   const srLabel = serviceRequest.name
@@ -201,6 +203,50 @@ export function LabRequestActionModal({
     )
   }
 
+  if (action === 'cancel') {
+    return (
+      <ModalShell
+        tone="primary"
+        title="Cancel lab request?"
+        subtitle="Linked lab tests will be removed before sample collection."
+        icon={<FlaskConical className="h-5 w-5" />}
+        loading={loading}
+        onClose={onClose}
+        footer={
+          <>
+            <button type="button" onClick={onClose} disabled={loading} className={CM_BTN_CANCEL}>
+              Keep request
+            </button>
+            <button
+              type="button"
+              onClick={onCancelConfirm}
+              disabled={loading}
+              className={`${CM_BTN_PRIMARY} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {loading ? 'Cancelling…' : 'Cancel lab request'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-slate-700">
+          Cancel <span className="font-semibold">{srLabel}</span> for{' '}
+          <span className="font-medium">{patientLabel}</span>. Linked billing that is not a paid sales
+          invoice will be removed with the request.
+        </p>
+        <dl className="grid grid-cols-1 gap-2 text-sm text-slate-700">
+          <div className="flex justify-between gap-4 border-b border-slate-100 pb-2">
+            <dt className="text-slate-500">Patient</dt>
+            <dd className="font-medium text-right">{patientLabel}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-500">Tests</dt>
+            <dd className="font-medium text-right">{templateLabel}</dd>
+          </div>
+        </dl>
+      </ModalShell>
+    )
+  }
+
   return (
     <ModalShell
       tone="primary"
@@ -217,7 +263,8 @@ export function LabRequestActionModal({
     >
       <p className="text-sm leading-relaxed text-slate-700">
         Cancel <span className="font-semibold">{srLabel}</span> for{' '}
-        <span className="font-medium">{patientLabel}</span>. Choose how to settle payment:
+        <span className="font-medium">{patientLabel}</span>. This request has a paid sales invoice.
+        Choose how to settle payment:
       </p>
       <div className="flex flex-col gap-2">
         <button

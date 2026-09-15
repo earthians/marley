@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { apiRequest } from '../../services/apiClient'
+import { updateDoctypeRow } from '../../services/doctypeResource'
 import {
+  fetchDoc,
   fetchHealthcarePractitioners,
   getCurrentUserPractitionerOption,
   type LinkFieldOption,
@@ -31,11 +33,17 @@ import { useCareContext } from '../../providers/CareContextProvider'
 import { DateFilterInput } from '../ui/DateFilterInput'
 
 interface ECTPatientHealthHistoryModalProps {
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
   patient?: string
   patientName?: string
   admissionNo?: string
   onClose: () => void
   onSuccess?: () => void
+}
+
+function docCheck(value: unknown): boolean {
+  return value === 1 || value === true
 }
 
 interface HealthHistoryRow {
@@ -62,18 +70,20 @@ function nowTime() {
 }
 
 export const ECTPatientHealthHistoryModal = ({
+  editName,
   patient = '',
   patientName = '',
   admissionNo = '',
   onClose,
   onSuccess,
 }: ECTPatientHealthHistoryModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   const { activeAdmission, selectedPatient: contextPatient } = useCareContext()
 
   // ── General
-  const [patientField] = useState(patient || contextPatient || '')
-  const [patientNameField] = useState(patientName || '')
-  const [admissionField] = useState(admissionNo || activeAdmission || '')
+  const [patientField, setPatientField] = useState(patient || contextPatient || '')
+  const [patientNameField, setPatientNameField] = useState(patientName || '')
+  const [admissionField, setAdmissionField] = useState(admissionNo || activeAdmission || '')
   const [historyDate, setHistoryDate] = useState(nowDate())
   const [historyTime, setHistoryTime] = useState(nowTime())
   const [height, setHeight] = useState('')
@@ -92,6 +102,53 @@ export const ECTPatientHealthHistoryModal = ({
   const practitionerRef = useRef<HTMLDivElement>(null)
 
   const [submitting, setSubmitting] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
+
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchDoc('Patient Health History', editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setPatientField(String(doc.patient || ''))
+        setPatientNameField(String(doc.patient_name || ''))
+        setAdmissionField(String(doc.inpatient_admission || ''))
+        if (doc.date) setHistoryDate(String(doc.date).slice(0, 10))
+        if (doc.time) setHistoryTime(String(doc.time).slice(0, 5))
+        setHeight(String(doc.height || ''))
+        setWeight(String(doc.weight || ''))
+        setUsername(String(doc.username || ''))
+        const tpl = String(doc.template || '')
+        if (tpl) setTemplateSelected({ name: tpl, label: tpl })
+        const rows: Record<string, unknown>[] = Array.isArray(doc.template_feedback) ? doc.template_feedback : []
+        setHealthRows(
+          rows.map((r, idx) => ({
+            _key: Math.random().toString(36).slice(2),
+            history: String(r.history ?? ''),
+            yes: docCheck(r.yes) ? true : r.yes === 0 || r.yes === false ? false : null,
+            remarks: String(r.remarks ?? ''),
+            no_format: typeof r.no_format === 'number' ? r.no_format : idx + 1,
+            is_diabetic: docCheck(r.is_diabetic),
+            type: String(r.type ?? ''),
+            specify: docCheck(r.specify),
+            speficication: String(r.speficication ?? ''),
+          }))
+        )
+        if (doc.username) {
+          setPractitionerQuery(String(doc.username))
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) toast.error(err instanceof Error ? err.message : 'Failed to load history')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
 
   const loadTemplateRows = async (opt: LinkFieldOption) => {
     setTemplateSelected(opt)
@@ -123,6 +180,7 @@ export const ECTPatientHealthHistoryModal = ({
 
   // Auto-select default template on mount
   useEffect(() => {
+    if (isEdit) return
     let cancelled = false
     const loadDefault = async () => {
       try {
@@ -143,6 +201,7 @@ export const ECTPatientHealthHistoryModal = ({
 
   // Auto-select current user's practitioner as username
   useEffect(() => {
+    if (isEdit) return
     let cancelled = false
     const load = async () => {
       try {
@@ -256,11 +315,16 @@ export const ECTPatientHealthHistoryModal = ({
           speficication: r.speficication,
         })),
       }
-      await apiRequest<{ name: string }>('/api/resource/Patient%20Health%20History', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
-      toast.success('Patient Health History saved successfully.')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('Patient Health History', editName.trim(), payload)
+        toast.success('Patient Health History updated.')
+      } else {
+        await apiRequest<{ name: string }>('/api/resource/Patient%20Health%20History', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+        toast.success('Patient Health History saved successfully.')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -273,9 +337,14 @@ export const ECTPatientHealthHistoryModal = ({
   return (
     <div className={CREATE_MODAL_OVERLAY_STACK} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className={createModalShellClass('max-w-4xl max-h-[92vh] overflow-hidden')} onMouseDown={(e) => e.stopPropagation()}>
-        <CreateModalHeader title="Patient Health History" onClose={onClose} />
+        <CreateModalHeader title={isEdit ? 'Edit Patient Health History' : 'Patient Health History'} onClose={onClose} />
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading history…</div>
+            ) : null}
+            {!loadingEdit && (
+            <>
             {/* Top: Patient info + Date/Time + Height/Weight */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -406,11 +475,15 @@ export const ECTPatientHealthHistoryModal = ({
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-3 bg-white">
             <button type="button" onClick={onClose} className={CM_BTN_CANCEL}>Cancel</button>
-            <button type="submit" disabled={submitting} className={CM_BTN_PRIMARY}>{submitting ? 'Saving…' : 'Save History'}</button>
+            <button type="submit" disabled={submitting || loadingEdit} className={CM_BTN_PRIMARY}>
+              {submitting ? 'Saving…' : isEdit ? 'Save Changes' : 'Save History'}
+            </button>
           </div>
         </form>
       </div>

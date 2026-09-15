@@ -62,8 +62,14 @@ export async function fetchPrintFormats(doctype: string): Promise<string[]> {
   )
   const resData = await response.json()
   if (resData?.message && Array.isArray(resData.message)) {
-    return resData.message as string[]
+    const formats = resData.message as string[]
+    // Notes: never offer Frappe's built-in Standard print format in the UI.
+    if (doctype === 'Clinical Note' || doctype === 'Main Nursing Note') {
+      return formats.filter((f) => (f || '').trim().toLowerCase() !== 'standard')
+    }
+    return formats
   }
+  if (doctype === 'Clinical Note' || doctype === 'Main Nursing Note') return []
   return ['Standard']
 }
 

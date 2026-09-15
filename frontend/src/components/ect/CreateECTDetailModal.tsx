@@ -5,17 +5,21 @@ import {
   CREATE_MODAL_OVERLAY,
   createModalShellClass,
 } from '../ui/CreateModalChrome'
-import { createECTDetail, getNextECTDetailsTransNum } from '../../services/ectDetails'
+import { createECTDetail, fetchECTDetail, getNextECTDetailsTransNum } from '../../services/ectDetails'
+import { updateDoctypeRow } from '../../services/doctypeResource'
 import { searchPatients, fetchPatients, type PatientListItem } from '../../services/patients'
 import { fetchCostCenters, fetchHealthcarePractitioners, fetchLeadSources, getCurrentUserPractitioner, type LinkFieldOption } from '../../services/common'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { toast } from '../../hooks/useToast'
 import { localDateInputValue } from '../../utils/formatDate'
+import { parseToDatetimeLocalValue } from '../../utils/datetimeLocal'
 import { DateFilterInput } from '../ui/DateFilterInput'
 
 interface CreateECTDetailModalProps {
   onClose: () => void
   onSuccess?: () => void
+  /** When set, modal loads and updates this record instead of creating. */
+  editName?: string
   initialPatient?: string
 }
 
@@ -36,8 +40,10 @@ function toFrappeDateTime(value: string): string {
 export const CreateECTDetailModal = ({
   onClose,
   onSuccess,
+  editName,
   initialPatient,
 }: CreateECTDetailModalProps) => {
+  const isEdit = Boolean(editName?.trim())
   const { mode, activeAdmission, activeVisit, userCostCenter } = useCareContext()
   const [activeTab, setActiveTab] = useState<ECTTab>('procedure')
   const [formData, setFormData] = useState({
@@ -75,6 +81,7 @@ export const CreateECTDetailModal = ({
     anaesthetic_doctor: '',
   })
   const [loading, setLoading] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
   const [error, setError] = useState<string | null>(null)
   const [sourceOptions, setSourceOptions] = useState<LinkFieldOption[]>([])
   const [costCenterOptions, setCostCenterOptions] = useState<LinkFieldOption[]>([])
@@ -131,6 +138,63 @@ export const CreateECTDetailModal = ({
     }
   }, [])
 
+  useEffect(() => {
+    if (!editName?.trim()) return
+    let cancelled = false
+    setLoadingEdit(true)
+    fetchECTDetail(editName.trim())
+      .then((doc) => {
+        if (cancelled) return
+        setFormData((prev) => ({
+          ...prev,
+          patient: doc.patient || '',
+          cost_center: doc.cost_center || prev.cost_center,
+          date: doc.date ? String(doc.date).slice(0, 10) : prev.date,
+          time: doc.time ? String(doc.time).slice(0, 5) : prev.time,
+          source: doc.source || '',
+          duration: doc.duration != null ? String(doc.duration) : '',
+          energy: doc.energy || '',
+          propofol_detail: doc.propofol_detail || '',
+          succinycholine_detail: doc.succinycholine_detail || '',
+          _age: doc._age != null ? String(doc._age) : '',
+          success: doc.success || '',
+          reference_doctype: doc.reference_doctype || '',
+          reference_name: doc.reference_name || '',
+          repeated: doc.repeated || '',
+          vitals: doc.vitals || '',
+          ecg: doc.ecg || '',
+          anathesiologist: doc.anathesiologist || '',
+          assist_doctor: doc.assist_doctor || '',
+          psychiatrist: doc.psychiatrist || '',
+          nurse: doc.nurse || '',
+          doctors_name: doc.doctors_name || '',
+          ect_doctors_notes: doc.ect_doctors_notes || '',
+          date_and_time: doc.date_and_time ? parseToDatetimeLocalValue(String(doc.date_and_time)) : '',
+          nurse_name: doc.nurse_name || '',
+          ect_nurse_notes: doc.ect_nurse_notes || '',
+          n_date_and_time: doc.n_date_and_time ? parseToDatetimeLocalValue(String(doc.n_date_and_time)) : '',
+          bp_1: doc.bp_1 || '',
+          bp_2: doc.bp_2 || '',
+          max_bp_1: doc.max_bp_1 || '',
+          max_bp2: doc.max_bp2 || '',
+          psychology_doctor: doc.psychology_doctor || '',
+          anaesthetic_doctor: doc.anaesthetic_doctor || '',
+        }))
+        setPatientQuery(doc.patient || '')
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Failed to load ECT detail')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editName])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -151,10 +215,7 @@ export const CreateECTDetailModal = ({
       setError(null)
 
       const timePart = formData.time ? `${formData.time}:00`.slice(0, 8) : undefined
-      const transNum = await getNextECTDetailsTransNum()
-
-      await createECTDetail({
-        trans_num: transNum,
+      const detailPayload = {
         patient: formData.patient,
         cost_center: formData.cost_center || undefined,
         date: formData.date || undefined,
@@ -187,9 +248,16 @@ export const CreateECTDetailModal = ({
         succinycholine_detail: formData.succinycholine_detail || undefined,
         psychology_doctor: formData.psychology_doctor || undefined,
         anaesthetic_doctor: formData.anaesthetic_doctor || undefined,
-      })
+      }
 
-      toast.success('ECT Detail created successfully')
+      if (isEdit && editName?.trim()) {
+        await updateDoctypeRow('ECT Details', editName.trim(), detailPayload)
+        toast.success('ECT Detail updated successfully')
+      } else {
+        const transNum = await getNextECTDetailsTransNum()
+        await createECTDetail({ trans_num: transNum, ...detailPayload })
+        toast.success('ECT Detail created successfully')
+      }
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -246,6 +314,7 @@ export const CreateECTDetailModal = ({
 
   // Auto-link admission or visit from care context (avoids invalid dynamic-link errors).
   useEffect(() => {
+    if (isEdit) return
     if (mode === 'IP' && activeAdmission) {
       setFormData((prev) => ({
         ...prev,
@@ -287,7 +356,7 @@ export const CreateECTDetailModal = ({
         }
       })()
     }
-  }, [mode, activeAdmission, activeVisit])
+  }, [mode, activeAdmission, activeVisit, isEdit])
 
   // Auto-populate practitioner fields if current user is a healthcare practitioner
   useEffect(() => {
@@ -441,7 +510,9 @@ export const CreateECTDetailModal = ({
     <div className={CREATE_MODAL_OVERLAY}>
       <div className={createModalShellClass('max-w-2xl w-full max-h-[90vh] overflow-hidden')}>
         <div className="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-lg font-semibold tracking-tight text-emerald-950">Create ECT Detail</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-emerald-950">
+            {isEdit ? 'Edit ECT Detail' : 'Create ECT Detail'}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -479,6 +550,10 @@ export const CreateECTDetailModal = ({
           )}
 
           <div className="p-4 overflow-y-auto flex-1 min-h-0">
+            {loadingEdit ? (
+              <div className="flex items-center justify-center py-10 text-sm text-slate-500">Loading ECT detail…</div>
+            ) : (
+            <>
             {/* Tab 1: Procedure */}
             {activeTab === 'procedure' && (
               <div className="space-y-4">
@@ -1098,6 +1173,8 @@ export const CreateECTDetailModal = ({
                 </div>
               </div>
             )}
+            </>
+            )}
           </div>
 
           <div className="p-4 border-t border-slate-200 flex justify-end gap-2 flex-shrink-0">
@@ -1110,10 +1187,10 @@ export const CreateECTDetailModal = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingEdit}
               className={CM_BTN_PRIMARY}
             >
-              {loading ? 'Saving…' : 'Save'}
+              {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Save'}
             </button>
           </div>
         </form>

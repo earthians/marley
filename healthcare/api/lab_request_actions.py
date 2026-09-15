@@ -128,10 +128,14 @@ def _can_edit_lab_request(phase: str, lab_tests: list[dict]) -> bool:
 	return True
 
 
-def _lab_request_action_flags(phase: str, lab_tests: list[dict]) -> dict:
+def _lab_request_action_flags(phase: str, lab_tests: list[dict], requires_settlement: bool = False) -> dict:
+	cancellable = phase in ("booked_pre_sample", "paid_not_booked")
 	return {
 		"can_delete": phase == "draft_unpaid",
-		"can_cancel_with_settlement": phase in ("booked_pre_sample", "paid_not_booked"),
+		# Settlement choices only when SO → paid Sales Invoice.
+		"can_cancel_with_settlement": cancellable and requires_settlement,
+		"can_cancel_simple": cancellable and not requires_settlement,
+		"requires_settlement": requires_settlement,
 		"can_cancel_sample_handling": phase == "sample_collected",
 		"can_delete_lab_tests": any(_can_delete_requested_lab_test(lt) for lt in lab_tests),
 		"can_delete_lab_request": phase in ("draft_unpaid", "booked_pre_sample"),
@@ -230,13 +234,71 @@ def _delete_lab_test_dependencies(lab_test_name: str) -> dict:
 	}
 
 
+def _sales_order_name_for_sr(sr) -> str | None:
+	if (getattr(sr, "reference_document_type", None) or "") != "Sales Order":
+		return None
+	so_name = (getattr(sr, "reference_document_name", None) or "").strip()
+	return so_name or None
+
+
+def _submitted_sales_invoices_for_sales_order(so_name: str) -> list[dict]:
+	"""Submitted Sales Invoices created from this Sales Order."""
+	so_name = (so_name or "").strip()
+	if not so_name:
+		return []
+	parents = frappe.get_all(
+		"Sales Invoice Item",
+		filters={"sales_order": so_name},
+		pluck="parent",
+	)
+	names: list[str] = []
+	seen: set[str] = set()
+	for parent in parents:
+		if not parent or parent in seen:
+			continue
+		seen.add(parent)
+		names.append(parent)
+	if not names:
+		return []
+	return frappe.get_all(
+		"Sales Invoice",
+		filters={"name": ["in", names], "docstatus": 1},
+		fields=["name", "grand_total", "outstanding_amount", "status"],
+	)
+
+
+def _lab_request_requires_settlement(sr) -> bool:
+	"""
+	Settlement (patient credit / refund) is only needed when the Sales Order was
+	converted to a Sales Invoice and that invoice is fully paid.
+	"""
+	so_name = _sales_order_name_for_sr(sr)
+	if not so_name:
+		return False
+	for si in _submitted_sales_invoices_for_sales_order(so_name):
+		grand = flt(si.get("grand_total"))
+		outstanding = flt(si.get("outstanding_amount"))
+		status = (si.get("status") or "").strip()
+		if status == "Paid" or (grand > 0 and outstanding <= 0):
+			return True
+	return False
+
+
 def _get_service_request_paid_amount(sr) -> float:
-	"""Return cash already received against this lab request's sales order."""
-	if sr.reference_document_type != "Sales Order" or not sr.reference_document_name:
+	"""Return cash already received against this lab request's SO / paid SI."""
+	so_name = _sales_order_name_for_sr(sr)
+	if not so_name or not frappe.db.exists("Sales Order", so_name):
 		return 0
-	so_name = sr.reference_document_name
-	if not frappe.db.exists("Sales Order", so_name):
-		return 0
+
+	# Prefer paid amount on submitted Sales Invoices from this SO.
+	si_paid = 0.0
+	for si in _submitted_sales_invoices_for_sales_order(so_name):
+		grand = flt(si.get("grand_total"))
+		outstanding = flt(si.get("outstanding_amount"))
+		paid = max(grand - outstanding, 0)
+		si_paid += paid
+	if si_paid > 0:
+		return si_paid
 
 	advance_paid = flt(frappe.db.get_value("Sales Order", so_name, "advance_paid"))
 	if advance_paid > 0:
@@ -257,6 +319,13 @@ def _get_service_request_paid_amount(sr) -> float:
 	return flt(paid_rows[0][0]) if paid_rows else 0
 
 
+def _cancel_billing_for_service_request(sr) -> dict:
+	"""Cancel/delete linked Sales Invoice(s) and Sales Order for this lab request."""
+	from healthcare.api.service_request import _retire_lab_request_sales_order
+
+	return _retire_lab_request_sales_order(sr)
+
+
 def _cleanup_service_request_if_empty(
 	sr_name: str,
 	settlement_mode: str = "patient_credit",
@@ -268,10 +337,17 @@ def _cleanup_service_request_if_empty(
 
 	sr = _get_lab_service_request(sr_name)
 	paid_amount = _get_service_request_paid_amount(sr)
-	so_name = _cancel_sales_order_for_service_request(sr)
+	requires_settlement = _lab_request_requires_settlement(sr)
+	billing = _cancel_billing_for_service_request(sr)
+	so_name = billing.get("previous_sales_order")
 
 	payment_entry = None
-	if settlement_mode == "patient_credit" and paid_amount > 0:
+	# Auto patient-credit only when a paid invoice existed (same rule as cancel UI).
+	if (
+		settlement_mode == "patient_credit"
+		and requires_settlement
+		and paid_amount > 0
+	):
 		payment_entry = _apply_patient_credit(
 			sr,
 			paid_amount,
@@ -320,27 +396,9 @@ def _delete_or_cancel_lab_test(lab_test_name: str) -> None:
 
 
 def _cancel_sales_order_for_service_request(sr) -> str | None:
-	if sr.reference_document_type != "Sales Order" or not sr.reference_document_name:
-		return None
-	so_name = sr.reference_document_name
-	if not frappe.db.exists("Sales Order", so_name):
-		return None
-
-	invoiced = frappe.db.exists("Sales Invoice Item", {"sales_order": so_name, "docstatus": 1})
-	if invoiced:
-		frappe.throw(
-			_(
-				"A submitted Sales Invoice exists for this lab request. "
-				"Cancel or credit the invoice from Accounts before cancelling the lab request."
-			)
-		)
-
-	so = frappe.get_doc("Sales Order", so_name)
-	if so.docstatus == 1:
-		so.cancel()
-	elif so.docstatus == 0:
-		frappe.delete_doc("Sales Order", so_name, ignore_permissions=True)
-	return so_name
+	"""Back-compat wrapper — prefer `_cancel_billing_for_service_request`."""
+	result = _cancel_billing_for_service_request(sr)
+	return result.get("previous_sales_order")
 
 
 def _patient_customer(patient: str) -> str:
@@ -418,7 +476,8 @@ def get_lab_request_actions(service_request_name: str) -> dict:
 	sr = _get_lab_service_request(service_request_name)
 	lab_tests = _linked_lab_tests(sr.name)
 	phase = _lab_request_phase(sr, lab_tests)
-	flags = _lab_request_action_flags(phase, lab_tests)
+	requires_settlement = _lab_request_requires_settlement(sr)
+	flags = _lab_request_action_flags(phase, lab_tests, requires_settlement=requires_settlement)
 	return {
 		"service_request": sr.name,
 		"phase": phase,
@@ -517,8 +576,13 @@ def delete_draft_lab_request(service_request_name: str) -> dict:
 
 
 @frappe.whitelist()
-def cancel_booked_lab_request(service_request_name: str, settlement_mode: str = "patient_credit") -> dict:
-	"""Cancel a booked (or paid-not-booked) lab request with refund or patient credit."""
+def cancel_booked_lab_request(service_request_name: str, settlement_mode: str | None = None) -> dict:
+	"""Cancel a booked (or paid-not-booked) lab request.
+
+	Settlement choices (patient credit / refund) are required only when the linked
+	Sales Order has a fully paid Sales Invoice. Otherwise the request is cancelled
+	and billing docs are retired without a settlement prompt.
+	"""
 	_require_lab_roles()
 	sr = _get_lab_service_request(service_request_name)
 	lab_tests = _linked_lab_tests(sr.name)
@@ -526,9 +590,14 @@ def cancel_booked_lab_request(service_request_name: str, settlement_mode: str = 
 	if phase not in ("booked_pre_sample", "paid_not_booked"):
 		frappe.throw(_("This lab request cannot be cancelled at its current stage."))
 
-	settlement_mode = (settlement_mode or "patient_credit").strip().lower()
-	if settlement_mode not in ("refund", "patient_credit"):
-		frappe.throw(_("Settlement mode must be Refund or Patient Credit."))
+	requires_settlement = _lab_request_requires_settlement(sr)
+	settlement_mode = (settlement_mode or "").strip().lower() or None
+	if requires_settlement:
+		if settlement_mode not in ("refund", "patient_credit"):
+			frappe.throw(_("Choose Patient Credit or Refund to settle the paid invoice."))
+	else:
+		# No paid invoice — skip settlement UI path.
+		settlement_mode = None
 
 	for lt in lab_tests:
 		if _lab_test_has_sample_collected(lt["name"]) or _lab_test_past_sample_collection(lt):
@@ -547,7 +616,8 @@ def cancel_booked_lab_request(service_request_name: str, settlement_mode: str = 
 
 	credit_amount = flt(sr.grand_total) or flt(sr.cost) or 0
 	paid_amount = _get_service_request_paid_amount(sr)
-	so_name = _cancel_sales_order_for_service_request(sr)
+	billing = _cancel_billing_for_service_request(sr)
+	so_name = billing.get("previous_sales_order")
 
 	payment_entry = None
 	if settlement_mode == "patient_credit" and paid_amount > 0:
@@ -573,7 +643,9 @@ def cancel_booked_lab_request(service_request_name: str, settlement_mode: str = 
 		"service_request": service_request_name,
 		"deleted_service_request": deleted_sr,
 		"settlement_mode": settlement_mode,
+		"requires_settlement": requires_settlement,
 		"sales_order": so_name,
+		"cancelled_sales_invoices": billing.get("cancelled_sales_invoices") or [],
 		"payment_entry": payment_entry,
 		"lab_tests_removed": lab_test_names,
 	}
