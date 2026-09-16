@@ -32,6 +32,7 @@ def get_visit_date(visit):
 def get_visit_department(visit):
 	if visit.doctype == "Patient Encounter":
 		return visit.medical_department
+	return visit.department
 
 
 def is_visit_cancelled(visit):
