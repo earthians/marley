@@ -132,7 +132,11 @@ def patient_has_validity(visit):
 
 
 @frappe.whitelist()
-def check_fee_validity(visit, date=None, practitioner=None):
+def check_fee_validity(
+	visit: str | Document,
+	date: str | datetime.date | None = None,
+	practitioner: str | None = None,
+) -> Document | None:
 	if isinstance(visit, str):
 		visit = frappe.get_doc(json.loads(visit))
 
@@ -171,8 +175,6 @@ def check_fee_validity(visit, date=None, practitioner=None):
 	)
 	if validity and len(validity):
 		return frappe.get_doc("Fee Validity", validity[0].get("name"))
-
-	return
 
 
 def manage_fee_validity(visit):
@@ -312,7 +314,12 @@ def validate_free_visits_not_taken(fee_validity):
 
 
 @frappe.whitelist()
-def get_fee_validity(reference_dn, date, ignore_status=False, reference_dt="Patient Appointment"):
+def get_fee_validity(
+	reference_dn: str | None,
+	date: str | datetime.date,
+	ignore_status: bool = False,
+	reference_dt: str = "Patient Appointment",
+) -> list[dict] | None:
 	"""
 	Get the fee validity details for the free visit
 	:params reference_dn: Patient Appointment or Patient Encounter doc name
