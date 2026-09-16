@@ -37,6 +37,13 @@ def validate_read_access(doctype, name=None):
 		frappe.throw(_("Not permitted to read {0} {1}").format(doctype, name or ""), frappe.PermissionError)
 
 
+def validate_visit_access(visit):
+	"""The caller must be able to read the patient, and the visit itself once it is saved"""
+	validate_read_access("Patient", visit.patient)
+	if not visit.get("__islocal"):
+		validate_read_access(visit.doctype, visit.name)
+
+
 def get_visit_date(visit):
 	if visit.doctype == "Patient Encounter":
 		return getdate(visit.encounter_date)
@@ -165,10 +172,7 @@ def check_fee_validity(
 		validate_visit_doctype(visit.get("doctype"))
 		visit = frappe.get_doc(visit)
 
-	validate_read_access("Patient", visit.patient)
-	if not visit.get("__islocal"):
-		validate_read_access(visit.doctype, visit.name)
-
+	validate_visit_access(visit)
 	return find_fee_validity(visit, date, practitioner)
 
 
