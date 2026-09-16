@@ -78,11 +78,18 @@ def is_free_follow_up_enabled(practitioner, doctype="Patient Appointment"):
 	return bool(pract_enabled or settings_enabled)
 
 
-def create_fee_validity(visit):
-	# lock the patient for the rest of the transaction, so that two visits submitted at the
-	# same time cannot both find no validity and open one each
-	frappe.db.get_value("Patient", visit.patient, "name", for_update=True)
+def lock_patient(patient):
+	"""Serialize every fee validity write for a patient until the transaction ends.
 
+	Two visits submitted together must not both find no validity and open one each, nor both read
+	the same visit count and overwrite each other. Under REPEATABLE READ a plain read after the
+	lock still sees the transaction's old snapshot, so the reads inside the critical section that
+	another visit could have changed are locking reads (for_update) as well.
+	"""
+	frappe.db.get_value("Patient", patient, "name", for_update=True)
+
+
+def create_fee_validity(visit):
 	if patient_has_validity(visit):
 		return
 
@@ -127,6 +134,7 @@ def patient_has_validity(visit):
 		},
 		["name", "start_date", "creation"],
 		as_dict=True,
+		for_update=True,
 	)
 
 	return bool(validity and covers_visit_date(validity, visit_date))
@@ -138,6 +146,11 @@ def check_fee_validity(
 	date: str | datetime.date | None = None,
 	practitioner: str | None = None,
 ) -> Document | None:
+	return find_fee_validity(visit, date, practitioner)
+
+
+def find_fee_validity(visit, date=None, practitioner=None, for_update=False):
+	"""The validity covering this visit; for_update reads and locks the latest committed row"""
 	if isinstance(visit, str):
 		visit = frappe.get_doc(json.loads(visit))
 
@@ -162,10 +175,12 @@ def check_fee_validity(
 		filters["reference_dt"] = visit.doctype
 		filters["reference_dn"] = visit.name
 
-	validity = frappe.db.get_value("Fee Validity", filters, ["name", "start_date", "creation"], as_dict=True)
+	validity = frappe.db.get_value(
+		"Fee Validity", filters, ["name", "start_date", "creation"], as_dict=True, for_update=for_update
+	)
 
 	if validity and covers_visit_date(validity, date):
-		return frappe.get_doc("Fee Validity", validity.name)
+		return frappe.get_doc("Fee Validity", validity.name, for_update=for_update)
 
 	# Fallback for rescheduled visits
 	if visit.get("__islocal"):
@@ -182,6 +197,7 @@ def manage_fee_validity(visit):
 	if is_inpatient_visit(visit) or not is_free_follow_up_enabled(visit.practitioner, visit.doctype):
 		return
 
+	lock_patient(visit.patient)
 	pract_enabled = frappe.db.get_value(
 		"Healthcare Practitioner", visit.practitioner, "enable_free_follow_ups"
 	)
@@ -207,7 +223,7 @@ def manage_fee_validity(visit):
 			)
 
 	# Check for existing valid fee
-	fee_validity = check_fee_validity(visit)
+	fee_validity = find_fee_validity(visit, for_update=True)
 
 	if fee_validity:
 		exists = frappe.db.exists(
@@ -242,10 +258,7 @@ def manage_fee_validity(visit):
 			"Fee Validity Reference", {"reference_dt": visit.doctype, "reference_dn": visit.name}, "parent"
 		)
 		if free_visit_validity:
-			fee_validity = frappe.get_doc(
-				"Fee Validity",
-				free_visit_validity,
-			)
+			fee_validity = frappe.get_doc("Fee Validity", free_visit_validity, for_update=True)
 			frappe.db.delete(
 				"Fee Validity Reference", {"reference_dt": visit.doctype, "reference_dn": visit.name}
 			)
@@ -264,8 +277,9 @@ def cancel_fee_validity(visit):
 	The validity exists only because of the visit that opened it, so it goes with it. An
 	encounter is invoiced after it is submitted, so its invoiced state says nothing here.
 	"""
+	lock_patient(visit.patient)
 	fee_validity = frappe.db.get_value(
-		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}, for_update=True
 	)
 	if fee_validity:
 		validate_free_visits_not_taken(fee_validity)
