@@ -375,6 +375,9 @@ def query_fee_validity(reference_dn, date, ignore_status=False, reference_dt="Pa
 	if not reference_dn:
 		return None
 
+	if reference_dt not in ("Patient Appointment", "Patient Encounter"):
+		frappe.throw(_(f"Invalid reference doctype {reference_dt}"))
+
 	visit_details = frappe.db.get_value(reference_dt, reference_dn, ["patient", "practitioner"], as_dict=True)
 
 	if not visit_details:
