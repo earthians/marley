@@ -27,6 +27,8 @@
   "free_cases",
   "tier_after_cases",
   "tier_commission_percent",
+  "section_payment_modes",
+  "payment_modes",
   "section_notes",
   "remarks"
  ],
@@ -163,6 +165,18 @@
    "fieldname": "tier_commission_percent",
    "fieldtype": "Percent",
    "label": "Tier Commission %"
+  },
+  {
+   "description": "Split each service amount across the payment modes it is collected through. Used to build the Commission Payslip (one row per service per mode). Percentages are relative weights, so they need not add up to 100. Leave empty to keep one row per service with 100%.",
+   "fieldname": "section_payment_modes",
+   "fieldtype": "Section Break",
+   "label": "Payment Modes"
+  },
+  {
+   "fieldname": "payment_modes",
+   "fieldtype": "Table",
+   "label": "Payment Modes",
+   "options": "Doctor Commission Rule Payment Mode"
   },
   {
    "fieldname": "section_notes",

@@ -85,6 +85,18 @@ function fmtDate(value?: string | null): string {
   }
 }
 
+/**
+ * Practitioner who prescribed / added this medication line. Lines that predate the
+ * per-line doctor field (or legacy Oracle rows) fall back to the prescription's doctor.
+ */
+function linePractitionerName(m: MedicationOrderEntry | null, row: Prescription): string {
+  return (
+    (m?.healthcare_practitioner_name || m?.healthcare_practitioner || '').trim() ||
+    (row.healthcare_practitioner_name || row.healthcare_practitioner || row.practitioner || '').trim() ||
+    (row.user_name || '').trim()
+  )
+}
+
 /** Friendly branch label from a Cost Center name (drops the company abbr suffix). */
 function branchLabel(cc?: string): string {
   if (!cc) return '-'
@@ -628,7 +640,7 @@ export const PrescriptionList = ({
               Status
             </th>
             <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase whitespace-nowrap">
-              Created By
+              Practitioner
             </th>
             <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase whitespace-nowrap">
               Date of Creation
@@ -647,12 +659,7 @@ export const PrescriptionList = ({
             const lineStatus = prescriptionLineListingStatus(m, row)
             const metaFields = [
               ['Prescription', row.name],
-              ['Doctor',
-                m?.healthcare_practitioner
-                  ? (m.healthcare_practitioner_name || m.healthcare_practitioner)
-                  : row.healthcare_practitioner || row.practitioner
-                    ? (row.healthcare_practitioner_name || row.healthcare_practitioner || row.practitioner)
-                    : (row.user_name || '')],
+              ['Doctor', linePractitionerName(m, row)],
               ['Care context', row.care_context],
               ['Visit', row.patient_encounter],
               ['Admission', row.inpatient_record],
@@ -713,7 +720,7 @@ export const PrescriptionList = ({
                 />
               </td>
               <td className="px-3 py-2 text-slate-700 whitespace-nowrap">
-                {row.owner_full_name || row.owner || '-'}
+                {linePractitionerName(m, row) || '-'}
               </td>
               <td className="px-3 py-2 text-slate-700 whitespace-nowrap">{fmtDate(row.creation)}</td>
               <td className="px-3 py-2 whitespace-nowrap">

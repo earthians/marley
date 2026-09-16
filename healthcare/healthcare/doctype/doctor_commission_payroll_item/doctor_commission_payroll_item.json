@@ -27,6 +27,8 @@
   "column_break_service",
   "qty",
   "service_amount",
+  "mode_of_payment",
+  "payment_mode_percent",
   "section_commission",
   "commission_rule",
   "calculation_type",
@@ -166,6 +168,23 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Service Amount",
+   "read_only": 1
+  },
+  {
+   "description": "Payment mode this share of the service amount was collected through (from the rule's Payment Modes).",
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mode of Payment",
+   "options": "Mode of Payment",
+   "read_only": 1
+  },
+  {
+   "description": "Share of the service amount for this mode.",
+   "fieldname": "payment_mode_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Mode %",
    "read_only": 1
   },
   {

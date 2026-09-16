@@ -2108,6 +2108,14 @@ def get_medications_for_clinical_note_day(
 	2. Ongoing (active) — lines started earlier that were still active on the note day
 	   (not ended, not stopped/discontinued as of that day). Stopped/ended meds are excluded
 	   from the ongoing set.
+
+	Legacy (Oracle-imported) lines are treated as completed: they are never listed as
+	ongoing, even when they carry no end date. They only appear when they started on the
+	note day itself.
+
+	STAT lines are one-off: they belong only to the note of the day they were written.
+	A STAT given yesterday never repeats as "ongoing" on a note written today, even when
+	no end date / stop flag was recorded.
 	"""
 	from frappe.utils import getdate
 
@@ -2169,6 +2177,7 @@ def get_medications_for_clinical_note_day(
 			AND NOT ({stopped_as_of_note_day})
 			AND IFNULL(parent.status, '') NOT IN ('Cancelled', 'Discontinued')
 			AND IFNULL(child.medication_type, '') NOT LIKE '%%Inactive%%'
+			AND UPPER(TRIM(IFNULL(child.medication_type, ''))) != 'STAT'
 		)
 	"""
 
@@ -2272,7 +2281,10 @@ def get_medications_for_clinical_note_day(
 		as_dict=True,
 	)
 
-	from healthcare.api.medication_order_display import medication_entry_display_fields
+	from healthcare.api.medication_order_display import (
+		is_legacy_medication_entry,
+		medication_entry_display_fields,
+	)
 
 	seen = set()
 	medications = []
@@ -2284,6 +2296,14 @@ def get_medications_for_clinical_note_day(
 			seen.add(entry_name)
 
 		started_on_note_day = cint(row.get("started_on_note_day"))
+		# Legacy (Oracle-imported) lines are considered done: never show them as ongoing,
+		# even without an end date, so they do not repeat on every later note.
+		if not started_on_note_day and is_legacy_medication_entry(row):
+			continue
+		# STAT is a one-off: only shown on the note of the day it was prescribed. Never
+		# repeat it as "ongoing" on later notes (STAT written yesterday, note written today).
+		if not started_on_note_day and (row.get("medication_type") or "").strip().upper() == "STAT":
+			continue
 		# Ongoing path: only line-level stop / end. Do NOT use parent PMO end_date —
 		# header end_date is often set from another line and would hide open-ended actives.
 		if not started_on_note_day:
@@ -2495,12 +2515,21 @@ def _discontinue_medication_entry(doc, entry, reason):
 
 
 @frappe.whitelist()
-def update_medication_order_entry(patient_medication_order, order_entry_name, updates, reason=None):
+def update_medication_order_entry(
+    patient_medication_order, order_entry_name, updates, reason=None, add_new_line=None
+):
     """Update a single medication order entry (child table row) in a Patient Medication Order.
 
-    Date / duration-only changes are saved on the same line.
-    Changing dose, frequency, UOM, route, type, or instructions discontinues the
-    existing line and appends a replacement so the original order is preserved.
+    Date / duration-only changes are always saved on the same line.
+
+    For clinical changes (dose, frequency, UOM, route, type, instructions, …):
+    - ``add_new_line`` = 1: discontinue the existing line and append a replacement so the
+      original order is preserved.
+    - ``add_new_line`` = 0: change the existing line in place — no new line is created and
+      the line is not discontinued (the change is logged as an Info comment).
+    - ``add_new_line`` omitted: amend (historical default).
+
+    A reason is required whenever clinical fields change, in either mode.
     """
     assert_editing_allowed()
     import json
@@ -2523,6 +2552,8 @@ def update_medication_order_entry(patient_medication_order, order_entry_name, up
 
     allowed_fields = list(_MEDICATION_ENTRY_ALLOWED_FIELDS)
     clinical_changed, _date_changed = _medication_entry_clinical_changes(entry, updates)
+    # None keeps the historical amend default; 0 explicitly asks for an in-place update.
+    add_new_line_flag = None if add_new_line is None else cint(add_new_line)
 
     if clinical_changed:
         reason = cstr(reason or updates.get("change_reason") or "").strip()
@@ -2530,6 +2561,8 @@ def update_medication_order_entry(patient_medication_order, order_entry_name, up
             frappe.throw(
                 _("A reason is required when changing dosage, dosage form, unit of measure, route, prescription type, frequency, or other details.")
             )
+
+    if clinical_changed and add_new_line_flag != 0:
         old_drug = entry.get("drug")
         old_drug_name = entry.get("drug_name")
         old_uom = entry.get("uom")
@@ -2664,6 +2697,16 @@ def update_medication_order_entry(patient_medication_order, order_entry_name, up
             entry.long_acting_frequency = normalized["long_acting_frequency"]
 
     doc.save(ignore_permissions=True)
+    if clinical_changed:
+        # In-place clinical change: keep an audit trail on the prescription.
+        doc.add_comment(
+            "Info",
+            _("Medication line updated in place ({0}). Changed: {1}. Reason: {2}").format(
+                entry.get("drug_name") or entry.get("drug") or order_entry_name,
+                ", ".join(clinical_changed),
+                reason,
+            ),
+        )
     long_acting = []
     if _entry_is_long_acting(entry):
         long_acting = _create_long_acting_medicine_for_entries(doc, only_entry_names=[entry.name])

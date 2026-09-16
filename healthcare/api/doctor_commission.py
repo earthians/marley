@@ -151,7 +151,8 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 		period_doc.generated_on = now_datetime()
 		period_doc.generated_by = frappe.session.user
 		period_doc.save(ignore_permissions=True)
-		return {"doctors": 0, "items": 0, "backdated_items": 0}
+		_clear_draft_commission_payslips(period_doc.name)
+		return {"doctors": 0, "items": 0, "backdated_items": 0, "payslips": 0}
 
 	practitioner_by_base = resolve_practitioners_for_sources(service_rows, sources)
 	eligible = get_commission_eligible_practitioners(
@@ -220,28 +221,31 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 		)
 
 		details = eligible.get(practitioner) or {}
-		detail_rows.append(
-			{
-				"practitioner": practitioner,
-				"practitioner_name": details.get("practitioner_name") or "",
-				"transaction_date": row.transaction_date,
-				"patient": row.patient,
-				"patient_name": row.custom_patient_name or "",
-				"source_doctype": row.custom_base_reference,
-				"source_name": row.custom_base_reference_name,
-				"sales_order": row.sales_order,
-				"item_code": row.item_code,
-				"item_name": row.item_name,
-				"qty": flt(row.qty),
-				"service_amount": flt(row.amount),
-				"cost_center": branch,
-				"commission_rule": rule.name if rule else None,
-				"calculation_type": calc_type,
-				"commission_percent": percent_used,
-				"commission_amount": commission_amount,
-				"case_index": case_index,
-			}
-		)
+		line_base = {
+			"practitioner": practitioner,
+			"practitioner_name": details.get("practitioner_name") or "",
+			"transaction_date": row.transaction_date,
+			"patient": row.patient,
+			"patient_name": row.custom_patient_name or "",
+			"source_doctype": row.custom_base_reference,
+			"source_name": row.custom_base_reference_name,
+			"sales_order": row.sales_order,
+			"item_code": row.item_code,
+			"item_name": row.item_name,
+			"cost_center": branch,
+			"commission_rule": rule.name if rule else None,
+			"calculation_type": calc_type,
+			"commission_percent": percent_used,
+			"case_index": case_index,
+		}
+		# One row per service line per mode of payment (from the rule's Payment Modes).
+		for share in payment_mode_shares(
+			rule.get("payment_modes") if rule else None,
+			service_amount=flt(row.amount),
+			qty=flt(row.qty),
+			commission_amount=commission_amount,
+		):
+			detail_rows.append({**line_base, **share})
 
 	doctor_map = defaultdict(
 		lambda: {
@@ -256,13 +260,16 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 	for line in detail_rows:
 		dkey = (line["practitioner"], line.get("cost_center") or "")
 		bucket = doctor_map[dkey]
-		bucket["cases_count"] += 1
 		bucket["service_amount"] += flt(line["service_amount"])
 		bucket["calculated_commission"] += flt(line["commission_amount"])
 		bucket["practitioner_name"] = line.get("practitioner_name") or bucket["practitioner_name"]
 		details = eligible.get(line["practitioner"]) or {}
 		bucket["doctors_id"] = details.get("doctors_id") or line["practitioner"]
 		bucket["cost_center"] = line.get("cost_center")
+	# Cases are counted once per service line, not once per payment-mode row.
+	for case_key, count in case_counter.items():
+		if case_key in doctor_map:
+			doctor_map[case_key]["cases_count"] = count
 
 	period_doc.set("items", [])
 	for line in detail_rows:
@@ -292,12 +299,17 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 	period_doc.generated_by = frappe.session.user
 	period_doc.save(ignore_permissions=True)
 
+	# Draft Commission Payslips — one per doctor, services split per payment mode.
+	payslips = build_commission_payslips_for_payroll(period_doc, replace=True)
+
 	return {
 		"doctors": len(period_doc.doctors or []),
 		"items": len(period_doc.items or []),
 		"backdated_items": backdated_count,
 		"skipped_no_practitioner": skipped_no_practitioner,
 		"skipped_not_eligible": skipped_not_eligible,
+		"payslips": payslips.get("payslips", 0),
+		"payslip_items": payslips.get("items", 0),
 	}
 
 
@@ -827,6 +839,7 @@ def load_active_commission_rules(from_date, to_date):
 		order_by="priority desc, modified desc",
 	)
 	_attach_rule_cost_centers(rules)
+	_attach_rule_payment_modes(rules)
 	out = []
 	for rule in rules:
 		vf = getdate(rule.valid_from) if rule.valid_from else None
@@ -862,6 +875,28 @@ def _attach_rule_cost_centers(rules: list) -> None:
 		if legacy and legacy not in ccs:
 			ccs.append(legacy)
 		rule["cost_centers"] = ccs
+
+
+def _attach_rule_payment_modes(rules: list) -> None:
+	"""Attach ``payment_modes`` list from the rule's Payment Modes child table."""
+	if not rules:
+		return
+	names = [r.name for r in rules if r.get("name")]
+	by_parent: dict[str, list[dict]] = {n: [] for n in names}
+	if names and frappe.db.exists("DocType", "Doctor Commission Rule Payment Mode"):
+		for row in frappe.get_all(
+			"Doctor Commission Rule Payment Mode",
+			filters={"parent": ["in", names], "parenttype": "Doctor Commission Rule"},
+			fields=["parent", "mode_of_payment", "percent", "idx"],
+			order_by="idx asc",
+		):
+			mode = (row.mode_of_payment or "").strip()
+			if mode:
+				by_parent[row.parent].append(
+					{"mode_of_payment": mode, "percent": flt(row.percent)}
+				)
+	for rule in rules:
+		rule["payment_modes"] = by_parent.get(rule.name) or []
 
 
 def _rule_matches_cost_center(rule, cost_center: str | None) -> bool:
@@ -984,6 +1019,289 @@ def calculate_line_commission(rule, service_amount, case_index, default_percent,
 
 	percent = flt(rule.commission_percent)
 	return flt(service_amount * percent / 100.0), calc, percent
+
+
+def payment_mode_shares(payment_modes, *, service_amount, qty, commission_amount) -> list[dict]:
+	"""Split one service line across the rule's payment modes.
+
+	Each share carries the mode, its configured percent, and the proportional part of
+	the service amount, qty and commission. Percentages are normalised by their own
+	total so the shares always add back up to the original amounts (a relative
+	rounding difference is absorbed by the last row). With no payment modes the line
+	stays on a single 100% row.
+	"""
+	modes = [
+		((row.get("mode_of_payment") or "").strip(), flt(row.get("percent")))
+		for row in (payment_modes or [])
+	]
+	modes = [(mode, percent) for mode, percent in modes if mode and percent > 0]
+
+	total_amount = flt(service_amount, 2)
+	total_commission = flt(commission_amount, 2)
+	total_qty = flt(qty)
+
+	if not modes:
+		return [
+			{
+				"mode_of_payment": None,
+				"payment_mode_percent": 100.0,
+				"qty": total_qty,
+				"service_amount": total_amount,
+				"commission_amount": total_commission,
+			}
+		]
+
+	total_percent = sum(percent for _, percent in modes)
+	shares: list[dict] = []
+	for index, (mode, percent) in enumerate(modes):
+		last = index == len(modes) - 1
+		factor = (percent / total_percent) if total_percent else 0.0
+		if last:
+			share_amount = flt(total_amount - sum(s["service_amount"] for s in shares), 2)
+			share_commission = flt(
+				total_commission - sum(s["commission_amount"] for s in shares), 2
+			)
+			share_qty = flt(total_qty - sum(s["qty"] for s in shares))
+		else:
+			share_amount = flt(total_amount * factor, 2)
+			share_commission = flt(total_commission * factor, 2)
+			share_qty = flt(total_qty * factor)
+		shares.append(
+			{
+				"mode_of_payment": mode,
+				"payment_mode_percent": flt(percent, 2),
+				"qty": share_qty,
+				"service_amount": share_amount,
+				"commission_amount": share_commission,
+			}
+		)
+	return shares
+
+
+COMMISSION_PAYSLIP_ITEM_FIELDS = (
+	"practitioner",
+	"practitioner_name",
+	"transaction_date",
+	"patient",
+	"patient_name",
+	"source_doctype",
+	"source_name",
+	"sales_order",
+	"item_code",
+	"item_name",
+	"cost_center",
+	"case_index",
+	"qty",
+	"mode_of_payment",
+	"payment_mode_percent",
+	"service_amount",
+	"commission_rule",
+	"calculation_type",
+	"commission_percent",
+	"commission_amount",
+)
+
+
+def _clear_draft_commission_payslips(payroll_name: str) -> int:
+	"""Delete draft Commission Payslips previously generated for this payroll."""
+	if not payroll_name or not frappe.db.exists("DocType", "Commission Payslip"):
+		return 0
+	names = frappe.get_all(
+		"Commission Payslip",
+		filters={"doctor_commission_payroll": payroll_name, "docstatus": 0},
+		pluck="name",
+	)
+	for name in names:
+		frappe.delete_doc("Commission Payslip", name, force=True, ignore_permissions=True)
+	return len(names)
+
+
+def _single_branch(lines) -> str | None:
+	"""The one branch shared by every line, or None when lines span branches/blank."""
+	branches = {(row.cost_center or "").strip() for row in (lines or [])}
+	branches.discard("")
+	return next(iter(branches)) if len(branches) == 1 else None
+
+
+def build_commission_payslips_for_payroll(payroll_doc, *, replace: bool = True):
+	"""Create one draft Commission Payslip per doctor that has service lines.
+
+	Every payslip holds the doctor's service lines split per mode of payment, so the
+	commission can be reviewed and printed per doctor.
+	"""
+	if not frappe.db.exists("DocType", "Commission Payslip"):
+		return {"payslips": 0, "items": 0}
+
+	payroll_doc = payroll_doc if hasattr(payroll_doc, "doctors") else frappe.get_doc(
+		"Doctor Commission Payroll", payroll_doc
+	)
+	if payroll_doc.docstatus == 2:
+		frappe.throw(_("Cancelled payrolls cannot create Commission Payslips."))
+
+	if replace:
+		_clear_draft_commission_payslips(payroll_doc.name)
+
+	items_by_practitioner = defaultdict(list)
+	for row in payroll_doc.items or []:
+		if row.practitioner:
+			items_by_practitioner[row.practitioner].append(row)
+
+	doctor_rows = defaultdict(list)
+	for row in payroll_doc.doctors or []:
+		if row.practitioner:
+			doctor_rows[row.practitioner].append(row)
+
+	# One payslip per doctor (all branches), in the payroll's doctor order.
+	order: list[str] = []
+	for row in payroll_doc.doctors or []:
+		if row.practitioner and row.practitioner not in order:
+			order.append(row.practitioner)
+	for practitioner in items_by_practitioner:
+		if practitioner not in order:
+			order.append(practitioner)
+
+	created = 0
+	item_count = 0
+	for practitioner in order:
+		lines = items_by_practitioner.get(practitioner) or []
+		if not lines:
+			continue
+		rows = doctor_rows.get(practitioner) or []
+		head = rows[0] if rows else None
+
+		doc = frappe.new_doc("Commission Payslip")
+		doc.doctor_commission_payroll = payroll_doc.name
+		doc.practitioner = practitioner
+		doc.practitioner_name = (
+			(head.practitioner_name if head else None) or lines[0].practitioner_name or ""
+		)
+		doc.doctors_id = head.doctors_id if head else None
+		doc.employee = head.employee if head else None
+		doc.company = payroll_doc.company
+		doc.cost_center = (
+			_single_branch(lines)
+			or (head.cost_center if head else None)
+			or payroll_doc.cost_center
+		)
+		doc.from_date = payroll_doc.from_date
+		doc.to_date = payroll_doc.to_date
+		doc.generated_on = now_datetime()
+		doc.generated_by = frappe.session.user
+		for row in lines:
+			doc.append("items", {field: row.get(field) for field in COMMISSION_PAYSLIP_ITEM_FIELDS})
+		doc.flags.ignore_permissions = True
+		doc.insert()
+		created += 1
+		item_count += len(lines)
+
+	return {"payslips": created, "items": item_count}
+
+
+def get_doctor_commission_view(payroll_doc, practitioner: str) -> dict:
+	"""Services, payment-mode splits and commission for one doctor on a payroll.
+
+	Backs the View Doctor dialog on Doctor Commission Payroll (and printing).
+	"""
+	payroll_doc = payroll_doc if hasattr(payroll_doc, "doctors") else frappe.get_doc(
+		"Doctor Commission Payroll", payroll_doc
+	)
+	practitioner = (practitioner or "").strip()
+	if not practitioner:
+		frappe.throw(_("Doctor is required"))
+
+	doctor_rows = [row for row in (payroll_doc.doctors or []) if row.practitioner == practitioner]
+	if not doctor_rows:
+		frappe.throw(_("{0} is not part of this Doctor Commission Payroll.").format(practitioner))
+	head = doctor_rows[0]
+
+	services: list[dict] = []
+	index: dict[tuple, dict] = {}
+	for row in payroll_doc.items or []:
+		if row.practitioner != practitioner:
+			continue
+		key = (
+			row.sales_order or "",
+			row.item_code or "",
+			str(row.transaction_date or ""),
+			cint(row.case_index),
+		)
+		service = index.get(key)
+		if not service:
+			service = {
+				"transaction_date": str(row.transaction_date) if row.transaction_date else "",
+				"patient": row.patient,
+				"patient_name": row.patient_name,
+				"source_doctype": row.source_doctype,
+				"source_name": row.source_name,
+				"sales_order": row.sales_order,
+				"item_code": row.item_code,
+				"item_name": row.item_name,
+				"cost_center": row.cost_center,
+				"case_index": cint(row.case_index),
+				"commission_rule": row.commission_rule,
+				"calculation_type": row.calculation_type,
+				"commission_percent": flt(row.commission_percent),
+				"service_amount": 0.0,
+				"commission_amount": 0.0,
+				"modes": [],
+			}
+			index[key] = service
+			services.append(service)
+
+		service["modes"].append(
+			{
+				"mode_of_payment": row.mode_of_payment or "",
+				"payment_mode_percent": flt(row.payment_mode_percent),
+				"qty": flt(row.qty),
+				"service_amount": flt(row.service_amount),
+				"commission_amount": flt(row.commission_amount),
+			}
+		)
+		service["service_amount"] += flt(row.service_amount)
+		service["commission_amount"] += flt(row.commission_amount)
+
+	if services:
+		service_amount = sum(flt(service["service_amount"]) for service in services)
+		calculated = sum(flt(service["commission_amount"]) for service in services)
+		cases_count = len(services)
+	else:
+		service_amount = sum(flt(row.service_amount) for row in doctor_rows)
+		calculated = sum(flt(row.calculated_commission) for row in doctor_rows)
+		cases_count = sum(cint(row.cases_count) for row in doctor_rows)
+
+	# A doctor can hold one payroll row per branch — total the overrides across them.
+	adjusted = sum(
+		flt(row.adjusted_commission)
+		if row.adjusted_commission not in (None, "")
+		else flt(row.calculated_commission)
+		for row in doctor_rows
+	)
+	branch = (
+		_single_branch([r for r in (payroll_doc.items or []) if r.practitioner == practitioner])
+		or head.cost_center
+		or payroll_doc.cost_center
+	)
+
+	return {
+		"payroll": payroll_doc.name,
+		"payroll_status": payroll_doc.status,
+		"company": payroll_doc.company,
+		"from_date": str(payroll_doc.from_date) if payroll_doc.from_date else "",
+		"to_date": str(payroll_doc.to_date) if payroll_doc.to_date else "",
+		"doctor": {
+			"practitioner": head.practitioner,
+			"practitioner_name": head.practitioner_name,
+			"doctors_id": head.doctors_id,
+			"employee": head.employee,
+			"cost_center": branch,
+			"cases_count": cases_count,
+			"service_amount": service_amount,
+			"calculated_commission": calculated,
+			"adjusted_commission": adjusted,
+			"remarks": head.remarks,
+		},
+		"services": services,
+	}
 
 
 def get_item_groups(item_codes):

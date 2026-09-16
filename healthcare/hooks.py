@@ -238,9 +238,9 @@ fixtures = [
     {
 		"doctype":"Service Template Group"
 	},
-    {
-		"doctype": "Lab Test Result Rule"
-	},
+    # {
+	# 	"doctype": "Lab Test Result Rule"
+	# },
     {
 		"doctype":"Practitioner Schedule"
 	},

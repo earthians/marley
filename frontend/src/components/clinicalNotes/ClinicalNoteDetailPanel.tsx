@@ -487,6 +487,24 @@ export function ClinicalNoteDetailPanel({
     return counts
   }, [dayMedications])
 
+  // Show only the prescription types that actually have a medication on this note's day
+  // (plus All). A type with nothing on the day — a STAT that ended yesterday, or any
+  // other empty category — is hidden rather than showing an empty "no medications" result.
+  const visibleMedTypeFilters = useMemo(
+    () =>
+      NOTE_MED_TYPE_FILTERS.filter(
+        (typeDef) => typeDef.key === 'All' || (medTypeCounts[typeDef.key] || 0) > 0,
+      ),
+    [medTypeCounts],
+  )
+
+  // Keep the selected filter valid when the visible chips change (e.g. after reload).
+  useEffect(() => {
+    if (medTypeFilter !== 'All' && !visibleMedTypeFilters.some((t) => t.key === medTypeFilter)) {
+      setMedTypeFilter('All')
+    }
+  }, [medTypeFilter, visibleMedTypeFilters])
+
   const filteredDayMedications = useMemo(
     () => dayMedications.filter((m) => medicationMatchesTypeFilter(m, medTypeFilter)),
     [dayMedications, medTypeFilter],
@@ -500,7 +518,8 @@ export function ClinicalNoteDetailPanel({
   const ongoingActiveMeds = useMemo(
     () =>
       filteredDayMedications.filter(
-        (m) => Boolean(m.is_ongoing) || !m.started_on_note_day,
+        // Legacy (Oracle-imported) lines are treated as completed — never ongoing.
+        (m) => !m.is_legacy && (Boolean(m.is_ongoing) || !m.started_on_note_day),
       ),
     [filteredDayMedications],
   )
@@ -687,7 +706,7 @@ export function ClinicalNoteDetailPanel({
 
             {!loadingMedications && dayMedications.length > 0 ? (
               <div className="mb-3 flex flex-wrap gap-1">
-                {NOTE_MED_TYPE_FILTERS.map((typeDef) => (
+                {visibleMedTypeFilters.map((typeDef) => (
                   <ThinMedTypeChip
                     key={typeDef.key}
                     label={typeDef.label}

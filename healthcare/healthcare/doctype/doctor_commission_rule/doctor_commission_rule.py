@@ -24,3 +24,32 @@ class DoctorCommissionRule(Document):
 				frappe.throw(_("Tier After Cases is required for Tiered by Cases rules"))
 			if flt(self.tier_commission_percent) <= 0:
 				frappe.throw(_("Tier Commission % is required for Tiered by Cases rules"))
+
+		self._validate_payment_modes()
+
+	def _validate_payment_modes(self):
+		"""Payment mode shares must be unique with a positive weight each.
+
+		Percentages are relative weights, not forced to total 100 — the shares are
+		normalised by their own total when splitting a service line.
+		"""
+		rows = self.get("payment_modes") or []
+		if not rows:
+			return
+
+		seen = set()
+		for row in rows:
+			mode = (row.mode_of_payment or "").strip()
+			if not mode:
+				frappe.throw(_("Mode of Payment is required on every Payment Modes row."))
+			key = mode.casefold()
+			if key in seen:
+				frappe.throw(
+					_("Mode of Payment {0} is listed more than once in Payment Modes.").format(mode)
+				)
+			seen.add(key)
+
+			if flt(row.percent) <= 0:
+				frappe.throw(
+					_("Percent must be greater than zero for Mode of Payment {0}.").format(mode)
+				)

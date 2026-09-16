@@ -106,6 +106,28 @@ class DoctorCommissionPayroll(Document):
 		return generate_doctor_commission_period(self, include_backdated=cint(include_backdated))
 
 	@frappe.whitelist()
+	def create_commission_payslips(self):
+		"""Create/refresh draft Commission Payslips for the doctors on this payroll."""
+		from healthcare.api.doctor_commission import build_commission_payslips_for_payroll
+
+		if self.docstatus == 2:
+			frappe.throw(_("Cancelled documents cannot create Commission Payslips"))
+
+		self.flags.ignore_permissions = True
+		return build_commission_payslips_for_payroll(self, replace=True)
+
+	@frappe.whitelist()
+	def view_doctor_commission(self, practitioner):
+		"""Services, payment modes per service and commission for one doctor."""
+		from healthcare.api.doctor_commission import get_doctor_commission_view
+
+		if not practitioner:
+			frappe.throw(_("Doctor is required"))
+
+		self.flags.ignore_permissions = True
+		return get_doctor_commission_view(self, practitioner)
+
+	@frappe.whitelist()
 	def create_additional_salary(self):
 		"""Create HRMS Additional Salary entries for each doctor after submit."""
 		from healthcare.api.doctor_commission import create_additional_salaries_for_payroll

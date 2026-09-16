@@ -354,6 +354,8 @@ export const EditMedicationEntryModal = ({
   const [doseLimitInfo, setDoseLimitInfo] = useState<MedicineDoseLimitInfo | null>(null)
   const [loadingDoseLimitInfo, setLoadingDoseLimitInfo] = useState(false)
   const [doseLimitConfirmOpen, setDoseLimitConfirmOpen] = useState(false)
+  // Which footer action triggered the dose-limit confirmation (false = update in place).
+  const [doseLimitAddNewLine, setDoseLimitAddNewLine] = useState(false)
 
   const [freqQuery, setFreqQuery] = useState(order.patient_frequency || '')
   const [freqOptions, setFreqOptions] = useState<LinkFieldOption[]>([])
@@ -521,7 +523,7 @@ export const EditMedicationEntryModal = ({
     }
   }, [form.drug, formIsLongActing])
 
-  const handleSave = async () => {
+  const handleSave = async (addNewLine: boolean) => {
     if (isDiscontinued) return
     if (!String(form.healthcare_practitioner || '').trim()) {
       toast.error('Doctor is required')
@@ -538,22 +540,23 @@ export const EditMedicationEntryModal = ({
       return
     }
     if (doseWarning?.message) {
+      setDoseLimitAddNewLine(addNewLine)
       setDoseLimitConfirmOpen(true)
       return
     }
-    await performSave()
+    await performSave(addNewLine)
   }
 
-  const performSave = async () => {
+  const performSave = async (addNewLine: boolean) => {
     try {
       setSaving(true)
       const payload = normalizeMedicationOrderForSave(form)
-      const willAmend = medicationClinicalFieldsChanged(order, form)
       const res = await updateMedicationOrderEntry(
         prescriptionName,
         order.name,
         payload,
-        willAmend ? changeReason.trim() : undefined,
+        changeReason.trim() || undefined,
+        addNewLine,
       )
       toast.success(
         res.amended
@@ -619,7 +622,7 @@ export const EditMedicationEntryModal = ({
               <span className="text-xs text-slate-400">Checking...</span>
             ) : givenCheck.given ? (
               <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
-                Already given — dose/frequency changes create a new line
+                Already given — prefer &quot;Discontinue &amp; add new line&quot; to keep history
               </span>
             ) : null}
             <button onClick={onClose} className="shrink-0 rounded-lg p-2 text-emerald-800/70 transition hover:bg-emerald-200/50 hover:text-emerald-950">
@@ -869,13 +872,13 @@ export const EditMedicationEntryModal = ({
             />
             {willAmend ? (
               <p className="mt-1 text-[11px] text-amber-800">
-                Changing route, unit of measure, prescription type, dosage form, dosage, or frequency
-                discontinues this line and adds a new one.
+                <strong>Update</strong> changes this line in place.{' '}
+                <strong>Discontinue &amp; add new line</strong> keeps this line for history, discontinues
+                it, and adds a replacement.
               </p>
             ) : (
               <p className="mt-1 text-[11px] text-slate-500">
-                Only start date, end date, and days stay on this line. Route, UOM, prescription type,
-                dosage form, and similar details always create a new line.
+                Changes are saved on this line — no new line is created.
               </p>
             )}
           </div>
@@ -887,10 +890,20 @@ export const EditMedicationEntryModal = ({
             {disabled ? 'Close' : 'Cancel'}
           </button>
           {!disabled && (
-            <button type="button" disabled={saving || givenCheck.loading} onClick={() => void handleSave()}
-              className="px-4 py-2 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors font-medium">
-              {saving ? 'Saving...' : willAmend ? 'Discontinue & add new line' : 'Save Changes'}
-            </button>
+            <>
+              <button type="button" disabled={saving || givenCheck.loading} onClick={() => void handleSave(false)}
+                title="Update this line in place — no new line is created"
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors font-medium">
+                {saving ? 'Saving...' : willAmend ? 'Update' : 'Save Changes'}
+              </button>
+              {willAmend ? (
+                <button type="button" disabled={saving || givenCheck.loading} onClick={() => void handleSave(true)}
+                  title="Keep this line for history, discontinue it, and create a replacement line"
+                  className="px-4 py-2 text-sm rounded-lg border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 disabled:opacity-50 transition-colors font-medium">
+                  Discontinue &amp; add new line
+                </button>
+              ) : null}
+            </>
           )}
         </div>
       </div>
@@ -927,7 +940,7 @@ export const EditMedicationEntryModal = ({
         if (saving) return
         setDoseLimitConfirmOpen(false)
       }}
-      onConfirm={() => void performSave()}
+      onConfirm={() => void performSave(doseLimitAddNewLine)}
     />
     </>,
     document.body

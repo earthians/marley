@@ -560,8 +560,10 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient, editRow }: C
   const [doctorOptions, setDoctorOptions] = useState<LinkFieldOption[]>([])
   const [doctorOpen, setDoctorOpen] = useState(false)
   const [doctorQuery, setDoctorQuery] = useState(editRow?.doctor_name || editRow?.doctor || '')
+  // Sick Leave is exempt from lock_doctors_name_choosing: a doctor linked to a
+  // Healthcare Practitioner must still be able to change the Doctor freely. The linked
+  // practitioner is only used as the default value (see auto-fill effect below).
   const {
-    locked: practitionerLocked,
     practitionerId: linkedPractitionerId,
     practitionerLabel: linkedPractitionerLabel,
   } = useLockedLinkedPractitioner()
@@ -740,15 +742,23 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient, editRow }: C
   useEffect(() => {
     if (!doctorOpen) return
     let cancelled = false
+    // Only treat the text as a search when the user is actually typing. While the box just
+    // shows the selected doctor, fetch the full list so another doctor can be picked.
+    const typed = doctorQuery.trim()
+    const selectedLabel = (selectedDoctor?.label || '').trim()
+    const search = typed && typed !== selectedLabel ? typed : undefined
     const run = async () => {
       try {
-        const res = await fetchHealthcarePractitioners(doctorQuery || undefined)
+        // Healthcare Settings.lock_doctors_name_choosing must not block Sick Leave: this API
+        // returns all active practitioners, so a doctor linked to a practitioner can pick
+        // any doctor on the certificate.
+        const res = await fetchHealthcarePractitioners(search)
         if (!cancelled) setDoctorOptions(res)
       } catch { if (!cancelled) setDoctorOptions([]) }
     }
-    const t = setTimeout(run, doctorQuery.trim() ? 300 : 0)
+    const t = setTimeout(run, search ? 300 : 0)
     return () => { cancelled = true; clearTimeout(t) }
-  }, [doctorQuery, doctorOpen])
+  }, [doctorQuery, doctorOpen, selectedDoctor])
 
   // Auto-fill current user's linked practitioner
   useEffect(() => {
@@ -1111,7 +1121,6 @@ export const CreateSickLeaveModal = ({ onClose, onSuccess, patient, editRow }: C
                 query={doctorQuery}
                 selectedLabel={selectedDoctor?.label}
                 options={doctorOptions}
-                locked={practitionerLocked}
                 onFocus={() => setDoctorOpen(true)}
                 onChange={(v) => {
                   setDoctorQuery(v)

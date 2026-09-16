@@ -859,12 +859,19 @@ export async function fetchAfterDischargePrescriptions(
   return []
 }
 
-/** Update a single medication order entry (child table row). */
+/** Update a single medication order entry (child table row).
+ *
+ * `addNewLine` selects what happens when clinical fields change (dose, route, type, …):
+ * - `true`  → discontinue this line and append a replacement (amend).
+ * - `false` → change this line in place; no new line is created and it is not discontinued.
+ * - omitted → the backend amend default.
+ */
 export async function updateMedicationOrderEntry(
   patientMedicationOrder: string,
   orderEntryName: string,
   updates: Record<string, unknown>,
   reason?: string,
+  addNewLine?: boolean,
 ): Promise<{ ok: boolean; amended?: boolean; discontinued_entry?: string }> {
   const { apiRequest } = await import('./apiClient')
   return apiRequest<{ ok: boolean; amended?: boolean; discontinued_entry?: string }>(
@@ -876,6 +883,7 @@ export async function updateMedicationOrderEntry(
         order_entry_name: orderEntryName,
         updates: JSON.stringify(updates),
         reason: reason || undefined,
+        add_new_line: addNewLine === undefined ? undefined : addNewLine ? 1 : 0,
       }),
     }
   )
