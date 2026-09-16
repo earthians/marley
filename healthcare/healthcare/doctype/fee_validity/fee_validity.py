@@ -23,6 +23,20 @@ class FeeValidity(Document):
 			self.status = "Active"
 
 
+VISIT_DOCTYPES = ("Patient Appointment", "Patient Encounter")
+
+
+def validate_visit_doctype(reference_dt):
+	if reference_dt not in VISIT_DOCTYPES:
+		frappe.throw(_("{0} is not a visit").format(frappe.bold(reference_dt)))
+
+
+def validate_read_access(doctype, name=None):
+	"""A whitelisted lookup must not reveal a validity for a record the caller cannot read"""
+	if not frappe.has_permission(doctype, "read", name):
+		frappe.throw(_("Not permitted to read {0} {1}").format(doctype, name or ""), frappe.PermissionError)
+
+
 def get_visit_date(visit):
 	if visit.doctype == "Patient Encounter":
 		return getdate(visit.encounter_date)
@@ -146,6 +160,15 @@ def check_fee_validity(
 	date: str | datetime.date | None = None,
 	practitioner: str | None = None,
 ) -> Document | None:
+	if isinstance(visit, str):
+		visit = json.loads(visit)
+		validate_visit_doctype(visit.get("doctype"))
+		visit = frappe.get_doc(visit)
+
+	validate_read_access("Patient", visit.patient)
+	if not visit.get("__islocal"):
+		validate_read_access(visit.doctype, visit.name)
+
 	return find_fee_validity(visit, date, practitioner)
 
 
@@ -187,7 +210,7 @@ def find_fee_validity(visit, date=None, practitioner=None, for_update=False):
 		return
 
 	validity = (
-		get_fee_validity(visit.get("name"), date, ignore_status=True, reference_dt=visit.doctype) or None
+		query_fee_validity(visit.get("name"), date, ignore_status=True, reference_dt=visit.doctype) or None
 	)
 	if validity and len(validity):
 		return frappe.get_doc("Fee Validity", validity[0].get("name"))
@@ -343,7 +366,12 @@ def get_fee_validity(
 	:params reference_dt: Patient Appointment or Patient Encounter
 	:return fee validity name and valid_till values of free visits
 	"""
+	validate_visit_doctype(reference_dt)
+	validate_read_access(reference_dt, reference_dn)
+	return query_fee_validity(reference_dn, date, ignore_status, reference_dt)
 
+
+def query_fee_validity(reference_dn, date, ignore_status=False, reference_dt="Patient Appointment"):
 	if not reference_dn:
 		return None
 
