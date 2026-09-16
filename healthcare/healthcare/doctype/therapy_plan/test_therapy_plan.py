@@ -52,6 +52,67 @@ class TestTherapyPlan(HealthcareTestSuite):
 		session.cancel()
 		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Open")
 
+	def test_practitioner_from_service_request(self):
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		medical_department = "_Test Medical Department"
+		encounter = create_encounter(patient, medical_department, practitioner)
+
+		therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
+		service_request = frappe.db.get_value(
+			"Service Request", {"template_dn": therapy_type, "order_group": encounter.name}
+		)
+
+		# distinct from the Therapy Plan's practitioner, so the assertion can only pass
+		# if the session actually resolved it from the Service Request
+		sr_practitioner = frappe.get_list(
+			"Healthcare Practitioner", filters={"name": ["!=", practitioner]}, pluck="name"
+		)[0]
+		frappe.db.set_value("Service Request", service_request, "practitioner", sr_practitioner)
+
+		session = make_therapy_session(
+			patient, therapy_type, "_Test Company", service_request=service_request
+		)
+		self.assertEqual(session["practitioner"], sr_practitioner)
+
+	def test_practitioner_from_therapy_plan(self):
+		plan = create_therapy_plan()
+		therapy_type = "Basic Rehab"
+
+		# confirm there really is no Service Request to fall back to first, so the
+		# assertion below actually exercises the Therapy Plan branch
+		self.assertFalse(
+			frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": plan.order_group}
+			)
+		)
+
+		session = make_therapy_session(plan.patient, therapy_type, "_Test Company", plan.name)
+		self.assertEqual(session["practitioner"], plan.practitioner)
+
+	def test_explicit_practitioner_takes_priority(self):
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		medical_department = "_Test Medical Department"
+		encounter = create_encounter(patient, medical_department, practitioner)
+
+		therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
+		service_request = frappe.db.get_value(
+			"Service Request", {"template_dn": therapy_type, "order_group": encounter.name}
+		)
+		explicit_practitioner = frappe.get_list(
+			"Healthcare Practitioner", filters={"name": ["!=", practitioner]}, pluck="name"
+		)[0]
+
+		session = make_therapy_session(
+			patient,
+			therapy_type,
+			"_Test Company",
+			service_request=service_request,
+			practitioner=explicit_practitioner,
+		)
+		self.assertEqual(session["practitioner"], explicit_practitioner)
+
 	def test_therapy_plan_from_template(self):
 		patient = frappe.get_list("Patient", pluck="name")[0]
 		template = create_therapy_plan_template()
