@@ -710,3 +710,21 @@ class TestFeeValidity(HealthcareTestSuite):
 		self.invoice_encounter(encounter)
 
 		self.assertFalse(frappe.db.exists("Fee Validity", reference))
+
+	def test_validity_records_the_department_of_the_visit_that_opened_it(self):
+		"""Exports and consumers read medical_department, so both doctypes must fill it"""
+		patient, practitioner = self.enable_free_follow_ups(max_visits=1, valid_days=7)
+
+		appointment = create_appointment(patient, practitioner, nowdate())
+		self.assertTrue(appointment.department)
+		self.assertEqual(self.validity_department(patient, practitioner), appointment.department)
+
+		frappe.db.sql("delete from `tabFee Validity`")
+		encounter = create_encounter(patient, practitioner, submit=True)
+		self.assertTrue(encounter.medical_department)
+		self.assertEqual(self.validity_department(patient, practitioner), encounter.medical_department)
+
+	def validity_department(self, patient, practitioner):
+		return frappe.db.get_value(
+			"Fee Validity", self.get_fee_validity(patient, practitioner), "medical_department"
+		)
