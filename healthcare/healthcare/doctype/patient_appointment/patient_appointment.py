@@ -29,6 +29,7 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	manage_fee_validity,
 	query_fee_validity,
 	validate_fee_validity_cancellation,
+	validate_visit_access,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
@@ -603,6 +604,8 @@ def get_appointment_doc(appointment: str | dict | PatientAppointment) -> Patient
 	if isinstance(appointment, str):
 		appointment = json.loads(appointment)
 	if isinstance(appointment, dict):
+		if appointment.get("doctype") != "Patient Appointment":
+			frappe.throw(_("Expected a Patient Appointment"))
 		appointment = frappe.get_doc(appointment)
 
 	return appointment
@@ -716,6 +719,8 @@ def get_availability_data(date: str, practitioner: str, appointment: str | dict 
 	:param appointment: Appointment doc to validate fee validity
 	:return: dict containing a list of available slots, list of appointments and time of appointments
 	"""
+	appointment = get_appointment_doc(appointment)
+	validate_visit_access(appointment)
 
 	date = getdate(date)
 	weekday = date.strftime("%A")
@@ -725,7 +730,6 @@ def get_availability_data(date: str, practitioner: str, appointment: str | dict 
 	check_employee_wise_availability(date, practitioner_doc)
 
 	available_slots = []
-	appointment = get_appointment_doc(appointment)
 
 	if frappe.db.exists(
 		"Practitioner Availability",
