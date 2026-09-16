@@ -12,6 +12,7 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	create_fee_validity,
 	get_fee_validity,
 	manage_fee_validity,
+	query_fee_validity,
 	update_validity_status,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -728,3 +729,33 @@ class TestFeeValidity(HealthcareTestSuite):
 		return frappe.db.get_value(
 			"Fee Validity", self.get_fee_validity(patient, practitioner), "medical_department"
 		)
+
+	def test_get_fee_validity_rejects_a_doctype_that_is_not_a_visit(self):
+		self.assertRaises(
+			frappe.ValidationError, get_fee_validity, "Administrator", nowdate(), reference_dt="User"
+		)
+
+	def test_get_fee_validity_requires_read_access_to_the_visit(self):
+		"""Knowing an inaccessible visit's name must not reveal its validity"""
+		patient, practitioner = self.enable_free_follow_ups()
+		appointment = create_appointment(patient, practitioner, nowdate())
+
+		self.act_as("test3@example.com")
+		self.assertRaises(
+			frappe.PermissionError, get_fee_validity, appointment.name, appointment.appointment_date
+		)
+
+	def test_check_fee_validity_requires_read_access_to_the_patient(self):
+		"""A crafted unsaved visit naming any patient must not reveal that patient's validity"""
+		patient, practitioner = self.enable_free_follow_ups()
+		create_encounter(patient, practitioner, submit=True)
+		crafted = frappe.as_json(
+			{"doctype": "Patient Encounter", "patient": patient, "practitioner": practitioner, "__islocal": 1}
+		)
+
+		self.act_as("test3@example.com")
+		self.assertRaises(frappe.PermissionError, check_fee_validity, crafted)
+
+	def act_as(self, user):
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(user)
