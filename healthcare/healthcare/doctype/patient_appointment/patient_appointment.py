@@ -25,9 +25,9 @@ from erpnext.setup.doctype.employee.employee import is_holiday
 from healthcare.healthcare.api.patient_portal import update_payment_record
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	cancel_fee_validity,
-	check_fee_validity,
-	get_fee_validity,
+	find_fee_validity,
 	manage_fee_validity,
+	query_fee_validity,
 	validate_fee_validity_cancellation,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -82,7 +82,7 @@ class PatientAppointment(Document):
 		send_confirmation_msg(self)
 		self.insert_calendar_event()
 
-		if self.insurance_policy and self.appointment_type and not check_fee_validity(self):
+		if self.insurance_policy and self.appointment_type and not find_fee_validity(self):
 			if frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):
 				# TODO: apply insurance coverage
 				frappe.msgprint(
@@ -537,12 +537,12 @@ def invoice_appointment(
 	settings = frappe.get_single("Healthcare Settings")
 
 	if settings.enable_free_follow_ups:
-		fee_validity = check_fee_validity(appointment_doc)
+		fee_validity = find_fee_validity(appointment_doc)
 
 		if fee_validity and fee_validity.status != "Active":
 			fee_validity = None
 		elif not fee_validity:
-			if get_fee_validity(appointment_doc.name, appointment_doc.appointment_date):
+			if query_fee_validity(appointment_doc.name, appointment_doc.appointment_date):
 				return
 	else:
 		fee_validity = None
@@ -769,9 +769,9 @@ def get_availability_data(date: str, practitioner: str, appointment: str | dict 
 		free_follow_ups = True
 
 	if free_follow_ups:
-		fee_validity = check_fee_validity(appointment, date, practitioner)
+		fee_validity = find_fee_validity(appointment, date, practitioner)
 		if not fee_validity and not appointment.get("__islocal"):
-			validity_details = get_fee_validity(appointment.get("name"), date, ignore_status=True)
+			validity_details = query_fee_validity(appointment.get("name"), date, ignore_status=True)
 			if validity_details:
 				fee_validity = validity_details[0]
 
