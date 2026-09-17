@@ -157,6 +157,16 @@
    "role": "Healthcare Administrator",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Physician"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User"
   }
  ],
  "quick_entry": 1,
