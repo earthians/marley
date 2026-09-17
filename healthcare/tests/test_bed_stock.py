@@ -67,22 +67,33 @@ class TestBedStock(HealthcareTestSuite):
 		)
 		frappe.db.delete("Inpatient Record", {"name": self.admission})
 
-	def leave_stock_at_the_bed(self, qty=4):
-		from healthcare.healthcare.doctype.inpatient_medication_entry.test_inpatient_medication_entry import (
-			make_stock_entry,
-		)
+	def leave_stock_at_the_bed(self, qty=4, item_code="Dextromethorphan"):
+		from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 
-		make_stock_entry()
-		transfer = frappe.new_doc("Stock Entry")
-		transfer.stock_entry_type = "Material Transfer"
-		transfer.company = "_Test Company"
-		row = transfer.append("items")
-		row.item_code = "Dextromethorphan"
+		receipt = frappe.new_doc("Stock Entry")
+		receipt.stock_entry_type = "Material Receipt"
+		receipt.company = "_Test Company"
+		receipt.to_warehouse = self.bed.warehouse
+		row = receipt.append("items")
+		row.item_code = item_code
 		row.qty = qty
 		row.conversion_factor = 1
-		row.s_warehouse = "Stores - _TC"
+		row.basic_rate = 50
 		row.t_warehouse = self.bed.warehouse
-		transfer.submit()
+		row.expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
+		receipt.submit()
+
+	def prescribe_dextromethorphan(self):
+		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
+			create_ipmo,
+		)
+
+		create_ipmo(self.patient).submit()
+
+	def leave_medication_and_consumables(self):
+		self.prescribe_dextromethorphan()
+		self.leave_stock_at_the_bed(qty=4)
+		self.leave_stock_at_the_bed(qty=2, item_code="_Test_Stock_Item")
 
 	def test_an_untouched_bed_holds_nothing(self):
 		self.assertEqual(BedStock(self.admission).items(), [])
@@ -96,26 +107,43 @@ class TestBedStock(HealthcareTestSuite):
 		self.assertEqual(items[0]["item_code"], "Dextromethorphan")
 		self.assertEqual(items[0]["quantity"], 4)
 
-	def test_returning_to_pharmacy_drafts_a_transfer_off_the_bed(self):
-		self.leave_stock_at_the_bed(qty=4)
+	def test_what_was_prescribed_is_medication_and_the_rest_is_ward_stock(self):
+		self.leave_medication_and_consumables()
 
-		transfer = BedStock(self.admission).return_to_pharmacy("Stores - _TC")
+		medication, consumables = BedStock(self.admission).split()
+
+		self.assertEqual([item["item_code"] for item in medication], ["Dextromethorphan"])
+		self.assertEqual([item["item_code"] for item in consumables], ["_Test_Stock_Item"])
+
+	def test_returning_drafts_one_transfer_to_the_pharmacy_and_the_ward_store(self):
+		self.leave_medication_and_consumables()
+
+		transfer = BedStock(self.admission).return_leftovers(
+			"Stores - _TC", ward_store="Finished Goods - _TC"
+		)
 
 		self.assertEqual(transfer.stock_entry_type, "Material Transfer")
 		self.assertEqual(transfer.docstatus, 0)
-		self.assertEqual(transfer.items[0].s_warehouse, self.bed.warehouse)
-		self.assertEqual(transfer.items[0].t_warehouse, "Stores - _TC")
-		self.assertEqual(transfer.items[0].qty, 4)
+		destinations = {row.item_code: (row.s_warehouse, row.t_warehouse, row.qty) for row in transfer.items}
+		self.assertEqual(destinations["Dextromethorphan"], (self.bed.warehouse, "Stores - _TC", 4))
+		self.assertEqual(destinations["_Test_Stock_Item"], (self.bed.warehouse, "Finished Goods - _TC", 2))
 
-	def test_selling_to_the_patient_issues_the_stock_and_bills_it(self):
-		self.leave_stock_at_the_bed(qty=4)
+	def test_consumables_need_a_ward_store_to_go_back_to(self):
+		self.leave_medication_and_consumables()
+
+		self.assertRaises(frappe.ValidationError, BedStock(self.admission).return_leftovers, "Stores - _TC")
+
+	def test_selling_to_the_patient_issues_and_bills_the_medication_only(self):
+		self.leave_medication_and_consumables()
 
 		stock_entry = BedStock(self.admission).sell_to_patient()
 
 		issued = frappe.get_doc("Stock Entry", stock_entry)
 		self.assertEqual(issued.purpose, "Material Issue")
-		self.assertEqual(issued.items[0].s_warehouse, self.bed.warehouse)
-		self.assertEqual(issued.items[0].qty, 4)
+		self.assertEqual(
+			[(row.item_code, row.s_warehouse, row.qty) for row in issued.items],
+			[("Dextromethorphan", self.bed.warehouse, 4)],
+		)
 
 		billable = frappe.get_all(
 			"Inpatient Record Item",
@@ -125,6 +153,15 @@ class TestBedStock(HealthcareTestSuite):
 		self.assertEqual(len(billable), 1)
 		self.assertEqual(billable[0].quantity, 4)
 		self.assertEqual(billable[0].invoiced, 0)
+		self.assertEqual(
+			[item["item_code"] for item in BedStock(self.admission).items()], ["_Test_Stock_Item"]
+		)
+
+	def test_a_bed_holding_only_consumables_has_nothing_to_sell(self):
+		self.leave_stock_at_the_bed(qty=2, item_code="_Test_Stock_Item")
+
+		self.assertRaises(frappe.ValidationError, BedStock(self.admission).sell_to_patient)
 
 	def test_settling_an_empty_bed_says_so(self):
 		self.assertRaises(frappe.ValidationError, BedStock(self.admission).sell_to_patient)
+		self.assertRaises(frappe.ValidationError, BedStock(self.admission).return_leftovers, "Stores - _TC")
