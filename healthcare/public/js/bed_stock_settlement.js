@@ -33,42 +33,77 @@ healthcare.inpatient.BedStockSettlement = class BedStockSettlement {
 	}
 
 	show(stock) {
+		this.stock = stock;
 		this.dialog = new frappe.ui.Dialog({
 			title: __("Settle Bed Stock"),
-			fields: this.fields(stock),
-			primary_action_label: __("Return to Pharmacy"),
-			primary_action: values => this.return_to_pharmacy(values.warehouse),
-			secondary_action_label: __("Sell to Patient"),
-			secondary_action: () => this.sell_to_patient(),
+			fields: this.fields(),
+			primary_action_label: __("Return"),
+			primary_action: values => this.return_leftovers(values),
+			...this.sell_action(),
 		});
 		this.dialog.show();
 	}
 
-	fields(stock) {
+	sell_action() {
+		if (!this.has_medication()) {
+			return {};
+		}
+		return {
+			secondary_action_label: __("Sell Medication to Patient"),
+			secondary_action: () => this.sell_to_patient(),
+		};
+	}
+
+	has_medication() {
+		return this.stock.items.some(item => item.is_medication);
+	}
+
+	has_consumables() {
+		return this.stock.items.some(item => !item.is_medication);
+	}
+
+	fields() {
 		return [
 			{
 				fieldname: "items",
 				fieldtype: "Table",
-				label: __("Left at {0}", [stock.warehouse]),
+				label: __("Left at {0}", [this.stock.warehouse]),
 				cannot_add_rows: true,
 				cannot_delete_rows: true,
 				in_place_edit: true,
-				data: stock.items,
+				data: this.stock.items.map(item => this.as_row(item)),
 				fields: this.item_fields(),
 			},
-			{
-				fieldname: "warehouse",
-				fieldtype: "Link",
-				label: __("Return to Warehouse"),
-				options: "Warehouse",
-				description: __(
-					"Leave blank to sell the leftovers to the patient instead",
-				),
-				get_query: () => ({
-					filters: { company: this.frm.doc.company, is_group: 0 },
-				}),
-			},
+			this.warehouse_field(
+				"pharmacy",
+				__("Return Medication To"),
+				this.has_medication(),
+			),
+			this.warehouse_field(
+				"ward_store",
+				__("Return Consumables To"),
+				this.has_consumables(),
+			),
 		];
+	}
+
+	as_row(item) {
+		const kind = item.is_medication ? __("Medication") : __("Consumable");
+		return { ...item, kind };
+	}
+
+	warehouse_field(fieldname, label, shown) {
+		return {
+			fieldname,
+			label,
+			fieldtype: "Link",
+			options: "Warehouse",
+			hidden: !shown,
+			reqd: shown ? 1 : 0,
+			get_query: () => ({
+				filters: { company: this.frm.doc.company, is_group: 0 },
+			}),
+		};
 	}
 
 	item_fields() {
@@ -100,18 +135,16 @@ healthcare.inpatient.BedStockSettlement = class BedStockSettlement {
 				label: __("Batch"),
 				...read_only,
 			},
+			{ fieldname: "kind", fieldtype: "Data", label: __("Kind"), ...read_only },
 		];
 	}
 
-	return_to_pharmacy(warehouse) {
-		if (!warehouse) {
-			frappe.msgprint(__("Choose the warehouse the medication goes back to"));
-			return;
-		}
+	return_leftovers(values) {
 		frappe
-			.xcall(`${API}.return_to_pharmacy`, {
+			.xcall(`${API}.return_leftovers`, {
 				inpatient_record: this.frm.doc.name,
-				warehouse: warehouse,
+				pharmacy: values.pharmacy,
+				ward_store: values.ward_store,
 			})
 			.then(transfer => this.open_draft(transfer));
 	}
