@@ -3,7 +3,7 @@
 
 frappe.provide("healthcare.nursing");
 
-// Every form the Nursing Workspace button is added to.
+// Every form the Nursing Dialog button is added to.
 healthcare.nursing.STATION_DOCTYPES = [
 	"Inpatient Record",
 	"Emergency Record",
@@ -42,7 +42,7 @@ healthcare.nursing.open_from_form = function (frm) {
 healthcare.nursing.add_button = function (frm) {
 	if (!frm.doc.patient || frm.is_new()) return;
 
-	frm.add_custom_button(__("Nursing Workspace"), () =>
+	frm.add_custom_button(__("Nursing Dialog"), () =>
 		healthcare.nursing.open_from_form(frm),
 	);
 };
