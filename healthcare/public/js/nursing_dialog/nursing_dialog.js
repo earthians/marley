@@ -43,7 +43,7 @@ healthcare.nursing.RAIL = [
 	},
 ];
 
-healthcare.nursing.NursingWorkspace = class NursingWorkspace {
+healthcare.nursing.NursingDialog = class NursingDialog {
 	constructor(options) {
 		Object.assign(this, options);
 		this.pane = null;
@@ -55,7 +55,7 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 
 	make_dialog() {
 		this.dialog = new frappe.ui.Dialog({
-			title: __("Nursing Workspace"),
+			title: __("Nursing Dialog"),
 			size: "extra-large",
 		});
 		this.dialog.$wrapper.addClass("nursing-station-dialog");
@@ -388,7 +388,7 @@ healthcare.nursing.NursingWorkspace = class NursingWorkspace {
 };
 
 healthcare.nursing.open = function (options) {
-	const workspace = new healthcare.nursing.NursingWorkspace(options);
-	workspace.show();
-	return workspace;
+	const dialog = new healthcare.nursing.NursingDialog(options);
+	dialog.show();
+	return dialog;
 };
