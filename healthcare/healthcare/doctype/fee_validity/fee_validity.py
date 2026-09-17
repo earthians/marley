@@ -173,7 +173,10 @@ def check_fee_validity(
 		visit = frappe.get_doc(visit)
 
 	validate_visit_access(visit)
-	return find_fee_validity(visit, date, practitioner)
+	fee_validity = find_fee_validity(visit, date, practitioner)
+	if fee_validity:
+		validate_read_access("Fee Validity", fee_validity.name)
+	return fee_validity
 
 
 def find_fee_validity(visit, date=None, practitioner=None, for_update=False):
