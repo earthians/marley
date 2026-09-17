@@ -3,7 +3,7 @@
 
 frappe.provide("healthcare.nursing");
 
-// What every pane in the workspace shares: a heading, frappe controls laid out
+// What every pane in the dialog shares: a heading, frappe controls laid out
 // in the field grid, and a table of what has been recorded.
 healthcare.nursing.Pane = class Pane {
 	constructor({ wrapper, station }) {

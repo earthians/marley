@@ -1,4 +1,4 @@
-// Nursing Workspace — desk dialog and the inline snapshot on Inpatient / Emergency Record.
+// Nursing Dialog — desk dialog and the inline snapshot on Inpatient / Emergency Record.
 // Colours come from desk variables so light and dark themes follow the user's setting.
 
 // Shared top offset so the rail, the form and the snapshot start on one line.
@@ -311,7 +311,7 @@ $nursing-pane-top: 0.85rem;
 	padding-top: 0.75rem;
 	border-top: 1px solid var(--border-color);
 
-	// Same treatment as the row actions, so every button in the workspace
+	// Same treatment as the row actions, so every button in the dialog
 	// is wide enough for its own label.
 	.btn {
 		min-width: 7.5rem;
