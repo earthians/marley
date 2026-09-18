@@ -86,7 +86,7 @@ class IntakeOutputSummary:
 
 
 @frappe.whitelist()
-def get_intake_output_types():
+def get_intake_output_types() -> list[dict]:
 	return frappe.get_all(
 		"Intake Output Type",
 		filters={"disabled": 0},
@@ -96,13 +96,19 @@ def get_intake_output_types():
 
 
 @frappe.whitelist()
-def get_intake_output_summary(patient, hours=24):
+def get_intake_output_summary(patient: str, hours: int = 24) -> dict:
 	ChartAccess(patient).to_read()
 	return IntakeOutputSummary(patient, int(hours)).as_dict()
 
 
 @frappe.whitelist()
-def record_intake_output(patient, entries, reference_doctype=None, reference_name=None, practitioner=None):
+def record_intake_output(
+	patient: str,
+	entries: list | str,
+	reference_doctype: str | None = None,
+	reference_name: str | None = None,
+	practitioner: str | None = None,
+) -> list[str]:
 	if isinstance(entries, str):
 		entries = json.loads(entries)
 

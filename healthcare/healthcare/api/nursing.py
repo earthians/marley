@@ -262,17 +262,17 @@ class PatientFinder:
 
 
 @frappe.whitelist()
-def find_patients(term, admitted_only=0):
+def find_patients(term: str, admitted_only: int = 0) -> list[dict]:
 	return PatientFinder(term, int(admitted_only)).find()
 
 
 @frappe.whitelist()
-def get_banner(patient, reference_doctype=None, reference_name=None):
+def get_banner(patient: str, reference_doctype: str | None = None, reference_name: str | None = None) -> dict:
 	ChartAccess(patient, reference_doctype, reference_name).to_read()
 	return PatientBanner(patient, reference_doctype, reference_name).as_dict()
 
 
 @frappe.whitelist()
-def get_snapshot(patient, limit=10):
+def get_snapshot(patient: str, limit: int = 10) -> dict:
 	ChartAccess(patient).to_read()
 	return PatientSnapshot(patient, int(limit)).as_dict()
