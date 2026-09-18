@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from frappe.utils import now_datetime
 
 import erpnext
 
@@ -96,3 +97,38 @@ def editable(doctype, name):
 	document.check_permission("write")
 	ChartAccess(document.patient).to_read()
 	return document
+
+
+class Lapse:
+	"""Marks what was left waiting too long as Missed.
+
+	A nurse may act on a row between our reading it and our writing it, so the
+	write is conditional: the status test is part of the UPDATE, and a row that
+	has moved on since the read is left as the nurse set it.
+	"""
+
+	def __init__(self, doctype, waiting_statuses, filters):
+		self.doctype = doctype
+		self.waiting_statuses = waiting_statuses
+		self.filters = filters
+
+	def run(self):
+		waiting = frappe.get_all(self.doctype, filters=self.filters, pluck="name")
+		if not waiting:
+			return []
+
+		self.mark_missed(waiting)
+		return frappe.get_all(
+			self.doctype, filters={"name": ["in", waiting], "status": "Missed"}, pluck="name"
+		)
+
+	def mark_missed(self, names):
+		table = frappe.qb.DocType(self.doctype)
+		(
+			frappe.qb.update(table)
+			.set(table.status, "Missed")
+			.set(table.modified, now_datetime())
+			.set(table.modified_by, frappe.session.user)
+			.where(table.name.isin(names) & table.status.isin(self.waiting_statuses))
+			.run()
+		)
