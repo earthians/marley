@@ -185,7 +185,7 @@ def schedule_due_medications(patient=None):
 
 
 @frappe.whitelist()
-def schedule_patient_medications(patient):
+def schedule_patient_medications(patient: str) -> list[str]:
 	"""The pane bringing one patient's round up to date."""
 	frappe.has_permission("Medication Administration", "create", throw=True)
 	ChartAccess(patient).to_read()
@@ -226,7 +226,7 @@ def doses_on_the_round(patient, hours=ROUND_WINDOW_HOURS, statuses=None, limit=N
 
 
 @frappe.whitelist()
-def get_due_medications(patient, hours=ROUND_WINDOW_HOURS):
+def get_due_medications(patient: str, hours: int = ROUND_WINDOW_HOURS) -> list[dict]:
 	"""The round, plus any dose recently missed so it is not quietly forgotten."""
 	schedule_patient_medications(patient)
 
@@ -239,7 +239,13 @@ def missed_doses(patient, hours=MISSED_LOOKBACK_HOURS):
 
 
 @frappe.whitelist()
-def record_administration(administration, status, reason=None, route=None, second_check_by=None):
+def record_administration(
+	administration: str,
+	status: str,
+	reason: str | None = None,
+	route: str | None = None,
+	second_check_by: str | None = None,
+) -> str:
 	dose = editable("Medication Administration", administration)
 	dose.status = status
 	dose.reason = reason
