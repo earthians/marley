@@ -53,6 +53,26 @@ class TestMedicationAdministration(HealthcareTestSuite):
 		self.assertTrue(dose.administered_time)
 		self.assertEqual(dose.administered_by, frappe.session.user)
 
+	def test_who_gave_the_dose_is_the_login_that_closed_it_whatever_the_document_says(self):
+		dose = self.make()
+
+		dose.status = "Given"
+		dose.administered_by = "test_user@marleyhealth.io"
+		dose.save()
+
+		self.assertEqual(dose.administered_by, frappe.session.user)
+
+	def test_who_gave_the_dose_cannot_be_changed_afterwards(self):
+		dose = self.make()
+		dose.status = "Given"
+		dose.save()
+
+		dose.administered_by = "test_user@marleyhealth.io"
+		dose.site = "left arm"
+		dose.save()
+
+		self.assertEqual(dose.administered_by, frappe.session.user)
+
 	def test_a_dose_not_given_needs_a_reason(self):
 		dose = self.make()
 		dose.status = "Held"
