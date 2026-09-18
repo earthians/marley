@@ -24,7 +24,7 @@ class InpatientMedicationEntry(Document):
 		self.validate_medication_orders()
 
 	@frappe.whitelist()
-	def get_medication_orders(self):
+	def get_medication_orders(self) -> "InpatientMedicationEntry | None":
 		# pull inpatient medication orders based on selected filters
 		orders = get_pending_medication_orders(self)
 
@@ -271,7 +271,7 @@ def get_drug_shortage_map(medication_orders, warehouse):
 
 
 @frappe.whitelist()
-def make_difference_stock_entry(docname):
+def make_difference_stock_entry(docname: str) -> Document | None:
 	doc = frappe.get_doc("Inpatient Medication Entry", docname)
 	drug_shortage = get_drug_shortage_map(doc.medication_orders, doc.warehouse)
 
