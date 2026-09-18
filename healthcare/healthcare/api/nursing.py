@@ -257,7 +257,7 @@ def find_patients(term, admitted_only=0):
 
 @frappe.whitelist()
 def get_banner(patient, reference_doctype=None, reference_name=None):
-	ChartAccess(patient).to_read()
+	ChartAccess(patient, reference_doctype, reference_name).to_read()
 	return PatientBanner(patient, reference_doctype, reference_name).as_dict()
 
 
