@@ -193,6 +193,7 @@ class PatientFinder:
 	def find(self):
 		if not self.term:
 			frappe.throw(_("Scan a wristband or type a patient to search"))
+		frappe.has_permission("Patient", "read", throw=True)
 
 		# A record number identifies one patient exactly, so those come first.
 		matches = self.by_document() + self.by_patient()
@@ -217,13 +218,17 @@ class PatientFinder:
 		return matches
 
 	def patient_on(self, doctype):
+		"""A record number the caller may not read does not resolve to anyone."""
 		if not frappe.db.exists(doctype, self.term):
 			return None
+		if not frappe.has_permission(doctype, "read", self.term):
+			return None
 
-		return frappe.db.get_value(doctype, self.term, "patient")
+		patient = frappe.db.get_value(doctype, self.term, "patient")
+		return patient if frappe.has_permission("Patient", "read", patient) else None
 
 	def by_patient(self):
-		return frappe.get_all(
+		return frappe.get_list(
 			"Patient",
 			or_filters=[[field, "like", f"%{self.term}%"] for field in self.FIELDS],
 			filters=self.filters(),
