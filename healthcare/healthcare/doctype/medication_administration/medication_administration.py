@@ -67,15 +67,26 @@ class MedicationAdministration(Document):
 	def issue_from_the_ward(self):
 		"""A dose is billed when it reaches the patient, not when the drug was
 		moved to the bed, so the stock leaves here rather than at transfer."""
-		if self.status != "Given" or self.stock_entry:
+		if self.status != "Given" or self.stock_entry or not self.inpatient_record:
 			return
 
-		if not manages_medication_stock() or not self.inpatient_record:
+		if not self.stock_is_at_the_bed():
 			return
 
 		stock_entry = WardIssue(self.inpatient_record, self.ward_warehouse()).record([self.as_issued_item()])
 		self.db_set("stock_entry", stock_entry)
 		self.complete_order_entry()
+
+	def stock_is_at_the_bed(self):
+		"""Once the pharmacy has transferred the drug to the bed it has to be
+		issued from there, whatever the setting says now; switching the
+		setting off afterwards must not strand it."""
+		if self.order_entry:
+			return (
+				frappe.db.get_value("Inpatient Medication Order Entry", self.order_entry, "status")
+				== "Transferred"
+			)
+		return bool(manages_medication_stock())
 
 	def ward_warehouse(self):
 		warehouse = WardStore(self.inpatient_record).warehouse()

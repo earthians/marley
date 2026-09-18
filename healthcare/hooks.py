@@ -142,6 +142,10 @@ doc_events = {
 scheduler_events = {
 	"all": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.send_appointment_reminder",
+		"healthcare.healthcare.api.medication.schedule_due_medications",
+	],
+	"hourly": [
+		"healthcare.healthcare.api.nursing_tasks.lapse_missed_tasks",
 	],
 	"daily": [
 		"healthcare.healthcare.doctype.patient_appointment.patient_appointment.update_appointment_status",
