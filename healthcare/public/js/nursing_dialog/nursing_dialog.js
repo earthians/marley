@@ -184,12 +184,20 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 	}
 
 	async render_banner() {
+		const patient = this.patient;
 		const banner = await frappe.xcall(healthcare.nursing.BANNER_METHOD, {
-			patient: this.patient,
+			patient,
 			reference_doctype: this.reference_doctype,
 			reference_name: this.reference_name,
 		});
+		if (this.patient_changed_since(patient)) return;
+
 		this.$banner.html(this.get_banner_html(banner));
+	}
+
+	// A slower response for the previous patient must not overwrite this one.
+	patient_changed_since(patient) {
+		return patient !== this.patient;
 	}
 
 	get_banner_html(banner) {
@@ -310,9 +318,12 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 	// A handover waiting on this nurse is flagged rather than enforced: nothing
 	// clinical is held up by an administrative step.
 	async mark_attention() {
+		const patient = this.patient;
 		const waiting = await frappe.xcall(healthcare.nursing.HANDOVER_WAITING_METHOD, {
-			patient: this.patient,
+			patient,
 		});
+		if (this.patient_changed_since(patient)) return;
+
 		this.set_attention("handover", waiting);
 	}
 
@@ -341,8 +352,11 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 			.filter(`[data-action="${name}"]`)
 			.addClass("selected")
 			.attr({ "aria-selected": "true", tabindex: "0" });
+		// Each pane gets a host of its own: a pane replaced while its fetch is
+		// still in flight then renders into a detached node, not over the new one.
 		this.$pane.empty();
-		this.pane = new PaneClass({ wrapper: this.$pane, station: this });
+		const $host = $("<div></div>").appendTo(this.$pane);
+		this.pane = new PaneClass({ wrapper: $host, station: this });
 		this.pane.render();
 	}
 
