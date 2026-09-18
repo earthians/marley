@@ -171,13 +171,9 @@ def lapse_missed_doses(patient=None):
 	return Lapse("Medication Administration", ("Scheduled",), filters).run()
 
 
-@frappe.whitelist()
 def schedule_due_medications(patient=None):
-	"""Called by the scheduler for every patient, and by the pane for one."""
-	frappe.has_permission("Medication Administration", "create", throw=True)
-	if patient:
-		ChartAccess(patient).to_read()
-
+	"""Run by the scheduler for every patient. Not whitelisted: a user only
+	ever schedules one patient, through schedule_patient_medications."""
 	settings = MedicationScheduleSettings()
 	if not settings.enabled:
 		return []
@@ -186,6 +182,14 @@ def schedule_due_medications(patient=None):
 
 	patients = [patient] if patient else patients_with_open_orders()
 	return [name for one in patients for name in MedicationScheduler(one, settings).build()]
+
+
+@frappe.whitelist()
+def schedule_patient_medications(patient):
+	"""The pane bringing one patient's round up to date."""
+	frappe.has_permission("Medication Administration", "create", throw=True)
+	ChartAccess(patient).to_read()
+	return schedule_due_medications(patient)
 
 
 def patients_with_open_orders():
@@ -224,8 +228,7 @@ def doses_on_the_round(patient, hours=ROUND_WINDOW_HOURS, statuses=None, limit=N
 @frappe.whitelist()
 def get_due_medications(patient, hours=ROUND_WINDOW_HOURS):
 	"""The round, plus any dose recently missed so it is not quietly forgotten."""
-	ChartAccess(patient).to_read()
-	schedule_due_medications(patient)
+	schedule_patient_medications(patient)
 
 	doses = doses_on_the_round(patient, hours, statuses=ROUND_STATUSES) + missed_doses(patient)
 	return sorted(doses, key=lambda dose: dose.scheduled_time)
