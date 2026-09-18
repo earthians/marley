@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 
-from healthcare.healthcare.api.nursing_common import ChartAccess, admitted_patients, has_value
+from healthcare.healthcare.api.nursing_common import ChartAccess, WardScope, admitted_patients, has_value
 from healthcare.healthcare.api.nursing_tasks import OPEN_TASK_STATUSES
 from healthcare.healthcare.api.vitals import vital_sign_templates
 
@@ -225,7 +225,9 @@ class PatientFinder:
 			return None
 
 		patient = frappe.db.get_value(doctype, self.term, "patient")
-		return patient if frappe.has_permission("Patient", "read", patient) else None
+		if not frappe.has_permission("Patient", "read", patient):
+			return None
+		return patient if WardScope().allows(patient, doctype, self.term) else None
 
 	def by_patient(self):
 		return frappe.get_list(
@@ -249,6 +251,10 @@ class PatientFinder:
 		return unique
 
 	def filters(self):
+		"""A ward nurse searches their ward; everyone else, the admitted or the whole list."""
+		scope = WardScope()
+		if scope.restricted():
+			return {"name": ["in", list(scope.patients())]}
 		if not self.admitted_only:
 			return {}
 
