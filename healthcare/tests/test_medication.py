@@ -163,6 +163,36 @@ class TestMedicationScheduling(HealthcareTestSuite):
 
 		self.assertEqual(frappe.db.get_value("Medication Administration", dose, "status"), "Missed")
 
+	def test_a_dose_given_after_it_was_read_is_not_marked_missed(self):
+		from healthcare.healthcare.api.nursing_common import Lapse
+
+		self.make_inpatient_order()
+		dose = self.build()[0]
+		frappe.db.set_value("Medication Administration", dose, "status", "Given")
+
+		Lapse("Medication Administration", ("Scheduled",), {}).mark_missed([dose])
+
+		self.assertEqual(frappe.db.get_value("Medication Administration", dose, "status"), "Given")
+
+	def test_a_dose_the_scheduler_created_meanwhile_is_not_created_twice(self):
+		"""The pane and the scheduler can build the same round at once; the
+		database refuses the second insert and the builder carries on."""
+		from healthcare.healthcare.api.medication import MedicationScheduler
+
+		class RacingBuilder(MedicationScheduler):
+			def already_recorded(self, dose):
+				return False  # the other request inserted after we looked
+
+		self.make_inpatient_order()
+		first = self.build()
+
+		second = RacingBuilder(self.patient).build(
+			frappe.utils.add_to_date(frappe.utils.now_datetime(), days=3)
+		)
+
+		self.assertEqual(second, [])
+		self.assertEqual(frappe.db.count("Medication Administration", {"patient": self.patient}), len(first))
+
 	def test_a_dose_still_on_the_round_does_not_lapse(self):
 		from healthcare.healthcare.api.medication import lapse_missed_doses
 
@@ -320,7 +350,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		row.t_warehouse = self.bed.warehouse
 		transfer.submit()
 
-	def give_a_dose(self):
+	def give_a_dose(self, **links):
 		dose = frappe.get_doc(
 			{
 				"doctype": "Medication Administration",
@@ -331,6 +361,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 				"scheduled_time": frappe.utils.now_datetime(),
 				"inpatient_record": self.admission,
 				"status": "Scheduled",
+				**links,
 			}
 		).insert(ignore_permissions=True)
 
@@ -356,6 +387,28 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		self.assertEqual(billable[0].item_code, "Dextromethorphan")
 		self.assertEqual(billable[0].quantity, 1)
 		self.assertEqual(billable[0].invoiced, 0)
+
+	def test_a_transferred_dose_is_issued_from_the_bed_even_after_the_setting_is_turned_off(self):
+		"""The drug is already at the bed: leaving it there would strand it."""
+		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
+			create_ipmo,
+		)
+
+		order = create_ipmo(self.patient)
+		order.submit()
+		entry = order.medication_orders[0].name
+		frappe.db.set_value("Inpatient Medication Order Entry", entry, "status", "Transferred")
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
+		frappe.clear_cache(doctype="Healthcare Settings")
+
+		dose = self.give_a_dose(
+			order_doctype="Inpatient Medication Order", order_name=order.name, order_entry=entry
+		)
+
+		self.assertTrue(dose.stock_entry)
+		self.assertEqual(
+			frappe.db.get_value("Inpatient Medication Order Entry", entry, "status"), "Completed"
+		)
 
 	def test_a_dose_that_was_given_cannot_be_taken_back(self):
 		dose = self.give_a_dose()

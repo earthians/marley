@@ -4,7 +4,7 @@
 import frappe
 from frappe.utils import add_to_date, now_datetime
 
-from healthcare.healthcare.api.nursing_common import ChartAccess, editable
+from healthcare.healthcare.api.nursing_common import ChartAccess, Lapse, editable
 
 OPEN_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready", "In Progress")
 
@@ -27,11 +27,7 @@ def lapse_missed_tasks(patient=None):
 	if patient:
 		filters["patient"] = patient
 
-	missed = frappe.get_all("Nursing Task", filters=filters, pluck="name")
-	for name in missed:
-		frappe.db.set_value("Nursing Task", name, "status", "Missed")
-
-	return missed
+	return Lapse("Nursing Task", LAPSABLE_TASK_STATUSES, filters).run()
 
 
 @frappe.whitelist()

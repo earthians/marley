@@ -155,6 +155,7 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		return ipme
 
 	def test_drug_shortage_stock_entry(self):
+		empty_warehouse("Finished Goods - _TC", "Dextromethorphan")
 		ipmo = create_ipmo(self.patient)
 		ipmo.submit()
 		ipmo.reload()
@@ -205,6 +206,28 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		for entry in frappe.get_all("Inpatient Medication Order"):
 			doc = frappe.get_doc("Inpatient Medication Order", entry.name)
 			doc.cancel()
+
+
+def empty_warehouse(warehouse, item_code):
+	"""The shortage test needs an empty warehouse; a failed earlier run strands
+	stock there, which would otherwise fail every run after it."""
+	from erpnext.stock.utils import get_stock_balance
+
+	balance = get_stock_balance(item_code, warehouse)
+	if balance <= 0:
+		return
+
+	stock_entry = frappe.new_doc("Stock Entry")
+	stock_entry.stock_entry_type = "Material Issue"
+	stock_entry.company = "_Test Company"
+	stock_entry.from_warehouse = warehouse
+	row = stock_entry.append("items")
+	row.item_code = item_code
+	row.qty = balance
+	row.s_warehouse = warehouse
+	row.conversion_factor = 1
+	row.expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
+	stock_entry.submit()
 
 
 def make_stock_entry(warehouse=None):

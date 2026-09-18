@@ -288,6 +288,18 @@ class TestNursingTasks(HealthcareTestSuite):
 
 		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "In Progress")
 
+	def test_a_task_picked_up_after_it_was_read_is_not_marked_missed(self):
+		"""The read and the write are separate requests; a nurse may act in between."""
+		from healthcare.healthcare.api.nursing_common import Lapse
+		from healthcare.healthcare.api.nursing_tasks import LAPSABLE_TASK_STATUSES
+
+		task = self.make_task(status="Requested")
+		frappe.db.set_value("Nursing Task", task.name, "status", "In Progress")
+
+		Lapse("Nursing Task", LAPSABLE_TASK_STATUSES, {}).mark_missed([task.name])
+
+		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "In Progress")
+
 	def test_a_task_still_within_its_window_does_not_lapse(self):
 		from healthcare.healthcare.api.nursing_tasks import lapse_missed_tasks
 
