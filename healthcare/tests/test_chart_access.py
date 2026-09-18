@@ -7,7 +7,9 @@ from healthcare.healthcare.api.nursing_common import ChartAccess
 from healthcare.tests.utils import HealthcareTestSuite
 
 NURSE = "nurse@marleyhealth.io"
+READER = "chart.reader@marleyhealth.io"  # may read patients and tasks, change nothing
 NOBODY = "test_user@marleyhealth.io"  # a login with no clinical role at all
+READER_ROLE = "_Test Chart Reader"
 
 
 class TestChartAccess(HealthcareTestSuite):
@@ -32,17 +34,32 @@ class TestChartAccess(HealthcareTestSuite):
 		)
 
 	def make_nurse(self):
-		if frappe.db.exists("User", NURSE):
+		self.make_user(NURSE, "Nursing User")
+		self.make_reader_role()
+		self.make_user(READER, READER_ROLE)
+
+	def make_user(self, email, role):
+		if frappe.db.exists("User", email):
 			return
 		frappe.get_doc(
 			{
 				"doctype": "User",
-				"email": NURSE,
-				"first_name": "nurse",
+				"email": email,
+				"first_name": email.split("@")[0],
 				"send_welcome_email": 0,
-				"roles": [{"role": "Nursing User"}],
+				"roles": [{"role": role}],
 			}
 		).insert(ignore_permissions=True)
+
+	def make_reader_role(self):
+		"""add_permission copies a doctype's standard permissions into custom
+		ones before adding a row, so the roles it already had keep theirs."""
+		from frappe.permissions import add_permission
+
+		if not frappe.db.exists("Role", READER_ROLE):
+			frappe.get_doc({"doctype": "Role", "role_name": READER_ROLE}).insert(ignore_permissions=True)
+		for doctype in ("Patient", "Nursing Task"):
+			add_permission(doctype, READER_ROLE)
 
 	def test_a_login_without_a_clinical_role_cannot_write_the_chart(self):
 		frappe.set_user(NOBODY)
@@ -100,6 +117,39 @@ class TestChartAccess(HealthcareTestSuite):
 		self.assertNotIn(medication.schedule_due_medications, frappe.whitelisted)
 		self.assertIn(medication.schedule_patient_medications, frappe.whitelisted)
 
+	def test_a_reader_listing_tasks_does_not_lapse_them(self):
+		"""Listing is a read; only a caller who could change the task may mark it Missed."""
+		from healthcare.healthcare.api.nursing_tasks import TASK_LAPSE_HOURS, get_nursing_tasks
+
+		task = self.make_task()
+		frappe.db.set_value(
+			"Nursing Task",
+			task.name,
+			"requested_start_time",
+			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(TASK_LAPSE_HOURS + 1)),
+		)
+		frappe.set_user(READER)
+
+		get_nursing_tasks(self.patient)
+
+		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
+
+	def test_patient_search_is_refused_without_patient_access(self):
+		from healthcare.healthcare.api.nursing import find_patients
+
+		frappe.set_user(NOBODY)
+
+		self.assertRaises(frappe.PermissionError, find_patients, self.other_patient)
+
+	def test_a_record_number_the_caller_cannot_read_resolves_to_nobody(self):
+		from healthcare.healthcare.api.nursing import find_patients
+
+		frappe.set_user(READER)  # may read patients, but not admissions
+
+		self.assertEqual(
+			[match["matched_via"] for match in find_patients(self.admission) if match.get("matched_via")], []
+		)
+
 	def test_recording_vitals_as_nobody_is_refused(self):
 		from healthcare.healthcare.api.vitals import record_vitals
 
@@ -109,10 +159,8 @@ class TestChartAccess(HealthcareTestSuite):
 			frappe.PermissionError, record_vitals, self.patient, {"_Test Pulse": 80}, "Patient", self.patient
 		)
 
-	def test_updating_a_task_as_nobody_is_refused(self):
-		from healthcare.healthcare.api.nursing_tasks import update_nursing_task
-
-		task = frappe.get_doc(
+	def make_task(self):
+		return frappe.get_doc(
 			{
 				"doctype": "Nursing Task",
 				"patient": self.patient,
@@ -122,6 +170,11 @@ class TestChartAccess(HealthcareTestSuite):
 				"requested_start_time": frappe.utils.now_datetime(),
 			}
 		).insert()
+
+	def test_updating_a_task_as_nobody_is_refused(self):
+		from healthcare.healthcare.api.nursing_tasks import update_nursing_task
+
+		task = self.make_task()
 		frappe.set_user(NOBODY)
 
 		self.assertRaises(frappe.PermissionError, update_nursing_task, task.name, "In Progress")
