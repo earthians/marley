@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now_datetime
+from frappe.utils import flt, now_datetime
 
 from healthcare.healthcare.doctype.healthcare_service_unit.healthcare_service_unit import (
 	manages_medication_stock,
@@ -21,6 +21,7 @@ class MedicationAdministration(Document):
 
 	def validate(self):
 		self.set_drug_name()
+		DoseReferences(self).validate()
 		self.validate_reason()
 		self.validate_not_already_issued()
 		self.set_administered()
@@ -115,3 +116,76 @@ class MedicationAdministration(Document):
 
 		if self.order_doctype == "Inpatient Medication Order" and self.order_name:
 			frappe.get_doc("Inpatient Medication Order", self.order_name).update_completed_orders()
+
+
+class DoseReferences:
+	"""The admission, order and order entry a dose points at must be this
+	patient's and this drug's. Stock is issued to and billed against the
+	admission, and the entry is marked Completed, on the strength of these
+	links - so they are checked before any of that can happen."""
+
+	def __init__(self, dose):
+		self.dose = dose
+
+	def validate(self):
+		self.check_admission()
+		self.check_order()
+		self.check_order_entry()
+
+	def check_admission(self):
+		if not self.dose.inpatient_record:
+			return
+		if self.dose.patient != frappe.db.get_value(
+			"Inpatient Record", self.dose.inpatient_record, "patient"
+		):
+			self.refuse(_("Admission {0} is not {1}'s").format(self.dose.inpatient_record, self.dose.patient))
+
+	def check_order(self):
+		if not self.dose.order_name:
+			return
+		if self.dose.order_doctype != "Inpatient Medication Order":
+			self.refuse(_("A dose is scheduled from an Inpatient Medication Order"))
+
+		order = frappe.db.get_value(
+			"Inpatient Medication Order", self.dose.order_name, ["patient", "inpatient_record"], as_dict=True
+		)
+		if not order or order.patient != self.dose.patient:
+			self.refuse(_("Order {0} is not {1}'s").format(self.dose.order_name, self.dose.patient))
+		if self.dose.inpatient_record and order.inpatient_record != self.dose.inpatient_record:
+			self.refuse(
+				_("Order {0} is not for admission {1}").format(
+					self.dose.order_name, self.dose.inpatient_record
+				)
+			)
+
+	def check_order_entry(self):
+		if not self.dose.order_entry:
+			return
+		if not self.dose.order_name:
+			self.refuse(_("An order entry needs its order"))
+
+		entry = frappe.db.get_value(
+			"Inpatient Medication Order Entry",
+			self.dose.order_entry,
+			["parent", "drug", "dosage"],
+			as_dict=True,
+		)
+		if not entry or entry.parent != self.dose.order_name:
+			self.refuse(
+				_("Entry {0} is not on order {1}").format(self.dose.order_entry, self.dose.order_name)
+			)
+		if entry.drug != self.dose.drug_code:
+			self.refuse(
+				_("Entry {0} is for {1}, not {2}").format(
+					self.dose.order_entry, entry.drug, self.dose.drug_code
+				)
+			)
+		if flt(entry.dosage) != flt(self.dose.dosage):
+			self.refuse(
+				_("Entry {0} prescribes {1}, not {2}").format(
+					self.dose.order_entry, entry.dosage, self.dose.dosage
+				)
+			)
+
+	def refuse(self, message):
+		frappe.throw(message, title=_("Dose Does Not Match Its Order"))
