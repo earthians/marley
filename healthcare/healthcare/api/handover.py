@@ -42,7 +42,7 @@ class HandoverRecorder:
 
 
 @frappe.whitelist()
-def get_outstanding(patient):
+def get_outstanding(patient: str) -> dict:
 	"""What the next nurse is inheriting, gathered rather than retyped."""
 	ChartAccess(patient).to_read()
 	tasks = get_nursing_tasks(patient)
@@ -65,7 +65,9 @@ def get_outstanding(patient):
 
 
 @frappe.whitelist()
-def record_handover(patient, values, reference_doctype=None, reference_name=None):
+def record_handover(
+	patient: str, values: dict | str, reference_doctype: str | None = None, reference_name: str | None = None
+) -> str:
 	if isinstance(values, str):
 		values = frappe.parse_json(values)
 
@@ -105,7 +107,7 @@ def pending_handover(patient):
 
 
 @frappe.whitelist()
-def is_handover_waiting(patient):
+def is_handover_waiting(patient: str) -> bool:
 	"""Whether this nurse has a handover to take on this patient."""
 	ChartAccess(patient).to_read()
 	waiting = pending_handover(patient)
@@ -113,7 +115,7 @@ def is_handover_waiting(patient):
 
 
 @frappe.whitelist()
-def get_handovers(patient, limit=RECENT_HANDOVERS):
+def get_handovers(patient: str, limit: int = RECENT_HANDOVERS) -> list[dict]:
 	ChartAccess(patient).to_read()
 	return frappe.get_all(
 		"Shift Handover",
@@ -133,7 +135,7 @@ def get_handovers(patient, limit=RECENT_HANDOVERS):
 
 
 @frappe.whitelist()
-def accept_handover(handover):
+def accept_handover(handover: str) -> str:
 	"""Only the nurse it was handed to can accept it."""
 	document = editable("Shift Handover", handover)
 

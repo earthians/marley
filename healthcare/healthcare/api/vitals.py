@@ -65,12 +65,18 @@ def vital_sign_templates():
 
 
 @frappe.whitelist()
-def get_vital_sign_templates():
+def get_vital_sign_templates() -> list[dict]:
 	return vital_sign_templates()
 
 
 @frappe.whitelist()
-def record_vitals(patient, readings, reference_doctype=None, reference_name=None, practitioner=None):
+def record_vitals(
+	patient: str,
+	readings: dict | str,
+	reference_doctype: str | None = None,
+	reference_name: str | None = None,
+	practitioner: str | None = None,
+) -> list[str]:
 	if isinstance(readings, str):
 		readings = json.loads(readings)
 

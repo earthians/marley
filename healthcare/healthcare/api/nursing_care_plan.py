@@ -56,13 +56,13 @@ class ActiveOrders:
 
 
 @frappe.whitelist()
-def get_active_orders(patient):
+def get_active_orders(patient: str) -> list[dict]:
 	ChartAccess(patient).to_read()
 	return ActiveOrders(patient).as_list()
 
 
 @frappe.whitelist()
-def get_care_plan(patient):
+def get_care_plan(patient: str) -> dict | None:
 	"""The live plan for this patient's admission, if a nurse has started one."""
 	ChartAccess(patient).to_read()
 	plans = frappe.get_all(
@@ -86,7 +86,9 @@ def get_care_plan(patient):
 
 
 @frappe.whitelist()
-def start_care_plan(patient, goals, reference_doctype=None, reference_name=None):
+def start_care_plan(
+	patient: str, goals: list | str, reference_doctype: str | None = None, reference_name: str | None = None
+) -> str:
 	"""Goals are set when a nurse first takes the patient over."""
 	if isinstance(goals, str):
 		goals = frappe.parse_json(goals)
@@ -112,7 +114,7 @@ def start_care_plan(patient, goals, reference_doctype=None, reference_name=None)
 
 
 @frappe.whitelist()
-def add_goal(plan, goal, target_date=None):
+def add_goal(plan: str, goal: str, target_date: str | None = None) -> str:
 	document = editable("Nursing Care Plan", plan)
 	document.append("goals", {"goal": goal, "target_date": target_date})
 	document.save()
@@ -120,7 +122,7 @@ def add_goal(plan, goal, target_date=None):
 
 
 @frappe.whitelist()
-def set_goal_status(plan, goal, status, notes=None):
+def set_goal_status(plan: str, goal: str, status: str, notes: str | None = None) -> str:
 	document = editable("Nursing Care Plan", plan)
 	for row in document.goals:
 		if row.name == goal:

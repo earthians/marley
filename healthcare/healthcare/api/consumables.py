@@ -33,7 +33,7 @@ def inpatient_record_for(patient):
 
 
 @frappe.whitelist()
-def get_consumable_context(patient):
+def get_consumable_context(patient: str) -> dict:
 	"""Whether consumables can be recorded here, and where stock comes from."""
 	ChartAccess(patient).to_read()
 	inpatient_record = inpatient_record_for(patient)
@@ -48,7 +48,7 @@ def get_consumable_context(patient):
 
 
 @frappe.whitelist()
-def record_consumables(patient, items):
+def record_consumables(patient: str, items: list | str) -> str:
 	if isinstance(items, str):
 		items = json.loads(items)
 
@@ -64,7 +64,7 @@ def record_consumables(patient, items):
 
 
 @frappe.whitelist()
-def get_consumables(patient, limit=RECENT_ROWS):
+def get_consumables(patient: str, limit: int = RECENT_ROWS) -> list[dict]:
 	"""Items issued on this admission, most recent first.
 
 	Child rows carry the parent's creation timestamp, so they cannot be filtered
