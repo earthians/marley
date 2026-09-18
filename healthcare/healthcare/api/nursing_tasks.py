@@ -35,7 +35,8 @@ def get_nursing_tasks(patient, hours=24):
 	"""The worklist: what is still outstanding, plus anything that fell over
 	this shift. A completed task is done with, so it drops off."""
 	ChartAccess(patient).to_read()
-	lapse_missed_tasks(patient)
+	if frappe.has_permission("Nursing Task", "write"):
+		lapse_missed_tasks(patient)
 	since = add_to_date(now_datetime(), hours=-int(hours))
 
 	return frappe.get_all(
