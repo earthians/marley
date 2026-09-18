@@ -410,6 +410,80 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 			frappe.db.get_value("Inpatient Medication Order Entry", entry, "status"), "Completed"
 		)
 
+	def transferred_order(self):
+		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
+			create_ipmo,
+		)
+
+		order = create_ipmo(self.patient)
+		order.submit()
+		entry = order.medication_orders[0].name
+		frappe.db.set_value("Inpatient Medication Order Entry", entry, "status", "Transferred")
+		return order.name, entry
+
+	def someone_elses_admission(self):
+		"""A second patient admitted to the other bed, with an order of their own."""
+		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
+			create_ipmo,
+		)
+		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
+		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
+
+		other = frappe.get_list("Patient", filters={"name": ["!=", self.patient]}, pluck="name")[0]
+		record = create_inpatient(other)
+		record.expected_length_of_stay = 0
+		record.save()
+		record.reload()
+		frappe.db.set_value("Healthcare Service Unit", "_Test HSU - OT - _TC", "occupancy_status", "Vacant")
+		admit_patient(record, "_Test HSU - OT - _TC", frappe.utils.now_datetime())
+		order = create_ipmo(other)
+		order.submit()
+		self.addCleanup(self.forget_admission, other, record.name)
+		return record.name, order.name, order.medication_orders[0].name
+
+	def forget_admission(self, patient, record):
+		frappe.db.set_value("Patient", patient, {"inpatient_record": None, "inpatient_status": None})
+		frappe.db.delete("Inpatient Record", {"name": record})
+
+	def refused(self, **links):
+		"""A mismatched dose never saves, so nothing is issued, billed or completed."""
+		issued_before = frappe.db.count("Stock Entry", {"docstatus": 1})
+
+		self.assertRaises(frappe.ValidationError, self.give_a_dose, **links)
+
+		self.assertEqual(frappe.db.count("Stock Entry", {"docstatus": 1}), issued_before)
+
+	def test_a_dose_cannot_point_at_another_patients_admission(self):
+		other_admission, _order, _entry = self.someone_elses_admission()
+
+		self.refused(inpatient_record=other_admission)
+
+	def test_a_dose_cannot_point_at_another_patients_order(self):
+		_admission, other_order, other_entry = self.someone_elses_admission()
+
+		self.refused(
+			order_doctype="Inpatient Medication Order", order_name=other_order, order_entry=other_entry
+		)
+
+	def test_a_dose_cannot_complete_an_entry_from_a_different_order(self):
+		order, _entry = self.transferred_order()
+		_admission, _other_order, other_entry = self.someone_elses_admission()
+
+		self.refused(order_doctype="Inpatient Medication Order", order_name=order, order_entry=other_entry)
+
+	def test_a_dose_cannot_complete_an_entry_for_a_different_drug(self):
+		order, entry = self.transferred_order()
+		frappe.db.set_value("Inpatient Medication Order Entry", entry, "drug", "_Test_Stock_Item")
+
+		self.refused(order_doctype="Inpatient Medication Order", order_name=order, order_entry=entry)
+
+	def test_a_dose_cannot_issue_more_than_the_entry_prescribes(self):
+		order, entry = self.transferred_order()
+
+		self.refused(
+			order_doctype="Inpatient Medication Order", order_name=order, order_entry=entry, dosage=5
+		)
+
 	def test_a_dose_that_was_given_cannot_be_taken_back(self):
 		dose = self.give_a_dose()
 
