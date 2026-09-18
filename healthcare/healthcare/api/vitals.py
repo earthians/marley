@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
-from healthcare.healthcare.api.nursing_common import default_company, has_value
+from healthcare.healthcare.api.nursing_common import ChartAccess, default_company, has_value
 
 VITAL_SIGNS_CATEGORY = "Vital Signs"
 
@@ -32,7 +32,7 @@ class VitalsRecorder:
 		observation = frappe.new_doc("Observation")
 		observation.update(self.observation_defaults(template))
 		self.set_result(observation, value)
-		observation.insert(ignore_permissions=True)
+		observation.insert()
 		return observation.name
 
 	def observation_defaults(self, template):
@@ -77,5 +77,6 @@ def record_vitals(patient, readings, reference_doctype=None, reference_name=None
 	if not readings:
 		frappe.throw(_("Enter at least one reading"))
 
+	ChartAccess(patient, reference_doctype, reference_name).to_write("Observation")
 	recorder = VitalsRecorder(patient, reference_doctype, reference_name, practitioner)
 	return recorder.record(readings)

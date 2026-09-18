@@ -6,7 +6,7 @@ from frappe import _
 from frappe.utils import now_datetime
 
 from healthcare.healthcare.api.medication import get_due_medications
-from healthcare.healthcare.api.nursing_common import default_company
+from healthcare.healthcare.api.nursing_common import ChartAccess, default_company, editable
 from healthcare.healthcare.api.nursing_tasks import get_nursing_tasks
 
 SBAR_PARTS = ("situation", "background", "assessment", "recommendation")
@@ -37,13 +37,14 @@ class HandoverRecorder:
 				**values,
 			}
 		)
-		document.insert(ignore_permissions=True)
+		document.insert()
 		return document.name
 
 
 @frappe.whitelist()
 def get_outstanding(patient):
 	"""What the next nurse is inheriting, gathered rather than retyped."""
+	ChartAccess(patient).to_read()
 	tasks = get_nursing_tasks(patient)
 	doses = [dose for dose in get_due_medications(patient) if dose.status != "Given"]
 
@@ -77,6 +78,7 @@ def record_handover(patient, values, reference_doctype=None, reference_name=None
 	if missing:
 		frappe.throw(_("Fill in {0}").format(", ".join(missing)))
 
+	ChartAccess(patient, reference_doctype, reference_name).to_write("Shift Handover")
 	waiting = pending_handover(patient)
 	if waiting:
 		frappe.throw(
@@ -105,12 +107,14 @@ def pending_handover(patient):
 @frappe.whitelist()
 def is_handover_waiting(patient):
 	"""Whether this nurse has a handover to take on this patient."""
+	ChartAccess(patient).to_read()
 	waiting = pending_handover(patient)
 	return bool(waiting and waiting.handed_over_to == frappe.session.user)
 
 
 @frappe.whitelist()
 def get_handovers(patient, limit=RECENT_HANDOVERS):
+	ChartAccess(patient).to_read()
 	return frappe.get_all(
 		"Shift Handover",
 		filters={"patient": patient, "docstatus": ["<", 2]},
@@ -131,11 +135,11 @@ def get_handovers(patient, limit=RECENT_HANDOVERS):
 @frappe.whitelist()
 def accept_handover(handover):
 	"""Only the nurse it was handed to can accept it."""
-	document = frappe.get_doc("Shift Handover", handover)
+	document = editable("Shift Handover", handover)
 
 	if document.handed_over_to != frappe.session.user:
 		frappe.throw(_("This handover was given to {0}").format(document.handed_over_to))
 
 	document.status = "Accepted"
-	document.save(ignore_permissions=True)
+	document.save()
 	return document.status

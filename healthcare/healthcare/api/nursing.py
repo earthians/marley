@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 
-from healthcare.healthcare.api.nursing_common import admitted_patients, has_value
+from healthcare.healthcare.api.nursing_common import ChartAccess, admitted_patients, has_value
 from healthcare.healthcare.api.nursing_tasks import OPEN_TASK_STATUSES
 from healthcare.healthcare.api.vitals import vital_sign_templates
 
@@ -257,9 +257,11 @@ def find_patients(term, admitted_only=0):
 
 @frappe.whitelist()
 def get_banner(patient, reference_doctype=None, reference_name=None):
+	ChartAccess(patient).to_read()
 	return PatientBanner(patient, reference_doctype, reference_name).as_dict()
 
 
 @frappe.whitelist()
 def get_snapshot(patient, limit=10):
+	ChartAccess(patient).to_read()
 	return PatientSnapshot(patient, int(limit)).as_dict()

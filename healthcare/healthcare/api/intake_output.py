@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, now_datetime
 
-from healthcare.healthcare.api.nursing_common import default_company
+from healthcare.healthcare.api.nursing_common import ChartAccess, default_company
 
 
 class IntakeOutputRecorder:
@@ -38,7 +38,7 @@ class IntakeOutputRecorder:
 				"company": self.company,
 			}
 		)
-		document.insert(ignore_permissions=True)
+		document.insert()
 		return document.name
 
 
@@ -97,6 +97,7 @@ def get_intake_output_types():
 
 @frappe.whitelist()
 def get_intake_output_summary(patient, hours=24):
+	ChartAccess(patient).to_read()
 	return IntakeOutputSummary(patient, int(hours)).as_dict()
 
 
@@ -108,5 +109,6 @@ def record_intake_output(patient, entries, reference_doctype=None, reference_nam
 	if not entries:
 		frappe.throw(_("Add at least one row"))
 
+	ChartAccess(patient, reference_doctype, reference_name).to_write("Intake Output Entry")
 	recorder = IntakeOutputRecorder(patient, reference_doctype, reference_name, practitioner)
 	return recorder.record(entries)
