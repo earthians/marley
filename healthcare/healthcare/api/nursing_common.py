@@ -52,13 +52,12 @@ class ChartAccess:
 		if not self.patient:
 			frappe.throw(_("Choose a patient"))
 		frappe.has_permission("Patient", "read", self.patient, throw=True)
+		self.check_reference()
 		return self
 
 	def to_write(self, doctype):
 		frappe.has_permission(doctype, "create", throw=True)
-		self.to_read()
-		self.check_reference()
-		return self
+		return self.to_read()
 
 	def check_reference(self):
 		if not self.reference_doctype and not self.reference_name:

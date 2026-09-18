@@ -85,6 +85,21 @@ class TestChartAccess(HealthcareTestSuite):
 
 		self.assertRaises(frappe.ValidationError, access.to_write, "Observation")
 
+	def test_the_banner_will_not_read_another_patients_record(self):
+		from healthcare.healthcare.api.nursing import get_banner
+
+		frappe.set_user(NURSE)
+
+		self.assertRaises(
+			frappe.PermissionError, get_banner, self.patient, "Inpatient Record", self.admission
+		)
+
+	def test_the_scheduler_run_over_every_patient_is_not_callable_remotely(self):
+		from healthcare.healthcare.api import medication
+
+		self.assertNotIn(medication.schedule_due_medications, frappe.whitelisted)
+		self.assertIn(medication.schedule_patient_medications, frappe.whitelisted)
+
 	def test_recording_vitals_as_nobody_is_refused(self):
 		from healthcare.healthcare.api.vitals import record_vitals
 
