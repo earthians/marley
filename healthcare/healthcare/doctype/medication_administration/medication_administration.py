@@ -42,13 +42,20 @@ class MedicationAdministration(Document):
 			frappe.throw(_("Give a reason for a dose that was not administered"))
 
 	def set_administered(self):
+		"""Who dealt with the dose is the login that closed it - an audit fact
+		taken from the session, never from the document, and kept as it was
+		stamped from then on."""
 		if self.status not in CLOSED_STATUSES:
+			return
+
+		before = self.get_doc_before_save()
+		if before and before.status in CLOSED_STATUSES:
+			self.administered_by = before.administered_by
 			return
 
 		if not self.administered_time:
 			self.administered_time = now_datetime()
-		if not self.administered_by:
-			self.administered_by = frappe.session.user
+		self.administered_by = frappe.session.user
 
 	def validate_not_already_issued(self):
 		"""Stock has left the ward and the patient has been billed for it, so the
