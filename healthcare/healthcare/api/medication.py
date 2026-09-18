@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, get_datetime, now_datetime
 
-from healthcare.healthcare.api.nursing_common import ChartAccess, editable
+from healthcare.healthcare.api.nursing_common import ChartAccess, Lapse, editable
 
 # Used when the setting has never been saved. A Single doctype does not write
 # its declared default until the form is saved once, and a null there would
@@ -133,15 +133,26 @@ class MedicationScheduler:
 		return [name for name in map(self.record_dose, doses) if name]
 
 	def record_dose(self, dose):
-		"""The unique dose key means a dose described by two orders lands once."""
-		if frappe.db.exists("Medication Administration", {"dose_key": self.dose_key(dose)}):
+		"""The unique dose key means a dose described by two orders lands once,
+		and that the round and the scheduler cannot both create it: whichever
+		inserts second is refused by the database and backs out of that dose."""
+		if self.already_recorded(dose):
 			return None
 
 		administration = frappe.get_doc(
 			{"doctype": "Medication Administration", "patient": self.patient, **dose}
 		)
-		administration.insert(ignore_permissions=True)
+		frappe.db.savepoint("dose")
+		try:
+			administration.insert(ignore_permissions=True)
+		except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
+			frappe.db.rollback(save_point="dose")
+			return None
+
 		return administration.name
+
+	def already_recorded(self, dose):
+		return frappe.db.exists("Medication Administration", {"dose_key": self.dose_key(dose)})
 
 	def dose_key(self, dose):
 		return f"{self.patient}::{dose['drug_code']}::{dose['scheduled_time']}"
@@ -157,11 +168,7 @@ def lapse_missed_doses(patient=None):
 	if patient:
 		filters["patient"] = patient
 
-	missed = frappe.get_all("Medication Administration", filters=filters, pluck="name")
-	for name in missed:
-		frappe.db.set_value("Medication Administration", name, "status", "Missed")
-
-	return missed
+	return Lapse("Medication Administration", ("Scheduled",), filters).run()
 
 
 @frappe.whitelist()
