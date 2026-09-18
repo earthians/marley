@@ -5,6 +5,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_to_date, get_datetime, now_datetime
 
+from healthcare.healthcare.api.nursing_common import ChartAccess, editable
+
 # Used when the setting has never been saved. A Single doctype does not write
 # its declared default until the form is saved once, and a null there would
 # otherwise read as zero minutes, hiding a dose until the moment it is due.
@@ -165,6 +167,10 @@ def lapse_missed_doses(patient=None):
 @frappe.whitelist()
 def schedule_due_medications(patient=None):
 	"""Called by the scheduler for every patient, and by the pane for one."""
+	frappe.has_permission("Medication Administration", "create", throw=True)
+	if patient:
+		ChartAccess(patient).to_read()
+
 	settings = MedicationScheduleSettings()
 	if not settings.enabled:
 		return []
@@ -211,6 +217,7 @@ def doses_on_the_round(patient, hours=ROUND_WINDOW_HOURS, statuses=None, limit=N
 @frappe.whitelist()
 def get_due_medications(patient, hours=ROUND_WINDOW_HOURS):
 	"""The round, plus any dose recently missed so it is not quietly forgotten."""
+	ChartAccess(patient).to_read()
 	schedule_due_medications(patient)
 
 	doses = doses_on_the_round(patient, hours, statuses=ROUND_STATUSES) + missed_doses(patient)
@@ -223,12 +230,12 @@ def missed_doses(patient, hours=MISSED_LOOKBACK_HOURS):
 
 @frappe.whitelist()
 def record_administration(administration, status, reason=None, route=None, second_check_by=None):
-	dose = frappe.get_doc("Medication Administration", administration)
+	dose = editable("Medication Administration", administration)
 	dose.status = status
 	dose.reason = reason
 	if route:
 		dose.route = route
 	if second_check_by:
 		dose.second_check_by = second_check_by
-	dose.save(ignore_permissions=True)
+	dose.save()
 	return dose.name

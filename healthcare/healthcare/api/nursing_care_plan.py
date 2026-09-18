@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 
-from healthcare.healthcare.api.nursing_common import default_company
+from healthcare.healthcare.api.nursing_common import ChartAccess, default_company, editable
 
 # An order in any of these states is done with, so it is not part of the plan.
 CLOSED_ORDER_CODES = ("completed", "revoked", "cancelled", "stopped", "entered-in-error", "unknown")
@@ -57,12 +57,14 @@ class ActiveOrders:
 
 @frappe.whitelist()
 def get_active_orders(patient):
+	ChartAccess(patient).to_read()
 	return ActiveOrders(patient).as_list()
 
 
 @frappe.whitelist()
 def get_care_plan(patient):
 	"""The live plan for this patient's admission, if a nurse has started one."""
+	ChartAccess(patient).to_read()
 	plans = frappe.get_all(
 		"Nursing Care Plan",
 		filters={"patient": patient, "status": "Active", "docstatus": ["<", 2]},
@@ -93,6 +95,7 @@ def start_care_plan(patient, goals, reference_doctype=None, reference_name=None)
 	if not written:
 		frappe.throw(_("Set at least one goal to start the plan"))
 
+	ChartAccess(patient, reference_doctype, reference_name).to_write("Nursing Care Plan")
 	plan = frappe.get_doc(
 		{
 			"doctype": "Nursing Care Plan",
@@ -104,21 +107,21 @@ def start_care_plan(patient, goals, reference_doctype=None, reference_name=None)
 			"goals": written,
 		}
 	)
-	plan.insert(ignore_permissions=True)
+	plan.insert()
 	return plan.name
 
 
 @frappe.whitelist()
 def add_goal(plan, goal, target_date=None):
-	document = frappe.get_doc("Nursing Care Plan", plan)
+	document = editable("Nursing Care Plan", plan)
 	document.append("goals", {"goal": goal, "target_date": target_date})
-	document.save(ignore_permissions=True)
+	document.save()
 	return document.name
 
 
 @frappe.whitelist()
 def set_goal_status(plan, goal, status, notes=None):
-	document = frappe.get_doc("Nursing Care Plan", plan)
+	document = editable("Nursing Care Plan", plan)
 	for row in document.goals:
 		if row.name == goal:
 			row.status = status
@@ -128,5 +131,5 @@ def set_goal_status(plan, goal, status, notes=None):
 	else:
 		frappe.throw(_("That goal is not on this plan"))
 
-	document.save(ignore_permissions=True)
+	document.save()
 	return status

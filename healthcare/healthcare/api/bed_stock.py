@@ -110,17 +110,25 @@ class BedStock:
 		return WardIssue(self.inpatient_record, self.warehouse).record(medication)
 
 
+def settling(inpatient_record):
+	"""Settling moves stock and bills the admission, so the caller needs both."""
+	frappe.has_permission("Inpatient Record", "write", inpatient_record, throw=True)
+	frappe.has_permission("Stock Entry", "create", throw=True)
+	return BedStock(inpatient_record)
+
+
 @frappe.whitelist()
 def get_bed_stock(inpatient_record):
+	frappe.has_permission("Inpatient Record", "read", inpatient_record, throw=True)
 	bed = BedStock(inpatient_record)
 	return {"warehouse": bed.warehouse, "items": bed.items()}
 
 
 @frappe.whitelist()
 def return_leftovers(inpatient_record, pharmacy, ward_store=None):
-	return BedStock(inpatient_record).return_leftovers(pharmacy, ward_store)
+	return settling(inpatient_record).return_leftovers(pharmacy, ward_store)
 
 
 @frappe.whitelist()
 def sell_to_patient(inpatient_record):
-	return BedStock(inpatient_record).sell_to_patient()
+	return settling(inpatient_record).sell_to_patient()
