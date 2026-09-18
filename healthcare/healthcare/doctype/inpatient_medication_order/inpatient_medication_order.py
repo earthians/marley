@@ -74,7 +74,7 @@ class InpatientMedicationOrder(Document):
 		self.db_set("status", status)
 
 	@frappe.whitelist()
-	def add_order_entries(self, order):
+	def add_order_entries(self, order: dict) -> None:
 		if not order.get("drug_code"):
 			return
 
@@ -106,7 +106,7 @@ class InpatientMedicationOrder(Document):
 		)
 
 	@frappe.whitelist()
-	def get_from_encounter(self, encounter):
+	def get_from_encounter(self, encounter: str) -> None:
 		"""Medication Requests are the order of record, so the schedule is built
 		from them rather than from the encounter's prescription lines."""
 		for request in get_medication_requests(encounter):
