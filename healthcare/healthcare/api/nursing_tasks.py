@@ -4,6 +4,8 @@
 import frappe
 from frappe.utils import add_to_date, now_datetime
 
+from healthcare.healthcare.api.nursing_common import ChartAccess, editable
+
 OPEN_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready", "In Progress")
 
 # Waiting on someone, so still lapsable. A task in progress or on hold is not:
@@ -36,6 +38,7 @@ def lapse_missed_tasks(patient=None):
 def get_nursing_tasks(patient, hours=24):
 	"""The worklist: what is still outstanding, plus anything that fell over
 	this shift. A completed task is done with, so it drops off."""
+	ChartAccess(patient).to_read()
 	lapse_missed_tasks(patient)
 	since = add_to_date(now_datetime(), hours=-int(hours))
 
@@ -63,7 +66,7 @@ def get_nursing_tasks(patient, hours=24):
 @frappe.whitelist()
 def update_nursing_task(task, status):
 	"""Moves a task along its own workflow; the controller stamps the times."""
-	document = frappe.get_doc("Nursing Task", task)
+	document = editable("Nursing Task", task)
 	document.status = status
-	document.save(ignore_permissions=True)
+	document.save()
 	return document.status

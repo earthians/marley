@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 
 import erpnext
 
@@ -29,3 +30,69 @@ def admitted_patients():
 		filters={"status": ["in", IN_HOSPITAL_STATUSES]},
 		pluck="patient",
 	)
+
+
+class ChartAccess:
+	"""What the caller may do to a patient's chart.
+
+	The nursing endpoints take the patient and the record an entry is filed
+	under from the caller, so nothing about the request itself proves the
+	caller should be there. Every endpoint passes through here first: the
+	role must allow the document, the user must be allowed the patient, and
+	the record the entry is filed under must be that patient's own.
+	"""
+
+	def __init__(self, patient, reference_doctype=None, reference_name=None):
+		self.patient = patient
+		self.reference_doctype = reference_doctype
+		self.reference_name = reference_name
+
+	def to_read(self):
+		if not self.patient:
+			frappe.throw(_("Choose a patient"))
+		frappe.has_permission("Patient", "read", self.patient, throw=True)
+		return self
+
+	def to_write(self, doctype):
+		frappe.has_permission(doctype, "create", throw=True)
+		self.to_read()
+		self.check_reference()
+		return self
+
+	def check_reference(self):
+		if not self.reference_doctype and not self.reference_name:
+			return
+		if not (self.reference_doctype and self.reference_name):
+			frappe.throw(_("Both the reference document type and name are needed"))
+
+		if not self.names_a_patient():
+			frappe.throw(_("A chart entry cannot be filed under {0}").format(_(self.reference_doctype)))
+
+		frappe.has_permission(self.reference_doctype, "read", self.reference_name, throw=True)
+		if self.reference_patient() != self.patient:
+			frappe.throw(
+				_("{0} {1} does not belong to this patient").format(
+					_(self.reference_doctype), frappe.bold(self.reference_name)
+				),
+				frappe.PermissionError,
+			)
+
+	def names_a_patient(self):
+		"""Only a document that says whose it is can be checked against the patient."""
+		if self.reference_doctype == "Patient":
+			return True
+		return frappe.get_meta(self.reference_doctype).has_field("patient")
+
+	def reference_patient(self):
+		"""An entry filed under the patient record itself is filed under that patient."""
+		if self.reference_doctype == "Patient":
+			return self.reference_name
+		return frappe.db.get_value(self.reference_doctype, self.reference_name, "patient")
+
+
+def editable(doctype, name):
+	"""A chart document the caller is allowed to change."""
+	document = frappe.get_doc(doctype, name)
+	document.check_permission("write")
+	ChartAccess(document.patient).to_read()
+	return document

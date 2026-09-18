@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
-from healthcare.healthcare.api.nursing_common import default_company
+from healthcare.healthcare.api.nursing_common import ChartAccess
 
 FDAR_PARTS = ("fdar_focus", "fdar_data", "fdar_action", "fdar_response")
 RECENT_NOTES = 10
@@ -34,7 +34,7 @@ class ClinicalNoteRecorder:
 				**values,
 			}
 		)
-		document.insert(ignore_permissions=True)
+		document.insert()
 		return document.name
 
 
@@ -68,6 +68,7 @@ def record_note(
 	if not any(str(value or "").strip() for value in written.values()):
 		frappe.throw(_("Write the note before saving"))
 
+	ChartAccess(patient, reference_doctype, reference_name).to_write("Clinical Note")
 	recorder = ClinicalNoteRecorder(patient, reference_doctype, reference_name, practitioner)
 	return recorder.record(note_type, written)
 
@@ -78,6 +79,7 @@ def is_fdar_type(note_type):
 
 @frappe.whitelist()
 def get_recent_notes(patient, limit=RECENT_NOTES, note_types=None):
+	ChartAccess(patient).to_read()
 	filters = {"patient": patient, "docstatus": ["<", 2]}
 	if note_types:
 		filters["clinical_note_type"] = ["in", note_types]
