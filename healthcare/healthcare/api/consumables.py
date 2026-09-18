@@ -6,6 +6,7 @@ import json
 import frappe
 from frappe import _
 
+from healthcare.healthcare.api.nursing_common import ChartAccess
 from healthcare.healthcare.ward_stock import WardIssue, WardStore
 
 # Consumables bill through Inpatient Record Item, so they need an admission.
@@ -34,6 +35,7 @@ def inpatient_record_for(patient):
 @frappe.whitelist()
 def get_consumable_context(patient):
 	"""Whether consumables can be recorded here, and where stock comes from."""
+	ChartAccess(patient).to_read()
 	inpatient_record = inpatient_record_for(patient)
 	if not inpatient_record:
 		return {"inpatient_record": None, "warehouse": None}
@@ -53,6 +55,7 @@ def record_consumables(patient, items):
 	if not items:
 		frappe.throw(_("Add at least one item"))
 
+	ChartAccess(patient).to_write("Stock Entry")
 	inpatient_record = inpatient_record_for(patient)
 	if not inpatient_record:
 		frappe.throw(_("Consumables are recorded against an admission"))
@@ -67,6 +70,7 @@ def get_consumables(patient, limit=RECENT_ROWS):
 	Child rows carry the parent's creation timestamp, so they cannot be filtered
 	by time; a row with a stock entry is one that was actually issued.
 	"""
+	ChartAccess(patient).to_read()
 	inpatient_record = inpatient_record_for(patient)
 	if not inpatient_record:
 		return []
