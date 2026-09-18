@@ -11,6 +11,7 @@ ever go back to the ward store. Both are started by hand, at discharge.
 
 import frappe
 from frappe import _
+from frappe.model.document import Document
 from frappe.utils import flt, nowdate, nowtime
 
 from healthcare.healthcare.ward_stock import WardIssue, WardStore, set_batch
@@ -118,17 +119,17 @@ def settling(inpatient_record):
 
 
 @frappe.whitelist()
-def get_bed_stock(inpatient_record):
+def get_bed_stock(inpatient_record: str) -> dict:
 	frappe.has_permission("Inpatient Record", "read", inpatient_record, throw=True)
 	bed = BedStock(inpatient_record)
 	return {"warehouse": bed.warehouse, "items": bed.items()}
 
 
 @frappe.whitelist()
-def return_leftovers(inpatient_record, pharmacy, ward_store=None):
+def return_leftovers(inpatient_record: str, pharmacy: str, ward_store: str | None = None) -> Document:
 	return settling(inpatient_record).return_leftovers(pharmacy, ward_store)
 
 
 @frappe.whitelist()
-def sell_to_patient(inpatient_record):
+def sell_to_patient(inpatient_record: str) -> str:
 	return settling(inpatient_record).sell_to_patient()

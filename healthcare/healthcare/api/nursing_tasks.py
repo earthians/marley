@@ -31,7 +31,7 @@ def lapse_missed_tasks(patient=None):
 
 
 @frappe.whitelist()
-def get_nursing_tasks(patient, hours=24):
+def get_nursing_tasks(patient: str, hours: int = 24) -> list[dict]:
 	"""The worklist: what is still outstanding, plus anything that fell over
 	this shift. A completed task is done with, so it drops off."""
 	ChartAccess(patient).to_read()
@@ -61,7 +61,7 @@ def get_nursing_tasks(patient, hours=24):
 
 
 @frappe.whitelist()
-def update_nursing_task(task, status):
+def update_nursing_task(task: str, status: str) -> str:
 	"""Moves a task along its own workflow; the controller stamps the times."""
 	document = editable("Nursing Task", task)
 	document.status = status

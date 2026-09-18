@@ -39,7 +39,7 @@ class ClinicalNoteRecorder:
 
 
 @frappe.whitelist()
-def get_note_types():
+def get_note_types() -> list[dict]:
 	"""The types a site actually uses. Seeded ones are only defaults: add your
 	own, or disable what you do not want, without touching code."""
 	return frappe.get_all(
@@ -52,8 +52,13 @@ def get_note_types():
 
 @frappe.whitelist()
 def record_note(
-	patient, values, note_type=None, reference_doctype=None, reference_name=None, practitioner=None
-):
+	patient: str,
+	values: dict | str,
+	note_type: str | None = None,
+	reference_doctype: str | None = None,
+	reference_name: str | None = None,
+	practitioner: str | None = None,
+) -> str:
 	"""The type decides the note's shape: F-DAR keeps its four parts, anything
 	else is written as free text."""
 	if isinstance(values, str):
@@ -78,7 +83,9 @@ def is_fdar_type(note_type):
 
 
 @frappe.whitelist()
-def get_recent_notes(patient, limit=RECENT_NOTES, note_types=None):
+def get_recent_notes(
+	patient: str, limit: int = RECENT_NOTES, note_types: list | str | None = None
+) -> list[dict]:
 	ChartAccess(patient).to_read()
 	filters = {"patient": patient, "docstatus": ["<", 2]}
 	if note_types:
