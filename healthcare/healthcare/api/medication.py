@@ -130,7 +130,7 @@ class MedicationScheduler:
 		until = until or add_to_date(now_datetime(), minutes=self.settings.lead_time_minutes)
 		since = add_to_date(now_datetime(), hours=-BACKFILL_HOURS)
 		doses = MedicationSchedule(self.patient, until, since).due()
-		return [name for name in map(self.record_dose, doses) if name]
+		return [name for name in (self.record_dose(dose) for dose in doses) if name]
 
 	def record_dose(self, dose):
 		"""The unique dose key means a dose described by two orders lands once,
