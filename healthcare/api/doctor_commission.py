@@ -12,6 +12,12 @@ from frappe import _
 from frappe.utils import add_days, cint, flt, getdate, now_datetime
 
 
+# Bahraini Dinar amounts (service amounts, commissions and payment-mode charges)
+# are quoted in fils, i.e. three decimal places. Keep every money rounding here
+# at this precision so the printed "round off" is nil for BHD.
+MONEY_PRECISION = 3
+
+
 GENERIC_PRACTITIONER_FIELDS = [
 	"practitioner",
 	"doctor",
@@ -251,7 +257,9 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 		lambda: {
 			"cases_count": 0,
 			"service_amount": 0.0,
+			"net_service_amount": 0.0,
 			"calculated_commission": 0.0,
+			"deduction_amount": 0.0,
 			"practitioner_name": "",
 			"doctors_id": "",
 			"cost_center": None,
@@ -261,7 +269,12 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 		dkey = (line["practitioner"], line.get("cost_center") or "")
 		bucket = doctor_map[dkey]
 		bucket["service_amount"] += flt(line["service_amount"])
-		bucket["calculated_commission"] += flt(line["commission_amount"])
+		# What was received after the payment-mode charge was taken off.
+		bucket["net_service_amount"] += flt(line.get("net_service_amount"))
+		# The mode's charge comes off the collection, so the commission is already
+		# computed on the net paid amount — nothing is deducted afterwards.
+		bucket["calculated_commission"] += flt(line.get("net_commission_amount"))
+		bucket["deduction_amount"] += flt(line.get("deduction_amount"))
 		bucket["practitioner_name"] = line.get("practitioner_name") or bucket["practitioner_name"]
 		details = eligible.get(line["practitioner"]) or {}
 		bucket["doctors_id"] = details.get("doctors_id") or line["practitioner"]
@@ -288,7 +301,9 @@ def generate_doctor_commission_period(period_doc, include_backdated: bool | int 
 				"cost_center": data["cost_center"],
 				"cases_count": data["cases_count"],
 				"service_amount": data["service_amount"],
+				"net_service_amount": data["net_service_amount"],
 				"calculated_commission": data["calculated_commission"],
+				"deduction_amount": data["deduction_amount"],
 				"adjusted_commission": data["calculated_commission"],
 			},
 		)
@@ -636,6 +651,7 @@ def fetch_doctors_for_period(period_doc):
 				"cost_center": period_doc.cost_center,
 				"cases_count": 0,
 				"service_amount": 0,
+				"net_service_amount": 0,
 				"calculated_commission": 0,
 				"adjusted_commission": existing_adjusted.get(p.name, 0),
 			},
@@ -884,16 +900,26 @@ def _attach_rule_payment_modes(rules: list) -> None:
 	names = [r.name for r in rules if r.get("name")]
 	by_parent: dict[str, list[dict]] = {n: [] for n in names}
 	if names and frappe.db.exists("DocType", "Doctor Commission Rule Payment Mode"):
+		meta = frappe.get_meta("Doctor Commission Rule Payment Mode")
+		fields = ["parent", "mode_of_payment", "percent", "idx"]
+		# Sites that have not migrated yet do not have the deduction column.
+		has_deduction = meta.has_field("deduction_percent")
+		if has_deduction:
+			fields.append("deduction_percent")
 		for row in frappe.get_all(
 			"Doctor Commission Rule Payment Mode",
 			filters={"parent": ["in", names], "parenttype": "Doctor Commission Rule"},
-			fields=["parent", "mode_of_payment", "percent", "idx"],
+			fields=fields,
 			order_by="idx asc",
 		):
 			mode = (row.mode_of_payment or "").strip()
 			if mode:
 				by_parent[row.parent].append(
-					{"mode_of_payment": mode, "percent": flt(row.percent)}
+					{
+						"mode_of_payment": mode,
+						"percent": flt(row.percent),
+						"deduction_percent": flt(row.get("deduction_percent")) if has_deduction else 0.0,
+					}
 				)
 	for rule in rules:
 		rule["payment_modes"] = by_parent.get(rule.name) or []
@@ -1024,20 +1050,38 @@ def calculate_line_commission(rule, service_amount, case_index, default_percent,
 def payment_mode_shares(payment_modes, *, service_amount, qty, commission_amount) -> list[dict]:
 	"""Split one service line across the rule's payment modes.
 
-	Each share carries the mode, its configured percent, and the proportional part of
-	the service amount, qty and commission. Percentages are normalised by their own
-	total so the shares always add back up to the original amounts (a relative
-	rounding difference is absorbed by the last row). With no payment modes the line
-	stays on a single 100% row.
+	The mode's deduction (e.g. the 1.65% card charge) is charged on the amount
+	collected, not on the doctor's commission, so every share carries::
+
+		net paid   = collected amount - (collected amount x deduction %)
+		commission = commission on the net paid amount
+
+	``net_service_amount`` is therefore what was actually received through the
+	mode and ``net_commission_amount`` — the amount paid to the doctor — is already
+	final: nothing is deducted from the commission afterwards.
+	``commission_amount`` stays the gross commission on the full collected amount,
+	kept for reference and for the statement.
+
+	Percentages are normalised by their own total so the shares always add back up
+	to the original amounts (a relative rounding difference is absorbed by the last
+	row). With no payment modes the line stays on a single 100% row.
 	"""
 	modes = [
-		((row.get("mode_of_payment") or "").strip(), flt(row.get("percent")))
+		(
+			(row.get("mode_of_payment") or "").strip(),
+			flt(row.get("percent")),
+			flt(row.get("deduction_percent")),
+		)
 		for row in (payment_modes or [])
 	]
-	modes = [(mode, percent) for mode, percent in modes if mode and percent > 0]
+	modes = [
+		(mode, percent, deduction)
+		for mode, percent, deduction in modes
+		if mode and percent > 0
+	]
 
-	total_amount = flt(service_amount, 2)
-	total_commission = flt(commission_amount, 2)
+	total_amount = flt(service_amount, MONEY_PRECISION)
+	total_commission = flt(commission_amount, MONEY_PRECISION)
 	total_qty = flt(qty)
 
 	if not modes:
@@ -1047,32 +1091,48 @@ def payment_mode_shares(payment_modes, *, service_amount, qty, commission_amount
 				"payment_mode_percent": 100.0,
 				"qty": total_qty,
 				"service_amount": total_amount,
+				"deduction_percent": 0.0,
+				"deduction_amount": 0.0,
+				"net_service_amount": total_amount,
 				"commission_amount": total_commission,
+				"net_commission_amount": total_commission,
 			}
 		]
 
-	total_percent = sum(percent for _, percent in modes)
+	total_percent = sum(percent for _, percent, _ in modes)
 	shares: list[dict] = []
-	for index, (mode, percent) in enumerate(modes):
+	for index, (mode, percent, deduction_percent) in enumerate(modes):
 		last = index == len(modes) - 1
 		factor = (percent / total_percent) if total_percent else 0.0
 		if last:
-			share_amount = flt(total_amount - sum(s["service_amount"] for s in shares), 2)
+			share_amount = flt(
+				total_amount - sum(s["service_amount"] for s in shares), MONEY_PRECISION
+			)
 			share_commission = flt(
-				total_commission - sum(s["commission_amount"] for s in shares), 2
+				total_commission - sum(s["commission_amount"] for s in shares), MONEY_PRECISION
 			)
 			share_qty = flt(total_qty - sum(s["qty"] for s in shares))
 		else:
-			share_amount = flt(total_amount * factor, 2)
-			share_commission = flt(total_commission * factor, 2)
+			share_amount = flt(total_amount * factor, MONEY_PRECISION)
+			share_commission = flt(total_commission * factor, MONEY_PRECISION)
 			share_qty = flt(total_qty * factor)
+		# The charge is on the amount collected through the mode, so the doctor
+		# earns on the net paid amount (the commission is already net of it).
+		d_rate = flt(deduction_percent, 3)
+		share_deduction = flt(share_amount * d_rate / 100.0, 3)
+		share_net_amount = flt(share_amount - share_deduction, 3)
+		share_net_commission = flt(share_commission * (100.0 - d_rate) / 100.0, 3)
 		shares.append(
 			{
 				"mode_of_payment": mode,
 				"payment_mode_percent": flt(percent, 2),
 				"qty": share_qty,
 				"service_amount": share_amount,
+				"deduction_percent": d_rate,
+				"deduction_amount": share_deduction,
+				"net_service_amount": share_net_amount,
 				"commission_amount": share_commission,
+				"net_commission_amount": share_net_commission,
 			}
 		)
 	return shares
@@ -1095,10 +1155,14 @@ COMMISSION_PAYSLIP_ITEM_FIELDS = (
 	"mode_of_payment",
 	"payment_mode_percent",
 	"service_amount",
+	"net_service_amount",
 	"commission_rule",
 	"calculation_type",
 	"commission_percent",
 	"commission_amount",
+	"deduction_percent",
+	"deduction_amount",
+	"net_commission_amount",
 )
 
 
@@ -1242,7 +1306,10 @@ def get_doctor_commission_view(payroll_doc, practitioner: str) -> dict:
 				"calculation_type": row.calculation_type,
 				"commission_percent": flt(row.commission_percent),
 				"service_amount": 0.0,
+				"net_service_amount": 0.0,
 				"commission_amount": 0.0,
+				"deduction_amount": 0.0,
+				"net_commission_amount": 0.0,
 				"modes": [],
 			}
 			index[key] = service
@@ -1254,19 +1321,40 @@ def get_doctor_commission_view(payroll_doc, practitioner: str) -> dict:
 				"payment_mode_percent": flt(row.payment_mode_percent),
 				"qty": flt(row.qty),
 				"service_amount": flt(row.service_amount),
+				"net_service_amount": flt(row.get("net_service_amount")),
 				"commission_amount": flt(row.commission_amount),
+				"deduction_percent": flt(row.get("deduction_percent")),
+				"deduction_amount": flt(row.get("deduction_amount")),
+				"net_commission_amount": flt(row.get("net_commission_amount"), 3)
+				if row.get("net_commission_amount") is not None
+				else flt(row.commission_amount),
 			}
 		)
 		service["service_amount"] += flt(row.service_amount)
+		service["net_service_amount"] += flt(row.get("net_service_amount"))
 		service["commission_amount"] += flt(row.commission_amount)
+		service["deduction_amount"] += flt(row.get("deduction_amount"))
+		service["net_commission_amount"] += (
+			flt(row.get("net_commission_amount"))
+			if row.get("net_commission_amount") is not None
+			else flt(row.commission_amount)
+		)
 
 	if services:
 		service_amount = sum(flt(service["service_amount"]) for service in services)
-		calculated = sum(flt(service["commission_amount"]) for service in services)
+		net_service_amount = sum(flt(service["net_service_amount"]) for service in services)
+		gross_commission = sum(flt(service["commission_amount"]) for service in services)
+		deduction_amount = sum(flt(service["deduction_amount"]) for service in services)
+		calculated = sum(flt(service["net_commission_amount"]) for service in services)
 		cases_count = len(services)
 	else:
 		service_amount = sum(flt(row.service_amount) for row in doctor_rows)
+		net_service_amount = sum(flt(row.get("net_service_amount")) for row in doctor_rows)
+		deduction_amount = sum(flt(row.get("deduction_amount")) for row in doctor_rows)
 		calculated = sum(flt(row.calculated_commission) for row in doctor_rows)
+		# The mode charges come off the collection, not the commission, so the
+		# gross commission can no longer be reconstructed from the deduction.
+		gross_commission = flt(calculated, 3)
 		cases_count = sum(cint(row.cases_count) for row in doctor_rows)
 
 	# A doctor can hold one payroll row per branch — total the overrides across them.
@@ -1296,6 +1384,9 @@ def get_doctor_commission_view(payroll_doc, practitioner: str) -> dict:
 			"cost_center": branch,
 			"cases_count": cases_count,
 			"service_amount": service_amount,
+			"net_service_amount": net_service_amount,
+			"gross_commission": gross_commission,
+			"deduction_amount": deduction_amount,
 			"calculated_commission": calculated,
 			"adjusted_commission": adjusted,
 			"remarks": head.remarks,

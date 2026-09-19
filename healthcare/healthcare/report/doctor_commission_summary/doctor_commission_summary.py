@@ -58,18 +58,35 @@ def get_columns():
 			"label": _("Service Amount"),
 			"fieldname": "service_amount",
 			"fieldtype": "Currency",
+			"precision": 3,
 			"width": 140,
+		},
+		{
+			"label": _("Net Paid Amount"),
+			"fieldname": "net_service_amount",
+			"fieldtype": "Currency",
+			"precision": 3,
+			"width": 150,
 		},
 		{
 			"label": _("Calculated Commission"),
 			"fieldname": "calculated_commission",
 			"fieldtype": "Currency",
+			"precision": 3,
 			"width": 160,
+		},
+		{
+			"label": _("Deduction"),
+			"fieldname": "deduction_amount",
+			"fieldtype": "Currency",
+			"precision": 3,
+			"width": 120,
 		},
 		{
 			"label": _("Adjusted Commission"),
 			"fieldname": "adjusted_commission",
 			"fieldtype": "Currency",
+			"precision": 3,
 			"width": 160,
 		},
 		{
@@ -125,6 +142,19 @@ def get_data(filters):
 		values["status"] = filters.status
 
 	where_clause = " AND ".join(conditions) if conditions else "1=1"
+	# Payment-mode charges and the net paid amount were added later, so keep the
+	# report working on sites that have not migrated the new columns yet.
+	has_net_paid = frappe.get_meta("Doctor Commission Payroll Doctor").has_field("net_service_amount")
+	net_service_expr = (
+		"SUM(doctor.net_service_amount) as net_service_amount,"
+		if has_net_paid
+		else "0 as net_service_amount,"
+	)
+	deduction_expr = (
+		"SUM(doctor.deduction_amount) as deduction_amount,"
+		if frappe.get_meta("Doctor Commission Payroll Doctor").has_field("deduction_amount")
+		else "0 as deduction_amount,"
+	)
 
 	data = frappe.db.sql(
 		f"""
@@ -136,7 +166,9 @@ def get_data(filters):
 			doctor.cost_center,
 			SUM(doctor.cases_count) as cases_count,
 			SUM(doctor.service_amount) as service_amount,
+			{net_service_expr}
 			SUM(doctor.calculated_commission) as calculated_commission,
+			{deduction_expr}
 			SUM(
 				CASE 
 					WHEN doctor.adjusted_commission IS NOT NULL AND doctor.adjusted_commission != 0

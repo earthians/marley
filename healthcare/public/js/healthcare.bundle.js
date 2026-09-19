@@ -7,3 +7,4 @@ import "./observation_widget.js";
 import "./healthcare_note.js";
 import "./healthcare_note.html";
 import "./healthcare_orders.html";
+import "./doctor_commission_statement.js";

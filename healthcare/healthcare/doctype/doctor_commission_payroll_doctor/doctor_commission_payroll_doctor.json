@@ -12,7 +12,9 @@
   "cost_center",
   "cases_count",
   "service_amount",
+  "net_service_amount",
   "calculated_commission",
+  "deduction_amount",
   "adjusted_commission",
   "additional_salary",
   "remarks"
@@ -68,20 +70,41 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Service Amount",
-   "read_only": 1
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "description": "Amount actually received for these cases: Service Amount less the payment-mode charges. The commission is computed on this.",
+   "fieldname": "net_service_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Net Paid Amount",
+   "read_only": 1,
+   "precision": 3
   },
   {
    "fieldname": "calculated_commission",
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Calculated Commission",
-   "read_only": 1
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "description": "Payment-mode charges (e.g. the card fee) taken off the collected amounts. The commission is already computed on the net paid amount, so this is not deducted from Calculated Commission again.",
+   "fieldname": "deduction_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Deduction",
+   "read_only": 1,
+   "precision": 3
   },
   {
    "fieldname": "adjusted_commission",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Adjusted Commission"
+   "label": "Adjusted Commission",
+   "precision": 3
   },
   {
    "allow_on_submit": 1,
@@ -100,7 +123,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-10 17:12:19.254012",
+ "modified": "2026-09-17 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Doctor Commission Payroll Doctor",

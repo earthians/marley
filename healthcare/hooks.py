@@ -309,6 +309,7 @@ jinja = {
 		"healthcare.api.lab_test_print.render_lab_test_result_report",
 		"healthcare.api.service_request.get_lab_sample_barcode_label",
 		"healthcare.api.inpatient_admission.get_patient_admission_barcode_label",
+		"healthcare.api.doctor_commission_due.render_due_payment",
 	]
 }
 

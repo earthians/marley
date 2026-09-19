@@ -82,7 +82,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 1,
+   "link_count": 3,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -102,6 +102,16 @@
    "label": "Doctor Commission Details",
    "link_count": 0,
    "link_to": "Doctor Commission",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Doctor Due Payment",
+   "link_count": 0,
+   "link_to": "Doctor Due Payment",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

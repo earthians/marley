@@ -6,7 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "mode_of_payment",
-  "percent"
+  "percent",
+  "deduction_percent"
  ],
  "fields": [
   {
@@ -26,12 +27,21 @@
    "in_list_view": 1,
    "label": "Percent",
    "reqd": 1
+  },
+  {
+   "columns": 5,
+   "default": "0",
+   "description": "Charged on the amount collected through this mode, e.g. 1.65 for card payments (the statement note \"1.650% deduction, if patient pays by card\"). The charge is taken off the collection and the doctor's commission is then computed on the net paid amount. Leave 0 for no deduction.",
+   "fieldname": "deduction_percent",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Deduction %"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-16 00:00:00.000000",
+ "modified": "2026-09-17 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Doctor Commission Rule Payment Mode",

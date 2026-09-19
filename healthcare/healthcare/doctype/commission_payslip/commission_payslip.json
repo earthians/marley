@@ -28,6 +28,7 @@
   "total_cases",
   "column_break_totals",
   "total_commission",
+  "total_deduction",
   "generated_by",
   "section_items",
   "items"
@@ -157,7 +158,8 @@
    "fieldname": "total_service_amount",
    "fieldtype": "Currency",
    "label": "Total Service Amount",
-   "read_only": 1
+   "read_only": 1,
+   "precision": 3
   },
   {
    "fieldname": "total_cases",
@@ -174,7 +176,16 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Commission",
-   "read_only": 1
+   "read_only": 1,
+   "precision": 3
+  },
+  {
+   "description": "Payment-mode charges (e.g. the card fee) taken off the collected amounts. The commission is already computed on the net paid amount.",
+   "fieldname": "total_deduction",
+   "fieldtype": "Currency",
+   "label": "Total Deduction",
+   "read_only": 1,
+   "precision": 3
   },
   {
    "fieldname": "generated_by",
@@ -197,7 +208,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-16 00:00:00.000000",
+ "modified": "2026-09-17 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Commission Payslip",

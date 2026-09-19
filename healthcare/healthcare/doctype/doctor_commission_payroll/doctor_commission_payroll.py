@@ -66,10 +66,12 @@ class DoctorCommissionPayroll(Document):
 	def _recalc_totals(self):
 		total_service = 0
 		total_commission = 0
+		total_deduction = 0
 		total_cases = 0
 		for row in self.doctors or []:
 			total_service += flt(row.service_amount)
 			total_cases += int(row.cases_count or 0)
+			total_deduction += flt(row.get("deduction_amount"))
 			total_commission += flt(
 				row.adjusted_commission
 				if row.adjusted_commission not in (None, "")
@@ -78,6 +80,8 @@ class DoctorCommissionPayroll(Document):
 		self.total_service_amount = total_service
 		self.total_cases = total_cases
 		self.total_commission = total_commission
+		if hasattr(self, "total_deduction"):
+			self.total_deduction = total_deduction
 
 	@frappe.whitelist()
 	def fetch_doctors(self):
@@ -106,6 +110,19 @@ class DoctorCommissionPayroll(Document):
 		return generate_doctor_commission_period(self, include_backdated=cint(include_backdated))
 
 	@frappe.whitelist()
+	def mark_as_reviewed(self):
+		"""Mark the generated commission as reviewed before submitting."""
+		if self.docstatus != 0:
+			frappe.throw(_("Only draft documents can be marked as reviewed"))
+		if self.status not in ("Generated", "Approved"):
+			frappe.throw(_("Generate the commission before marking it as reviewed"))
+
+		self.status = "Reviewed"
+		self.flags.ignore_permissions = True
+		self.save()
+		return {"status": self.status}
+
+	@frappe.whitelist()
 	def create_commission_payslips(self):
 		"""Create/refresh draft Commission Payslips for the doctors on this payroll."""
 		from healthcare.api.doctor_commission import build_commission_payslips_for_payroll
@@ -126,6 +143,17 @@ class DoctorCommissionPayroll(Document):
 
 		self.flags.ignore_permissions = True
 		return get_doctor_commission_view(self, practitioner)
+
+	@frappe.whitelist()
+	def view_doctor_statement(self, practitioner):
+		"""Doctor commission statement (visits, collections by mode, due, commission)."""
+		from healthcare.api.doctor_commission_statement import get_statement_for_payroll
+
+		if not practitioner:
+			frappe.throw(_("Doctor is required"))
+
+		self.flags.ignore_permissions = True
+		return get_statement_for_payroll(self, practitioner)
 
 	@frappe.whitelist()
 	def create_additional_salary(self):
