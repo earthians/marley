@@ -151,22 +151,50 @@ class TestServiceRequest(HealthcareTestSuite):
 			practitioner_2,
 		)
 
-		service_request = frappe.db.get_value(
-			"Service Request",
+	def test_make_appointment_from_service_request(self):
+		patient = frappe.get_doc(
 			{
-				"order_group": encounter.name,
+				"doctype": "Patient",
+				"first_name": "_Test Service Request Appointment Patient",
+				"sex": "Female",
+				"customer_group": "Individual",
+			}
+		).insert()
+		ordering_practitioner = frappe.get_doc(
+			{
+				"doctype": "Healthcare Practitioner",
+				"first_name": "_Test Ordering Practitioner",
+				"gender": "Female",
+				"department": "_Test Medical Department",
+			}
+		).insert()
+		referred_practitioner = frappe.get_doc(
+			{
+				"doctype": "Healthcare Practitioner",
+				"first_name": "_Test Referred Practitioner",
+				"gender": "Male",
+				"department": "Cardiology",
+			}
+		).insert()
+		service_request = frappe.get_doc(
+			{
+				"doctype": "Service Request",
+				"patient": patient.name,
+				"practitioner": ordering_practitioner.name,
+				"referred_to_practitioner": referred_practitioner.name,
+				"company": "_Test Company",
+				"order_time": nowtime(),
 				"template_dt": "Appointment Type",
-				"template_dn": appointment_type.name,
-			},
-			"name",
-		)
-		frappe.db.set_value("Service Request", service_request, "source", "Direct")
-		appointment = make_appointment(service_request)
-		self.assertEqual(appointment.practitioner, practitioner_2)
-		self.assertEqual(
-			appointment.practitioner_name,
-			frappe.db.get_value("Healthcare Practitioner", practitioner_2, "practitioner_name"),
-		)
+				"template_dn": "_Test Appointment Type with Items",
+				"source": "Direct",
+			}
+		).insert()
+
+		appointment = make_appointment(service_request.name)
+
+		self.assertEqual(appointment.practitioner, referred_practitioner.name)
+		self.assertEqual(appointment.department, referred_practitioner.department)
+		self.assertEqual(appointment.practitioner_name, referred_practitioner.practitioner_name)
 		self.assertFalse(appointment.source)
 
 
