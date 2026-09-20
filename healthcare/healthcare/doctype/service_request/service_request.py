@@ -446,6 +446,9 @@ def make_appointment(
 		set_missing_values(source, target)
 
 	def set_missing_values(source, target):
+		if not source.referred_to_practitioner:
+			return
+
 		target.department, target.practitioner_name = frappe.db.get_value(
 			"Healthcare Practitioner",
 			source.referred_to_practitioner,
