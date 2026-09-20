@@ -153,9 +153,7 @@ class TestServiceRequest(HealthcareTestSuite):
 
 	def test_make_appointment_from_service_request_does_not_copy_order_source(self):
 		patient = frappe.get_list("Patient", pluck="name", order_by="name asc")[0]
-		practitioners = frappe.get_list(
-			"Healthcare Practitioner", pluck="name", order_by="name asc", limit=2
-		)
+		practitioners = frappe.get_list("Healthcare Practitioner", pluck="name", order_by="name asc", limit=2)
 		referring_practitioner, referred_practitioner = practitioners
 		appointment_type = frappe.get_doc("Appointment Type", "_Test Appointment Type with Items")
 		referred_practitioner_name = frappe.db.get_value(
@@ -182,6 +180,30 @@ class TestServiceRequest(HealthcareTestSuite):
 		self.assertEqual(appointment.service_request, service_request.name)
 		self.assertEqual(appointment.practitioner, referred_practitioner)
 		self.assertEqual(appointment.practitioner_name, referred_practitioner_name)
+		self.assertFalse(appointment.source)
+
+	def test_make_appointment_without_referred_practitioner_returns_draft(self):
+		patient = frappe.get_list("Patient", pluck="name", order_by="name asc")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name", order_by="name asc")[0]
+		appointment_type = frappe.get_doc("Appointment Type", "_Test Appointment Type with Items")
+		service_request = frappe.get_doc(
+			{
+				"doctype": "Service Request",
+				"order_date": getdate(),
+				"order_time": nowtime(),
+				"company": "_Test Company",
+				"patient": patient,
+				"practitioner": practitioner,
+				"source": "Direct",
+				"template_dt": "Appointment Type",
+				"template_dn": appointment_type.name,
+				"quantity": 1,
+			}
+		).insert(ignore_permissions=True)
+
+		appointment = make_appointment(service_request.name)
+
+		self.assertEqual(appointment.service_request, service_request.name)
 		self.assertFalse(appointment.source)
 
 
