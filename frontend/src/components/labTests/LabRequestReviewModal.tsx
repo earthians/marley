@@ -280,7 +280,7 @@ export function LabRequestReviewModal({
   onClose,
 }: LabRequestReviewModalProps) {
   const formatMoney = useFormatMoney()
-  const { userRole } = useCareContext()
+  const { userRole, haveMultiresultsOnLabTest } = useCareContext()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [review, setReview] = useState<LabRequestReview | null>(null)
@@ -630,6 +630,11 @@ export function LabRequestReviewModal({
   )
 
   const hideChildCollectSample = Boolean(review?.remove_collect_sample_button_from_child_test)
+  /**
+   * Prefer the value that came with this review payload (fresh on every open) over the
+   * app-load-time context flag, so ticking Healthcare Settings takes effect immediately.
+   */
+  const multiResultsEnabled = review?.have_multiresults_on_lab_test ?? haveMultiresultsOnLabTest
 
   const labTestsByName = useMemo(() => {
     const map = new Map<string, NonNullable<LabRequestReview['lab_tests']>[number]>()
@@ -1103,8 +1108,13 @@ export function LabRequestReviewModal({
                           const isFormulaReadonly = Boolean(formulaLine?.readonly)
                           const isSaving = savingResultFor === test.lab_test
                           // Formula targets always show inline (calculated), even if template is Multiple.
+                          // Multiple Results entry (button → external modal) is only offered when
+                          // Healthcare Settings.have_multiresults_on_lab_test is enabled; otherwise
+                          // every test is entered inline like a normal single-result lab test.
                           const singleLine =
-                            Boolean(formulaLine) || isSingleResultType(test.result_type)
+                            Boolean(formulaLine) ||
+                            isSingleResultType(test.result_type) ||
+                            !multiResultsEnabled
                           return (
                             <tr key={test.template} className="border-b border-slate-100">
                               <td className="px-2.5 py-1.5 font-medium text-slate-800">{test.test_code}</td>

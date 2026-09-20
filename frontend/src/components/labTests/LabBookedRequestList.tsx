@@ -43,6 +43,21 @@ const VIRTUAL_STATUS_TABS = [
 
 type VirtualStatusKey = (typeof VIRTUAL_STATUS_TABS)[number]['key']
 
+/** Persist the selected status tab so a page refresh keeps the user on the same tab. */
+const LAB_REQUEST_STATUS_STORAGE_KEY = 'healthcare:lab_request:active_status'
+
+function readSavedVirtualStatus(): VirtualStatusKey {
+  try {
+    const saved = localStorage.getItem(LAB_REQUEST_STATUS_STORAGE_KEY)
+    if (saved && VIRTUAL_STATUS_TABS.some((tab) => tab.key === saved)) {
+      return saved as VirtualStatusKey
+    }
+  } catch {
+    // localStorage unavailable (privacy mode / blocked storage) — fall through to default.
+  }
+  return 'booked'
+}
+
 const VIRTUAL_STATUS_COLORS: Record<string, string> = {
   booked: 'info',
   'sample-collected': 'info',
@@ -120,8 +135,10 @@ export function LabBookedRequestList({
   const [selectedNames, setSelectedNames] = useState<Set<string>>(() => new Set())
   const [showBulkCollect, setShowBulkCollect] = useState(false)
 
-  // Virtual status filter (UI-only) — backend computes from linked Lab Tests
-  const [virtualStatus, setVirtualStatus] = useState<VirtualStatusKey>('booked')
+  // Virtual status filter (UI-only) — backend computes from linked Lab Tests.
+  // Restored from localStorage so a page refresh stays on the same status tab
+  // (New Request / Partial Sample / Sample Collected / Partial Results / Pending Review…).
+  const [virtualStatus, setVirtualStatus] = useState<VirtualStatusKey>(readSavedVirtualStatus)
 
   const inDashboardCard = useInDashboardCard()
   const cardFilters = useCardFilters()
@@ -155,6 +172,15 @@ export function LabBookedRequestList({
   useEffect(() => {
     setPage(1)
   }, [userCostCenter, patient, careType, patientVisit, inpatientRecord])
+
+  // Persist the active status tab so a page refresh keeps the user on the same tab.
+  useEffect(() => {
+    try {
+      localStorage.setItem(LAB_REQUEST_STATUS_STORAGE_KEY, virtualStatus)
+    } catch {
+      // Ignore write failures (privacy mode / storage full).
+    }
+  }, [virtualStatus])
 
   useEffect(() => {
     let cancelled = false

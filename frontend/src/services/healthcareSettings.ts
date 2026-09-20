@@ -16,6 +16,12 @@ export type HealthcarePortalSettings = {
   collect_sample_from_request_listing: boolean
   /** When true, hide the Tests & Results tab on the Lab page. */
   hide_test_and_result_from_lab: boolean
+  /**
+   * When true, lab tests whose template has Multiple Results enter per-unit results
+   * (external multi-results modal / Multiple Unit Results table). When false, every
+   * lab test falls back to the normal single result entry.
+   */
+  have_multiresults_on_lab_test: boolean
 }
 
 export async function fetchHealthcarePortalSettings(): Promise<HealthcarePortalSettings> {
@@ -37,5 +43,6 @@ export async function fetchHealthcarePortalSettings(): Promise<HealthcarePortalS
     ),
     collect_sample_from_request_listing: Boolean(msg?.collect_sample_from_request_listing),
     hide_test_and_result_from_lab: Boolean(msg?.hide_test_and_result_from_lab),
+    have_multiresults_on_lab_test: Boolean(msg?.have_multiresults_on_lab_test),
   }
 }

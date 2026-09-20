@@ -1286,6 +1286,14 @@ def get_lab_request_review(name):
 				)
 			)
 		),
+		# Multiple-unit result entry toggle (button → external multi-results modal).
+		"have_multiresults_on_lab_test": bool(
+			cint(
+				frappe.db.get_single_value(
+					"Healthcare Settings", "have_multiresults_on_lab_test"
+				)
+			)
+		),
 	}
 
 

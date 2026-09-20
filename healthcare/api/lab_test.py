@@ -313,6 +313,10 @@ def get_lab_test_template_details(template):
 	return {
 		'lab_test_template_type': doc.lab_test_template_type,
 		'is_multiple': cint(doc.get('is_multiple')),
+		# Global toggle (Healthcare Settings) for the per-unit Multiple Results entry UI.
+		'have_multiresults_on_lab_test': bool(
+			cint(frappe.db.get_single_value('Healthcare Settings', 'have_multiresults_on_lab_test'))
+		),
 		'min_range': doc.get('min_range'),
 		'max_range': doc.get('max_range'),
 		# Gendered ranges so result-entry validation can use the patient-appropriate range.

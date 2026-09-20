@@ -2453,7 +2453,16 @@ export const LabTestList = ({
   /** Doctor lab: open Lab Trends with this test name prefilled. */
   onOpenLabTrends?: (testName: string) => void
 }) => {
-  const { selectedPatient: contextPatient, userRole, guardClinicalEdit, userCostCenter } = useCareContext()
+  const {
+    selectedPatient: contextPatient,
+    userRole,
+    guardClinicalEdit,
+    userCostCenter,
+    haveMultiresultsOnLabTest,
+  } = useCareContext()
+  // Multiple-unit result entry is opt-in via Healthcare Settings.have_multiresults_on_lab_test.
+  // When off, a Multiple Results template behaves like any normal single-result lab test.
+  const allowMultipleResults = Boolean(haveMultiresultsOnLabTest)
   const effectivePatient = patient ?? (contextPatient || undefined)
   const resultsReadOnly = doctorLabDefaults
   const nurseLabContext = Boolean(byNurse)
@@ -2758,6 +2767,14 @@ export const LabTestList = ({
   const [resultDocumentUploading, setResultDocumentUploading] = useState<number | null>(null)
   const [normalTestItems, setNormalTestItems] = useState<NormalTestResultRow[]>([])
   const [templateDetails, setTemplateDetails] = useState<LabTestTemplateDetails>({})
+  /**
+   * Template is Multiple Results AND the Multiple Results feature is enabled
+   * (fresh value from the template fetch, falling back to the app-load-time flag).
+   * When disabled the template is entered as a normal single-result lab test.
+   */
+  const showMultipleUnitResults =
+    Boolean(templateDetails.is_multiple) &&
+    Boolean(templateDetails.have_multiresults_on_lab_test ?? allowMultipleResults)
   const [worksheetExpanded, setWorksheetExpanded] = useState(false)
   const [labTechnician, setLabTechnician] = useState('')
   const [labTechnicianQuery, setLabTechnicianQuery] = useState('')
@@ -3131,6 +3148,9 @@ export const LabTestList = ({
       if (doc.template) {
         fetchLabTestTemplateDetails(doc.template).then((d) => {
           setTemplateDetails(d)
+          // The setting returned with this fetch is authoritative (fresh) over the
+          // app-load-time Healthcare Settings flag.
+          const allowUnits = Boolean(d.have_multiresults_on_lab_test ?? allowMultipleResults)
           if (!doc.worksheet_instructions && d.worksheet_instructions) setWorksheetText(d.worksheet_instructions)
           if (existingItems.length === 0 && (d.normal_test_templates || []).length > 0) {
             setNormalTestItems((d.normal_test_templates || []).map((t) => ({
@@ -3138,7 +3158,12 @@ export const LabTestList = ({
               lab_test_uom: t.lab_test_uom || '', normal_range: t.normal_range || '',
               result_value: '', lab_test_comment: '', template: doc.template || '',
             })))
-          } else if (existingItems.length > 0 && d.is_multiple && (d.multiple_result_type || []).length > 0) {
+          } else if (
+            allowUnits &&
+            existingItems.length > 0 &&
+            d.is_multiple &&
+            (d.multiple_result_type || []).length > 0
+          ) {
             // Re-attach per-unit range metadata; Deficiency bands only when use_status=1
             const byUnit = new Map(
               (d.multiple_result_type || []).map((t) => [(t.test_unit || t.uom || '').trim(), t])
@@ -3170,7 +3195,12 @@ export const LabTestList = ({
                 return enriched
               })
             )
-          } else if (existingItems.length === 0 && d.is_multiple && (d.multiple_result_type || []).length > 0) {
+          } else if (
+            allowUnits &&
+            existingItems.length === 0 &&
+            d.is_multiple &&
+            (d.multiple_result_type || []).length > 0
+          ) {
             setNormalTestItems((d.multiple_result_type || []).map((t) => {
               const unit = (t.test_unit || t.uom || '').trim()
               const useStatus = Boolean(t.use_status ?? t.uses_status_bands)
@@ -4763,22 +4793,22 @@ export const LabTestList = ({
                       )}
                     </div>
                   </div>
-                  {normalTestItems.length > 0 && (
+                  {normalTestItems.length > 0 && !(templateDetails.is_multiple && !showMultipleUnitResults) && (
                     <div>
                       <label className="block text-sm font-semibold text-slate-800 mb-2">
-                        {templateDetails.is_multiple ? 'Multiple Unit Results' : 'Test Results'}
+                        {showMultipleUnitResults ? 'Multiple Unit Results' : 'Test Results'}
                       </label>
                       <div className="rounded-lg border border-slate-200 overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-slate-50 border-b border-slate-200">
                             <tr>
                               <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600">
-                                {templateDetails.is_multiple ? 'Unit' : 'Test / Event'}
+                                {showMultipleUnitResults ? 'Unit' : 'Test / Event'}
                               </th>
                               <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 w-24">Min</th>
                               <th className="px-3 py-2.5 text-center text-xs font-semibold text-slate-600 w-24">Max</th>
                               <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 w-36">Result</th>
-                              {templateDetails.is_multiple ? (
+                              {showMultipleUnitResults ? (
                                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600 w-48">Status</th>
                               ) : null}
                               <th className="px-3 py-2.5 text-left text-xs font-semibold text-slate-600">Comment</th>
@@ -4796,7 +4826,7 @@ export const LabTestList = ({
                               const isHighResult =
                                 hasResult && !row.uses_status_bands && max != null && result > max
                               const statusOptions = templateDetails.status_options || []
-                              const isMultiple = Boolean(templateDetails.is_multiple)
+                              const isMultiple = showMultipleUnitResults
                               const statusMark = isMultiple ? (row.result_status || '') : ''
                               return (
                                 <tr
@@ -4882,7 +4912,7 @@ export const LabTestList = ({
                       </div>
                     </div>
                   )}
-                  {!(templateDetails.is_multiple && normalTestItems.length > 0) && (
+                  {!(showMultipleUnitResults && normalTestItems.length > 0) && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Result</label>
                     <textarea className="w-full border border-slate-300 rounded-md p-2 text-sm min-h-[80px]" value={customResult} onChange={(e) => setCustomResult(e.target.value)} placeholder="Enter descriptive or custom result..." />

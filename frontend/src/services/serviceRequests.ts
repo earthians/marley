@@ -214,6 +214,11 @@ export interface LabRequestReview {
   total_price: number
   /** When true, hide Collect Sample on child tests; keep it on group rows. */
   remove_collect_sample_button_from_child_test?: boolean
+  /**
+   * Healthcare Settings.have_multiresults_on_lab_test as of this fetch: when true,
+   * Multiple Results tests get the Results button → external multi-unit modal.
+   */
+  have_multiresults_on_lab_test?: boolean
   lab_tests?: Array<{
     name: string
     template?: string

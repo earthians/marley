@@ -404,6 +404,12 @@ export interface LabTestTemplateDetails {
     normal_range?: string
   }>
   status_options?: string[]
+  /**
+   * Healthcare Settings.have_multiresults_on_lab_test as of this fetch.
+   * Preferred over the app-load-time context value so toggling the setting takes
+   * effect without reloading the whole portal.
+   */
+  have_multiresults_on_lab_test?: boolean
 }
 
 /** One row in the Observation Sample Collection child table. */

@@ -140,6 +140,12 @@ interface CareContextValue {
   /** True when Healthcare Settings.lock_doctors_name_choosing is enabled. */
   lockDoctorsNameChoosing: boolean
   /**
+   * True when Healthcare Settings.have_multiresults_on_lab_test is enabled.
+   * When true, Multiple Results lab tests enter per-unit results; when false,
+   * every lab test uses the normal single result entry.
+   */
+  haveMultiresultsOnLabTest: boolean
+  /**
    * Wrap handlers that modify existing records (edit modals, append note, etc.).
    * Creating new records is still allowed via {@link guardClinicalCreate}.
    */
@@ -207,6 +213,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
   const [uneditWithin24Hour, setUneditWithin24Hour] = useState(false)
   const [allowDoctorsToCreatePatientVisit, setAllowDoctorsToCreatePatientVisit] = useState(false)
   const [lockDoctorsNameChoosing, setLockDoctorsNameChoosing] = useState(false)
+  const [haveMultiresultsOnLabTest, setHaveMultiresultsOnLabTest] = useState(false)
 
   const editingLockMessage =
     'Editing is locked in Healthcare Settings. You can create new records but cannot modify existing data.'
@@ -366,6 +373,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
           remove_collect_sample_button_from_child_test: false,
           collect_sample_from_request_listing: false,
           hide_test_and_result_from_lab: false,
+          have_multiresults_on_lab_test: false,
         }))
         setLockEditingData(Boolean(portalSettings.lock_editing_data))
         setTherapyNoteUneditableIn24Hour(Boolean(portalSettings.therapy_note_uneditable_in_24_hour))
@@ -373,6 +381,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
         setUneditWithin24Hour(Boolean(portalSettings.unedit_within_24hour))
         setAllowDoctorsToCreatePatientVisit(Boolean(portalSettings.allow_doctors_to_create_patient_visit))
         setLockDoctorsNameChoosing(Boolean(portalSettings.lock_doctors_name_choosing))
+        setHaveMultiresultsOnLabTest(Boolean(portalSettings.have_multiresults_on_lab_test))
       } catch (error) {
         console.warn('Failed to load user context:', error)
       }
@@ -389,6 +398,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
           setUneditWithin24Hour(Boolean(portalSettings.unedit_within_24hour))
           setAllowDoctorsToCreatePatientVisit(Boolean(portalSettings.allow_doctors_to_create_patient_visit))
           setLockDoctorsNameChoosing(Boolean(portalSettings.lock_doctors_name_choosing))
+          setHaveMultiresultsOnLabTest(Boolean(portalSettings.have_multiresults_on_lab_test))
         })
         .catch(() => {
           setLockEditingData(false)
@@ -397,6 +407,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
           setUneditWithin24Hour(false)
           setAllowDoctorsToCreatePatientVisit(false)
           setLockDoctorsNameChoosing(false)
+          setHaveMultiresultsOnLabTest(false)
         })
     }
 
@@ -559,6 +570,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
       uneditWithin24Hour,
       allowDoctorsToCreatePatientVisit,
       lockDoctorsNameChoosing,
+      haveMultiresultsOnLabTest,
       applyOpCareContext,
       applyIpCareContext,
       clearCareWorkspace,
@@ -593,6 +605,7 @@ export const CareContextProvider = ({ children }: { children: ReactNode }) => {
       uneditWithin24Hour,
       allowDoctorsToCreatePatientVisit,
       lockDoctorsNameChoosing,
+      haveMultiresultsOnLabTest,
       applyOpCareContext,
       applyIpCareContext,
       clearCareWorkspace,
