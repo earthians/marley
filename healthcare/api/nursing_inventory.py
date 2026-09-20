@@ -823,7 +823,10 @@ def get_default_warehouse_and_cost_center(cost_center=None):
 def create_material_request():
     """
     Create a Material Request document.
-    
+
+    The Material Request purpose is always **Purchase** — nurse/lab mini-warehouse
+    requests are procurement indents raised against stores.
+
     Warehouse is automatically set from Healthcare Settings based on cost_center.
     Only Administrators and System Managers can override the warehouse.
     
@@ -878,7 +881,9 @@ def create_material_request():
         schedule_date = data.get("request_date", today())
 
         mr = frappe.new_doc("Material Request")
-        mr.material_request_type = "Material Transfer"
+        # Nursing / lab mini-warehouse requests are procurement indents:
+        # the purpose is always Purchase (never Material Transfer/Issue).
+        mr.material_request_type = "Purchase"
         mr.transaction_date = schedule_date
         mr.schedule_date = schedule_date
         mr.company = company

@@ -2193,6 +2193,9 @@ def create_lab_material_request(items, company=None, schedule_date=None, cost_ce
 	- qty
 	- warehouse (optional)
 
+	The Material Request purpose is always **Purchase** — lab mini-warehouse
+	requests are procurement indents raised against stores.
+
 	``is_medical`` maps to Material Request.custom_is_medical (1 = Medical, 0 = Consumable).
 	"""
 	import json
@@ -2207,7 +2210,7 @@ def create_lab_material_request(items, company=None, schedule_date=None, cost_ce
 		frappe.throw(_("Please choose whether this is a Medical or Consumable material request."))
 
 	mr = frappe.new_doc("Material Request")
-	mr.material_request_type = "Material Transfer"
+	mr.material_request_type = "Purchase"
 
 	if company:
 		mr.company = company
