@@ -446,8 +446,10 @@ def make_appointment(
 		set_missing_values(source, target)
 
 	def set_missing_values(source, target):
-		target.department = frappe.db.get_value(
-			"Healthcare Practitioner", source.referred_to_practitioner, "department"
+		target.department, target.practitioner_name = frappe.db.get_value(
+			"Healthcare Practitioner",
+			source.referred_to_practitioner,
+			["department", "practitioner_name"],
 		)
 
 	doc = get_mapped_doc(
@@ -463,7 +465,7 @@ def make_appointment(
 					"source_doc": "reference_doctype",
 					"order_group": "reference_docname",
 				},
-				"field_no_map": ["naming_series", "status"],
+				"field_no_map": ["naming_series", "status", "source"],
 			},
 		},
 		target_doc,
