@@ -117,6 +117,7 @@ class InpatientMedicationEntry(Document):
 			entry.idx = idx
 
 		self.set("medication_orders", medication_orders)
+		self.flags.ignore_mandatory = True
 		self.save()
 		return self
 
