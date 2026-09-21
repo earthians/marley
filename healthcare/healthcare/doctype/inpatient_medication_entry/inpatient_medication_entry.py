@@ -89,6 +89,50 @@ class InpatientMedicationEntry(Document):
 					)
 				)
 
+	@frappe.whitelist()
+	def get_stopped_medication_order_rows(self) -> list[dict]:
+		stopped_rows = self.get_stopped_order_entries()
+		return [
+			{
+				"idx": entry.idx,
+				"name": entry.name,
+				"drug_code": entry.drug_code,
+				"drug_name": entry.drug_name,
+				"datetime": entry.datetime,
+			}
+			for entry in self.medication_orders
+			if entry.against_imoe in stopped_rows
+		]
+
+	@frappe.whitelist()
+	def remove_stopped_medication_order_rows(self) -> "InpatientMedicationEntry":
+		stopped_rows = self.get_stopped_order_entries()
+		if not stopped_rows:
+			return self
+
+		medication_orders = [
+			entry for entry in self.medication_orders if entry.against_imoe not in stopped_rows
+		]
+		for idx, entry in enumerate(medication_orders, start=1):
+			entry.idx = idx
+
+		self.set("medication_orders", medication_orders)
+		self.save()
+		return self
+
+	def get_stopped_order_entries(self) -> set[str]:
+		order_entries = [entry.against_imoe for entry in self.medication_orders if entry.against_imoe]
+		if not order_entries:
+			return set()
+
+		return set(
+			frappe.get_all(
+				"Inpatient Medication Order Entry",
+				filters={"name": ["in", order_entries], "status": "Stopped"},
+				pluck="name",
+			)
+		)
+
 	def on_cancel(self):
 		self.cancel_stock_entries()
 		self.update_medication_orders(on_cancel=True)
@@ -168,6 +212,12 @@ class InpatientMedicationEntry(Document):
 		for entry in stock_entries:
 			doc = frappe.get_doc("Stock Entry", entry.name)
 			doc.cancel()
+
+
+@frappe.whitelist()
+def remove_stopped_medication_order_rows(docname: str) -> None:
+	doc = frappe.get_doc("Inpatient Medication Entry", docname)
+	doc.remove_stopped_medication_order_rows()
 
 
 def get_pending_medication_orders(entry):
