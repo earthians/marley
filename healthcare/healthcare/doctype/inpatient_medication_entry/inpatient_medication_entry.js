@@ -110,6 +110,15 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 					return;
 				}
 
+				if (frm.is_dirty()) {
+					frappe.msgprint(
+						__(
+							"Please save or reload this draft before removing stopped medication rows.",
+						),
+					);
+					return;
+				}
+
 				const row_list = rows.map(row => row.idx).join(", ");
 				frappe.confirm(
 					__(
@@ -117,6 +126,15 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 						[row_list],
 					),
 					() => {
+						if (frm.is_dirty()) {
+							frappe.msgprint(
+								__(
+									"Please save or reload this draft before removing stopped medication rows.",
+								),
+							);
+							return;
+						}
+
 						const stopped_row_names = rows.map(row => row.name);
 						frappe.call({
 							method: "healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry.remove_stopped_medication_order_rows",
