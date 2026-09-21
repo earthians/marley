@@ -73,13 +73,16 @@ class InpatientMedicationOrder(Document):
 			pending_orders = len(
 				[entry for entry in self.medication_orders if entry.status in (None, "", "Pending")]
 			)
+			transferred_orders = len(
+				[entry for entry in self.medication_orders if entry.status == "Transferred"]
+			)
 
 			if pending_orders == self.total_orders:
 				status = "Pending"
-			elif not pending_orders:
-				status = "Completed"
-			else:
+			elif pending_orders or transferred_orders:
 				status = "In Process"
+			else:
+				status = "Completed"
 
 		self.db_set("status", status)
 
@@ -122,7 +125,26 @@ class InpatientMedicationOrder(Document):
 			.set(order_entry.status, "Stopped")
 			.set(order_entry.stop_reason, stop_reason)
 			.where(order_entry.name.isin(list(selected)))
+			.where(order_entry.parent == self.name)
+			.where(order_entry.status == "Pending")
 		).run()
+
+		stopped_entries = frappe.get_all(
+			"Inpatient Medication Order Entry",
+			filters={
+				"parent": self.name,
+				"name": ["in", list(selected)],
+				"status": "Stopped",
+				"stop_reason": stop_reason,
+			},
+			pluck="name",
+		)
+		if len(stopped_entries) != len(selected):
+			frappe.throw(
+				_(
+					"Some selected medication rows are no longer Pending. Please refresh the document and try again."
+				)
+			)
 
 		self.reload()
 		self.update_completed_orders()

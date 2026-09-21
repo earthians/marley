@@ -85,6 +85,20 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 		ipmo.reload()
 		self.assertEqual(ipmo.status, "Completed")
 
+	def test_transferred_orders_keep_parent_in_process(self):
+		ipmo = create_ipmo(self.patient)
+		ipmo.submit()
+
+		for entry in ipmo.medication_orders:
+			frappe.db.set_value("Inpatient Medication Order Entry", entry.name, "status", "Transferred")
+
+		ipmo.reload()
+		ipmo.update_completed_orders()
+		ipmo.reload()
+
+		self.assertEqual(ipmo.completed_orders, 0)
+		self.assertEqual(ipmo.status, "In Process")
+
 	def test_stop_pending_medication_orders_after_partial_completion(self):
 		ipmo = create_ipmo(self.patient)
 		ipmo.submit()
