@@ -112,7 +112,7 @@ frappe.ui.form.on("Inpatient Medication Order", {
 
 	show_stop_medication_order_button: function (frm) {
 		const pending_orders = (frm.doc.medication_orders || []).filter(
-			(row) => row.status === "Pending",
+			row => row.status === "Pending",
 		);
 
 		if (!pending_orders.length) {
@@ -131,7 +131,7 @@ frappe.ui.form.on("Inpatient Medication Order", {
 						cannot_add_rows: true,
 						cannot_delete_rows: true,
 						in_place_edit: true,
-						data: pending_orders.map((row) => ({
+						data: pending_orders.map(row => ({
 							name: row.name,
 							drug: row.drug,
 							drug_name: row.drug_name,
@@ -192,13 +192,15 @@ frappe.ui.form.on("Inpatient Medication Order", {
 					},
 				],
 				primary_action_label: __("Stop"),
-				primary_action: (values) => {
+				primary_action: values => {
 					const selected = dialog.fields_dict.medication_orders.grid
 						.get_selected_children()
-						.map((row) => row.name);
+						.map(row => row.name);
 
 					if (!selected.length) {
-						frappe.throw(__("Please select at least one medication order to stop."));
+						frappe.throw(
+							__("Please select at least one medication order to stop."),
+						);
 					}
 
 					frm.call({
