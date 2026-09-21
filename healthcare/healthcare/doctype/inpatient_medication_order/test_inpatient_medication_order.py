@@ -153,9 +153,7 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 		ipmo = create_ipmo(self.patient)
 		ipmo.submit()
 
-		filters = frappe._dict(
-			from_date=add_days(getdate(), -1), to_date=getdate(), from_time="", to_time=""
-		)
+		filters = frappe._dict(from_date=add_days(getdate(), -1), to_date=getdate(), from_time="", to_time="")
 		ipme = create_ipme(filters)
 		ipme.save()
 
