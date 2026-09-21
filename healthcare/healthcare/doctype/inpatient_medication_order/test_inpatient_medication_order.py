@@ -85,6 +85,90 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 		ipmo.reload()
 		self.assertEqual(ipmo.status, "Completed")
 
+	def test_stop_pending_medication_orders_after_partial_completion(self):
+		ipmo = create_ipmo(self.patient)
+		ipmo.submit()
+
+		yesterday = add_days(getdate(), -1)
+		filters = frappe._dict(from_date=yesterday, to_date=yesterday, from_time="", to_time="")
+		ipme = create_ipme(filters)
+		ipme.submit()
+		ipmo.reload()
+
+		pending_rows = [entry.name for entry in ipmo.medication_orders if entry.status == "Pending"]
+		ipmo.stop_medication_orders(pending_rows, "Treatment changed")
+		ipmo.reload()
+
+		self.assertEqual(ipmo.status, "Completed")
+		self.assertEqual(ipmo.completed_orders, 3)
+		self.assertTrue(
+			all(entry.status == "Completed" for entry in ipmo.medication_orders if entry.date == yesterday)
+		)
+		self.assertTrue(
+			all(
+				entry.status == "Stopped" and entry.stop_reason == "Treatment changed"
+				for entry in ipmo.medication_orders
+				if entry.date == getdate()
+			)
+		)
+
+		today_filters = frappe._dict(from_date=getdate(), to_date=getdate(), from_time="", to_time="")
+		self.assertIsNone(create_ipme(today_filters))
+
+	def test_stop_medication_orders_blocks_stale_rows(self):
+		ipmo = create_ipmo(self.patient)
+		ipmo.submit()
+
+		yesterday = add_days(getdate(), -1)
+		filters = frappe._dict(from_date=yesterday, to_date=yesterday, from_time="", to_time="")
+		ipme = create_ipme(filters)
+		ipme.submit()
+		ipmo.reload()
+
+		completed_row = ipmo.medication_orders[0].name
+		self.assertRaises(frappe.ValidationError, ipmo.stop_medication_orders, [completed_row], "Stopped")
+
+	def test_draft_medication_entry_removes_stopped_rows(self):
+		ipmo = create_ipmo(self.patient)
+		ipmo.submit()
+
+		today_filters = frappe._dict(from_date=getdate(), to_date=getdate(), from_time="", to_time="")
+		ipme = create_ipme(today_filters)
+		ipme.save()
+
+		ipmo.reload()
+		today_rows = [entry.name for entry in ipmo.medication_orders if entry.date == getdate()]
+		ipmo.stop_medication_orders(today_rows, "Treatment changed")
+
+		ipme.reload()
+		self.assertEqual(len(ipme.get_stopped_medication_order_rows()), 3)
+		self.assertRaises(frappe.ValidationError, ipme.save)
+
+		ipme.reload()
+		ipme.remove_stopped_medication_order_rows()
+		ipme.reload()
+		self.assertEqual(len(ipme.medication_orders), 0)
+
+	def test_draft_medication_entry_reorders_rows_after_removing_stopped_rows(self):
+		ipmo = create_ipmo(self.patient)
+		ipmo.submit()
+
+		filters = frappe._dict(
+			from_date=add_days(getdate(), -1), to_date=getdate(), from_time="", to_time=""
+		)
+		ipme = create_ipme(filters)
+		ipme.save()
+
+		ipmo.reload()
+		stopped_rows = [ipmo.medication_orders[1].name, ipmo.medication_orders[3].name]
+		ipmo.stop_medication_orders(stopped_rows, "Treatment changed")
+
+		ipme.reload()
+		ipme.remove_stopped_medication_order_rows()
+		ipme.reload()
+
+		self.assertEqual([entry.idx for entry in ipme.medication_orders], [1, 2, 3, 4])
+
 	def test_multiple_orders_without_patient_encounter(self):
 		first_ipmo = create_ipmo(self.patient)
 		first_ipmo.insert()
