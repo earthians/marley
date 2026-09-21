@@ -93,7 +93,11 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 	},
 
 	prompt_remove_stopped_medication_orders: function (frm) {
-		if (frm.doc.__islocal || frm.doc.docstatus !== 0 || !(frm.doc.medication_orders || []).length) {
+		if (
+			frm.doc.__islocal ||
+			frm.doc.docstatus !== 0 ||
+			!(frm.doc.medication_orders || []).length
+		) {
 			return;
 		}
 
@@ -106,14 +110,14 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 					return;
 				}
 
-				const row_list = rows.map((row) => row.idx).join(", ");
+				const row_list = rows.map(row => row.idx).join(", ");
 				frappe.confirm(
 					__(
 						"Rows {0} reference stopped medication orders. Do you want to remove them from this draft?",
 						[row_list],
 					),
 					() => {
-						const stopped_row_names = rows.map((row) => row.name);
+						const stopped_row_names = rows.map(row => row.name);
 						frappe.call({
 							method: "healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry.remove_stopped_medication_order_rows",
 							args: {
@@ -122,9 +126,9 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 							freeze: true,
 							freeze_message: __("Removing Stopped Medication Orders"),
 							callback: function () {
-								frm.doc.medication_orders = (frm.doc.medication_orders || []).filter(
-									(row) => !stopped_row_names.includes(row.name),
-								);
+								frm.doc.medication_orders = (
+									frm.doc.medication_orders || []
+								).filter(row => !stopped_row_names.includes(row.name));
 								frm.doc.medication_orders.forEach((row, idx) => {
 									row.idx = idx + 1;
 								});
