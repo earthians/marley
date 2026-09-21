@@ -1,17 +1,19 @@
 # Copyright (c) 2026, Healthcare contributors
-"""Portal API: every stored document / signature that belongs to a patient.
+"""Portal API: the patient's own documents / signatures across every doctype.
 
-Patient files are spread over several doctypes:
+Only documents belonging to the patient are listed — doctor, nurse and other staff
+signatures plus clinical result attachments are excluded:
 
 * ``Patient Upload Document`` child rows on Patient, Patient Visit, Inpatient
   Admission (``e_signatures``), Discharge and Lab Test
-* ``Attach`` / ``Attach Image`` fields on patient-linked forms (consents,
-  assessments, referrals, medication orders, legacy scans, patient photos …)
-* ``File`` rows attached directly to the Patient / visit / admission
+* ``IP Patient Relative`` signatures captured with an admission / discharge
+* patient-owned file fields (signed consents, patient/guardian signatures, patient
+  profile photos, CPR scans)
+* ``File`` rows attached directly to the Patient / visit / admission / discharge / lab test
 
-``get_patient_documents`` reads the doctype metadata, so a newly added
-signature or upload field shows up automatically — there is no hard-coded
-doctype list to maintain.
+Legacy Visit Documents are **not** included here — Patient History shows them in its
+own "Legacy Documents" section. ``get_patient_documents`` reads the doctype metadata so
+a newly added patient upload/signature field is picked up automatically.
 """
 
 from __future__ import annotations
@@ -19,8 +21,6 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.utils import cint, cstr
-
-from healthcare.api.legacy_visit_document import _patient_identifiers
 
 MAX_ROWS = 500
 # Cap resolved document names so ``IN (...)`` filters stay small.
@@ -47,6 +47,36 @@ _FILE_CONTAINER_DOCTYPES = (
 	"Discharge",
 	"Lab Test",
 )
+
+# Child stores that only hold the patient's own uploads / signatures.
+_PATIENT_DOCUMENT_CHILD_DOCTYPES = ("Patient Upload Document", "IP Patient Relative")
+
+# Doctypes whose file fields are the patient's own (profile photo, passport, CPR scans).
+_PATIENT_OWNED_DOCTYPES = ("Patient",)
+
+# Explicit patient-side file fields that do not contain a patient/client hint.
+_PATIENT_OWNED_FIELD_NAMES = {"signed_document", "signee_signature"}
+
+# A field belongs to the patient when its name/label mentions one of these.
+_PATIENT_OWNED_FIELD_HINTS = ("patient", "client", "guardian", "signee")
+
+
+def _patient_owned_field(fieldname: str, label: str = "") -> bool:
+	"""True when a file field stores the patient's own document / signature.
+
+	Doctor, nurse and other staff signatures (``doctors_signature``,
+	``psychiatrist_signature``, ``staff_signature`` …), clinical result attachments and
+	generic form signatures are deliberately excluded.
+	"""
+	name = (fieldname or "").strip().lower()
+	if not name:
+		return False
+	if name in _PATIENT_OWNED_FIELD_NAMES:
+		return True
+	if any(hint in name for hint in _PATIENT_OWNED_FIELD_HINTS):
+		return True
+	label_text = (label or "").strip().lower()
+	return "patient" in label_text or "client" in label_text
 
 
 def _meta_rows(sql: str, values: dict | None = None) -> list[dict]:
@@ -259,35 +289,34 @@ def get_patient_documents(patient=None, limit=300):
 	direct_file_fields = _file_fields(istable=0)
 	child_file_fields = _file_fields(istable=1)
 	table_fields = _table_fields(child_file_fields)
-	identifiers = _patient_identifiers(patient)
 	cache: dict[str, list[str]] = {}
 
 	rows: list[dict] = []
 
-	# 1 ─ Attach fields on patient-linked doctypes (consents, assessments, scans, photos …)
+	# 1 ─ File fields that hold the patient's own documents / signatures.
+	# Legacy Visit Documents keep their own Patient History section, so skip them here.
 	for doctype, fields in direct_file_fields.items():
 		patient_field = patient_link_fields.get(doctype)
-		if not patient_field:
+		if not patient_field or doctype == "Legacy Visit Document":
 			continue
-		fieldnames = [name for name, _label in fields]
-		labels = dict(fields)
+		if doctype in _PATIENT_OWNED_DOCTYPES:
+			patient_fields = list(fields)
+		else:
+			patient_fields = [
+				(name, label) for name, label in fields if _patient_owned_field(name, label)
+			]
+		if not patient_fields:
+			continue
+		fieldnames = [name for name, _label in patient_fields]
+		labels = dict(patient_fields)
 		columns = _table_columns(doctype)
 		if not columns:
 			continue
 		date_fields = [name for name in _DATE_FIELDS if name in columns]
-		if doctype == "Legacy Visit Document":
-			# Imported scans often carry only the extracted legacy file number.
-			filters = {"document": ["is", "set"]}
-			or_filters = [[patient_field, "=", patient]] + [
-				["legacy_patient_file_no", "=", ident] for ident in identifiers if ident
-			]
-		else:
-			filters = {patient_field: patient}
-			or_filters = [[name, "is", "set"] for name in fieldnames]
 		docs = frappe.get_all(
 			doctype,
-			filters=filters,
-			or_filters=or_filters,
+			filters={patient_field: patient},
+			or_filters=[[name, "is", "set"] for name in fieldnames],
 			fields=list(dict.fromkeys(["name", *fieldnames, *date_fields])),
 			limit_page_length=limit,
 			ignore_permissions=True,
@@ -311,8 +340,11 @@ def get_patient_documents(patient=None, limit=300):
 					)
 				)
 
-	# 2 ─ Attach fields in child tables (Patient Upload Document, IP Patient Relative …)
+	# 2 ─ Attach fields in the patient's upload / signature child tables
+	# (Patient Upload Document, IP Patient Relative).
 	for child_doctype, fields in child_file_fields.items():
+		if child_doctype not in _PATIENT_DOCUMENT_CHILD_DOCTYPES:
+			continue
 		fieldnames = [name for name, _label in fields]
 		labels = dict(fields)
 		columns = _table_columns(child_doctype)

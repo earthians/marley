@@ -13,6 +13,7 @@ import { DischargeList } from '../components/discharges/DischargeList'
 import { MedicalHistoryView } from '../components/medicalHistory/MedicalHistoryView'
 import { PackageDetailsList } from '../components/packageDetails/PackageDetailsList'
 import { PatientDocumentsList } from '../components/patientHistory/PatientDocumentsList'
+import { LegacyVisitDocumentsList } from '../components/legacyVisitDocuments/LegacyVisitDocumentsList'
 import { VitalSignsList } from '../components/vitalSigns/VitalSignsList'
 import { ObservationList } from '../components/observations/ObservationList'
 import { ServiceRequestList } from '../components/serviceRequests/ServiceRequestList'
@@ -46,6 +47,7 @@ export const PatientHistoryPage = () => {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'general' | 'admission' | 'op'>('general')
   const [documentsExpanded, setDocumentsExpanded] = useState(false)
+  const [legacyDocsExpanded, setLegacyDocsExpanded] = useState(false)
 
   const historyRoles = useMemo(() => {
     if (userRole?.length) return userRole
@@ -57,6 +59,7 @@ export const PatientHistoryPage = () => {
 
   useEffect(() => {
     setDocumentsExpanded(false)
+    setLegacyDocsExpanded(false)
   }, [selectedPatient])
 
   useEffect(() => {
@@ -178,7 +181,7 @@ export const PatientHistoryPage = () => {
             <PatientSummaryCard patient={selectedPatient} />
           </section>
 
-          {/* Documents — every stored file/signature, collapsible, directly under demographics */}
+          {/* Patient documents & signatures — patient visits, admissions, discharges, lab tests */}
           <section className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
             <button
               type="button"
@@ -187,10 +190,10 @@ export const PatientHistoryPage = () => {
               className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition"
             >
               <div>
-                <h2 className="font-semibold text-slate-900">Documents</h2>
+                <h2 className="font-semibold text-slate-900">Patient Documents</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  All documents for this patient — patient visits, admissions, lab tests,
-                  consents &amp; signatures, legacy scans and attachments
+                  Patient documents &amp; signatures — patient visits, admissions, discharges and
+                  lab tests
                 </p>
               </div>
               <ChevronDown
@@ -202,6 +205,33 @@ export const PatientHistoryPage = () => {
             {documentsExpanded ? (
               <div className="border-t border-slate-200 px-4 py-3">
                 <PatientDocumentsList patient={selectedPatient} layout="table" />
+              </div>
+            ) : null}
+          </section>
+
+          {/* Legacy Documents — scanned / imported patient documentation */}
+          <section className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setLegacyDocsExpanded((open) => !open)}
+              aria-expanded={legacyDocsExpanded}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition"
+            >
+              <div>
+                <h2 className="font-semibold text-slate-900">Legacy Documents</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Scanned / imported patient documentation (CPR, National ID, medical reports, …)
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-slate-500 transition-transform ${
+                  legacyDocsExpanded ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {legacyDocsExpanded ? (
+              <div className="border-t border-slate-200 px-4 py-3">
+                <LegacyVisitDocumentsList patient={selectedPatient} layout="table" />
               </div>
             ) : null}
           </section>

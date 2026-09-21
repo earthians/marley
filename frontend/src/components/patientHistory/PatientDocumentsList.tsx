@@ -26,9 +26,10 @@ const DOCUMENT_TH =
   'px-3 py-2.5 text-left text-xs font-semibold uppercase text-slate-600 whitespace-nowrap'
 
 /**
- * All documents recorded for a patient, whichever doctype stores them:
- * patient visits, admissions (e-signatures), discharges, lab tests,
- * consents / assessments, legacy scans and direct file attachments.
+ * The patient's own documents / signatures, whichever doctype stores them:
+ * patient visits, admissions (e-signatures), discharges, lab tests, signed
+ * consents and directly attached patient files. Doctor / staff signatures are
+ * excluded, and legacy scans live in the separate "Legacy Documents" section.
  */
 export const PatientDocumentsList = ({ patient, layout = 'table' }: PatientDocumentsListProps) => {
   const [documents, setDocuments] = useState<PatientDocumentEntry[]>([])
