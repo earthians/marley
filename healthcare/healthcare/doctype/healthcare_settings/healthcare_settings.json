@@ -47,6 +47,7 @@
   "unedit_within_24hour",
   "automatically_create_lab_test_for_ip",
   "have_multiresults_on_lab_test",
+  "show_ranges_on_history_lab_tests",
   "column_break_tobn",
   "block_new_patient_visit_if_open_exist",
   "close_all_cost_before_patient_transfer",
@@ -1167,11 +1168,17 @@
    "fieldname": "have_multiresults_on_lab_test",
    "fieldtype": "Check",
    "label": "Have MultiResults on Lab test"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_ranges_on_history_lab_tests",
+   "fieldtype": "Check",
+   "label": "Show Ranges on History Lab Tests"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-21 03:56:10.654486",
+ "modified": "2026-09-21 05:27:16.075779",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

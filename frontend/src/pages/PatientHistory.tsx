@@ -12,7 +12,7 @@ import { PatientDiagnosisList } from '../components/diagnosis/PatientDiagnosisLi
 import { DischargeList } from '../components/discharges/DischargeList'
 import { MedicalHistoryView } from '../components/medicalHistory/MedicalHistoryView'
 import { PackageDetailsList } from '../components/packageDetails/PackageDetailsList'
-import { LegacyVisitDocumentsList } from '../components/legacyVisitDocuments/LegacyVisitDocumentsList'
+import { PatientDocumentsList } from '../components/patientHistory/PatientDocumentsList'
 import { VitalSignsList } from '../components/vitalSigns/VitalSignsList'
 import { ObservationList } from '../components/observations/ObservationList'
 import { ServiceRequestList } from '../components/serviceRequests/ServiceRequestList'
@@ -45,7 +45,7 @@ export const PatientHistoryPage = () => {
   const [summary, setSummary] = useState<PatientHistorySummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'general' | 'admission' | 'op'>('general')
-  const [legacyDocsExpanded, setLegacyDocsExpanded] = useState(false)
+  const [documentsExpanded, setDocumentsExpanded] = useState(false)
 
   const historyRoles = useMemo(() => {
     if (userRole?.length) return userRole
@@ -56,7 +56,7 @@ export const PatientHistoryPage = () => {
   const canViewClinical = useMemo(() => canViewClinicalPatientHistory(historyRoles), [historyRoles])
 
   useEffect(() => {
-    setLegacyDocsExpanded(false)
+    setDocumentsExpanded(false)
   }, [selectedPatient])
 
   useEffect(() => {
@@ -178,29 +178,30 @@ export const PatientHistoryPage = () => {
             <PatientSummaryCard patient={selectedPatient} />
           </section>
 
-          {/* Legacy Documents — collapsible, directly under demographics */}
+          {/* Documents — every stored file/signature, collapsible, directly under demographics */}
           <section className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
             <button
               type="button"
-              onClick={() => setLegacyDocsExpanded((open) => !open)}
-              aria-expanded={legacyDocsExpanded}
+              onClick={() => setDocumentsExpanded((open) => !open)}
+              aria-expanded={documentsExpanded}
               className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 transition"
             >
               <div>
-                <h2 className="font-semibold text-slate-900">Legacy Documents</h2>
+                <h2 className="font-semibold text-slate-900">Documents</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Scanned / imported patient documentation (CPR, National ID, medical reports, …)
+                  All documents for this patient — patient visits, admissions, lab tests,
+                  consents &amp; signatures, legacy scans and attachments
                 </p>
               </div>
               <ChevronDown
                 className={`h-5 w-5 shrink-0 text-slate-500 transition-transform ${
-                  legacyDocsExpanded ? 'rotate-180' : ''
+                  documentsExpanded ? 'rotate-180' : ''
                 }`}
               />
             </button>
-            {legacyDocsExpanded ? (
+            {documentsExpanded ? (
               <div className="border-t border-slate-200 px-4 py-3">
-                <LegacyVisitDocumentsList patient={selectedPatient} layout="table" />
+                <PatientDocumentsList patient={selectedPatient} layout="table" />
               </div>
             ) : null}
           </section>

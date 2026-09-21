@@ -1444,6 +1444,17 @@ def _to_float_range(val):
 		return None
 
 
+def _normalize_reference_bounds(min_val, max_val):
+	"""Drop an ``0 / 0`` pair — templates store unset numeric ranges as zeros.
+
+	A one-sided ``0`` (e.g. ``0 – 5``) is kept; only the meaningless both-zero pair is
+	treated as "no reference range".
+	"""
+	if min_val == 0 and max_val == 0:
+		return None, None
+	return min_val, max_val
+
+
 def _reference_range_bounds(
 	patient_gender=None,
 	*,
@@ -1488,7 +1499,11 @@ def _matrix_cell_eval(
 	min_range=None,
 	max_range=None,
 ):
-	"""Return flag + optional direction for matrix cell colouring."""
+	"""Return flag + optional direction for matrix cell colouring.
+
+	Also returns the resolved ``min``/``max`` reference bounds so the history UI can
+	show the range on demand (Healthcare Settings.show_ranges_on_history_lab_tests).
+	"""
 	neutral = {"flag": "neutral", "direction": None}
 	if result_value is None or str(result_value).strip() == "":
 		return neutral
@@ -1507,13 +1522,15 @@ def _matrix_cell_eval(
 		max_range=max_range,
 		normal_range=normal_range,
 	)
+	min_val, max_val = _normalize_reference_bounds(min_val, max_val)
+	bounds = {"min": min_val, "max": max_val}
 	if min_val is None or max_val is None:
-		return neutral
+		return {**neutral, **bounds}
 	if val < min_val:
-		return {"flag": "abnormal", "direction": "low"}
+		return {"flag": "abnormal", "direction": "low", **bounds}
 	if val > max_val:
-		return {"flag": "abnormal", "direction": "high"}
-	return {"flag": "normal", "direction": None}
+		return {"flag": "abnormal", "direction": "high", **bounds}
+	return {"flag": "normal", "direction": None, **bounds}
 
 
 def _matrix_cell_eval_from_template_info(result_value, patient_gender, tpl_info, normal_range=None):
@@ -1548,6 +1565,9 @@ def _matrix_history_cell(value, lab_test_name, cell_eval: dict):
 		"flag": cell_eval.get("flag") or "neutral",
 		"direction": cell_eval.get("direction"),
 		"lab_test": lab_test_name,
+		# Reference bounds for this result date (may be partial/None).
+		"min": cell_eval.get("min"),
+		"max": cell_eval.get("max"),
 	}
 
 
@@ -1842,9 +1862,19 @@ def get_lab_test_history_matrix(
 	template_cache: dict[str, dict] = {}
 	template_info_cache: dict[str, dict] = {}
 
-	def _ensure_row(row_key, label, uom="", group_key="", group_label=""):
+	def _ensure_row(
+		row_key,
+		label,
+		uom="",
+		group_key="",
+		group_label="",
+		min_value=None,
+		max_value=None,
+		normal_range="",
+	):
 		gk = (group_key or "").strip()
 		gl = (group_label or "").strip()
+		range_text = (normal_range or "").strip()
 		if row_key not in rows_map:
 			rows_map[row_key] = {
 				"key": row_key,
@@ -1852,6 +1882,10 @@ def get_lab_test_history_matrix(
 				"uom": uom or "",
 				"group_key": gk,
 				"group_label": gl,
+				# Row-level reference range (fallback when a cell carries none).
+				"min": min_value,
+				"max": max_value,
+				"normal_range": range_text,
 				"cells": {},
 			}
 		else:
@@ -1863,7 +1897,30 @@ def get_lab_test_history_matrix(
 				row["label"] = label
 			if uom and not row.get("uom"):
 				row["uom"] = uom
+			if row.get("min") is None and min_value is not None:
+				row["min"] = min_value
+			if row.get("max") is None and max_value is not None:
+				row["max"] = max_value
+			if not row.get("normal_range") and range_text:
+				row["normal_range"] = range_text
 		return rows_map[row_key]
+
+	def _range_bounds(tpl_info, normal_range=None):
+		"""Reference min/max for a template (patient-sex aware) + optional range text."""
+		if not tpl_info:
+			return None, None
+		return _normalize_reference_bounds(
+			*_reference_range_bounds(
+				patient_gender,
+				female_min_range=tpl_info.get("female_min_range"),
+				female_max_range=tpl_info.get("female_max_range"),
+				male_min_range=tpl_info.get("male_min_range"),
+				male_max_range=tpl_info.get("male_max_range"),
+				min_range=tpl_info.get("min_range"),
+				max_range=tpl_info.get("max_range"),
+				normal_range=normal_range,
+			)
+		)
 
 	for lt in lab_tests:
 		eff_date = _effective_date(lt)
@@ -1943,7 +2000,15 @@ def get_lab_test_history_matrix(
 					row_key = f"{lt.name}::sr::{sr_num}".lower()
 				else:
 					row_key = f"{lt.name}::line::{len(rows_map)}".lower()
-				_ensure_row(row_key, label, group_key=line_group_key, group_label=line_group_label)
+				line_min, line_max = _range_bounds(tpl_info)
+				_ensure_row(
+					row_key,
+					label,
+					group_key=line_group_key,
+					group_label=line_group_label,
+					min_value=line_min,
+					max_value=line_max,
+				)
 				value = (line.get("lab_result_value") or "").strip()
 				if value:
 					cell_eval = _matrix_cell_eval_from_template_info(value, patient_gender, tpl_info)
@@ -1980,12 +2045,16 @@ def get_lab_test_history_matrix(
 				uom = (item.lab_test_uom or "").strip()
 				row_key = label_base.lower()
 				label = f"{label_base} ({uom})" if uom else label_base
+				item_min, item_max = _range_bounds(tpl_info, item.normal_range)
 				_ensure_row(
 					row_key,
 					label,
 					uom=uom,
 					group_key=item_group_key,
 					group_label=item_group_label,
+					min_value=item_min,
+					max_value=item_max,
+					normal_range=item.normal_range or "",
 				)
 				value = (item.result_value or "").strip()
 				if value:
@@ -2010,11 +2079,14 @@ def get_lab_test_history_matrix(
 				if not (panel_group_label and search_term in panel_group_label.lower()):
 					continue
 			row_key = label_base.lower()
+			branch_min, branch_max = _range_bounds(tpl_info)
 			_ensure_row(
 				row_key,
 				label_base,
 				group_key=panel_group_key,
 				group_label=panel_group_label,
+				min_value=branch_min,
+				max_value=branch_max,
 			)
 			value = (lt.custom_result or lt.results or "").strip()
 			if value:
@@ -2041,6 +2113,11 @@ def get_lab_test_history_matrix(
 		"rows": rows,
 		"patient": patient,
 		"patient_name": patient_name,
+		# Healthcare Settings -> Show Ranges on History Lab Tests: lets the UI expand a
+		# result box to reveal the reference min (left) / max (right).
+		"show_ranges_on_history_lab_tests": bool(
+			cint(frappe.db.get_single_value("Healthcare Settings", "show_ranges_on_history_lab_tests"))
+		),
 	}
 
 

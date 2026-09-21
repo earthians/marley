@@ -70,6 +70,9 @@ type VerticalHistoryEvent = {
   dateLine: string
   testLabel: string
   cell: LabHistoryMatrixCell
+  /** Row-level reference range fallback (cells without bounds). */
+  rowMin?: number | string | null
+  rowMax?: number | string | null
 }
 
 /** Dates with an actual result for the filtered test(s) — newest first. */
@@ -91,6 +94,8 @@ function buildVerticalHistoryEvents(
         dateLine: formatColumnHeader(col),
         testLabel: row.label,
         cell,
+        rowMin: row.min,
+        rowMax: row.max,
       })
     }
   }
@@ -238,6 +243,65 @@ function cellDirectionArrow(direction?: 'high' | 'low' | null) {
     return <span className="shrink-0 text-[10px] font-bold leading-none text-yellow-700" aria-label="Low">↓</span>
   }
   return null
+}
+
+/** Trim trailing zeros from a numeric bound (8.60 → 8.6). */
+function formatRangeBound(value?: number | string | null): string {
+  if (value === null || value === undefined) return ''
+  const text = String(value).trim()
+  if (!text) return ''
+  const num = Number(text)
+  return Number.isFinite(num) ? String(num) : text
+}
+
+/** Reference min/max for a result — cell bounds first, then the row-level range. */
+function resultRange(
+  cellMin?: number | string | null,
+  cellMax?: number | string | null,
+  rowMin?: number | string | null,
+  rowMax?: number | string | null,
+): { min: string; max: string; available: boolean } {
+  const min = formatRangeBound(cellMin !== null && cellMin !== undefined ? cellMin : rowMin)
+  const max = formatRangeBound(cellMax !== null && cellMax !== undefined ? cellMax : rowMax)
+  return { min, max, available: Boolean(min || max) }
+}
+
+/**
+ * Result value with its reference range always shown
+ * (Healthcare Settings → Show Ranges on History Lab Tests):
+ * small font, minimum on the left and maximum (high) on the right.
+ * The range text enlarges on hover.
+ */
+function RangeResult({
+  value,
+  direction,
+  min,
+  max,
+}: {
+  value: string
+  direction?: 'high' | 'low' | null
+  min: string
+  max: string
+}) {
+  const body = (
+    <span className="inline-flex max-w-full items-center justify-center gap-0.5">
+      <span className="truncate">{value}</span>
+      {cellDirectionArrow(direction)}
+    </span>
+  )
+  if (!min && !max) return body
+  return (
+    <div
+      className="group block w-full"
+      title={`Reference range${min ? ` · min ${min}` : ''}${max ? ` · max ${max}` : ''}`}
+    >
+      {body}
+      <span className="mt-0.5 flex items-baseline justify-between gap-2 text-[10px] font-normal leading-tight tabular-nums opacity-80 transition-all duration-150 group-hover:text-[13px] group-hover:font-semibold group-hover:opacity-100">
+        <span title="Minimum">{min || '—'}</span>
+        <span title="Maximum">{max || '—'}</span>
+      </span>
+    </div>
+  )
 }
 
 const FilterBar = ({
@@ -406,6 +470,8 @@ export const LabTestHistory = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [unconsolidatedInternal, setUnconsolidatedInternal] = useState(false)
+  /** Healthcare Settings → Show Ranges on History Lab Tests (from the matrix payload). */
+  const [showRanges, setShowRanges] = useState(false)
 
   const unconsolidated = unconsolidatedProp ?? unconsolidatedInternal
   const setUnconsolidated = (value: boolean) => {
@@ -466,6 +532,7 @@ export const LabTestHistory = ({
       })
       setColumns(data.columns || [])
       setRows(data.rows || [])
+      setShowRanges(Boolean(data.show_ranges_on_history_lab_tests))
       if (data.patient_name) setDisplayPatientName(data.patient_name)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load lab history')
@@ -729,10 +796,32 @@ export const LabTestHistory = ({
                           <td className="px-3 py-2 text-sm text-slate-700">{ev.testLabel}</td>
                         ) : null}
                         <td className={`px-3 py-2 text-sm ${cellClass(ev.cell.flag, ev.cell.direction)}`}>
-                          <span className="inline-flex items-center gap-1 font-medium">
-                            {ev.cell.value}
-                            {cellDirectionArrow(ev.cell.direction)}
-                          </span>
+                          {(() => {
+                            const { min, max, available } = resultRange(
+                              ev.cell.min,
+                              ev.cell.max,
+                              ev.rowMin,
+                              ev.rowMax,
+                            )
+                            if (!showRanges || !available) {
+                              return (
+                                <span className="inline-flex items-center gap-1 font-medium">
+                                  {ev.cell.value}
+                                  {cellDirectionArrow(ev.cell.direction)}
+                                </span>
+                              )
+                            }
+                            return (
+                              <div className="font-medium">
+                                <RangeResult
+                                  value={ev.cell.value}
+                                  direction={ev.cell.direction}
+                                  min={min}
+                                  max={max}
+                                />
+                              </div>
+                            )
+                          })()}
                         </td>
                         <td className="px-3 py-2 text-xs capitalize text-slate-600">
                           {ev.cell.flag || '—'}
@@ -862,10 +951,30 @@ export const LabTestHistory = ({
                                 : undefined
                           }
                         >
-                          <span className="inline-flex items-center justify-center gap-0.5 max-w-full">
-                            <span className="truncate">{cell?.value ?? ''}</span>
-                            {cellDirectionArrow(cell?.direction)}
-                          </span>
+                          {(() => {
+                            const { min, max, available } = resultRange(
+                              cell?.min,
+                              cell?.max,
+                              row.min,
+                              row.max,
+                            )
+                            if (!showRanges || !available || !cell?.value) {
+                              return (
+                                <span className="inline-flex items-center justify-center gap-0.5 max-w-full">
+                                  <span className="truncate">{cell?.value ?? ''}</span>
+                                  {cellDirectionArrow(cell?.direction)}
+                                </span>
+                              )
+                            }
+                            return (
+                              <RangeResult
+                                value={String(cell.value)}
+                                direction={cell.direction}
+                                min={min}
+                                max={max}
+                              />
+                            )
+                          })()}
                         </td>
                       )
                     })}
