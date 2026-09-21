@@ -5,6 +5,7 @@ frappe.ui.form.on("Inpatient Medication Order", {
 	refresh: function (frm) {
 		if (frm.doc.docstatus === 1) {
 			frm.trigger("show_progress");
+			frm.events.show_stop_medication_order_button(frm);
 		}
 
 		frm.events.show_medication_order_button(frm);
@@ -107,6 +108,118 @@ frappe.ui.form.on("Inpatient Medication Order", {
 				});
 			},
 		);
+	},
+
+	show_stop_medication_order_button: function (frm) {
+		const pending_orders = (frm.doc.medication_orders || []).filter(
+			(row) => row.status === "Pending",
+		);
+
+		if (!pending_orders.length) {
+			return;
+		}
+
+		frm.add_custom_button(__("Stop Medication Order"), () => {
+			const dialog = new frappe.ui.Dialog({
+				title: __("Stop Medication Order"),
+				size: "extra-large",
+				fields: [
+					{
+						fieldname: "medication_orders",
+						fieldtype: "Table",
+						label: __("Pending Medication Orders"),
+						cannot_add_rows: true,
+						cannot_delete_rows: true,
+						in_place_edit: true,
+						data: pending_orders.map((row) => ({
+							name: row.name,
+							drug: row.drug,
+							drug_name: row.drug_name,
+							dosage: row.dosage,
+							date: row.date,
+							time: row.time,
+						})),
+						fields: [
+							{
+								fieldname: "drug",
+								fieldtype: "Link",
+								label: __("Drug"),
+								options: "Item",
+								in_list_view: 1,
+								read_only: 1,
+							},
+							{
+								fieldname: "drug_name",
+								fieldtype: "Data",
+								label: __("Drug Name"),
+								read_only: 1,
+							},
+							{
+								fieldname: "dosage",
+								fieldtype: "Float",
+								label: __("Dosage"),
+								in_list_view: 1,
+								read_only: 1,
+							},
+							{
+								fieldname: "date",
+								fieldtype: "Date",
+								label: __("Date"),
+								in_list_view: 1,
+								read_only: 1,
+							},
+							{
+								fieldname: "time",
+								fieldtype: "Time",
+								label: __("Time"),
+								in_list_view: 1,
+								read_only: 1,
+							},
+							{
+								fieldname: "name",
+								fieldtype: "Data",
+								label: __("Row ID"),
+								hidden: 1,
+								read_only: 1,
+							},
+						],
+					},
+					{
+						fieldname: "stop_reason",
+						fieldtype: "Small Text",
+						label: __("Stop Reason"),
+						reqd: 1,
+					},
+				],
+				primary_action_label: __("Stop"),
+				primary_action: (values) => {
+					const selected = dialog.fields_dict.medication_orders.grid
+						.get_selected_children()
+						.map((row) => row.name);
+
+					if (!selected.length) {
+						frappe.throw(__("Please select at least one medication order to stop."));
+					}
+
+					frm.call({
+						doc: frm.doc,
+						method: "stop_medication_orders",
+						args: {
+							entries: selected,
+							stop_reason: values.stop_reason,
+						},
+						freeze: true,
+						freeze_message: __("Stopping Medication Orders"),
+						callback: function () {
+							dialog.hide();
+							frm.reload_doc();
+						},
+					});
+				},
+			});
+
+			dialog.show();
+		});
 	},
 
 	show_progress: function (frm) {
