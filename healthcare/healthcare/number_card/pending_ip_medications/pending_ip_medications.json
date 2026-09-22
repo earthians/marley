@@ -7,7 +7,7 @@
  "doctype": "Number Card",
  "document_type": "Inpatient Medication Order",
  "dynamic_filters_json": "[[\"Inpatient Medication Order\",\"company\",\"=\",\"frappe.defaults.get_user_default(\\\"Company\\\")\"]]",
- "filters_json": "[[\"Inpatient Medication Order\",\"docstatus\",\"=\",\"1\"],[\"Inpatient Medication Order Entry\",\"date\",\"Timespan\",\"this week\"],[\"Inpatient Medication Order Entry\",\"is_completed\",\"=\",0]]",
+ "filters_json": "[[\"Inpatient Medication Order\",\"docstatus\",\"=\",\"1\"],[\"Inpatient Medication Order Entry\",\"date\",\"Timespan\",\"this week\"],[\"Inpatient Medication Order Entry\",\"status\",\"=\",\"Pending\"]]",
  "function": "Count",
  "idx": 0,
  "is_public": 1,
