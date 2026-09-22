@@ -488,7 +488,11 @@ var list_row_data_items = function (head, $row, result, invoice_healthcare_servi
 	return $row;
 };
 
-var add_to_item_line = function (frm, checked_values, invoice_healthcare_services) {
+var add_to_item_line = async function (
+	frm,
+	checked_values,
+	invoice_healthcare_services,
+) {
 	if (invoice_healthcare_services) {
 		frappe.call({
 			doc: frm.doc,
@@ -508,27 +512,27 @@ var add_to_item_line = function (frm, checked_values, invoice_healthcare_service
 				"Sales Invoice Item",
 				"items",
 			);
-			frappe.model.set_value(
+			await frappe.model.set_value(
 				si_item.doctype,
 				si_item.name,
 				"item_code",
 				checked_values[i]["item"],
 			);
-			frappe.model.set_value(si_item.doctype, si_item.name, "qty", 1);
-			frappe.model.set_value(
+			await frappe.model.set_value(si_item.doctype, si_item.name, "qty", 1);
+			await frappe.model.set_value(
 				si_item.doctype,
 				si_item.name,
 				"reference_dn",
 				checked_values[i]["dn"],
 			);
-			frappe.model.set_value(
+			await frappe.model.set_value(
 				si_item.doctype,
 				si_item.name,
 				"reference_dt",
 				checked_values[i]["dt"],
 			);
 			if (checked_values[i]["qty"] > 1) {
-				frappe.model.set_value(
+				await frappe.model.set_value(
 					si_item.doctype,
 					si_item.name,
 					"qty",
