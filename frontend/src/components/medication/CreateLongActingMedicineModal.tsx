@@ -84,8 +84,10 @@ const Combobox = ({
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    // Capture phase: the modal shell stops mousedown propagation (React portals
+    // listen on document.body), so the dropdown must observe the event first.
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
   }, [])
 
   return (

@@ -29,6 +29,7 @@ import {
   syncPrescriptionEndDateAndDays,
 } from '../../utils/prescriptionType'
 import { prescriptionNeedsSignature, prescriptionIsSigned } from '../../utils/prescriptionSigning'
+import { sanitizeDosageInput } from '../../utils/prescriptionDosage'
 import { RefreshCw, MoreVertical, Plus, X, ChevronDown, History } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { CreatePrescriptionModal } from './CreatePrescriptionModal'
@@ -68,6 +69,7 @@ import {
   fetchHealthcarePractitioners,
   getCurrentUserPractitioner,
   getCurrentUserPractitionerOption,
+  filterPinkItems,
   type LinkFieldOption,
 } from '../../services/common'
 import {
@@ -126,8 +128,10 @@ const MiniCombobox = ({
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    // Capture phase so mousedown is still seen when a parent panel stops
+    // propagation — the dropdown then closes on any click outside it.
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
   }, [])
 
   return (
@@ -375,6 +379,8 @@ export const EditMedicationEntryModal = ({
   const [practQuery, setPractQuery] = useState(
     order.healthcare_practitioner_name || order.healthcare_practitioner || ''
   )
+  /** True when the medicine's Item Group is pink — Is Pink is then forced on and read-only. */
+  const [pinkItemLocked, setPinkItemLocked] = useState(false)
 
   const formIsLongActing =
     Boolean(form.is_long_acting) || isLongActingPrescriptionType(String(form.medication_type || ''))
@@ -383,6 +389,28 @@ export const EditMedicationEntryModal = ({
     fetchDosageForms().then(setDosageFormOptions).catch(() => setDosageFormOptions([]))
     fetchStandardUoms(undefined, { medicalOnly: true }).then(setUomOptions).catch(() => setUomOptions([]))
   }, [])
+
+  // Pink Item Group medicine: Is Pink is always ticked and cannot be changed.
+  useEffect(() => {
+    const drug = (order.drug || '').trim()
+    if (!drug) {
+      setPinkItemLocked(false)
+      return
+    }
+    let cancelled = false
+    filterPinkItems([drug])
+      .then((pink) => {
+        if (cancelled || !pink.includes(drug)) return
+        setPinkItemLocked(true)
+        setForm((f) => (f.is_pink ? f : { ...f, is_pink: true }))
+      })
+      .catch(() => {
+        /* leave the checkbox editable when the lookup fails */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [order.drug])
 
   // Editing creates a new medicine line when clinical fields change — stamp the
   // logged-in doctor's practitioner on that new line (same as Add Medication).
@@ -673,7 +701,7 @@ export const EditMedicationEntryModal = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Dosage</label>
-              <input value={form.dosage} onChange={(e) => updateField('dosage', e.target.value)} disabled={disabled} placeholder="45mg"
+              <input value={form.dosage} inputMode="decimal" onChange={(e) => updateField('dosage', sanitizeDosageInput(e.target.value))} disabled={disabled} placeholder="45"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500" />
               {checkingDose ? (
                 <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
@@ -821,7 +849,11 @@ export const EditMedicationEntryModal = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <label
+                className={`flex items-center gap-2 text-sm text-slate-700 ${
+                  pinkItemLocked ? 'cursor-not-allowed' : 'cursor-pointer'
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={!!form.is_pink}
@@ -830,11 +862,16 @@ export const EditMedicationEntryModal = ({
                     updateField('is_pink', checked)
                     if (!checked) updateField('reference_no', '')
                   }}
-                  disabled={disabled}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  disabled={disabled || pinkItemLocked}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed"
                 />
                 Is Pink
               </label>
+              {pinkItemLocked ? (
+                <p className="mt-1 text-[11px] font-medium text-pink-600">
+                  Pink medicine — set by the item group and cannot be changed.
+                </p>
+              ) : null}
             </div>
             {!!form.is_pink && (
               <div>
@@ -992,6 +1029,8 @@ export const AddMedicationEntryModal = ({
   const [drugQuery, setDrugQuery] = useState('')
   const [drugOpts, setDrugOpts] = useState<LinkFieldOption[]>([])
   const [drugLoading, setDrugLoading] = useState(false)
+  /** True when the chosen medicine's Item Group is pink — Is Pink is forced on and read-only. */
+  const [addPinkItemLocked, setAddPinkItemLocked] = useState(false)
 
   const [addFreqQuery, setAddFreqQuery] = useState('')
   const [addFreqOptions, setAddFreqOptions] = useState<LinkFieldOption[]>([])
@@ -1282,6 +1321,8 @@ export const AddMedicationEntryModal = ({
                   ...(route ? { route_of_administration: route } : {}),
                 }))
                 setAddUomQuery(stockUom)
+                // Pink Item Group medicine: Is Pink stays ticked and read-only.
+                setAddPinkItemLocked(Boolean(opt.is_pink))
                 if (route) {
                   let routes = addRouteOptions
                   if (!routes.length) {
@@ -1293,14 +1334,19 @@ export const AddMedicationEntryModal = ({
                 }
                 setDrugQuery(opt.label || opt.name)
               }}
-              onClear={() => { updateField('drug', ''); updateField('drug_name', ''); setDrugQuery('') }}
+              onClear={() => {
+                updateField('drug', '')
+                updateField('drug_name', '')
+                setDrugQuery('')
+                setAddPinkItemLocked(false)
+              }}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Dosage *</label>
-              <input value={form.dosage} onChange={(e) => updateField('dosage', e.target.value)} placeholder="45mg"
+              <input value={form.dosage} inputMode="decimal" onChange={(e) => updateField('dosage', sanitizeDosageInput(e.target.value))} placeholder="45"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               {checkingDose ? (
                 <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
@@ -1443,19 +1489,29 @@ export const AddMedicationEntryModal = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+              <label
+                className={`flex items-center gap-2 text-sm text-slate-700 ${
+                  addPinkItemLocked ? 'cursor-not-allowed' : 'cursor-pointer'
+                }`}
+              >
                 <input
                   type="checkbox"
                   checked={!!form.is_pink}
+                  disabled={addPinkItemLocked}
                   onChange={(e) => {
                     const checked = e.target.checked
                     updateField('is_pink', checked)
                     if (!checked) updateField('reference_no', '')
                   }}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed"
                 />
                 Is Pink
               </label>
+              {addPinkItemLocked ? (
+                <p className="mt-1 text-[11px] font-medium text-pink-600">
+                  Pink medicine — set by the item group and cannot be changed.
+                </p>
+              ) : null}
             </div>
             {!!form.is_pink && (
               <div>
@@ -2154,15 +2210,55 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
   if ((mode === 'OP' && !activeVisit) || (mode === 'IP' && !activeAdmission)) {
     return (
       <div className="flex flex-col h-full min-h-[240px]">
-        <div className="flex items-center justify-end px-4 pt-3">
-          {historyToggleButton}
+        <div className="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 pt-4 pb-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-xs text-slate-400 uppercase tracking-wide leading-none mb-0.5">
+                Current Prescription — {mode === 'OP' ? 'Outpatient visit' : 'Inpatient admission'}
+              </p>
+              <h1 className="text-base font-bold text-slate-900 leading-none">
+                {mode === 'OP' ? 'No visit selected' : 'No admission selected'}
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <IpMedicationPlanPrintButton />
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => guardClinicalCreate(() => setShowCreatePrescriptionModal(true))}
+                  className="inline-flex items-center justify-center rounded-md bg-primary text-white p-1.5 hover:bg-primary/90 transition-colors"
+                  title="Create prescription"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
+              {historyToggleButton}
+            </div>
+          </div>
         </div>
         <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-2">
           <span className="text-4xl">📋</span>
           <p className="text-sm">
             {mode === 'OP' ? 'Select an OP visit to view prescription.' : 'Select an IP admission to view prescription.'}
           </p>
+          {!readOnly && (
+            <p className="text-xs text-slate-500 text-center max-w-sm">
+              Use the <strong>+</strong> button above to create a prescription — you can pick the visit or
+              admission inside the form.
+            </p>
+          )}
         </div>
+        {showCreatePrescriptionModal && selectedPatient && (
+          <CreatePrescriptionModal
+            onClose={() => setShowCreatePrescriptionModal(false)}
+            onSuccess={() => {
+              setShowCreatePrescriptionModal(false)
+              load()
+            }}
+            initialPatient={selectedPatient}
+            initialCareContext={mode === 'IP' ? 'Inpatient Admission' : 'Patient Visit'}
+          />
+        )}
       </div>
     )
   }
@@ -2419,15 +2515,25 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
             {renderHeaderActions(false)}
           </div>
         </div>
-        <div className="flex flex-1 flex-col items-center justify-center text-slate-400 gap-2 px-4 py-12">
+        <div className="flex flex-1 flex-col items-center justify-center text-slate-400 gap-3 px-4 py-12">
           <span className="text-4xl">📋</span>
           <p className="text-sm text-center">
             No prescription found for this {mode === 'OP' ? 'visit' : 'admission'}.
           </p>
           {!readOnly && (
-            <p className="text-xs text-slate-500 text-center max-w-sm">
-              Use the <strong>+</strong> button above to create a prescription (same as All Prescriptions).
-            </p>
+            <>
+              <button
+                type="button"
+                onClick={() => guardClinicalCreate(() => setShowCreatePrescriptionModal(true))}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Create Prescription
+              </button>
+              <p className="text-xs text-slate-500 text-center max-w-sm">
+                Or use the <strong>+</strong> button above (same as All Prescriptions).
+              </p>
+            </>
           )}
         </div>
         {showCreatePrescriptionModal && selectedPatient && (
@@ -2583,8 +2689,27 @@ export const RxPage = ({ readOnly = false }: { readOnly?: boolean } = {}) => {
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2 border border-dashed border-slate-200 rounded-lg">
             <span className="text-2xl">{activeTypeDef?.icon}</span>
             <p className="text-sm">
-              No orders for <strong>{activeTypeDef?.label}</strong>
+              {orders.length === 0 ? (
+                'No medicines on this prescription yet.'
+              ) : (
+                <>
+                  No orders for <strong>{activeTypeDef?.label}</strong>
+                </>
+              )}
             </p>
+            {!readOnly &&
+              orders.length === 0 &&
+              canAddMedicationToPrescription(prescription) &&
+              !showSignedIpAddButton(prescription) && (
+                <button
+                  type="button"
+                  onClick={() => guardClinicalCreate(() => setShowAddModal(true))}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Medicine
+                </button>
+              )}
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-slate-200">

@@ -467,6 +467,23 @@ def _pink_reference_required_for_pmo(doc) -> bool:
 	return True
 
 
+def _force_pink_from_item_group(entry):
+	"""Tick Is Pink for medicines whose Item Group (or any ancestor) is marked pink.
+
+	Pink medicines are controlled items, so the flag is derived from the Item
+	Group and can never be switched off on the prescription line.
+	"""
+	if entry is None or cint(getattr(entry, 'is_pink', 0)):
+		return
+	drug = cstr(getattr(entry, 'drug', '') or '').strip()
+	if not drug:
+		return
+	from healthcare.api.common import is_item_pink
+
+	if is_item_pink(drug):
+		entry.is_pink = 1
+
+
 def _set_medication_row(doc, row):
 	"""Append one medication order row to doc. row is a dict with keys from Inpatient Medication Order Entry."""
 	row = _normalize_long_acting_medication_row(row)
@@ -482,6 +499,8 @@ def _set_medication_row(doc, row):
 	entry.end_date = row.get('end_date') or None
 	entry.patient_frequency = row.get('patient_frequency')
 	entry.is_pink = 1 if row.get('is_pink') else 0
+	# Pink Item Group lines always keep Is Pink ticked (UI shows it read-only).
+	_force_pink_from_item_group(entry)
 	entry.is_prn = 1 if row.get('is_prn') else 0
 	entry.reference_no = (row.get('reference_no') or '').strip()
 	# Pink reference required for OP only — inpatient prescriptions skip this
@@ -2664,6 +2683,9 @@ def update_medication_order_entry(
     for field, value in updates.items():
         if field in allowed_fields:
             entry.set(field, value)
+
+    # Pink Item Group lines always keep Is Pink ticked (UI shows it read-only).
+    _force_pink_from_item_group(entry)
 
     if "healthcare_practitioner" in updates or "practitioner" in updates:
         _apply_entry_healthcare_practitioner(

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
   CM_BTN_CANCEL,
@@ -18,6 +18,7 @@ import {
   fetchInpatientAdmissions,
   fetchPrescriptionItems,
   fetchStandardUoms,
+  filterPinkItems,
   fetchDosageForms,
   fetchPrescriptionFrequencies,
   fetchLongActingFrequencies,
@@ -72,6 +73,7 @@ import {
 import { DoseLimitHint } from './DoseLimitHint'
 import { DateFilterInput } from '../ui/DateFilterInput'
 import { localDateInputValue } from '../../utils/formatDate'
+import { normalizeDosageUom, sanitizeDosageInput } from '../../utils/prescriptionDosage'
 
 interface CreatePrescriptionModalProps {
   onClose: () => void
@@ -183,8 +185,11 @@ const Combobox = ({
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    // Capture phase: the modal shell stops mousedown propagation (React portals
+    // listen on document.body), so a bubble-phase listener would never fire and
+    // the dropdown would stay open when clicking another field.
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
   }, [])
 
   const handleSelectCustom = () => {
@@ -373,6 +378,8 @@ export const CreatePrescriptionModal = ({
   // Scientific / generic name of the drug selected per row (for display under the field).
   const [drugScientific, setDrugScientific] = useState<Record<number, string>>({})
   const [drugOptions, setDrugOptions] = useState<Record<number, LinkFieldOption[]>>({})
+  /** Rows whose medicine belongs to a pink Item Group — Is Pink is forced on and read-only. */
+  const [pinkItemRows, setPinkItemRows] = useState<Record<number, boolean>>({})
   const [drugLoading, setDrugLoading] = useState<Record<number, boolean>>({})
 
   const [frequencyQueries, setFrequencyQueries] = useState<Record<number, string>>({})
@@ -384,6 +391,41 @@ export const CreatePrescriptionModal = ({
   const [longActingFrequencyOptions, setLongActingFrequencyOptions] = useState<LinkFieldOption[]>([])
   const [routeOptions, setRouteOptions] = useState<LinkFieldOption[]>([])
   const [uomOptions, setUomOptions] = useState<LinkFieldOption[]>([])
+  /**
+   * Medical UOM names — needed so a legacy dosage unit ("18MG") can be moved to
+   * Unit of Measure as an existing UOM instead of breaking link validation on save.
+   */
+  const uomNamesRef = useRef<string[]>([])
+  const uomNamesPromiseRef = useRef<Promise<string[]> | null>(null)
+  const ensureUomNames = useCallback((): Promise<string[]> => {
+    if (!uomNamesPromiseRef.current) {
+      uomNamesPromiseRef.current = fetchStandardUoms(undefined, { medicalOnly: true })
+        .then((options) => {
+          const names = options.map((option) => option.name)
+          uomNamesRef.current = names
+          if (options.length) {
+            setUomOptions((prev) => (prev.length ? prev : options))
+          }
+          return names
+        })
+        .catch(() => uomNamesRef.current)
+    }
+    return uomNamesPromiseRef.current
+  }, [])
+  /**
+   * Item codes among the given ones that belong to a pink Item Group.
+   * Used so a loaded/duplicated line for a pink medicine keeps Is Pink ticked
+   * and read-only, exactly like a freshly chosen medicine.
+   */
+  const resolvePinkItemCodes = useCallback(async (itemCodes: string[]): Promise<Set<string>> => {
+    const codes = Array.from(new Set(itemCodes.map((code) => (code || '').trim()).filter(Boolean)))
+    if (!codes.length) return new Set<string>()
+    try {
+      return new Set(await filterPinkItems(codes))
+    } catch {
+      return new Set<string>()
+    }
+  }, [])
   const [loadingFrequency, setLoadingFrequency] = useState(false)
   const [loadingLongActingFrequency, setLoadingLongActingFrequency] = useState(false)
   const [loadingRoute, setLoadingRoute] = useState(false)
@@ -618,6 +660,13 @@ export const CreatePrescriptionModal = ({
     setUomQueries((prev) => ({ ...prev, [index]: stockUom }))
     setDrugQueries((prev) => ({ ...prev, [index]: opt.label || opt.name }))
     setDrugScientific((prev) => ({ ...prev, [index]: (opt.scientific_name || '').trim() }))
+    // Pink Item Group medicines keep Is Pink ticked and not editable.
+    setPinkItemRows((prev) => {
+      const next = { ...prev }
+      if (opt.is_pink) next[index] = true
+      else delete next[index]
+      return next
+    })
     if (route) {
       let routes = routeOptions
       if (!routes.length) {
@@ -665,11 +714,25 @@ export const CreatePrescriptionModal = ({
   useEffect(() => {
     fetchPrescriptionFrequencies().then(setFrequencyOptions).catch(() => setFrequencyOptions([]))
     fetchRouteOfAdministrationList().then(setRouteOptions).catch(() => setRouteOptions([]))
-    fetchStandardUoms(undefined, { medicalOnly: true }).then(setUomOptions).catch(() => setUomOptions([]))
-  }, [])
+    // Also caches the medical UOM names used to normalise legacy dosages.
+    void ensureUomNames()
+  }, [ensureUomNames])
 
   useEffect(() => {
-    if (editMode && prescriptionData) {
+    if (!editMode || !prescriptionData) return
+
+    let cancelled = false
+    void (async () => {
+      // Wait for the UOM list so legacy dosages like "18MG" can move the unit
+      // into Unit of Measure as an existing UOM.
+      const uomNames = await ensureUomNames()
+      if (cancelled) return
+      // Pink Item Group medicines keep Is Pink ticked and read-only.
+      const pinkCodes = await resolvePinkItemCodes(
+        (prescriptionData.medication_orders || []).map((med: any) => med.drug || ''),
+      )
+      if (cancelled) return
+
       const linkedVisit = (prescriptionData.patient_encounter || '').trim()
       const careContext: 'Patient Visit' | 'Inpatient Admission' = linkedVisit
         ? 'Patient Visit'
@@ -686,41 +749,57 @@ export const CreatePrescriptionModal = ({
         start_date: prescriptionData.start_date || localDateInputValue(),
         practitioner: prescriptionData.practitioner || '',
       })
-      
+
       if (prescriptionData.patient) {
-        setSelectedPatient({ 
-          name: prescriptionData.patient, 
-          patient_name: prescriptionData.patient_name || prescriptionData.patient 
+        setSelectedPatient({
+          name: prescriptionData.patient,
+          patient_name: prescriptionData.patient_name || prescriptionData.patient
         } as PatientListItem)
         setPatientQuery(prescriptionData.patient_name || prescriptionData.patient)
       }
-      
+
       if (prescriptionData.medication_orders && prescriptionData.medication_orders.length > 0) {
-        const loadedMedications: MedicationOrderRow[] = prescriptionData.medication_orders.map((med: any) => ({
-          drug: med.drug || '',
-          drug_name: med.drug_name || med.drug || '',
-          dosage: med.dosage || '',
-          uom: med.uom || '',
-          no_of_days: med.no_of_days || 1,
-          dosage_form: med.dosage_form || '',
-          instructions: med.instructions || '',
-          date: med.date || formData.start_date,
-          // Leave end date blank when missing — do not default to today/tomorrow.
-          end_date: med.end_date || '',
-          time: med.time || '',
-          patient_frequency: med.patient_frequency || '',
-          is_pink: med.is_pink || false,
-          reference_no: med.reference_no || '',
-          long_acting_frequency: med.long_acting_frequency || 'Weekly',
-          route_of_administration: med.route_of_administration || '',
-          medication_type:
-            med.medication_type === 'Contraindicated' ? '' : (med.medication_type || ''),
-          ...flagsFromPrescriptionType(
-            med.medication_type === 'Contraindicated' ? '' : med.medication_type
-          ),
-        }))
+        const loadedMedications: MedicationOrderRow[] = prescriptionData.medication_orders.map((med: any) => {
+          // A legacy line like "18MG" is shown as Dosage 18 + Unit of Measure.
+          const row = normalizeDosageUom(
+            {
+              drug: med.drug || '',
+              drug_name: med.drug_name || med.drug || '',
+              dosage: med.dosage || '',
+              uom: med.uom || '',
+              no_of_days: med.no_of_days || 1,
+              dosage_form: med.dosage_form || '',
+              instructions: med.instructions || '',
+              date: med.date || formData.start_date,
+              // Leave end date blank when missing — do not default to today/tomorrow.
+              end_date: med.end_date || '',
+              time: med.time || '',
+              patient_frequency: med.patient_frequency || '',
+              is_pink: med.is_pink || false,
+              reference_no: med.reference_no || '',
+              long_acting_frequency: med.long_acting_frequency || 'Weekly',
+              route_of_administration: med.route_of_administration || '',
+              medication_type:
+                med.medication_type === 'Contraindicated' ? '' : (med.medication_type || ''),
+              ...flagsFromPrescriptionType(
+                med.medication_type === 'Contraindicated' ? '' : med.medication_type
+              ),
+            },
+            uomNames,
+          )
+          // Pink Item Group medicine: Is Pink always ticked (checkbox read-only).
+          return pinkCodes.has((row.drug || '').trim()) ? { ...row, is_pink: true } : row
+        })
+        if (cancelled) return
         setMedications(loadedMedications)
-        
+        setPinkItemRows(() => {
+          const next: Record<number, boolean> = {}
+          loadedMedications.forEach((med, idx) => {
+            if (pinkCodes.has((med.drug || '').trim())) next[idx] = true
+          })
+          return next
+        })
+
         const queries: Record<number, string> = {}
         const nextUomQueries: Record<number, string> = {}
         loadedMedications.forEach((med, idx) => {
@@ -734,8 +813,12 @@ export const CreatePrescriptionModal = ({
       if (prescriptionData.doctors_signature) {
         setDoctorsSignature(prescriptionData.doctors_signature)
       }
+    })()
+
+    return () => {
+      cancelled = true
     }
-  }, [editMode, prescriptionData, formData.start_date])
+  }, [editMode, prescriptionData, formData.start_date, ensureUomNames, resolvePinkItemCodes])
 
   useEffect(() => {
     if (isEditing) return
@@ -864,16 +947,32 @@ export const CreatePrescriptionModal = ({
     if (medicationsUserEditedRef.current) return
 
     let cancelled = false
-    const applyRows = (rows: MedicationOrderRow[]) => {
+    const applyRows = (rows: MedicationOrderRow[], uomNames: string[], pinkCodes: Set<string>) => {
       if (cancelled || medicationsUserEditedRef.current) return
-      setMedications(rows)
-      medicationRowKeysRef.current = rows.map(() => nextMedicationRowKey())
+      // Legacy dosages like "5mg" / "18MG" keep the number in Dosage and give
+      // the unit to Unit of Measure before the rows reach the form state.
+      const prepared = rows.map((row) => {
+        const normalized = normalizeDosageUom(row, uomNames)
+        // Pink Item Group medicine: Is Pink always ticked (checkbox read-only).
+        return pinkCodes.has((normalized.drug || '').trim())
+          ? { ...normalized, is_pink: true }
+          : normalized
+      })
+      setMedications(prepared)
+      setPinkItemRows(() => {
+        const next: Record<number, boolean> = {}
+        prepared.forEach((med, idx) => {
+          if (pinkCodes.has((med.drug || '').trim())) next[idx] = true
+        })
+        return next
+      })
+      medicationRowKeysRef.current = prepared.map(() => nextMedicationRowKey())
       const queries: Record<number, string> = {}
       const nextFreq: Record<number, string> = {}
       const nextRoute: Record<number, string> = {}
       const nextUom: Record<number, string> = {}
       const nextLongActing: Record<number, string> = {}
-      rows.forEach((med, idx) => {
+      prepared.forEach((med, idx) => {
         queries[idx] = (med.drug_name || med.drug || '').trim()
         if (med.patient_frequency) nextFreq[idx] = med.patient_frequency
         if (med.route_of_administration) nextRoute[idx] = med.route_of_administration
@@ -885,7 +984,7 @@ export const CreatePrescriptionModal = ({
       setRouteQueries(nextRoute)
       setUomQueries(nextUom)
       setLongActingFrequencyQueries(nextLongActing)
-      setExpandedMedications(new Set(rows.map((_, idx) => idx)))
+      setExpandedMedications(new Set(prepared.map((_, idx) => idx)))
     }
 
     // Duplicate of legacy Rx: map ITEM_00_01 → current Item when possible.
@@ -895,16 +994,20 @@ export const CreatePrescriptionModal = ({
         Boolean(med.old_medicine_code || med.medicine_no) ||
         !med.drug,
     )
-    if (!needsLegacyResolve) {
-      applyRows(initialMedications)
-      return () => {
-        cancelled = true
-      }
-    }
 
-    applyRows(initialMedications)
-    resolveMedicationsForDuplicate(initialMedications)
-      .then((resolved) => {
+    void (async () => {
+      // Wait for the UOM list so the unit moved out of Dosage resolves to a real UOM.
+      const uomNames = await ensureUomNames()
+      if (cancelled || medicationsUserEditedRef.current) return
+      // Pink Item Group medicines keep Is Pink ticked and read-only.
+      const pinkCodes = await resolvePinkItemCodes(initialMedications.map((med) => med.drug || ''))
+      if (cancelled || medicationsUserEditedRef.current) return
+
+      applyRows(initialMedications, uomNames, pinkCodes)
+      if (!needsLegacyResolve) return
+
+      try {
+        const resolved = await resolveMedicationsForDuplicate(initialMedications)
         if (cancelled || medicationsUserEditedRef.current) return
         // Merge only mapped drug fields so dosage/frequency/etc. from the
         // original duplicate payload are never dropped by the resolve API.
@@ -918,16 +1021,18 @@ export const CreatePrescriptionModal = ({
             old_medicine_code: r.old_medicine_code || orig.old_medicine_code,
           }
         })
-        applyRows(merged)
-      })
-      .catch(() => {
+        const mergedPinkCodes = await resolvePinkItemCodes(merged.map((med) => med.drug || ''))
+        if (cancelled || medicationsUserEditedRef.current) return
+        applyRows(merged, uomNames, mergedPinkCodes)
+      } catch {
         /* keep original rows; doctor can still pick Item manually */
-      })
+      }
+    })()
 
     return () => {
       cancelled = true
     }
-  }, [initialMedications])
+  }, [initialMedications, ensureUomNames, resolvePinkItemCodes])
 
   useEffect(() => {
     if (!initialCareContext || isEditing) return
@@ -1001,6 +1106,7 @@ export const CreatePrescriptionModal = ({
     }
 
     setDrugScientific((prev) => reindexRecord(prev))
+    setPinkItemRows((prev) => reindexRecord(prev))
     setDrugOptions((prev) => reindexRecord(prev))
     setDrugLoading((prev) => reindexRecord(prev))
     setFrequencyQueries((prev) => reindexRecord(prev))
@@ -1703,9 +1809,12 @@ export const CreatePrescriptionModal = ({
                               </label>
                               <input
                                 type="text"
+                                inputMode="decimal"
                                 value={row.dosage}
-                                onChange={(e) => updateMedicationRow(index, 'dosage', e.target.value)}
-                                placeholder="45mg"
+                                onChange={(e) =>
+                                  updateMedicationRow(index, 'dosage', sanitizeDosageInput(e.target.value))
+                                }
+                                placeholder="45"
                                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                               />
                               {checkingDoseRows[index] ? (
@@ -1959,19 +2068,29 @@ export const CreatePrescriptionModal = ({
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-2">Is Pink</label>
-                              <label className="inline-flex items-center gap-2 cursor-pointer">
+                              <label
+                                className={`inline-flex items-center gap-2 ${
+                                  pinkItemRows[index] ? 'cursor-not-allowed' : 'cursor-pointer'
+                                }`}
+                              >
                                 <input
                                   type="checkbox"
                                   checked={!!row.is_pink}
+                                  disabled={Boolean(pinkItemRows[index])}
                                   onChange={(e) => {
                                     const checked = e.target.checked
                                     updateMedicationRow(index, 'is_pink', checked)
                                     if (!checked) updateMedicationRow(index, 'reference_no', '')
                                   }}
-                                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary disabled:bg-slate-100 disabled:cursor-not-allowed"
                                 />
                                 <span className="text-sm text-slate-600">Yes</span>
                               </label>
+                              {pinkItemRows[index] ? (
+                                <p className="mt-1 text-[11px] font-medium text-pink-600">
+                                  Pink medicine — set by the item group and cannot be changed.
+                                </p>
+                              ) : null}
                             </div>
                             {!!row.is_pink && (
                               <div>

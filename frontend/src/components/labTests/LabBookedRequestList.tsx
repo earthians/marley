@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Droplet } from 'lucide-react'
+import { Droplet, Printer } from 'lucide-react'
 import {
   fetchServiceRequests,
   type ServiceRequest,
@@ -8,6 +8,7 @@ import {
 import { fetchHealthcarePortalSettings } from '../../services/healthcareSettings'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { useFormatMoney } from '../../hooks/useFormatMoney'
+import { toast } from '../../hooks/useToast'
 import { StatusPill } from '../ui/StatusPill'
 import { PaginationControls, DEFAULT_PAGE_SIZE, type PageSize } from '../ui/PaginationControls'
 import {
@@ -22,6 +23,7 @@ import {
 } from '../../contexts/CardFilterContext'
 import { LabRequestReviewModal } from './LabRequestReviewModal'
 import { LabListingBulkSampleModal } from './LabListingBulkSampleModal'
+import { openLabRequestResultReportPrint } from '../../utils/printLabTestResultReport'
 
 interface LabBookedRequestListProps {
   patient?: string
@@ -134,6 +136,8 @@ export function LabBookedRequestList({
   const [collectFromListing, setCollectFromListing] = useState(false)
   const [selectedNames, setSelectedNames] = useState<Set<string>>(() => new Set())
   const [showBulkCollect, setShowBulkCollect] = useState(false)
+  /** Service Request name currently resolving its Lab Test before printing. */
+  const [printingName, setPrintingName] = useState<string | null>(null)
 
   // Virtual status filter (UI-only) — backend computes from linked Lab Tests.
   // Restored from localStorage so a page refresh stays on the same status tab
@@ -257,6 +261,25 @@ export function LabBookedRequestList({
       }
       return next
     })
+  }
+
+  /**
+   * Print every lab test on a request from the listing row (outside the review modal).
+   * The "Lab Test Print" format expands to the full request, matching the modal's Print.
+   */
+  const handlePrintRequest = async (sr: ServiceRequest) => {
+    if (printingName) return
+    setPrintingName(sr.name)
+    try {
+      const printed = await openLabRequestResultReportPrint(sr.name)
+      if (!printed) {
+        toast.error('No Lab Test available to print for this request.')
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to print Lab Request')
+    } finally {
+      setPrintingName(null)
+    }
   }
 
   const collectButton = collectFromListing ? (
@@ -491,6 +514,18 @@ export function LabBookedRequestList({
                     </div>
                   </div>
                 </button>
+                {vs !== 'booked' ? (
+                  <button
+                    type="button"
+                    title="Print lab results"
+                    aria-label={`Print lab results for ${sr.name}`}
+                    disabled={printingName !== null}
+                    onClick={() => void handlePrintRequest(sr)}
+                    className="flex w-9 shrink-0 items-center justify-center rounded-lg border border-teal-300 bg-white text-teal-700 shadow-sm transition-colors hover:bg-teal-50 disabled:cursor-wait disabled:opacity-50"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </button>
+                ) : null}
               </li>
             )
           })}

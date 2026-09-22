@@ -1018,6 +1018,21 @@ export async function filterItemsInStock(
   )
 }
 
+/**
+ * Subset of the given Item codes that are pink medicines — the Item's Item Group
+ * (or any ancestor) has `custom_is_pink` ticked. The prescription UI keeps the
+ * Is Pink checkbox ticked and read-only for these lines.
+ */
+export async function filterPinkItems(itemCodes: string[]): Promise<string[]> {
+  const codes = itemCodes.map((code) => (code || '').trim()).filter(Boolean)
+  if (!codes.length) return []
+  const { apiRequest } = await import('./apiClient')
+  return apiRequest<string[]>('/api/method/healthcare.api.common.filter_pink_items', {
+    method: 'POST',
+    body: JSON.stringify({ item_codes: codes }),
+  })
+}
+
 export async function fetchDosageForms(search?: string): Promise<LinkFieldOption[]> {
   const params = new URLSearchParams()
   if (search) params.append('search', search)

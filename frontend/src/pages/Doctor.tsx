@@ -1728,11 +1728,23 @@ export const DoctorPage = () => {
             title="Current Prescription"
             filterable={false}
             noHeightLimit
+            onAdd={() => setShowPrescriptionModal(true)}
+            addButtonTitle="Create Prescription"
             headerExtra={<IpMedicationPlanPrintButton />}
           >
-            <RxPage />
+            <RxPage key={prescriptionRefreshKey} />
           </DashboardCard>
         </div>
+        {showPrescriptionModal && (
+          <CreatePrescriptionModal
+            onClose={() => setShowPrescriptionModal(false)}
+            onSuccess={() => {
+              setPrescriptionRefreshKey((prev) => prev + 1)
+              setShowPrescriptionModal(false)
+            }}
+            initialPatient={selectedPatient}
+          />
+        )}
       </div>
     )
   }

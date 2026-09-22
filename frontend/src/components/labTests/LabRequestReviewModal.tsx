@@ -26,6 +26,7 @@ import { StatusPill } from '../ui/StatusPill'
 import { LabTestSampleCollectionModal } from './LabTestSampleCollectionModal'
 import { LabTestEnterResultsModal } from './LabTestEnterResultsModal'
 import { openLabSampleBarcodePrint } from '../../utils/printLabSampleBarcodeLabel'
+import { openLabTestResultReportPrint } from '../../utils/printLabTestResultReport'
 import { showLabTestRuleFeedback } from '../../utils/labTestRuleFeedback'
 import {
   buildPatientFormulaContext,
@@ -322,15 +323,8 @@ export function LabRequestReviewModal({
       toast.error('No Lab Test available to print for this group.')
       return
     }
-    const params = new URLSearchParams({
-      doctype: 'Lab Test',
-      name: firstChild,
-      format: 'Lab Test Print',
-      trigger_print: '1',
-      no_letterhead: '0',
-    })
-    const base = typeof window !== 'undefined' ? window.location.origin : ''
-    window.open(`${base}/printview?${params.toString()}`, '_blank', 'noopener,noreferrer')
+    // "Lab Test Print" expands to every Lab Test on the Service Request (all groups).
+    openLabTestResultReportPrint(firstChild)
   }, [])
 
   const printBarcode = useCallback(() => {

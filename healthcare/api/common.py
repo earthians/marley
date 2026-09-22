@@ -1207,6 +1207,19 @@ def _item_group_chain_has_custom_is_pink(item_group_name, cache):
 	return result
 
 
+def is_item_pink(item, cache=None):
+	"""True when the Item's Item Group (or any ancestor) has ``custom_is_pink`` ticked.
+
+	Pink medicines are controlled items — the flag is derived from the Item Group
+	and is never entered by hand on the prescription line.
+	"""
+	item = (item or '').strip()
+	if not item:
+		return False
+	item_group = frappe.db.get_value('Item', item, 'item_group')
+	return bool(_item_group_chain_has_custom_is_pink(item_group, cache if cache is not None else {}))
+
+
 def _prescription_warehouse_for_cost_center(cost_center):
 	"""Branch pharmacy/prescription warehouse from Healthcare Settings (prescr_warehouse)."""
 	cost_center = (cost_center or "").strip()
@@ -1423,6 +1436,36 @@ def filter_items_in_stock(item_codes=None, warehouse=None, cost_center=None):
 		"in_stock": in_stock,
 		"out_of_stock": out_of_stock,
 	}
+
+
+@frappe.whitelist()
+def filter_pink_items(item_codes=None):
+	"""Return the subset of the given Item codes that are pink medicines.
+
+	Pink medicines belong to an Item Group (or an ancestor group) with
+	``custom_is_pink`` ticked. The prescription UI keeps Is Pink ticked and
+	read-only for these rows.
+	"""
+	import json
+
+	if isinstance(item_codes, str):
+		try:
+			item_codes = json.loads(item_codes)
+		except (TypeError, ValueError):
+			item_codes = [c.strip() for c in item_codes.split(",") if c.strip()]
+
+	codes = []
+	seen = set()
+	for raw in item_codes or []:
+		code = (raw or "").strip()
+		if code and code not in seen:
+			seen.add(code)
+			codes.append(code)
+	if not codes:
+		return []
+
+	cache = {}
+	return [code for code in codes if is_item_pink(code, cache)]
 
 
 @frappe.whitelist()
