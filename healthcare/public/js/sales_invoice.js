@@ -262,14 +262,14 @@ var make_list_row = function (columns, invoice_healthcare_services, result = {})
 
 var set_primary_action = function (frm, dialog, $results, invoice_healthcare_services) {
 	var me = this;
-	dialog.set_primary_action(__("Add"), function () {
+	dialog.set_primary_action(__("Add"), async function () {
 		let checked_values = get_checked_values($results);
 		if (checked_values.length > 0) {
 			if (invoice_healthcare_services) {
 				frm.set_value("patient", dialog.fields_dict.patient.input.value);
 			}
 			frm.set_value("items", []);
-			add_to_item_line(frm, checked_values, invoice_healthcare_services);
+			await add_to_item_line(frm, checked_values, invoice_healthcare_services);
 			dialog.hide();
 		} else {
 			if (invoice_healthcare_services) {
