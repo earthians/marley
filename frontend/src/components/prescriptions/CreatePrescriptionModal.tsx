@@ -24,6 +24,7 @@ import {
   fetchLongActingFrequencies,
   fetchRouteOfAdministrationList,
   resolvePrescriptionDrugRoute,
+  resolvePrescriptionDrugPharmaceuticalForm,
   fetchDoc,
   type LinkFieldOption,
 } from '../../services/common'
@@ -74,6 +75,8 @@ import { DoseLimitHint } from './DoseLimitHint'
 import { DateFilterInput } from '../ui/DateFilterInput'
 import { localDateInputValue } from '../../utils/formatDate'
 import { normalizeDosageUom, sanitizeDosageInput } from '../../utils/prescriptionDosage'
+import { withDosageFormValues } from '../../utils/dosageFormOptions'
+import { DosageFormSelect } from '../ui/DosageFormSelect'
 
 interface CreatePrescriptionModalProps {
   onClose: () => void
@@ -387,6 +390,14 @@ export const CreatePrescriptionModal = ({
   const [uomQueries, setUomQueries] = useState<Record<number, string>>({})
 
   const [dosageForms, setDosageForms] = useState<LinkFieldOption[]>([])
+  /**
+   * Dosage Form options plus any stored value (legacy "Tablet" vs master "TABLET")
+   * so a row's select never renders blank.
+   */
+  const dosageFormSelectOptions = useMemo(
+    () => withDosageFormValues(dosageForms, medications.map((med) => med.dosage_form)),
+    [dosageForms, medications],
+  )
   const [frequencyOptions, setFrequencyOptions] = useState<LinkFieldOption[]>([])
   const [longActingFrequencyOptions, setLongActingFrequencyOptions] = useState<LinkFieldOption[]>([])
   const [routeOptions, setRouteOptions] = useState<LinkFieldOption[]>([])
@@ -641,6 +652,8 @@ export const CreatePrescriptionModal = ({
 
   const applyDrugSelection = async (index: number, opt: LinkFieldOption) => {
     const route = (await resolvePrescriptionDrugRoute(opt)).trim()
+    // Pharmaceutical form from the Item master — prefills Dosage Form when set.
+    const pharmaceuticalForm = (await resolvePrescriptionDrugPharmaceuticalForm(opt)).trim()
     // UOM defaults to UNIT on every prescription line (editable if it differs).
     const stockUom = 'UNIT'
     setMedications((prev) => {
@@ -654,6 +667,8 @@ export const CreatePrescriptionModal = ({
         is_pink: Boolean(opt.is_pink),
         reference_no: opt.is_pink ? next[index].reference_no || '' : '',
         ...(route ? { route_of_administration: route } : {}),
+        // No Item form → leave Dosage Form for the doctor to pick.
+        ...(pharmaceuticalForm ? { dosage_form: pharmaceuticalForm } : {}),
       }
       return next
     })
@@ -1996,18 +2011,12 @@ export const CreatePrescriptionModal = ({
                               <label className="block text-xs font-medium text-slate-600 mb-1">
                                 Dosage Form
                               </label>
-                              <select
+                              <DosageFormSelect
                                 value={row.dosage_form}
-                                onChange={(e) => updateMedicationRow(index, 'dosage_form', e.target.value)}
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                              >
-                                <option value="">Select...</option>
-                                {dosageForms.map((df) => (
-                                  <option key={df.name} value={df.name}>
-                                    {df.label || df.name}
-                                  </option>
-                                ))}
-                              </select>
+                                options={dosageFormSelectOptions}
+                                onChange={(value) => updateMedicationRow(index, 'dosage_form', value)}
+                                placeholder="Type or select form..."
+                              />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -2086,11 +2095,6 @@ export const CreatePrescriptionModal = ({
                                 />
                                 <span className="text-sm text-slate-600">Yes</span>
                               </label>
-                              {pinkItemRows[index] ? (
-                                <p className="mt-1 text-[11px] font-medium text-pink-600">
-                                  Pink medicine — set by the item group and cannot be changed.
-                                </p>
-                              ) : null}
                             </div>
                             {!!row.is_pink && (
                               <div>

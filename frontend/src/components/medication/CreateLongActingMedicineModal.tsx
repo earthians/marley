@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   CREATE_MODAL_OVERLAY,
   CreateModalHeader,
@@ -24,6 +24,8 @@ import { LONG_ACTING_FREQUENCY_OPTIONS, fetchPrescriptions } from '../../service
 import { toast } from '../../hooks/useToast'
 import { X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { DateFilterInput } from '../ui/DateFilterInput'
+import { withDosageFormValues } from '../../utils/dosageFormOptions'
+import { DosageFormSelect } from '../ui/DosageFormSelect'
 
 interface CreateLongActingMedicineModalProps {
   initialPatient?: string
@@ -218,6 +220,11 @@ export const CreateLongActingMedicineModal = ({
   const [practitioners, setPractitioners] = useState<LinkFieldOption[]>([])
   const [companies, setCompanies] = useState<LinkFieldOption[]>([])
   const [dosageForms, setDosageForms] = useState<LinkFieldOption[]>([])
+  /** Dosage Form options plus each row's value (legacy spelling) so a select never renders blank. */
+  const dosageFormSelectOptions = useMemo(
+    () => withDosageFormValues(dosageForms, medications.map((med) => med.dosage_form)),
+    [dosageForms, medications],
+  )
   const [frequencies, setFrequencies] = useState<LinkFieldOption[]>([])
   const [practQuery, setPractQuery] = useState('')
   const {
@@ -764,6 +771,9 @@ export const CreateLongActingMedicineModal = ({
                                     updateMedicationRow(index, 'dosage', rx.dosage || '')
                                     if (rx.dosage_form) updateMedicationRow(index, 'dosage_form', rx.dosage_form)
                                     if (rx.patient_frequency) updateMedicationRow(index, 'patient_frequency', rx.patient_frequency)
+                                  } else if (opt.pharmaceutical_form) {
+                                    // No prescription line — prefill from the Item's pharmaceutical form.
+                                    updateMedicationRow(index, 'dosage_form', opt.pharmaceutical_form)
                                   }
                                   setDrugQueries((prev) => ({
                                     ...prev,
@@ -802,20 +812,15 @@ export const CreateLongActingMedicineModal = ({
                               <label className="block text-xs font-medium text-slate-600 mb-1">
                                 Dosage Form <span className="text-red-500">*</span>
                               </label>
-                              <select
+                              <DosageFormSelect
                                 value={row.dosage_form}
-                                onChange={(e) =>
-                                  updateMedicationRow(index, 'dosage_form', e.target.value)
-                                }
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                              >
-                                <option value="">Select...</option>
-                                {dosageForms.map((df) => (
-                                  <option key={df.name} value={df.name}>
-                                    {df.label || df.name}
-                                  </option>
-                                ))}
-                              </select>
+                                options={dosageFormSelectOptions}
+                                onChange={(value) => updateMedicationRow(index, 'dosage_form', value)}
+                                placeholder="Type or select form..."
+                                inputClassName="w-full rounded-md border border-slate-300 px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                                dropdownClassName="absolute z-30 mt-1 w-full max-h-52 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg"
+                                optionClassName="w-full px-3 py-2 text-left text-sm transition hover:bg-primary/5 focus:outline-none"
+                              />
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">

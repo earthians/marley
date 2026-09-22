@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import {
   fetchPrescriptionByInpatientOrEncounter,
@@ -30,6 +30,8 @@ import {
 } from '../../utils/prescriptionType'
 import { prescriptionNeedsSignature, prescriptionIsSigned } from '../../utils/prescriptionSigning'
 import { sanitizeDosageInput } from '../../utils/prescriptionDosage'
+import { withDosageFormValues } from '../../utils/dosageFormOptions'
+import { DosageFormSelect } from '../ui/DosageFormSelect'
 import { RefreshCw, MoreVertical, Plus, X, ChevronDown, History } from 'lucide-react'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { CreatePrescriptionModal } from './CreatePrescriptionModal'
@@ -66,6 +68,7 @@ import {
   fetchDosageForms,
   fetchStandardUoms,
   resolvePrescriptionDrugRoute,
+  resolvePrescriptionDrugPharmaceuticalForm,
   fetchHealthcarePractitioners,
   getCurrentUserPractitioner,
   getCurrentUserPractitionerOption,
@@ -384,6 +387,12 @@ export const EditMedicationEntryModal = ({
 
   const formIsLongActing =
     Boolean(form.is_long_acting) || isLongActingPrescriptionType(String(form.medication_type || ''))
+
+  /** Dosage Form options plus this line's stored value (legacy spelling) so the select never renders blank. */
+  const dosageFormSelectOptions = useMemo(
+    () => withDosageFormValues(dosageFormOptions, [form.dosage_form]),
+    [dosageFormOptions, form.dosage_form],
+  )
 
   useEffect(() => {
     fetchDosageForms().then(setDosageFormOptions).catch(() => setDosageFormOptions([]))
@@ -751,11 +760,13 @@ export const EditMedicationEntryModal = ({
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Dosage Form</label>
-              <select value={form.dosage_form} onChange={(e) => updateField('dosage_form', e.target.value)} disabled={disabled}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500">
-                <option value="">Select...</option>
-                {dosageFormOptions.map((df) => <option key={df.name} value={df.name}>{df.label || df.name}</option>)}
-              </select>
+              <DosageFormSelect
+                value={form.dosage_form}
+                options={dosageFormSelectOptions}
+                onChange={(value) => updateField('dosage_form', value)}
+                disabled={disabled}
+                placeholder="Type or select form..."
+              />
             </div>
           </div>
 
@@ -867,11 +878,6 @@ export const EditMedicationEntryModal = ({
                 />
                 Is Pink
               </label>
-              {pinkItemLocked ? (
-                <p className="mt-1 text-[11px] font-medium text-pink-600">
-                  Pink medicine — set by the item group and cannot be changed.
-                </p>
-              ) : null}
             </div>
             {!!form.is_pink && (
               <div>
@@ -1051,6 +1057,12 @@ export const AddMedicationEntryModal = ({
 
   const formIsLongActing =
     Boolean(form.is_long_acting) || isLongActingPrescriptionType(String(form.medication_type || ''))
+
+  /** Dosage Form options plus the chosen value so the select never renders blank. */
+  const addDosageFormSelectOptions = useMemo(
+    () => withDosageFormValues(addDosageForms, [form.dosage_form]),
+    [addDosageForms, form.dosage_form],
+  )
 
   useEffect(() => {
     fetchDosageForms().then(setAddDosageForms).catch(() => setAddDosageForms([]))
@@ -1309,6 +1321,8 @@ export const AddMedicationEntryModal = ({
               onOpen={() => loadDrugOptions(drugQuery || '')}
               onSelect={async (opt) => {
                 const route = (await resolvePrescriptionDrugRoute(opt)).trim()
+                // Pharmaceutical form from the Item master — prefills Dosage Form when set.
+                const pharmaceuticalForm = (await resolvePrescriptionDrugPharmaceuticalForm(opt)).trim()
                 // Match create prescription: UOM defaults to UNIT
                 const stockUom = 'UNIT'
                 setForm((f) => ({
@@ -1319,6 +1333,8 @@ export const AddMedicationEntryModal = ({
                   is_pink: Boolean(opt.is_pink),
                   reference_no: opt.is_pink ? f.reference_no || '' : '',
                   ...(route ? { route_of_administration: route } : {}),
+                  // No Item form → leave Dosage Form for the doctor to pick.
+                  ...(pharmaceuticalForm ? { dosage_form: pharmaceuticalForm } : {}),
                 }))
                 setAddUomQuery(stockUom)
                 // Pink Item Group medicine: Is Pink stays ticked and read-only.
@@ -1394,11 +1410,12 @@ export const AddMedicationEntryModal = ({
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Dosage Form</label>
-              <select value={form.dosage_form} onChange={(e) => updateField('dosage_form', e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25">
-                <option value="">Select...</option>
-                {addDosageForms.map((df) => <option key={df.name} value={df.name}>{df.label || df.name}</option>)}
-              </select>
+              <DosageFormSelect
+                value={form.dosage_form}
+                options={addDosageFormSelectOptions}
+                onChange={(value) => updateField('dosage_form', value)}
+                placeholder="Type or select form..."
+              />
             </div>
           </div>
 
@@ -1507,11 +1524,6 @@ export const AddMedicationEntryModal = ({
                 />
                 Is Pink
               </label>
-              {addPinkItemLocked ? (
-                <p className="mt-1 text-[11px] font-medium text-pink-600">
-                  Pink medicine — set by the item group and cannot be changed.
-                </p>
-              ) : null}
             </div>
             {!!form.is_pink && (
               <div>

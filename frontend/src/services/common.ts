@@ -30,6 +30,8 @@ export interface LinkFieldOption {
   cost_center?: string
   /** From Item.custom_route_of_administration when present — prefills prescription route */
   default_route_of_administration?: string
+  /** From Item.custom_pharmaceutical_form when present — prefills prescription dosage form */
+  pharmaceutical_form?: string
   /** Prescription drug: item group (or ancestor) has Item Group.custom_is_pink */
   is_pink?: boolean
   code_value?: string
@@ -965,6 +967,26 @@ export async function fetchItemRouteOfAdministration(item: string): Promise<stri
   const data = await res.json()
   const route = typeof data?.message === 'string' ? data.message.trim() : ''
   return route || null
+}
+
+/** Item master pharmaceutical form (dosage form), e.g. TABLET / CAPSULE. */
+export async function fetchItemPharmaceuticalForm(item: string): Promise<string | null> {
+  const itemName = (item || '').trim()
+  if (!itemName) return null
+  const params = new URLSearchParams({ item: itemName })
+  const res = await fetch(
+    `/api/method/healthcare.api.common.get_item_pharmaceutical_form?${params.toString()}`
+  )
+  const data = await res.json()
+  const form = typeof data?.message === 'string' ? data.message.trim() : ''
+  return form || null
+}
+
+/** Pharmaceutical form from the drug search option, or fetched from Item master when missing. */
+export async function resolvePrescriptionDrugPharmaceuticalForm(opt: LinkFieldOption): Promise<string> {
+  const direct = opt.pharmaceutical_form?.trim()
+  if (direct) return direct
+  return (await fetchItemPharmaceuticalForm(opt.name)) || ''
 }
 
 /** Route from prescription item search, or fetched from Item master when missing. */
