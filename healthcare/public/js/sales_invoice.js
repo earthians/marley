@@ -269,7 +269,16 @@ var set_primary_action = function (frm, dialog, $results, invoice_healthcare_ser
 				frm.set_value("patient", dialog.fields_dict.patient.input.value);
 			}
 			frm.set_value("items", []);
-			await add_to_item_line(frm, checked_values, invoice_healthcare_services);
+			frappe.dom.freeze(__("Adding items..."));
+			try {
+				await add_to_item_line(
+					frm,
+					checked_values,
+					invoice_healthcare_services,
+				);
+			} finally {
+				frappe.dom.unfreeze();
+			}
 			dialog.hide();
 		} else {
 			if (invoice_healthcare_services) {
