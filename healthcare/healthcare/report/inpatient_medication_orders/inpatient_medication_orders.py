@@ -57,6 +57,8 @@ def get_columns():
 		},
 		{"fieldname": "date", "fieldtype": "Date", "label": "Date", "width": 100},
 		{"fieldname": "time", "fieldtype": "Time", "label": "Time", "width": 100},
+		{"fieldname": "status", "fieldtype": "Data", "label": "Status", "width": 100},
+		{"fieldname": "stop_reason", "fieldtype": "Small Text", "label": "Stop Reason", "width": 180},
 		{"fieldname": "is_completed", "fieldtype": "Check", "label": "Is Order Completed", "width": 100},
 		{
 			"fieldname": "healthcare_practitioner",
@@ -102,6 +104,8 @@ def get_data(filters=None):
 			child.dosage_form,
 			child.date,
 			child.time,
+			child.status,
+			child.stop_reason,
 			child.is_completed,
 			child.name.as_("order_entry"),
 		)
@@ -128,7 +132,7 @@ def get_conditions(query, filters, parent, child):
 		query = query.where(parent.patient == filters.get("patient"))
 
 	if not filters.get("show_completed_orders"):
-		query = query.where(child.is_completed == 0)
+		query = query.where(child.status == "Pending")
 
 	return query
 
@@ -139,7 +143,7 @@ def get_inpatient_details(data, service_unit):
 	for entry in data:
 		entry["healthcare_service_unit"] = get_current_healthcare_service_unit(entry.inpatient_record)
 
-		if entry.is_completed:
+		if entry.status in ("Completed", "Transferred"):
 			entry["inpatient_medication_entry"] = get_inpatient_medication_entry(entry.order_entry)
 
 		if service_unit and entry.healthcare_service_unit and service_unit != entry.healthcare_service_unit:
@@ -161,21 +165,20 @@ def get_chart_data(data):
 	if not data:
 		return None
 
-	labels = ["Pending", "Completed"]
+	labels = ["Pending", "Transferred", "Completed", "Stopped"]
 	datasets = []
 
-	status_wise_data = {"Pending": 0, "Completed": 0}
+	status_wise_data = {status: 0 for status in labels}
 
 	for d in data:
-		if d.is_completed:
-			status_wise_data["Completed"] += 1
-		else:
-			status_wise_data["Pending"] += 1
+		status = d.status or "Pending"
+		if status in status_wise_data:
+			status_wise_data[status] += 1
 
 	datasets.append(
 		{
 			"name": "Inpatient Medication Order Status",
-			"values": [status_wise_data.get("Pending"), status_wise_data.get("Completed")],
+			"values": [status_wise_data.get(status) for status in labels],
 		}
 	)
 
