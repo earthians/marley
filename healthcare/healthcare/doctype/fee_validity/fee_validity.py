@@ -5,8 +5,9 @@ import datetime
 import json
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
+from frappe.utils import get_link_to_form, getdate
 
 
 class FeeValidity(Document):
@@ -22,190 +23,371 @@ class FeeValidity(Document):
 			self.status = "Active"
 
 
-def create_fee_validity(appointment):
-	if patient_has_validity(appointment):
+VISIT_DOCTYPES = ("Patient Appointment", "Patient Encounter")
+
+
+def validate_visit_doctype(reference_dt):
+	if reference_dt not in VISIT_DOCTYPES:
+		frappe.throw(_("{0} is not a visit").format(frappe.bold(reference_dt)))
+
+
+def validate_read_access(doctype, name=None):
+	"""A whitelisted lookup must not reveal a validity for a record the caller cannot read"""
+	if not frappe.has_permission(doctype, "read", name):
+		frappe.throw(_("Not permitted to read {0} {1}").format(doctype, name or ""), frappe.PermissionError)
+
+
+def validate_visit_access(visit):
+	"""The caller must be able to read the patient, and the visit itself once it is saved"""
+	validate_read_access("Patient", visit.patient)
+	if not visit.get("__islocal"):
+		validate_read_access(visit.doctype, visit.name)
+
+
+def get_visit_date(visit):
+	if visit.doctype == "Patient Encounter":
+		return getdate(visit.encounter_date)
+	return getdate(visit.appointment_date)
+
+
+def get_visit_department(visit):
+	if visit.doctype == "Patient Encounter":
+		return visit.medical_department
+	return visit.department
+
+
+def is_visit_cancelled(visit):
+	if visit.doctype == "Patient Encounter":
+		return visit.docstatus == 2
+	return visit.status == "Cancelled"
+
+
+def covers_visit_date(fee_validity, date):
+	"""A validity may serve a visit made before it started, but not one made before it existed.
+
+	A future dated appointment opens a validity that starts tomorrow, and today's encounter
+	should still use it. A visit backdated to last year should not.
+	"""
+	return date >= fee_validity.start_date or date >= getdate(fee_validity.creation)
+
+
+def is_inpatient_visit(visit):
+	"""Inpatient visits are billed with the admission, they are not outpatient follow ups."""
+	if visit.get("inpatient_record"):
+		return True
+
+	inpatient_record = frappe.db.get_value("Patient", visit.patient, "inpatient_record")
+	if not inpatient_record:
+		return False
+
+	return frappe.db.get_value("Inpatient Record", inpatient_record, "status") == "Admitted"
+
+
+def is_free_follow_up_enabled(practitioner, doctype="Patient Appointment"):
+	"""Free follow ups apply when enabled for the practitioner or in Healthcare Settings."""
+	if not practitioner:
+		return False
+
+	if doctype == "Patient Encounter" and not frappe.db.get_single_value(
+		"Healthcare Settings", "apply_free_follow_ups_on_encounters"
+	):
+		return False
+
+	pract_enabled = frappe.get_cached_value("Healthcare Practitioner", practitioner, "enable_free_follow_ups")
+	settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
+
+	return bool(pract_enabled or settings_enabled)
+
+
+def lock_patient(patient):
+	"""Serialize every fee validity write for a patient until the transaction ends.
+
+	Two visits submitted together must not both find no validity and open one each, nor both read
+	the same visit count and overwrite each other. Under REPEATABLE READ a plain read after the
+	lock still sees the transaction's old snapshot, so the reads inside the critical section that
+	another visit could have changed are locking reads (for_update) as well.
+	"""
+	frappe.db.get_value("Patient", patient, "name", for_update=True)
+
+
+def create_fee_validity(visit):
+	if patient_has_validity(visit):
 		return
 
 	settings = frappe.get_single("Healthcare Settings")
 	valid_days, max_visits = settings.valid_days, settings.max_visits
-	pract_enabled = False
-	if appointment.practitioner:
-		pract_enabled = frappe.get_cached_value(
-			"Healthcare Practitioner", appointment.practitioner, "enable_free_follow_ups"
+	# a visit always has a practitioner here, free follow ups are never enabled without one
+	if frappe.get_cached_value("Healthcare Practitioner", visit.practitioner, "enable_free_follow_ups"):
+		valid_days, max_visits = frappe.get_cached_value(
+			"Healthcare Practitioner", visit.practitioner, ["valid_days", "max_visits"]
 		)
 
-		if pract_enabled:
-			valid_days, max_visits = frappe.get_cached_value(
-				"Healthcare Practitioner", appointment.practitioner, ["valid_days", "max_visits"]
-			)
+	visit_date = get_visit_date(visit)
 
 	fee_validity = frappe.new_doc("Fee Validity")
-	fee_validity.practitioner = appointment.practitioner
-	fee_validity.patient = appointment.patient
-	fee_validity.medical_department = appointment.department
-	fee_validity.patient_appointment = appointment.name
+	fee_validity.practitioner = visit.practitioner
+	fee_validity.patient = visit.patient
+	fee_validity.medical_department = get_visit_department(visit)
+	fee_validity.reference_dt = visit.doctype
+	fee_validity.reference_dn = visit.name
 	fee_validity.sales_invoice_ref = frappe.db.get_value(
-		"Sales Invoice Item", {"reference_dn": appointment.name}, "parent"
+		"Sales Invoice Item", {"reference_dt": visit.doctype, "reference_dn": visit.name}, "parent"
 	)
 	fee_validity.max_visits = max_visits or 1
 	fee_validity.visited = 0
-	fee_validity.start_date = getdate(appointment.appointment_date)
-	fee_validity.valid_till = getdate(appointment.appointment_date) + datetime.timedelta(
-		days=int(valid_days or 1)
-	)
+	fee_validity.start_date = visit_date
+	fee_validity.valid_till = visit_date + datetime.timedelta(days=int(valid_days or 1))
 	fee_validity.save(ignore_permissions=True)
 
 	return fee_validity
 
 
-def patient_has_validity(appointment):
-	validity_exists = frappe.db.exists(
+def patient_has_validity(visit):
+	"""A patient can hold only one active validity per practitioner at a time."""
+	visit_date = get_visit_date(visit)
+	validity = frappe.db.get_value(
 		"Fee Validity",
 		{
-			"practitioner": appointment.practitioner,
-			"patient": appointment.patient,
+			"practitioner": visit.practitioner,
+			"patient": visit.patient,
 			"status": "Active",
-			"valid_till": [">=", appointment.appointment_date],
-			"start_date": ["<=", appointment.appointment_date],
+			"valid_till": [">=", visit_date],
 		},
+		["name", "start_date", "creation"],
+		as_dict=True,
+		for_update=True,
 	)
 
-	return validity_exists
+	return bool(validity and covers_visit_date(validity, visit_date))
 
 
 @frappe.whitelist()
-def check_fee_validity(appointment, date=None, practitioner=None):
-	if isinstance(appointment, str):
-		appointment = frappe.get_doc(json.loads(appointment))
+def check_fee_validity(
+	visit: str | Document,
+	date: str | datetime.date | None = None,
+	practitioner: str | None = None,
+) -> Document | None:
+	if isinstance(visit, str):
+		visit = json.loads(visit)
+		validate_visit_doctype(visit.get("doctype"))
+		visit = frappe.get_doc(visit)
 
-	practitioner = practitioner if practitioner else appointment.practitioner
-	if not practitioner:
+	validate_visit_access(visit)
+	fee_validity = find_fee_validity(visit, date, practitioner)
+	if fee_validity:
+		validate_read_access("Fee Validity", fee_validity.name)
+	return fee_validity
+
+
+def find_fee_validity(visit, date=None, practitioner=None, for_update=False):
+	"""The validity covering this visit; for_update reads and locks the latest committed row"""
+	if isinstance(visit, str):
+		visit = frappe.get_doc(json.loads(visit))
+
+	practitioner = practitioner if practitioner else visit.practitioner
+	if not practitioner or is_inpatient_visit(visit):
 		return
 
 	# Check if free follow-ups are enabled
-	pract_enabled = frappe.get_cached_value("Healthcare Practitioner", practitioner, "enable_free_follow_ups")
-	settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
-	if not (pract_enabled or settings_enabled):
+	if not is_free_follow_up_enabled(practitioner, visit.doctype):
 		return
 
-	date = getdate(date) if date else appointment.appointment_date
+	date = getdate(date) if date else get_visit_date(visit)
 
 	filters = {
 		"practitioner": practitioner,
-		"patient": appointment.patient,
+		"patient": visit.patient,
 		"valid_till": (">=", date),
-		"start_date": ("<=", date),
 	}
-	if appointment.status != "Cancelled":
+	if not is_visit_cancelled(visit):
 		filters["status"] = "Active"
 	else:
-		filters["patient_appointment"] = appointment.name
+		filters["reference_dt"] = visit.doctype
+		filters["reference_dn"] = visit.name
 
-	validity = frappe.db.exists(
-		"Fee Validity",
-		filters,
+	validity = frappe.db.get_value(
+		"Fee Validity", filters, ["name", "start_date", "creation"], as_dict=True, for_update=for_update
 	)
 
-	if validity:
-		return frappe.get_doc("Fee Validity", validity)
+	if validity and covers_visit_date(validity, date):
+		return frappe.get_doc("Fee Validity", validity.name, for_update=for_update)
 
-	# Fallback for rescheduled appointments
-	if appointment.get("__islocal"):
+	# Fallback for rescheduled visits
+	if visit.get("__islocal"):
 		return
 
-	validity = get_fee_validity(appointment.get("name"), date, ignore_status=True) or None
+	validity = (
+		query_fee_validity(visit.get("name"), date, ignore_status=True, reference_dt=visit.doctype) or None
+	)
 	if validity and len(validity):
 		return frappe.get_doc("Fee Validity", validity[0].get("name"))
 
-	return
 
-
-def manage_fee_validity(appointment):
-	settings_enabled = frappe.db.get_single_value("Healthcare Settings", "enable_free_follow_ups")
-	pract_enabled = False
-	free_follow_ups = False
-
-	if appointment.practitioner:
-		pract_enabled = frappe.db.get_value(
-			"Healthcare Practitioner", appointment.practitioner, "enable_free_follow_ups"
-		)
-		free_follow_ups = pract_enabled or settings_enabled
-
-	if not free_follow_ups:
+def manage_fee_validity(visit):
+	if is_inpatient_visit(visit) or not is_free_follow_up_enabled(visit.practitioner, visit.doctype):
 		return
 
-	# Update fee validity dates when rescheduling an invoiced appointment
-	invoiced_fee_validity = frappe.db.exists("Fee Validity", {"patient_appointment": appointment.name})
-	if invoiced_fee_validity and appointment.invoiced:
+	lock_patient(visit.patient)
+	pract_enabled = frappe.db.get_value(
+		"Healthcare Practitioner", visit.practitioner, "enable_free_follow_ups"
+	)
+	visit_date = get_visit_date(visit)
+
+	# Update fee validity dates when rescheduling an invoiced visit
+	invoiced_fee_validity = frappe.db.exists(
+		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+	)
+	if invoiced_fee_validity and visit.get("invoiced"):
 		start_date = frappe.db.get_value("Fee Validity", invoiced_fee_validity, "start_date")
-		if getdate(appointment.appointment_date) != start_date:
+		if visit_date != start_date:
 			valid_days = frappe.db.get_single_value("Healthcare Settings", "valid_days")
 			if pract_enabled:
-				valid_days = frappe.db.get_value(
-					"Healthcare Practitioner", appointment.practitioner, "valid_days"
-				)
+				valid_days = frappe.db.get_value("Healthcare Practitioner", visit.practitioner, "valid_days")
 			frappe.db.set_value(
 				"Fee Validity",
 				invoiced_fee_validity,
 				{
-					"start_date": appointment.appointment_date,
-					"valid_till": getdate(appointment.appointment_date)
-					+ datetime.timedelta(days=int(valid_days or 1)),
+					"start_date": visit_date,
+					"valid_till": visit_date + datetime.timedelta(days=int(valid_days or 1)),
 				},
 			)
 
 	# Check for existing valid fee
-	fee_validity = check_fee_validity(appointment)
+	fee_validity = find_fee_validity(visit, for_update=True)
 
 	if fee_validity:
-		exists = frappe.db.exists("Fee Validity Reference", {"appointment": appointment.name})
-		if appointment.status == "Cancelled" and fee_validity.visited > 0:
+		exists = frappe.db.exists(
+			"Fee Validity Reference", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+		)
+		if is_visit_cancelled(visit) and fee_validity.visited > 0:
 			fee_validity.visited -= 1
-			frappe.db.delete("Fee Validity Reference", {"appointment": appointment.name})
+			frappe.db.delete(
+				"Fee Validity Reference", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+			)
 		elif fee_validity.status != "Active":
 			return
-		elif appointment.name != fee_validity.patient_appointment and not exists:
+		elif visit.name != fee_validity.reference_dn and not exists:
 			fee_validity.visited += 1
-			fee_validity.append("ref_appointments", {"appointment": appointment.name})
+			fee_validity.append(
+				"reference_visits", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+			)
+			if visit_date < fee_validity.start_date:
+				# the validity now serves a visit earlier than the one that opened it
+				fee_validity.start_date = visit_date
+
+		if not fee_validity.sales_invoice_ref:
+			# an encounter is invoiced after the validity is created, unlike an appointment
+			fee_validity.sales_invoice_ref = frappe.db.get_value(
+				"Sales Invoice Item", {"reference_dt": visit.doctype, "reference_dn": visit.name}, "parent"
+			)
+
 		fee_validity.save(ignore_permissions=True)
 	else:
-		# remove appointment from fee validity reference when rescheduling an appointment to date not in fee validity
+		# remove visit from fee validity reference when rescheduling a visit to date not in fee validity
 		free_visit_validity = frappe.db.get_value(
-			"Fee Validity Reference", {"appointment": appointment.name}, "parent"
+			"Fee Validity Reference", {"reference_dt": visit.doctype, "reference_dn": visit.name}, "parent"
 		)
 		if free_visit_validity:
-			fee_validity = frappe.get_doc(
-				"Fee Validity",
-				free_visit_validity,
+			fee_validity = frappe.get_doc("Fee Validity", free_visit_validity, for_update=True)
+			frappe.db.delete(
+				"Fee Validity Reference", {"reference_dt": visit.doctype, "reference_dn": visit.name}
 			)
-			frappe.db.delete("Fee Validity Reference", {"appointment": appointment.name})
 			if fee_validity.visited > 0:
 				fee_validity.visited -= 1
 				fee_validity.save(ignore_permissions=True)
 
-		fee_validity = create_fee_validity(appointment)
+		fee_validity = create_fee_validity(visit)
 
 	return fee_validity
 
 
-@frappe.whitelist()
-def get_fee_validity(appointment_name, date, ignore_status=False):
-	"""
-	Get the fee validity details for the free visit appointment
-	:params appointment_name: Appointment doc name
-	:params date: Schedule date
-	:params ignore_status: status will not filter in query
-	:return fee validity name and valid_till values of free visit appointments
-	"""
+def cancel_fee_validity(visit):
+	"""Cancel the validity this visit opened, or give back the visit it consumed.
 
-	if not appointment_name:
-		return None
+	The validity exists only because of the visit that opened it, so it goes with it. An
+	encounter is invoiced after it is submitted, so its invoiced state says nothing here.
+	"""
+	lock_patient(visit.patient)
+	fee_validity = frappe.db.get_value(
+		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}, for_update=True
+	)
+	if fee_validity:
+		validate_free_visits_not_taken(fee_validity)
+		frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
+		return
 
-	appointment_details = frappe.db.get_value(
-		"Patient Appointment", appointment_name, ["patient", "practitioner"], as_dict=True
+	return manage_fee_validity(visit)
+
+
+def set_sales_invoice_reference(reference_dt, reference_dn, sales_invoice=None):
+	"""Stamp the invoice on the validity a visit opened, without ever opening one"""
+	fee_validity = frappe.db.get_value(
+		"Fee Validity", {"reference_dt": reference_dt, "reference_dn": reference_dn}
+	)
+	if fee_validity:
+		frappe.db.set_value("Fee Validity", fee_validity, "sales_invoice_ref", sales_invoice)
+
+
+def validate_fee_validity_cancellation(visit):
+	"""A visit cannot be cancelled while free visits stand against the validity it opened.
+
+	This runs before anything is written, so the cancellation is refused rather than rolled back.
+	"""
+	fee_validity = frappe.db.get_value(
+		"Fee Validity", {"reference_dt": visit.doctype, "reference_dn": visit.name}
+	)
+	if fee_validity:
+		validate_free_visits_not_taken(fee_validity)
+
+
+def validate_free_visits_not_taken(fee_validity):
+	"""Free visits already taken would be left without the validity that made them free"""
+	free_visits = frappe.get_all(
+		"Fee Validity Reference", {"parent": fee_validity}, ["reference_dt", "reference_dn"]
+	)
+	if not free_visits:
+		return
+
+	frappe.throw(
+		_("Cannot cancel, {0} taken against Fee Validity {1}. Cancel {2} first.").format(
+			frappe.bold(_("free visits")),
+			get_link_to_form("Fee Validity", fee_validity),
+			", ".join(get_link_to_form(visit.reference_dt, visit.reference_dn) for visit in free_visits),
+		),
+		title=_("Free Visits Taken"),
 	)
 
-	if not appointment_details:
+
+@frappe.whitelist()
+def get_fee_validity(
+	reference_dn: str | None,
+	date: str | datetime.date,
+	ignore_status: bool = False,
+	reference_dt: str = "Patient Appointment",
+) -> list[dict] | None:
+	"""
+	Get the fee validity details for the free visit
+	:params reference_dn: Patient Appointment or Patient Encounter doc name
+	:params date: Schedule date
+	:params ignore_status: status will not filter in query
+	:params reference_dt: Patient Appointment or Patient Encounter
+	:return fee validity name and valid_till values of free visits
+	"""
+	validate_visit_doctype(reference_dt)
+	validate_read_access(reference_dt, reference_dn)
+	return query_fee_validity(reference_dn, date, ignore_status, reference_dt)
+
+
+def query_fee_validity(reference_dn, date, ignore_status=False, reference_dt="Patient Appointment"):
+	if not reference_dn:
+		return None
+
+	if reference_dt not in ("Patient Appointment", "Patient Encounter"):
+		frappe.throw(_(f"Invalid reference doctype {reference_dt}"))
+
+	visit_details = frappe.db.get_value(reference_dt, reference_dn, ["patient", "practitioner"], as_dict=True)
+
+	if not visit_details:
 		return None
 
 	fee_validity = frappe.qb.DocType("Fee Validity")
@@ -216,11 +398,11 @@ def get_fee_validity(appointment_name, date, ignore_status=False):
 		.inner_join(child)
 		.on(fee_validity.name == child.parent)
 		.select(fee_validity.name, fee_validity.valid_till)
-		.where(fee_validity.start_date <= date)
 		.where(fee_validity.valid_till >= date)
-		.where(fee_validity.patient == appointment_details.patient)
-		.where(fee_validity.practitioner == appointment_details.practitioner)
-		.where(child.appointment == appointment_name)
+		.where(fee_validity.patient == visit_details.patient)
+		.where(fee_validity.practitioner == visit_details.practitioner)
+		.where(child.reference_dt == reference_dt)
+		.where(child.reference_dn == reference_dn)
 	)
 
 	if not ignore_status:

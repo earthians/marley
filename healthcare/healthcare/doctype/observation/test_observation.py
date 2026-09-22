@@ -10,6 +10,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.service_request.service_request import make_observation
+from healthcare.healthcare.doctype.observation.observation import add_note
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -315,6 +316,27 @@ class TestObservation(HealthcareTestSuite):
 		self.assertIn("Normal", observation.result_text)
 		self.assertNotIn("onerror", observation.result_interpretation)
 		self.assertIn("High", observation.result_interpretation)
+		self.assertNotIn("onclick", observation.note)
+		self.assertIn("Note", observation.note)
+
+	def test_add_note_sanitizes_unsafe_html(self):
+		observation = frappe.get_doc(
+			{
+				"doctype": "Observation",
+				"observation_template": "_Test Observation without Sample",
+				"patient": self.get_test_patient(),
+				"company": "_Test Company",
+				"observation_category": "Laboratory",
+			}
+		).insert()
+
+		add_note(
+			note='<p onclick="steal_data()">Note</p><script>alert(1)</script>',
+			observation=observation.name,
+		)
+
+		observation.reload()
+		self.assertNotIn("<script", observation.note)
 		self.assertNotIn("onclick", observation.note)
 		self.assertIn("Note", observation.note)
 

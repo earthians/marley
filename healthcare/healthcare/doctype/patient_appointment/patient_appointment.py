@@ -24,9 +24,12 @@ from erpnext.setup.doctype.employee.employee import is_holiday
 
 from healthcare.healthcare.api.patient_portal import update_payment_record
 from healthcare.healthcare.doctype.fee_validity.fee_validity import (
-	check_fee_validity,
-	get_fee_validity,
+	cancel_fee_validity,
+	find_fee_validity,
 	manage_fee_validity,
+	query_fee_validity,
+	validate_fee_validity_cancellation,
+	validate_visit_access,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
@@ -80,7 +83,7 @@ class PatientAppointment(Document):
 		send_confirmation_msg(self)
 		self.insert_calendar_event()
 
-		if self.insurance_policy and self.appointment_type and not check_fee_validity(self):
+		if self.insurance_policy and self.appointment_type and not find_fee_validity(self):
 			if frappe.db.get_single_value("Healthcare Settings", "show_payment_popup"):
 				# TODO: apply insurance coverage
 				frappe.msgprint(
@@ -535,12 +538,12 @@ def invoice_appointment(
 	settings = frappe.get_single("Healthcare Settings")
 
 	if settings.enable_free_follow_ups:
-		fee_validity = check_fee_validity(appointment_doc)
+		fee_validity = find_fee_validity(appointment_doc)
 
 		if fee_validity and fee_validity.status != "Active":
 			fee_validity = None
 		elif not fee_validity:
-			if get_fee_validity(appointment_doc.name, appointment_doc.appointment_date):
+			if query_fee_validity(appointment_doc.name, appointment_doc.appointment_date):
 				return
 	else:
 		fee_validity = None
@@ -601,6 +604,8 @@ def get_appointment_doc(appointment: str | dict | PatientAppointment) -> Patient
 	if isinstance(appointment, str):
 		appointment = json.loads(appointment)
 	if isinstance(appointment, dict):
+		if appointment.get("doctype") != "Patient Appointment":
+			frappe.throw(_("Expected a Patient Appointment"))
 		appointment = frappe.get_doc(appointment)
 
 	return appointment
@@ -667,12 +672,10 @@ def cancel_appointment(appointment_id):
 			msg = _("Appointment Cancelled. Please review and cancel the invoice {0}").format(
 				sales_invoice.name
 			)
-		fee_validity = frappe.db.get_value("Fee Validity", {"patient_appointment": appointment.name})
-		if fee_validity:
-			frappe.db.set_value("Fee Validity", fee_validity, "status", "Cancelled")
+		cancel_fee_validity(appointment)
 
 	else:
-		fee_validity = manage_fee_validity(appointment)
+		fee_validity = cancel_fee_validity(appointment)
 		msg = _("Appointment Cancelled.")
 		if fee_validity:
 			msg += _("Fee Validity {0} updated.").format(fee_validity.name)
@@ -716,6 +719,8 @@ def get_availability_data(date: str, practitioner: str, appointment: str | dict 
 	:param appointment: Appointment doc to validate fee validity
 	:return: dict containing a list of available slots, list of appointments and time of appointments
 	"""
+	appointment = get_appointment_doc(appointment)
+	validate_visit_access(appointment)
 
 	date = getdate(date)
 	weekday = date.strftime("%A")
@@ -725,7 +730,6 @@ def get_availability_data(date: str, practitioner: str, appointment: str | dict 
 	check_employee_wise_availability(date, practitioner_doc)
 
 	available_slots = []
-	appointment = get_appointment_doc(appointment)
 
 	if frappe.db.exists(
 		"Practitioner Availability",
@@ -769,9 +773,9 @@ def get_availability_data(date: str, practitioner: str, appointment: str | dict 
 		free_follow_ups = True
 
 	if free_follow_ups:
-		fee_validity = check_fee_validity(appointment, date, practitioner)
+		fee_validity = find_fee_validity(appointment, date, practitioner)
 		if not fee_validity and not appointment.get("__islocal"):
-			validity_details = get_fee_validity(appointment.get("name"), date, ignore_status=True)
+			validity_details = query_fee_validity(appointment.get("name"), date, ignore_status=True)
 			if validity_details:
 				fee_validity = validity_details[0]
 
@@ -1051,6 +1055,9 @@ def check_in_appointment(
 
 @frappe.whitelist()
 def update_status(appointment_id: str, status: str) -> None:
+	if status == "Cancelled":
+		validate_fee_validity_cancellation(frappe.get_doc("Patient Appointment", appointment_id))
+
 	frappe.db.set_value("Patient Appointment", appointment_id, "status", status)
 	appointment_booked = True
 	if status == "Cancelled":

@@ -15,8 +15,8 @@
 
 		<!-- Weekdays -->
 		<div class="grid grid-cols-7 gap-0 text-center text-gray-600 text-sm mb-1 font-medium">
-			<div v-for="w in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="w"
-				:class="w==='Su'||w==='Sa' ? 'text-red-500' : ''">{{ w }}</div>
+			<div v-for="(weekday, index) in weekdays" :key="index" class="truncate"
+				:class="index === 0 || index === 6 ? 'text-red-500' : ''">{{ weekday }}</div>
 		</div>
 
 		<!-- Days -->
@@ -38,6 +38,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { getLocale } from '@/translation'
 
 const currentMonth = ref(new Date().getMonth())
 const currentYear = ref(new Date().getFullYear())
@@ -59,8 +60,15 @@ const blanks = computed(() => {
 	return startDay === 0 ? [] : Array(startDay).fill('')
 })
 
+const weekdays = computed(() => {
+	const formatter = new Intl.DateTimeFormat(getLocale(), { weekday: 'short' })
+	return Array.from({ length: 7 }, (_, index) =>
+		formatter.format(new Date(Date.UTC(2021, 7, 1 + index)))
+	)
+})
+
 const monthYear = computed(() => {
-	return `${new Date(currentYear.value, currentMonth.value).toLocaleString('default',{ month: 'long' })} ${currentYear.value}`
+	return `${new Date(currentYear.value, currentMonth.value).toLocaleString(getLocale(), { month: 'long' })} ${currentYear.value}`
 })
 
 const isToday = (day) => {

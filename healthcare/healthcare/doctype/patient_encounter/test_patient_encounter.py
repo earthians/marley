@@ -7,6 +7,7 @@ import frappe
 from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
 	PatientEncounter,
 	get_medications_query,
+	get_permitted_patient,
 )
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -119,3 +120,21 @@ class TestPatientEncounter(HealthcareTestSuite):
 			"Item", None, "name", 0, 20, {"medication": medication, "company": company}
 		)
 		self.assertTrue(any("Actual Qty" in str(column) for column in results[0]))
+
+
+class TestAllergyAnnotationPermission(HealthcareTestSuite):
+	"""The drug search takes the patient from its filters, so it must not annotate one the
+	caller has no right to read"""
+
+	def test_a_readable_patient_is_annotated(self):
+		self.assertEqual(get_permitted_patient({"patient": "_Test Patient"}), "_Test Patient")
+
+	def test_a_patient_the_caller_cannot_read_is_not_annotated(self):
+		frappe.set_user("Guest")
+		try:
+			self.assertIsNone(get_permitted_patient({"patient": "_Test Patient"}))
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_no_patient_filter_annotates_nothing(self):
+		self.assertIsNone(get_permitted_patient({}))

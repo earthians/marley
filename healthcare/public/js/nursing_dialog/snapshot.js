@@ -1,0 +1,350 @@
+// Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
+// For license information, please see license.txt
+
+frappe.provide("healthcare.nursing");
+
+healthcare.nursing.SNAPSHOT_METHOD = "healthcare.healthcare.api.nursing.get_snapshot";
+
+// Vitals share no scale, so one chart shows one template at a time.
+healthcare.nursing.Snapshot = class Snapshot {
+	constructor({ wrapper, patient, layout = "rail" }) {
+		this.$wrapper = $(wrapper);
+		this.patient = patient;
+		this.layout = layout;
+		this.selected_vital = null;
+	}
+
+	// Switching patient resets what the card is showing: a vital chosen for one
+	// patient means nothing for the next.
+	set_patient(patient) {
+		this.patient = patient;
+		this.selected_vital = null;
+		return this.refresh();
+	}
+
+	async refresh() {
+		const patient = this.patient;
+		const data = await this.fetch();
+
+		// A slower fetch for the previous patient must not overwrite this one.
+		if (patient !== this.patient) return;
+
+		this.data = data;
+		this.render();
+	}
+
+	fetch() {
+		return frappe.xcall(healthcare.nursing.SNAPSHOT_METHOD, {
+			patient: this.patient,
+		});
+	}
+
+	render() {
+		this.stop_waiting();
+		this.$wrapper.empty().addClass(`nursing-snapshot-${this.layout}`);
+		this.render_vitals();
+		this.render_medications();
+		this.render_next_tasks();
+		this.render_last_note();
+		this.render_care_plan();
+		this.skip_in_tab_order();
+	}
+
+	// The snapshot reports; it is not somewhere to tab through on the way to
+	// the form. Its controls stay clickable, just not reachable by Tab.
+	skip_in_tab_order() {
+		this.$wrapper.find("button, a, [tabindex]").attr("tabindex", "-1");
+	}
+
+	add_card(title, action = "") {
+		const $card = $(`
+			<div class="nursing-card">
+				<div class="nursing-card-head">
+					<span class="nursing-card-title">${title}</span>
+					<span class="nursing-card-action">${action}</span>
+				</div>
+				<div class="nursing-card-body"></div>
+			</div>
+		`);
+		this.$wrapper.append($card);
+		return $card.find(".nursing-card-body");
+	}
+
+	// ---- vitals ----
+
+	render_vitals() {
+		const entries = this.get_recorded_vitals();
+		const $body = this.add_card(__("Vitals"));
+
+		if (!entries.length) {
+			$body.html(this.get_empty(__("No vitals recorded yet")));
+			return;
+		}
+
+		this.entry = this.get_selected_entry(entries);
+		this.selected_vital = this.entry.template;
+		this.render_vital_selector($body, entries);
+		this.$chart_area = $(`<div class="nursing-chart"></div>`).appendTo($body);
+		this.render_chart();
+	}
+
+	get_recorded_vitals() {
+		return (this.data.vitals || []).filter(entry => entry.readings.length);
+	}
+
+	get_selected_entry(entries) {
+		return (
+			entries.find(entry => entry.template === this.selected_vital) || entries[0]
+		);
+	}
+
+	render_vital_selector($body, entries) {
+		const $selector = $(`<div class="nursing-vital-selector"></div>`).appendTo(
+			$body,
+		);
+
+		entries.forEach(entry => {
+			const selected = entry.template === this.selected_vital ? "selected" : "";
+			$selector.append(`<button type="button" class="nursing-vital ${selected}"
+				data-template="${frappe.utils.escape_html(entry.template)}">${__(
+					entry.label,
+				)}</button>`);
+		});
+
+		$selector.on("click", "[data-template]", event => {
+			this.selected_vital = $(event.currentTarget).attr("data-template");
+			this.render();
+		});
+	}
+
+	// A pain score is a bounded rating, so it reads as bars rather than a trend line.
+	is_rating() {
+		return this.entry.abbr === healthcare.nursing.PAIN_SCORE_ABBR;
+	}
+
+	render_chart() {
+		const readings = this.entry.readings;
+
+		// A line needs two points, so a lone reading is shown as a value.
+		if (readings.length < 2) {
+			this.render_single_reading(readings[0]);
+			return;
+		}
+
+		if (this.$chart_area.width() > 0) {
+			this.draw_chart(readings);
+			return;
+		}
+
+		// Inside a tab that is not open yet the container has no width, and the
+		// chart would size itself to NaN. Wait until it is laid out.
+		this.draw_when_visible(readings);
+	}
+
+	draw_when_visible(readings) {
+		this.observer = new ResizeObserver(() => {
+			if (this.$chart_area.width() <= 0) return;
+
+			this.stop_waiting();
+			this.draw_chart(readings);
+		});
+		this.observer.observe(this.$chart_area.get(0));
+	}
+
+	stop_waiting() {
+		if (!this.observer) return;
+
+		this.observer.disconnect();
+		this.observer = null;
+	}
+
+	draw_chart(readings) {
+		this.chart = new frappe.Chart(this.$chart_area.get(0), {
+			data: {
+				labels: readings.map(reading => this.format_time(reading.recorded_at)),
+				datasets: [
+					{
+						name: this.entry.label,
+						values: readings.map(reading => Number(reading.value)),
+					},
+				],
+			},
+			type: this.is_rating() ? "bar" : "line",
+			height: this.layout === "rail" ? 150 : 200,
+			colors: ["#318AD8"],
+			axisOptions: { xIsSeries: true, xAxisMode: "tick" },
+			lineOptions: { hideDots: 0, regionFill: 1 },
+			barOptions: { spaceRatio: 0.4 },
+			valuesOverPoints: this.is_rating() ? 1 : 0,
+		});
+	}
+
+	render_single_reading(reading) {
+		if (!reading) {
+			this.$chart_area.html(this.get_empty(__("No readings yet")));
+			return;
+		}
+
+		this.$chart_area.html(`
+			<div class="nursing-reading">
+				<span class="nursing-reading-value">
+					${frappe.utils.escape_html(String(reading.value))}
+				</span>
+				<span class="nursing-reading-time">${this.format_time(reading.recorded_at)}</span>
+			</div>
+		`);
+	}
+
+	// Axis labels only have a few pixels each, so full timestamps collide.
+	format_time(value) {
+		return value ? moment(value).format("DD/MM HH:mm") : "";
+	}
+
+	// ---- medication ----
+
+	render_medications() {
+		const doses = this.data.medications || [];
+		const missed = this.data.missed_medications || [];
+		const $body = this.add_card(
+			__("Medication Due"),
+			this.get_missed_label(missed),
+		);
+
+		if (!doses.length && !missed.length) {
+			$body.html(this.get_empty(__("Nothing due")));
+			return;
+		}
+
+		doses.forEach(dose => $body.append(this.get_dose_row(dose)));
+		missed.forEach(dose => $body.append(this.get_dose_row(dose, true)));
+	}
+
+	get_missed_label(missed) {
+		return missed.length
+			? `<span class="text-danger">${__("{0} missed", [missed.length])}</span>`
+			: "";
+	}
+
+	get_dose_row(dose, missed = false) {
+		const late = missed || moment(dose.scheduled_time).isBefore(moment());
+		return `<div class="nursing-row">
+			<span class="nursing-row-time ${late ? "text-danger" : ""}">
+				${moment(dose.scheduled_time).format("HH:mm")}
+			</span>
+			<span class="nursing-row-label">
+				${frappe.utils.escape_html(dose.drug_name || dose.drug_code)}
+			</span>
+			<span class="nursing-row-status ${missed ? "text-danger" : ""}">
+				${missed ? __("Missed") : format_number(dose.dosage)}
+			</span>
+		</div>`;
+	}
+
+	// ---- tasks, notes ----
+
+	render_next_tasks() {
+		const tasks = this.data.next_tasks || [];
+		const $body = this.add_card(__("Next Due"));
+
+		if (!tasks.length) {
+			$body.html(this.get_empty(__("Nothing due")));
+			return;
+		}
+		tasks.forEach(task => $body.append(this.get_task_row(task)));
+	}
+
+	// The rail is narrow, so the activity takes its own line and the time and
+	// status sit under it rather than competing for width.
+	get_task_row(task) {
+		const label = task.activity || task.description || task.name;
+		return `<div class="nursing-stacked-row">
+			<div class="nursing-stacked-label">${frappe.utils.escape_html(label)}</div>
+			<div class="nursing-stacked-meta">
+				<span class="${this.is_overdue(task) ? "text-danger" : ""}">${this.get_task_time(
+					task,
+				)}</span>
+				<span>${__(task.status)}</span>
+			</div>
+		</div>`;
+	}
+
+	get_task_time(task) {
+		return task.requested_start_time
+			? moment(task.requested_start_time).format("DD/MM HH:mm")
+			: __("Unscheduled");
+	}
+
+	is_overdue(task) {
+		return (
+			task.requested_start_time &&
+			moment(task.requested_start_time).isBefore(moment())
+		);
+	}
+
+	render_last_note() {
+		const note = this.data.last_note;
+		const $body = this.add_card(__("Last Note"));
+
+		if (!note) {
+			$body.html(this.get_empty(__("No notes yet")));
+			return;
+		}
+		$body.append(`<div class="nursing-note">${this.get_note_text(note)}</div>`);
+		$body.append(`<div class="nursing-note-meta">
+			${frappe.utils.escape_html(note.clinical_note_type || "")} ·
+			${frappe.utils.escape_html(note.practitioner || note.user || "")} ·
+			${note.posting_date ? moment(note.posting_date).format("DD/MM HH:mm") : ""}
+		</div>`);
+	}
+
+	// An F-DAR entry has no single note field, so its parts are read in order.
+	get_note_text(note) {
+		const parts = [
+			note.fdar_focus,
+			note.fdar_data,
+			note.fdar_action,
+			note.fdar_response,
+		]
+			.filter(part => part && String(part).trim())
+			.join(" · ");
+
+		return frappe.utils.escape_html(
+			parts || frappe.utils.html2text(note.note || ""),
+		);
+	}
+
+	render_care_plan() {
+		const plan = this.data.care_plan;
+		const goals = (plan && plan.goals) || [];
+		const met = goals.filter(goal => goal.status === "Met").length;
+		const $body = this.add_card(
+			__("Care Plan"),
+			goals.length ? `${met}/${goals.length}` : "",
+		);
+
+		if (!goals.length) {
+			$body.html(this.get_empty(__("No care plan started")));
+			return;
+		}
+		goals.forEach(goal => $body.append(this.get_goal_row(goal)));
+	}
+
+	get_goal_row(goal) {
+		return `<div class="nursing-stacked-row">
+			<div class="nursing-stacked-label">${frappe.utils.escape_html(goal.goal)}</div>
+			<div class="nursing-stacked-meta">
+				<span>${goal.target_date ? moment(goal.target_date).format("DD/MM") : ""}</span>
+				<span class="${this.get_goal_indicator(goal)}">${__(goal.status)}</span>
+			</div>
+		</div>`;
+	}
+
+	get_goal_indicator(goal) {
+		if (goal.status === "Met") return "text-success";
+		return goal.status === "Not Met" ? "text-danger" : "text-muted";
+	}
+
+	get_empty(message) {
+		return `<div class="nursing-empty">${message}</div>`;
+	}
+};

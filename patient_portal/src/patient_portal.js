@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import PatientPortal from './PatientPortal.vue'
+import translationPlugin from './translation'
 import { initSocket } from './socket'
 
 import './index.css'
@@ -27,7 +28,9 @@ let globalComponents = {
 
 let app = createApp(PatientPortal)
 setConfig('resourceFetcher', frappeRequest)
+setConfig('translatedMessages', window.translated_messages || {})
 app.use(FrappeUI)
+app.use(translationPlugin)
 app.provide('$socket', initSocket())
 
 for (let key in globalComponents) {

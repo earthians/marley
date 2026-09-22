@@ -9,10 +9,19 @@ from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
 
+from healthcare.healthcare.doctype.medication_alert_log.medication_alert_log import (
+	ACTIONS,
+	SEVERITY_ORDER,
+	action_fieldname,
+)
+
 
 class HealthcareSettings(Document):
 	def onload(self):
 		self.get_journal_entry_naming_series()
+
+	def validate_medication_alert_severities(self):
+		validate_medication_alert_actions(self)
 
 	def validate(self):
 		for key in [
@@ -25,6 +34,8 @@ class HealthcareSettings(Document):
 		]:
 			frappe.db.set_default(key, self.get(key, ""))
 
+		self.validate_medication_alert_severities()
+
 		if self.collect_registration_fee:
 			if self.registration_fee <= 0:
 				frappe.throw(_("Registration Fee cannot be negative or zero"))
@@ -36,9 +47,57 @@ class HealthcareSettings(Document):
 		if self.clinical_procedure_consumable_item:
 			validate_service_item(self.clinical_procedure_consumable_item)
 
+	def on_update(self):
+		self.create_warehouses_for_existing_beds()
+
+	def create_warehouses_for_existing_beds(self):
+		"""Beds admitted long before the setting was switched on still need
+		somewhere to hold medication, so fill them in once, here."""
+		if not self.manage_inpatient_medication_stock:
+			return
+
+		if not self.has_value_changed("manage_inpatient_medication_stock"):
+			return
+
+		from healthcare.healthcare.doctype.healthcare_service_unit.healthcare_service_unit import (
+			create_bed_warehouses,
+		)
+
+		count = create_bed_warehouses()
+		if count:
+			frappe.msgprint(
+				_("Created a warehouse for {0} inpatient beds").format(frappe.bold(count)),
+				title=_("Bed Warehouses Ready"),
+				indicator="green",
+			)
+
 	def get_journal_entry_naming_series(self):
 		meta = frappe.get_meta("Journal Entry")
 		self.set_onload("naming_series_for_journal_entry", meta.get_field("naming_series").options)
+
+
+def validate_medication_alert_actions(settings):
+	"""Every action must be answered once the feature is on, and a milder severity may never
+	act more strongly than a more serious one"""
+	if not settings.enable_medication_alerts:
+		return
+
+	milder = None
+
+	for severity in reversed(SEVERITY_ORDER):
+		fieldname = action_fieldname(severity)
+		action = settings.get(fieldname)
+		label = _(settings.meta.get_label(fieldname))
+
+		if not action:
+			frappe.throw(_("{0} is required when medication alerts are enabled").format(label))
+
+		if milder and ACTIONS.index(action) < ACTIONS.index(milder[1]):
+			frappe.throw(
+				_("{0} cannot act more weakly than {1}").format(label, _(settings.meta.get_label(milder[0])))
+			)
+
+		milder = (fieldname, action)
 
 
 def validate_service_item(item):

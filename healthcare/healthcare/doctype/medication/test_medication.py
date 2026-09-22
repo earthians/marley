@@ -4,6 +4,10 @@
 import frappe
 from frappe.utils.make_random import get_random
 
+from healthcare.healthcare.doctype.medication.medication import (
+	expand,
+	validate_medication_is_orderable,
+)
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -21,6 +25,36 @@ class TestMedication(HealthcareTestSuite):
 			),
 			25,
 		)
+
+	def test_ingredient_only_medication_drops_its_item_links(self):
+		medication = create_ingredient_medication("_Test Clavulanic Acid")
+		medication.append("linked_items", {"item_code": "_Test Clavulanic Acid", "item_group": "Drug"})
+		medication.save()
+
+		self.assertEqual(medication.linked_items, [])
+		self.assertIsNone(medication.price_list)
+		self.assertFalse(frappe.db.exists("Item", "_Test Clavulanic Acid"))
+
+	def test_ingredient_only_medication_cannot_be_ordered(self):
+		medication = create_ingredient_medication("_Test Carbidopa")
+
+		self.assertRaises(frappe.ValidationError, validate_medication_is_orderable, medication.name, "Row #1")
+
+	def test_orderable_medication_passes_the_order_guard(self):
+		medication = create_ingredient_medication("_Test Levodopa", is_orderable=1)
+
+		self.assertIsNone(validate_medication_is_orderable(medication.name, "Row #1"))
+
+
+def create_ingredient_medication(generic_name, is_orderable=0):
+	medication = frappe.new_doc("Medication")
+	medication.generic_name = generic_name
+	medication.medication_class = "Analgesics"
+	medication.strength = 125
+	medication.strength_uom = "Milligram"
+	medication.dosage_form = "Tablet"
+	medication.is_orderable = is_orderable
+	return medication.insert()
 
 
 def create_medication(medication, is_billable=False, price_list=None):
@@ -50,3 +84,87 @@ def create_medication(medication, is_billable=False, price_list=None):
 	)
 	medication_doc.save()
 	return medication_doc, medication
+
+
+class TestInteractantExpansion(HealthcareTestSuite):
+	"""What a medication is matched against when a prescription is checked"""
+
+	def setUp(self):
+		super().setUp()
+		self.amoxicillin = create_classed_medication("_Test Amoxicillin", "Amoxicillin")
+
+	def test_expansion_reaches_every_ancestor_class(self):
+		interactants = expand(self.amoxicillin)
+
+		self.assertIn(("Medication", self.amoxicillin), interactants)
+		self.assertIn(("Medication Class", "Amoxicillin"), interactants)
+		self.assertIn(("Medication Class", "Penicillins"), interactants)
+		self.assertIn(("Medication Class", "Anti-infectives"), interactants)
+
+	def test_expansion_reaches_combination_ingredients(self):
+		clavulanate = create_classed_medication("_Test Clavulanate", "Clavulanic Acid", is_orderable=0)
+		combination = create_combination("_Test Co-Amoxiclav", [self.amoxicillin, clavulanate])
+
+		interactants = expand(combination)
+
+		self.assertIn(("Medication Class", "Clavulanic Acid"), interactants)
+		self.assertIn(("Medication Class", "Penicillins"), interactants)
+
+	def test_expansion_survives_a_self_referencing_combination(self):
+		combination = create_combination("_Test Looping Product", [self.amoxicillin])
+		medication = frappe.get_doc("Medication", combination)
+		medication.append(
+			"combinations", {"medication": combination, "strength": 1, "strength_uom": "Milligram"}
+		)
+		medication.save()
+
+		self.assertIn(("Medication Class", "Amoxicillin"), expand(combination))
+
+
+def create_classed_medication(generic_name, medication_class, is_orderable=1):
+	existing = frappe.db.exists("Medication", {"generic_name": generic_name})
+	if existing:
+		return existing
+
+	medication = frappe.new_doc("Medication")
+	medication.generic_name = generic_name
+	medication.medication_class = medication_class
+	medication.strength = 100
+	medication.strength_uom = "Milligram"
+	medication.dosage_form = "Tablet"
+	medication.is_orderable = is_orderable
+	return medication.insert().name
+
+
+def create_combination(generic_name, ingredients):
+	existing = frappe.db.exists("Medication", {"generic_name": generic_name})
+	if existing:
+		return existing
+
+	medication = frappe.new_doc("Medication")
+	medication.generic_name = generic_name
+	medication.medication_class = "Penicillins"
+	medication.strength = 625
+	medication.strength_uom = "Milligram"
+	medication.dosage_form = "Tablet"
+	medication.is_combination = 1
+
+	for ingredient in ingredients:
+		medication.append(
+			"combinations", {"medication": ingredient, "strength": 1, "strength_uom": "Milligram"}
+		)
+
+	return medication.insert().name
+
+
+class TestOrderableTransition(HealthcareTestSuite):
+	def test_disabling_orderable_disables_a_previously_linked_item(self):
+		price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
+		medication, item = create_medication("_Test Retired Drug", is_billable=True, price_list=price_list)
+		self.assertEqual(frappe.db.get_value("Item", item, "disabled"), 0)
+
+		medication.is_orderable = 0
+		medication.linked_items = []
+		medication.save()
+
+		self.assertEqual(frappe.db.get_value("Item", item, "disabled"), 1)

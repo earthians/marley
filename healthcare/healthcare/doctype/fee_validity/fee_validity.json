@@ -13,15 +13,17 @@
   "medical_department",
   "column_break_3",
   "status",
-  "patient_appointment",
+  "reference_dt",
+  "reference_dn",
   "sales_invoice_ref",
   "section_break_3",
   "max_visits",
   "visited",
-  "ref_appointments",
   "column_break_6",
   "start_date",
-  "valid_till"
+  "valid_till",
+  "section_break_zmhp",
+  "reference_visits"
  ],
  "fields": [
   {
@@ -94,9 +96,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "ref_appointments",
-   "fieldtype": "Table MultiSelect",
-   "label": "Reference Appointments",
+   "fieldname": "reference_visits",
+   "fieldtype": "Table",
+   "label": "Reference Visits",
    "options": "Fee Validity Reference",
    "read_only": 1
   },
@@ -115,17 +117,30 @@
    "read_only": 1
   },
   {
-   "fieldname": "patient_appointment",
+   "fieldname": "reference_dt",
    "fieldtype": "Link",
-   "label": "Patient Appointment",
-   "options": "Patient Appointment",
-   "read_only": 1
+   "label": "Reference DocType",
+   "options": "DocType",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reference_dn",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Name",
+   "options": "reference_dt",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_zmhp",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "in_create": 1,
  "links": [],
- "modified": "2025-12-25 09:36:29.334799",
+ "modified": "2026-09-17 14:30:09.631711",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Fee Validity",
@@ -142,6 +157,16 @@
    "role": "Healthcare Administrator",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Physician"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User"
   }
  ],
  "quick_entry": 1,

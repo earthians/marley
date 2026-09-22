@@ -3,10 +3,10 @@
 		<div>
 			<Tabs as="div" v-model="portal_tabs" :tabs="tabs">
 				<template #tab-panel="{ tab }">
-					<div v-if="tab.label == 'Appointments'">
+					<div v-if="tab.name == 'appointments'">
 						<AppointmentModel />
 					</div>
-					<div v-else-if="tab.label == 'Diagnostics'">
+					<div v-else-if="tab.name == 'diagnostics'">
 						<DiagnosticModel />
 					</div>
 				</template>
@@ -24,7 +24,7 @@
 		},
 		actions: [
 			{
-				label: 'OK',
+				label: __('OK'),
 				variant: 'solid',
 			},
 		],
@@ -63,9 +63,9 @@ let getHealthcareSettings = createResource({
 getHealthcareSettings.fetch();
 
 const tabs = computed(() => {
-	let baseTabs = [{ label: 'Appointments' }]
+	let baseTabs = [{ name: 'appointments', label: __('Appointments') }]
 	if (healthcareSettings.value.show_diagnostics_tab) {
-		baseTabs.push({ label: 'Diagnostics' })
+		baseTabs.push({ name: 'diagnostics', label: __('Diagnostics') })
 	}
 	return baseTabs
 })
@@ -79,8 +79,8 @@ let set_logged_in_patient = createResource({
 		}
 	},
 	onError(error) {
-		dialog_message = error.messages?.[0] || error;
-		dialog_title = "Failed to load appointments";
+		dialog_message.value = error.messages?.[0] || error;
+		dialog_title.value = __('Failed to load appointments');
 		alert_dialog.value = true;
 	}
 });

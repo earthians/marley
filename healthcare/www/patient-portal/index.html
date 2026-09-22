@@ -10,4 +10,9 @@
 <div id="app" class="w-100"></div>
 <link rel="stylesheet" href="/assets/healthcare/frontend/{{ assets.css[0] }}">
 <script type="module" src="/assets/healthcare/frontend/{{ assets.file }}"></script>
+
+<script>
+	window.portal_lang = {{ lang | tojson }};
+	window.translated_messages = {{ translated_messages | tojson }};
+</script>
 {% endblock page_content %}

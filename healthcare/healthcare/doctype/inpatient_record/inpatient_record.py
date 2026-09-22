@@ -709,7 +709,9 @@ def cancel_amend_treatment_counselling(args, treatment_counselling):
 
 
 @frappe.whitelist()
-def make_discharge_summary(source_name, target_doc=None, ignore_permissions=False):
+def make_discharge_summary(
+	source_name: str, target_doc: Document | None = None, ignore_permissions: bool = False
+) -> Document:
 	doclist = get_mapped_doc(
 		"Inpatient Record",
 		source_name,
@@ -719,7 +721,7 @@ def make_discharge_summary(source_name, target_doc=None, ignore_permissions=Fals
 				"field_map": {
 					"name": "inpatient_record",
 				},
-				"field_no_map": ["status", "chief_complaint", "diagnosis"],
+				"field_no_map": ["naming_series", "status", "chief_complaint", "diagnosis"],
 			},
 		},
 		target_doc,

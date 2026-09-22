@@ -3,6 +3,10 @@
 {% include "healthcare/healthcare/service_request.js" %}
 
 frappe.ui.form.on('Medication Request', {
+	medication: function (frm) {
+		healthcare.medication_safety.show_for_medication(frm, frm.doc.medication);
+	},
+
     refresh: function(frm) {
         frm.set_query("status", function () {
 			return {

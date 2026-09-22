@@ -135,6 +135,7 @@ frappe.ui.form.on("Inpatient Record", {
 				frm.add_custom_button(__("Discharge"), function () {
 					discharge_patient(frm);
 				});
+				healthcare.inpatient.BedStockSettlement.attach(frm);
 				if (frm.doc.insurance_policy) {
 					frm.add_custom_button(__("Create Insurance Coverage"), function () {
 						create_insurance_coverage(frm);
