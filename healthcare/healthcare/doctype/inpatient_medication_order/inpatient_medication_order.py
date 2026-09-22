@@ -17,6 +17,7 @@ class InpatientMedicationOrder(Document):
 		self.validate_inpatient()
 		self.validate_duplicate()
 		self.set_total_orders()
+		self.set_completed_orders()
 		self.set_status()
 
 	def on_submit(self):
@@ -53,25 +54,100 @@ class InpatientMedicationOrder(Document):
 	def set_total_orders(self):
 		self.db_set("total_orders", len(self.medication_orders))
 
+	def set_completed_orders(self):
+		self.completed_orders = len(
+			[entry for entry in self.medication_orders if entry.status == "Completed"]
+		)
+
 	def update_completed_orders(self):
 		"""Counted from the entries rather than tallied up and down, so cancelling
 		or amending an Inpatient Medication Entry cannot drift the total."""
-		completed = [entry for entry in self.medication_orders if entry.status == "Completed"]
-		self.db_set("completed_orders", len(completed))
+		self.set_completed_orders()
+		self.db_set("completed_orders", self.completed_orders)
 		self.set_status()
 
 	def set_status(self):
 		status = {"0": "Draft", "1": "Submitted", "2": "Cancelled"}[cstr(self.docstatus or 0)]
 
 		if self.docstatus == 1:
-			if not self.completed_orders:
+			pending_orders = len(
+				[entry for entry in self.medication_orders if entry.status in (None, "", "Pending")]
+			)
+			transferred_orders = len(
+				[entry for entry in self.medication_orders if entry.status == "Transferred"]
+			)
+
+			if pending_orders == self.total_orders:
 				status = "Pending"
-			elif self.completed_orders < self.total_orders:
+			elif pending_orders or transferred_orders:
 				status = "In Process"
 			else:
 				status = "Completed"
 
 		self.db_set("status", status)
+
+	@frappe.whitelist()
+	def stop_medication_orders(self, entries: list[str] | str, stop_reason: str) -> None:
+		if self.docstatus != 1:
+			frappe.throw(_("Only submitted Inpatient Medication Orders can be stopped."))
+
+		entries = frappe.parse_json(entries) if isinstance(entries, str) else entries
+		entries = entries or []
+		stop_reason = (stop_reason or "").strip()
+
+		if not entries:
+			frappe.throw(_("Please select at least one medication order to stop."))
+
+		if not stop_reason:
+			frappe.throw(_("Stop Reason is mandatory."))
+
+		selected = set(entries)
+		order_entry_statuses = frappe.get_all(
+			"Inpatient Medication Order Entry",
+			filters={"parent": self.name, "name": ["in", list(selected)]},
+			fields=["name", "status"],
+		)
+
+		if len(order_entry_statuses) != len(selected):
+			frappe.throw(_("Some selected medication rows do not belong to this order."))
+
+		stale_entries = [entry.name for entry in order_entry_statuses if entry.status != "Pending"]
+		if stale_entries:
+			frappe.throw(
+				_(
+					"Some selected medication rows are no longer Pending. Please refresh the document and try again."
+				)
+			)
+
+		order_entry = frappe.qb.DocType("Inpatient Medication Order Entry")
+		(
+			frappe.qb.update(order_entry)
+			.set(order_entry.status, "Stopped")
+			.set(order_entry.stop_reason, stop_reason)
+			.where(order_entry.name.isin(list(selected)))
+			.where(order_entry.parent == self.name)
+			.where(order_entry.status == "Pending")
+		).run()
+
+		stopped_entries = frappe.get_all(
+			"Inpatient Medication Order Entry",
+			filters={
+				"parent": self.name,
+				"name": ["in", list(selected)],
+				"status": "Stopped",
+				"stop_reason": stop_reason,
+			},
+			pluck="name",
+		)
+		if len(stopped_entries) != len(selected):
+			frappe.throw(
+				_(
+					"Some selected medication rows are no longer Pending. Please refresh the document and try again."
+				)
+			)
+
+		self.reload()
+		self.update_completed_orders()
 
 	@frappe.whitelist()
 	def add_order_entries(self, order: dict) -> None:

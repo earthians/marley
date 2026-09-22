@@ -6,6 +6,7 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 		// Ignore cancellation of doctype on cancel all
 		frm.ignore_doctypes_on_cancel_all = ["Stock Entry"];
 		frm.fields_dict["medication_orders"].grid.wrapper.find(".grid-add-row").hide();
+		frm.events.prompt_remove_stopped_medication_orders(frm);
 
 		frm.set_query("patient", () => {
 			return {
@@ -87,6 +88,74 @@ frappe.ui.form.on("Inpatient Medication Entry", {
 			freeze_message: __("Fetching Pending Medication Orders"),
 			callback: function () {
 				refresh_field("medication_orders");
+			},
+		});
+	},
+
+	prompt_remove_stopped_medication_orders: function (frm) {
+		if (
+			frm.doc.__islocal ||
+			frm.doc.docstatus !== 0 ||
+			!(frm.doc.medication_orders || []).length
+		) {
+			return;
+		}
+
+		frm.call({
+			doc: frm.doc,
+			method: "get_stopped_medication_order_rows",
+			callback: function (r) {
+				const rows = r.message || [];
+				if (!rows.length) {
+					return;
+				}
+
+				if (frm.is_dirty()) {
+					frappe.msgprint(
+						__(
+							"Please save or reload this draft before removing stopped medication rows.",
+						),
+					);
+					return;
+				}
+
+				const row_list = rows.map(row => row.idx).join(", ");
+				frappe.confirm(
+					__(
+						"Rows {0} reference stopped medication orders. Do you want to remove them from this draft?",
+						[row_list],
+					),
+					() => {
+						if (frm.is_dirty()) {
+							frappe.msgprint(
+								__(
+									"Please save or reload this draft before removing stopped medication rows.",
+								),
+							);
+							return;
+						}
+
+						const stopped_row_names = rows.map(row => row.name);
+						frappe.call({
+							method: "healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry.remove_stopped_medication_order_rows",
+							args: {
+								docname: frm.doc.name,
+							},
+							freeze: true,
+							freeze_message: __("Removing Stopped Medication Orders"),
+							callback: function () {
+								frm.doc.medication_orders = (
+									frm.doc.medication_orders || []
+								).filter(row => !stopped_row_names.includes(row.name));
+								frm.doc.medication_orders.forEach((row, idx) => {
+									row.idx = idx + 1;
+								});
+								frm.refresh_field("medication_orders");
+								frm.reload_doc();
+							},
+						});
+					},
+				);
 			},
 		});
 	},
