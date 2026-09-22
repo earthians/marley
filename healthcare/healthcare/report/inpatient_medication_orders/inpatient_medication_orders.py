@@ -3,6 +3,7 @@
 
 
 import frappe
+from frappe import _
 
 from healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medication_entry import (
 	get_current_healthcare_service_unit,
@@ -57,8 +58,8 @@ def get_columns():
 		},
 		{"fieldname": "date", "fieldtype": "Date", "label": "Date", "width": 100},
 		{"fieldname": "time", "fieldtype": "Time", "label": "Time", "width": 100},
-		{"fieldname": "status", "fieldtype": "Data", "label": "Status", "width": 100},
-		{"fieldname": "stop_reason", "fieldtype": "Small Text", "label": "Stop Reason", "width": 180},
+		{"fieldname": "status", "fieldtype": "Data", "label": _("Status"), "width": 100},
+		{"fieldname": "stop_reason", "fieldtype": "Small Text", "label": _("Stop Reason"), "width": 180},
 		{"fieldname": "is_completed", "fieldtype": "Check", "label": "Is Order Completed", "width": 100},
 		{
 			"fieldname": "healthcare_practitioner",
