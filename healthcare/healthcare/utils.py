@@ -1286,66 +1286,67 @@ def manage_doc_for_appointment(dt_from_appointment, appointment, invoiced):
 
 
 @frappe.whitelist()
-def get_drugs_to_invoice(encounter, customer, link_customer=False):
-	encounter = frappe.get_doc("Patient Encounter", encounter)
-	if link_customer:
-		frappe.db.set_value("Patient", encounter.patient, "customer", customer)
+def get_drugs_to_invoice(patient, customer, encounter=None, company=None, link_customer=False):
+	"""Billable Medication Requests of a Patient, optionally limited to one Patient Encounter"""
+	patient = frappe.get_doc("Patient", patient)
+	validate_customer_created(patient, customer, link_customer)
+	drugs_to_invoice = [
+		get_medication_request_line(medication_request)
+		for medication_request in get_billable_medication_requests(patient.name, encounter, company)
+	]
+	return [drug for drug in drugs_to_invoice if drug]
+
+
+def get_billable_medication_requests(patient, encounter=None, company=None):
+	filters = {
+		"patient": patient,
+		"billing_status": ["in", ["Pending", "Partly Invoiced"]],
+		"docstatus": 1,
+	}
 	if encounter:
-		patient = frappe.get_doc("Patient", encounter.patient)
-		if patient:
-			orders_to_invoice = []
-			medication_requests = frappe.get_list(
-				"Medication Request",
-				fields=["*"],
-				filters={
-					"patient": patient.name,
-					"order_group": encounter.name,
-					"billing_status": ["in", ["Pending", "Partly Invoiced"]],
-					"docstatus": 1,
-				},
-			)
-			for medication_request in medication_requests:
-				if medication_request.medication:
-					is_billable = frappe.get_cached_value(
-						"Medication", medication_request.medication, ["is_billable"]
-					)
-				else:
-					is_billable = frappe.db.exists(
-						"Item", {"name": medication_request.medication_item, "disabled": False}
-					)
+		# a Medication Request can be submitted while its Patient Encounter is still a draft
+		filters["order_group"] = encounter
+	if company:
+		filters["company"] = company
 
-				description = ""
-				if medication_request.dosage and medication_request.period:
-					description = _("{0} for {1}").format(
-						medication_request.dosage, medication_request.period
-					)
+	return frappe.get_list("Medication Request", fields=["*"], filters=filters)
 
-				if medication_request.medication_item and is_billable:
-					billable_order_qty = medication_request.get("quantity", 1) - medication_request.get(
-						"qty_invoiced", 0
-					)
-					if medication_request.number_of_repeats_allowed:
-						if (
-							medication_request.total_dispensable_quantity
-							>= medication_request.quantity + medication_request.qty_invoiced
-						):
-							billable_order_qty = medication_request.get("quantity", 1)
-						else:
-							billable_order_qty = (
-								medication_request.total_dispensable_quantity
-								- medication_request.get("qty_invoiced", 0)
-							)
 
-					orders_to_invoice.append(
-						{
-							"reference_type": "Medication Request",
-							"reference_name": medication_request.name,
-							"drug_code": medication_request.medication_item,
-							"quantity": billable_order_qty,
-							"description": description,
-						}
-					)
-			return orders_to_invoice
+def get_medication_request_line(medication_request):
+	if not medication_request.medication_item or not is_medication_billable(medication_request):
+		return None
+
+	return {
+		"reference_type": "Medication Request",
+		"reference_name": medication_request.name,
+		"drug_code": medication_request.medication_item,
+		"quantity": get_billable_medication_quantity(medication_request),
+		"description": get_medication_request_description(medication_request),
+	}
+
+
+def is_medication_billable(medication_request):
+	"""Medication keeps billability on its linked Item, disabling the Item when it is not billable"""
+	return frappe.db.exists("Item", {"name": medication_request.medication_item, "disabled": False})
+
+
+def get_billable_medication_quantity(medication_request):
+	quantity = medication_request.get("quantity", 1)
+	qty_invoiced = medication_request.get("qty_invoiced", 0)
+	if not medication_request.number_of_repeats_allowed:
+		return quantity - qty_invoiced
+
+	if medication_request.total_dispensable_quantity >= quantity + qty_invoiced:
+		return quantity
+
+	return medication_request.total_dispensable_quantity - qty_invoiced
+
+
+def get_medication_request_description(medication_request):
+	if medication_request.dosage and medication_request.period:
+		return _("{0} for {1}").format(medication_request.dosage, medication_request.period)
+
+	return ""
 
 
 @frappe.whitelist()
