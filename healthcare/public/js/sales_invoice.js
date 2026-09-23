@@ -211,7 +211,7 @@ var get_healthcare_items = function (
 		method: method,
 		args: args,
 		callback: function (data) {
-			if (data.message) {
+			if (data.message && data.message.length) {
 				$results.append(make_list_row(columns, invoice_healthcare_services));
 				for (let i = 0; i < data.message.length; i++) {
 					$results.append(
@@ -265,9 +265,8 @@ var set_primary_action = function (frm, dialog, $results, invoice_healthcare_ser
 	dialog.set_primary_action(__("Add"), async function () {
 		let checked_values = get_checked_values($results);
 		if (checked_values.length > 0) {
-			if (invoice_healthcare_services) {
-				frm.set_value("patient", dialog.fields_dict.patient.input.value);
-			}
+			// both dialogs pick the items of the Patient selected in them
+			frm.set_value("patient", dialog.get_value("patient"));
 			frm.set_value("items", []);
 			frappe.dom.freeze(__("Adding items..."));
 			try {
@@ -379,8 +378,7 @@ var get_checked_values = function ($results) {
 };
 
 var get_drugs_to_invoice = function (frm, link_customer) {
-	var me = this;
-	let selected_encounter = "";
+	let selected_filters = "";
 	var dialog = new frappe.ui.Dialog({
 		title: __("Get Items from Prescriptions"),
 		fields: [
@@ -396,15 +394,16 @@ var get_drugs_to_invoice = function (frm, link_customer) {
 				options: "Patient Encounter",
 				label: "Patient Encounter",
 				fieldname: "encounter",
-				reqd: true,
-				description:
-					'Quantity will be calculated only for items which has "Nos" as UoM. You may change as required for each invoice item.',
-				get_query: function (doc) {
+				description: __(
+					'Optional, leave blank to list every billable Prescription of the Patient. Quantity will be calculated only for items which has "Nos" as UoM. You may change as required for each invoice item.',
+				),
+				get_query: function () {
 					return {
 						filters: {
 							patient: dialog.get_value("patient"),
 							company: frm.doc.company,
-							docstatus: 1,
+							// a draft Encounter can hold submitted Medication Requests
+							docstatus: ["<", 2],
 						},
 					};
 				},
@@ -413,54 +412,63 @@ var get_drugs_to_invoice = function (frm, link_customer) {
 			{ fieldtype: "HTML", fieldname: "results_area" },
 		],
 	});
-	var $wrapper;
-	var $results;
-	var $placeholder;
-	dialog.set_values({
-		patient: frm.doc.patient,
-		encounter: "",
-	});
-	dialog.fields_dict["encounter"].df.onchange = () => {
-		var encounter = dialog.fields_dict.encounter.input.value;
-		if (encounter && encounter != selected_encounter) {
-			selected_encounter = encounter;
-			var method = "healthcare.healthcare.utils.get_drugs_to_invoice";
-			var args = {
-				encounter: encounter,
-				customer: frm.doc.customer,
-				link_customer: link_customer,
-			};
-			var columns = ["drug_code", "quantity", "description"];
-			get_healthcare_items(
-				frm,
-				false,
-				$results,
-				$placeholder,
-				method,
-				args,
-				columns,
-			);
-		} else if (!encounter) {
-			selected_encounter = "";
-			$results.empty();
-			$results.append($placeholder);
-		}
-	};
-	$wrapper = dialog.fields_dict.results_area.$wrapper.append(`<div class="results"
+	var $wrapper = dialog.fields_dict.results_area.$wrapper.append(`<div class="results"
 		style="border: 1px solid #d1d8dd; border-radius: 3px; height: 300px; overflow: auto;"></div>`);
-	$results = $wrapper.find(".results");
-	$placeholder = $(`<div class="multiselect-empty-state">
+	var $results = $wrapper.find(".results");
+	var $placeholder = $(`<div class="multiselect-empty-state">
 				<span class="text-center" style="margin-top: -40px;">
 					<i class="fa fa-2x fa-heartbeat text-extra-muted"></i>
 					<p class="text-extra-muted">No Drug Prescription found</p>
 				</span>
 			</div>`);
+
+	var refresh_drugs = function () {
+		let patient = dialog.get_value("patient");
+		let encounter = dialog.get_value("encounter");
+		if (!patient) {
+			selected_filters = "";
+			$results.empty();
+			$results.append($placeholder);
+			return;
+		}
+		let filters = `${patient}::${encounter || ""}`;
+		if (filters === selected_filters) return;
+		selected_filters = filters;
+		get_healthcare_items(
+			frm,
+			false,
+			$results,
+			$placeholder,
+			"healthcare.healthcare.utils.get_drugs_to_invoice",
+			{
+				patient: patient,
+				encounter: encounter,
+				company: frm.doc.company,
+				customer: frm.doc.customer,
+				link_customer: link_customer,
+			},
+			["drug_code", "quantity", "description"],
+		);
+	};
+
+	dialog.fields_dict["patient"].df.onchange = () => {
+		dialog.set_value("encounter", "");
+		refresh_drugs();
+	};
+	dialog.fields_dict["encounter"].df.onchange = refresh_drugs;
+
 	$results.on("click", ".list-item--head :checkbox", e => {
 		$results
 			.find(".list-item-container .list-row-check")
 			.prop("checked", $(e.target).is(":checked"));
 	});
 	set_primary_action(frm, dialog, $results, false);
+	dialog
+		.set_values({
+			patient: frm.doc.patient,
+			encounter: "",
+		})
+		.then(refresh_drugs);
 	dialog.show();
 };
 
