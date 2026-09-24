@@ -42,6 +42,7 @@
    "reqd": 1
   },
   {
+   "allow_on_submit": 1,
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -49,8 +50,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "options": "Draft\nGenerated\nReviewed\nApproved\nSalary Created\nCancelled",
-   "read_only": 1,
-   "allow_on_submit": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_1",
@@ -126,8 +126,8 @@
    "fieldname": "total_service_amount",
    "fieldtype": "Currency",
    "label": "Total Service Amount",
-   "read_only": 1,
-   "precision": 3
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "total_cases",
@@ -144,16 +144,16 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total Commission",
-   "read_only": 1,
-   "precision": 3
+   "precision": "3",
+   "read_only": 1
   },
   {
    "description": "Payment-mode charges (e.g. the card fee) taken off the collected amounts. The commission is already computed on the net paid amount.",
    "fieldname": "total_deduction",
    "fieldtype": "Currency",
    "label": "Total Deduction",
-   "read_only": 1,
-   "precision": 3
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "generated_on",
@@ -210,8 +210,13 @@
   }
  ],
  "is_submittable": 1,
- "links": [],
- "modified": "2026-09-17 00:00:00.000000",
+ "links": [
+  {
+   "link_doctype": "Commission Payslip",
+   "link_fieldname": "doctor_commission_payroll"
+  }
+ ],
+ "modified": "2026-09-24 17:17:51.373277",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Doctor Commission Payroll",
@@ -272,6 +277,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

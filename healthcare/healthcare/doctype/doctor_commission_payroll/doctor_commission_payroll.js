@@ -126,6 +126,17 @@ function show_view_doctor_dialog(frm) {
 						.filter(Boolean);
 					return { filters: { name: ["in", names.length ? names : [""]] } };
 				},
+				// Switching the doctor must refresh the sheet AND the Print output —
+				// otherwise the printed details stay on the first doctor loaded.
+				onchange() {
+					const practitioner = dialog.get_value("practitioner");
+					if (!practitioner) {
+						reset_doctor_statement(dialog);
+						return;
+					}
+					if (dialog._statement && dialog._statement_practitioner === practitioner) return;
+					load_doctor_statement(frm, dialog, practitioner);
+				},
 			},
 			{ fieldtype: "Section Break" },
 			{ fieldname: "view_html", fieldtype: "HTML" },
@@ -146,13 +157,7 @@ function show_view_doctor_dialog(frm) {
 
 	dialog.add_custom_action(
 		__("Print"),
-		() => {
-			if (!dialog._statement) {
-				frappe.msgprint(__("View a doctor first."));
-				return;
-			}
-			healthcare_dcs.print_statement(dialog._statement);
-		},
+		() => print_selected_doctor_statement(frm, dialog),
 		"btn-default"
 	);
 
@@ -166,21 +171,69 @@ function show_view_doctor_dialog(frm) {
 	}
 }
 
-function load_doctor_statement(frm, dialog, practitioner) {
-	frm.call({
-		doc: frm.doc,
-		method: "view_doctor_statement",
-		args: { practitioner },
-		freeze: true,
-		freeze_message: __("Loading doctor commission statement..."),
-		callback(r) {
-			if (!r.message) return;
-			dialog._statement = r.message;
-			dialog.fields_dict.view_html.$wrapper.html(
-				healthcare_dcs.render_statement(r.message, false)
-			);
-		},
+/** Drop the sheet currently on screen (used when the Doctor field is cleared). */
+function reset_doctor_statement(dialog) {
+	dialog._statement = null;
+	dialog._statement_practitioner = null;
+	dialog._loading_practitioner = null;
+	if (dialog.fields_dict.view_html) dialog.fields_dict.view_html.$wrapper.html("");
+}
+
+/** Statement payload for one doctor of the payroll. */
+function fetch_doctor_statement(frm, practitioner) {
+	return new Promise((resolve) => {
+		frm.call({
+			doc: frm.doc,
+			method: "view_doctor_statement",
+			args: { practitioner },
+			freeze: true,
+			freeze_message: __("Loading doctor commission statement..."),
+			callback: (r) => resolve(r && r.message ? r.message : null),
+		});
 	});
+}
+
+function show_doctor_statement(dialog, practitioner, statement) {
+	dialog._statement = statement;
+	dialog._statement_practitioner = practitioner;
+	if (dialog.fields_dict.view_html) {
+		dialog.fields_dict.view_html.$wrapper.html(
+			healthcare_dcs.render_statement(statement, false)
+		);
+	}
+}
+
+function load_doctor_statement(frm, dialog, practitioner) {
+	if (!practitioner) return;
+	// Already showing this doctor, or already fetching it.
+	if (dialog._statement && dialog._statement_practitioner === practitioner) return;
+	if (dialog._loading_practitioner === practitioner) return;
+
+	dialog._loading_practitioner = practitioner;
+	fetch_doctor_statement(frm, practitioner).then((statement) => {
+		dialog._loading_practitioner = null;
+		if (!statement) return;
+		// Ignore a late reply for a doctor the user has already switched away from.
+		if (dialog.get_value("practitioner") !== practitioner) return;
+		show_doctor_statement(dialog, practitioner, statement);
+	});
+}
+
+/** Print the statement of the doctor currently selected in the dialog. */
+async function print_selected_doctor_statement(frm, dialog) {
+	const practitioner = dialog.get_value("practitioner");
+	if (!practitioner) {
+		frappe.msgprint(__("Select a doctor first."));
+		return;
+	}
+	if (!dialog._statement || dialog._statement_practitioner !== practitioner) {
+		// The sheet on screen belongs to another doctor — load the selected one first
+		// so the printed header, cases and totals always match the chosen doctor.
+		const statement = await fetch_doctor_statement(frm, practitioner);
+		if (!statement) return;
+		show_doctor_statement(dialog, practitioner, statement);
+	}
+	healthcare_dcs.print_statement(dialog._statement);
 }
 
 
