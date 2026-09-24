@@ -38,6 +38,10 @@ export interface LinkFieldOption {
   country?: string
   /** Healthcare Service Unit Type: room price multiplier */
   room_multiplier?: number
+  /** Prescription Frequency: "How Many Times a Day?" (BD = 2) */
+  frequency_in_a_day?: number
+  /** Dose Frequency: number of days the period covers (Per Week → 7) */
+  days?: number
 }
 
 export interface ChecklistItem {
@@ -1084,6 +1088,19 @@ export async function fetchLongActingFrequencies(search?: string): Promise<LinkF
   const params = new URLSearchParams()
   if (search) params.append('search', search)
   const res = await fetch(`/api/method/healthcare.api.common.get_long_acting_frequencies?${params.toString()}`)
+  const data = await res.json()
+  return Array.isArray(data?.message) ? (data.message as LinkFieldOption[]) : []
+}
+
+/**
+ * "Total Dose Per" options (Dose Frequency) shown when the prescription frequency
+ * is "Other" — e.g. Per Week (7), Per Month (30). `days` is used to convert the
+ * total dose per period into a daily dose for the max-dose check.
+ */
+export async function fetchDoseFrequencies(search?: string): Promise<LinkFieldOption[]> {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  const res = await fetch(`/api/method/healthcare.api.common.get_dose_frequencies?${params.toString()}`)
   const data = await res.json()
   return Array.isArray(data?.message) ? (data.message as LinkFieldOption[]) : []
 }

@@ -29,7 +29,7 @@ import {
   syncPrescriptionEndDateAndDays,
 } from '../../utils/prescriptionType'
 import { prescriptionNeedsSignature, prescriptionIsSigned } from '../../utils/prescriptionSigning'
-import { sanitizeDosageInput } from '../../utils/prescriptionDosage'
+import { sanitizeDosageInput, isOtherFrequency, parseDoseNumber } from '../../utils/prescriptionDosage'
 import { withDosageFormValues } from '../../utils/dosageFormOptions'
 import { DosageFormSelect } from '../ui/DosageFormSelect'
 import { RefreshCw, MoreVertical, Plus, X, ChevronDown, History } from 'lucide-react'
@@ -64,6 +64,7 @@ import {
   fetchPrescriptionItems,
   fetchPrescriptionFrequencies,
   fetchLongActingFrequencies,
+  fetchDoseFrequencies,
   fetchRouteOfAdministrationList,
   fetchDosageForms,
   fetchStandardUoms,
@@ -288,6 +289,9 @@ const CLINICAL_EDIT_FIELDS = [
   'is_prn',
   'medication_type',
   'healthcare_practitioner',
+  // "Other" frequency: changing the total dose / period is a clinical change.
+  'total_dose',
+  'total_dose_per',
 ] as const
 
 const CASEFOLD_EDIT_FIELDS = new Set([
@@ -347,6 +351,9 @@ export const EditMedicationEntryModal = ({
     reference_no: order.reference_no || '',
     long_acting_frequency: order.long_acting_frequency || '',
     healthcare_practitioner: order.healthcare_practitioner || '',
+    total_dose: order.total_dose || '',
+    total_dose_per: order.total_dose_per || '',
+    frequency_in_a_day: order.frequency_in_a_day || 0,
     medication_type:
       order.medication_type === 'Contraindicated' ? '' : (order.medication_type || ''),
     ...flagsFromPrescriptionType(
@@ -367,6 +374,10 @@ export const EditMedicationEntryModal = ({
   const [freqQuery, setFreqQuery] = useState(order.patient_frequency || '')
   const [freqOptions, setFreqOptions] = useState<LinkFieldOption[]>([])
   const [freqLoading, setFreqLoading] = useState(false)
+  /** "Total Dose Per" options shown when the frequency is "Other". */
+  const [doseFreqQuery, setDoseFreqQuery] = useState(order.total_dose_per || '')
+  const [doseFreqOptions, setDoseFreqOptions] = useState<LinkFieldOption[]>([])
+  const [doseFreqLoading, setDoseFreqLoading] = useState(false)
   const [longActingFreqQuery, setLongActingFreqQuery] = useState(order.long_acting_frequency || 'Weekly')
   const [longActingFreqOptions, setLongActingFreqOptions] = useState<LinkFieldOption[]>([])
   const [longActingFreqLoading, setLongActingFreqLoading] = useState(false)
@@ -480,6 +491,14 @@ export const EditMedicationEntryModal = ({
     } catch { setRouteOptions([]) } finally { setRouteLoading(false) }
   }
 
+  /** "Total Dose Per" options (Per Week, Per Month, …) for the "Other" frequency. */
+  const searchDoseFrequencies = async (q: string) => {
+    setDoseFreqLoading(true)
+    try {
+      setDoseFreqOptions(await fetchDoseFrequencies(q || undefined))
+    } catch { setDoseFreqOptions([]) } finally { setDoseFreqLoading(false) }
+  }
+
   useEffect(() => {
     let cancelled = false
     checkMedicineGivenForEntry(prescriptionName, order.name)
@@ -495,7 +514,9 @@ export const EditMedicationEntryModal = ({
   useEffect(() => {
     const drug = (form.drug || '').trim()
     const dosage = (form.dosage || '').trim()
-    if (!drug || !dosage) {
+    const totalDose = (form.total_dose || '').trim()
+    // "Other" frequency keeps the dose in Total Dose, so Dosage may be blank.
+    if (!drug || (!dosage && !totalDose)) {
       setDoseWarning(null)
       return
     }
@@ -510,6 +531,12 @@ export const EditMedicationEntryModal = ({
         inpatient_record: inpatientRecord,
         route_of_administration: form.route_of_administration || undefined,
         is_long_acting: formIsLongActing ? 1 : 0,
+        // Daily ceiling = dose × "How Many Times a Day?" (BD = 2); for "Other",
+        // total dose ÷ Dose Frequency days.
+        patient_frequency: form.patient_frequency || undefined,
+        frequency_in_a_day: Number(form.frequency_in_a_day) || undefined,
+        total_dose: totalDose || undefined,
+        total_dose_per: (form.total_dose_per || '').trim() || undefined,
       })
         .then((preview) => {
           if (!cancelled) {
@@ -531,6 +558,10 @@ export const EditMedicationEntryModal = ({
     form.drug,
     form.dosage,
     form.route_of_administration,
+    form.patient_frequency,
+    form.frequency_in_a_day,
+    form.total_dose,
+    form.total_dose_per,
     formIsLongActing,
     patient,
     patientEncounter,
@@ -566,6 +597,17 @@ export const EditMedicationEntryModal = ({
       toast.error('Doctor is required')
       return
     }
+    // Frequency "Other": the total dose and the period it covers are mandatory.
+    if (isOtherFrequency(String(form.patient_frequency))) {
+      if (!String(form.total_dose || '').trim() || !String(form.total_dose_per || '').trim()) {
+        toast.error('Total Dose and Total Dose Per are required when Frequency is Other')
+        return
+      }
+      if (parseDoseNumber(form.total_dose) == null) {
+        toast.error('Enter the Total Dose as a number (e.g. 700)')
+        return
+      }
+    }
     if (form.is_pink && !String(form.reference_no || '').trim() && !inpatientRecord) {
       toast.error('Reference No is required for pink medications')
       return
@@ -594,6 +636,8 @@ export const EditMedicationEntryModal = ({
         payload,
         changeReason.trim() || undefined,
         addNewLine,
+        // Doctor making the change is recorded as the one who stopped the old line.
+        String(form.healthcare_practitioner || '').trim() || undefined,
       )
       toast.success(
         res.amended
@@ -625,6 +669,12 @@ export const EditMedicationEntryModal = ({
       if (field === 'long_acting_frequency') {
         next.patient_frequency = String(value)
         setFreqQuery(String(value))
+      }
+      // Leaving the "Other" frequency drops the total-dose period fields.
+      if (field === 'patient_frequency' && !isOtherFrequency(String(value))) {
+        next.total_dose = ''
+        next.total_dose_per = ''
+        setDoseFreqQuery('')
       }
       return next
     })
@@ -712,17 +762,6 @@ export const EditMedicationEntryModal = ({
               <label className="block text-xs font-medium text-slate-600 mb-1">Dosage</label>
               <input value={form.dosage} inputMode="decimal" onChange={(e) => updateField('dosage', sanitizeDosageInput(e.target.value))} disabled={disabled} placeholder="45"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500" />
-              {checkingDose ? (
-                <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
-              ) : (
-                <DoseLimitHint
-                  info={doseLimitInfo}
-                  loading={loadingDoseLimitInfo}
-                  hasWarning={Boolean(doseWarning?.message)}
-                  warningMessage={doseWarning?.message}
-                  enteredDose={form.dosage}
-                />
-              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Unit of Measure</label>
@@ -740,6 +779,20 @@ export const EditMedicationEntryModal = ({
               />
             </div>
           </div>
+
+          {/* Full width so the long dose-limit message never squeezes the Dosage column
+              or leaves the Unit of Measure side looking empty. */}
+          {checkingDose ? (
+            <p className="text-xs text-slate-500">Checking dose limit…</p>
+          ) : (
+            <DoseLimitHint
+              info={doseLimitInfo}
+              loading={loadingDoseLimitInfo}
+              hasWarning={Boolean(doseWarning?.message)}
+              warningMessage={doseWarning?.message}
+              enteredDose={form.dosage}
+            />
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -810,9 +863,24 @@ export const EditMedicationEntryModal = ({
                     onCreateClick={() => setCreateFreqModal('regular')}
                     onQueryChange={(q) => { setFreqQuery(q); searchFrequencies(q) }}
                     onOpen={() => { if (freqOptions.length === 0) searchFrequencies('') }}
-                    onSelect={(opt) => { updateField('patient_frequency', opt.name); setFreqQuery(opt.label || opt.name) }}
-                    onClear={() => { updateField('patient_frequency', ''); setFreqQuery('') }}
+                    onSelect={(opt) => {
+                      updateField('patient_frequency', opt.name)
+                      // "How Many Times a Day?" — used for the daily dose check.
+                      updateField('frequency_in_a_day', Number(opt.frequency_in_a_day) || 0)
+                      setFreqQuery(opt.label || opt.name)
+                    }}
+                    onClear={() => {
+                      updateField('patient_frequency', '')
+                      updateField('frequency_in_a_day', 0)
+                      setFreqQuery('')
+                    }}
                   />
+                  {(Number(form.frequency_in_a_day) || 0) > 0 && (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {form.frequency_in_a_day}× per day — the daily dose check uses dose ×{' '}
+                      {form.frequency_in_a_day}.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -833,7 +901,41 @@ export const EditMedicationEntryModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          {/* "Other" frequency: dose is a total over a period, e.g. 700 per week. */}
+          {isOtherFrequency(form.patient_frequency) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Total Dose <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={form.total_dose || ''}
+                  onChange={(e) => updateField('total_dose', e.target.value)}
+                  disabled={disabled}
+                  placeholder="e.g. 700"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Total Dose Per <span className="text-red-500">*</span></label>
+                <MiniCombobox
+                  value={form.total_dose_per}
+                  displayValue={doseFreqQuery}
+                  placeholder="Select period..."
+                  options={doseFreqOptions}
+                  loading={doseFreqLoading}
+                  disabled={disabled}
+                  onQueryChange={(q) => { setDoseFreqQuery(q); searchDoseFrequencies(q) }}
+                  onOpen={() => { if (doseFreqOptions.length === 0) searchDoseFrequencies('') }}
+                  onSelect={(opt) => { updateField('total_dose_per', opt.name); setDoseFreqQuery(opt.label || opt.name) }}
+                  onClear={() => { updateField('total_dose_per', ''); setDoseFreqQuery('') }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Start Date | End Date | Days — End Date is narrower and Days is a small
+              box at the end of the row. */}
+          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_4.5rem] gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Start Date</label>
               <DateFilterInput value={form.date} onChange={(e) => updateFieldWithDateCalc('date', e.target.value)} disabled={disabled}
@@ -847,7 +949,7 @@ export const EditMedicationEntryModal = ({
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Days</label>
               <input type="number" min={1} step={1} value={form.no_of_days} onChange={(e) => updateFieldWithDateCalc('no_of_days', e.target.value)} disabled={disabled}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500" />
+                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 disabled:bg-slate-100 disabled:text-slate-500" />
             </div>
           </div>
           <p className="text-[11px] text-slate-500">Start + End Date → Days; or Start Date + Days → End Date. Clear End Date or Days to clear both.</p>
@@ -964,6 +1066,7 @@ export const EditMedicationEntryModal = ({
           } else {
             setFreqOptions((prev) => (prev.some((p) => p.name === opt.name) ? prev : [...prev, opt]))
             updateField('patient_frequency', opt.name)
+            updateField('frequency_in_a_day', Number(opt.frequency_in_a_day) || 0)
             setFreqQuery(opt.label || opt.name)
           }
           setCreateFreqModal(null)
@@ -1025,6 +1128,9 @@ export const AddMedicationEntryModal = ({
     long_acting_frequency: '',
     medication_type: '',
     healthcare_practitioner: '',
+    total_dose: '',
+    total_dose_per: '',
+    frequency_in_a_day: 0,
   })
   const [saving, setSaving] = useState(false)
   const [doseWarning, setDoseWarning] = useState<PrescriptionDoseValidationPreview | null>(null)
@@ -1041,6 +1147,10 @@ export const AddMedicationEntryModal = ({
   const [addFreqQuery, setAddFreqQuery] = useState('')
   const [addFreqOptions, setAddFreqOptions] = useState<LinkFieldOption[]>([])
   const [addFreqLoading, setAddFreqLoading] = useState(false)
+  /** "Total Dose Per" options shown when the frequency is "Other". */
+  const [addDoseFreqQuery, setAddDoseFreqQuery] = useState('')
+  const [addDoseFreqOptions, setAddDoseFreqOptions] = useState<LinkFieldOption[]>([])
+  const [addDoseFreqLoading, setAddDoseFreqLoading] = useState(false)
   const [addLongActingFreqQuery, setAddLongActingFreqQuery] = useState('Weekly')
   const [addLongActingFreqOptions, setAddLongActingFreqOptions] = useState<LinkFieldOption[]>([])
   const [addLongActingFreqLoading, setAddLongActingFreqLoading] = useState(false)
@@ -1136,10 +1246,20 @@ export const AddMedicationEntryModal = ({
     } catch { setAddRouteOptions([]) } finally { setAddRouteLoading(false) }
   }
 
+  /** "Total Dose Per" options (Per Week, Per Month, …) for the "Other" frequency. */
+  const addSearchDoseFrequencies = async (q: string) => {
+    setAddDoseFreqLoading(true)
+    try {
+      setAddDoseFreqOptions(await fetchDoseFrequencies(q || undefined))
+    } catch { setAddDoseFreqOptions([]) } finally { setAddDoseFreqLoading(false) }
+  }
+
   useEffect(() => {
     const drug = (form.drug || '').trim()
     const dosage = (form.dosage || '').trim()
-    if (!drug || !dosage) {
+    const totalDose = (form.total_dose || '').trim()
+    // "Other" frequency keeps the dose in Total Dose, so Dosage may be blank.
+    if (!drug || (!dosage && !totalDose)) {
       setDoseWarning(null)
       return
     }
@@ -1154,6 +1274,11 @@ export const AddMedicationEntryModal = ({
         inpatient_record: inpatientRecord,
         route_of_administration: form.route_of_administration || undefined,
         is_long_acting: formIsLongActing ? 1 : 0,
+        // Daily ceiling = dose × "How Many Times a Day?"; "Other" → total ÷ period days.
+        patient_frequency: form.patient_frequency || undefined,
+        frequency_in_a_day: Number(form.frequency_in_a_day) || undefined,
+        total_dose: totalDose || undefined,
+        total_dose_per: (form.total_dose_per || '').trim() || undefined,
       })
         .then((preview) => {
           if (!cancelled) {
@@ -1175,6 +1300,10 @@ export const AddMedicationEntryModal = ({
     form.drug,
     form.dosage,
     form.route_of_administration,
+    form.patient_frequency,
+    form.frequency_in_a_day,
+    form.total_dose,
+    form.total_dose_per,
     formIsLongActing,
     patient,
     patientEncounter,
@@ -1205,7 +1334,22 @@ export const AddMedicationEntryModal = ({
   }, [form.drug, formIsLongActing])
 
   const handleSave = async () => {
-    if (!form.drug || !form.dosage || !form.date) {
+    if (!form.drug || !form.date) {
+      toast.error('Drug and Start Date are required')
+      return
+    }
+    // Frequency "Other": the total dose and the period it covers are mandatory.
+    if (isOtherFrequency(String(form.patient_frequency))) {
+      if (!String(form.total_dose || '').trim() || !String(form.total_dose_per || '').trim()) {
+        toast.error('Total Dose and Total Dose Per are required when Frequency is Other')
+        return
+      }
+      if (parseDoseNumber(form.total_dose) == null) {
+        toast.error('Enter the Total Dose as a number (e.g. 700)')
+        return
+      }
+    } else if (!form.dosage) {
+      // Normal frequency: Dosage is the per-session dose and stays mandatory.
       toast.error('Drug, Dosage, and Start Date are required')
       return
     }
@@ -1255,6 +1399,12 @@ export const AddMedicationEntryModal = ({
       if (field === 'long_acting_frequency') {
         next.patient_frequency = String(value)
         setAddFreqQuery(String(value))
+      }
+      // Leaving the "Other" frequency drops the total-dose period fields.
+      if (field === 'patient_frequency' && !isOtherFrequency(String(value))) {
+        next.total_dose = ''
+        next.total_dose_per = ''
+        setAddDoseFreqQuery('')
       }
       return next
     })
@@ -1364,17 +1514,6 @@ export const AddMedicationEntryModal = ({
               <label className="block text-xs font-medium text-slate-600 mb-1">Dosage *</label>
               <input value={form.dosage} inputMode="decimal" onChange={(e) => updateField('dosage', sanitizeDosageInput(e.target.value))} placeholder="45"
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
-              {checkingDose ? (
-                <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
-              ) : (
-                <DoseLimitHint
-                  info={doseLimitInfo}
-                  loading={loadingDoseLimitInfo}
-                  hasWarning={Boolean(doseWarning?.message)}
-                  warningMessage={doseWarning?.message}
-                  enteredDose={form.dosage}
-                />
-              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Unit of Measure</label>
@@ -1391,6 +1530,20 @@ export const AddMedicationEntryModal = ({
               />
             </div>
           </div>
+
+          {/* Full width so the long dose-limit message never squeezes the Dosage column
+              or leaves the Unit of Measure side looking empty. */}
+          {checkingDose ? (
+            <p className="text-xs text-slate-500">Checking dose limit…</p>
+          ) : (
+            <DoseLimitHint
+              info={doseLimitInfo}
+              loading={loadingDoseLimitInfo}
+              hasWarning={Boolean(doseWarning?.message)}
+              warningMessage={doseWarning?.message}
+              enteredDose={form.dosage}
+            />
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -1457,9 +1610,24 @@ export const AddMedicationEntryModal = ({
                     onCreateClick={() => setAddCreateFreqModal('regular')}
                     onQueryChange={(q) => { setAddFreqQuery(q); addSearchFrequencies(q) }}
                     onOpen={() => { if (addFreqOptions.length === 0) addSearchFrequencies('') }}
-                    onSelect={(opt) => { updateField('patient_frequency', opt.name); setAddFreqQuery(opt.label || opt.name) }}
-                    onClear={() => { updateField('patient_frequency', ''); setAddFreqQuery('') }}
+                    onSelect={(opt) => {
+                      updateField('patient_frequency', opt.name)
+                      // "How Many Times a Day?" — used for the daily dose check.
+                      updateField('frequency_in_a_day', Number(opt.frequency_in_a_day) || 0)
+                      setAddFreqQuery(opt.label || opt.name)
+                    }}
+                    onClear={() => {
+                      updateField('patient_frequency', '')
+                      updateField('frequency_in_a_day', 0)
+                      setAddFreqQuery('')
+                    }}
                   />
+                  {(Number(form.frequency_in_a_day) || 0) > 0 && (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {form.frequency_in_a_day}× per day — the daily dose check uses dose ×{' '}
+                      {form.frequency_in_a_day}.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -1479,7 +1647,39 @@ export const AddMedicationEntryModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          {/* "Other" frequency: dose is a total over a period, e.g. 700 per week. */}
+          {isOtherFrequency(form.patient_frequency) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Total Dose <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={form.total_dose || ''}
+                  onChange={(e) => updateField('total_dose', e.target.value)}
+                  placeholder="e.g. 700"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Total Dose Per <span className="text-red-500">*</span></label>
+                <MiniCombobox
+                  value={form.total_dose_per}
+                  displayValue={addDoseFreqQuery}
+                  placeholder="Select period..."
+                  options={addDoseFreqOptions}
+                  loading={addDoseFreqLoading}
+                  onQueryChange={(q) => { setAddDoseFreqQuery(q); addSearchDoseFrequencies(q) }}
+                  onOpen={() => { if (addDoseFreqOptions.length === 0) addSearchDoseFrequencies('') }}
+                  onSelect={(opt) => { updateField('total_dose_per', opt.name); setAddDoseFreqQuery(opt.label || opt.name) }}
+                  onClear={() => { updateField('total_dose_per', ''); setAddDoseFreqQuery('') }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Start Date | End Date | Days — End Date is narrower and Days is a small
+              box at the end of the row. */}
+          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_4.5rem] gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Start Date *</label>
               <DateFilterInput value={form.date} onChange={(e) => addUpdateFieldWithDateCalc('date', e.target.value)}
@@ -1493,7 +1693,7 @@ export const AddMedicationEntryModal = ({
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">Days</label>
               <input type="number" min={1} step={1} value={form.no_of_days} onChange={(e) => addUpdateFieldWithDateCalc('no_of_days', e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
             </div>
           </div>
           <p className="text-[11px] text-slate-500">Start + End Date → Days; or Start Date + Days → End Date. Clear End Date or Days to clear both.</p>
@@ -1572,6 +1772,7 @@ export const AddMedicationEntryModal = ({
           } else {
             setAddFreqOptions((prev) => (prev.some((p) => p.name === opt.name) ? prev : [...prev, opt]))
             updateField('patient_frequency', opt.name)
+            updateField('frequency_in_a_day', Number(opt.frequency_in_a_day) || 0)
             setAddFreqQuery(opt.label || opt.name)
           }
           setAddCreateFreqModal(null)
@@ -1655,10 +1856,46 @@ const MedicationRow = ({
   const [reasonDraft, setReasonDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  /** Healthcare Practitioner who is stopping / holding this line (mandatory). */
+  const [stoppedByDraft, setStoppedByDraft] = useState<string>(order.stoped_by || '')
+  const [stoppedByQuery, setStoppedByQuery] = useState<string>(order.stopped_by_name || '')
+  const [stoppedByOptions, setStoppedByOptions] = useState<LinkFieldOption[]>([])
+  const [stoppedByLoading, setStoppedByLoading] = useState(false)
+
+  // Default "Stopped by" to the logged-in user's Healthcare Practitioner.
+  useEffect(() => {
+    if (order.stoped_by) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const pract = await getCurrentUserPractitionerOption()
+        if (cancelled || !pract?.name) return
+        setStoppedByDraft((prev) => prev || pract.name)
+        setStoppedByQuery((prev) => prev || pract.label || pract.name)
+      } catch {
+        /* user has no linked practitioner — doctor must pick one */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [order.stoped_by])
+
+  const searchStoppedBy = async (q: string) => {
+    setStoppedByLoading(true)
+    try {
+      setStoppedByOptions(await fetchHealthcarePractitioners(q || undefined))
+    } catch {
+      setStoppedByOptions([])
+    } finally {
+      setStoppedByLoading(false)
+    }
+  }
 
   const openStopModal = (mode: 'stop' | 'edit') => {
     setStopModalMode(mode)
     setReasonDraft(mode === 'edit' ? reasonStopped : '')
+    setStoppedByDraft((prev) => prev || order.stoped_by || '')
     setStopModalOpen(true)
     setMenuOpen(false)
   }
@@ -1669,9 +1906,16 @@ const MedicationRow = ({
       toast.error('Please enter a stop reason.')
       return
     }
+    if (!stoppedByDraft.trim()) {
+      toast.error('Please select the doctor stopping this medicine (Stopped by).')
+      return
+    }
     try {
       setSaving(true)
-      await saveMedicationOrderEntryStopReason(prescriptionName, order.name, { reasonStopped: text })
+      await saveMedicationOrderEntryStopReason(prescriptionName, order.name, {
+        reasonStopped: text,
+        stoppedBy: stoppedByDraft.trim(),
+      })
       toast.success(stopModalMode === 'edit' ? 'Stop reason updated' : 'Medication marked as stopped')
       setStopModalOpen(false)
       await onUpdated()
@@ -1717,6 +1961,40 @@ const MedicationRow = ({
                   ? 'Update the reason documented for stopping this line.'
                   : 'This line will show as stopped. Enter a clinical reason (required).'}
               </p>
+              <label className="block text-xs font-medium text-slate-600">
+                Stopped by <span className="text-red-500">*</span>
+              </label>
+              <MiniCombobox
+                value={stoppedByDraft}
+                displayValue={
+                  stoppedByDraft
+                    ? stoppedByOptions.find((p) => p.name === stoppedByDraft)?.label || stoppedByQuery
+                    : stoppedByQuery
+                }
+                placeholder="Search doctor..."
+                options={stoppedByOptions}
+                loading={stoppedByLoading}
+                onQueryChange={(q) => {
+                  setStoppedByQuery(q)
+                  setStoppedByDraft('')
+                  void searchStoppedBy(q)
+                }}
+                onOpen={() => {
+                  if (stoppedByOptions.length === 0) {
+                    void searchStoppedBy(
+                      stoppedByOptions.find((p) => p.name === stoppedByDraft)?.label || '',
+                    )
+                  }
+                }}
+                onSelect={(opt) => {
+                  setStoppedByDraft(opt.name)
+                  setStoppedByQuery(opt.label || opt.name)
+                }}
+                onClear={() => {
+                  setStoppedByDraft('')
+                  setStoppedByQuery('')
+                }}
+              />
               <label className="block text-xs font-medium text-slate-600">Reason stopped</label>
               <textarea
                 value={reasonDraft}
@@ -1809,6 +2087,12 @@ const MedicationRow = ({
                 </>
               ) : (
                 <span className="font-semibold text-rose-900">Discontinued / stopped</span>
+              )}
+              {(order.stopped_by_name || order.stoped_by) && (
+                <span className="block text-[11px] text-rose-700/90">
+                  <span className="font-semibold">Stopped by: </span>
+                  {order.stopped_by_name || order.stoped_by}
+                </span>
               )}
             </div>
           )}

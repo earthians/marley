@@ -484,6 +484,107 @@ def _force_pink_from_item_group(entry):
 		entry.is_pink = 1
 
 
+def _is_other_frequency(value) -> bool:
+	"""True for the "Other" Prescription Frequency (also matches legacy ``-OTHER-``)."""
+	return re.sub(r"[^a-z]", "", cstr(value or "").lower()) == "other"
+
+
+def _assert_other_frequency_dose_complete(
+	patient_frequency,
+	total_dose,
+	total_dose_per,
+	dosage=None,
+	drug_label=None,
+) -> None:
+	"""Frequency "Other" stores the dose as a total over a period.
+
+	Both ``total_dose`` (how much) and ``total_dose_per`` (the Dose Frequency the
+	total is for, e.g. Per Week) are mandatory so the per-day max-dose check can
+	run. Legacy lines that only carry a per-session dosage (imported from the old
+	system, e.g. ``1-0-1``) are grandfathered — re-saving an existing prescription
+	must never fail — so the check is skipped when a dosage is present.
+	"""
+	if not _is_other_frequency(patient_frequency):
+		return
+	if cstr(total_dose or "").strip() and cstr(total_dose_per or "").strip():
+		return
+	if cstr(dosage or "").strip():
+		# Legacy / handwritten "Other" line: leave it editable; the UI asks for the
+		# total dose and period the next time the line is changed.
+		return
+	frappe.throw(
+		_("Total Dose and Total Dose Per are required for {0} when Frequency is Other.").format(
+			cstr(drug_label or "").strip() or _("this medicine")
+		),
+		title=_("Missing Total Dose"),
+	)
+
+
+def _resolve_stopped_by_practitioner(practitioner=None) -> str | None:
+	"""Doctor stopping / holding a medicine.
+
+	Uses the practitioner passed by the UI and otherwise falls back to the
+	Healthcare Practitioner linked to the logged-in user (e.g. when a nurse
+	discontinues a line during discharge reconciliation).
+	"""
+	hp = cstr(practitioner or "").strip()
+	if hp:
+		return hp
+	try:
+		from healthcare.api.common import get_current_user_healthcare_practitioner
+
+		return get_current_user_healthcare_practitioner() or None
+	except Exception:
+		return None
+
+
+def _apply_stopped_by(entry, practitioner=None) -> str | None:
+	"""Set ``stoped_by`` / ``stopped_by_name`` on a medication line.
+
+	The person who stopped or put the medicine on hold is always recorded. Pass
+	``practitioner=None`` with no linked user practitioner to leave it blank.
+	"""
+	if entry is None:
+		return None
+	hp = _resolve_stopped_by_practitioner(practitioner)
+	if hasattr(entry, "stoped_by"):
+		entry.stoped_by = hp
+		if hasattr(entry, "stopped_by_name"):
+			entry.stopped_by_name = (
+				frappe.db.get_value("Healthcare Practitioner", hp, "practitioner_name") or hp
+				if hp
+				else None
+			)
+	return hp
+
+
+def _set_stopped_by(entry_name, practitioner=None) -> str | None:
+	"""db-level variant of :func:`_apply_stopped_by` for ``frappe.db.set_value`` flows."""
+	hp = _resolve_stopped_by_practitioner(practitioner)
+	if not frappe.db.has_column("Inpatient Medication Order Entry", "stoped_by"):
+		return hp
+	frappe.db.set_value("Inpatient Medication Order Entry", entry_name, "stoped_by", hp)
+	if frappe.db.has_column("Inpatient Medication Order Entry", "stopped_by_name"):
+		practitioner_name = (
+			(frappe.db.get_value("Healthcare Practitioner", hp, "practitioner_name") or hp)
+			if hp
+			else None
+		)
+		frappe.db.set_value(
+			"Inpatient Medication Order Entry", entry_name, "stopped_by_name", practitioner_name
+		)
+	return hp
+
+
+def _clear_stopped_by(entry_name) -> None:
+	"""Clear ``stoped_by`` when a medicine is continued (no longer held/stopped)."""
+	if not frappe.db.has_column("Inpatient Medication Order Entry", "stoped_by"):
+		return
+	frappe.db.set_value("Inpatient Medication Order Entry", entry_name, "stoped_by", None)
+	if frappe.db.has_column("Inpatient Medication Order Entry", "stopped_by_name"):
+		frappe.db.set_value("Inpatient Medication Order Entry", entry_name, "stopped_by_name", None)
+
+
 def _set_medication_row(doc, row):
 	"""Append one medication order row to doc. row is a dict with keys from Inpatient Medication Order Entry."""
 	row = _normalize_long_acting_medication_row(row)
@@ -553,6 +654,27 @@ def _set_medication_row(doc, row):
 		) or 0
 	else:
 		entry.frequency_in_a_day = 0
+	# "Other" frequency: doctor enters the total dose for a period and how often
+	# that period is (Dose Frequency, e.g. Per Week). The per-day dose used by the
+	# daily max-dose check is total dose ÷ Dose Frequency days.
+	if _is_other_frequency(entry.patient_frequency):
+		if entry.meta.has_field('total_dose'):
+			entry.total_dose = cstr(row.get('total_dose') or '').strip() or None
+		if entry.meta.has_field('total_dose_per'):
+			entry.total_dose_per = cstr(row.get('total_dose_per') or '').strip() or None
+		# Frequency "Other" is dosed as a total over a period → both are required.
+		_assert_other_frequency_dose_complete(
+			entry.patient_frequency,
+			entry.get('total_dose'),
+			entry.get('total_dose_per'),
+			dosage=entry.get('dosage'),
+			drug_label=row.get('drug_name') or row.get('drug'),
+		)
+	else:
+		if entry.meta.has_field('total_dose'):
+			entry.total_dose = None
+		if entry.meta.has_field('total_dose_per'):
+			entry.total_dose_per = None
 	# Preserve user-entered quantity (quantity/qty); auto-calculate only when missing.
 	quantity_input = row.get("quantity")
 	if quantity_input in (None, ""):
@@ -1154,7 +1276,7 @@ MEDICATION_ACTION_ROLES = frozenset(
 
 
 @frappe.whitelist()
-def set_medication_entry_status(order, entry, action, reason=None):
+def set_medication_entry_status(order, entry, action, reason=None, practitioner=None):
 	"""Doctor action to Hold / Continue / Discontinue an individual prescribed drug.
 
 	Rules (per drug, not the whole prescription):
@@ -1162,6 +1284,9 @@ def set_medication_entry_status(order, entry, action, reason=None):
 	- Continue: On Hold -> active (usual). Re-enables giving. No reason required.
 	- Discontinue: active/On Hold -> Discontinued. Doctor stopping the drug early. Reason required.
 	- Discontinued is terminal: no further transitions are allowed.
+	The doctor who stopped / held the medicine is stored on the line (``stoped_by``),
+	defaulting to the Healthcare Practitioner linked to the logged-in user when the
+	UI does not send one.
 	Every action is written to Medication Status Log (who/when via owner/creation).
 	"""
 	action = (action or "").strip().capitalize()
@@ -1202,6 +1327,13 @@ def set_medication_entry_status(order, entry, action, reason=None):
 		new_status = "Discontinued"
 
 	frappe.db.set_value("Inpatient Medication Order Entry", entry, "medication_status", new_status)
+	if action == "Continue":
+		# No longer held/stopped — the "stopped by" doctor no longer applies.
+		_clear_stopped_by(entry)
+	else:
+		# Hold / Discontinue: record who is holding or stopping the medicine.
+		_apply_stopped_by(row, practitioner)
+		_set_stopped_by(entry, practitioner)
 	if new_status == "Discontinued":
 		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped"):
 			frappe.db.set_value("Inpatient Medication Order Entry", entry, "stopped", 1)
@@ -1225,7 +1357,14 @@ def set_medication_entry_status(order, entry, action, reason=None):
 	log.reason = reason or None
 	log.insert(ignore_permissions=True)
 
-	return {"entry": entry, "medication_status": new_status, "action": action}
+	stopped_by = cstr(getattr(row, "stoped_by", None) or "").strip() or None
+	return {
+		"entry": entry,
+		"medication_status": new_status,
+		"action": action,
+		"stoped_by": stopped_by,
+		"stopped_by_name": getattr(row, "stopped_by_name", None),
+	}
 
 
 @frappe.whitelist()
@@ -1615,11 +1754,14 @@ def save_medication_order_entry_stop_reason(
 	order_entry_name: str,
 	reason_stopped: str | None = None,
 	clear: int | str | None = None,
+	practitioner: str | None = None,
 ):
 	"""Set or clear ``reason_stopped`` on one Inpatient Medication Order Entry (child of Patient Medication Order).
 
 	Used from the single-prescription UI. When not clearing, ``reason_stopped`` is required.
-	Optionally sets ``stopped_date`` / ``stop_by`` when those columns exist.
+	The doctor who stopped the medicine is stored in ``stoped_by`` (falling back to the
+	Healthcare Practitioner linked to the logged-in user), together with
+	``stopped_date`` / ``stop_by`` when those columns exist.
 	"""
 	if not patient_medication_order or not order_entry_name:
 		frappe.throw(_("Patient Medication Order and medication line are required"))
@@ -1640,6 +1782,7 @@ def save_medication_order_entry_stop_reason(
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stop_by", None)
 		if frappe.db.has_column("Inpatient Medication Order Entry", "stopped"):
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stopped", 0)
+		_clear_stopped_by(order_entry_name)
 	else:
 		reason = (reason_stopped or "").strip()
 		if not reason:
@@ -1651,6 +1794,8 @@ def save_medication_order_entry_stop_reason(
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stopped_date", nowdate())
 		if frappe.db.has_column("Inpatient Medication Order Entry", "stop_by"):
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "stop_by", frappe.session.user)
+		# Who stopped the medicine (doctor / healthcare practitioner).
+		_set_stopped_by(order_entry_name, practitioner)
 		# End date = day the medicine was stopped/discontinued.
 		if frappe.db.has_column("Inpatient Medication Order Entry", "end_date"):
 			frappe.db.set_value("Inpatient Medication Order Entry", order_entry_name, "end_date", nowdate())
@@ -2452,6 +2597,8 @@ _MEDICATION_ENTRY_AMEND_FIELDS = frozenset(
 		"medication_type",
 		"frequency_in_a_day",
 		"healthcare_practitioner",
+		"total_dose",
+		"total_dose_per",
 	}
 )
 _MEDICATION_ENTRY_ALLOWED_FIELDS = [
@@ -2476,6 +2623,8 @@ _MEDICATION_ENTRY_ALLOWED_FIELDS = [
 	"frequency_in_a_day",
 	"healthcare_practitioner",
 	"healthcare_practitioner_name",
+	"total_dose",
+	"total_dose_per",
 ]
 
 
@@ -2518,7 +2667,7 @@ def _medication_entry_clinical_changes(entry, updates):
 	return clinical, date_only
 
 
-def _discontinue_medication_entry(doc, entry, reason):
+def _discontinue_medication_entry(doc, entry, reason, practitioner=None):
 	entry.medication_status = "Discontinued"
 	if hasattr(entry, "stopped"):
 		entry.stopped = 1
@@ -2528,6 +2677,8 @@ def _discontinue_medication_entry(doc, entry, reason):
 		entry.stopped_date = nowdate()
 	if hasattr(entry, "stop_by"):
 		entry.stop_by = frappe.session.user
+	# Doctor who discontinued / replaced this line.
+	_apply_stopped_by(entry, practitioner)
 	# End the line on the discontinue day (UI inactive/period uses end_date).
 	if entry.meta.has_field("end_date"):
 		entry.end_date = nowdate()
@@ -2535,7 +2686,7 @@ def _discontinue_medication_entry(doc, entry, reason):
 
 @frappe.whitelist()
 def update_medication_order_entry(
-    patient_medication_order, order_entry_name, updates, reason=None, add_new_line=None
+    patient_medication_order, order_entry_name, updates, reason=None, add_new_line=None, practitioner=None
 ):
     """Update a single medication order entry (child table row) in a Patient Medication Order.
 
@@ -2549,6 +2700,8 @@ def update_medication_order_entry(
     - ``add_new_line`` omitted: amend (historical default).
 
     A reason is required whenever clinical fields change, in either mode.
+    ``practitioner`` is the doctor stopping / replacing the line; it defaults to the
+    Healthcare Practitioner linked to the logged-in user.
     """
     assert_editing_allowed()
     import json
@@ -2586,7 +2739,7 @@ def update_medication_order_entry(
         old_drug_name = entry.get("drug_name")
         old_uom = entry.get("uom")
         old_route = entry.get("route_of_administration")
-        _discontinue_medication_entry(doc, entry, reason)
+        _discontinue_medication_entry(doc, entry, reason, practitioner)
 
         skip = {
             "name",
@@ -2605,6 +2758,8 @@ def update_medication_order_entry(
             "reason_stopped",
             "stopped_date",
             "stop_by",
+            "stoped_by",
+            "stopped_by_name",
             "is_completed",
             "quantity",
             "amount",
@@ -2683,6 +2838,22 @@ def update_medication_order_entry(
     for field, value in updates.items():
         if field in allowed_fields:
             entry.set(field, value)
+
+    # "Other" frequency holds the total dose per period. Leaving that frequency
+    # clears the pair so a normal frequency can never keep a stale total dose.
+    if "patient_frequency" in updates and not _is_other_frequency(entry.get("patient_frequency")):
+        if entry.meta.has_field("total_dose"):
+            entry.total_dose = None
+        if entry.meta.has_field("total_dose_per"):
+            entry.total_dose_per = None
+    # Frequency "Other" is dosed as a total over a period → both are required.
+    _assert_other_frequency_dose_complete(
+        entry.get("patient_frequency"),
+        entry.get("total_dose"),
+        entry.get("total_dose_per"),
+        dosage=entry.get("dosage"),
+        drug_label=entry.get("drug_name") or entry.get("drug") or order_entry_name,
+    )
 
     # Pink Item Group lines always keep Is Pink ticked (UI shows it read-only).
     _force_pink_from_item_group(entry)

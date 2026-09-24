@@ -93,29 +93,9 @@ class HealthcarePractitioner(Document):
 			if result.get("file_url"):
 				self.set(stamp_attach_field(), result["file_url"])
 
-		if not self.user_id:
-			return
-
-		# Only create the link permission if it is missing. The cache-backed
-		# helper can miss an existing row and then insert blows up with
-		# DuplicateEntryError on every subsequent save (e.g. signature upload).
-		already_exists = frappe.db.exists(
-			"User Permission",
-			{
-				"user": self.user_id,
-				"allow": "Healthcare Practitioner",
-				"for_value": self.name,
-			},
-		)
-		if already_exists:
-			return
-
-		try:
-			frappe.permissions.add_user_permission(
-				"Healthcare Practitioner", self.name, self.user_id
-			)
-		except frappe.DuplicateEntryError:
-			pass
+		# NOTE: No User Permission is created for the linked User here on
+		# purpose. Linking a User to a Healthcare Practitioner must not scope
+		# that user's permissions to this document.
 
 	def set_full_name(self):
 		if self.last_name:

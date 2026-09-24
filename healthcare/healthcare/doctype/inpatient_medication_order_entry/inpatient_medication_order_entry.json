@@ -53,9 +53,15 @@
   "rate",
   "column_break_ugjx",
   "amount",
+  "section_break_bvlt",
+  "total_dose",
+  "total_dose_per",
   "section_break_lgun",
   "healthcare_practitioner",
   "healthcare_practitioner_name",
+  "column_break_lcrf",
+  "stoped_by",
+  "stopped_by_name",
   "section_break_vfoy",
   "trans_num",
   "old_medicine_code",
@@ -462,12 +468,43 @@
    "fieldname": "healthcare_practitioner_name",
    "fieldtype": "Data",
    "label": "Healthcare Practitioner Name"
+  },
+  {
+   "fieldname": "column_break_lcrf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stoped_by",
+   "fieldtype": "Link",
+   "label": "Stoped By",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fetch_from": "stoped_by.practitioner_name",
+   "fieldname": "stopped_by_name",
+   "fieldtype": "Data",
+   "label": "Stopped By Name"
+  },
+  {
+   "fieldname": "section_break_bvlt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_dose",
+   "fieldtype": "Data",
+   "label": "Total Dose"
+  },
+  {
+   "fieldname": "total_dose_per",
+   "fieldtype": "Link",
+   "label": "Total Dose Per",
+   "options": "Dose Frequency"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-09-22 21:03:03.841005",
+ "modified": "2026-09-24 14:25:37.833980",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Medication Order Entry",

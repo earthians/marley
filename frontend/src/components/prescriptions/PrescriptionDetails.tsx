@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react'
 import { fetchPrescription, setMedicationEntryStatus, type Prescription, type MedicationAction, mapOrderToDuplicateMedication } from '../../services/prescriptions'
+import {
+  fetchHealthcarePractitioners,
+  getCurrentUserPractitionerOption,
+  type LinkFieldOption,
+} from '../../services/common'
 import { useAuth } from '../../providers/AuthProvider'
 import { toast } from '../../hooks/useToast'
 import { ClearFiltersButton } from '../ui/ClearFiltersButton'
@@ -335,6 +340,29 @@ export const PrescriptionDetails = ({ prescriptionName, onUpdate }: Prescription
   const [pendingAction, setPendingAction] = useState<{ entry: string; drug: string; action: MedicationAction } | null>(null)
   const [reasonText, setReasonText] = useState('')
   const [savingAction, setSavingAction] = useState(false)
+  /** Healthcare Practitioner holding / stopping the medicine (required for Hold / Discontinue). */
+  const [stoppedBy, setStoppedBy] = useState('')
+  const [practitionerOptions, setPractitionerOptions] = useState<LinkFieldOption[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const [current, options] = await Promise.all([
+          getCurrentUserPractitionerOption(),
+          fetchHealthcarePractitioners(),
+        ])
+        if (cancelled) return
+        setPractitionerOptions(options)
+        if (current?.name) setStoppedBy((prev) => prev || current.name)
+      } catch {
+        /* doctor must pick the practitioner manually */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const load = async () => {
     try {
@@ -365,9 +393,13 @@ export const PrescriptionDetails = ({ prescriptionName, onUpdate }: Prescription
 
   const runMedAction = async (entry: string, action: MedicationAction, reason?: string) => {
     if (!prescription) return
+    if (action !== 'Continue' && !stoppedBy.trim()) {
+      toast.error('Select the doctor holding / stopping this medicine (Stopped by).')
+      return
+    }
     setSavingAction(true)
     try {
-      await setMedicationEntryStatus(prescription.name, entry, action, reason)
+      await setMedicationEntryStatus(prescription.name, entry, action, reason, stoppedBy.trim() || undefined)
       toast.success(
         action === 'Continue' ? 'Medicine continued' : action === 'Hold' ? 'Medicine put on hold' : 'Medicine discontinued',
       )
@@ -690,6 +722,25 @@ export const PrescriptionDetails = ({ prescriptionName, onUpdate }: Prescription
               )}
             </p>
             <label className="block text-xs font-medium text-slate-600 mb-1">
+              Stopped by <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={stoppedBy}
+              onChange={(e) => setStoppedBy(e.target.value)}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mb-3"
+            >
+              <option value="">Select doctor…</option>
+              {practitionerOptions.map((p) => (
+                <option key={p.name} value={p.name}>
+                  {p.label || p.name}
+                </option>
+              ))}
+              {/* Keep the current value selectable even when the list is still loading */}
+              {stoppedBy && !practitionerOptions.some((p) => p.name === stoppedBy) && (
+                <option value={stoppedBy}>{practitionerOptions.length ? stoppedBy : 'Loading…'}</option>
+              )}
+            </select>
+            <label className="block text-xs font-medium text-slate-600 mb-1">
               Reason <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -711,7 +762,7 @@ export const PrescriptionDetails = ({ prescriptionName, onUpdate }: Prescription
               </button>
               <button
                 type="button"
-                disabled={savingAction || !reasonText.trim()}
+                disabled={savingAction || !reasonText.trim() || !stoppedBy.trim()}
                 onClick={() => runMedAction(pendingAction.entry, pendingAction.action, reasonText.trim())}
                 className={`px-3 py-1.5 text-sm rounded-md text-white disabled:opacity-50 ${
                   pendingAction.action === 'Discontinue' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'

@@ -22,6 +22,7 @@ import {
   fetchDosageForms,
   fetchPrescriptionFrequencies,
   fetchLongActingFrequencies,
+  fetchDoseFrequencies,
   fetchRouteOfAdministrationList,
   resolvePrescriptionDrugRoute,
   resolvePrescriptionDrugPharmaceuticalForm,
@@ -74,7 +75,7 @@ import {
 import { DoseLimitHint } from './DoseLimitHint'
 import { DateFilterInput } from '../ui/DateFilterInput'
 import { localDateInputValue } from '../../utils/formatDate'
-import { normalizeDosageUom, sanitizeDosageInput } from '../../utils/prescriptionDosage'
+import { normalizeDosageUom, sanitizeDosageInput, isOtherFrequency, parseDoseNumber } from '../../utils/prescriptionDosage'
 import { withDosageFormValues } from '../../utils/dosageFormOptions'
 import { DosageFormSelect } from '../ui/DosageFormSelect'
 
@@ -137,6 +138,9 @@ const emptyMedicationRow = (startDate: string): MedicationOrderRow => ({
   long_acting_frequency: 'Weekly',
   route_of_administration: '',
   medication_type: '',
+  // "Other" frequency: total dose taken over a period (Dose Frequency).
+  total_dose: '',
+  total_dose_per: '',
 })
 
 function formatMedicationStockInline(stock: PrescriptionDrugStockCheck): string | null {
@@ -386,6 +390,7 @@ export const CreatePrescriptionModal = ({
   const [drugLoading, setDrugLoading] = useState<Record<number, boolean>>({})
 
   const [frequencyQueries, setFrequencyQueries] = useState<Record<number, string>>({})
+  const [doseFrequencyQueries, setDoseFrequencyQueries] = useState<Record<number, string>>({})
   const [routeQueries, setRouteQueries] = useState<Record<number, string>>({})
   const [uomQueries, setUomQueries] = useState<Record<number, string>>({})
 
@@ -400,6 +405,8 @@ export const CreatePrescriptionModal = ({
   )
   const [frequencyOptions, setFrequencyOptions] = useState<LinkFieldOption[]>([])
   const [longActingFrequencyOptions, setLongActingFrequencyOptions] = useState<LinkFieldOption[]>([])
+  /** "Total Dose Per" options shown when a row's frequency is "Other". */
+  const [doseFrequencyOptions, setDoseFrequencyOptions] = useState<LinkFieldOption[]>([])
   const [routeOptions, setRouteOptions] = useState<LinkFieldOption[]>([])
   const [uomOptions, setUomOptions] = useState<LinkFieldOption[]>([])
   /**
@@ -438,6 +445,7 @@ export const CreatePrescriptionModal = ({
     }
   }, [])
   const [loadingFrequency, setLoadingFrequency] = useState(false)
+  const [loadingDoseFrequency, setLoadingDoseFrequency] = useState(false)
   const [loadingLongActingFrequency, setLoadingLongActingFrequency] = useState(false)
   const [loadingRoute, setLoadingRoute] = useState(false)
   const [loadingUom, setLoadingUom] = useState(false)
@@ -471,14 +479,26 @@ export const CreatePrescriptionModal = ({
 
   const isEditing = editMode
 
-  // Re-check max dose when drug, dosage, route, or long-acting mode changes.
+  // Re-check max dose when drug, dosage, frequency (times per day), route, or
+  // long-acting mode changes. The frequency matters because the per-day ceiling is
+  // checked against dose × "How Many Times a Day?"; for "Other" the daily dose
+  // comes from the total dose ÷ Dose Frequency days.
   const doseValidationKey = useMemo(
     () =>
       medications
         .map((row) => {
           const longActing =
             Boolean(row.is_long_acting) || isLongActingPrescriptionType(String(row.medication_type))
-          return `${(row.drug || '').trim()}\u0001${(row.dosage || '').trim()}\u0001${(row.route_of_administration || '').trim()}\u0001${longActing ? '1' : '0'}`
+          return [
+            (row.drug || '').trim(),
+            (row.dosage || '').trim(),
+            (row.route_of_administration || '').trim(),
+            longActing ? '1' : '0',
+            (row.patient_frequency || '').trim(),
+            String(row.frequency_in_a_day ?? ''),
+            (row.total_dose || '').trim(),
+            (row.total_dose_per || '').trim(),
+          ].join('\u0001')
         })
         .join('\u0002'),
     [medications],
@@ -491,9 +511,11 @@ export const CreatePrescriptionModal = ({
     medications.forEach((row, index) => {
       const drug = (row.drug || '').trim()
       const dosage = (row.dosage || '').trim()
+      const totalDose = (row.total_dose || '').trim()
       const longActing =
         Boolean(row.is_long_acting) || isLongActingPrescriptionType(String(row.medication_type))
-      if (!drug || !dosage) {
+      // "Other" frequency lines carry the dose in Total Dose, so Dosage may be blank.
+      if (!drug || (!dosage && !totalDose)) {
         setMedicationDoseWarnings((prev) => {
           if (!(index in prev)) return prev
           const next = { ...prev }
@@ -517,6 +539,12 @@ export const CreatePrescriptionModal = ({
               : undefined,
           route_of_administration: row.route_of_administration || undefined,
           is_long_acting: longActing ? 1 : 0,
+          // Daily ceiling = dose × "How Many Times a Day?" for the chosen frequency;
+          // for "Other", total dose ÷ Dose Frequency days.
+          patient_frequency: row.patient_frequency || undefined,
+          frequency_in_a_day: Number(row.frequency_in_a_day) || undefined,
+          total_dose: totalDose || undefined,
+          total_dose_per: (row.total_dose_per || '').trim() || undefined,
         })
           .then((preview) => {
             if (cancelled) return
@@ -613,6 +641,19 @@ export const CreatePrescriptionModal = ({
       setFrequencyOptions([])
     } finally {
       setLoadingFrequency(false)
+    }
+  }
+
+  /** "Total Dose Per" options (Per Week, Per Month, …) for the "Other" frequency. */
+  const searchDoseFrequencies = async (query: string) => {
+    setLoadingDoseFrequency(true)
+    try {
+      setDoseFrequencyOptions(await fetchDoseFrequencies(query || undefined))
+    } catch (error) {
+      console.error('Failed to search dose frequencies:', error)
+      setDoseFrequencyOptions([])
+    } finally {
+      setLoadingDoseFrequency(false)
     }
   }
 
@@ -796,6 +837,9 @@ export const CreatePrescriptionModal = ({
               route_of_administration: med.route_of_administration || '',
               medication_type:
                 med.medication_type === 'Contraindicated' ? '' : (med.medication_type || ''),
+              total_dose: med.total_dose || '',
+              total_dose_per: med.total_dose_per || '',
+              frequency_in_a_day: med.frequency_in_a_day || 0,
               ...flagsFromPrescriptionType(
                 med.medication_type === 'Contraindicated' ? '' : med.medication_type
               ),
@@ -817,12 +861,15 @@ export const CreatePrescriptionModal = ({
 
         const queries: Record<number, string> = {}
         const nextUomQueries: Record<number, string> = {}
+        const nextDoseFreqQueries: Record<number, string> = {}
         loadedMedications.forEach((med, idx) => {
           if (med.drug) queries[idx] = med.drug_name || med.drug
           if (med.uom) nextUomQueries[idx] = med.uom
+          if (med.total_dose_per) nextDoseFreqQueries[idx] = med.total_dose_per
         })
         setDrugQueries(queries)
         setUomQueries(nextUomQueries)
+        setDoseFrequencyQueries(nextDoseFreqQueries)
       }
 
       if (prescriptionData.doctors_signature) {
@@ -984,18 +1031,21 @@ export const CreatePrescriptionModal = ({
       medicationRowKeysRef.current = prepared.map(() => nextMedicationRowKey())
       const queries: Record<number, string> = {}
       const nextFreq: Record<number, string> = {}
+      const nextDoseFreq: Record<number, string> = {}
       const nextRoute: Record<number, string> = {}
       const nextUom: Record<number, string> = {}
       const nextLongActing: Record<number, string> = {}
       prepared.forEach((med, idx) => {
         queries[idx] = (med.drug_name || med.drug || '').trim()
         if (med.patient_frequency) nextFreq[idx] = med.patient_frequency
+        if (med.total_dose_per) nextDoseFreq[idx] = med.total_dose_per
         if (med.route_of_administration) nextRoute[idx] = med.route_of_administration
         if (med.uom) nextUom[idx] = med.uom
         if (med.long_acting_frequency) nextLongActing[idx] = String(med.long_acting_frequency)
       })
       setDrugQueries(queries)
       setFrequencyQueries(nextFreq)
+      setDoseFrequencyQueries(nextDoseFreq)
       setRouteQueries(nextRoute)
       setUomQueries(nextUom)
       setLongActingFrequencyQueries(nextLongActing)
@@ -1169,11 +1219,17 @@ export const CreatePrescriptionModal = ({
       if (field === 'long_acting_frequency') {
         row.patient_frequency = String(value)
       }
+      // Leaving the "Other" frequency drops the total-dose period fields.
+      if (field === 'patient_frequency' && !isOtherFrequency(String(value))) {
+        row.total_dose = ''
+        row.total_dose_per = ''
+      }
 
-      const isIP = mode === 'IP'
+      // Start Date / End Date / Days stay in lockstep for every care context
+      // (inpatient lines now show Days too, so the same rule applies).
       // Long-acting medicines may have an empty end date — don't auto-compute it for them.
       const rowIsLongActing = row.is_long_acting || isLongActingPrescriptionType(String(row.medication_type))
-      if (!isIP && !rowIsLongActing && (field === 'date' || field === 'end_date' || field === 'no_of_days')) {
+      if (!rowIsLongActing && (field === 'date' || field === 'end_date' || field === 'no_of_days')) {
         Object.assign(row, syncPrescriptionEndDateAndDays(row, field, addDays, daysBetween))
       }
       
@@ -1187,7 +1243,11 @@ export const CreatePrescriptionModal = ({
       const stopped = Boolean(String(m.reason_stopped || '').trim())
       // Stopped/discontinued lines: include if drug + date present (user can remove to exclude).
       if (stopped) return Boolean(m.drug && m.date)
-      return Boolean(m.drug && m.dosage && m.date)
+      // "Other" frequency keeps the dose in Total Dose, so a per-session Dosage is not required.
+      const hasDose =
+        Boolean(m.dosage) ||
+        (isOtherFrequency(m.patient_frequency) && Boolean(String(m.total_dose || '').trim()))
+      return Boolean(m.drug && hasDose && m.date)
     })
     .map((m) => ({ ...m, ...flagsFromPrescriptionType(m.medication_type) }))
 
@@ -1248,6 +1308,30 @@ export const CreatePrescriptionModal = ({
     }
     if (formData.care_context === 'Inpatient Admission' && !formData.inpatient_record) {
       setError('A prescription can only be created for the current admission.'); setActiveTab('details'); return
+    }
+    // Frequency "Other" keeps the dose in Total Dose, so both the total dose and the
+    // period it is taken over (Per Week, Per Month, …) are mandatory.
+    const otherDoseLines = medications.filter(
+      (med) => med.drug && med.date && isOtherFrequency(med.patient_frequency),
+    )
+    const otherMissing = otherDoseLines.filter(
+      (med) =>
+        !String(med.total_dose || '').trim() || !String(med.total_dose_per || '').trim(),
+    )
+    if (otherMissing.length > 0) {
+      const names = otherMissing.map((m) => m.drug_name || m.drug).join(', ')
+      setError(
+        `Total Dose and Total Dose Per are required when Frequency is Other: ${names}`,
+      )
+      setActiveTab('medications')
+      return
+    }
+    const otherNonNumeric = otherDoseLines.filter((med) => parseDoseNumber(med.total_dose) == null)
+    if (otherNonNumeric.length > 0) {
+      const names = otherNonNumeric.map((m) => m.drug_name || m.drug).join(', ')
+      setError(`Enter the Total Dose as a number (e.g. 700) for: ${names}`)
+      setActiveTab('medications')
+      return
     }
     if (validMedications.length === 0) {
       setError('Please add at least one medication with Drug, Dosage, and Date')
@@ -1407,7 +1491,6 @@ export const CreatePrescriptionModal = ({
 
   const isExpanded = (index: number) => expandedMedications.has(index)
   const shouldShowCollapse = medications.length >= 2
-  const isIP = mode === 'IP'
 
   const modal = (
     <div
@@ -1832,17 +1915,6 @@ export const CreatePrescriptionModal = ({
                                 placeholder="45"
                                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                               />
-                              {checkingDoseRows[index] ? (
-                                <p className="mt-1 text-xs text-slate-500">Checking dose limit…</p>
-                              ) : (
-                                <DoseLimitHint
-                                  info={medicationDoseLimits[index] || null}
-                                  loading={Boolean(loadingDoseLimits[index])}
-                                  hasWarning={Boolean(medicationDoseWarnings[index]?.message)}
-                                  warningMessage={medicationDoseWarnings[index]?.message}
-                                  enteredDose={row.dosage}
-                                />
-                              )}
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -1875,6 +1947,20 @@ export const CreatePrescriptionModal = ({
                               />
                             </div>
                           </div>
+
+                          {/* Full width so the long dose-limit message never squeezes the
+                              Dosage column or leaves the Unit of Measure side looking empty. */}
+                          {checkingDoseRows[index] ? (
+                            <p className="text-xs text-slate-500">Checking dose limit…</p>
+                          ) : (
+                            <DoseLimitHint
+                              info={medicationDoseLimits[index] || null}
+                              loading={Boolean(loadingDoseLimits[index])}
+                              hasWarning={Boolean(medicationDoseWarnings[index]?.message)}
+                              warningMessage={medicationDoseWarnings[index]?.message}
+                              enteredDose={row.dosage}
+                            />
+                          )}
 
                           <div className="grid grid-cols-2 gap-3">
                             <div>
@@ -1966,13 +2052,26 @@ export const CreatePrescriptionModal = ({
                                     }}
                                     onSelect={(opt) => {
                                       updateMedicationRow(index, 'patient_frequency', opt.name)
+                                      // "How Many Times a Day?" — used for the daily dose check.
+                                      updateMedicationRow(
+                                        index,
+                                        'frequency_in_a_day',
+                                        Number(opt.frequency_in_a_day) || 0,
+                                      )
                                       setFrequencyQueries((prev) => ({ ...prev, [index]: opt.label || opt.name }))
                                     }}
                                     onClear={() => {
                                       updateMedicationRow(index, 'patient_frequency', '')
+                                      updateMedicationRow(index, 'frequency_in_a_day', 0)
                                       setFrequencyQueries((prev) => ({ ...prev, [index]: '' }))
                                     }}
                                   />
+                                  {(row.frequency_in_a_day ?? 0) > 0 && (
+                                    <p className="mt-1 text-[11px] text-slate-500">
+                                      {row.frequency_in_a_day}× per day — the daily dose check uses
+                                      dose × {row.frequency_in_a_day}.
+                                    </p>
+                                  )}
                                 </>
                               )}
                             </div>
@@ -2006,6 +2105,64 @@ export const CreatePrescriptionModal = ({
                             </div>
                           </div>
 
+                          {/* "Other" frequency: the dose is a total over a period,
+                              e.g. 700 per week → 100/day for the daily dose check. */}
+                          {isOtherFrequency(row.patient_frequency) && (
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">
+                                  Total Dose <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={row.total_dose ?? ''}
+                                  onChange={(e) =>
+                                    updateMedicationRow(index, 'total_dose', e.target.value)
+                                  }
+                                  placeholder="e.g. 700"
+                                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/25"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">
+                                  Total Dose Per <span className="text-red-500">*</span>
+                                </label>
+                                <Combobox
+                                  value={row.total_dose_per ?? ''}
+                                  displayValue={
+                                    doseFrequencyQueries[index] ??
+                                    (row.total_dose_per
+                                      ? doseFrequencyOptions.find(
+                                          (f) => f.name === row.total_dose_per,
+                                        )?.label || row.total_dose_per
+                                      : '')
+                                  }
+                                  placeholder="Select period..."
+                                  options={doseFrequencyOptions}
+                                  loading={loadingDoseFrequency}
+                                  onQueryChange={(q) => {
+                                    setDoseFrequencyQueries((prev) => ({ ...prev, [index]: q }))
+                                    void searchDoseFrequencies(q)
+                                  }}
+                                  onOpen={() => {
+                                    if (doseFrequencyOptions.length === 0) void searchDoseFrequencies('')
+                                  }}
+                                  onSelect={(opt) => {
+                                    updateMedicationRow(index, 'total_dose_per', opt.name)
+                                    setDoseFrequencyQueries((prev) => ({
+                                      ...prev,
+                                      [index]: opt.label || opt.name,
+                                    }))
+                                  }}
+                                  onClear={() => {
+                                    updateMedicationRow(index, 'total_dose_per', '')
+                                    setDoseFrequencyQueries((prev) => ({ ...prev, [index]: '' }))
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
@@ -2037,7 +2194,9 @@ export const CreatePrescriptionModal = ({
                             </div>
                           </div>
 
-                          <div className={`grid ${isIP ? 'grid-cols-2' : 'grid-cols-3'} gap-3`}>
+                          {/* Start Date | End Date | Days — End Date is narrower and Days is a
+                              small box at the end of the row (IP and OP alike). */}
+                          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_4.5rem] gap-3">
                             <div>
                               <label className="block text-xs font-medium text-slate-600 mb-1">
                                 Start Date <span className="text-red-500">*</span>
@@ -2056,23 +2215,19 @@ export const CreatePrescriptionModal = ({
                                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                               />
                             </div>
-                            {!isIP && (
-                              <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Days</label>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  step={1}
-                                  value={row.no_of_days ?? ''}
-                                  onChange={(e) => updateMedicationRow(index, 'no_of_days', e.target.value === '' ? '' : Number(e.target.value))}
-                                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                                />
-                              </div>
-                            )}
+                            <div>
+                              <label className="block text-xs font-medium text-slate-600 mb-1">Days</label>
+                              <input
+                                type="number"
+                                min={1}
+                                step={1}
+                                value={row.no_of_days ?? ''}
+                                onChange={(e) => updateMedicationRow(index, 'no_of_days', e.target.value === '' ? '' : Number(e.target.value))}
+                                className="w-full rounded-md border border-slate-300 px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                              />
+                            </div>
                           </div>
-                          {!isIP && (
-                            <p className="text-[11px] text-slate-500">Start + End Date → Days; or Start Date + Days → End Date. Clear End Date or Days to clear both.</p>
-                          )}
+                          <p className="text-[11px] text-slate-500">Start + End Date → Days; or Start Date + Days → End Date. Clear End Date or Days to clear both.</p>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
@@ -2270,6 +2425,11 @@ export const CreatePrescriptionModal = ({
                 return [...prev, opt]
               })
               updateMedicationRow(rowIndex, 'patient_frequency', opt.name)
+              updateMedicationRow(
+                rowIndex,
+                'frequency_in_a_day',
+                Number(opt.frequency_in_a_day) || 0,
+              )
               setFrequencyQueries((prev) => ({
                 ...prev,
                 [rowIndex]: opt.label || opt.name,

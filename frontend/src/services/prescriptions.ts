@@ -385,6 +385,12 @@ export interface MedicationOrderRow {
   lot_no?: string
   rate?: number
   amount?: number
+  /** "How Many Times a Day?" from the Prescription Frequency (BD = 2) */
+  frequency_in_a_day?: number
+  /** Shown only when the frequency is "Other": total dose taken over the period below */
+  total_dose?: string
+  /** Period the total dose is for — Dose Frequency (e.g. Per Week, Per Month) */
+  total_dose_per?: string
 }
 
 export interface NursingPharmacyGiveOutResult {
@@ -436,6 +442,15 @@ export interface MedicationOrderEntry {
   stopped?: 0 | 1 | boolean
   stopped_date?: string
   stop_by?: string
+  /** "How Many Times a Day?" from the Prescription Frequency (BD = 2) */
+  frequency_in_a_day?: number
+  /** Shown when the frequency is "Other": total dose taken over the period below */
+  total_dose?: string
+  /** Period the total dose is for — Dose Frequency (e.g. Per Week, Per Month) */
+  total_dose_per?: string
+  /** Healthcare Practitioner who held / stopped this line */
+  stoped_by?: string
+  stopped_by_name?: string
   /** Legacy import status (e.g. stopped) */
   effective_status?: string
   /** Doctor who prescribed / added this medication line */
@@ -512,6 +527,9 @@ export function mapOrderToDuplicateMedication(order: any): MedicationOrderRow {
     old_medicine_name: order.old_medicine_name || '',
     medicine_no: order.medicine_no || '',
     medication: order.medication || '',
+    // "Other" frequency: keep the total dose and the period it is taken over.
+    total_dose: order.total_dose || '',
+    total_dose_per: order.total_dose_per || '',
   }
 }
 
@@ -671,17 +689,22 @@ export async function fetchMedicationOrders(
 
 export type MedicationAction = 'Hold' | 'Continue' | 'Discontinue'
 
-/** Doctor action to Hold / Continue / Discontinue a single prescribed drug. */
+/** Doctor action to Hold / Continue / Discontinue a single prescribed drug.
+ *
+ * ``practitioner`` is the Healthcare Practitioner who is holding / stopping the
+ * medicine; the backend defaults to the current user's linked practitioner.
+ */
 export async function setMedicationEntryStatus(
   order: string,
   entry: string,
   action: MedicationAction,
   reason?: string,
-): Promise<{ entry: string; medication_status: string; action: string }> {
+  practitioner?: string,
+): Promise<{ entry: string; medication_status: string; action: string; stoped_by?: string }> {
   const { apiRequest } = await import('./apiClient')
   return apiRequest('/api/method/healthcare.api.patient_medication_order.set_medication_entry_status', {
     method: 'POST',
-    body: JSON.stringify({ order, entry, action, reason: reason || undefined }),
+    body: JSON.stringify({ order, entry, action, reason: reason || undefined, practitioner: practitioner || undefined }),
   })
 }
 
@@ -814,11 +837,15 @@ export async function createSubscriptionMedicationPlan(input: {
   )
 }
 
-/** Set stop reason on one prescription line, or clear it (resume). */
+/** Set stop reason on one prescription line, or clear it (resume).
+ *
+ * ``stoppedBy`` is the Healthcare Practitioner stopping the line; the backend
+ * defaults to the current user's linked practitioner.
+ */
 export async function saveMedicationOrderEntryStopReason(
   patientMedicationOrder: string,
   orderEntryName: string,
-  opts: { reasonStopped: string } | { clear: true }
+  opts: { reasonStopped: string; stoppedBy?: string } | { clear: true }
 ): Promise<void> {
   const { apiRequest } = await import('./apiClient')
   const body: Record<string, unknown> = {
@@ -829,6 +856,7 @@ export async function saveMedicationOrderEntryStopReason(
     body.clear = 1
   } else if ('reasonStopped' in opts) {
     body.reason_stopped = opts.reasonStopped
+    if (opts.stoppedBy) body.practitioner = opts.stoppedBy
   }
   await apiRequest<{ ok?: boolean }>(
     '/api/method/healthcare.api.patient_medication_order.save_medication_order_entry_stop_reason',
@@ -872,6 +900,7 @@ export async function updateMedicationOrderEntry(
   updates: Record<string, unknown>,
   reason?: string,
   addNewLine?: boolean,
+  practitioner?: string,
 ): Promise<{ ok: boolean; amended?: boolean; discontinued_entry?: string }> {
   const { apiRequest } = await import('./apiClient')
   return apiRequest<{ ok: boolean; amended?: boolean; discontinued_entry?: string }>(
@@ -884,6 +913,8 @@ export async function updateMedicationOrderEntry(
         updates: JSON.stringify(updates),
         reason: reason || undefined,
         add_new_line: addNewLine === undefined ? undefined : addNewLine ? 1 : 0,
+        // Doctor replacing / discontinuing the line (defaults to current user's practitioner).
+        practitioner: practitioner || undefined,
       }),
     }
   )
@@ -1037,6 +1068,12 @@ export interface PrescriptionDoseValidationPreview {
   long_acting_remarks?: string | null
   entered_dose?: number | null
   parsed_dose?: number | null
+  /** Dose for one session (single administration). */
+  session_dose?: number | null
+  /** How many times a day the line is taken (BD = 2). */
+  doses_per_day?: number | null
+  /** Total dose in one day = session dose × doses per day (or total dose ÷ period days). */
+  daily_total_dose?: number | null
   exceeds_single_dose?: boolean
   exceeds_cumulative_24h?: boolean
   exceeds_period?: boolean
@@ -1069,6 +1106,14 @@ export async function previewPrescriptionDoseValidation(args: {
   patient_weight?: number | string
   route_of_administration?: string
   is_long_acting?: boolean | number
+  /** Prescription Frequency (BD, TDS, -OTHER-, …) — server reads "How Many Times a Day?". */
+  patient_frequency?: string
+  /** Explicit times-per-day override when the caller already resolved it. */
+  frequency_in_a_day?: number
+  /** "Other" frequency: total dose over the period below. */
+  total_dose?: string
+  /** "Other" frequency: Dose Frequency period (Per Week, Per Month, …). */
+  total_dose_per?: string
 }): Promise<PrescriptionDoseValidationPreview> {
   const { apiRequest } = await import('./apiClient')
   return apiRequest<PrescriptionDoseValidationPreview>(

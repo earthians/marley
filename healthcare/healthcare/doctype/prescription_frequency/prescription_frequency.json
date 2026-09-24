@@ -11,6 +11,7 @@
  "field_order": [
   "dosage",
   "frequency_in_a_day",
+  "gap_duration",
   "column_break_bxra",
   "daily",
   "active",
@@ -34,6 +35,7 @@
   },
   {
    "default": "1",
+   "depends_on": "daily",
    "fieldname": "frequency_in_a_day",
    "fieldtype": "Int",
    "label": "How Many Times a Day?"
@@ -57,10 +59,15 @@
    "fieldname": "active",
    "fieldtype": "Check",
    "label": "Active"
+  },
+  {
+   "fieldname": "gap_duration",
+   "fieldtype": "Data",
+   "label": "Gap Duration(Days)"
   }
  ],
  "links": [],
- "modified": "2026-06-30 02:24:28.151397",
+ "modified": "2026-09-24 14:57:49.239951",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Prescription Frequency",

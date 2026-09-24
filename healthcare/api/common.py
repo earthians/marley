@@ -1846,7 +1846,12 @@ def get_dosage_forms(search=None):
 
 @frappe.whitelist()
 def get_prescription_frequencies(search=None):
-	"""Get list of active Prescription Frequency records for medication rows."""
+	"""Get list of active Prescription Frequency records for medication rows.
+
+	``frequency_in_a_day`` ("How Many Times a Day?") is returned so the prescription
+	UI can show it and send it straight to the max-dose check (the per-day ceiling is
+	validated against dose × times a day).
+	"""
 	_ensure_default_long_acting_frequencies()
 	filters = {}
 	if frappe.db.has_column("Prescription Frequency", "active"):
@@ -1856,11 +1861,18 @@ def get_prescription_frequencies(search=None):
 	items = frappe.get_all(
 		"Prescription Frequency",
 		filters=filters,
-		fields=["name"],
+		fields=["name", "frequency_in_a_day"],
 		order_by="name asc",
 		limit=50,
 	)
-	return [{"name": p.name, "label": p.name} for p in items]
+	return [
+		{
+			"name": p.name,
+			"label": p.name,
+			"frequency_in_a_day": cint(p.get("frequency_in_a_day") or 0) or 1,
+		}
+		for p in items
+	]
 
 
 DEFAULT_LONG_ACTING_FREQUENCIES = [
@@ -1945,7 +1957,68 @@ def create_prescription_frequency(dosage, frequency_in_a_day=1):
 		doc.active = 1
 	doc.insert(ignore_permissions=True)
 	frappe.db.commit()
-	return {"name": doc.name, "label": doc.name}
+	# ``frequency_in_a_day`` lets the prescription UI run the per-day dose check
+	# (dose × times a day) without a second lookup.
+	return {
+		"name": doc.name,
+		"label": doc.name,
+		"frequency_in_a_day": cint(doc.frequency_in_a_day) or 1,
+	}
+
+
+# Options for "Total Dose Per" on a prescription line (frequency = Other).
+# ``days`` is the divisor used to turn a total dose per period into a daily dose.
+DEFAULT_DOSE_FREQUENCIES = [
+	("Per Day", 1),
+	("Per Week", 7),
+	("Per 2 Weeks", 14),
+	("Per Month", 30),
+	("Per 3 Months", 90),
+]
+
+
+def _ensure_default_dose_frequencies():
+	"""Seed the Dose Frequency options used by the prescription "Other" frequency."""
+	if not frappe.db.exists("DocType", "Dose Frequency"):
+		return
+	created = False
+	for dose_frequency, days in DEFAULT_DOSE_FREQUENCIES:
+		if frappe.db.exists("Dose Frequency", dose_frequency):
+			continue
+		doc = frappe.new_doc("Dose Frequency")
+		doc.dose_frequency = dose_frequency
+		doc.days = days
+		# Explicit name keeps the Link value readable even before the doctype
+		# autoname (field:dose_frequency) has been migrated.
+		doc.insert(set_name=dose_frequency, ignore_permissions=True)
+		created = True
+	if created:
+		frappe.db.commit()
+
+
+@frappe.whitelist()
+def get_dose_frequencies(search=None):
+	"""Get the "Total Dose Per" options (Dose Frequency) for prescription rows."""
+	_ensure_default_dose_frequencies()
+	filters = {}
+	if search:
+		filters["dose_frequency"] = ["like", f"%{search}%"]
+	items = frappe.get_all(
+		"Dose Frequency",
+		filters=filters,
+		fields=["name", "dose_frequency", "days"],
+		order_by="days asc, dose_frequency asc",
+		limit=50,
+		ignore_permissions=True,
+	)
+	return [
+		{
+			"name": item.name,
+			"label": item.dose_frequency or item.name,
+			"days": item.days,
+		}
+		for item in items
+	]
 
 
 @frappe.whitelist()

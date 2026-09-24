@@ -13,6 +13,9 @@ interface DoseLimitHintProps {
 /**
  * Amber warning only when the server reports a dose-limit breach.
  * Long-acting warnings require the Long-Acting Dose Period settings checkbox.
+ *
+ * Rendered as a full-width block below the Dosage / Unit of Measure row so the
+ * multi-line message never squeezes the Dosage column.
  */
 export function DoseLimitHint({
   info,
@@ -29,7 +32,7 @@ export function DoseLimitHint({
   const isLongActing = Boolean(info?.is_long_acting)
 
   return (
-    <div className="mt-1.5 rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-snug text-amber-900">
+    <div className="w-full rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-snug text-amber-900">
       <div className="mb-1.5 text-xs font-medium whitespace-pre-line">{warningMessage}</div>
       {isLongActing ? (
         <>

@@ -116,6 +116,52 @@ def is_numeric_dose_input(value) -> bool:
 	return extract_dose_numeric(value) is not None
 
 
+# Well-known dosing abbreviations used as a fallback when a free-typed frequency is
+# not (yet) a Prescription Frequency record. Only ≥2 values make the per-day check
+# stricter, so the default of 1/day is never relaxed by this map.
+_FREQUENCY_ABBREVIATIONS = {
+	"od": 1,
+	"qd": 1,
+	"qam": 1,
+	"qpm": 1,
+	"hs": 1,
+	"nocte": 1,
+	"am": 1,
+	"pm": 1,
+	"stat": 1,
+	"bd": 2,
+	"bid": 2,
+	"tds": 3,
+	"tid": 3,
+	"qid": 4,
+	"qds": 4,
+}
+
+
+def _frequency_abbreviation_times_per_day(value) -> float | None:
+	"""Times-per-day for a plain frequency abbreviation (``BD`` → 2), else ``None``."""
+	key = re.sub(r"[^a-z]", "", str(value or "").lower())
+	return _FREQUENCY_ABBREVIATIONS.get(key)
+
+
+def get_dose_frequency_days(dose_frequency) -> float | None:
+	"""Number of days a ``Dose Frequency`` covers (e.g. ``Per Week`` → 7).
+
+	Used for the "Other" frequency flow: the doctor enters a total dose per period
+	and the per-day equivalent is ``total dose ÷ days``.
+	"""
+	name = str(dose_frequency or "").strip()
+	if not name:
+		return None
+	try:
+		if not frappe.db.exists("Dose Frequency", name):
+			return None
+		value = flt(frappe.db.get_value("Dose Frequency", name, "days") or 0)
+	except Exception:
+		return None
+	return value if value > 0 else None
+
+
 def _parse_item_dose_limit_detail(raw) -> dict | None:
 	"""Parse Item max-dose text into absolute or weight-based (``mg/kg``) form."""
 	if raw is None:
@@ -637,12 +683,22 @@ def evaluate_dose_against_item_limits(
 	validate_long_acting_period: bool | None = None,
 	context: str | None = None,
 	is_long_acting: bool | int | None = False,
+	doses_per_day=None,
+	daily_dose_override=None,
 ) -> dict:
 	"""Check entered dose against Item single/daily or long-acting period ceilings.
 
 	When ``is_long_acting`` is true, daily (24h) Item fields and the daily session/day
 	toggles are ignored. Long-acting warnings run only when the Healthcare Settings
 	checkbox ``Validate Long-Acting Dose Period on …`` is enabled for this context.
+
+	The entered ``dose`` is a single administration (session). The per-day ceiling is
+	checked against the total given in one day:
+
+	* ``doses_per_day`` — how many times a day the medicine is taken (Prescription
+	  Frequency ``frequency_in_a_day``, e.g. BD = 2) → daily total = dose × count.
+	* ``daily_dose_override`` — explicit daily total, used when the frequency is
+	  "Other" and the doctor entered a total dose per period (total / period days).
 	"""
 	lai = bool(cint(is_long_acting))
 	if validate_session is None or validate_day is None or validate_long_acting_period is None:
@@ -792,6 +848,20 @@ def evaluate_dose_against_item_limits(
 		or (validate_day and (orig_daily.get("raw") or orig_daily.get("requires_weight") or orig_daily.get("ceiling") is not None))
 	)
 
+	# The entered dose is a single session. Derive the total taken in one day so the
+	# per-day ceiling is checked against dose × times-per-day (BD = 2 times/day), or
+	# against the doctor's explicit total dose per period ÷ period days ("Other").
+	frequency_count = flt(doses_per_day) if doses_per_day not in (None, "") else 0.0
+	if frequency_count <= 0:
+		frequency_count = 1.0
+	if daily_dose_override not in (None, ""):
+		# Explicit daily total (total dose ÷ period days) — there is no times-per-day
+		# multiple to report, so keep the count at 1 for the warning wording.
+		daily_total = flt(daily_dose_override)
+		frequency_count = 1.0
+	else:
+		daily_total = flt(entered_dose or 0) * frequency_count
+
 	result = {
 		"ok": True,
 		"has_limit": bool(has_limit_config),
@@ -817,13 +887,16 @@ def evaluate_dose_against_item_limits(
 		"max_dose_per_single_dose": single_ceiling,
 		"max_dose_per_day": daily_ceiling,
 		"entered_dose": entered_dose,
+		"session_dose": entered_dose,
+		"doses_per_day": frequency_count,
+		"daily_total_dose": daily_total if entered_dose is not None else None,
 		"frequency_style_dosage": frequency_style,
 		"exceeds_single_dose": False,
 		"exceeds_cumulative_24h": False,
 		"exceeds_period": False,
 		"prior_24h_dose": 0.0,
 		"prior_period_dose": 0.0,
-		"cumulative_24h_with_new_dose": entered_dose or 0.0,
+		"cumulative_24h_with_new_dose": daily_total if entered_dose is not None else 0.0,
 		"cumulative_period_with_new_dose": entered_dose or 0.0,
 		"medicine_code": medicine_code,
 		"route_of_administration": route_of_administration,
@@ -854,8 +927,10 @@ def evaluate_dose_against_item_limits(
 	if validate_session and single_ceiling is not None:
 		result["exceeds_single_dose"] = entered_dose > single_ceiling
 	if validate_day and daily_ceiling is not None:
-		result["exceeds_cumulative_24h"] = entered_dose > daily_ceiling
-		result["cumulative_24h_with_new_dose"] = entered_dose
+		# Per-day ceiling is validated against the total taken in one day
+		# (single dose × times-per-day), not the single administration.
+		result["exceeds_cumulative_24h"] = daily_total > daily_ceiling
+		result["cumulative_24h_with_new_dose"] = daily_total
 	result["ok"] = not (result["exceeds_single_dose"] or result["exceeds_cumulative_24h"])
 	return result
 
@@ -1039,18 +1114,34 @@ def dose_limit_validation_message(evaluation: dict) -> str:
 			)
 		)
 	elif evaluation.get("exceeds_cumulative_24h") and evaluation.get("validate_day", True):
-		# DOC-117: the BRD specifies this exact alert wording.
-		lines.append(
-			frappe._(
-				"Entered dose exceeds recommended maximum daily dose. "
-				"24-hour cumulative dose ({0}) would exceed the maximum daily dose ({1}). "
-				"Doses already given in the last 24 hours: {2}."
-			).format(
-				evaluation.get("cumulative_24h_with_new_dose"),
-				daily_ceiling,
-				evaluation.get("prior_24h_dose"),
+		doses_per_day = flt(evaluation.get("doses_per_day") or 1)
+		if doses_per_day > 1:
+			# Single dose is fine on its own, but the times-per-day total is not.
+			lines.append(
+				frappe._(
+					"Entered dose exceeds recommended maximum daily dose. "
+					"Total daily dose ({0}) — {1} taken {2} times a day — would exceed the "
+					"maximum daily dose ({3})."
+				).format(
+					evaluation.get("cumulative_24h_with_new_dose"),
+					entered,
+					doses_per_day,
+					daily_ceiling,
+				)
 			)
-		)
+		else:
+			# DOC-117: the BRD specifies this exact alert wording.
+			lines.append(
+				frappe._(
+					"Entered dose exceeds recommended maximum daily dose. "
+					"24-hour cumulative dose ({0}) would exceed the maximum daily dose ({1}). "
+					"Doses already given in the last 24 hours: {2}."
+				).format(
+					evaluation.get("cumulative_24h_with_new_dose"),
+					daily_ceiling,
+					evaluation.get("prior_24h_dose"),
+				)
+			)
 	return "\n".join(lines)
 
 
@@ -1140,16 +1231,47 @@ def preview_prescription_dose_validation(
 	patient_weight=None,
 	route_of_administration: str | None = None,
 	is_long_acting: int | bool = 0,
+	patient_frequency: str | None = None,
+	frequency_in_a_day=None,
+	total_dose=None,
+	total_dose_per: str | None = None,
 ) -> dict:
-	"""Preview max-dose checks while creating/editing a prescription dosage."""
+	"""Preview max-dose checks while creating/editing a prescription dosage.
+
+	The doctor enters the dose for one session and the Prescription Frequency. The
+	daily ceiling is checked against ``dose × frequency_in_a_day`` (e.g. BD = 2).
+	When the frequency is "Other", the doctor instead enters ``total_dose`` per
+	``total_dose_per`` (a Dose Frequency, e.g. Per Week) and the per-day equivalent
+	is ``total_dose ÷ days``.
+	"""
 	if not medicine_code:
 		frappe.throw(frappe._("Medicine code is required"))
-	if dose is None or str(dose).strip() == "":
+
+	dose_text = "" if dose is None else str(dose).strip()
+	total_dose_text = "" if total_dose is None else str(total_dose).strip()
+	if not dose_text and not total_dose_text:
 		return {
 			"ok": True,
 			"has_limit": False,
 			"message": "",
 		}
+
+	doses_per_day = flt(frequency_in_a_day) if frequency_in_a_day not in (None, "") else 0.0
+	if doses_per_day <= 0 and patient_frequency:
+		doses_per_day = flt(
+			frappe.db.get_value("Prescription Frequency", patient_frequency, "frequency_in_a_day") or 0
+		)
+	if doses_per_day <= 0 and patient_frequency:
+		# Free-typed frequency that is not a Prescription Frequency record yet
+		# (e.g. the doctor typed "BD"): fall back to the standard abbreviation.
+		doses_per_day = _frequency_abbreviation_times_per_day(patient_frequency) or 0.0
+
+	daily_dose_override = None
+	days = get_dose_frequency_days(total_dose_per)
+	if total_dose_text and days:
+		total_numeric = extract_dose_numeric(total_dose_text)
+		if total_numeric is not None:
+			daily_dose_override = total_numeric / days
 
 	weight = get_patient_weight_kg(
 		patient=patient,
@@ -1159,13 +1281,18 @@ def preview_prescription_dose_validation(
 	)
 	evaluation = evaluate_dose_against_item_limits(
 		medicine_code=medicine_code,
-		dose=dose,
+		dose=dose_text or total_dose_text,
 		patient_weight=weight,
 		skip_if_frequency_style=True,
 		patient=patient,
 		route_of_administration=route_of_administration,
 		context="prescription",
 		is_long_acting=is_long_acting,
+		# No per-session dose was entered (total dose per period only) → skip the
+		# single-dose check; the daily ceiling is still validated below.
+		validate_session=False if not dose_text else None,
+		doses_per_day=doses_per_day,
+		daily_dose_override=daily_dose_override,
 	)
 	return {
 		**evaluation,

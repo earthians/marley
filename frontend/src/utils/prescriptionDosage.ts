@@ -131,6 +131,50 @@ export function resolveDosageUnitName(
 }
 
 /**
+ * True for the "Other" Prescription Frequency (also matches the legacy "-OTHER-"
+ * record). When the frequency is "Other" the doctor does not enter a per-session
+ * dose; they enter the total dose per period instead.
+ */
+export function isOtherFrequency(frequency?: string | null): boolean {
+  return (frequency || '').toLowerCase().replace(/[^a-z]/g, '') === 'other'
+}
+
+/** Numeric part of a dose string (``"700mg"`` → ``700``); ``null`` when there is no number. */
+export function parseDoseNumber(value: unknown): number | null {
+  if (value == null) return null
+  const match = String(value).replace(/,/g, '').match(/\d+(?:\.\d+)?/)
+  if (!match) return null
+  const parsed = Number(match[0])
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+/**
+ * Total dose taken in one day for a prescription line.
+ *
+ * Normal frequency → single-session dose × "How Many Times a Day?".
+ * "Other" frequency → total dose ÷ Dose Frequency days (e.g. total per week ÷ 7).
+ * The server applies the same maths for the daily max-dose check.
+ */
+export function resolveDailyDose(row: {
+  dosage?: string | number | null
+  frequency_in_a_day?: number | string | null
+  total_dose?: string | number | null
+  total_dose_days?: number | string | null
+}): { dailyDose: number | null; dosesPerDay: number; fromTotalDose: boolean } {
+  const totalDose = parseDoseNumber(row.total_dose)
+  const totalDays = parseDoseNumber(row.total_dose_days)
+  if (totalDose != null && totalDays != null && totalDays > 0) {
+    return { dailyDose: totalDose / totalDays, dosesPerDay: 1, fromTotalDose: true }
+  }
+
+  const dose = parseDoseNumber(row.dosage)
+  const count = Number(row.frequency_in_a_day)
+  const dosesPerDay = Number.isFinite(count) && count > 0 ? count : 1
+  if (dose == null) return { dailyDose: null, dosesPerDay, fromTotalDose: false }
+  return { dailyDose: dose * dosesPerDay, dosesPerDay, fromTotalDose: false }
+}
+
+/**
  * Normalise one medication row so Dosage holds only the number and the unit
  * lives in Unit of Measure. Rows that cannot be split safely are returned
  * unchanged (legacy text is preserved rather than truncated).
