@@ -122,6 +122,34 @@ class TestInpatientRecord(HealthcareTestSuite):
 		self.assertEqual(None, frappe.db.get_value("Patient", patient, "inpatient_record"))
 		self.assertEqual(None, frappe.db.get_value("Patient", patient, "inpatient_status"))
 
+	def test_discharge_closes_active_nursing_care_plan(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		ip_record = create_inpatient(patient)
+		ip_record.expected_length_of_stay = 0
+		ip_record.save(ignore_permissions=True)
+
+		service_unit = get_healthcare_service_unit()
+		admit_patient(ip_record, service_unit, now_datetime())
+
+		care_plan = frappe.get_doc(
+			{
+				"doctype": "Nursing Care Plan",
+				"patient": patient,
+				"inpatient_record": ip_record.name,
+				"goals": [{"goal": "Patient remains comfortable"}],
+			}
+		).insert(ignore_permissions=True)
+
+		schedule_discharge(frappe.as_json({"patient": patient}))
+		ip_record = frappe.get_doc("Inpatient Record", ip_record.name)
+		mark_invoiced_inpatient_occupancy(ip_record)
+		discharge_patient(ip_record)
+
+		care_plan.reload()
+		self.assertEqual(care_plan.status, "Closed")
+		self.assertTrue(care_plan.closed_on)
+
 	def test_disallow_discharge_with_pending_healthcare_services(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		previous_pending_services = frappe.db.get_single_value(

@@ -459,6 +459,23 @@ def discharge_patient(inpatient_record):
 	inpatient_record.status = "Discharged"
 
 	inpatient_record.save(ignore_permissions=True)
+	close_active_nursing_care_plans(inpatient_record)
+
+
+def close_active_nursing_care_plans(inpatient_record):
+	active_plans = frappe.get_all(
+		"Nursing Care Plan",
+		filters={
+			"inpatient_record": inpatient_record.name,
+			"status": "Active",
+		},
+		pluck="name",
+	)
+
+	for plan_name in active_plans:
+		plan = frappe.get_doc("Nursing Care Plan", plan_name)
+		plan.status = "Closed"
+		plan.save(ignore_permissions=True)
 
 
 def validate_inpatient_invoicing(inpatient_record):
