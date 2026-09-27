@@ -13,8 +13,17 @@ class NursingCarePlan(Document):
 		self.started_on = now_datetime()
 
 	def validate(self):
+		self.validate_active_admission()
 		self.validate_single_active_plan()
 		self.stamp_closure()
+
+	def validate_active_admission(self):
+		if self.status != "Active" or not self.inpatient_record:
+			return
+
+		inpatient_status = frappe.db.get_value("Inpatient Record", self.inpatient_record, "status")
+		if inpatient_status in ["Discharged", "Cancelled"]:
+			frappe.throw(_("Cannot create an active care plan for a {0} admission").format(inpatient_status))
 
 	def validate_single_active_plan(self):
 		"""One live plan per admission; a second would split the goals."""

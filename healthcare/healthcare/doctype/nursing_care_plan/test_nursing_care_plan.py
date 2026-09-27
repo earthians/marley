@@ -10,6 +10,7 @@ from healthcare.healthcare.api.nursing_care_plan import (
 	set_goal_status,
 	start_care_plan,
 )
+from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -63,6 +64,23 @@ class TestNursingCarePlan(HealthcareTestSuite):
 		frappe.db.set_value("Nursing Care Plan", name, "status", "Closed")
 
 		self.assertIsNone(get_care_plan(self.patient))
+
+	def test_active_plan_cannot_be_linked_to_discharged_admission(self):
+		frappe.db.delete("Inpatient Record", {"patient": self.patient})
+		ip_record = create_inpatient(self.patient)
+		ip_record.status = "Discharged"
+		ip_record.save(ignore_permissions=True)
+
+		care_plan = frappe.get_doc(
+			{
+				"doctype": "Nursing Care Plan",
+				"patient": self.patient,
+				"inpatient_record": ip_record.name,
+				"goals": [{"goal": "Patient remains comfortable"}],
+			}
+		)
+
+		self.assertRaises(frappe.ValidationError, care_plan.insert)
 
 	def test_active_orders_exclude_finished_ones(self):
 		orders = get_active_orders(self.patient)
