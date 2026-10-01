@@ -210,8 +210,8 @@ def collect_row(context, index, obs):
 def collect_sample(context, index, obs):
 	specimen = (
 		context.comp_obs_ref.get(obs.get("name"))
-		or context.comp_obs_ref.get(index + 1)
 		or context.comp_obs_ref.get(obs.get("idx"))
+		or context.comp_obs_ref.get(index + 1)
 	)
 	observation = get_or_add_observation(
 		patient=context.sample_col.get("patient"),
@@ -284,7 +284,7 @@ def get_existing_observation(values):
 		"observation_template": values.get("template"),
 		"reference_doctype": values.get("doc"),
 		"reference_docname": values.get("docname"),
-		"parent_observation": values.get("parent") or "",
+		"parent_observation": values.get("parent") or ["in", ["", None]],
 		"docstatus": ["!=", 2],
 	}
 	if values.get("invoice"):
