@@ -602,7 +602,13 @@ def create_sales_invoice(appointment_doc, discount_percentage=0, discount_amount
 
 def get_appointment_doc(appointment: str | dict | PatientAppointment) -> PatientAppointment:
 	if isinstance(appointment, str):
-		appointment = json.loads(appointment)
+		# a str here is either a JSON blob (how frappe delivers RPC arguments) or a
+		# plain document name (the natural thing for a Python caller to pass). Only
+		# the former needs parsing; json.loads on a name raises JSONDecodeError.
+		if appointment.startswith("{"):
+			appointment = json.loads(appointment)
+		else:
+			appointment = frappe.get_doc("Patient Appointment", appointment)
 	if isinstance(appointment, dict):
 		if appointment.get("doctype") != "Patient Appointment":
 			frappe.throw(_("Expected a Patient Appointment"))
