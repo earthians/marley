@@ -157,11 +157,11 @@ class TestEmergencyRecord(HealthcareTestSuite):
 				"reference_docname": record.name,
 				"observation_category": "Vital Signs",
 			},
-			fields=["observation_template", "result_data"],
+			fields=["observation_template", "result"],
 		)
 		self.assertEqual(len(observations), 1)
 		self.assertEqual(observations[0].observation_template, "Pulse")
-		self.assertEqual(observations[0].result_data, "82")
+		self.assertEqual(observations[0].result, "82")
 
 	def test_get_vital_signs_returns_recorded(self):
 		record = create_emergency_record("_Test Patient")

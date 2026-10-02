@@ -115,5 +115,5 @@ class TestDiagnosticReport(HealthcareTestSuite):
 	def set_results(self, observations):
 		for observation in observations:
 			observation_doc = frappe.get_doc("Observation", observation)
-			observation_doc.result_data = "5"
+			observation_doc.result = "5"
 			observation_doc.save()
