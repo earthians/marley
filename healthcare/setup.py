@@ -347,6 +347,7 @@ def create_custom_records():
 	setup_patient_history_settings()
 	setup_service_request_masters()
 	setup_order_status_codes()
+	setup_observation_reference_types()
 
 
 def create_medical_departments():
@@ -1910,6 +1911,148 @@ def get_medication_request_codes():
 				"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
 			),
 			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+	]
+
+
+def setup_observation_reference_types():
+	code_systems = get_observation_reference_type_code_systems()
+	insert_record(code_systems)
+	codes = get_observation_reference_type_codes()
+	insert_record(codes)
+
+
+def get_observation_reference_type_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 1,
+			"uri": "http://terminology.hl7.org/CodeSystem/referencerange-meaning",
+			"code_system": _("Reference Type"),
+			"description": _("Meaning of a reference range, used by Observation Reference Range."),
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_observation_reference_type_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "type",
+			"display": _("Type"),
+			"definition": _("General types of reference range."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "normal",
+			"display": _("Normal Range"),
+			"definition": _(
+				"Values expected for a normal member of the relevant control population being measured."
+				" Typically each results producer such as a laboratory has specific normal ranges and they"
+				" are usually defined as within two standard deviations from the mean and account for"
+				" 95.45% of this population."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "recommended",
+			"display": _("Recommended Range"),
+			"definition": _("The range that is recommended by a relevant professional body."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "treatment",
+			"display": _("Treatment Range"),
+			"definition": _("The range at which treatment would/should be considered."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "therapeutic",
+			"display": _("Therapeutic Desired Level"),
+			"definition": _("The optimal range for best therapeutic outcomes."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "pre",
+			"display": _("Pre Therapeutic Desired Level"),
+			"definition": _(
+				"The optimal range for best therapeutic outcomes for a specimen taken immediately"
+				" before administration."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "post",
+			"display": _("Post Therapeutic Desired Level"),
+			"definition": _(
+				"The optimal range for best therapeutic outcomes for a specimen taken immediately"
+				" after administration."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "endocrine",
+			"display": _("Endocrine"),
+			"definition": _("Endocrine related states that change the expected value."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "pre-puberty",
+			"display": _("Pre-Puberty"),
+			"definition": _("An expected range in an individual prior to puberty."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "follicular",
+			"display": _("Follicular Stage"),
+			"definition": _("An expected range in an individual during the follicular stage of the cycle."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "midcycle",
+			"display": _("MidCycle"),
+			"definition": _("An expected range in an individual during the midcycle stage of the cycle."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "luteal",
+			"display": _("Luteal"),
+			"definition": _("An expected range in an individual during the luteal stage of the cycle."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "postmenopausal",
+			"display": _("Post-Menopause"),
+			"definition": _("An expected range in an individual post-menopause."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
 		},
 	]
 

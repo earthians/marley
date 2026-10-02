@@ -38,3 +38,6 @@ healthcare.patches.v16_0.add_pain_score_and_vital_sign_units
 healthcare.patches.v16_0.create_intake_output_types
 healthcare.patches.v16_0.create_clinical_note_types
 healthcare.patches.v16_0.set_medication_order_entry_status
+healthcare.patches.v16_0.unify_observation_result_field
+healthcare.patches.v16_0.setup_observation_reference_types
+healthcare.patches.v16_0.backfill_observation_result_flag
