@@ -102,7 +102,7 @@
    "in_standard_filter": 1,
    "label": "Permitted Data Type",
    "mandatory_depends_on": "eval: doc.observation_category == \"Laboratory\" && !doc.has_component;",
-   "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach"
+   "options": "\nQuantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach\nDuration\nPercent"
   },
   {
    "depends_on": "eval: [\"Text\", \"Quantity\"].includes(doc.permitted_data_type);",
@@ -401,7 +401,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-25 09:36:34.261650",
+ "modified": "2026-10-02 20:15:10.914907",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",

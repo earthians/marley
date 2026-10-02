@@ -8,13 +8,18 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.workflow import get_workflow_name, get_workflow_state_field
-from frappe.utils import flt, get_link_to_form, getdate, now_datetime, nowdate
+from frappe.utils import flt, get_link_to_form, get_time, getdate, now_datetime, nowdate
 
 from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
 	get_terms_and_conditions,
 )
 
+from healthcare.healthcare.api.nursing_common import has_value
+
 DAYS_PER_AGE_TYPE = {"Years": 365.2425, "Months": 30.436875, "Days": 1}
+
+# Types whose result is a plain number, matched against reference ranges numerically.
+NUMERIC_DATA_TYPES = ("Quantity", "Numeric", "Range", "Percent")
 
 
 class Observation(Document):
@@ -28,16 +33,13 @@ class Observation(Document):
 		self.set_result_time()
 		self.set_status()
 		self.reference = get_observation_reference(self)
+		self.result_flag, self.result_flag_color = get_observation_result_flag(self)
 		self.validate_input()
 		self.sanitize_input()
 
 	def on_update(self):
 		set_diagnostic_report_status(self)
-		if (
-			self.parent_observation
-			and self.result_data
-			and self.permitted_data_type in ["Quantity", "Numeric"]
-		):
+		if self.parent_observation and self.result and self.permitted_data_type in ["Quantity", "Numeric"]:
 			set_calculated_result(self)
 
 	def before_insert(self):
@@ -84,25 +86,7 @@ class Observation(Document):
 			self.time_of_approval = ""
 
 	def has_result(self):
-		result_fields = [
-			"result_attach",
-			"result_boolean",
-			"result_data",
-			"result_text",
-			"result_float",
-			"result_select",
-		]
-		for field in result_fields:
-			if self.get(field, None):
-				return True
-
-		# TODO: handle fields defaulting to now
-		# "result_datetime",
-		# "result_time",
-		# "result_period_from",
-		# "result_period_to",
-
-		return False
+		return has_value(self.result)
 
 	def component_has_result(self):
 		component_obs = frappe.db.get_all(
@@ -131,24 +115,27 @@ class Observation(Document):
 		return self.has_result()
 
 	def validate_input(self):
-		if self.permitted_data_type in ["Quantity", "Numeric"]:
-			if self.result_data and not is_numbers_with_exceptions(self.result_data):
+		if self.permitted_data_type in NUMERIC_DATA_TYPES:
+			if self.result and not is_numbers_with_exceptions(self.result):
 				frappe.throw(
 					_("Non numeric result {0} is not allowed for Permitted Data Type {1}").format(
-						frappe.bold(self.result_data), frappe.bold(self.permitted_data_type)
+						frappe.bold(self.result), frappe.bold(self.permitted_data_type)
 					)
 				)
 
 	def sanitize_input(self):
-		html_fields = ["result_text", "result_interpretation", "note"]
+		html_fields = ["result_interpretation", "note"]
+		if self.permitted_data_type == "Text" or self.observation_category == "Imaging":
+			html_fields.append("result")
+
 		for field in html_fields:
 			value = self.get(field)
 			if value:
 				self.set(field, frappe.utils.sanitize_html(value))
 
 	def render_templates(self):
-		if self.result_template and not self.result_text:
-			self.result_text = get_terms_and_conditions(self.result_template, self.as_dict())
+		if self.result_template and not self.result:
+			self.result = get_terms_and_conditions(self.result_template, self.as_dict())
 
 		if self.interpretation_template and not self.result_interpretation:
 			self.result_interpretation = get_terms_and_conditions(
@@ -223,6 +210,7 @@ def aggregate_and_return_observation_data(observations):
 			if obs.get("observation_template") and obs.get("specimen"):
 				obs["received_time"] = frappe.get_value("Specimen", obs.get("specimen"), "received_time")
 
+			ensure_result_flag(obs)
 			out_data.append({"observation": obs})
 
 		else:
@@ -269,14 +257,11 @@ def return_child_observation_data_as_dict(child_observations, obs, obs_length=0)
 				child["received_time"] = frappe.get_value("Specimen", child.get("specimen"), "received_time")
 			if child.get("status") != "Approved":
 				all_children_approved = False
+			ensure_result_flag(child)
 			observation_data = {"observation": child}
 			obs_list.append(observation_data)
 
-		if (
-			child.get("result_data")
-			or child.get("result_text")
-			or child.get("result_select") not in [None, "", "Null"]
-		):
+		if has_value(child.get("result")):
 			has_result = True
 
 	if all_children_approved and child_observations:
@@ -339,6 +324,203 @@ def age_value_in_days(value, age_type):
 		return None
 
 
+def get_observation_result_flag(doc):
+	"""Text and color for the indicator shown next to a result, for whichever
+	reference-range band the result falls in — only when that band's author
+	opted in via "Show Indicator on Report". Returns (text, color), either of
+	which may be empty."""
+	if not doc.observation_template or not has_value(doc.result):
+		return "", ""
+
+	template_doc = frappe.get_doc("Observation Template", doc.observation_template)
+	candidates = [
+		child
+		for child in template_doc.observation_reference_range
+		if reference_applies_to_patient(child, doc) and reference_matches_age(child, doc)
+	]
+	matched = match_reference_band(doc, candidates)
+	if not matched or not matched.show_indicator_on_report:
+		return "", ""
+
+	text = matched.short_interpretation or get_reference_type_display(matched.reference_type)
+	return text or "", matched.indicator_color or ""
+
+
+def get_reference_type_display(reference_type):
+	if not reference_type:
+		return ""
+	return frappe.db.get_value("Code Value", reference_type, "display") or ""
+
+
+def ensure_result_flag(obs):
+	"""result_flag/result_flag_color are only ever (re)computed when an
+	Observation is saved — a template's reference ranges can change (or this
+	logic itself can change) without every existing Observation being resaved,
+	so the cached value can go stale or simply never have been set. Recompute
+	live here, in the single function the Diagnostic Report widget and its
+	print format both read through, rather than trusting the stored value.
+	Also derives a light tint of the indicator color for the badge background.
+	"""
+	if not obs.get("result_flag"):
+		obs["result_flag"], obs["result_flag_color"] = get_observation_result_flag(frappe._dict(obs))
+
+	if obs.get("result_flag_color"):
+		obs["result_flag_bg"] = hex_to_rgba(obs["result_flag_color"], 0.12)
+
+	return obs
+
+
+def hex_to_rgba(hex_color, alpha):
+	hex_color = (hex_color or "").lstrip("#")
+	if len(hex_color) != 6:
+		return None
+	r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+	return f"rgba({r}, {g}, {b}, {alpha})"
+
+
+SHORTHAND_CONDITION = re.compile(r"^\s*(<=|>=|<|>|==|!=)\s*[\d.]+\s*$")
+
+
+def normalize_condition(condition):
+	"""Reference ranges have always been authored as informal shorthand, e.g.
+	"<200" or ">239" — display-only text, not a Python expression (there's no
+	left-hand operand). Prepend the operand so these now evaluate correctly,
+	without requiring every existing template to be rewritten."""
+	if SHORTHAND_CONDITION.match(condition):
+		return f"value{condition.strip()}"
+
+	return condition
+
+
+def match_reference_band(doc, candidates):
+	matches = [child for child in candidates if reference_band_matches_result(child, doc)]
+	if len(matches) <= 1:
+		return matches[0] if matches else None
+
+	# More than one band matches the same result — this happens with
+	# overlapping conditions, e.g. ">6.5" and ">7.0" are both true for 7.8.
+	# Prefer whichever band's boundary the result sits nearest to: that's the
+	# more specific band, not just whichever was listed first in the table.
+	value = flt(doc.result) if has_value(doc.result) else None
+	if value is None:
+		return matches[0]
+
+	def sort_key(indexed_child):
+		index, child = indexed_child
+		distance = band_boundary_distance(child, value)
+		return (distance if distance is not None else float("inf"), index)
+
+	return min(enumerate(matches), key=sort_key)[1]
+
+
+def band_boundary_distance(child, value):
+	"""How close `value` sits to whichever boundary made `child` match — used
+	by match_reference_band to break ties between overlapping bands."""
+	if child.conditions:
+		threshold = condition_threshold(child.conditions)
+		return abs(value - threshold) if threshold is not None else None
+
+	bounds = [flt(b) for b in (child.reference_from, child.reference_to) if has_value(b)]
+	return min((abs(value - b) for b in bounds), default=None)
+
+
+NUMBER_IN_CONDITION = re.compile(r"[-+]?[0-9]*\.?[0-9]+")
+
+
+def condition_threshold(condition):
+	if not SHORTHAND_CONDITION.match(condition):
+		return None
+	match = NUMBER_IN_CONDITION.search(condition)
+	return flt(match.group()) if match else None
+
+
+def reference_band_matches_result(child, doc):
+	# An authored condition always takes priority: it can express things a
+	# plain from/to pair cannot (open-ended bounds, compound checks).
+	if child.conditions:
+		try:
+			return bool(
+				frappe.safe_eval(normalize_condition(child.conditions), {}, {"value": flt(doc.result)})
+			)
+		except Exception:
+			return False
+
+	data_type = doc.permitted_data_type
+
+	if data_type in NUMERIC_DATA_TYPES:
+		return numeric_value_in_band(doc.result, child.reference_from, child.reference_to)
+
+	if data_type == "Boolean":
+		return bool(child.boolean_value) and doc.result == child.boolean_value
+
+	if data_type == "Select":
+		return bool(child.options) and doc.result == child.options
+
+	if data_type == "Ratio":
+		return bool(child.ratio) and doc.result == child.ratio
+
+	if data_type == "DateTime":
+		return bool(child.datetime) and doc.result == str(child.datetime)
+
+	if data_type == "Time":
+		return duration_value_in_band(doc.result, child.from_duration, child.to_duration)
+
+	if data_type == "Duration":
+		return numeric_value_in_band(doc.result, child.from_duration, child.to_duration)
+
+	if data_type == "Period":
+		return period_value_in_band(doc.result, child.from_datetime, child.to_datetime)
+
+	return False
+
+
+def numeric_value_in_band(value, band_from, band_to):
+	value = flt(value) if has_value(value) else None
+	if value is None:
+		return False
+
+	band_from = flt(band_from) if has_value(band_from) else None
+	band_to = flt(band_to) if has_value(band_to) else None
+
+	if band_from is None and band_to is None:
+		return False
+	if band_from is not None and band_to is not None:
+		return band_from <= value <= band_to
+	if band_from is not None:
+		return value >= band_from
+
+	return value <= band_to
+
+
+def duration_value_in_band(result, band_from, band_to):
+	if not has_value(result):
+		return False
+	try:
+		result_time = get_time(result)
+	except Exception:
+		return False
+
+	seconds = result_time.hour * 3600 + result_time.minute * 60 + result_time.second
+	return numeric_value_in_band(seconds, band_from, band_to)
+
+
+def period_value_in_band(result, band_from, band_to):
+	if not has_value(result) or not (band_from or band_to):
+		return False
+	try:
+		parsed = json.loads(result)
+	except (TypeError, ValueError):
+		return False
+
+	value_from, value_to = parsed.get("from"), parsed.get("to")
+	if band_from and value_from != str(band_from):
+		return False
+	if band_to and value_to != str(band_to):
+		return False
+
+	return True
+
+
 def set_reference_string(child):
 	display_reference = ""
 	if (child.reference_from and child.reference_to) or child.conditions:
@@ -361,11 +543,7 @@ def set_reference_string(child):
 @frappe.whitelist()
 def edit_observation(observation: str, data_type: str, result: str) -> None:
 	observation_doc = frappe.get_doc("Observation", observation)
-	if data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
-		observation_doc.result_data = result
-
-	elif data_type == "Text":
-		observation_doc.result_text = result
+	observation_doc.result = result
 	observation_doc.save()
 
 
@@ -382,11 +560,7 @@ def add_observation(**kwargs: str) -> str:
 	observation_doc.healthcare_practitioner = kwargs.get("practitioner")
 	observation_doc.specimen = kwargs.get("specimen")
 	observation_doc.company = kwargs.get("company")
-	if kwargs.get("data_type") in ["Range", "Ratio", "Quantity", "Numeric"]:
-		observation_doc.result_data = kwargs.get("result")
-
-	elif kwargs.get("data_type") == "Text":
-		observation_doc.result_text = kwargs.get("result")
+	observation_doc.result = kwargs.get("result")
 	if kwargs.get("parent"):
 		observation_doc.parent_observation = kwargs.get("parent")
 	observation_doc.sales_invoice_item = kwargs.get("child") if kwargs.get("child") else ""
@@ -404,21 +578,13 @@ def record_observation_result(values: str) -> None:
 			if not val.get("observation"):
 				return
 			observation_doc = frappe.get_doc("Observation", val["observation"])
-			if observation_doc.get("permitted_data_type") in [
-				"Range",
-				"Ratio",
-				"Quantity",
-				"Numeric",
-			]:
-				if (
-					observation_doc.get("permitted_data_type")
-					in [
-						"Quantity",
-						"Numeric",
-					]
-					and val.get("result")
-					and not is_numbers_with_exceptions(val.get("result"))
-				):
+			# Numeric-typed controls submit a JSON number rather than a
+			# string; normalize once so comparisons/storage stay consistent.
+			if val.get("result") is not None:
+				val["result"] = str(val["result"])
+
+			if observation_doc.get("permitted_data_type") in NUMERIC_DATA_TYPES:
+				if val.get("result") and not is_numbers_with_exceptions(val.get("result")):
 					frappe.msgprint(
 						_("Non numeric result {0} is not allowed for Permitted Type {1}").format(
 							frappe.bold(val.get("result")),
@@ -429,39 +595,26 @@ def record_observation_result(values: str) -> None:
 					)
 					return
 
-				if val.get("result") != observation_doc.get("result_data"):
-					if val.get("result"):
-						observation_doc.result_data = val.get("result")
-					if val.get("note"):
-						observation_doc.note = val.get("note")
-					if observation_doc.docstatus == 0:
-						observation_doc.save()
-					elif observation_doc.docstatus == 1:
-						observation_doc.save("Update")
-			elif observation_doc.get("permitted_data_type") == "Text":
-				if val.get("result") != observation_doc.get("result_text"):
-					if val.get("result"):
-						observation_doc.result_text = val.get("result")
-					if val.get("note"):
-						observation_doc.note = val.get("note")
-					if observation_doc.docstatus == 0:
-						observation_doc.save()
-					elif observation_doc.docstatus == 1:
-						observation_doc.save("Update")
-			elif observation_doc.get("permitted_data_type") == "Select":
-				if val.get("result") != observation_doc.get("result_select"):
-					if val.get("result"):
-						observation_doc.result_select = val.get("result")
-					if val.get("note"):
-						observation_doc.note = val.get("note")
-					if observation_doc.docstatus == 0:
-						observation_doc.save()
-					elif observation_doc.docstatus == 1:
-						observation_doc.save("Update")
+			# "result" is only present in val when the client's result control
+			# itself changed (see set_result_n_name in observation_widget.js) —
+			# an Interpretation-only save, or a note-only save, omits the key
+			# entirely so it never touches result. When present, apply it as
+			# sent, including clearing it to "" (e.g. removing an attachment).
+			result_changed = "result" in val and val.get("result") != observation_doc.get("result")
+			if result_changed:
+				observation_doc.result = val.get("result") or ""
+
+			if result_changed or val.get("note"):
+				if val.get("note"):
+					observation_doc.note = val.get("note")
+				if observation_doc.docstatus == 0:
+					observation_doc.save()
+				elif observation_doc.docstatus == 1:
+					observation_doc.save("Update")
 
 			if observation_doc.get("observation_category") == "Imaging":
 				if val.get("result"):
-					observation_doc.result_text = val.get("result")
+					observation_doc.result = val.get("result")
 				if val.get("interpretation"):
 					observation_doc.result_interpretation = val.get("interpretation")
 				if val.get("result") or val.get("interpretation"):
@@ -499,8 +652,11 @@ def set_observation_idx(doc):
 
 
 def is_numbers_with_exceptions(value):
+	# Numeric-typed controls (Float/Percent) submit an actual
+	# JSON number, not a string, once decoded — only Data-style free text
+	# results ever reach here as a str.
 	pattern = r"^[0-9{}]+$".format(re.escape(".<>"))
-	return re.match(pattern, value) is not None
+	return re.match(pattern, str(value)) is not None
 
 
 @frappe.whitelist()
@@ -686,19 +842,19 @@ def set_calculated_result(doc):
 				if not result:
 					continue
 
-				result_observation_name, result_data = frappe.db.get_value(
+				result_observation_name, existing_result = frappe.db.get_value(
 					"Observation",
 					{
 						"parent_observation": doc.parent_observation,
 						"observation_template": component.get("observation_template"),
 					},
-					["name", "result_data"],
+					["name", "result"],
 				)
-				if result_observation_name and result_data != str(result):
+				if result_observation_name and existing_result != str(result):
 					frappe.db.set_value(
 						"Observation",
 						result_observation_name,
-						"result_data",
+						"result",
 						str(result),
 					)
 
@@ -708,15 +864,15 @@ def get_data(doc, parent_template_doc):
 	observation_details = frappe.get_all(
 		"Observation",
 		{"parent_observation": doc.parent_observation},
-		["observation_template", "result_data"],
+		["observation_template", "result"],
 	)
 
-	# to get all result_data to map against abbs of all table rows
+	# to get all results to map against abbs of all table rows
 	for component in parent_template_doc.observation_component:
 		result = [
-			d["result_data"]
+			d["result"]
 			for d in observation_details
-			if (d["observation_template"] == component.get("observation_template") and d["result_data"])
+			if (d["observation_template"] == component.get("observation_template") and d["result"])
 		]
 		data[component.get("abbr")] = flt(result[0]) if (result and len(result) > 0 and result[0]) else 0
 	return data
