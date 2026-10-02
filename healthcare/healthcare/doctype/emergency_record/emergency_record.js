@@ -86,7 +86,7 @@ frappe.ui.form.on("Emergency Record", {
 						`<tr><td>${frappe.utils.escape_html(
 							v.observation_template || "",
 						)}</td><td>${frappe.utils.escape_html(
-							v.result_data || "",
+							v.result || "",
 						)} ${frappe.utils.escape_html(
 							v.permitted_unit || "",
 						)}</td></tr>`,

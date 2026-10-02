@@ -40,7 +40,7 @@ class TestNursing(HealthcareTestSuite):
 		self.assertEqual(len(names), 1)
 		observation = frappe.get_doc("Observation", names[0])
 		self.assertEqual(observation.patient, self.patient)
-		self.assertEqual(observation.result_data, "88")
+		self.assertEqual(observation.result, "88")
 		self.assertEqual(observation.observation_category, VITAL_SIGNS_CATEGORY)
 
 	def test_record_vitals_links_the_source_document(self):
@@ -61,7 +61,7 @@ class TestNursing(HealthcareTestSuite):
 	def test_record_vitals_accepts_json_readings(self):
 		names = record_vitals(patient=self.patient, readings=f'{{"{self.template}": 101}}')
 
-		self.assertEqual(frappe.db.get_value("Observation", names[0], "result_data"), "101")
+		self.assertEqual(frappe.db.get_value("Observation", names[0], "result"), "101")
 
 	def test_snapshot_returns_readings_oldest_first(self):
 		for value in (70, 80, 90):
