@@ -1,4 +1,44 @@
 frappe.provide("healthcare.ObservationWidget");
+frappe.provide("healthcare.observation");
+
+// The single "result" field's visible control changes to match the
+// Observation Template's Permitted Data Type. Period has no native single
+// control (it needs a from/to pair) so it falls back to a plain Data input
+// here; the Observation form itself renders a proper two-datetime control.
+healthcare.observation.CONTROL_FIELDTYPE_MAP = {
+	Quantity: "Float",
+	Numeric: "Float",
+	Range: "Float",
+	Percent: "Percent",
+	Ratio: "Data",
+	Text: "Text Editor",
+	Select: "Select",
+	Boolean: "Select",
+	DateTime: "Datetime",
+	Time: "Time",
+	Duration: "Duration",
+	Attach: "Attach",
+};
+
+healthcare.observation.get_control_fieldtype = function (permitted_data_type) {
+	return healthcare.observation.CONTROL_FIELDTYPE_MAP[permitted_data_type] || "Data";
+};
+
+// The compact card's "result" column is a fixed width, but a Frappe control's
+// input is `width: 100%` by default, so every type — a short number as much
+// as a paragraph of Text — stretches to fill it identically. Capping max-width
+// per type (rather than the column itself, which would upset the row's flex
+// total, see git history) lets short values sit at their natural size while
+// leaving room, and types that genuinely need it (Text, Attach, Datetime)
+// unconstrained.
+healthcare.observation.RESULT_FIELD_MAX_WIDTH = {
+	Float: "90px",
+	Percent: "90px",
+	Duration: "100px",
+	Time: "90px",
+	Data: "130px",
+	Select: "130px",
+};
 
 healthcare.ObservationWidget = class {
 	constructor(opts) {
@@ -165,23 +205,23 @@ healthcare.ObservationWidget = class {
 		var me = this;
 		me._is_rendering_result_field = me._is_rendering_result_field || {};
 		me._is_rendering_result_field[obs_data.name] = true;
-		var default_input = "";
-		if (
-			["Range", "Ratio", "Quantity", "Numeric"].includes(
-				obs_data.permitted_data_type,
-			)
-		) {
-			default_input = obs_data.result_data;
-		} else if (obs_data.permitted_data_type == "Text") {
-			default_input = trim_html(obs_data.result_text);
-		}
-		let fieldtype = "Data";
-		let options = "";
-		if (obs_data.permitted_data_type == "Select") {
-			fieldtype = "Select";
-			options = obs_data.options;
-			default_input = obs_data.result_select;
-		}
+		// This card's "result" column is too narrow (one of six equal-width
+		// columns in the row) for the full Text Editor toolbar. Use a plain
+		// multi-line textarea here instead; the standalone Observation form
+		// still uses the shared map's "Text Editor" where there's room for it.
+		let fieldtype =
+			obs_data.permitted_data_type == "Text"
+				? "Small Text"
+				: healthcare.observation.get_control_fieldtype(
+						obs_data.permitted_data_type,
+				  );
+		let options = ["Select", "Boolean"].includes(obs_data.permitted_data_type)
+			? obs_data.options
+			: "";
+		let default_input =
+			obs_data.permitted_data_type == "Text"
+				? trim_html(obs_data.result)
+				: obs_data.result;
 		me[obs_data.name] = new frappe.ui.FieldGroup({
 			fields: [
 				{
@@ -209,6 +249,9 @@ healthcare.ObservationWidget = class {
 					fieldname: "result",
 					fieldtype: fieldtype,
 					options: options,
+					// The card is too narrow to also fit the timezone hint
+					// Datetime controls normally print below the input.
+					hide_timezone: 1,
 					read_only: 1 ? obs_data.status == "Approved" : 0,
 					change: () => {
 						if (me._is_rendering_result_field[obs_data.name]) {
@@ -289,10 +332,46 @@ healthcare.ObservationWidget = class {
 			body: wrapper,
 		});
 		me[obs_data.name].make();
+		const max_width = healthcare.observation.RESULT_FIELD_MAX_WIDTH[fieldtype];
+		if (max_width) {
+			const result_field = me[obs_data.name].get_field("result");
+			(result_field.$input || result_field.$wrapper.find(".form-control")).css(
+				"max-width",
+				max_width,
+			);
+		}
 		me.set_values(this, obs_data);
 		setTimeout(() => {
 			me._is_rendering_result_field[obs_data.name] = false;
 		}, 0);
+	}
+
+	get_result_flag_html(flag, color, bg) {
+		if (!flag) return "";
+
+		const label = frappe.utils.escape_html(flag);
+		const dot_color = color || "var(--text-muted)";
+		const tint = bg || "var(--subtle-fg, var(--bg-color))";
+		// A template author can write any length of short interpretation —
+		// step the type scale down as the label grows so it never wraps or
+		// forces the pill wider than the card, but never past a readable floor.
+		const font_size =
+			flag.length > 24
+				? "7.5px"
+				: flag.length > 16
+				  ? "8px"
+				  : flag.length > 10
+				    ? "8.5px"
+				    : "9px";
+
+		return `<span title="${label}" style="display:inline-flex; align-items:center;
+			gap:5px; max-width:100%; box-sizing:border-box; margin-top:4px;
+			padding:2px 8px 2px 7px; border-radius:var(--radius-full, 9999px); background:${tint};">
+			<span style="width:6px; height:6px; border-radius:50%; flex-shrink:0; background:${dot_color};"></span>
+			<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+				font-size:${font_size}; font-weight:600; letter-spacing:0.1px; line-height:14px;
+				color:${dot_color};">${label}</span>
+		</span>`;
 	}
 
 	render_note_html(html, label = __("Note")) {
@@ -350,11 +429,19 @@ healthcare.ObservationWidget = class {
 		method_html += `</div></div>`;
 		me[obs_data.name].get_field("unit").html(method_html);
 
-		let reference_html = `<div style="display:flex;"><div class="text-muted" style="font-size:10px; padding-top:20px;">`;
+		let reference_html = `<div class="text-muted" style="font-size:10px; padding-top:20px;">`;
 		if (obs_data.reference) {
 			reference_html += `${obs_data.reference}`;
 		}
 		reference_html += `</div>`;
+		const flag_html = me.get_result_flag_html(
+			obs_data.result_flag,
+			obs_data.result_flag_color,
+			obs_data.result_flag_bg,
+		);
+		if (flag_html) {
+			reference_html += `<div style="margin-top:4px;">${flag_html}</div>`;
+		}
 		me[obs_data.name].get_field("reference").html(reference_html);
 
 		let auth_html = "";
@@ -411,7 +498,7 @@ healthcare.ObservationWidget = class {
 		if (obs_data.observation_category == "Imaging") {
 			me[obs_data.name]
 				.get_field("findings_text")
-				.html(me.render_note_html(obs_data.result_text, __("Findings")));
+				.html(me.render_note_html(obs_data.result, __("Findings")));
 			me[obs_data.name]
 				.get_field("result_interpretation")
 				.html(
@@ -427,6 +514,13 @@ healthcare.ObservationWidget = class {
 		var me = this;
 		let dialog_values = me[observation].get_values();
 		dialog_values["observation"] = observation;
+		// get_values() drops falsy fields entirely (see FieldGroup.get_values),
+		// so a cleared result (e.g. removing an Attach value) would otherwise
+		// vanish from the payload instead of telling the server to clear it.
+		// Read the control directly so "result" is always present — but keep
+		// a real 0 (a valid Float/Int result) instead of `||`-ing it away.
+		const result_value = me[observation].get_field("result").get_value();
+		dialog_values["result"] = result_value == null ? "" : result_value;
 		let valuexists = me.result.some(dict => dict.observation === observation);
 		for (var res of me.result) {
 			if (observation == res.observation) {
@@ -544,7 +638,7 @@ healthcare.ObservationWidget = class {
 		let note = "";
 		if (type == "Findings") {
 			template = obs_data.result_template;
-			note = obs_data.result_text;
+			note = obs_data.result;
 		} else if (type == "Interpretation") {
 			template = obs_data.interpretation_template;
 			note = obs_data.result_interpretation;
@@ -582,10 +676,13 @@ healthcare.ObservationWidget = class {
 				let val_dict = {};
 				var values = [];
 				val_dict["observation"] = obs_data.name;
-				val_dict["result"] = "";
+				// Only set "result" for Findings — the server now applies
+				// whatever "result" it's sent (including clearing it), so an
+				// Interpretation-only save must leave the key out entirely
+				// rather than send "" and wipe out the Findings text.
 				if (type == "Findings") {
 					val_dict["result"] = data.note;
-					obs_data.result_text = data.note;
+					obs_data.result = data.note;
 					me[obs_data.name]
 						.get_field("findings_text")
 						.html(me.render_note_html(data.note, __(type)));

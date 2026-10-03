@@ -1,6 +1,8 @@
 # Copyright (c) 2023, healthcare and Contributors
 # See license.txt
 
+import json
+
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import flt, getdate, nowtime
@@ -10,6 +12,9 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.observation.observation import add_note
+from healthcare.healthcare.doctype.observation_template.test_observation_template import (
+	create_observation_template,
+)
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -244,14 +249,15 @@ class TestObservation(HealthcareTestSuite):
 
 	def test_sanitize_input_strips_unsafe_html(self):
 		observation = frappe.new_doc("Observation")
-		observation.result_text = "<p>Normal</p><script>alert('xyz')</script>"
+		observation.permitted_data_type = "Text"
+		observation.result = "<p>Normal</p><script>alert('xyz')</script>"
 		observation.result_interpretation = "<b>High</b><img src=xyz onerror=alert(1)>"
 		observation.note = "<span onclick='steal_data()'>Note</span>"
 
 		observation.sanitize_input()
 
-		self.assertNotIn("<script", observation.result_text)
-		self.assertIn("Normal", observation.result_text)
+		self.assertNotIn("<script", observation.result)
+		self.assertIn("Normal", observation.result)
 		self.assertNotIn("onerror", observation.result_interpretation)
 		self.assertIn("High", observation.result_interpretation)
 		self.assertNotIn("onclick", observation.note)
@@ -277,6 +283,181 @@ class TestObservation(HealthcareTestSuite):
 		self.assertNotIn("<script", observation.note)
 		self.assertNotIn("onclick", observation.note)
 		self.assertIn("Note", observation.note)
+
+	def test_result_flag_matches_band_with_indicator_enabled(self):
+		template = create_observation_template("_Test Reference Range Template", sample_required=False)
+		template.set("observation_reference_range", [])
+		template.append(
+			"observation_reference_range",
+			{
+				"applies_to": "All",
+				"age": "All",
+				"reference_to": "200",
+				"short_interpretation": "Desirable",
+				# show_indicator_on_report left unchecked: Normal is informational only.
+			},
+		)
+		template.append(
+			"observation_reference_range",
+			{
+				"applies_to": "All",
+				"age": "All",
+				"reference_from": "200",
+				"reference_to": "239",
+				"short_interpretation": "Borderline High",
+				"show_indicator_on_report": 1,
+				"indicator_color": "#f2994a",
+			},
+		)
+		template.append(
+			"observation_reference_range",
+			{
+				"applies_to": "All",
+				"age": "All",
+				"reference_from": "239",
+				"short_interpretation": "High",
+				"show_indicator_on_report": 1,
+				"indicator_color": "#e24c4c",
+			},
+		)
+		template.save()
+
+		patient = self.get_test_patient()
+
+		normal = self.create_lab_observation(patient, template.name, "150")
+		self.assertEqual(normal.result_flag, "")
+		self.assertEqual(normal.result_flag_color, "")
+
+		borderline = self.create_lab_observation(patient, template.name, "220")
+		self.assertEqual(borderline.result_flag, "Borderline High")
+		self.assertEqual(borderline.result_flag_color, "#f2994a")
+
+		high = self.create_lab_observation(patient, template.name, "275")
+		self.assertEqual(high.result_flag, "High")
+		self.assertEqual(high.result_flag_color, "#e24c4c")
+
+	def test_result_flag_falls_back_to_reference_type_display(self):
+		code_value = self.create_test_reference_type_code_value("High")
+
+		template = create_observation_template(
+			"_Test Reference Type Fallback Template", sample_required=False
+		)
+		template.set("observation_reference_range", [])
+		template.append(
+			"observation_reference_range",
+			{
+				"applies_to": "All",
+				"age": "All",
+				"reference_from": "239",
+				"reference_type": code_value,
+				"show_indicator_on_report": 1,
+				"indicator_color": "#e24c4c",
+			},
+		)
+		template.save()
+		# fetch_if_empty copies the Code Value's display into short_interpretation
+		# on save; blank it again so this test exercises the Python fallback.
+		frappe.db.set_value(
+			"Observation Reference Range",
+			template.observation_reference_range[0].name,
+			"short_interpretation",
+			"",
+		)
+
+		patient = self.get_test_patient()
+		observation = self.create_lab_observation(patient, template.name, "275")
+
+		self.assertEqual(observation.result_flag, "High")
+		self.assertEqual(observation.result_flag_color, "#e24c4c")
+
+	def create_test_reference_type_code_value(self, display):
+		code_system = "_Test Reference Type Codes"
+		if not frappe.db.exists("Code System", code_system):
+			frappe.get_doc(
+				{"doctype": "Code System", "code_system": code_system, "uri": "urn:test:reference-type-codes"}
+			).insert()
+
+		code_value = display.lower()
+		existing = frappe.db.exists("Code Value", {"code_system": code_system, "code_value": code_value})
+		if existing:
+			return existing
+
+		return (
+			frappe.get_doc(
+				{
+					"doctype": "Code Value",
+					"code_system": code_system,
+					"code_value": code_value,
+					"display": display,
+				}
+			)
+			.insert()
+			.name
+		)
+
+	def test_result_flag_empty_without_reference_ranges(self):
+		template = create_observation_template("_Test No Reference Range Template", sample_required=False)
+		patient = self.get_test_patient()
+
+		observation = self.create_lab_observation(patient, template.name, "100")
+
+		self.assertEqual(observation.result_flag, "")
+		self.assertEqual(observation.result_flag_color, "")
+
+	def test_period_result_stores_as_json_pair(self):
+		template = create_observation_template("_Test Period Template", sample_required=False)
+		template.permitted_data_type = "Period"
+		template.save()
+
+		patient = self.get_test_patient()
+		observation = frappe.get_doc(
+			{
+				"doctype": "Observation",
+				"observation_template": template.name,
+				"patient": patient,
+				"company": "_Test Company",
+				"observation_category": "Laboratory",
+				"permitted_data_type": "Period",
+			}
+		).insert()
+		observation.result = json.dumps({"from": "2026-01-01 08:00:00", "to": "2026-01-05 08:00:00"})
+		observation.save()
+		observation.reload()
+
+		parsed = json.loads(observation.result)
+		self.assertEqual(parsed["from"], "2026-01-01 08:00:00")
+		self.assertEqual(parsed["to"], "2026-01-05 08:00:00")
+
+	def test_new_permitted_data_types_accept_results(self):
+		patient = self.get_test_patient()
+		for data_type, value in (
+			("Duration", "3600"),
+			("Percent", "87.5"),
+		):
+			template = create_observation_template(f"_Test {data_type} Template", sample_required=False)
+			template.permitted_data_type = data_type
+			template.abbr = f"T{data_type[:3]}"
+			template.save()
+
+			observation = self.create_lab_observation(patient, template.name, value, data_type)
+
+			self.assertEqual(observation.result, value)
+
+	def create_lab_observation(self, patient, observation_template, result, data_type="Quantity"):
+		observation = frappe.get_doc(
+			{
+				"doctype": "Observation",
+				"observation_template": observation_template,
+				"patient": patient,
+				"company": "_Test Company",
+				"observation_category": "Laboratory",
+				"permitted_data_type": data_type,
+			}
+		).insert()
+		observation.result = result
+		observation.save()
+		observation.reload()
+		return observation
 
 	def run_formula_test_case(
 		self,
@@ -341,13 +522,13 @@ class TestObservation(HealthcareTestSuite):
 
 		if not operand_1_db_set:
 			child_obs_1_doc = frappe.get_doc("Observation", child_obs_1)
-			child_obs_1_doc.result_data = str(input_value_1)
+			child_obs_1_doc.result = str(input_value_1)
 			child_obs_1_doc.save()
 		else:
-			frappe.db.set_value("Observation", child_obs_1, "result_data", str(input_value_1))
+			frappe.db.set_value("Observation", child_obs_1, "result", str(input_value_1))
 
 		child_obs_2_doc = frappe.get_doc("Observation", child_obs_2)
-		child_obs_2_doc.result_data = str(input_value_2)
+		child_obs_2_doc.result = str(input_value_2)
 		child_obs_2_doc.save()
 
 		return {
@@ -379,13 +560,13 @@ class TestObservation(HealthcareTestSuite):
 				"patient": patient,
 				"observation_template": observation_template,
 			},
-			fields=["name", "result_data"],
+			fields=["name", "result"],
 			order_by="creation desc",
 			limit=1,
 		)
 
 		self.assertTrue(rows, f"No Observation found for template {observation_template}")
-		return rows[0].result_data
+		return rows[0].result
 
 	def get_test_patient(self):
 		return frappe.get_list("Patient", pluck="name")[0]

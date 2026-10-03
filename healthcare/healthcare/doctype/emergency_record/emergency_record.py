@@ -194,7 +194,7 @@ class EmergencyRecord(Document):
 				"observation_category": "Vital Signs",
 				"status": ["!=", "Cancelled"],
 			},
-			fields=["observation_template", "result_data", "permitted_unit", "posting_date"],
+			fields=["observation_template", "result", "permitted_unit", "posting_date"],
 			order_by="creation desc",
 		)
 

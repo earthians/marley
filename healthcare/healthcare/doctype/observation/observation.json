@@ -46,16 +46,9 @@
   "sample_status",
   "result_section",
   "result_template",
-  "result_attach",
-  "result_boolean",
-  "result_data",
-  "result_text",
-  "result_float",
-  "result_select",
-  "result_datetime",
-  "result_time",
-  "result_period_from",
-  "result_period_to",
+  "result",
+  "result_flag",
+  "result_flag_color",
   "options",
   "time_of_result",
   "time_of_approval",
@@ -176,27 +169,27 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Permitted Data Type",
-   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach",
+   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nAttach\nDuration\nPercent",
    "read_only_depends_on": "observation_template"
   },
   {
-   "depends_on": "eval:[\"Range\", \"Ratio\", \"Quantity\", \"Numeric\"].includes(doc.permitted_data_type)",
-   "fieldname": "result_data",
+   "fieldname": "result",
+   "fieldtype": "Long Text",
+   "label": "Result"
+  },
+  {
+   "fieldname": "result_flag",
    "fieldtype": "Data",
-   "label": "Result"
+   "in_list_view": 1,
+   "label": "Result Flag",
+   "read_only": 1
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Text\" || doc.observation_category == \"Imaging\";",
-   "fieldname": "result_text",
-   "fieldtype": "Text Editor",
-   "label": "Result"
-  },
-  {
-   "depends_on": "eval:[\"Quantity\", 'Numeric'].includes(doc.permitted_data_type)",
-   "fieldname": "result_float",
-   "fieldtype": "Float",
+   "fieldname": "result_flag_color",
+   "fieldtype": "Data",
    "hidden": 1,
-   "label": "Result"
+   "label": "Result Flag Color",
+   "read_only": 1
   },
   {
    "fieldname": "reference_doctype",
@@ -239,23 +232,11 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Attach\";",
-   "fieldname": "result_attach",
-   "fieldtype": "Attach",
-   "label": "Attach Result"
-  },
-  {
    "fieldname": "service_request",
    "fieldtype": "Link",
    "label": "Service Request",
    "options": "Service Request",
    "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type == \"Select\";",
-   "fieldname": "result_select",
-   "fieldtype": "Select",
-   "label": "Result"
   },
   {
    "fieldname": "column_break_meur",
@@ -324,24 +305,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Period\";",
-   "fieldname": "result_period_from",
-   "fieldtype": "Datetime",
-   "label": "Result Period From"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type == \"Period\";",
-   "fieldname": "result_period_to",
-   "fieldtype": "Datetime",
-   "label": "Result Period To"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type == \"DateTime\";",
-   "fieldname": "result_datetime",
-   "fieldtype": "Datetime",
-   "label": "Result"
-  },
-  {
    "fetch_from": "observation_template.medical_department",
    "fetch_if_empty": 1,
    "fieldname": "medical_department",
@@ -368,18 +331,6 @@
    "label": "Note"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type == \"Boolean\";",
-   "fieldname": "result_boolean",
-   "fieldtype": "Select",
-   "label": "Result"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type == \"Time\";",
-   "fieldname": "result_time",
-   "fieldtype": "Datetime",
-   "label": "Result"
-  },
-  {
    "collapsible": 1,
    "fieldname": "tab_more_information",
    "fieldtype": "Tab Break",
@@ -395,9 +346,9 @@
   {
    "fieldname": "sales_invoice_status",
    "fieldtype": "Data",
+   "is_virtual": 1,
    "label": "Sales Invoice Status",
-   "read_only": 1,
-   "is_virtual": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_zrac",
@@ -586,7 +537,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-17 18:11:51.318190",
+ "modified": "2026-10-02 20:14:55.216931",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

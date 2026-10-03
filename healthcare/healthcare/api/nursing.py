@@ -61,8 +61,8 @@ class PatientSnapshot:
 		readings = frappe.get_all(
 			"Observation",
 			filters={"patient": self.patient, "observation_template": template, "docstatus": ["<", 2]},
-			fields=["result_data as value", "result_datetime as recorded_at"],
-			order_by="result_datetime desc, creation desc",
+			fields=["result as value", "time_of_result as recorded_at"],
+			order_by="time_of_result desc, creation desc",
 			limit=self.limit,
 		)
 		return list(reversed([reading for reading in readings if has_value(reading.value)]))
