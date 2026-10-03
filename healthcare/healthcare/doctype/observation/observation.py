@@ -971,6 +971,7 @@ def get_observations_for_medical_record(observation, parent_observation=None):
 		if obs_doc.get("observation_template") and obs_doc.get("specimen"):
 			obs_doc["received_time"] = frappe.get_value("Specimen", obs_doc.get("specimen"), "received_time")
 
+		ensure_result_flag(obs_doc)
 		out_data.append({"observation": obs_doc})
 
 	else:
