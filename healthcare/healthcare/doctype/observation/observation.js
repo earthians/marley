@@ -128,9 +128,14 @@ var render_period_control = function (frm) {
 	const write_back = () => {
 		const from_value = frm.period_controls.from.get_value();
 		const to_value = frm.period_controls.to.get_value();
+		// Clearing both controls must leave no result, not the non-empty
+		// string '{"from":"","to":""}' — has_value() would otherwise treat
+		// an empty period as an actual answer.
 		frm.set_value(
 			"result",
-			JSON.stringify({ from: from_value || "", to: to_value || "" }),
+			from_value || to_value
+				? JSON.stringify({ from: from_value || "", to: to_value || "" })
+				: "",
 		);
 	};
 

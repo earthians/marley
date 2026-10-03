@@ -355,17 +355,21 @@ def get_reference_type_display(reference_type):
 def ensure_result_flag(obs):
 	"""result_flag/result_flag_color are only ever (re)computed when an
 	Observation is saved — a template's reference ranges can change (or this
-	logic itself can change) without every existing Observation being resaved,
-	so the cached value can go stale or simply never have been set. Recompute
-	live here, in the single function the Diagnostic Report widget and its
-	print format both read through, rather than trusting the stored value.
-	Also derives a light tint of the indicator color for the badge background.
+	logic itself can change) without every existing Observation being resaved.
+	A stored flag isn't just possibly blank, it can be actively wrong: stale
+	text/color from a band that no longer matches, or from an indicator that
+	has since been turned off. Always recompute live here, in the single
+	function the Diagnostic Report widget and its print format both read
+	through, rather than trusting whatever is already stored. Also derives a
+	light tint of the indicator color for the badge background, and a
+	display-formatted version of `result` for the same two consumers.
 	"""
-	if not obs.get("result_flag"):
-		obs["result_flag"], obs["result_flag_color"] = get_observation_result_flag(frappe._dict(obs))
+	obs["result_flag"], obs["result_flag_color"] = get_observation_result_flag(frappe._dict(obs))
 
 	if obs.get("result_flag_color"):
 		obs["result_flag_bg"] = hex_to_rgba(obs["result_flag_color"], 0.12)
+
+	obs["result_display"] = get_result_display(obs)
 
 	return obs
 
@@ -378,7 +382,30 @@ def hex_to_rgba(hex_color, alpha):
 	return f"rgba({r}, {g}, {b}, {alpha})"
 
 
-SHORTHAND_CONDITION = re.compile(r"^\s*(<=|>=|<|>|==|!=)\s*[\d.]+\s*$")
+def get_result_display(obs):
+	"""Period results are stored as a JSON {"from", "to"} pair — fine for the
+	editable control to round-trip, but raw JSON shouldn't leak into the
+	Diagnostic Report or Patient Medical Record. Every other type passes
+	through unchanged."""
+	result = obs.get("result")
+	if obs.get("permitted_data_type") != "Period" or not has_value(result):
+		return result
+
+	try:
+		parsed = json.loads(result)
+	except (TypeError, ValueError):
+		return result
+	if not isinstance(parsed, dict):
+		return result
+
+	from_value, to_value = parsed.get("from") or "", parsed.get("to") or ""
+	if not from_value and not to_value:
+		return ""
+
+	return f"{from_value} - {to_value}"
+
+
+SHORTHAND_CONDITION = re.compile(r"^\s*(<=|>=|<|>|==|!=)\s*-?[\d.]+\s*$")
 
 
 def normalize_condition(condition):
@@ -510,6 +537,8 @@ def period_value_in_band(result, band_from, band_to):
 	try:
 		parsed = json.loads(result)
 	except (TypeError, ValueError):
+		return False
+	if not isinstance(parsed, dict):
 		return False
 
 	value_from, value_to = parsed.get("from"), parsed.get("to")

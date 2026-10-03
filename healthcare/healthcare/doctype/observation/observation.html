@@ -157,7 +157,7 @@
             {% endif %}
 
             {% if data.get("observation") or data.get("observation")  %}
-            {% if data.get("observation").get("status")=="Approved" and data.get("observation").get("result") not in [None, "", "Null"] %}
+            {% if data.get("observation").get("status")=="Approved" and data.get("observation").get("result_display") not in [None, "", "Null"] %}
             <div class="observation-section grouped-obs">
                 <div class="flex" style="padding-bottom: 5px; margin-left:5px;">
                     <b>
@@ -194,12 +194,12 @@
                     </div>
                     <div class="obs-field" style="width: 20%;">
                         <div class="obs-first-line text-center" style="text-align: center;">
-                            {% if '</div>' in (data.get("observation").get("result") or "") %}
-                                {% if data.get("observation").get("result")|length <= 60 %}
-                                    {{data.get("observation").get("result")}}
+                            {% if '</div>' in (data.get("observation").get("result_display") or "") %}
+                                {% if data.get("observation").get("result_display")|length <= 60 %}
+                                    {{data.get("observation").get("result_display")}}
                                 {% endif %}
-                            {% elif (data.get("observation").get("result") or "")|length <= 24 %}
-                                {{data.get("observation").get("result")}}
+                            {% elif (data.get("observation").get("result_display") or "")|length <= 24 %}
+                                {{data.get("observation").get("result_display")}}
                             {% endif %}
                         </div>
                         {% if data.get("observation").get("time_of_result")  %}
@@ -225,15 +225,15 @@
                         {% endif %}
                     </div>
                 </div>
-                {% if '</div>' in (data.get("observation").get("result") or "") %}
-                    {% if data.get("observation").get("result")|length > 60 %}
+                {% if '</div>' in (data.get("observation").get("result_display") or "") %}
+                    {% if data.get("observation").get("result_display")|length > 60 %}
                         <div class="note obs-second-line">
-                            {{data.get("observation").get("result")}}
+                            {{data.get("observation").get("result_display")}}
                         </div>
                     {% endif %}
-                {% elif (data.get("observation").get("result") or "")|length > 24 %}
+                {% elif (data.get("observation").get("result_display") or "")|length > 24 %}
                     <div class="note obs-second-line">
-                        {{data.get("observation").get("result")}}
+                        {{data.get("observation").get("result_display")}}
                     </div>
                 {% endif %}
                 {% if data.get("observation").get("result_interpretation")  %}
@@ -275,7 +275,7 @@
                             {% set observation_name = comps.get("observation").get("observation_template") %}
                         {% endif %}
                         {% if comps.get("observation").get("status")=="Approved" and comps.get("observation")  %}
-                        {% if comps.get("observation").get("result") not in [None, "", "Null"] %}
+                        {% if comps.get("observation").get("result_display") not in [None, "", "Null"] %}
                             <div class="observation-section">
                             <div class="observation single-obs">
                             <div class="observation-details" style="width: 100%;">
@@ -307,12 +307,12 @@
                                 </div>
                                 <div class="obs-field" style="width: 20%;">
                                     <div class="obs-first-line text-center" style="text-align: center;">
-                                        {% if '</div>' in (comps.get("observation").get("result") or "") %}
-                                            {% if comps.get("observation").get("result")|length <= 60 %}
-                                                {{comps.get("observation").get("result")}}
+                                        {% if '</div>' in (comps.get("observation").get("result_display") or "") %}
+                                            {% if comps.get("observation").get("result_display")|length <= 60 %}
+                                                {{comps.get("observation").get("result_display")}}
                                             {% endif %}
-                                        {% elif (comps.get("observation").get("result") or "")|length <= 24 %}
-                                            {{comps.get("observation").get("result")}}
+                                        {% elif (comps.get("observation").get("result_display") or "")|length <= 24 %}
+                                            {{comps.get("observation").get("result_display")}}
                                         {% endif %}
                                     </div>
                                     {% if comps.get("observation").get("time_of_result")  %}
@@ -338,15 +338,15 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            {% if '</div>' in (comps.get("observation").get("result") or "") %}
-                                {% if comps.get("observation").get("result")|length > 60 %}
+                            {% if '</div>' in (comps.get("observation").get("result_display") or "") %}
+                                {% if comps.get("observation").get("result_display")|length > 60 %}
                                     <div class="note obs-second-line">
-                                        {{comps.get("observation").get("result")}}
+                                        {{comps.get("observation").get("result_display")}}
                                     </div>
                                 {% endif %}
-                            {% elif (comps.get("observation").get("result") or "")|length > 24 %}
+                            {% elif (comps.get("observation").get("result_display") or "")|length > 24 %}
                                 <div class="note obs-second-line">
-                                    {{comps.get("observation").get("result")}}
+                                    {{comps.get("observation").get("result_display")}}
                                 </div>
                             {% endif %}
                             {% if comps.get("observation").get("result_interpretation")  %}
