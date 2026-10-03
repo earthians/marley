@@ -2,7 +2,7 @@
 # See license.txt
 
 import frappe
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, getdate, nowdate
 
 from healthcare.healthcare.doctype.inpatient_medication_entry.medication_stock_entry import (
 	ServiceUnitTransfer,
@@ -35,32 +35,32 @@ class TestBatchedMedicationTransfer(HealthcareTestSuite):
 
 	def test_the_batch_that_expires_first_is_taken_first(self):
 		receive_batch("_TEST-BATCH-LATE", add_days(nowdate(), 300), qty=10)
-		receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=10)
+		expires_soon = receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=10)
 
 		allocations = self.transfer_for(4).allocate(frappe._dict(drug_code=DRUG, dosage=4))
 
 		self.assertEqual(len(allocations), 1)
-		self.assertEqual(allocations[0].batch_no, "_TEST-BATCH-SOON")
+		self.assertEqual(allocations[0].batch_no, expires_soon)
 		self.assertEqual(allocations[0].qty, 4)
 
 	def test_a_dose_larger_than_one_batch_spills_into_the_next(self):
-		receive_batch("_TEST-BATCH-LATE", add_days(nowdate(), 300), qty=10)
-		receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=3)
+		expires_late = receive_batch("_TEST-BATCH-LATE", add_days(nowdate(), 300), qty=10)
+		expires_soon = receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=3)
 
 		allocations = self.transfer_for(8).allocate(frappe._dict(drug_code=DRUG, dosage=8))
 
 		self.assertEqual(
 			[(row.batch_no, row.qty) for row in allocations],
-			[("_TEST-BATCH-SOON", 3), ("_TEST-BATCH-LATE", 5)],
+			[(expires_soon, 3), (expires_late, 5)],
 		)
 
 	def test_what_the_batches_cannot_cover_is_left_on_the_last_of_them(self):
-		receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=2)
+		expires_soon = receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=2)
 
 		allocations = self.transfer_for(5).allocate(frappe._dict(drug_code=DRUG, dosage=5))
 
 		self.assertEqual(len(allocations), 1)
-		self.assertEqual(allocations[0].batch_no, "_TEST-BATCH-SOON")
+		self.assertEqual(allocations[0].batch_no, expires_soon)
 		self.assertEqual(allocations[0].qty, 5, "the shortfall rides on the last batch")
 
 	def test_a_drug_with_no_stock_at_all_falls_back_to_one_plain_row(self):
@@ -76,14 +76,21 @@ class TestBatchedMedicationTransfer(HealthcareTestSuite):
 		self.assertEqual(len(allocations), 1)
 		self.assertIsNone(allocations[0].get("batch_no"))
 
+	def test_a_batch_that_outlived_an_earlier_run_is_given_the_expiry_asked_for(self):
+		stale = receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 1), qty=1)
+
+		receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=1)
+
+		self.assertEqual(frappe.db.get_value("Batch", stale, "expiry_date"), getdate(add_days(nowdate(), 30)))
+
 	def test_a_bed_with_no_warehouse_stops_the_transfer(self):
 		transfer = self.transfer_for(1, service_unit=None)
 
 		self.assertRaises(frappe.ValidationError, transfer.validate)
 
 	def test_each_batch_becomes_its_own_row_on_the_stock_entry(self):
-		receive_batch("_TEST-BATCH-LATE", add_days(nowdate(), 300), qty=10)
-		receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=3)
+		expires_late = receive_batch("_TEST-BATCH-LATE", add_days(nowdate(), 300), qty=10)
+		expires_soon = receive_batch("_TEST-BATCH-SOON", add_days(nowdate(), 30), qty=3)
 
 		bed = bed_with_warehouse()
 		transfer = self.transfer_for(8, service_unit=bed.name)
@@ -93,7 +100,7 @@ class TestBatchedMedicationTransfer(HealthcareTestSuite):
 		self.assertEqual(len(stock_entry.items), 2)
 		self.assertEqual(
 			[(row.batch_no, row.qty) for row in stock_entry.items],
-			[("_TEST-BATCH-SOON", 3), ("_TEST-BATCH-LATE", 5)],
+			[(expires_soon, 3), (expires_late, 5)],
 		)
 		for row in stock_entry.items:
 			self.assertEqual(row.s_warehouse, PHARMACY)
@@ -147,26 +154,41 @@ def empty_drug_stock():
 	entry.submit()
 
 
-def receive_batch(batch_id, expiry, qty):
-	if not frappe.db.exists("Batch", batch_id):
-		frappe.get_doc(
-			{"doctype": "Batch", "batch_id": batch_id, "item": DRUG, "expiry_date": expiry}
-		).insert(ignore_permissions=True)
+def receive_batch(batch_id, expiry, qty, warehouse=PHARMACY):
+	"""Take the batch into the warehouse, and return the name it is linked by.
 
+	A Batch is named by hash, so the batch number a pharmacist reads off the
+	strip is only its batch_id, and stock rows link to the name."""
+	batch_no = batch_with_expiry(batch_id, expiry)
 	entry = frappe.new_doc("Stock Entry")
 	entry.stock_entry_type = "Material Receipt"
 	entry.company = "_Test Company"
-	entry.to_warehouse = PHARMACY
+	entry.to_warehouse = warehouse
 	row = entry.append("items")
 	row.item_code = DRUG
 	row.qty = qty
-	row.t_warehouse = PHARMACY
+	row.t_warehouse = warehouse
 	row.basic_rate = 10
 	row.conversion_factor = 1
 	row.use_serial_batch_fields = 1
-	row.batch_no = batch_id
+	row.batch_no = batch_no
 	entry.submit()
-	return entry
+	return batch_no
+
+
+def batch_with_expiry(batch_id, expiry):
+	"""A batch that outlived an earlier run still carries that run's expiry, and
+	expiry is what these tests order stock by, so say it again."""
+	batch_no = frappe.db.get_value("Batch", {"item": DRUG, "batch_id": batch_id}, "name")
+	if not batch_no:
+		return (
+			frappe.get_doc({"doctype": "Batch", "batch_id": batch_id, "item": DRUG, "expiry_date": expiry})
+			.insert(ignore_permissions=True)
+			.name
+		)
+
+	frappe.db.set_value("Batch", batch_no, "expiry_date", expiry)
+	return batch_no
 
 
 def bed_with_warehouse():
