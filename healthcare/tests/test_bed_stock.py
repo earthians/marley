@@ -2,8 +2,10 @@
 # See license.txt
 
 import frappe
+from frappe.utils import add_days, nowdate
 
 from healthcare.healthcare.api.bed_stock import BedStock
+from healthcare.healthcare.ward_stock import set_batch
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -50,6 +52,8 @@ class TestBedStock(HealthcareTestSuite):
 			row.qty = item["quantity"]
 			row.conversion_factor = 1
 			row.s_warehouse = self.bed.warehouse
+			if item["batch_no"]:
+				set_batch(row, item["batch_no"])
 		entry.submit()
 
 	def tearDown(self):
@@ -95,6 +99,12 @@ class TestBedStock(HealthcareTestSuite):
 		self.leave_stock_at_the_bed(qty=4)
 		self.leave_stock_at_the_bed(qty=2, item_code="_Test_Stock_Item")
 
+	def leave_batched_medication_at_the_bed(self, batch_id="_TEST-BATCH-BEDSIDE", qty=2):
+		from healthcare.tests.test_medication_stock_entry import make_batched_drug, receive_batch
+
+		make_batched_drug()
+		return receive_batch(batch_id, add_days(nowdate(), 60), qty=qty, warehouse=self.bed.warehouse)
+
 	def test_an_untouched_bed_holds_nothing(self):
 		self.assertEqual(BedStock(self.admission).items(), [])
 
@@ -106,6 +116,23 @@ class TestBedStock(HealthcareTestSuite):
 		self.assertEqual(len(items), 1)
 		self.assertEqual(items[0]["item_code"], "Dextromethorphan")
 		self.assertEqual(items[0]["quantity"], 4)
+
+	def test_a_bedside_row_carries_the_batch_number_and_not_the_batch_name(self):
+		"""The Batch is named by hash, which nobody at a bedside can read."""
+		batch_no = self.leave_batched_medication_at_the_bed()
+
+		items = BedStock(self.admission).items()
+
+		self.assertEqual(len(items), 1)
+		self.assertEqual(items[0]["batch_no"], batch_no)
+		self.assertEqual(items[0]["batch_number"], "_TEST-BATCH-BEDSIDE")
+
+	def test_an_unbatched_row_has_no_batch_number(self):
+		self.leave_stock_at_the_bed(qty=4)
+
+		items = BedStock(self.admission).items()
+
+		self.assertIsNone(items[0]["batch_number"])
 
 	def test_what_was_prescribed_is_medication_and_the_rest_is_ward_stock(self):
 		self.leave_medication_and_consumables()
