@@ -95,6 +95,7 @@ def insert_observation(
 ) -> None:
 	try:
 		context = build_context(selected, sample_collection, component_observations, child_name)
+		refresh_selected_rows(context)
 		context.comp_obs_ref = create_specimen(
 			context.sample_col.get("patient"), context.selected, context.component_observations
 		)
@@ -125,8 +126,75 @@ def build_context(selected, sample_collection, component_observations, child_nam
 		sample_collection,
 		["reference_name", "reference_doc", "patient", "referring_practitioner"],
 		as_dict=1,
+		for_update=True,
 	)
 	return context
+
+
+def refresh_selected_rows(context):
+	if context.child_name:
+		refresh_selected_components(context)
+		return
+
+	selected = []
+	for obs in context.selected:
+		if not obs.get("name"):
+			selected.append(obs)
+			continue
+
+		current = frappe.db.get_value(
+			"Observation Sample Collection",
+			obs.get("name"),
+			["status", "specimen", "component_observations", "component_observation_parent"],
+			as_dict=1,
+			for_update=True,
+		)
+		if not current or current.get("status") != "Open" or current.get("specimen"):
+			continue
+
+		obs.update(current)
+		selected.append(obs)
+
+	context.selected = selected
+
+
+def refresh_selected_components(context):
+	child = frappe.db.get_value(
+		"Observation Sample Collection",
+		context.child_name,
+		["status", "component_observations"],
+		as_dict=1,
+		for_update=True,
+	)
+	if not child:
+		context.selected = []
+		context.component_observations = []
+		context.skip_child_update = True
+		return
+
+	component_observations = json.loads(child.get("component_observations") or "[]")
+	if child.get("status") != "Open":
+		context.selected = []
+		context.component_observations = component_observations
+		return
+
+	selected_component_keys = {
+		(component.get("idx"), component.get("observation_template")) for component in context.selected
+	}
+	selected_templates_without_index = {
+		component.get("observation_template") for component in context.selected if not component.get("idx")
+	}
+	context.selected = [
+		frappe._dict(component, idx=index + 1)
+		for index, component in enumerate(component_observations)
+		if component.get("status") == "Open"
+		and not component.get("specimen")
+		and (
+			(index + 1, component.get("observation_template")) in selected_component_keys
+			or component.get("observation_template") in selected_templates_without_index
+		)
+	]
+	context.component_observations = component_observations
 
 
 def collect_row(context, index, obs):
@@ -140,15 +208,18 @@ def collect_row(context, index, obs):
 
 
 def collect_sample(context, index, obs):
-	observation = add_observation(
+	specimen = (
+		context.comp_obs_ref.get(obs.get("name"))
+		or context.comp_obs_ref.get(obs.get("idx"))
+		or context.comp_obs_ref.get(index + 1)
+	)
+	observation = get_or_add_observation(
 		patient=context.sample_col.get("patient"),
 		template=obs.get("observation_template"),
 		doc="Sample Collection",
 		docname=context.sample_collection,
 		parent=parent_observation(context, obs),
-		specimen=context.comp_obs_ref.get(obs.get("name"))
-		or context.comp_obs_ref.get(index + 1)
-		or context.comp_obs_ref.get(obs.get("idx")),
+		specimen=specimen,
 		invoice=invoice(context),
 		practitioner=context.sample_col.get("referring_practitioner"),
 		child=obs.get("reference_child") or "",
@@ -162,7 +233,7 @@ def collect_sample(context, index, obs):
 			{
 				"status": "Collected",
 				"collection_date_time": now_datetime(),
-				"specimen": context.comp_obs_ref.get(obs.get("name")),
+				"specimen": specimen,
 			},
 		)
 
@@ -171,7 +242,7 @@ def collect_components(context, obs):
 	context.component_observations = json.loads(obs.get("component_observations"))
 	for j, comp in enumerate(context.component_observations):
 		specimen = context.comp_obs_ref.get(j + 1) or context.comp_obs_ref.get(obs.get("name"))
-		observation = add_observation(
+		observation = get_or_add_observation(
 			patient=context.sample_col.get("patient"),
 			template=comp.get("observation_template"),
 			doc="Sample Collection",
@@ -200,6 +271,32 @@ def collect_components(context, obs):
 	)
 
 
+def get_or_add_observation(**kwargs):
+	existing_observation = get_existing_observation(kwargs)
+	if existing_observation:
+		return existing_observation
+
+	return add_observation(**kwargs)
+
+
+def get_existing_observation(values):
+	filters = {
+		"observation_template": values.get("template"),
+		"reference_doctype": values.get("doc"),
+		"reference_docname": values.get("docname"),
+		"parent_observation": values.get("parent") or ["in", ["", None]],
+		"docstatus": ["!=", 2],
+	}
+	if values.get("invoice"):
+		filters["sales_invoice"] = values.get("invoice")
+	if values.get("child"):
+		filters["sales_invoice_item"] = values.get("child")
+	if values.get("service_request"):
+		filters["service_request"] = values.get("service_request")
+
+	return frappe.db.get_value("Observation", filters, "name", for_update=True)
+
+
 def mark_matching_components(context, obs):
 	if not context.component_observations:
 		return
@@ -211,6 +308,9 @@ def mark_matching_components(context, obs):
 
 
 def update_child_status(context):
+	if context.get("skip_child_update"):
+		return
+
 	child_values = {"component_observations": json.dumps(context.component_observations, default=str)}
 	# Mark the child row Collected once none of its components are still Open.
 	if context.component_observations and not any(
