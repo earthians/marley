@@ -54,7 +54,10 @@ frappe.ui.form.on("Observation", {
 		frm.set_df_property("result", "hidden", 0);
 		remove_period_control(frm);
 
-		const fieldtype = healthcare.observation.get_control_fieldtype(data_type);
+		const fieldtype =
+			frm.doc.observation_category == "Imaging"
+				? "Text Editor"
+				: healthcare.observation.get_control_fieldtype(data_type);
 		const options = ["Select", "Boolean"].includes(data_type)
 			? frm.doc.options
 			: "";
