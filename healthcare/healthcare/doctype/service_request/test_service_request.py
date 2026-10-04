@@ -17,6 +17,7 @@ from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
 from healthcare.healthcare.doctype.service_request.service_request import (
 	make_appointment,
 	make_clinical_procedure,
+	make_observation,
 )
 from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
 from healthcare.tests.utils import HealthcareTestSuite
@@ -115,6 +116,23 @@ class TestServiceRequest(HealthcareTestSuite):
 			observation = create_observation(patient, service_request, obs_template.name)
 			create_sales_invoice(patient, service_request_doc, obs_template, "observation")
 			self.assertEqual(frappe.db.get_value("Observation", observation.name, "invoiced"), 1)
+
+	def test_make_observation_maps_practitioner_from_service_request(self):
+		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		encounter = create_encounter(
+			patient, practitioner, "lab_test_prescription", obs_template, submit=True, obs=True
+		)
+		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name}, "name")
+
+		observation, doctype = make_observation(service_request)
+
+		self.assertEqual(doctype, "Observation")
+		self.assertEqual(
+			frappe.db.get_value("Observation", observation, "healthcare_practitioner"),
+			practitioner,
+		)
 
 	def test_patient_referral(self):
 		patient = frappe.get_list("Patient", pluck="name")[0]

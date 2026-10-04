@@ -287,6 +287,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 					doc="Patient Encounter",
 					docname=service_request.order_group,
 					parent=observation.name,
+					practitioner=service_request.practitioner,
 				)
 
 		if len(sample_reqd_component_obs) > 0:
@@ -394,6 +395,7 @@ def create_observation(service_request, appointment=None):
 	doc.posting_datetime = now_datetime()
 	doc.patient = service_request.patient
 	doc.appointment = appointment
+	doc.company = service_request.company
 	doc.observation_template = service_request.template_dn
 	doc.healthcare_practitioner = service_request.practitioner
 	doc.reference_doctype = "Patient Encounter"

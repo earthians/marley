@@ -150,7 +150,7 @@ def collect_sample(context, index, obs):
 		or context.comp_obs_ref.get(index + 1)
 		or context.comp_obs_ref.get(obs.get("idx")),
 		invoice=invoice(context),
-		practitioner=context.sample_col.get("referring_practitioner"),
+		practitioner=observation_practitioner(context, obs),
 		child=obs.get("reference_child") or "",
 		service_request=obs.get("service_request"),
 	)
@@ -179,7 +179,7 @@ def collect_components(context, obs):
 			parent=obs.get("component_observation_parent"),
 			specimen=specimen,
 			invoice=invoice(context),
-			practitioner=context.sample_col.get("referring_practitioner"),
+			practitioner=observation_practitioner(context, obs),
 			child=obs.get("reference_child") or "",
 			service_request=obs.get("service_request"),
 		)
@@ -254,6 +254,12 @@ def invoice(context):
 	if context.sample_col.reference_doc == "Sales Invoice":
 		return context.sample_col.get("reference_name")
 	return None
+
+
+def observation_practitioner(context, obs):
+	if obs.get("service_request"):
+		return frappe.db.get_value("Service Request", obs.get("service_request"), "practitioner")
+	return context.sample_col.get("referring_practitioner")
 
 
 def publish_progress(sample_collection):
