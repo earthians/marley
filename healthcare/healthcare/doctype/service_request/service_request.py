@@ -395,6 +395,7 @@ def create_observation(service_request, appointment=None):
 	doc.patient = service_request.patient
 	doc.appointment = appointment
 	doc.observation_template = service_request.template_dn
+	doc.healthcare_practitioner = service_request.practitioner
 	doc.reference_doctype = "Patient Encounter"
 	doc.reference_docname = service_request.order_group
 	doc.service_request = service_request.name
