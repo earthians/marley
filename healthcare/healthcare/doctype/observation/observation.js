@@ -29,6 +29,10 @@ frappe.ui.form.on("Observation", {
 		frm.trigger("set_result_control");
 	},
 
+	observation_category: function (frm) {
+		frm.trigger("set_result_control");
+	},
+
 	options: function (frm) {
 		frm.trigger("set_result_control");
 	},
@@ -54,10 +58,10 @@ frappe.ui.form.on("Observation", {
 		frm.set_df_property("result", "hidden", 0);
 		remove_period_control(frm);
 
-		const fieldtype =
-			frm.doc.observation_category == "Imaging"
-				? "Text Editor"
-				: healthcare.observation.get_control_fieldtype(data_type);
+		let fieldtype = healthcare.observation.get_control_fieldtype(data_type);
+		if (!data_type && frm.doc.observation_category == "Imaging") {
+			fieldtype = "Text Editor";
+		}
 		const options = ["Select", "Boolean"].includes(data_type)
 			? frm.doc.options
 			: "";
