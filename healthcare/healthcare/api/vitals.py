@@ -5,7 +5,6 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import now_datetime
 
 from healthcare.healthcare.api.nursing_common import ChartAccess, default_company, has_value
 
@@ -43,15 +42,10 @@ class VitalsRecorder:
 			"reference_docname": self.reference_name,
 			"healthcare_practitioner": self.practitioner,
 			"company": self.company,
-			"result_datetime": now_datetime(),
 		}
 
 	def set_result(self, observation, value):
-		data_type = observation.permitted_data_type or "Quantity"
-		if data_type == "Text":
-			observation.result_text = value
-		else:
-			observation.result_data = str(value)
+		observation.result = str(value)
 
 
 def vital_sign_templates():

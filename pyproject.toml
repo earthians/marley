@@ -65,3 +65,8 @@ section-order = [
 [tool.bench.frappe-dependencies]
 frappe = ">=17.0.0-dev,<18.0.0"
 erpnext = ">=17.0.0-dev,<18.0.0"
+
+# No index_html_path: the portal page reads frontend/manifest.json, and the build would overwrite the tracked www/patient_portal.html.
+[tool.bench.assets]
+build_dir = "./patient_portal"
+out_dir = "./healthcare/public/frontend"
