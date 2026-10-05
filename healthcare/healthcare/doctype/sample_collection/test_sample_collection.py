@@ -68,7 +68,7 @@ class TestSampleCollection(HealthcareTestSuite):
 		components = set_component_observation_data(package.name)
 
 		found = mark_component_collected(
-			components, {"observation_template": leaf.name}, {1: "_Test Specimen"}
+			components, {"observation_template": leaf.name}, {leaf.name: "_Test Specimen"}
 		)
 
 		self.assertTrue(found)
@@ -119,6 +119,121 @@ class TestSampleCollection(HealthcareTestSuite):
 		# Not row.component_observation_parent (Package 1) - the leaf's real,
 		# immediate parent is the sub-panel's own Observation.
 		self.assertEqual(leaf_observation[0]["parent_observation"], sub_panel_observation_name)
+
+	def test_collecting_leaves_at_different_nesting_depths_does_not_cross_contaminate_specimens(self):
+		# idx is only unique among siblings under the *same* immediate parent
+		# - a direct child of the package and the first child of a sub-panel
+		# nested under it can both be idx 1. Collecting both in one batch must
+		# still produce two distinct, correctly-typed specimens; keying the
+		# specimen lookup by idx (instead of observation_template) made the
+		# second leaf silently steal the first leaf's specimen.
+		package, sub_panel, urine_leaf, serum_leaf = create_sibling_and_nested_leaf_template()
+		doc = new_sample_collection_with_package(package)
+		row = doc.observation_sample_collection[0]
+
+		components = json.loads(row.component_observations)
+		urine_entry = next(c for c in components if c["observation_template"] == urine_leaf.name)
+		sub_panel_entry = next(c for c in components if c["observation_template"] == sub_panel.name)
+		serum_entry = json.loads(sub_panel_entry["component_observations"])[0]
+		self.assertEqual(serum_entry["observation_template"], serum_leaf.name)
+
+		insert_observation(
+			selected=json.dumps([urine_entry, serum_entry]),
+			sample_collection=doc.name,
+			component_observations=row.component_observations,
+			child_name=row.name,
+		)
+
+		doc.reload()
+		row = doc.observation_sample_collection[0]
+		components = json.loads(row.component_observations)
+		urine_entry = next(c for c in components if c["observation_template"] == urine_leaf.name)
+		sub_panel_entry = next(c for c in components if c["observation_template"] == sub_panel.name)
+		serum_entry = json.loads(sub_panel_entry["component_observations"])[0]
+
+		self.assertTrue(urine_entry["specimen"])
+		self.assertTrue(serum_entry["specimen"])
+		self.assertNotEqual(urine_entry["specimen"], serum_entry["specimen"])
+		self.assertEqual(
+			frappe.db.get_value("Specimen", urine_entry["specimen"], "specimen_type"),
+			"_Test Sample - Urine",
+		)
+		self.assertEqual(
+			frappe.db.get_value("Specimen", serum_entry["specimen"], "specimen_type"),
+			"_Test Sample - Blood Sample",
+		)
+
+
+def create_sibling_and_nested_leaf_template():
+	"""A package with a direct leaf (Urine) and a sub-panel containing its own
+	leaf (Blood Sample) as the sub-panel's *first* child - so the direct leaf
+	and the nested leaf can share the same client-assigned idx (both are
+	"position 1" under their own immediate parent), reproducing the real
+	cross-depth idx collision."""
+	urine_leaf = create_lab_sample_leaf("_Test Sibling Urine Leaf", "_Test Sample - Urine")
+	serum_leaf = create_lab_sample_leaf("_Test Sibling Serum Leaf", "_Test Sample - Blood Sample")
+
+	if frappe.db.exists("Observation Template", "_Test Sibling Sub Panel"):
+		sub_panel = frappe.get_doc("Observation Template", "_Test Sibling Sub Panel")
+	else:
+		sub_panel = frappe.get_doc(
+			{
+				"doctype": "Observation Template",
+				"observation": "_Test Sibling Sub Panel",
+				"item_code": "_Test Sibling Sub Panel",
+				"observation_category": "Laboratory",
+				"item_group": "Services",
+				"has_component": 1,
+				"rate": 300,
+				"abbr": "TSSP",
+				"is_billable": 1,
+				"observation_component": [{"observation_template": serum_leaf.name}],
+			}
+		)
+		sub_panel.insert()
+
+	if frappe.db.exists("Observation Template", "_Test Sibling Package"):
+		package = frappe.get_doc("Observation Template", "_Test Sibling Package")
+	else:
+		package = frappe.get_doc(
+			{
+				"doctype": "Observation Template",
+				"observation": "_Test Sibling Package",
+				"item_code": "_Test Sibling Package",
+				"observation_category": "Laboratory",
+				"item_group": "Services",
+				"has_component": 1,
+				"rate": 300,
+				"abbr": "TSPKG",
+				"is_billable": 1,
+				"observation_component": [
+					{"observation_template": urine_leaf.name},
+					{"observation_template": sub_panel.name},
+				],
+			}
+		)
+		package.insert()
+
+	return package, sub_panel, urine_leaf, serum_leaf
+
+
+def create_lab_sample_leaf(name, sample):
+	if frappe.db.exists("Observation Template", name):
+		return frappe.get_doc("Observation Template", name)
+	template = frappe.new_doc("Observation Template")
+	template.observation = name
+	template.item_code = name
+	template.observation_category = "Laboratory"
+	template.permitted_data_type = "Quantity"
+	template.permitted_unit = "mg / dl"
+	template.item_group = "Services"
+	template.sample_collection_required = 1
+	template.sample = sample
+	template.rate = 300
+	template.abbr = "".join(w[0] for w in name.split())
+	template.is_billable = 1
+	template.save()
+	return template
 
 
 def new_sample_collection():
