@@ -165,6 +165,54 @@ def create_observation_template(obs_name, idx="", sample_required=None):
 	return template
 
 
+def create_multi_level_template():
+	"""A 3-level nesting: a top-level package containing a sub-panel, which
+	itself contains the one sample-required leaf. Shared by the recursive
+	sample-collection tests (set_component_observation_data,
+	mark_component_collected, ...)."""
+	leaf = create_observation_template("_Test Nested Leaf", sample_required=True)
+
+	if frappe.db.exists("Observation Template", "_Test Nested Sub Panel"):
+		sub_panel = frappe.get_doc("Observation Template", "_Test Nested Sub Panel")
+	else:
+		sub_panel = frappe.get_doc(
+			{
+				"doctype": "Observation Template",
+				"observation": "_Test Nested Sub Panel",
+				"item_code": "_Test Nested Sub Panel",
+				"observation_category": "Laboratory",
+				"item_group": "Services",
+				"has_component": 1,
+				"rate": 300,
+				"abbr": "TNSP",
+				"is_billable": 1,
+				"observation_component": [{"observation_template": leaf.name}],
+			}
+		)
+		sub_panel.insert()
+
+	if frappe.db.exists("Observation Template", "_Test Top Package"):
+		package = frappe.get_doc("Observation Template", "_Test Top Package")
+	else:
+		package = frappe.get_doc(
+			{
+				"doctype": "Observation Template",
+				"observation": "_Test Top Package",
+				"item_code": "_Test Top Package",
+				"observation_category": "Laboratory",
+				"item_group": "Services",
+				"has_component": 1,
+				"rate": 300,
+				"abbr": "TTP",
+				"is_billable": 1,
+				"observation_component": [{"observation_template": sub_panel.name}],
+			}
+		)
+		package.insert()
+
+	return package, sub_panel, leaf
+
+
 def create_grouped_observation_template(obs_name, idx="", sample_required=None):
 	if frappe.db.exists("Observation Template", obs_name + str(idx)):
 		return frappe.get_doc("Observation Template", obs_name + str(idx))
