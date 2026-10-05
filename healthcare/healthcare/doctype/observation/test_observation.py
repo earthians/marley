@@ -13,8 +13,10 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 )
 from healthcare.healthcare.doctype.observation.observation import add_note
 from healthcare.healthcare.doctype.observation_template.test_observation_template import (
+	create_mixed_sub_panel_template,
 	create_multi_level_template,
 	create_observation_template,
+	create_pure_non_sample_sub_panel_template,
 )
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -231,12 +233,8 @@ class TestObservation(HealthcareTestSuite):
 		)
 
 	def test_make_observation_from_encounter_does_not_duplicate_a_sub_panel(self):
-		# make_observation()'s non-sample-required-components loop used to
-		# call add_observation() for every direct non-sample-required child
-		# without checking has_component - for a sub-panel like Lipid Profile
-		# under Package 1, that created a dead-end duplicate Observation
-		# alongside the one create_component_observations() already chains
-		# correctly below it.
+		# A sub-panel like Lipid Profile under Package 1 used to get a
+		# dead-end duplicate Observation alongside its correctly chained one.
 		from healthcare.healthcare.doctype.service_request.service_request import make_observation
 
 		package, sub_panel, _leaf = create_multi_level_template()
@@ -260,6 +258,63 @@ class TestObservation(HealthcareTestSuite):
 			"Observation", filters={"parent_observation": package_observation}, pluck="observation_template"
 		)
 		self.assertEqual(children, [sub_panel.name])
+
+	def test_has_component_observation_from_invoice_does_not_duplicate_a_mixed_sub_panel(self):
+		# A mixed sub-panel used to get two Observations instead of one,
+		# with its children split across them.
+		self.enable_observation_on_invoice_submit()
+
+		package, sub_panel, _sample_leaf, non_sample_leaf = create_mixed_sub_panel_template()
+		patient = self.get_test_patient()
+		create_sales_invoice(patient, package.name)
+
+		sub_panel_observations = frappe.get_all(
+			"Observation", filters={"observation_template": sub_panel.name, "patient": patient}
+		)
+		self.assertEqual(len(sub_panel_observations), 1)
+
+		non_sample_observation = frappe.db.get_value(
+			"Observation",
+			{"observation_template": non_sample_leaf.name, "patient": patient},
+			"parent_observation",
+		)
+		self.assertEqual(non_sample_observation, sub_panel_observations[0].name)
+
+	def test_make_observation_from_encounter_gives_a_pure_non_sample_sub_panel_its_own_observation(self):
+		# A sub-panel with nothing sample-required anywhere beneath it used
+		# to get no Observation at all, and neither did its own leaf.
+		from healthcare.healthcare.doctype.service_request.service_request import make_observation
+
+		package, sub_panel, _sample_leaf, non_sample_leaf = create_pure_non_sample_sub_panel_template()
+		patient = self.get_test_patient()
+		encounter = create_patient_encounter(patient, package.name)
+
+		service_request = frappe.db.get_value(
+			"Service Request",
+			{"patient": patient, "template_dn": package.name, "order_group": encounter.name},
+		)
+		self.assertTrue(service_request)
+
+		make_observation(service_request)
+
+		package_observation = frappe.db.get_value(
+			"Observation", {"observation_template": package.name, "reference_docname": encounter.name}
+		)
+		sub_panel_observation = frappe.db.get_value(
+			"Observation", {"observation_template": sub_panel.name, "patient": patient}
+		)
+		self.assertTrue(sub_panel_observation)
+		self.assertEqual(
+			frappe.db.get_value("Observation", sub_panel_observation, "parent_observation"),
+			package_observation,
+		)
+
+		leaf_observation = frappe.db.get_value(
+			"Observation",
+			{"observation_template": non_sample_leaf.name, "patient": patient},
+			"parent_observation",
+		)
+		self.assertEqual(leaf_observation, sub_panel_observation)
 
 	def test_formula_computes_result(self):
 		self.enable_observation_on_invoice_submit()
