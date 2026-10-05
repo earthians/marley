@@ -22,6 +22,7 @@ class TestBedStock(HealthcareTestSuite):
 
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
+		frappe.db.set_single_value("Stock Settings", "use_serial_batch_fields", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
 		self.patient = frappe.get_list("Patient", pluck="name")[0]
