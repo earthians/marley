@@ -87,10 +87,13 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		// draw for the whole panel), so letting a colour match reach inside
 		// any panel would silently drag in that panel's whole component tree
 		// (and visually re-check the panel itself) just because one of its
-		// leaves happens to share a tube colour with an unrelated test.
+		// leaves happens to share a tube colour with an unrelated test. A
+		// top-level panel's own checkbox is just as "top-level", so exclude it too.
 		return this.wrapper.find(".sample-tree-check").filter((index, element) => {
 			const $el = $(element);
-			return $el.attr("data-color") === color && this.is_top_level($el);
+			if ($el.attr("data-color") !== color || !this.is_top_level($el))
+				return false;
+			return this.get_children($el.data("node").row).length === 0;
 		});
 	}
 
@@ -104,7 +107,12 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		// since that's the only node with a real name the server can persist
 		// a collected-status update against.
 		const effective_top = top_row || row;
-		const children = this.get_children(row);
+		// Only set for a node nested inside a real sub-panel - disambiguates
+		// a leaf template reused under two different sub-panels.
+		const children = this.get_children(
+			row,
+			row === effective_top ? null : row.observation_template,
+		);
 		const node = $('<li class="sample-tree-node"></li>');
 		node.append(this.node_label(row, parent, children.length > 0, effective_top));
 
@@ -118,7 +126,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		return node;
 	}
 
-	get_children(row) {
+	get_children(row, parent_observation_template = null) {
 		if (!row.has_component || !row.component_observations) return [];
 		try {
 			// Tag each component with its 1-based position; the backend keys created
@@ -126,6 +134,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 			return JSON.parse(row.component_observations).map((component, index) => ({
 				...component,
 				idx: index + 1,
+				parent_observation_template: parent_observation_template,
 			}));
 		} catch (e) {
 			return [];
