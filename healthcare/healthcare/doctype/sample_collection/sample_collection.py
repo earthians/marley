@@ -109,8 +109,8 @@ def insert_observation(
 		context.comp_obs_ref = create_specimen(
 			context.sample_col.get("patient"), context.selected, context.component_observations
 		)
-		for index, obs in enumerate(context.selected):
-			collect_row(context, index, obs)
+		for obs in context.selected:
+			collect_row(context, obs)
 		update_child_status(context)
 		update_collection_status(context)
 	except Exception as exception:
@@ -140,17 +140,25 @@ def build_context(selected, sample_collection, component_observations, child_nam
 	return context
 
 
-def collect_row(context, index, obs):
+def collect_row(context, obs):
 	if obs.get("status") == "Open":
 		if not obs.get("has_component"):
-			collect_sample(context, index, obs)
+			collect_sample(context, obs)
 		elif obs.get("component_observations"):
 			collect_components(context, obs)
 	# A component template checked individually from the main table is marked here.
 	mark_matching_components(context, obs)
 
 
-def collect_sample(context, index, obs):
+def collect_sample(context, obs):
+	# A direct top-level row has a real name, unique by definition. A nested
+	# leaf has none (it's a synthetic dict inside component_observations
+	# JSON), so it falls back to its observation_template - unique within a
+	# single row's own tree (duplicate template names are rejected when
+	# added) - never its idx: idx is only unique among *siblings under the
+	# same parent*, not across the whole nested tree, so two leaves at
+	# different nesting levels can share the same idx and silently steal
+	# each other's specimen when collected in the same batch.
 	observation = add_observation(
 		patient=context.sample_col.get("patient"),
 		template=obs.get("observation_template"),
@@ -159,8 +167,7 @@ def collect_sample(context, index, obs):
 		company=context.sample_col.get("company"),
 		parent=parent_observation(context, obs),
 		specimen=context.comp_obs_ref.get(obs.get("name"))
-		or context.comp_obs_ref.get(index + 1)
-		or context.comp_obs_ref.get(obs.get("idx")),
+		or context.comp_obs_ref.get(obs.get("observation_template")),
 		invoice=invoice(context),
 		practitioner=context.sample_col.get("referring_practitioner"),
 		child=obs.get("reference_child") or "",
@@ -181,8 +188,10 @@ def collect_sample(context, index, obs):
 
 def collect_components(context, obs):
 	context.component_observations = json.loads(obs.get("component_observations"))
-	for j, comp in enumerate(context.component_observations):
-		specimen = context.comp_obs_ref.get(j + 1) or context.comp_obs_ref.get(obs.get("name"))
+	for comp in context.component_observations:
+		specimen = context.comp_obs_ref.get(comp.get("observation_template")) or context.comp_obs_ref.get(
+			obs.get("name")
+		)
 		observation = add_observation(
 			patient=context.sample_col.get("patient"),
 			template=comp.get("observation_template"),
@@ -208,7 +217,7 @@ def collect_components(context, obs):
 			"collection_date_time": now_datetime(),
 			"component_observations": json.dumps(context.component_observations, default=str),
 			"status": "Collected",
-			"specimen": context.comp_obs_ref.get(j + 1) or context.comp_obs_ref.get(obs.get("name")),
+			"specimen": context.comp_obs_ref.get(obs.get("name")),
 		},
 	)
 
@@ -225,7 +234,7 @@ def mark_component_collected(components, obs, comp_obs_ref):
 	sub-panel Collected too once every one of its own components is done.
 	Mutates `components` in place. Returns True once a match is found, so a
 	caller one level up knows to re-check its own children."""
-	for j, comp in enumerate(components):
+	for comp in components:
 		if comp.get("has_component"):
 			nested = comp.get("component_observations")
 			if not nested:
@@ -245,7 +254,7 @@ def mark_component_collected(components, obs, comp_obs_ref):
 		):
 			comp["status"] = "Collected"
 			comp["collection_date_time"] = now_datetime()
-			comp["specimen"] = comp_obs_ref.get(comp.get("idx")) or comp_obs_ref.get(j + 1)
+			comp["specimen"] = comp_obs_ref.get(comp.get("observation_template"))
 			return True
 
 	return False
@@ -345,6 +354,13 @@ def publish_progress(sample_collection):
 
 
 def create_specimen(patient, selected, component_observations):
+	# Nested leaves (anything collected via a top-level row's
+	# component_observations tree) have no real row name, so they're
+	# referenced back by observation_template below - unique within one
+	# row's own tree - never by idx: idx is only unique among siblings
+	# under the *same* parent, not across the whole nested tree, so two
+	# leaves at different nesting levels collected in the same batch could
+	# share an idx and silently overwrite each other's specimen mapping.
 	groups = {}
 	# to group by
 	for sel in selected:
@@ -377,7 +393,7 @@ def create_specimen(patient, selected, component_observations):
 		specimen.save()
 		for sub_grp in groups[gr]:
 			if component_observations:
-				obs_ref[sub_grp.get("idx")] = specimen.name
+				obs_ref[sub_grp.get("observation_template")] = specimen.name
 			else:
 				obs_ref[sub_grp.get("name")] = specimen.name
 
