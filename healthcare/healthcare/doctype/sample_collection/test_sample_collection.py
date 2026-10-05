@@ -121,12 +121,8 @@ class TestSampleCollection(HealthcareTestSuite):
 		self.assertEqual(leaf_observation[0]["parent_observation"], sub_panel_observation_name)
 
 	def test_collecting_leaves_at_different_nesting_depths_does_not_cross_contaminate_specimens(self):
-		# idx is only unique among siblings under the *same* immediate parent
-		# - a direct child of the package and the first child of a sub-panel
-		# nested under it can both be idx 1. Collecting both in one batch must
-		# still produce two distinct, correctly-typed specimens; keying the
-		# specimen lookup by idx (instead of observation_template) made the
-		# second leaf silently steal the first leaf's specimen.
+		# idx collides across nesting levels - this used to make one leaf
+		# steal the other's specimen when collected in the same batch.
 		package, sub_panel, urine_leaf, serum_leaf = create_sibling_and_nested_leaf_template()
 		doc = new_sample_collection_with_package(package)
 		row = doc.observation_sample_collection[0]
@@ -165,11 +161,8 @@ class TestSampleCollection(HealthcareTestSuite):
 
 
 def create_sibling_and_nested_leaf_template():
-	"""A package with a direct leaf (Urine) and a sub-panel containing its own
-	leaf (Blood Sample) as the sub-panel's *first* child - so the direct leaf
-	and the nested leaf can share the same client-assigned idx (both are
-	"position 1" under their own immediate parent), reproducing the real
-	cross-depth idx collision."""
+	"""A direct leaf and a nested one that can share the same client-assigned
+	idx, reproducing the cross-depth idx collision."""
 	urine_leaf = create_lab_sample_leaf("_Test Sibling Urine Leaf", "_Test Sample - Urine")
 	serum_leaf = create_lab_sample_leaf("_Test Sibling Serum Leaf", "_Test Sample - Blood Sample")
 
