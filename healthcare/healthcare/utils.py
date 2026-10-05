@@ -1762,20 +1762,8 @@ def insert_observation_and_sample_collection(
 			grp.get("name")
 		)
 
-		# The top-level template always needs its own Observation - it's what
-		# the Sample Collection row (below) references, or what a plain
-		# non-grouped Observation parents under. A sub-panel reached by
-		# recursing into a parent's components (e.g. Lipid Profile under
-		# Package 1) only needs one of its own here if it actually has
-		# non-sample-required descendants to parent under this call: its
-		# sample-required side is already fully, correctly handled once the
-		# top-level row is saved (set_component_observation_data()/
-		# create_component_observations() build and chain that whole nested
-		# tree recursively) - creating one here too would just leave an
-		# orphaned duplicate Observation for the same template, which then
-		# shows up twice (once correctly nested, once as this stray extra)
-		# wherever Observations are listed by parent, including the
-		# Diagnostic Report.
+		# A sub-panel only needs its own Observation here if it has
+		# non-sample children to parent - its sample side is chained later.
 		current_parent_observation = None
 		if parent_observation is None or non_sample_reqd_component_obs:
 			current_parent_observation = add_observation(
@@ -1789,12 +1777,7 @@ def insert_observation_and_sample_collection(
 			)
 
 		add_to_sample_collection = has_sample_required_component(grp.get("name"))
-		# Only the top-level template gets its own Sample Collection row - a
-		# sub-panel reached by recursing into a parent's non-sample-required
-		# components is already fully represented *inside* that top-level
-		# row's own nested component_observations tree. Appending it here
-		# too would just duplicate the same template as a second, separate
-		# top-level row.
+		# Only the top-level template gets its own Sample Collection row.
 		if add_to_sample_collection and parent_observation is None:
 			sample_collection.append(
 				"observation_sample_collection",
@@ -1812,31 +1795,33 @@ def insert_observation_and_sample_collection(
 
 		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
-				comp_details = frappe.get_value(
-					"Observation Template",
-					comp,
-					[
-						"name",
-						"has_component",
-						"sample_collection_required",
-						"sample",
-						"sample_type",
-						"container_closure_color",
-					],
-					as_dict=True,
-				)
-				if comp_details.get("has_component"):
-					# recurse if component is also a template with components
-					sub_sc, sub_drc = insert_observation_and_sample_collection(
-						doc,
-						patient,
-						comp_details,
-						sample_collection,
-						child,
-						parent_observation=current_parent_observation,
+				comp_has_component = frappe.db.get_value("Observation Template", comp, "has_component")
+				if comp_has_component and has_sample_required_component(comp):
+					# A mixed sub-panel is chained later, non-sample
+					# children included - an Observation here would duplicate it.
+					continue
+				if comp_has_component:
+					# Pure non-sample sub-panel - never chained elsewhere.
+					sub_observation = add_observation(
+						patient=patient,
+						template=comp,
+						company=doc.company,
+						practitioner=doc.ref_practitioner,
+						parent=current_parent_observation,
+						invoice=doc.name,
+						child=child if child else "",
 					)
-					sample_collection = sub_sc
-					diag_report_required = diag_report_required or sub_drc
+					create_non_sample_observations(
+						comp,
+						sub_observation,
+						{
+							"patient": patient,
+							"company": doc.company,
+							"practitioner": doc.ref_practitioner,
+							"invoice": doc.name,
+							"child": child if child else "",
+						},
+					)
 				else:
 					add_observation(
 						patient=patient,
@@ -1904,12 +1889,8 @@ def insert_observation_and_sample_collection(
 
 
 def has_sample_required_component(template_name):
-	"""True if `template_name` has a sample-required leaf anywhere beneath
-	it, at any depth - not just among its direct children. A panel can
-	contain nothing but a further sub-panel (e.g. a package that bundles a
-	single bigger panel with no leaf of its own directly on it), so checking
-	only direct children would miss that the package still has something
-	worth tracking for sample collection, several levels down."""
+	"""True if `template_name` has a sample-required leaf anywhere
+	beneath it, at any depth - not just among its direct children."""
 	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(template_name)
 	all_components = sample_reqd_component_obs + non_sample_reqd_component_obs
 
@@ -1927,6 +1908,19 @@ def has_sample_required_component(template_name):
 			return True
 
 	return False
+
+
+def create_non_sample_observations(template, parent_observation, observation_kwargs):
+	"""Observations for `template`'s non-sample-required children and any
+	sub-panel with no sample-required descendants at all, recursively."""
+	_, non_sample_reqd_component_obs = get_observation_template_details(template)
+	for comp in non_sample_reqd_component_obs:
+		comp_has_component = frappe.db.get_value("Observation Template", comp, "has_component")
+		if comp_has_component and has_sample_required_component(comp):
+			continue
+		observation_name = add_observation(template=comp, parent=parent_observation, **observation_kwargs)
+		if comp_has_component:
+			create_non_sample_observations(comp, observation_name, observation_kwargs)
 
 
 @frappe.whitelist()
