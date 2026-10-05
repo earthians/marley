@@ -282,6 +282,15 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 		) = get_observation_template_details(service_request.template_dn)
 		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
+				# A sub-panel (e.g. Lipid Profile under Package 1) lands here
+				# too, since a panel is never itself sample_collection_required
+				# - but it's already fully handled below, recursively, by
+				# set_component_observation_data()/create_component_observations().
+				# Creating a plain Observation for it here as well would just
+				# leave a second, dead-end duplicate with none of its own
+				# leaves ever attached to it.
+				if frappe.db.get_value("Observation Template", comp, "has_component"):
+					continue
 				add_observation(
 					patient=service_request.patient,
 					template=comp,
@@ -290,7 +299,18 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 					parent=observation.name,
 				)
 
-		if len(sample_reqd_component_obs) > 0:
+		# A direct sample-required child isn't the only reason this template
+		# needs a Sample Collection row - its only content might be a further
+		# nested sub-panel with nothing sample-required directly on this
+		# level (e.g. a package that just bundles one bigger panel). Checking
+		# only direct children here would silently drop that sub-panel
+		# entirely: never represented in the Sample Collection, never given
+		# its own Observation. Imported locally - healthcare.utils imports
+		# back into this module elsewhere, so a top-level import here would
+		# be circular.
+		from healthcare.healthcare.utils import has_sample_required_component
+
+		if sample_reqd_component_obs or has_sample_required_component(service_request.template_dn):
 			save_sample_collection = True
 			obs_template = frappe.get_doc("Observation Template", service_request.template_dn)
 			data = set_component_observation_data(service_request.template_dn)
@@ -405,6 +425,7 @@ def create_observation(service_request, appointment=None):
 	doc = frappe.new_doc("Observation")
 	doc.posting_datetime = now_datetime()
 	doc.patient = service_request.patient
+	doc.company = service_request.company
 	doc.appointment = appointment
 	doc.observation_template = service_request.template_dn
 	doc.reference_doctype = "Patient Encounter"
