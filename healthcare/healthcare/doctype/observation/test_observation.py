@@ -266,7 +266,7 @@ class TestObservation(HealthcareTestSuite):
 
 		package, sub_panel, _sample_leaf, non_sample_leaf = create_mixed_sub_panel_template()
 		patient = self.get_test_patient()
-		create_sales_invoice(patient, package.name)
+		sales_invoice = create_sales_invoice(patient, package.name)
 
 		sub_panel_observations = frappe.get_all(
 			"Observation", filters={"observation_template": sub_panel.name, "patient": patient}
@@ -276,9 +276,13 @@ class TestObservation(HealthcareTestSuite):
 		non_sample_observation = frappe.db.get_value(
 			"Observation",
 			{"observation_template": non_sample_leaf.name, "patient": patient},
-			"parent_observation",
+			["parent_observation", "sales_invoice"],
+			as_dict=True,
 		)
-		self.assertEqual(non_sample_observation, sub_panel_observations[0].name)
+		self.assertEqual(non_sample_observation.parent_observation, sub_panel_observations[0].name)
+		# Diagnostic Report validation/status updates select leaves by
+		# sales_invoice - without it, this test's result would never be seen.
+		self.assertEqual(non_sample_observation.sales_invoice, sales_invoice.name)
 
 	def test_make_observation_from_encounter_gives_a_pure_non_sample_sub_panel_its_own_observation(self):
 		# A sub-panel with nothing sample-required anywhere beneath it used
@@ -315,6 +319,30 @@ class TestObservation(HealthcareTestSuite):
 			"parent_observation",
 		)
 		self.assertEqual(leaf_observation, sub_panel_observation)
+
+	def test_make_observation_from_encounter_mixed_sub_panel_children_get_encounter_reference(self):
+		# A mixed sub-panel's own non-sample children used to be created
+		# with no encounter reference at all.
+		from healthcare.healthcare.doctype.service_request.service_request import make_observation
+
+		package, _sub_panel, _sample_leaf, non_sample_leaf = create_mixed_sub_panel_template()
+		patient = self.get_test_patient()
+		encounter = create_patient_encounter(patient, package.name)
+
+		service_request = frappe.db.get_value(
+			"Service Request",
+			{"patient": patient, "template_dn": package.name, "order_group": encounter.name},
+		)
+		self.assertTrue(service_request)
+
+		make_observation(service_request)
+
+		leaf_reference = frappe.db.get_value(
+			"Observation",
+			{"observation_template": non_sample_leaf.name, "patient": patient},
+			"reference_docname",
+		)
+		self.assertEqual(leaf_reference, encounter.name)
 
 	def test_formula_computes_result(self):
 		self.enable_observation_on_invoice_submit()
