@@ -1758,19 +1758,44 @@ def insert_observation_and_sample_collection(
 	if grp.get("has_component"):
 		diag_report_required = True
 
-		# parent observation
-		current_parent_observation = add_observation(
-			patient=patient,
-			template=grp.get("name"),
-			company=doc.company,
-			practitioner=doc.ref_practitioner,
-			invoice=doc.name,
-			child=child if child else "",
-			parent=parent_observation,
+		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
+			grp.get("name")
 		)
 
-		add_to_sample_collection = has_direct_leaf_component(grp.get("name"))
-		if add_to_sample_collection:
+		# The top-level template always needs its own Observation - it's what
+		# the Sample Collection row (below) references, or what a plain
+		# non-grouped Observation parents under. A sub-panel reached by
+		# recursing into a parent's components (e.g. Lipid Profile under
+		# Package 1) only needs one of its own here if it actually has
+		# non-sample-required descendants to parent under this call: its
+		# sample-required side is already fully, correctly handled once the
+		# top-level row is saved (set_component_observation_data()/
+		# create_component_observations() build and chain that whole nested
+		# tree recursively) - creating one here too would just leave an
+		# orphaned duplicate Observation for the same template, which then
+		# shows up twice (once correctly nested, once as this stray extra)
+		# wherever Observations are listed by parent, including the
+		# Diagnostic Report.
+		current_parent_observation = None
+		if parent_observation is None or non_sample_reqd_component_obs:
+			current_parent_observation = add_observation(
+				patient=patient,
+				template=grp.get("name"),
+				company=doc.company,
+				practitioner=doc.ref_practitioner,
+				invoice=doc.name,
+				child=child if child else "",
+				parent=parent_observation,
+			)
+
+		add_to_sample_collection = has_sample_required_component(grp.get("name"))
+		# Only the top-level template gets its own Sample Collection row - a
+		# sub-panel reached by recursing into a parent's non-sample-required
+		# components is already fully represented *inside* that top-level
+		# row's own nested component_observations tree. Appending it here
+		# too would just duplicate the same template as a second, separate
+		# top-level row.
+		if add_to_sample_collection and parent_observation is None:
 			sample_collection.append(
 				"observation_sample_collection",
 				{
@@ -1783,9 +1808,6 @@ def insert_observation_and_sample_collection(
 				},
 			)
 
-		sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
-			grp.get("name")
-		)
 		# create observation for non sample_collection_reqd grouped templates
 
 		if len(non_sample_reqd_component_obs) > 0:
@@ -1881,8 +1903,13 @@ def insert_observation_and_sample_collection(
 	return sample_collection, diag_report_required
 
 
-def has_direct_leaf_component(template_name):
-	"""Return True if the given template has at least one direct leaf child."""
+def has_sample_required_component(template_name):
+	"""True if `template_name` has a sample-required leaf anywhere beneath
+	it, at any depth - not just among its direct children. A panel can
+	contain nothing but a further sub-panel (e.g. a package that bundles a
+	single bigger panel with no leaf of its own directly on it), so checking
+	only direct children would miss that the package still has something
+	worth tracking for sample collection, several levels down."""
 	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(template_name)
 	all_components = sample_reqd_component_obs + non_sample_reqd_component_obs
 
@@ -1893,7 +1920,10 @@ def has_direct_leaf_component(template_name):
 			["has_component", "sample_collection_required"],
 			as_dict=True,
 		)
-		if not comp_details.get("has_component") and comp_details.get("sample_collection_required"):
+		if comp_details.get("has_component"):
+			if has_sample_required_component(comp):
+				return True
+		elif comp_details.get("sample_collection_required"):
 			return True
 
 	return False

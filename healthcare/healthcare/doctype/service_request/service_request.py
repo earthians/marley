@@ -18,6 +18,13 @@ from healthcare.healthcare.doctype.observation_template.observation_template imp
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
 	make_insurance_coverage,
 )
+<<<<<<< HEAD
+=======
+from healthcare.healthcare.doctype.sample_collection.sample_collection import (
+	create_component_observations,
+	set_component_observation_data,
+)
+>>>>>>> 4dc27ab (fix(sample collection): multi-level panel tree support and checkbox cascade fix)
 
 
 class ServiceRequest(ServiceRequestController):
@@ -262,8 +269,74 @@ def make_observation(service_request, appointment=None):
 			},
 		)
 
+<<<<<<< HEAD
 	if exist_sample_collection:
 		sample_collection = frappe.get_doc("Sample Collection", exist_sample_collection)
+=======
+	if template.has_component:
+		if exist_sample_collection:
+			sample_collection = frappe.get_doc("Sample Collection", exist_sample_collection)
+		else:
+			sample_collection = create_sample_collection(patient, service_request, appointment)
+
+		# parent
+		observation = create_observation(service_request, appointment)
+
+		save_sample_collection = False
+		(
+			sample_reqd_component_obs,
+			non_sample_reqd_component_obs,
+		) = get_observation_template_details(service_request.template_dn)
+		if len(non_sample_reqd_component_obs) > 0:
+			for comp in non_sample_reqd_component_obs:
+				add_observation(
+					patient=service_request.patient,
+					template=comp,
+					doc="Patient Encounter",
+					docname=service_request.order_group,
+					parent=observation.name,
+				)
+
+		if len(sample_reqd_component_obs) > 0:
+			save_sample_collection = True
+			obs_template = frappe.get_doc("Observation Template", service_request.template_dn)
+			data = set_component_observation_data(service_request.template_dn)
+			# Any sub-panel inside `data` (e.g. a Lipid Profile under this
+			# template) needs its own chained Observation too, or every leaf
+			# under it would flatten onto this top-level `observation` instead
+			# of its real, more specific parent.
+			create_component_observations(
+				service_request.patient,
+				service_request.company,
+				service_request.practitioner,
+				data,
+				observation.name,
+			)
+			# append parent template
+			sample_collection.append(
+				"observation_sample_collection",
+				{
+					"observation_template": service_request.template_dn,
+					"sample": obs_template.sample,
+					"sample_type": obs_template.sample_type,
+					"container_closure_color": frappe.db.get_value(
+						"Observation Template",
+						service_request.template_dn,
+						"container_closure_color",
+					),
+					"component_observations": json.dumps(data),
+					"uom": obs_template.uom,
+					"status": "Open",
+					"sample_qty": obs_template.sample_qty,
+					"component_observation_parent": observation.name,
+					"service_request": service_request.name,
+				},
+			)
+
+		if save_sample_collection:
+			sample_collection.save(ignore_permissions=True)
+
+>>>>>>> 4dc27ab (fix(sample collection): multi-level panel tree support and checkbox cascade fix)
 	else:
 		sample_collection = create_sample_collection(patient, service_request, appointment)
 
