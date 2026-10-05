@@ -339,6 +339,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 				service_request.practitioner,
 				data,
 				observation.name,
+				{"doc": "Patient Encounter", "docname": service_request.order_group},
 			)
 			# append parent template
 			sample_collection.append(
