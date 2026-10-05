@@ -230,6 +230,37 @@ class TestObservation(HealthcareTestSuite):
 			)
 		)
 
+	def test_make_observation_from_encounter_does_not_duplicate_a_sub_panel(self):
+		# make_observation()'s non-sample-required-components loop used to
+		# call add_observation() for every direct non-sample-required child
+		# without checking has_component - for a sub-panel like Lipid Profile
+		# under Package 1, that created a dead-end duplicate Observation
+		# alongside the one create_component_observations() already chains
+		# correctly below it.
+		from healthcare.healthcare.doctype.service_request.service_request import make_observation
+
+		package, sub_panel, _leaf = create_multi_level_template()
+		patient = self.get_test_patient()
+		encounter = create_patient_encounter(patient, package.name)
+
+		service_request = frappe.db.get_value(
+			"Service Request",
+			{"patient": patient, "template_dn": package.name, "order_group": encounter.name},
+		)
+		self.assertTrue(service_request)
+
+		make_observation(service_request)
+
+		package_observation = frappe.db.get_value(
+			"Observation", {"observation_template": package.name, "reference_docname": encounter.name}
+		)
+		self.assertTrue(package_observation)
+
+		children = frappe.get_all(
+			"Observation", filters={"parent_observation": package_observation}, pluck="observation_template"
+		)
+		self.assertEqual(children, [sub_panel.name])
+
 	def test_formula_computes_result(self):
 		self.enable_observation_on_invoice_submit()
 		patient = self.get_test_patient()
@@ -660,6 +691,7 @@ def create_sales_invoice(patient, item):
 def create_patient_encounter(patient, observation_template):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
+	patient_encounter.company = "_Test Company"
 	patient_encounter.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
 	patient_encounter.appointment_type = "_Test Appointment Type"
 	patient_encounter.encounter_date = getdate()
