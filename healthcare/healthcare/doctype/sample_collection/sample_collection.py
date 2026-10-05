@@ -29,6 +29,13 @@ class SampleCollection(Document):
 							self.referring_practitioner,
 							data,
 							obs.get("component_observation_parent"),
+							{
+								"doc": "Sample Collection",
+								"docname": self.name,
+								"invoice": self.reference_name
+								if self.reference_doc == "Sales Invoice"
+								else None,
+							},
 						)
 						frappe.db.set_value(
 							"Observation Sample Collection",
@@ -427,10 +434,14 @@ def set_component_observation_data(observation_template):
 	return data
 
 
-def create_component_observations(patient, company, practitioner, components, parent_observation_name):
+def create_component_observations(
+	patient, company, practitioner, components, parent_observation_name, observation_kwargs=None
+):
 	"""Eagerly create an Observation for every sub-panel in `components`,
 	at any depth, parented to its own containing panel's Observation."""
 	from healthcare.healthcare.utils import create_non_sample_observations
+
+	observation_kwargs = observation_kwargs or {}
 
 	for comp in components:
 		if not comp.get("has_component"):
@@ -442,6 +453,7 @@ def create_component_observations(patient, company, practitioner, components, pa
 			company=company,
 			practitioner=practitioner,
 			parent=parent_observation_name,
+			**observation_kwargs,
 		)
 		comp["component_observation_parent"] = observation_name
 
@@ -449,12 +461,14 @@ def create_component_observations(patient, company, practitioner, components, pa
 		create_non_sample_observations(
 			comp.get("observation_template"),
 			observation_name,
-			{"patient": patient, "company": company, "practitioner": practitioner},
+			{"patient": patient, "company": company, "practitioner": practitioner, **observation_kwargs},
 		)
 
 		nested = comp.get("component_observations")
 		if nested:
 			if isinstance(nested, str):
 				nested = json.loads(nested)
-			create_component_observations(patient, company, practitioner, nested, observation_name)
+			create_component_observations(
+				patient, company, practitioner, nested, observation_name, observation_kwargs
+			)
 			comp["component_observations"] = json.dumps(nested, default=str)
