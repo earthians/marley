@@ -19,6 +19,7 @@ from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_
 	make_insurance_coverage,
 )
 from healthcare.healthcare.doctype.sample_collection.sample_collection import (
+	create_component_observations,
 	set_component_observation_data,
 )
 
@@ -293,6 +294,17 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 			save_sample_collection = True
 			obs_template = frappe.get_doc("Observation Template", service_request.template_dn)
 			data = set_component_observation_data(service_request.template_dn)
+			# Any sub-panel inside `data` (e.g. a Lipid Profile under this
+			# template) needs its own chained Observation too, or every leaf
+			# under it would flatten onto this top-level `observation` instead
+			# of its real, more specific parent.
+			create_component_observations(
+				service_request.patient,
+				service_request.company,
+				service_request.practitioner,
+				data,
+				observation.name,
+			)
 			# append parent template
 			sample_collection.append(
 				"observation_sample_collection",

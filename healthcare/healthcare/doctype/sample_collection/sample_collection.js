@@ -70,6 +70,23 @@ frappe.ui.form.on("Sample Collection", {
 	},
 });
 
+var collect_specimens = function (rows, samples, out) {
+	// A panel's own row carries no specimen of its own - only its leaves
+	// (at any depth, since a panel can itself contain a sub-panel) do.
+	$.each(rows || [], function (k, val) {
+		if (val.has_component && val.component_observations) {
+			collect_specimens(JSON.parse(val.component_observations), samples, out);
+		} else if (val.specimen && !samples.includes(val.specimen)) {
+			out.push({
+				specimen: val.specimen,
+				barcode: val.specimen,
+				sample_type: val.sample_type,
+			});
+			samples.push(val.specimen);
+		}
+	});
+};
+
 var calculate_age = function (birth) {
 	var ageMS = Date.parse(Date()) - Date.parse(birth);
 	var age = new Date();
@@ -165,29 +182,11 @@ var print_barcode = function (frm) {
 	});
 	if (frm.doc.observation_sample_collection) {
 		let samples = [];
-		$.each(frm.doc.observation_sample_collection, function (k, val) {
-			if (val.has_component === 0 && val.specimen) {
-				if (!samples.includes(val.specimen)) {
-					d.fields_dict.items.df.data.push({
-						specimen: val.specimen,
-						barcode: val.specimen,
-						sample_type: val.sample_type,
-					});
-					samples.push(val.specimen);
-				}
-			} else if (val.has_component === 1 && val.component_observations) {
-				$.each(JSON.parse(val.component_observations), function (j, comp) {
-					if (comp.specimen && !samples.includes(comp.specimen)) {
-						d.fields_dict.items.df.data.push({
-							specimen: comp.specimen,
-							barcode: comp.specimen,
-							sample_type: comp.sample_type,
-						});
-						samples.push(comp.specimen);
-					}
-				});
-			}
-		});
+		collect_specimens(
+			frm.doc.observation_sample_collection,
+			samples,
+			d.fields_dict.items.df.data,
+		);
 	}
 	d.fields_dict.items.grid.refresh();
 	d.show();
