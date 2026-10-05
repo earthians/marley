@@ -13,6 +13,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 )
 from healthcare.healthcare.doctype.observation.observation import add_note
 from healthcare.healthcare.doctype.observation_template.test_observation_template import (
+	create_multi_level_template,
 	create_observation_template,
 )
 from healthcare.tests.utils import HealthcareTestSuite
@@ -160,6 +161,48 @@ class TestObservation(HealthcareTestSuite):
 				},
 			)
 		)
+
+		self.assertTrue(
+			frappe.db.exists(
+				"Diagnostic Report",
+				{
+					"docname": sales_invoice.name,
+					"patient": patient,
+				},
+			)
+		)
+
+	def test_has_component_observation_from_invoice_does_not_duplicate_a_sub_panel_row(self):
+		# A sub-panel reached while recursing into the invoiced template's own
+		# components (e.g. a Lipid Profile under Package 1) must not also get
+		# its own, separate Sample Collection row - it's already represented
+		# inside the top-level template's row via its nested
+		# component_observations tree.
+		self.enable_observation_on_invoice_submit()
+
+		package, sub_panel, _leaf = create_multi_level_template()
+		patient = self.get_test_patient()
+		sales_invoice = create_sales_invoice(patient, package.name)
+
+		sample_docname = frappe.db.exists("Sample Collection", {"patient": patient})
+		self.assertTrue(sample_docname)
+
+		rows = frappe.get_all(
+			"Observation Sample Collection",
+			filters={"parent": sample_docname},
+			pluck="observation_template",
+		)
+		self.assertEqual(rows, [package.name])
+		self.assertNotIn(sub_panel.name, rows)
+
+		# Only one Observation for the sub-panel itself should exist at all -
+		# the one set_component_observation_data()/create_component_observations()
+		# chain correctly under the package's own Observation once the row is
+		# saved, not a second, orphaned one from the invoice-side recursion.
+		sub_panel_observations = frappe.get_all(
+			"Observation", filters={"observation_template": sub_panel.name, "patient": patient}
+		)
+		self.assertEqual(len(sub_panel_observations), 1)
 
 		self.assertTrue(
 			frappe.db.exists(
