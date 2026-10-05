@@ -267,6 +267,13 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 		)
 
 	if template.has_component:
+		# Imported locally - healthcare.utils imports back into this module
+		# elsewhere, so a top-level import here would be circular.
+		from healthcare.healthcare.utils import (
+			create_non_sample_observations,
+			has_sample_required_component,
+		)
+
 		if exist_sample_collection:
 			sample_collection = frappe.get_doc("Sample Collection", exist_sample_collection)
 		else:
@@ -282,41 +289,49 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 		) = get_observation_template_details(service_request.template_dn)
 		if len(non_sample_reqd_component_obs) > 0:
 			for comp in non_sample_reqd_component_obs:
-				# A sub-panel (e.g. Lipid Profile under Package 1) lands here
-				# too, since a panel is never itself sample_collection_required
-				# - but it's already fully handled below, recursively, by
-				# set_component_observation_data()/create_component_observations().
-				# Creating a plain Observation for it here as well would just
-				# leave a second, dead-end duplicate with none of its own
-				# leaves ever attached to it.
-				if frappe.db.get_value("Observation Template", comp, "has_component"):
+				comp_has_component = frappe.db.get_value("Observation Template", comp, "has_component")
+				if comp_has_component and has_sample_required_component(comp):
+					# A mixed sub-panel is chained later, non-sample
+					# children included - an Observation here would duplicate it.
 					continue
-				add_observation(
-					patient=service_request.patient,
-					template=comp,
-					doc="Patient Encounter",
-					docname=service_request.order_group,
-					parent=observation.name,
-				)
+				if comp_has_component:
+					# Pure non-sample sub-panel - never chained elsewhere.
+					sub_observation = add_observation(
+						patient=service_request.patient,
+						template=comp,
+						company=service_request.company,
+						doc="Patient Encounter",
+						docname=service_request.order_group,
+						parent=observation.name,
+					)
+					create_non_sample_observations(
+						comp,
+						sub_observation,
+						{
+							"patient": service_request.patient,
+							"company": service_request.company,
+							"doc": "Patient Encounter",
+							"docname": service_request.order_group,
+						},
+					)
+				else:
+					add_observation(
+						patient=service_request.patient,
+						template=comp,
+						company=service_request.company,
+						doc="Patient Encounter",
+						docname=service_request.order_group,
+						parent=observation.name,
+					)
 
-		# A direct sample-required child isn't the only reason this template
-		# needs a Sample Collection row - its only content might be a further
-		# nested sub-panel with nothing sample-required directly on this
-		# level (e.g. a package that just bundles one bigger panel). Checking
-		# only direct children here would silently drop that sub-panel
-		# entirely: never represented in the Sample Collection, never given
-		# its own Observation. Imported locally - healthcare.utils imports
-		# back into this module elsewhere, so a top-level import here would
-		# be circular.
-		from healthcare.healthcare.utils import has_sample_required_component
-
+		# A nested sub-panel with nothing sample-required directly on this
+		# level still needs a Sample Collection row for its own descendants.
 		if sample_reqd_component_obs or has_sample_required_component(service_request.template_dn):
 			save_sample_collection = True
 			obs_template = frappe.get_doc("Observation Template", service_request.template_dn)
 			data = set_component_observation_data(service_request.template_dn)
-			# Any sub-panel inside `data` (e.g. a Lipid Profile under this
-			# template) needs its own chained Observation too, or every leaf
-			# under it would flatten onto this top-level `observation` instead
+			# Chain each sub-panel's own Observation, or its leaves would
+			# flatten onto this top-level `observation` instead
 			# of its real, more specific parent.
 			create_component_observations(
 				service_request.patient,
