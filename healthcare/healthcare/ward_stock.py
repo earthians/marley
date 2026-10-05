@@ -37,6 +37,12 @@ def bed_warehouse(service_unit):
 	return frappe.db.get_value("Healthcare Service Unit", service_unit, "warehouse")
 
 
+def batch_number(batch_no):
+	"""The number printed on the strip, which a Batch carries as its batch_id
+	rather than its name. Nobody at a bedside can read a hash."""
+	return frappe.get_cached_value("Batch", batch_no, "batch_id") if batch_no else None
+
+
 def set_batch(row, batch_no):
 	"""ERPNext reads batch_no only when the row opts out of batch bundles.
 	Where a site uses bundles instead, say so rather than quietly dropping

@@ -14,7 +14,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, nowdate, nowtime
 
-from healthcare.healthcare.ward_stock import WardIssue, WardStore, set_batch
+from healthcare.healthcare.ward_stock import WardIssue, WardStore, batch_number, set_batch
 
 
 class BedStock:
@@ -45,6 +45,7 @@ class BedStock:
 			"item_name": frappe.get_cached_value("Item", item_code, "item_name"),
 			"quantity": flt(row.get("qty")),
 			"batch_no": row.get("batch_no"),
+			"batch_number": batch_number(row.get("batch_no")),
 			"is_medication": item_code in prescribed,
 		}
 

@@ -129,9 +129,9 @@ healthcare.inpatient.BedStockSettlement = class BedStockSettlement {
 				...read_only,
 			},
 			{
-				fieldname: "batch_no",
-				fieldtype: "Link",
-				options: "Batch",
+				// the batch number, not the Batch name, which is a hash
+				fieldname: "batch_number",
+				fieldtype: "Data",
 				label: __("Batch"),
 				...read_only,
 			},
