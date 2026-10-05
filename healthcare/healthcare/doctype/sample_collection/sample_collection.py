@@ -18,14 +18,25 @@ class SampleCollection(Document):
 	def after_insert(self):
 		if self.observation_sample_collection:
 			for obs in self.observation_sample_collection:
-				if obs.get("has_component"):
+				# A row inserted with component_observations already set (e.g. the
+				# Service Request flow, which eagerly chains each sub-panel's own
+				# Observation) has already done this correctly - recomputing it
+				# here from scratch would silently throw that chaining away.
+				if obs.get("has_component") and not obs.get("component_observations"):
 					data = set_component_observation_data(obs.get("observation_template"))
 					if data and len(data) > 0:
+						create_component_observations(
+							self.patient,
+							self.company,
+							self.referring_practitioner,
+							data,
+							obs.get("component_observation_parent"),
+						)
 						frappe.db.set_value(
 							"Observation Sample Collection",
 							obs.get("name"),
 							{
-								"component_observations": json.dumps(data),
+								"component_observations": json.dumps(data, default=str),
 							},
 						)
 
@@ -123,7 +134,7 @@ def build_context(selected, sample_collection, component_observations, child_nam
 	context.sample_col = frappe.db.get_value(
 		"Sample Collection",
 		sample_collection,
-		["reference_name", "reference_doc", "patient", "referring_practitioner"],
+		["reference_name", "reference_doc", "patient", "referring_practitioner", "company"],
 		as_dict=1,
 	)
 	return context
@@ -145,6 +156,7 @@ def collect_sample(context, index, obs):
 		template=obs.get("observation_template"),
 		doc="Sample Collection",
 		docname=context.sample_collection,
+		company=context.sample_col.get("company"),
 		parent=parent_observation(context, obs),
 		specimen=context.comp_obs_ref.get(obs.get("name"))
 		or context.comp_obs_ref.get(index + 1)
@@ -176,6 +188,7 @@ def collect_components(context, obs):
 			template=comp.get("observation_template"),
 			doc="Sample Collection",
 			docname=context.sample_collection,
+			company=context.sample_col.get("company"),
 			parent=obs.get("component_observation_parent"),
 			specimen=specimen,
 			invoice=invoice(context),
@@ -203,11 +216,39 @@ def collect_components(context, obs):
 def mark_matching_components(context, obs):
 	if not context.component_observations:
 		return
-	for j, comp in enumerate(context.component_observations):
-		if comp.get("observation_template") == obs.get("observation_template"):
+	mark_component_collected(context.component_observations, obs, context.comp_obs_ref)
+
+
+def mark_component_collected(components, obs, comp_obs_ref):
+	"""Find the component matching `obs` anywhere in `components`, at any
+	depth, and mark it Collected - then bubble back up marking a containing
+	sub-panel Collected too once every one of its own components is done.
+	Mutates `components` in place. Returns True once a match is found, so a
+	caller one level up knows to re-check its own children."""
+	for j, comp in enumerate(components):
+		if comp.get("has_component"):
+			nested = comp.get("component_observations")
+			if not nested:
+				continue
+			if isinstance(nested, str):
+				nested = json.loads(nested)
+			if not mark_component_collected(nested, obs, comp_obs_ref):
+				continue
+			comp["component_observations"] = json.dumps(nested, default=str)
+			if not any(c.get("status") == "Open" for c in nested):
+				comp["status"] = "Collected"
+				comp["collection_date_time"] = now_datetime()
+			return True
+		elif (
+			comp.get("observation_template") == obs.get("observation_template")
+			and comp.get("status") == "Open"
+		):
 			comp["status"] = "Collected"
 			comp["collection_date_time"] = now_datetime()
-			comp["specimen"] = context.comp_obs_ref.get(j + 1)
+			comp["specimen"] = comp_obs_ref.get(comp.get("idx")) or comp_obs_ref.get(j + 1)
+			return True
+
+	return False
 
 
 def update_child_status(context):
@@ -235,7 +276,12 @@ def update_collection_status(context):
 
 
 def get_collection_status(child_rows):
-	if all(row.get("status") == "Collected" for row in child_rows) or not child_rows:
+	# An empty table (nothing added yet, or everything added was since
+	# removed) has nothing collected - "all rows collected" is vacuously
+	# true over an empty list, which would otherwise mislabel it Collected.
+	if not child_rows:
+		return "Pending"
+	if all(row.get("status") == "Collected" for row in child_rows):
 		return "Collected"
 	if all(row.get("status") == "Open" for row in child_rows):
 		return "Pending"
@@ -243,11 +289,44 @@ def get_collection_status(child_rows):
 
 
 def parent_observation(context, obs):
+	# The top row's own component_observation_parent is only the right
+	# answer for a leaf that's a *direct* child of it. A leaf nested inside
+	# a sub-panel - at any depth - needs that sub-panel's own Observation
+	# instead, which find_parent_observation looks up from the chain
+	# create_component_observations built at add-time.
+	if context.component_observations:
+		found = find_parent_observation(context.component_observations, obs.get("observation_template"))
+		if found:
+			return found
 	if context.child_name:
 		return frappe.db.get_value(
 			"Observation Sample Collection", context.child_name, "component_observation_parent"
 		)
 	return obs.get("component_observation_parent")
+
+
+def find_parent_observation(components, template):
+	"""Walk a (possibly nested) component tree for the Observation that
+	should parent `template` once it's collected: the
+	component_observation_parent of whichever sub-panel directly contains
+	it, however many levels deep that panel is. A depth-1 leaf (a direct
+	child of the top-level row) is intentionally not found here - the
+	caller already falls back to the top row's own component_observation_parent
+	for that case."""
+	for comp in components:
+		if not comp.get("has_component"):
+			continue
+		nested = comp.get("component_observations")
+		if not nested:
+			continue
+		if isinstance(nested, str):
+			nested = json.loads(nested)
+		if any(c.get("observation_template") == template for c in nested):
+			return comp.get("component_observation_parent")
+		found = find_parent_observation(nested, template)
+		if found:
+			return found
+	return None
 
 
 def invoice(context):
@@ -306,11 +385,20 @@ def create_specimen(patient, selected, component_observations):
 
 
 def set_component_observation_data(observation_template):
-	sample_reqd_component_obs, _non_sample_reqd_component_obs = get_observation_template_details(
+	"""Components of `observation_template` worth tracking for sample
+	collection, one level down, nested recursively to any depth. A component
+	needs including either because it's sample_collection_required itself, or
+	because it's a sub-panel (has_component) with at least one such leaf
+	somewhere beneath it - a panel is never itself sample_collection_required,
+	only its leaves are, so that flag alone can't be used to decide whether to
+	descend into it. The tree widget parses `component_observations` on each
+	node the same way regardless of depth, so nesting it here is what makes
+	multi-level panels render and select correctly at any depth."""
+	sample_reqd_component_obs, non_sample_reqd_component_obs = get_observation_template_details(
 		observation_template
 	)
 	data = []
-	for d in sample_reqd_component_obs:
+	for d in sample_reqd_component_obs + non_sample_reqd_component_obs:
 		obs_temp = frappe.get_value(
 			"Observation Template",
 			d,
@@ -321,9 +409,52 @@ def set_component_observation_data(observation_template):
 				"container_closure_color",
 				"name as observation_template",
 				"sample_qty",
+				"has_component",
+				"sample_collection_required",
 			],
 			as_dict=True,
 		)
-		obs_temp["status"] = "Open"
-		data.append(obs_temp)
+		if obs_temp.get("has_component"):
+			nested = set_component_observation_data(d)
+			if not nested:
+				continue
+			obs_temp["component_observations"] = json.dumps(nested, default=str)
+			obs_temp["status"] = "Open"
+			data.append(obs_temp)
+		elif obs_temp.get("sample_collection_required"):
+			obs_temp["status"] = "Open"
+			data.append(obs_temp)
+		# Neither a panel nor itself sample-required - nothing to collect here.
 	return data
+
+
+def create_component_observations(patient, company, practitioner, components, parent_observation_name):
+	"""Eagerly create an Observation for every sub-panel inside `components`,
+	at any depth, each parented to its own containing panel's Observation.
+	Without this, a leaf collected later - however many panel levels down -
+	has nothing but the top-level row's own Observation to attach to, since
+	only that row carries a real component_observation_parent; the whole
+	chain of intermediate panels (e.g. Lipid Profile under Package 1) would
+	otherwise never get its own Observation, and every leaf beneath them
+	would flatten onto the top-level panel instead of its real parent.
+	Mutates `components` in place, writing each sub-panel's own Observation
+	name back into it as component_observation_parent."""
+	for comp in components:
+		if not comp.get("has_component"):
+			continue
+
+		observation_name = add_observation(
+			patient=patient,
+			template=comp.get("observation_template"),
+			company=company,
+			practitioner=practitioner,
+			parent=parent_observation_name,
+		)
+		comp["component_observation_parent"] = observation_name
+
+		nested = comp.get("component_observations")
+		if nested:
+			if isinstance(nested, str):
+				nested = json.loads(nested)
+			create_component_observations(patient, company, practitioner, nested, observation_name)
+			comp["component_observations"] = json.dumps(nested, default=str)

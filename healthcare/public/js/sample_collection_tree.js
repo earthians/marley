@@ -13,14 +13,21 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 
 	render() {
 		this.wrapper.empty();
-		if (!this.rows.length) return;
 
 		healthcare.SampleCollectionTree.inject_styles();
 		this.wrapper.append(this.build_toolbar());
 
-		const tree = $('<ul class="sample-tree"></ul>');
-		this.rows.forEach(row => tree.append(this.build_node(row, null)));
-		this.wrapper.append(tree);
+		if (this.rows.length) {
+			const tree = $('<ul class="sample-tree"></ul>');
+			this.rows.forEach(row => tree.append(this.build_node(row, null)));
+			this.wrapper.append(tree);
+		} else {
+			this.wrapper.append(
+				`<div class="text-muted sample-tree-empty">${__(
+					"No observations added yet.",
+				)}</div>`,
+			);
+		}
 
 		this.bind_toggle();
 		this.update_selection();
@@ -41,6 +48,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 				<span class="sample-tree-bulk">
 					<button class="btn btn-xs select-all-btn">${__("Select All")}</button>
 					<button class="btn btn-xs unselect-all-btn">${__("Unselect All")}</button>
+					<button class="btn btn-xs expand-all-btn">${__("Expand All")}</button>
 				</span>
 				<span class="sample-tree-selection text-muted"></span>
 				<button class="btn btn-xs btn-primary mark-selected-btn">${__(
@@ -53,7 +61,17 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 			.on("click", () => this.collect_selected());
 		this.toolbar.find(".select-all-btn").on("click", () => this.set_all(true));
 		this.toolbar.find(".unselect-all-btn").on("click", () => this.set_all(false));
+		this.toolbar
+			.find(".expand-all-btn")
+			.on("click", event => this.toggle_expand_all(event.currentTarget));
 		return this.toolbar;
+	}
+
+	toggle_expand_all(button) {
+		const $button = $(button);
+		const collapse = $button.text() === __("Collapse All");
+		this.wrapper.find(".sample-tree-node").toggleClass("collapsed", collapse);
+		$button.text(collapse ? __("Expand All") : __("Collapse All"));
 	}
 
 	set_all(checked) {
@@ -64,19 +82,37 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 	}
 
 	color_boxes(color) {
-		return this.wrapper
-			.find(".sample-tree-check")
-			.filter((index, element) => $(element).attr("data-color") === color);
+		// Only ever matches other top-level, standalone samples - a panel's
+		// own components routinely share one colour by construction (it's one
+		// draw for the whole panel), so letting a colour match reach inside
+		// any panel would silently drag in that panel's whole component tree
+		// (and visually re-check the panel itself) just because one of its
+		// leaves happens to share a tube colour with an unrelated test.
+		return this.wrapper.find(".sample-tree-check").filter((index, element) => {
+			const $el = $(element);
+			return $el.attr("data-color") === color && this.is_top_level($el);
+		});
 	}
 
-	build_node(row, parent) {
+	is_top_level(box) {
+		return box.closest(".sample-tree-children").length === 0;
+	}
+
+	build_node(row, parent, top_row) {
+		// The actual `Observation Sample Collection` row this node lives
+		// under - needed regardless of how many panel levels deep a leaf is,
+		// since that's the only node with a real name the server can persist
+		// a collected-status update against.
+		const effective_top = top_row || row;
 		const children = this.get_children(row);
 		const node = $('<li class="sample-tree-node"></li>');
-		node.append(this.node_label(row, parent, children.length > 0));
+		node.append(this.node_label(row, parent, children.length > 0, effective_top));
 
 		if (children.length) {
 			const child_list = $('<ul class="sample-tree-children"></ul>');
-			children.forEach(child => child_list.append(this.build_node(child, row)));
+			children.forEach(child =>
+				child_list.append(this.build_node(child, row, effective_top)),
+			);
 			node.append(child_list);
 		}
 		return node;
@@ -96,10 +132,10 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		}
 	}
 
-	node_label(row, parent, has_children) {
+	node_label(row, parent, has_children, top_row) {
 		const label = $('<div class="sample-tree-label"></div>');
 		label.append(this.marker(has_children));
-		label.append(this.checkbox(row, parent));
+		label.append(this.checkbox(row, parent, top_row));
 		label.append(
 			`<span class="sample-tree-test">${this.escape(
 				row.observation_template,
@@ -130,7 +166,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 			: '<span class="sample-tree-leaf">•</span>';
 	}
 
-	checkbox(row, parent) {
+	checkbox(row, parent, top_row) {
 		// Collected rows show a disabled, empty box (kept out of the selection logic
 		// via a distinct class) so rows stay aligned without looking selected.
 		if (this.is_collected(row)) {
@@ -138,7 +174,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		}
 
 		const box = $('<input type="checkbox" class="sample-tree-check">');
-		box.data("node", { row, parent });
+		box.data("node", { row, parent, top_row });
 		box.attr("data-color", (row.container_closure_color || "").trim());
 		box.on("click", event => event.stopPropagation());
 		box.on("change", event => this.on_check(event.currentTarget));
@@ -155,11 +191,31 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 			.find(".sample-tree-check")
 			.prop({ checked: checked, indeterminate: false });
 
-		// Selecting one colour selects every open sample of that colour;
-		// unselecting only affects the clicked sample.
+		// Selecting one colour selects every other open, standalone sample of
+		// that colour (one tube can cover multiple separate tests) - but only
+		// when the checked box is itself top-level. A panel's own components
+		// routinely share one colour by construction (it's one draw for the
+		// whole panel), so letting a component's click color-match anything
+		// - its own panel siblings, or some unrelated standalone test
+		// elsewhere that happens to share a colour - doesn't reflect the
+		// user's actual selection and silently grows it.
 		const color = box.attr("data-color");
-		if (checked && color)
-			this.color_boxes(color).prop({ checked: true, indeterminate: false });
+		if (checked && color && this.is_top_level(box)) {
+			// A matched box can itself be a panel (if an admin ever sets a
+			// container_closure_color directly on a panel template) - setting
+			// .prop() alone doesn't fire "change", so its own children would
+			// stay unchecked even though the panel now shows checked. Cascade
+			// each match the same way a direct click on it would.
+			this.color_boxes(color).each((index, element) => {
+				const matched = $(element);
+				matched.prop({ checked: true, indeterminate: false });
+				matched
+					.closest(".sample-tree-node")
+					.children(".sample-tree-children")
+					.find(".sample-tree-check")
+					.prop({ checked: true, indeterminate: false });
+			});
+		}
 
 		this.refresh_parent_states();
 		this.update_selection();
@@ -244,7 +300,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 					}
 					await this.frm.reload_doc();
 				} catch (error) {
-					frappe.msgprint(__("Failed to mark samples as Collected"));
+					frappe.throw(__("Failed to mark samples as Collected"));
 				} finally {
 					frappe.dom.unfreeze();
 				}
@@ -253,10 +309,14 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 	}
 
 	group_by_parent(nodes) {
+		// Grouped by the real row (top_row), not the immediate parent - a
+		// leaf two or more panel levels deep has no immediate-parent name to
+		// group on (its parent is a synthetic JSON object, not a DB row), but
+		// top_row is always the actual table row, at any depth.
 		const groups = new Map();
-		nodes.forEach(({ row, parent }) => {
-			const key = parent ? parent.name : "__top__";
-			if (!groups.has(key)) groups.set(key, { parent, rows: [] });
+		nodes.forEach(({ row, parent, top_row }) => {
+			const key = parent ? top_row.name : "__top__";
+			if (!groups.has(key)) groups.set(key, { parent, top_row, rows: [] });
 			groups.get(key).rows.push(row);
 		});
 		return [...groups.values()];
@@ -268,8 +328,8 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 			sample_collection: this.frm.doc.name,
 		};
 		if (group.parent) {
-			args.component_observations = group.parent.component_observations;
-			args.child_name = group.parent.name;
+			args.component_observations = group.top_row.component_observations;
+			args.child_name = group.top_row.name;
 		}
 		return frappe.call({
 			method: "healthcare.healthcare.doctype.sample_collection.sample_collection.create_observation",
@@ -318,6 +378,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 				.sample-tree-status { margin-left: auto; font-size: var(--text-sm); }
 				.sample-tree-status.collected { color: var(--green-600); }
 				.sample-tree-status.not-collected { color: var(--orange-600); }
+				.sample-tree-empty { padding: 10px 8px; font-size: var(--text-sm); }
 			</style>
 		`);
 	}
