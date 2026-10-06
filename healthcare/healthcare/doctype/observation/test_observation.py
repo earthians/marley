@@ -11,7 +11,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.doctype.observation.observation import add_note
+from healthcare.healthcare.doctype.observation.observation import add_note, record_observation_result
 from healthcare.healthcare.doctype.observation_template.test_observation_template import (
 	create_mixed_sub_panel_template,
 	create_multi_level_template,
@@ -590,6 +590,7 @@ class TestObservation(HealthcareTestSuite):
 		for data_type, value in (
 			("Duration", "3600"),
 			("Percent", "87.5"),
+			("Range", "12-15"),
 		):
 			template = create_observation_template(f"_Test {data_type} Template", sample_required=False)
 			template.permitted_data_type = data_type
@@ -599,6 +600,19 @@ class TestObservation(HealthcareTestSuite):
 			observation = self.create_lab_observation(patient, template.name, value, data_type)
 
 			self.assertEqual(observation.result, value)
+
+	def test_range_result_saved_from_diagnostic_report(self):
+		template = create_observation_template("_Test Report Range Template", sample_required=False)
+		template.permitted_data_type = "Range"
+		template.abbr = "TRangeReport"
+		template.save()
+		observation = self.create_lab_observation(self.get_test_patient(), template.name, "", "Range")
+
+		# Diagnostic Report widgets submit their results through this endpoint.
+		record_observation_result(json.dumps([{"observation": observation.name, "result": "12-15"}]))
+		observation.reload()
+
+		self.assertEqual(observation.result, "12-15")
 
 	def create_lab_observation(self, patient, observation_template, result, data_type="Quantity"):
 		observation = frappe.get_doc(
