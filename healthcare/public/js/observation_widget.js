@@ -8,7 +8,8 @@ frappe.provide("healthcare.observation");
 healthcare.observation.CONTROL_FIELDTYPE_MAP = {
 	Quantity: "Float",
 	Numeric: "Float",
-	Range: "Float",
+	// Keep ranges literal: Float evaluates "12-15" as subtraction.
+	Range: "Data",
 	Percent: "Percent",
 	Ratio: "Data",
 	Text: "Text Editor",

@@ -116,7 +116,7 @@ class Observation(Document):
 
 	def validate_input(self):
 		if self.permitted_data_type in NUMERIC_DATA_TYPES:
-			if self.result and not is_numbers_with_exceptions(self.result):
+			if self.result and not is_numbers_with_exceptions(self.result, self.permitted_data_type):
 				frappe.throw(
 					_("Non numeric result {0} is not allowed for Permitted Data Type {1}").format(
 						frappe.bold(self.result), frappe.bold(self.permitted_data_type)
@@ -462,6 +462,10 @@ def condition_threshold(condition):
 
 
 def reference_band_matches_result(child, doc):
+	# An interval cannot be compared as a scalar: flt("12-15") becomes zero.
+	if doc.permitted_data_type == "Range" and is_range_result(doc.result):
+		return False
+
 	# An authored condition always takes priority: it can express things a
 	# plain from/to pair cannot (open-ended bounds, compound checks).
 	if child.conditions:
@@ -613,7 +617,9 @@ def record_observation_result(values: str) -> None:
 				val["result"] = str(val["result"])
 
 			if observation_doc.get("permitted_data_type") in NUMERIC_DATA_TYPES:
-				if val.get("result") and not is_numbers_with_exceptions(val.get("result")):
+				if val.get("result") and not is_numbers_with_exceptions(
+					val.get("result"), observation_doc.get("permitted_data_type")
+				):
 					frappe.msgprint(
 						_("Non numeric result {0} is not allowed for Permitted Type {1}").format(
 							frappe.bold(val.get("result")),
@@ -680,7 +686,16 @@ def set_observation_idx(doc):
 			doc.observation_idx = idx
 
 
-def is_numbers_with_exceptions(value):
+def is_range_result(value):
+	# Signed decimal endpoints, with optional spaces around the separator.
+	number = r"[+-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)"
+	return re.fullmatch(rf"\s*{number}\s*-\s*{number}\s*", str(value)) is not None
+
+
+def is_numbers_with_exceptions(value, permitted_data_type=None):
+	if permitted_data_type == "Range" and is_range_result(value):
+		return True
+
 	# Numeric-typed controls (Float/Percent) submit an actual
 	# JSON number, not a string, once decoded — only Data-style free text
 	# results ever reach here as a str.
