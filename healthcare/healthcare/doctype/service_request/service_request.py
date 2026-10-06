@@ -276,8 +276,6 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 
 		if exist_sample_collection:
 			sample_collection = frappe.get_doc("Sample Collection", exist_sample_collection)
-			if service_request.practitioner and not sample_collection.referring_practitioner:
-				sample_collection.referring_practitioner = service_request.practitioner
 		else:
 			sample_collection = create_sample_collection(patient, service_request, appointment)
 
@@ -364,6 +362,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 					"sample_qty": obs_template.sample_qty,
 					"component_observation_parent": observation.name,
 					"service_request": service_request.name,
+					"practitioner": service_request.practitioner,
 				},
 			)
 
@@ -389,6 +388,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 						"status": "Open",
 						"sample_qty": template.sample_qty,
 						"service_request": service_request.name,
+						"practitioner": service_request.practitioner,
 					},
 				)
 				sample_collection.save(ignore_permissions=True)
@@ -437,6 +437,7 @@ def create_sample_collection(patient, service_request, appointment=None, templat
 				"uom": template.uom,
 				"sample_qty": template.sample_qty,
 				"service_request": service_request.name,
+				"practitioner": service_request.practitioner,
 			},
 		)
 		sample_collection.save(ignore_permissions=True)
