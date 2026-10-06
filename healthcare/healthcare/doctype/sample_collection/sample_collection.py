@@ -196,6 +196,11 @@ def build_context(selected, sample_collection, component_observations, child_nam
 	)
 	if context.sample_col.docstatus != 0:
 		frappe.throw(_("Samples can only be collected on a draft Sample Collection"))
+	context.child_practitioner = (
+		frappe.db.get_value("Observation Sample Collection", child_name, "practitioner")
+		if child_name
+		else None
+	)
 	return context
 
 
@@ -240,7 +245,7 @@ def collect_sample(context, obs):
 		specimen=context.comp_obs_ref.get(obs.get("name"))
 		or context.comp_obs_ref.get(obs.get("observation_template")),
 		invoice=invoice(context),
-		practitioner=context.sample_col.get("referring_practitioner"),
+		practitioner=sample_practitioner(context, obs),
 		child=obs.get("reference_child") or "",
 		service_request=obs.get("service_request"),
 	)
@@ -272,7 +277,7 @@ def collect_components(context, obs):
 			parent=obs.get("component_observation_parent"),
 			specimen=specimen,
 			invoice=invoice(context),
-			practitioner=context.sample_col.get("referring_practitioner"),
+			practitioner=sample_practitioner(context, obs),
 			child=obs.get("reference_child") or "",
 			service_request=obs.get("service_request"),
 		)
@@ -416,6 +421,14 @@ def invoice(context):
 	if context.sample_col.reference_doc == "Sales Invoice":
 		return context.sample_col.get("reference_name")
 	return None
+
+
+def sample_practitioner(context, obs):
+	return (
+		obs.get("practitioner")
+		or context.get("child_practitioner")
+		or context.sample_col.get("referring_practitioner")
+	)
 
 
 def publish_progress(sample_collection):

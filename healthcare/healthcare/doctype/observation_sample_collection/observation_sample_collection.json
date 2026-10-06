@@ -28,6 +28,7 @@
   "column_break_cpbc",
   "reference_child",
   "service_request",
+  "practitioner",
   "section_break_a5gx",
   "show_components",
   "specimen",
@@ -221,6 +222,13 @@
    "fieldtype": "Link",
    "label": "Service Request",
    "options": "Service Request",
+   "read_only": 1
+  },
+  {
+   "fieldname": "practitioner",
+   "fieldtype": "Link",
+   "label": "Referring Practitioner",
+   "options": "Healthcare Practitioner",
    "read_only": 1
   }
  ],
