@@ -188,17 +188,70 @@ let make_discharge_summary = function (frm) {
 };
 
 let discharge_patient = function (frm) {
-	frappe.call({
-		doc: frm.doc,
-		method: "discharge",
-		callback: function (data) {
-			if (!data.exc) {
-				frm.reload_doc();
-			}
-		},
-		freeze: true,
-		freeze_message: __("Processing Inpatient Discharge"),
+	let details = [
+		[
+			__("Patient ID"),
+			frm.doc.patient !== frm.doc.patient_name ? frm.doc.patient : null,
+		],
+		[__("Gender"), frm.doc.gender],
+		[__("Age"), frm.doc.dob ? calculate_age(frm.doc.dob) : null],
+	].filter(([, value]) => value);
+
+	let patient_name = frappe.utils.escape_html(frm.doc.patient_name);
+	let intro;
+	if (details.length === 0) {
+		intro = `<p>${__("You are about to discharge")} <b>${patient_name}</b>.</p>`;
+	} else if (details.length === 1) {
+		// A single extra detail reads better inline than as a one-row table.
+		let [label, value] = details[0];
+		intro = `<p>${__(
+			"You are about to discharge",
+		)} <b>${patient_name}</b> (${frappe.utils.escape_html(
+			label,
+		)}: ${frappe.utils.escape_html(value)}).</p>`;
+	} else {
+		let rows = details
+			.map(
+				([label, value]) =>
+					`<tr><td class="text-muted">${frappe.utils.escape_html(
+						label,
+					)}</td><td>${frappe.utils.escape_html(value)}</td></tr>`,
+			)
+			.join("");
+		intro = `
+			<p>${__("You are about to discharge")} <b>${patient_name}</b>:</p>
+			<table class="table table-bordered" style="margin-bottom: 0;"><tbody>${rows}</tbody></table>
+		`;
+	}
+
+	let message = `
+		${intro}
+		<p class="text-muted" style="margin-top: 12px; margin-bottom: 0;">
+			${__("This action cannot be undone.")}
+		</p>
+	`;
+
+	frappe.confirm(message, () => {
+		frappe.call({
+			doc: frm.doc,
+			method: "discharge",
+			callback: function (data) {
+				if (!data.exc) {
+					frm.reload_doc();
+				}
+			},
+			freeze: true,
+			freeze_message: __("Processing Inpatient Discharge"),
+		});
 	});
+};
+
+let calculate_age = function (birth) {
+	let birth_moment = moment(birth);
+	let diff = moment.duration(moment().diff(birth_moment));
+	return `${diff.years()} ${__("Year(s)")} ${diff.months()} ${__(
+		"Month(s)",
+	)} ${diff.days()} ${__("Day(s)")}`;
 };
 
 let admit_patient_dialog = function (frm) {
