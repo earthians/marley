@@ -588,9 +588,15 @@ class TestObservation(HealthcareTestSuite):
 	def test_new_permitted_data_types_accept_results(self):
 		patient = self.get_test_patient()
 		for data_type, value in (
+			("Quantity", "98.6"),
+			("Numeric", "42"),
 			("Duration", "3600"),
 			("Percent", "87.5"),
 			("Range", "12-15"),
+			("Ratio", "1:2"),
+			("Time", "10:30:00"),
+			("DateTime", "2026-01-15 10:30:00"),
+			("Attach", "/files/test_report.pdf"),
 		):
 			template = create_observation_template(f"_Test {data_type} Template", sample_required=False)
 			template.permitted_data_type = data_type
@@ -600,6 +606,30 @@ class TestObservation(HealthcareTestSuite):
 			observation = self.create_lab_observation(patient, template.name, value, data_type)
 
 			self.assertEqual(observation.result, value)
+
+	def test_select_result_matches_a_template_option(self):
+		template = create_observation_template("_Test Select Template", sample_required=False)
+		template.permitted_data_type = "Select"
+		template.abbr = "TSel"
+		template.options = "Positive\nNegative"
+		template.save()
+
+		observation = self.create_lab_observation(
+			self.get_test_patient(), template.name, "Positive", "Select"
+		)
+
+		self.assertEqual(observation.result, "Positive")
+
+	def test_boolean_result_matches_a_template_option(self):
+		template = create_observation_template("_Test Boolean Template", sample_required=False)
+		template.permitted_data_type = "Boolean"
+		template.abbr = "TBool"
+		template.options = "Yes\nNo"
+		template.save()
+
+		observation = self.create_lab_observation(self.get_test_patient(), template.name, "Yes", "Boolean")
+
+		self.assertEqual(observation.result, "Yes")
 
 	def test_range_result_saved_from_diagnostic_report(self):
 		template = create_observation_template("_Test Report Range Template", sample_required=False)
