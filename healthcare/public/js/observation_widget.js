@@ -216,7 +216,7 @@ healthcare.ObservationWidget = class {
 				? "Small Text"
 				: healthcare.observation.get_control_fieldtype(
 						obs_data.permitted_data_type,
-					);
+				  );
 		let options = ["Select", "Boolean"].includes(obs_data.permitted_data_type)
 			? obs_data.options
 			: "";
@@ -361,10 +361,10 @@ healthcare.ObservationWidget = class {
 			flag.length > 24
 				? "7.5px"
 				: flag.length > 16
-					? "8px"
-					: flag.length > 10
-						? "8.5px"
-						: "9px";
+				  ? "8px"
+				  : flag.length > 10
+				    ? "8.5px"
+				    : "9px";
 
 		return `<span title="${label}" style="display:inline-flex; align-items:center;
 			gap:5px; max-width:100%; box-sizing:border-box; margin-top:4px;
