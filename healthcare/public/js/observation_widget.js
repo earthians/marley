@@ -6,8 +6,9 @@ frappe.provide("healthcare.observation");
 // control (it needs a from/to pair) so it falls back to a plain Data input
 // here; the Observation form itself renders a proper two-datetime control.
 healthcare.observation.CONTROL_FIELDTYPE_MAP = {
-	Quantity: "Float",
-	Numeric: "Float",
+	// Preserve entered decimal places ("1.0", "1.00"); the server validates numbers.
+	Quantity: "Data",
+	Numeric: "Data",
 	// Keep ranges literal: Float evaluates "12-15" as subtraction.
 	Range: "Data",
 	Percent: "Percent",
@@ -215,7 +216,7 @@ healthcare.ObservationWidget = class {
 				? "Small Text"
 				: healthcare.observation.get_control_fieldtype(
 						obs_data.permitted_data_type,
-				  );
+					);
 		let options = ["Select", "Boolean"].includes(obs_data.permitted_data_type)
 			? obs_data.options
 			: "";
@@ -360,10 +361,10 @@ healthcare.ObservationWidget = class {
 			flag.length > 24
 				? "7.5px"
 				: flag.length > 16
-				  ? "8px"
-				  : flag.length > 10
-				    ? "8.5px"
-				    : "9px";
+					? "8px"
+					: flag.length > 10
+						? "8.5px"
+						: "9px";
 
 		return `<span title="${label}" style="display:inline-flex; align-items:center;
 			gap:5px; max-width:100%; box-sizing:border-box; margin-top:4px;
