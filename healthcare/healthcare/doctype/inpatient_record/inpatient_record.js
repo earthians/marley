@@ -248,13 +248,11 @@ let discharge_patient = function (frm) {
 };
 
 let calculate_age = function (birth) {
-	let ageMS = Date.parse(Date()) - Date.parse(birth);
-	let age = new Date();
-	age.setTime(ageMS);
-	let years = age.getFullYear() - 1970;
-	return `${years} ${__("Years(s)")} ${age.getMonth()} ${__(
+	let birth_moment = moment(birth);
+	let diff = moment.duration(moment().diff(birth_moment));
+	return `${diff.years()} ${__("Year(s)")} ${diff.months()} ${__(
 		"Month(s)",
-	)} ${age.getDate()} ${__("Day(s)")}`;
+	)} ${diff.days()} ${__("Day(s)")}`;
 };
 
 let admit_patient_dialog = function (frm) {
