@@ -1,5 +1,5 @@
 def narrow_shared_module_sidebar_workspaces(bootinfo):
-	"""Scope each sidebar's `workspaces` to only the workspaces its own rows link to.
+	"""Scope each Healthcare sidebar's `workspaces` to only the workspaces its own rows link to.
 
 	Frappe's `resolve_sidebar` attributes every workspace of a module to every sidebar
 	(`Sidebar` document) that module owns, on the assumption a module normally ships exactly
@@ -8,17 +8,17 @@ def narrow_shared_module_sidebar_workspaces(bootinfo):
 	the desk's workspace-route resolver (`module_for_workspace` in sidebar.js) picks whichever
 	sidebar it finds first - the wrong icon highlights, and the URL gets prefixed with the
 	wrong shell.
+
+	Scoped to the Healthcare module only, so sidebars belonging to other apps/modules are
+	never touched by this.
 	"""
 	sidebars = bootinfo.get("module_sidebars") or {}
+	healthcare_sidebars = [sidebar for sidebar in sidebars.values() if sidebar.get("module") == "Healthcare"]
 
-	by_module = {}
-	for shell, sidebar in sidebars.items():
-		by_module.setdefault(sidebar.get("module"), []).append(shell)
+	if len(healthcare_sidebars) <= 1:
+		return
 
-	for sidebar in sidebars.values():
-		if len(by_module.get(sidebar.get("module"), [])) <= 1:
-			continue
-
+	for sidebar in healthcare_sidebars:
 		own_workspaces = [
 			item.get("link_to")
 			for item in sidebar.get("items") or []
