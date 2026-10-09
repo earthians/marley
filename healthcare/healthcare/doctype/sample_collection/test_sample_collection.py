@@ -120,6 +120,35 @@ class TestSampleCollection(HealthcareTestSuite):
 		# immediate parent is the sub-panel's own Observation.
 		self.assertEqual(leaf_observation[0]["parent_observation"], sub_panel_observation_name)
 
+	def test_collecting_a_deeply_nested_leaf_uses_child_row_practitioner(self):
+		package, _sub_panel, leaf = create_multi_level_template()
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		doc = new_sample_collection_with_package(package)
+		row = doc.observation_sample_collection[0]
+		row.practitioner = practitioner
+		doc.save(ignore_permissions=True)
+		doc.reload()
+		row = doc.observation_sample_collection[0]
+
+		sub_panel_data = json.loads(row.component_observations)[0]
+		leaf_data = json.loads(sub_panel_data["component_observations"])[0]
+
+		insert_observation(
+			selected=json.dumps([leaf_data]),
+			sample_collection=doc.name,
+			component_observations=row.component_observations,
+			child_name=row.name,
+		)
+
+		self.assertEqual(
+			frappe.db.get_value(
+				"Observation",
+				{"observation_template": leaf.name, "reference_docname": doc.name},
+				"healthcare_practitioner",
+			),
+			practitioner,
+		)
+
 	def test_collecting_leaves_at_different_nesting_depths_does_not_cross_contaminate_specimens(self):
 		# idx collides across nesting levels - this used to make one leaf
 		# steal the other's specimen when collected in the same batch.
