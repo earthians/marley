@@ -45,6 +45,8 @@ doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
+extend_bootinfo = ["healthcare.boot.narrow_shared_module_sidebar_workspaces"]
+
 # Home Pages
 # ----------
 
