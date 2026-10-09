@@ -1,0 +1,79 @@
+{
+ "app": "healthcare",
+ "creation": "2026-10-08 14:55:26.753471",
+ "docstatus": 0,
+ "doctype": "Dock",
+ "idx": 0,
+ "items": [
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "heart-pulse",
+   "link_to": "Healthcare",
+   "link_type": "Sidebar",
+   "title": "Healthcare"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "flask-conical",
+   "link_to": "Diagnostics",
+   "link_type": "Sidebar",
+   "title": "Diagnostics"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "bed",
+   "link_to": "Inpatient",
+   "link_type": "Sidebar",
+   "title": "Inpatient"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "heart-handshake",
+   "link_to": "Insurance",
+   "link_type": "Sidebar",
+   "title": "Insurance"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "users",
+   "link_to": "Outpatient",
+   "link_type": "Sidebar",
+   "title": "Outpatient"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "siren",
+   "link_to": "Emergency",
+   "link_type": "Sidebar",
+   "title": "Emergency"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "hand-heart",
+   "link_to": "Rehabilitation",
+   "link_type": "Sidebar",
+   "title": "Rehabilitation"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "settings",
+   "link_to": "Healthcare Setup",
+   "link_type": "Sidebar",
+   "title": "Setup"
+  }
+ ],
+ "modified": "2026-10-08 14:56:40.987653",
+ "modified_by": "Administrator",
+ "name": "healthcare",
+ "owner": "Administrator",
+ "standard": 1,
+ "user": ""
+}
