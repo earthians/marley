@@ -80,7 +80,7 @@ frappe.ui.form.on("Therapy Session", {
 						frm: frm,
 					});
 				},
-				"Create",
+				__("Create"),
 			);
 
 			frappe.db.get_value(
@@ -97,7 +97,7 @@ frappe.ui.form.on("Therapy Session", {
 									frm: frm,
 								});
 							},
-							"Create",
+							__("Create"),
 						);
 					}
 				},

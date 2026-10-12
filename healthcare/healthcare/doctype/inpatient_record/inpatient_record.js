@@ -128,7 +128,7 @@ frappe.ui.form.on("Inpatient Record", {
 								function () {
 									make_discharge_summary(frm);
 								},
-								"Create",
+								__("Create"),
 							);
 						}
 					});
@@ -152,7 +152,7 @@ frappe.ui.form.on("Inpatient Record", {
 					function () {
 						create_cancel_treatment_counselling(frm);
 					},
-					"Create",
+					__("Create"),
 				);
 			}
 		}

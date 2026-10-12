@@ -65,7 +65,7 @@ frappe.ui.form.on("Treatment Counselling", {
 									},
 								});
 							},
-							"Create",
+							__("Create"),
 						);
 					}
 				}

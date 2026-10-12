@@ -138,7 +138,7 @@ frappe.ui.form.on("Patient Appointment", {
 							frm: frm,
 						});
 					},
-					"Create",
+					__("Create"),
 				);
 			} else if (frm.doc.template_dt == "Therapy Type") {
 				frm.add_custom_button(
@@ -191,7 +191,7 @@ frappe.ui.form.on("Patient Appointment", {
 								}
 							});
 					},
-					"Create",
+					__("Create"),
 				);
 			} else if (frm.doc.template_dt == "Clinical Procedure Template") {
 				frm.add_custom_button(
@@ -223,7 +223,7 @@ frappe.ui.form.on("Patient Appointment", {
 								}
 							});
 					},
-					"Create",
+					__("Create"),
 				);
 			} else if (frm.doc.template_dt == "Observation Template") {
 				frm.add_custom_button(
@@ -231,7 +231,7 @@ frappe.ui.form.on("Patient Appointment", {
 					function () {
 						frm.trigger("make_observation");
 					},
-					"Create",
+					__("Create"),
 				);
 			} else {
 				frm.add_custom_button(
