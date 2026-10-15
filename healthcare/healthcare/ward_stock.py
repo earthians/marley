@@ -69,12 +69,42 @@ class WardIssue:
 	def __init__(self, inpatient_record, warehouse):
 		self.admission = frappe.get_doc("Inpatient Record", inpatient_record)
 		self.warehouse = warehouse
-		self.company = self.admission.company
 
 	def record(self, items):
-		stock_entry = self.issue(items)
+		stock_entry = StockIssue(self.admission.company, self.warehouse, self.admission.patient).issue(items)
 		self.add_to_billables(items, stock_entry)
 		return stock_entry
+
+	def add_to_billables(self, items, stock_entry):
+		"""A billable row only invoices once it carries its stock entry."""
+		for item in items:
+			self.admission.append("items", self.billable(item, stock_entry))
+
+		self.admission.save(ignore_permissions=True)
+
+	def billable(self, item, stock_entry):
+		item_name, stock_uom = frappe.db.get_value("Item", item.get("item_code"), ["item_name", "stock_uom"])
+		return {
+			"item_code": item.get("item_code"),
+			"item_name": item_name,
+			"quantity": flt(item.get("quantity")),
+			"uom": stock_uom,
+			"stock_uom": stock_uom,
+			"conversion_factor": 1,
+			"stock_entry": stock_entry,
+		}
+
+
+class StockIssue:
+	"""A submitted Material Issue of a patient's items from one warehouse.
+
+	Each item is a dict of item_code, quantity and an optional batch_no.
+	"""
+
+	def __init__(self, company, warehouse, patient):
+		self.company = company
+		self.warehouse = warehouse
+		self.patient = patient
 
 	def issue(self, items):
 		stock_entry = frappe.new_doc("Stock Entry")
@@ -98,24 +128,5 @@ class WardIssue:
 		row.expense_account = get_account(None, "expense_account", "Healthcare Settings", self.company)
 		if item.get("batch_no"):
 			set_batch(row, item.get("batch_no"))
-		row.patient = self.admission.patient
+		row.patient = self.patient
 		return row
-
-	def add_to_billables(self, items, stock_entry):
-		"""A billable row only invoices once it carries its stock entry."""
-		for item in items:
-			self.admission.append("items", self.billable(item, stock_entry))
-
-		self.admission.save(ignore_permissions=True)
-
-	def billable(self, item, stock_entry):
-		item_name, stock_uom = frappe.db.get_value("Item", item.get("item_code"), ["item_name", "stock_uom"])
-		return {
-			"item_code": item.get("item_code"),
-			"item_name": item_name,
-			"quantity": flt(item.get("quantity")),
-			"uom": stock_uom,
-			"stock_uom": stock_uom,
-			"conversion_factor": 1,
-			"stock_entry": stock_entry,
-		}
