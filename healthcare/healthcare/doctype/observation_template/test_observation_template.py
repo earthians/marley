@@ -146,6 +146,29 @@ class TestObservationTemplate(HealthcareTestSuite):
 		with self.assertRaises(frappe.ValidationError):
 			lvl4.save()
 
+	def test_consumables_saved_for_every_stage(self):
+		template = create_observation_template("Consumables All Stages", sample_required=True)
+		for stage in ("Specimen", "Sample Collection", "Observation"):
+			template.append("consumables", {"item_code": "_Test_Stock_Item", "consumed_at": stage})
+		template.save()
+
+		self.assertEqual(len(template.reload().consumables), 3)
+
+	def test_collection_consumable_needs_sample_collection(self):
+		template = create_observation_template("Consumables No Sample", sample_required=False)
+		template.append("consumables", {"item_code": "_Test_Stock_Item", "consumed_at": "Specimen"})
+
+		with self.assertRaises(frappe.ValidationError):
+			template.save()
+
+	def test_consumable_must_be_stock_item(self):
+		template = create_observation_template("Consumables Service Item", sample_required=True)
+		service_item = frappe.db.get_value("Item", {"is_stock_item": 0}, "name")
+		template.append("consumables", {"item_code": service_item, "consumed_at": "Observation"})
+
+		with self.assertRaises(frappe.ValidationError):
+			template.save()
+
 
 def create_observation_template(obs_name, idx="", sample_required=None):
 	if frappe.db.exists("Observation Template", obs_name + str(idx)):

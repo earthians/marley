@@ -57,6 +57,9 @@
   "column_break_tktn",
   "rate",
   "change_in_item",
+  "consumables_tab",
+  "consume_stock",
+  "consumables",
   "conditions_tab",
   "diagnosis",
   "service_request_defaults_tab",
@@ -397,11 +400,34 @@
    "fieldtype": "Link",
    "label": "Staff Role",
    "options": "Role"
+  },
+  {
+   "fieldname": "consumables_tab",
+   "fieldtype": "Tab Break",
+   "label": "Consumables"
+  },
+  {
+   "default": "0",
+   "description": "Issue these items from stock when the sample is collected or the result is approved",
+   "fieldname": "consume_stock",
+   "fieldtype": "Check",
+   "label": "Consume Stock"
+  },
+  {
+   "depends_on": "consume_stock",
+   "fieldname": "consumables",
+   "fieldtype": "Table",
+   "label": "Consumables",
+   "options": "Observation Template Consumable"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
+<<<<<<< HEAD
  "modified": "2026-10-24 22:54:13.843788",
+=======
+ "modified": "2026-10-11 18:43:13.317216",
+>>>>>>> 68b8f3a (feat(observation template): add consumables with consumed-at stage)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
