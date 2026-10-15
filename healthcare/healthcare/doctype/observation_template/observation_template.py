@@ -10,6 +10,9 @@ from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedur
 	update_item_and_item_price,
 )
 
+# Stages whose items are issued by the Sample Collection, not the Observation.
+COLLECTION_STAGES = ("Specimen", "Sample Collection")
+
 
 class ObservationTemplate(Document):
 	def after_insert(self):
@@ -76,6 +79,21 @@ class ObservationTemplate(Document):
 					)
 		else:
 			self.validate_abbr()
+
+		self.validate_consumables()
+
+	def validate_consumables(self):
+		for row in self.consumables:
+			if not frappe.db.get_value("Item", row.item_code, "is_stock_item"):
+				frappe.throw(
+					_("Row #{0}: {1} is not a stock item").format(row.idx, frappe.bold(row.item_code))
+				)
+			if row.consumed_at in COLLECTION_STAGES and not self.sample_collection_required:
+				frappe.throw(
+					_("Row #{0}: items consumed at {1} need Sample Collection Required").format(
+						row.idx, _(row.consumed_at)
+					)
+				)
 
 	@staticmethod
 	def is_parent_in_child(child_name, parent_name):
