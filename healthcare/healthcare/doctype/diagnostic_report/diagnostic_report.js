@@ -51,9 +51,13 @@ var confirm_approve_all = function (frm) {
 	frappe.confirm(
 		__("Are you sure you want to approve all Observations in this report?"),
 		function () {
-			save_pending_results(frm).then(function () {
-				approve_all_observations(frm);
-			});
+			save_pending_results(frm)
+				.then(() =>
+					healthcare.review_approval_consumables({
+						diagnostic_report: frm.doc.name,
+					}),
+				)
+				.then(confirmed => confirmed && approve_all_observations(frm));
 		},
 	);
 };
