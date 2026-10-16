@@ -215,3 +215,26 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 function is_pending(row) {
 	return !row.stock_entry;
 }
+
+// Before approving, show what the approval will issue and save any edits.
+// `args` is { observation } or { diagnostic_report }. Resolves false when the user backs out.
+healthcare.review_approval_consumables = async function (args) {
+	const { message: rows } = await frappe.call({
+		method: "healthcare.healthcare.doctype.observation.approval_consumables.get_approval_consumables",
+		args: args,
+	});
+	const values = await new healthcare.ConsumablesReview({
+		title: __("Review Consumables"),
+		action_label: __("Confirm and Approve"),
+		rows: rows || [],
+	}).review();
+	if (!values) return false;
+
+	if (values.items.length) {
+		await frappe.call({
+			method: "healthcare.healthcare.doctype.observation.approval_consumables.update_approval_consumables",
+			args: { rows: values.items },
+		});
+	}
+	return true;
+};
