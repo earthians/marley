@@ -29,6 +29,9 @@
   "section_break_zz5k",
   "healthcare_practitioner",
   "practitioner_name",
+  "column_break_service_unit",
+  "service_unit",
+  "warehouse",
   "template_details_section",
   "has_component",
   "preferred_display_name",
@@ -65,6 +68,12 @@
   "description",
   "medical_coding_section",
   "codification_table",
+  "consumables_tab",
+  "consume_stock",
+  "column_break_consumables",
+  "stock_entry",
+  "section_break_consumables",
+  "consumables",
   "tab_more_information",
   "reference_doctype",
   "reference_docname",
@@ -532,12 +541,70 @@
    "label": "Emergency Record",
    "options": "Emergency Record",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_service_unit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Where the observation is performed",
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
+  },
+  {
+   "fetch_from": "service_unit.warehouse",
+   "fetch_if_empty": 1,
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only_depends_on": "eval:doc.stock_entry"
+  },
+  {
+   "fieldname": "consumables_tab",
+   "fieldtype": "Tab Break",
+   "label": "Consumables"
+  },
+  {
+   "default": "1",
+   "description": "Issue these items from the warehouse when the result is approved",
+   "fieldname": "consume_stock",
+   "fieldtype": "Check",
+   "label": "Consume Stock",
+   "read_only_depends_on": "eval:doc.stock_entry"
+  },
+  {
+   "fieldname": "column_break_consumables",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Entry",
+   "no_copy": 1,
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_consumables",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "consume_stock",
+   "fieldname": "consumables",
+   "fieldtype": "Table",
+   "label": "Consumables",
+   "no_copy": 1,
+   "options": "Observation Consumable",
+   "read_only_depends_on": "eval:doc.stock_entry"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-02 20:14:55.216931",
+ "modified": "2026-10-15 19:30:30.133106",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation",

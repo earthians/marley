@@ -15,6 +15,12 @@ from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import (
 )
 
 from healthcare.healthcare.api.nursing_common import has_value
+from healthcare.healthcare.doctype.observation.observation_consumables import (
+	issue_consumables,
+	prefill_consumables,
+	replace_consumables,
+	validate_stock,
+)
 
 DAYS_PER_AGE_TYPE = {"Years": 365.2425, "Months": 30.436875, "Days": 1}
 
@@ -36,6 +42,7 @@ class Observation(Document):
 		self.result_flag, self.result_flag_color = get_observation_result_flag(self)
 		self.validate_input()
 		self.sanitize_input()
+		validate_stock(self)
 
 	def on_update(self):
 		set_diagnostic_report_status(self)
@@ -45,12 +52,14 @@ class Observation(Document):
 	def before_insert(self):
 		set_observation_idx(self)
 		self.render_templates()
+		prefill_consumables(self)
 
 	def after_insert(self):
 		if self.appointment:
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
 	def on_submit(self):
+		issue_consumables(self)
 		if self.service_request:
 			frappe.db.set_value("Service Request", self.service_request, "status", "completed-Request Status")
 
@@ -721,8 +730,14 @@ def get_observation_result_template(template_name: str, observation: str) -> str
 
 @frappe.whitelist()
 def set_observation_status(
-	observation: str, status: str, reason: str | None = None, parent_obs: str | None = None
+	observation: str,
+	status: str,
+	reason: str | None = None,
+	parent_obs: str | None = None,
+	repeat_test: bool = False,
 ) -> None:
+	"""Approve or reject an Observation. A rejected one is replaced by an editable copy;
+	`repeat_test` says the test is run again, so the copy issues its consumables again."""
 	observation_doc = frappe.get_doc("Observation", observation)
 
 	if not observation_doc.is_ready_for_approval():
@@ -745,13 +760,14 @@ def set_observation_status(
 		new_doc.disapproval_reason = ""
 		if parent_obs:
 			new_doc.parent_observation = parent_obs
+		replace_consumables(new_doc, observation_doc, repeat_test)
 		new_doc.insert()
 		if observation_doc.has_component:
 			parent_obs = new_doc.name
 
 	if observation_doc.has_component:
 		for obs in get_component_observations(observation, status):
-			set_observation_status(obs, status, reason, parent_obs)
+			set_observation_status(obs, status, reason, parent_obs, repeat_test)
 		if status == "Rejected":
 			observation_doc.cancel()
 
@@ -786,7 +802,9 @@ def approve_all_observations(diagnostic_report: str) -> dict[str, list[str]]:
 
 
 @frappe.whitelist()
-def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, list[str]]:
+def reject_all_observations(
+	diagnostic_report: str, reason: str, repeat_test: bool = False
+) -> dict[str, list[str]]:
 	"""Reject every approved Observation of the report"""
 	if not reason:
 		frappe.throw(_("Please enter a reason to Reject."))
@@ -798,7 +816,7 @@ def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, li
 			skipped.append(get_observation_label(observation))
 			continue
 
-		set_observation_status(observation.get("name"), "Rejected", reason)
+		set_observation_status(observation.get("name"), "Rejected", reason, repeat_test=repeat_test)
 		rejected.append(observation.get("name"))
 
 	return {"rejected": rejected, "skipped": skipped}
