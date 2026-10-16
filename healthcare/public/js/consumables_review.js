@@ -58,6 +58,26 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		await frm.reload_doc();
 	}
 
+	// Batches of the item with stock in the warehouse it is issued from.
+	static batch_query(item_code, warehouse) {
+		const filters = {
+			item_code: item_code,
+			posting_date: frappe.datetime.nowdate(),
+		};
+		if (warehouse) filters.warehouse = warehouse;
+		return { query: "erpnext.controllers.queries.get_batch_no", filters: filters };
+	}
+
+	// The form's own consumables table offers the same batches as the review.
+	static set_batch_query(frm) {
+		frm.set_query("batch_no", "consumables", (doc, cdt, cdn) =>
+			healthcare.ConsumablesReview.batch_query(
+				locals[cdt][cdn].item_code,
+				doc.warehouse,
+			),
+		);
+	}
+
 	// Edits go onto the form's own rows, which the submit then saves.
 	static async apply_to_form(frm, values) {
 		await frm.set_value("warehouse", values.warehouse);
@@ -93,6 +113,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				},
 			});
 			dialog.onhide = () => !confirmed && resolve(null);
+			this.dialog = dialog;
 			dialog.show();
 		});
 	}
@@ -193,6 +214,13 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				label: __("Batch"),
 				in_list_view: 1,
 				columns: 2,
+				// An approval row carries its Observation's warehouse; a collection
+				// issues from the warehouse chosen above the table.
+				get_query: row =>
+					healthcare.ConsumablesReview.batch_query(
+						row.item_code,
+						row.warehouse || this.dialog.get_value("warehouse"),
+					),
 			},
 		];
 	}
