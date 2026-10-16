@@ -13,6 +13,7 @@
   "column_break_wyhn",
   "status",
   "barcode",
+  "sample_collection",
   "section_break_auky",
   "patient",
   "patient_name",
@@ -92,11 +93,18 @@
    "label": "Patient Gender",
    "options": "Gender",
    "read_only": 1
+  },
+  {
+   "fieldname": "sample_collection",
+   "fieldtype": "Link",
+   "label": "Sample Collection",
+   "options": "Sample Collection",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-25 09:36:31.648363",
+ "modified": "2026-10-11 18:46:49.029373",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Specimen",
