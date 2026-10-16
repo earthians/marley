@@ -123,10 +123,18 @@ var prompt_reject_all = function (frm) {
 				fieldtype: "Text",
 				reqd: 1,
 			},
+			{
+				label: __("Repeat the tests"),
+				fieldname: "repeat_test",
+				fieldtype: "Check",
+				description: __(
+					"Tick if the tests are run again. Their consumables are issued again when the new results are approved.",
+				),
+			},
 		],
 		function (values) {
 			save_pending_results(frm).then(function () {
-				reject_all_observations(frm, values.reason);
+				reject_all_observations(frm, values.reason, values.repeat_test);
 			});
 		},
 		__("Reason For Rejection"),
@@ -134,12 +142,13 @@ var prompt_reject_all = function (frm) {
 	);
 };
 
-var reject_all_observations = function (frm, reason) {
+var reject_all_observations = function (frm, reason, repeat_test) {
 	frappe.call({
 		method: "healthcare.healthcare.doctype.observation.observation.reject_all_observations",
 		args: {
 			diagnostic_report: frm.doc.name,
 			reason: reason,
+			repeat_test: !!repeat_test,
 		},
 		freeze: true,
 		freeze_message: __("Rejecting Observations"),

@@ -608,6 +608,14 @@ healthcare.ObservationWidget = class {
 						fieldtype: "Text",
 						reqd: 1,
 					},
+					{
+						label: __("Repeat the test"),
+						fieldname: "repeat_test",
+						fieldtype: "Check",
+						description: __(
+							"Tick if the test is run again. Its consumables are issued again when the new result is approved.",
+						),
+					},
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -617,6 +625,7 @@ healthcare.ObservationWidget = class {
 							observation: observation,
 							status: status,
 							reason: data.unauthorisation_reason,
+							repeat_test: !!data.repeat_test,
 						},
 						freeze: true,
 						callback: function (r) {
