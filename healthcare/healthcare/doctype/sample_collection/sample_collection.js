@@ -15,6 +15,7 @@ frappe.ui.form.on("Sample Collection", {
 	},
 
 	refresh: function (frm) {
+		healthcare.ConsumablesReview.set_batch_query(frm);
 		var sample_table = frm.doc.observation_sample_collection;
 		let value = sample_table && sample_table.length > 0;
 		frm.set_df_property("sample_details_section", "hidden", value);

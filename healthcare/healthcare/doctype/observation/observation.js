@@ -32,6 +32,7 @@ frappe.ui.form.on("Observation", {
 		});
 
 		set_service_unit_query(frm);
+		healthcare.ConsumablesReview.set_batch_query(frm);
 		render_period_control(frm);
 	},
 	onload_post_render: function (frm) {
