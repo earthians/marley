@@ -5,12 +5,19 @@
 import json
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 from healthcare.healthcare.doctype.observation.observation import add_observation
+from healthcare.healthcare.doctype.observation.observation_consumables import set_warehouse
 from healthcare.healthcare.doctype.observation_template.observation_template import (
 	get_observation_template_details,
+)
+from healthcare.healthcare.doctype.sample_collection.collection_consumables import (
+	issue_collection,
+	record_consumables,
+	validate_issued_rows,
 )
 
 
@@ -57,14 +64,19 @@ class SampleCollection(Document):
 						obs.status = "Collected"
 
 		self.status = get_collection_status(self.observation_sample_collection)
+		if self.consume_stock:
+			set_warehouse(self, "collection_point")
+		validate_issued_rows(self)
 
-	# def before_submit(self):
-	# 	if [sample for sample in self.observation_sample_collection if sample.status != "Collected"]:
-	# 		frappe.throw(
-	# 			msg=_("Cannot Submit, not all samples are marked as 'Collected'."), title=_("Not Allowed")
-	# 		)
+	def before_submit(self):
+		if [sample for sample in self.observation_sample_collection if sample.status != "Collected"]:
+			frappe.throw(
+				msg=_("Cannot Submit, not all samples are marked as 'Collected'."), title=_("Not Allowed")
+			)
 
 	def on_submit(self):
+		# Anything collected but not yet issued, such as after a skipped review.
+		issue_collection(self)
 		if self.observation_sample_collection:
 			for obs in self.observation_sample_collection:
 				if obs.get("service_request"):
@@ -94,12 +106,15 @@ def create_observation(
 	sample_collection: str,
 	component_observations: str | None = None,
 	child_name: str | None = None,
+	collect_action: str | None = None,
 ) -> None:
+	"""`collect_action` is the same for every call one Mark Collected makes."""
 	insert_observation(
 		selected=selected,
 		sample_collection=sample_collection,
 		component_observations=component_observations,
 		child_name=child_name,
+		collect_action=collect_action,
 	)
 
 
@@ -108,14 +123,20 @@ def insert_observation(
 	sample_collection: str,
 	component_observations: str | None = None,
 	child_name: str | None = None,
+	collect_action: str | None = None,
 ) -> None:
 	try:
 		context = build_context(selected, sample_collection, component_observations, child_name)
 		context.comp_obs_ref = create_specimen(
-			context.sample_col.get("patient"), context.selected, context.component_observations
+			context.sample_col.get("patient"),
+			context.selected,
+			context.component_observations,
+			sample_collection,
 		)
+		collected = collected_entries(context)
 		for obs in context.selected:
 			collect_row(context, obs)
+		record_consumables(sample_collection, collected, collect_action)
 		update_child_status(context)
 		update_collection_status(context)
 	except Exception as exception:
@@ -139,10 +160,30 @@ def build_context(selected, sample_collection, component_observations, child_nam
 	context.sample_col = frappe.db.get_value(
 		"Sample Collection",
 		sample_collection,
-		["reference_name", "reference_doc", "patient", "referring_practitioner", "company"],
+		["reference_name", "reference_doc", "patient", "referring_practitioner", "company", "docstatus"],
 		as_dict=1,
 	)
+	if context.sample_col.docstatus != 0:
+		frappe.throw(_("Samples can only be collected on a draft Sample Collection"))
 	return context
+
+
+def collected_entries(context):
+	"""The templates this action takes a sample for, each with its specimen."""
+	entries = []
+	for sel in context.selected:
+		if sel.get("status") != "Open":
+			continue
+		if not sel.get("has_component"):
+			entries.append(sel)
+		elif sel.get("component_observations"):
+			entries.extend(json.loads(sel.get("component_observations")))
+
+	ref = context.comp_obs_ref
+	return [
+		{**entry, "specimen": ref.get(entry.get("name")) or ref.get(entry.get("observation_template"))}
+		for entry in entries
+	]
 
 
 def collect_row(context, obs):
@@ -355,7 +396,7 @@ def publish_progress(sample_collection):
 	)
 
 
-def create_specimen(patient, selected, component_observations):
+def create_specimen(patient, selected, component_observations, sample_collection=None):
 	# Nested leaves have no real row name, so they're referenced back by
 	# observation_template, not idx (not unique across nesting levels).
 	groups = {}
@@ -386,6 +427,7 @@ def create_specimen(patient, selected, component_observations):
 		specimen = frappe.new_doc("Specimen")
 		specimen.received_time = now_datetime()
 		specimen.patient = patient
+		specimen.sample_collection = sample_collection
 		specimen.specimen_type = groups[gr][0].get("sample") or groups[gr][0].get("sample_type")
 		specimen.save()
 		for sub_grp in groups[gr]:

@@ -2,6 +2,18 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Sample Collection", {
+	// Submitting issues the consumables, so show them first and let staff correct them.
+	before_submit: async function (frm) {
+		const values = await healthcare.ConsumablesReview.for_form(
+			frm,
+			__("Confirm and Submit"),
+		).review();
+		frappe.validated = !!values;
+		if (values && values.items.length) {
+			await healthcare.ConsumablesReview.apply_to_form(frm, values);
+		}
+	},
+
 	refresh: function (frm) {
 		var sample_table = frm.doc.observation_sample_collection;
 		let value = sample_table && sample_table.length > 0;

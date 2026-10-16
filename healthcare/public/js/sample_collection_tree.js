@@ -304,10 +304,13 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 				try {
 					// Run groups one at a time: parallel requests race on the
 					// same Sample Collection and only one set of writes survives.
+					// One id for the whole action: its calls share containers.
+					const collect_action = frappe.utils.get_random(10);
 					for (const group of this.group_by_parent(nodes)) {
-						await this.collect_call(group);
+						await this.collect_call(group, collect_action);
 					}
 					await this.frm.reload_doc();
+					this.show_recorded_consumables();
 				} catch (error) {
 					frappe.throw(__("Failed to mark samples as Collected"));
 				} finally {
@@ -315,6 +318,12 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 				}
 			},
 		);
+	}
+
+	// Collecting records consumables; review and issue them now.
+	show_recorded_consumables() {
+		if (!this.frm.doc.consume_stock) return;
+		healthcare.ConsumablesReview.issue_collection(this.frm);
 	}
 
 	group_by_parent(nodes) {
@@ -331,10 +340,11 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		return [...groups.values()];
 	}
 
-	collect_call(group) {
+	collect_call(group, collect_action) {
 		const args = {
 			selected: JSON.stringify(group.rows),
 			sample_collection: this.frm.doc.name,
+			collect_action: collect_action,
 		};
 		if (group.parent) {
 			args.component_observations = group.top_row.component_observations;
