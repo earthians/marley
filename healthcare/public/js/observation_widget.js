@@ -585,7 +585,15 @@ healthcare.ObservationWidget = class {
 						observation +
 						"</b>",
 				),
-				function () {
+				async function () {
+					// Approving issues the consumables, so show them first.
+					if (
+						!(await healthcare.review_approval_consumables({
+							observation: observation,
+						}))
+					) {
+						return;
+					}
 					frappe.call({
 						method: "healthcare.healthcare.doctype.observation.observation.set_observation_status",
 						args: {
