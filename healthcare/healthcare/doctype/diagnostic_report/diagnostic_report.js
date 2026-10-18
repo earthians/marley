@@ -47,19 +47,16 @@ var show_diagnostic_report = function (frm) {
 	}
 };
 
+// The consumables review is the confirmation when approving issues any.
 var confirm_approve_all = function (frm) {
-	frappe.confirm(
-		__("Are you sure you want to approve all Observations in this report?"),
-		function () {
-			save_pending_results(frm)
-				.then(() =>
-					healthcare.review_approval_consumables({
-						diagnostic_report: frm.doc.name,
-					}),
-				)
-				.then(confirmed => confirmed && approve_all_observations(frm));
-		},
-	);
+	save_pending_results(frm)
+		.then(() =>
+			healthcare.review_approval_consumables(
+				{ diagnostic_report: frm.doc.name },
+				__("Are you sure you want to approve all Observations in this report?"),
+			),
+		)
+		.then(confirmed => confirmed && approve_all_observations(frm));
 };
 
 var save_pending_results = function (frm) {

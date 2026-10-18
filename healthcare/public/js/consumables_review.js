@@ -244,17 +244,27 @@ function is_pending(row) {
 	return !row.stock_entry;
 }
 
-// Before approving, show what the approval will issue and save any edits.
-// `args` is { observation } or { diagnostic_report }. Resolves false when the user backs out.
-healthcare.review_approval_consumables = async function (args) {
+// The one confirmation before approving: the consumables review when approval
+// issues any, otherwise `question`. `args` is { observation } or { diagnostic_report }.
+// Resolves false when the user backs out, after saving any edits otherwise.
+healthcare.review_approval_consumables = async function (args, question) {
 	const { message: rows } = await frappe.call({
 		method: "healthcare.healthcare.doctype.observation.approval_consumables.get_approval_consumables",
 		args: args,
 	});
+	if (!rows || !rows.length) {
+		return new Promise(resolve =>
+			frappe.confirm(
+				question,
+				() => resolve(true),
+				() => resolve(false),
+			),
+		);
+	}
 	const values = await new healthcare.ConsumablesReview({
 		title: __("Review Consumables"),
 		action_label: __("Confirm and Approve"),
-		rows: rows || [],
+		rows: rows,
 	}).review();
 	if (!values) return false;
 
