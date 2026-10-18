@@ -109,6 +109,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		frm.submit_asks_once = true;
 		const ask_and_submit = frm.savesubmit.bind(frm);
 		frm.savesubmit = (btn, callback, on_error) => {
+			frm.validate_form_action("Submit");
 			const review = healthcare.ConsumablesReview.for_form(
 				frm,
 				__("Confirm and Submit"),
@@ -127,7 +128,8 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		};
 	}
 
-	// Frappe's savesubmit after its question: before_submit, save, on_submit.
+	// Frappe's savesubmit after its question: before_submit, save, on_submit
+	// and the route's after_submit hook.
 	static submit(frm, btn, callback, on_error) {
 		return new Promise(resolve => {
 			frappe.validated = true;
@@ -141,7 +143,8 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 						callback && callback();
 						frm.script_manager
 							.trigger("on_submit")
-							.then(() => resolve(frm));
+							.then(() => resolve(frm))
+							.then(() => healthcare.ConsumablesReview.after_submit(frm));
 					},
 					btn,
 					() => frm.handle_save_fail(btn, on_error),
@@ -149,6 +152,14 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				);
 			});
 		});
+	}
+
+	// A screen that opened this form may wait for it to be submitted.
+	static after_submit(frm) {
+		const route_callback = frappe.route_hooks.after_submit;
+		if (!route_callback) return;
+		delete frappe.route_hooks.after_submit;
+		route_callback(frm);
 	}
 
 	// Edits go onto the form's own rows, which the submit then saves.
