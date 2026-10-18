@@ -2,18 +2,6 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Observation", {
-	// Submitting issues the consumables, so show them first and let staff correct them.
-	before_submit: async function (frm) {
-		const values = await healthcare.ConsumablesReview.for_form(
-			frm,
-			__("Confirm and Submit"),
-		).review();
-		frappe.validated = !!values;
-		if (values && values.items.length) {
-			await healthcare.ConsumablesReview.apply_to_form(frm, values);
-		}
-	},
-
 	refresh: function (frm) {
 		frm.set_query("patient", function () {
 			return {
@@ -33,6 +21,7 @@ frappe.ui.form.on("Observation", {
 
 		set_service_unit_query(frm);
 		healthcare.ConsumablesReview.set_batch_query(frm);
+		healthcare.ConsumablesReview.ask_once_before_submit(frm);
 		render_period_control(frm);
 	},
 	onload_post_render: function (frm) {

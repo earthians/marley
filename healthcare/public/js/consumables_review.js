@@ -102,6 +102,55 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		);
 	}
 
+	// Submitting issues the form's consumables. When there are any to issue, their
+	// review is the one question; otherwise Frappe asks its own.
+	static ask_once_before_submit(frm) {
+		if (frm.submit_asks_once) return;
+		frm.submit_asks_once = true;
+		const ask_and_submit = frm.savesubmit.bind(frm);
+		frm.savesubmit = (btn, callback, on_error) => {
+			const review = healthcare.ConsumablesReview.for_form(
+				frm,
+				__("Confirm and Submit"),
+			);
+			if (!review.rows.length) return ask_and_submit(btn, callback, on_error);
+			return review.review().then(async values => {
+				if (!values) return frm.handle_save_fail(btn, on_error);
+				await healthcare.ConsumablesReview.apply_to_form(frm, values);
+				return healthcare.ConsumablesReview.submit(
+					frm,
+					btn,
+					callback,
+					on_error,
+				);
+			});
+		};
+	}
+
+	// Frappe's savesubmit after its question: before_submit, save, on_submit.
+	static submit(frm, btn, callback, on_error) {
+		return new Promise(resolve => {
+			frappe.validated = true;
+			frm.script_manager.trigger("before_submit").then(() => {
+				if (!frappe.validated) return frm.handle_save_fail(btn, on_error);
+				frm.save(
+					"Submit",
+					r => {
+						if (r.exc) return frm.handle_save_fail(btn, on_error);
+						frappe.utils.play_sound("submit");
+						callback && callback();
+						frm.script_manager
+							.trigger("on_submit")
+							.then(() => resolve(frm));
+					},
+					btn,
+					() => frm.handle_save_fail(btn, on_error),
+					resolve,
+				);
+			});
+		});
+	}
+
 	// Edits go onto the form's own rows, which the submit then saves.
 	static async apply_to_form(frm, values) {
 		await frm.set_value("warehouse", values.warehouse);
