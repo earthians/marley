@@ -15,6 +15,7 @@ from healthcare.healthcare.doctype.observation_template.observation_template imp
 	get_observation_template_details,
 )
 from healthcare.healthcare.doctype.sample_collection.collection_consumables import (
+	consumable_key,
 	issue_collection,
 	record_consumables,
 	validate_issued_rows,
@@ -116,6 +117,26 @@ def create_observation(
 		child_name=child_name,
 		collect_action=collect_action,
 	)
+
+
+@frappe.whitelist()
+def preview_collect(sample_collection: str, selected: str, collect_action: str) -> list[dict]:
+	"""What collecting `selected` would record, for the review that confirms the collect."""
+	frappe.has_permission("Sample Collection", "write", sample_collection, throw=True)
+	if not frappe.db.get_value("Sample Collection", sample_collection, "consume_stock"):
+		return []
+	context = frappe._dict(selected=json.loads(selected), comp_obs_ref={})
+	rows = record_consumables(sample_collection, collected_entries(context), collect_action, dry_run=True)
+	return [
+		{
+			"row_name": consumable_key(row),
+			"item_code": row.item_code,
+			"consumed_at": row.consumed_at,
+			"qty": row.qty,
+			"suggested_qty": row.suggested_qty,
+		}
+		for row in rows
+	]
 
 
 def insert_observation(

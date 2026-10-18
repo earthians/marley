@@ -294,36 +294,41 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 			.text(count ? __("{0} selected", [count]) : "");
 	}
 
-	run_collection(nodes) {
-		frappe.confirm(
+	async run_collection(nodes) {
+		// One id for the whole action: its calls share containers.
+		const collect_action = frappe.utils.get_random(10);
+		const review = await healthcare.ConsumablesReview.before_collect(
+			this.frm,
+			nodes.map(node => node.row),
+			collect_action,
 			__("Are you sure you want to mark {0} sample(s) as Collected?", [
 				nodes.length,
 			]),
-			async () => {
-				frappe.dom.freeze(__("Marking Collected..."));
-				try {
-					// Run groups one at a time: parallel requests race on the
-					// same Sample Collection and only one set of writes survives.
-					// One id for the whole action: its calls share containers.
-					const collect_action = frappe.utils.get_random(10);
-					for (const group of this.group_by_parent(nodes)) {
-						await this.collect_call(group, collect_action);
-					}
-					await this.frm.reload_doc();
-					this.show_recorded_consumables();
-				} catch (error) {
-					frappe.throw(__("Failed to mark samples as Collected"));
-				} finally {
-					frappe.dom.unfreeze();
-				}
-			},
 		);
-	}
+		if (!review) return;
 
-	// Collecting records consumables; review and issue them now.
-	show_recorded_consumables() {
-		if (!this.frm.doc.consume_stock) return;
-		healthcare.ConsumablesReview.issue_collection(this.frm);
+		frappe.dom.freeze(__("Marking Collected..."));
+		try {
+			// Run groups one at a time: parallel requests race on the
+			// same Sample Collection and only one set of writes survives.
+			for (const group of this.group_by_parent(nodes)) {
+				await this.collect_call(group, collect_action);
+			}
+		} catch (error) {
+			frappe.throw(__("Failed to mark samples as Collected"));
+		} finally {
+			frappe.dom.unfreeze();
+		}
+		// Collected either way; a failed issue shows its own message and waits for submit.
+		try {
+			await healthcare.ConsumablesReview.issue_collected(
+				this.frm,
+				collect_action,
+				review,
+			);
+		} finally {
+			await this.frm.reload_doc();
+		}
 	}
 
 	group_by_parent(nodes) {

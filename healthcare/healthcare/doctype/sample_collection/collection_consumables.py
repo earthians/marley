@@ -17,7 +17,7 @@ STAGES = ("Specimen", "Sample Collection")
 CONTAINER_FIELDS = ("medical_department", "sample", "container_closure_color")
 
 
-def record_consumables(sample_collection, collected, collect_action=None):
+def record_consumables(sample_collection, collected, collect_action=None, dry_run=False):
 	"""Records what a collect action uses on its Sample Collection.
 
 	`collected` is a list of dicts of observation_template, the container fields and specimen.
@@ -27,16 +27,20 @@ def record_consumables(sample_collection, collected, collect_action=None):
 	have used a new tube or a new draw, or added a test to one already counted;
 	only staff know, so its row starts at the same-container quantity and keeps
 	the full one as `suggested_qty` for the review to offer.
+
+	Returns the action's rows. `dry_run` writes nothing, so the review can come first.
 	"""
 	context = frappe._dict(
 		sample_collection=sample_collection,
 		collect_action=collect_action,
+		dry_run=dry_run,
 		rows=recorded_rows(sample_collection),
 	)
 	by_template = {entry.get("observation_template"): entry for entry in collected}
 	for row in template_consumables(list(by_template), STAGES):
 		entry = by_template[row.observation_template]
 		add_consumable(context, row, container_of(row, entry), entry.get("specimen"))
+	return [row for row in context.rows if row.collect_action == collect_action and not row.stock_entry]
 
 
 def recorded_rows(sample_collection):
@@ -73,14 +77,17 @@ def add_consumable(context, row, container, specimen):
 		(m for m in matches if m.collect_action == context.collect_action and not m.stock_entry), None
 	)
 	if current:
-		update_consumable(current, flt(current.qty) + extra, max(flt(current.suggested_qty), suggested))
+		update_consumable(
+			context, current, flt(current.qty) + extra, max(flt(current.suggested_qty), suggested)
+		)
 	elif extra or suggested:
 		insert_consumable(context, row, container, specimen, extra, suggested)
 
 
-def update_consumable(row, qty, suggested_qty):
+def update_consumable(context, row, qty, suggested_qty):
 	row.qty, row.suggested_qty = qty, suggested_qty
-	frappe.db.set_value("Observation Consumable", row.name, {"qty": qty, "suggested_qty": suggested_qty})
+	if not context.dry_run:
+		frappe.db.set_value("Observation Consumable", row.name, {"qty": qty, "suggested_qty": suggested_qty})
 
 
 def matching_rows(rows, item_code, consumed_at, container):
@@ -109,7 +116,8 @@ def insert_consumable(context, row, container, specimen, qty, suggested_qty):
 			"collect_action": context.collect_action,
 		}
 	)
-	consumable.db_insert()
+	if not context.dry_run:
+		consumable.db_insert()
 	context.rows.append(frappe._dict(consumable.as_dict()))
 
 
@@ -201,3 +209,31 @@ def remove_declined(doc, edits):
 	]
 	for row in declined:
 		doc.remove(row)
+
+
+def consumable_key(row):
+	"""Names a row before it exists: one action has one row per item, stage and container."""
+	return "|".join(str(row.get(field) or "") for field in ("item_code", "consumed_at", *CONTAINER_FIELDS))
+
+
+@frappe.whitelist()
+def issue_collect_action(
+	sample_collection: str, collect_action: str, rows: list | str, warehouse: str | None = None
+) -> None:
+	"""Issues what a collect recorded, as reviewed before it ran: the rows had no names yet."""
+	recorded = frappe.get_all(
+		"Observation Consumable",
+		filters={
+			"parent": sample_collection,
+			"parenttype": "Sample Collection",
+			"collect_action": collect_action,
+		},
+		fields=["name", "item_code", "consumed_at", *CONTAINER_FIELDS],
+	)
+	names = {consumable_key(row): row.name for row in recorded}
+	reviewed = [
+		{**row, "row_name": names[row.get("row_name")]}
+		for row in frappe.parse_json(rows)
+		if row.get("row_name") in names
+	]
+	issue_collection_consumables(sample_collection, reviewed, warehouse)
