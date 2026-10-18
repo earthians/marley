@@ -579,21 +579,18 @@ healthcare.ObservationWidget = class {
 	auth_observation(observation, status) {
 		var me = this;
 		if (status == "Approved") {
-			frappe.confirm(
-				__(
-					"Are you sure you want to authorise Observation <b>" +
-						observation +
-						"</b>",
-				),
-				async function () {
-					// Approving issues the consumables, so show them first.
-					if (
-						!(await healthcare.review_approval_consumables({
-							observation: observation,
-						}))
-					) {
-						return;
-					}
+			// Approving issues the consumables, so their review is the confirmation.
+			healthcare
+				.review_approval_consumables(
+					{ observation: observation },
+					__(
+						"Are you sure you want to authorise Observation <b>" +
+							observation +
+							"</b>",
+					),
+				)
+				.then(confirmed => {
+					if (!confirmed) return;
 					frappe.call({
 						method: "healthcare.healthcare.doctype.observation.observation.set_observation_status",
 						args: {
@@ -604,8 +601,7 @@ healthcare.ObservationWidget = class {
 							me.frm.reload_doc();
 						},
 					});
-				},
-			);
+				});
 		} else if (status == "Rejected") {
 			var d = new frappe.ui.Dialog({
 				title: __("Reason For Rejection"),
