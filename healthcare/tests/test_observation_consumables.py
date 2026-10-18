@@ -7,10 +7,14 @@ import frappe
 from frappe.utils import flt
 
 from healthcare.healthcare.doctype.sample_collection.collection_consumables import (
+	issue_collect_action,
 	issue_collection_consumables,
 	record_consumables,
 )
-from healthcare.healthcare.doctype.sample_collection.sample_collection import insert_observation
+from healthcare.healthcare.doctype.sample_collection.sample_collection import (
+	insert_observation,
+	preview_collect,
+)
 from healthcare.healthcare.doctype.sample_collection.test_sample_collection import create_lab_sample_leaf
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -73,6 +77,49 @@ class TestCollectionConsumables(HealthcareTestSuite):
 
 		self.assertEqual(stock_qty(TUBE), before)
 		self.assertEqual(offered(doc, "second"), {})
+
+	def test_the_review_before_a_collect_shows_what_it_records_and_writes_nothing(self):
+		doc = collection_for(consuming_template("Consumables Bicarbonate", BLOOD, labels=2))
+		rows = doc.observation_sample_collection
+
+		preview = preview_of(doc, rows, "press")
+
+		self.assertEqual(recorded(doc), {})
+		collect(doc, rows, collect_action="press")
+		self.assertEqual(
+			{row["item_code"]: (row["qty"], row["suggested_qty"]) for row in preview}, offered(doc, "press")
+		)
+
+	def test_a_collect_reviewed_beforehand_issues_the_reviewed_quantities(self):
+		doc = collection_for(consuming_template("Consumables Phenytoin", BLOOD, labels=2))
+		rows = doc.observation_sample_collection
+		review = [
+			{**row, "shown_qty": row["qty"], "qty": 0 if row["item_code"] == LABEL else row["qty"]}
+			for row in preview_of(doc, rows, "press")
+		]
+		before = {item: stock_qty(item) for item in (TUBE, LABEL)}
+
+		collect(doc, rows, collect_action="press")
+		issue_collect_action(doc.name, "press", review)
+
+		self.assertEqual(stock_qty(TUBE), before[TUBE] - 1)
+		self.assertEqual(stock_qty(LABEL), before[LABEL])
+
+	def test_the_review_before_a_later_collect_offers_a_new_container(self):
+		doc = self.collected_twice_first_only("Consumables Digoxin", "Consumables Vancomycin")
+
+		preview = preview_of(doc, doc.observation_sample_collection[1:], "second")
+
+		self.assertEqual(
+			{row["item_code"]: (row["qty"], row["suggested_qty"]) for row in preview},
+			{TUBE: (0, 1), LABEL: (0, 1), NEEDLE: (0, 1)},
+		)
+
+	def collected_twice_first_only(self, first, second):
+		doc = collection_for(consuming_template(first, BLOOD), consuming_template(second, BLOOD))
+		collect(doc, doc.observation_sample_collection[:1], collect_action="first")
+		issue_reviewed(doc)
+		return doc
 
 	def collected_twice(self, first, second):
 		doc = collection_for(consuming_template(first, BLOOD), consuming_template(second, BLOOD))
@@ -362,6 +409,11 @@ def collect(doc, rows, collect_action=None):
 		sample_collection=doc.name,
 		collect_action=collect_action,
 	)
+
+
+def preview_of(doc, rows, collect_action):
+	selected = json.dumps([row.as_dict() for row in rows], default=str)
+	return preview_collect(doc.name, selected, collect_action)
 
 
 def offered(doc, collect_action):

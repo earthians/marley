@@ -39,23 +39,47 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		});
 	}
 
-	// Collecting adds supplies; review them and issue them now, so no result waits.
-	static async issue_collection(frm) {
-		const values = await healthcare.ConsumablesReview.for_form(
-			frm,
-			__("Confirm and Issue"),
-		).review();
-		if (!values || !values.items.length) return;
-
-		await frappe.call({
-			method: "healthcare.healthcare.doctype.sample_collection.collection_consumables.issue_collection_consumables",
+	// The one confirmation before collecting: what the collect will use, or
+	// `question` when it uses nothing. Resolves with the reviewed values, or null.
+	static async before_collect(frm, selected, collect_action, question) {
+		const { message: rows } = await frappe.call({
+			method: "healthcare.healthcare.doctype.sample_collection.sample_collection.preview_collect",
 			args: {
 				sample_collection: frm.doc.name,
+				selected: JSON.stringify(selected),
+				collect_action: collect_action,
+			},
+		});
+		if (!rows || !rows.length) {
+			return new Promise(resolve =>
+				frappe.confirm(
+					question,
+					() => resolve({ items: [] }),
+					() => resolve(null),
+				),
+			);
+		}
+		return new healthcare.ConsumablesReview({
+			title: __("Review Consumables"),
+			action_label: __("Confirm and Collect"),
+			rows: rows,
+			warehouse: frm.doc.warehouse,
+			company: frm.doc.company,
+		}).review();
+	}
+
+	// After the collect ran, issue what its review confirmed.
+	static issue_collected(frm, collect_action, values) {
+		if (!values.items.length) return;
+		return frappe.call({
+			method: "healthcare.healthcare.doctype.sample_collection.collection_consumables.issue_collect_action",
+			args: {
+				sample_collection: frm.doc.name,
+				collect_action: collect_action,
 				rows: values.items,
 				warehouse: values.warehouse,
 			},
 		});
-		await frm.reload_doc();
 	}
 
 	// Batches of the item with stock in the warehouse it is issued from.
