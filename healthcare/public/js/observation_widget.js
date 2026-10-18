@@ -576,17 +576,30 @@ healthcare.ObservationWidget = class {
 		d.get_close_btn().show();
 	}
 
+	// The results typed into the widget, saved as the report's own save would.
+	save_typed_results() {
+		if (!this.result || !this.result.length) return Promise.resolve();
+		return frappe.call({
+			method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
+			args: { values: this.result },
+			freeze: true,
+		});
+	}
+
 	auth_observation(observation, status) {
 		var me = this;
 		if (status == "Approved") {
+			// A result typed but not yet saved must be saved before it can be approved.
 			// Approving issues the consumables, so their review is the confirmation.
-			healthcare
-				.review_approval_consumables(
-					{ observation: observation },
-					__(
-						"Are you sure you want to authorise Observation <b>" +
-							observation +
-							"</b>",
+			me.save_typed_results()
+				.then(() =>
+					healthcare.review_approval_consumables(
+						{ observation: observation },
+						__(
+							"Are you sure you want to authorise Observation <b>" +
+								observation +
+								"</b>",
+						),
 					),
 				)
 				.then(confirmed => {
