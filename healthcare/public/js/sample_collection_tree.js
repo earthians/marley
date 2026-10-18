@@ -288,10 +288,23 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 
 	update_selection() {
 		const count = this.selected_units().length;
-		this.toolbar.find(".mark-selected-btn").prop("disabled", count === 0);
 		this.toolbar
 			.find(".sample-tree-selection")
 			.text(count ? __("{0} selected", [count]) : "");
+		this.show_relevant_buttons(count);
+	}
+
+	// Each button shows only when it can do something.
+	show_relevant_buttons(selected_count) {
+		const boxes = this.wrapper.find(".sample-tree-check");
+		const checked = boxes.filter(":checked").length;
+		const draft = this.frm.doc.docstatus === 0;
+		this.toolbar.find(".select-all-btn").toggle(draft && checked < boxes.length);
+		this.toolbar.find(".unselect-all-btn").toggle(draft && checked > 0);
+		this.toolbar.find(".mark-selected-btn").toggle(draft && selected_count > 0);
+		this.toolbar
+			.find(".expand-all-btn")
+			.toggle(this.wrapper.find(".sample-tree-children").length > 0);
 	}
 
 	async run_collection(nodes) {
