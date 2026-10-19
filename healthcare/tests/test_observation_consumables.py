@@ -160,6 +160,17 @@ class TestCollectionConsumables(HealthcareTestSuite):
 
 		self.assertEqual(recorded_totals(doc), {TUBE: 2, LABEL: 2, NEEDLE: 1})
 
+	def test_one_template_in_two_containers_records_both(self):
+		# Collected as a standalone test and as a panel's component, in different colors.
+		template = consuming_template("Consumables Twice Collected", BLOOD)
+		as_test = {**component_entry(template), "container_closure_color": make_color("_Test Lavender")}
+		as_component = {**component_entry(template), "container_closure_color": make_color("_Test Gold")}
+		doc = collection_for()
+
+		record_consumables(doc.name, [as_test, as_component])
+
+		self.assertEqual(recorded_totals(doc), {TUBE: 2, LABEL: 2, NEEDLE: 1})
+
 	def test_template_not_consuming_stock_records_nothing(self):
 		template = consuming_template("Consumables Switched Off", BLOOD)
 		frappe.db.set_value("Observation Template", template.name, "consume_stock", 0)
