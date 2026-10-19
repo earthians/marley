@@ -147,6 +147,21 @@ class TestObservationStock(HealthcareTestSuite):
 		with self.assertRaises(frappe.ValidationError):
 			replacement.save()
 
+	def test_a_corrected_result_cannot_drop_the_issue_it_carries(self):
+		replacement = self.corrected("Stock Correction Unlinked")
+		replacement.stock_entry = None
+
+		with self.assertRaises(frappe.ValidationError):
+			replacement.save()
+
+	def test_a_result_cannot_claim_an_issue_it_did_not_make(self):
+		issued_elsewhere = self.corrected("Stock Correction Source").stock_entry
+		observation = new_observation(reagent_template("Stock Unissued Claim"), warehouse=WAREHOUSE)
+		observation.stock_entry = issued_elsewhere
+
+		with self.assertRaises(frappe.ValidationError):
+			observation.save()
+
 	def test_a_corrected_result_keeps_its_warehouse_when_the_unit_changes(self):
 		# The default makes the warehouse look automatic, so it would otherwise follow the unit.
 		frappe.db.set_value("Company", "_Test Company", "default_warehouse", WAREHOUSE)

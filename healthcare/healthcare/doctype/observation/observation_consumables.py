@@ -116,14 +116,20 @@ def validate_stock(doc):
 
 
 def validate_issued(doc):
-	"""A corrected result shares the original's issue, so what it records must match it."""
+	"""A corrected result shares the original's issue, so what it records must match it.
+
+	Only the system sets the issue link: a correction gets it when it is created and an
+	approval when it issues. A save that changed it could skip an issue or repeat one.
+	"""
 	before = doc.get_doc_before_save()
-	if not (doc.stock_entry and before):
+	if not before:
 		return
-	if issued(before) != issued(doc):
+	if (doc.stock_entry or None) != (before.stock_entry or None):
+		frappe.throw(_("The Stock Entry that issued the consumables cannot be changed"))
+	if before.stock_entry and issued(before) != issued(doc):
 		frappe.throw(
 			_("The consumables were issued in {0} and can no longer be changed").format(
-				frappe.bold(doc.stock_entry)
+				frappe.bold(before.stock_entry)
 			)
 		)
 
