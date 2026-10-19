@@ -202,15 +202,19 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		});
 	}
 
-	// A ticked New Container takes the full quantity. shown_qty is what each row
-	// showed, so the server can refuse a row that changed meanwhile.
+	// shown_qty is what each row first showed, so the server can refuse a row
+	// that changed meanwhile.
 	confirmed_items(items) {
 		const rows = Object.fromEntries(this.rows.map(row => [row.row_name, row]));
-		return items.map(item => {
-			const row = rows[item.row_name];
-			const qty = item.new_container ? row.suggested_qty : item.qty;
-			return { ...item, qty: qty, shown_qty: row.qty };
-		});
+		return items.map(item => ({ ...item, shown_qty: rows[item.row_name].qty }));
+	}
+
+	// Ticking New Container shows the full quantity; unticking puts back the first one.
+	new_container_changed(grid_row) {
+		const row = grid_row.doc;
+		const first = this.rows.find(shown => shown.row_name === row.row_name);
+		row.qty = row.new_container ? first.suggested_qty : first.qty;
+		grid_row.refresh_field("qty");
 	}
 
 	fields() {
@@ -311,6 +315,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 
 	new_container_field() {
 		if (!this.asks_new_container) return [];
+		const review = this;
 		return [
 			{
 				fieldname: "new_container",
@@ -318,6 +323,9 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				label: __("New Container"),
 				in_list_view: 1,
 				columns: 1,
+				onchange: function () {
+					review.new_container_changed(this.grid_row);
+				},
 			},
 		];
 	}
