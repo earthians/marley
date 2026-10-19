@@ -10,7 +10,7 @@ const props = defineProps({
 	selected: String,
 	loading: Boolean,
 });
-const emit = defineEmits(["update:year", "update:filter", "select-day"]);
+const emit = defineEmits(["update:year", "select-day"]);
 const { monthWindow } = useBreakpoint();
 const windowStart = ref(0),
 	monthNames = computed(() => moment.monthsShort());
@@ -26,12 +26,6 @@ const yearOptions = computed(() => {
 const yearSelectOptions = computed(() =>
 	yearOptions.value.map(value => ({ value, label: String(value) })),
 );
-const filterOptions = [
-	{ value: "all", label: __("All records") },
-	{ value: "encounters", label: __("Encounters only") },
-	{ value: "vitals", label: __("Vitals only") },
-	{ value: "labs", label: __("Labs only") },
-];
 const months = computed(() =>
 	Array.from({ length: 12 }, (_, index) => index).slice(
 		windowStart.value,
@@ -129,13 +123,6 @@ watch(
 						›
 					</button>
 				</div>
-				<CustomSelect
-					:model-value="filter"
-					:options="filterOptions"
-					:aria-label="__('Record filter')"
-					class="ph-activity-filter"
-					@update:model-value="emit('update:filter', $event)"
-				/>
 			</div>
 		</header>
 		<div class="ph-activity-scroll">
