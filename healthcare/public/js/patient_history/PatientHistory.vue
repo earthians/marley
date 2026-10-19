@@ -34,7 +34,6 @@ watch(patientName, () => {
 	feed.page.value = 1;
 	feed.pageSize.value = 20;
 	activity.selectedDay.value = null;
-	activity.activityFilter.value = "all";
 });
 function selectDay(day, doctype) {
 	if (day === filters.day && !doctype) {
@@ -103,12 +102,10 @@ function changeActivityYear(value) {
 						<ActivityCalendar
 							:years="activity.years.value"
 							:year="activity.year.value"
-							:filter="activity.activityFilter.value"
 							:days="activity.days.value"
 							:selected="filters.day"
 							:loading="activity.loading.value"
 							@update:year="changeActivityYear"
-							@update:filter="activity.activityFilter.value = $event"
 							@select-day="selectDay"
 						/>
 						<VitalTrends :state="vitals" />
