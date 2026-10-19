@@ -36,10 +36,14 @@ def record_consumables(sample_collection, collected, collect_action=None, dry_ru
 		dry_run=dry_run,
 		rows=recorded_rows(sample_collection),
 	)
-	by_template = {entry.get("observation_template"): entry for entry in collected}
-	for row in template_consumables(list(by_template), STAGES):
-		entry = by_template[row.observation_template]
-		add_consumable(context, row, container_of(row, entry), entry.get("specimen"))
+	# A template can come in twice, as a test and as a panel's component, in different containers.
+	templates = {entry.get("observation_template") for entry in collected}
+	rows_by_template = {}
+	for row in template_consumables(list(templates), STAGES):
+		rows_by_template.setdefault(row.observation_template, []).append(row)
+	for entry in collected:
+		for row in rows_by_template.get(entry.get("observation_template"), []):
+			add_consumable(context, row, container_of(row, entry), entry.get("specimen"))
 	return [row for row in context.rows if row.collect_action == collect_action and not row.stock_entry]
 
 
