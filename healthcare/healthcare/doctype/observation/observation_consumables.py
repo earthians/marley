@@ -83,10 +83,16 @@ def conversion_factor(item_code, uom):
 
 def set_stock_qty(doc):
 	"""The quantity each row takes from stock, in a UOM no save can change: a saved row
-	keeps its own, a new one takes its template row's, else the item's stock UOM."""
+	keeps its own, a new one takes its template row's, else the item's stock UOM.
+	A correction's rows, copied from the original by the server, keep the original's:
+	they describe an issue already made, whatever the template says now."""
 	saved = saved_units(doc)
 	for row in doc.get("consumables") or []:
-		row.uom, row.conversion_factor = saved.get(row.name) or template_units(row)
+		if row.name in saved:
+			row.uom, row.conversion_factor = saved[row.name]
+		elif not (doc.flags.correction and row.uom):
+			row.uom, row.conversion_factor = template_units(row)
+		row.conversion_factor = flt(row.conversion_factor) or 1
 		row.stock_qty = flt(row.qty) * row.conversion_factor
 
 
