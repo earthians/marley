@@ -132,7 +132,16 @@ def set_service_request_status(service_request, status):
 =======
 def set_service_request_status(service_request: str, status: str) -> None:
 	frappe.has_permission("Service Request", "write", service_request, throw=True)
+<<<<<<< HEAD
 >>>>>>> 9dd1043 (fix(security): check write permission before setting request, lab test, appointment and observation status)
+=======
+	update_service_request_status(service_request, status)
+
+
+def update_service_request_status(service_request: str, status: str) -> None:
+	"""For the submit and cancel hooks of the records that fulfil a request. The
+	user may submit a Lab Test without having write access to its request."""
+>>>>>>> 6a4720b (fix(security): let clinical submit and cancel hooks update the service request status without write access)
 	frappe.db.set_value("Service Request", service_request, "status", status)
 
 
