@@ -83,13 +83,14 @@ def conversion_factor(item_code, uom):
 
 def set_stock_qty(doc):
 	"""The quantity each row takes from stock, in a UOM no save can change: a saved row
-	keeps its own, a new one takes its template row's, else the item's stock UOM.
+	keeps its own while its item is unchanged; a new row, or one given another item,
+	takes its template row's, else the item's stock UOM.
 	A correction's rows, copied from the original by the server, keep the original's:
 	they describe an issue already made, whatever the template says now."""
 	saved = saved_units(doc)
 	for row in doc.get("consumables") or []:
-		if row.name in saved:
-			row.uom, row.conversion_factor = saved[row.name]
+		if saved.get(row.name, {}).get("item_code") == row.item_code:
+			row.uom, row.conversion_factor = saved[row.name].units
 		elif not (doc.flags.correction and row.uom):
 			row.uom, row.conversion_factor = template_units(row)
 		row.conversion_factor = flt(row.conversion_factor) or 1
@@ -97,14 +98,19 @@ def set_stock_qty(doc):
 
 
 def saved_units(doc):
+	"""Each saved row's units with its item: they hold only while the item is the same."""
 	if not doc.get("name"):
 		return {}
 	rows = frappe.get_all(
 		"Observation Consumable",
 		filters={"parent": doc.name, "parenttype": doc.doctype},
-		fields=["name", "uom", "conversion_factor"],
+		fields=["name", "item_code", "uom", "conversion_factor"],
 	)
-	return {row.name: (row.uom, flt(row.conversion_factor) or 1) for row in rows if row.uom}
+	return {
+		row.name: frappe._dict(item_code=row.item_code, units=(row.uom, flt(row.conversion_factor) or 1))
+		for row in rows
+		if row.uom
+	}
 
 
 def template_units(row):
