@@ -161,6 +161,16 @@ class TestObservationTemplate(HealthcareTestSuite):
 		with self.assertRaises(frappe.ValidationError):
 			template.save()
 
+	def test_an_item_is_listed_once_per_stage(self):
+		template = create_observation_template("Consumables Listed Twice", sample_required=True)
+		for qty in (1, 2):
+			template.append(
+				"consumables", {"item_code": "_Test_Stock_Item", "consumed_at": "Observation", "qty": qty}
+			)
+
+		with self.assertRaises(frappe.ValidationError):
+			template.save()
+
 	def test_consumable_must_be_stock_item(self):
 		template = create_observation_template("Consumables Service Item", sample_required=True)
 		service_item = frappe.db.get_value("Item", {"is_stock_item": 0}, "name")
