@@ -143,7 +143,9 @@ def change_test_code_from_template(lab_test_code, doc):
 	if frappe.db.exists({"doctype": "Item", "item_code": lab_test_code}):
 		frappe.throw(_("Lab Test Item {0} already exist").format(lab_test_code))
 	else:
-		rename_doc("Item", doc.item, lab_test_code, ignore_permissions=True)
+		frappe.has_permission("Lab Test Template", "write", doc.name, throw=True)
+		item = frappe.db.get_value("Lab Test Template", doc.name, "item")
+		rename_doc("Item", item, lab_test_code, ignore_permissions=True)
 		frappe.db.set_value(
 			"Lab Test Template", doc.name, {"lab_test_code": lab_test_code, "lab_test_name": lab_test_code}
 		)
