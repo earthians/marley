@@ -8,7 +8,15 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
+<<<<<<< HEAD
 from healthcare.healthcare.doctype.observation.observation import add_observation
+=======
+from healthcare.healthcare.doctype.observation.observation import new_observation
+from healthcare.healthcare.doctype.observation.observation_consumables import (
+	set_stock_qty,
+	set_warehouse,
+)
+>>>>>>> 97664eb (fix(security): create observations for sample collection through an internal path, checking access on the collection)
 from healthcare.healthcare.doctype.observation_template.observation_template import (
 	get_observation_template_details,
 )
@@ -79,6 +87,11 @@ def create_observation(
 	component_observations: str | None = None,
 	child_name: str | None = None,
 ) -> None:
+<<<<<<< HEAD
+=======
+	"""`collect_action` is the same for every call one Mark Collected makes."""
+	frappe.has_permission("Sample Collection", "write", sample_collection, throw=True)
+>>>>>>> 97664eb (fix(security): create observations for sample collection through an internal path, checking access on the collection)
 	insert_observation(
 		selected=selected,
 		sample_collection=sample_collection,
@@ -139,8 +152,15 @@ def collect_row(context, index, obs):
 	mark_matching_components(context, obs)
 
 
+<<<<<<< HEAD
 def collect_sample(context, index, obs):
 	observation = add_observation(
+=======
+def collect_sample(context, obs):
+	# A nested leaf has no real row name, so it falls back to its
+	# observation_template instead of idx, which isn't unique across levels.
+	observation = new_observation(
+>>>>>>> 97664eb (fix(security): create observations for sample collection through an internal path, checking access on the collection)
 		patient=context.sample_col.get("patient"),
 		template=obs.get("observation_template"),
 		doc="Sample Collection",
@@ -169,9 +189,17 @@ def collect_sample(context, index, obs):
 
 def collect_components(context, obs):
 	context.component_observations = json.loads(obs.get("component_observations"))
+<<<<<<< HEAD
 	for j, comp in enumerate(context.component_observations):
 		specimen = context.comp_obs_ref.get(j + 1) or context.comp_obs_ref.get(obs.get("name"))
 		observation = add_observation(
+=======
+	for comp in context.component_observations:
+		specimen = context.comp_obs_ref.get(comp.get("observation_template")) or context.comp_obs_ref.get(
+			obs.get("name")
+		)
+		observation = new_observation(
+>>>>>>> 97664eb (fix(security): create observations for sample collection through an internal path, checking access on the collection)
 			patient=context.sample_col.get("patient"),
 			template=comp.get("observation_template"),
 			doc="Sample Collection",
@@ -327,3 +355,46 @@ def set_component_observation_data(observation_template):
 		obs_temp["status"] = "Open"
 		data.append(obs_temp)
 	return data
+<<<<<<< HEAD
+=======
+
+
+def create_component_observations(
+	patient, company, practitioner, components, parent_observation_name, observation_kwargs=None
+):
+	"""Eagerly create an Observation for every sub-panel in `components`,
+	at any depth, parented to its own containing panel's Observation."""
+	from healthcare.healthcare.utils import create_non_sample_observations
+
+	observation_kwargs = observation_kwargs or {}
+
+	for comp in components:
+		if not comp.get("has_component"):
+			continue
+
+		observation_name = new_observation(
+			patient=patient,
+			template=comp.get("observation_template"),
+			company=company,
+			practitioner=practitioner,
+			parent=parent_observation_name,
+			**observation_kwargs,
+		)
+		comp["component_observation_parent"] = observation_name
+
+		# A mixed panel's own non-sample-required children aren't in `nested`.
+		create_non_sample_observations(
+			comp.get("observation_template"),
+			observation_name,
+			{"patient": patient, "company": company, "practitioner": practitioner, **observation_kwargs},
+		)
+
+		nested = comp.get("component_observations")
+		if nested:
+			if isinstance(nested, str):
+				nested = json.loads(nested)
+			create_component_observations(
+				patient, company, practitioner, nested, observation_name, observation_kwargs
+			)
+			comp["component_observations"] = json.dumps(nested, default=str)
+>>>>>>> 97664eb (fix(security): create observations for sample collection through an internal path, checking access on the collection)
