@@ -240,6 +240,21 @@ class TestObservationStock(HealthcareTestSuite):
 		row = observation.reload().consumables[-1]
 		self.assertEqual((row.uom, row.conversion_factor), ("Nos", 1))
 
+	def test_a_result_issuing_nothing_is_approved_whatever_its_quantities(self):
+		# 5 ml of a 500 ml bottle is kept as 0.01 bottles; 2.5 ml (0.005) cannot be.
+		make_stock_item(BOTTLED, stock_uom=make_uom("_Test Bottle"))
+		add_uom_conversion(BOTTLED, "_Test Millilitre", 0.002)
+		template = measured_template("Stock Stock Off", 5, "_Test Millilitre", item_code=BOTTLED)
+		observation = new_observation(template, warehouse=WAREHOUSE)
+		observation.consumables[0].qty = 2.5
+		observation.consume_stock = 0
+		observation.save()
+
+		observation.submit()
+
+		self.assertEqual(observation.docstatus, 1)
+		self.assertFalse(observation.stock_entry)
+
 	def test_a_uom_the_item_cannot_convert_is_refused(self):
 		template = create_lab_sample_leaf("Stock Gram Refusal", None)
 		template.consume_stock = 1
