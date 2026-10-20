@@ -159,6 +159,7 @@ def set_total_amount(doc):
 
 @frappe.whitelist()
 def create_ip_from_treatment_counselling(admission_order, treatment_counselling):
+	frappe.has_permission("Inpatient Record", "create", throw=True)
 	ip_name = create_inpatient_record(admission_order)
 	frappe.db.set_value(
 		"Treatment Counselling",
