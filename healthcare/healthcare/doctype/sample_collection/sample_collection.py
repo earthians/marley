@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
-from healthcare.healthcare.doctype.observation.observation import add_observation
+from healthcare.healthcare.doctype.observation.observation import new_observation
 from healthcare.healthcare.doctype.observation.observation_consumables import (
 	set_stock_qty,
 	set_warehouse,
@@ -114,6 +114,7 @@ def create_observation(
 	collect_action: str | None = None,
 ) -> None:
 	"""`collect_action` is the same for every call one Mark Collected makes."""
+	frappe.has_permission("Sample Collection", "write", sample_collection, throw=True)
 	insert_observation(
 		selected=selected,
 		sample_collection=sample_collection,
@@ -229,7 +230,7 @@ def collect_row(context, obs):
 def collect_sample(context, obs):
 	# A nested leaf has no real row name, so it falls back to its
 	# observation_template instead of idx, which isn't unique across levels.
-	observation = add_observation(
+	observation = new_observation(
 		patient=context.sample_col.get("patient"),
 		template=obs.get("observation_template"),
 		doc="Sample Collection",
@@ -262,7 +263,7 @@ def collect_components(context, obs):
 		specimen = context.comp_obs_ref.get(comp.get("observation_template")) or context.comp_obs_ref.get(
 			obs.get("name")
 		)
-		observation = add_observation(
+		observation = new_observation(
 			patient=context.sample_col.get("patient"),
 			template=comp.get("observation_template"),
 			doc="Sample Collection",
@@ -519,7 +520,7 @@ def create_component_observations(
 		if not comp.get("has_component"):
 			continue
 
-		observation_name = add_observation(
+		observation_name = new_observation(
 			patient=patient,
 			template=comp.get("observation_template"),
 			company=company,
