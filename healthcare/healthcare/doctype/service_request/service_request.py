@@ -127,7 +127,12 @@ class ServiceRequest(ServiceRequestController):
 
 
 @frappe.whitelist()
+<<<<<<< HEAD
 def set_service_request_status(service_request, status):
+=======
+def set_service_request_status(service_request: str, status: str) -> None:
+	frappe.has_permission("Service Request", "write", service_request, throw=True)
+>>>>>>> 9dd1043 (fix(security): check write permission before setting request, lab test, appointment and observation status)
 	frappe.db.set_value("Service Request", service_request, "status", status)
 
 
