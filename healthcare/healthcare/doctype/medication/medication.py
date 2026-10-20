@@ -183,6 +183,7 @@ def change_item_code_from_medication(item_code, doc):
 	if frappe.db.exists("Item", {"item_code": item_code}):
 		frappe.throw(_("Item with Item Code {0} already exists").format(item_code))
 	else:
+		frappe.has_permission("Medication", "write", doc.name, throw=True)
 		rename_doc("Item", doc.item_code, item_code, ignore_permissions=True)
 		frappe.db.set_value("Medication", doc.name, "item_code", item_code)
 	return
