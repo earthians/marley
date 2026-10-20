@@ -133,6 +133,12 @@ class ServiceRequest(ServiceRequestController):
 @frappe.whitelist()
 def set_service_request_status(service_request: str, status: str) -> None:
 	frappe.has_permission("Service Request", "write", service_request, throw=True)
+	update_service_request_status(service_request, status)
+
+
+def update_service_request_status(service_request: str, status: str) -> None:
+	"""For the submit and cancel hooks of the records that fulfil a request. The
+	user may submit a Lab Test without having write access to its request."""
 	frappe.db.set_value("Service Request", service_request, "status", status)
 
 
