@@ -84,7 +84,16 @@ class ObservationTemplate(Document):
 		self.validate_consumables()
 
 	def validate_consumables(self):
+		listed = set()
 		for row in self.consumables:
+			# Rows are told apart by item and stage, so each pair is listed once.
+			if (row.item_code, row.consumed_at) in listed:
+				frappe.throw(
+					_(
+						"Row #{0}: {1} is already listed for {2}. List it once with the total quantity."
+					).format(row.idx, frappe.bold(row.item_code), _(row.consumed_at))
+				)
+			listed.add((row.item_code, row.consumed_at))
 			if not frappe.db.get_value("Item", row.item_code, "is_stock_item"):
 				frappe.throw(
 					_("Row #{0}: {1} is not a stock item").format(row.idx, frappe.bold(row.item_code))
