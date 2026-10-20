@@ -31,6 +31,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				item_code: row.item_code,
 				consumed_at: row.consumed_at,
 				qty: row.qty,
+				uom: row.uom,
 				suggested_qty: row.suggested_qty,
 				batch_no: row.batch_no,
 			})),
@@ -285,7 +286,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				label: __("Item"),
 				read_only: 1,
 				in_list_view: 1,
-				columns: this.for_approval || this.asks_new_container ? 3 : 4,
+				columns: this.for_approval || this.asks_new_container ? 2 : 3,
 			},
 			{
 				fieldname: "qty",
@@ -293,6 +294,16 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				label: __("To Issue"),
 				in_list_view: 1,
 				columns: 2,
+			},
+			{
+				// Set on the template; the quantity is entered in it.
+				fieldname: "uom",
+				fieldtype: "Link",
+				options: "UOM",
+				label: __("UOM"),
+				read_only: 1,
+				in_list_view: 1,
+				columns: 1,
 			},
 			...this.new_container_field(),
 			{
