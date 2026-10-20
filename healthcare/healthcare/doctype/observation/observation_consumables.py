@@ -19,8 +19,10 @@ def issue_consumables(doc):
 	A corrected result carries the original's issue; the test was not run again.
 	Every quantity set to 0 in the review leaves nothing to issue.
 	"""
+	if doc.stock_entry or not doc.consume_stock:
+		return
 	items = [stock_item(row) for row in doc.consumables if flt(row.qty) > 0]
-	if doc.stock_entry or not doc.consume_stock or not items:
+	if not items:
 		return
 	if not doc.warehouse:
 		frappe.throw(_("Set a Warehouse to issue the consumables from"))
