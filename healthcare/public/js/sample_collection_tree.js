@@ -310,9 +310,12 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 	async run_collection(nodes) {
 		// One id for the whole action: its calls share containers.
 		const collect_action = frappe.utils.get_random(10);
+		// The review previews the samples in the order they are collected: when two
+		// templates list an item in different units, the first one recorded sets the unit.
+		const groups = this.group_by_parent(nodes);
 		const review = await healthcare.ConsumablesReview.before_collect(
 			this.frm,
-			nodes.map(node => node.row),
+			groups.flatMap(group => group.rows),
 			collect_action,
 			__("Are you sure you want to mark {0} sample(s) as Collected?", [
 				nodes.length,
@@ -324,7 +327,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		try {
 			// Run groups one at a time: parallel requests race on the
 			// same Sample Collection and only one set of writes survives.
-			for (const group of this.group_by_parent(nodes)) {
+			for (const group of groups) {
 				await this.collect_call(group, collect_action);
 			}
 		} catch (error) {
