@@ -208,6 +208,19 @@ class TestObservationStock(HealthcareTestSuite):
 		row = observation.reload().consumables[0]
 		self.assertEqual((row.uom, row.conversion_factor, row.stock_qty), ("Nos", 1, 2))
 
+	def test_a_row_given_another_item_takes_that_items_units(self):
+		add_uom_conversion(REAGENT, "_Test Pair", 2)
+		template = reagent_template("Stock Item Swapped")
+		next(row for row in template.consumables if row.item_code == REAGENT).uom = "_Test Pair"
+		template.save()
+		observation = new_observation(template)
+		observation.consumables[0].item_code = TUBE
+
+		observation.save()
+
+		row = observation.reload().consumables[0]
+		self.assertEqual((row.item_code, row.uom, row.conversion_factor), (TUBE, "Nos", 1))
+
 	def test_a_row_added_by_hand_counts_in_the_stock_uom(self):
 		make_uom("_Test Pair")
 		observation = new_observation(reagent_template("Stock Hand Added"))
