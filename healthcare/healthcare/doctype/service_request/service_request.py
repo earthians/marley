@@ -132,6 +132,7 @@ class ServiceRequest(ServiceRequestController):
 
 @frappe.whitelist()
 def set_service_request_status(service_request: str, status: str) -> None:
+	frappe.has_permission("Service Request", "write", service_request, throw=True)
 	frappe.db.set_value("Service Request", service_request, "status", status)
 
 

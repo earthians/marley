@@ -1055,6 +1055,7 @@ def check_in_appointment(
 
 @frappe.whitelist()
 def update_status(appointment_id: str, status: str) -> None:
+	frappe.has_permission("Patient Appointment", "write", appointment_id, throw=True)
 	if status == "Cancelled":
 		validate_fee_validity_cancellation(frappe.get_doc("Patient Appointment", appointment_id))
 
