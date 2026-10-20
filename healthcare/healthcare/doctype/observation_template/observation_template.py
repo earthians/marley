@@ -9,6 +9,7 @@ from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedur
 	make_item_price,
 	update_item_and_item_price,
 )
+from healthcare.healthcare.doctype.observation.observation_consumables import set_consumable_uom
 
 # Stages whose items are issued by the Sample Collection, not the Observation.
 COLLECTION_STAGES = ("Specimen", "Sample Collection")
@@ -94,6 +95,7 @@ class ObservationTemplate(Document):
 						row.idx, _(row.consumed_at)
 					)
 				)
+			set_consumable_uom(row)
 
 	@staticmethod
 	def is_parent_in_child(child_name, parent_name):

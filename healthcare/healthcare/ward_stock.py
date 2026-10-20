@@ -98,7 +98,8 @@ class WardIssue:
 class StockIssue:
 	"""A submitted Material Issue of a patient's items from one warehouse.
 
-	Each item is a dict of item_code, quantity and an optional batch_no.
+	Each item is a dict of item_code, quantity, and an optional batch_no, and uom
+	with its conversion_factor when the quantity is not in the stock UOM.
 	"""
 
 	def __init__(self, company, warehouse, patient):
@@ -123,6 +124,10 @@ class StockIssue:
 		row = stock_entry.append("items")
 		row.item_code = item.get("item_code")
 		row.qty = flt(item.get("quantity"))
+		# A quantity in another UOM is converted to stock by the Stock Entry itself.
+		if item.get("uom"):
+			row.uom = item.get("uom")
+			row.conversion_factor = flt(item.get("conversion_factor")) or 1
 		row.s_warehouse = self.warehouse
 		row.cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
 		row.expense_account = get_account(None, "expense_account", "Healthcare Settings", self.company)
