@@ -10,7 +10,10 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 from healthcare.healthcare.doctype.observation.observation import add_observation
-from healthcare.healthcare.doctype.observation.observation_consumables import set_warehouse
+from healthcare.healthcare.doctype.observation.observation_consumables import (
+	set_stock_qty,
+	set_warehouse,
+)
 from healthcare.healthcare.doctype.observation_template.observation_template import (
 	get_observation_template_details,
 )
@@ -67,6 +70,7 @@ class SampleCollection(Document):
 		self.status = get_collection_status(self.observation_sample_collection)
 		if self.consume_stock:
 			set_warehouse(self, "collection_point")
+		set_stock_qty(self)
 		validate_issued_rows(self)
 
 	def before_submit(self):
@@ -133,6 +137,7 @@ def preview_collect(sample_collection: str, selected: str, collect_action: str) 
 			"item_code": row.item_code,
 			"consumed_at": row.consumed_at,
 			"qty": row.qty,
+			"uom": row.uom,
 			"suggested_qty": row.suggested_qty,
 		}
 		for row in rows
