@@ -171,6 +171,20 @@ class TestCollectionConsumables(HealthcareTestSuite):
 
 		self.assertEqual(recorded_totals(doc), {TUBE: 2, LABEL: 2, NEEDLE: 1})
 
+	def test_templates_listing_an_item_in_different_uoms_share_it_in_stock_units(self):
+		add_uom_conversion(TUBE, "_Test Pair", 2)
+		single = consuming_template("Consumables Single Tube", BLOOD)
+		paired = consuming_template("Consumables Paired Tube", BLOOD)
+		paired.consumables[0].uom = "_Test Pair"
+		paired.save()
+		doc = collection_for(single, paired)
+
+		collect(doc, doc.observation_sample_collection)
+
+		# One tube for the first test, raised to a pair (2 Nos) for the second: not 3.
+		tube_rows = [row for row in doc.reload().consumables if row.item_code == TUBE]
+		self.assertEqual(sum(row.stock_qty for row in tube_rows), 2)
+
 	def test_template_not_consuming_stock_records_nothing(self):
 		template = consuming_template("Consumables Switched Off", BLOOD)
 		frappe.db.set_value("Observation Template", template.name, "consume_stock", 0)
@@ -497,7 +511,7 @@ def make_color(name):
 	return name
 
 
-def make_stock_item(item_code):
+def make_stock_item(item_code, stock_uom="Nos"):
 	if frappe.db.exists("Item", item_code):
 		return
 	frappe.get_doc(
@@ -505,11 +519,25 @@ def make_stock_item(item_code):
 			"doctype": "Item",
 			"item_code": item_code,
 			"item_group": "Products",
-			"stock_uom": "Nos",
+			"stock_uom": stock_uom,
 			"is_stock_item": 1,
 			"valuation_rate": 10,
 		}
 	).insert(ignore_permissions=True)
+
+
+def make_uom(name):
+	"""A unit that allows fractions, as ml or grams do."""
+	if not frappe.db.exists("UOM", name):
+		frappe.get_doc({"doctype": "UOM", "uom_name": name, "must_be_whole_number": 0}).insert()
+	return name
+
+
+def add_uom_conversion(item_code, uom, factor):
+	item = frappe.get_doc("Item", item_code)
+	if not any(row.uom == uom for row in item.uoms):
+		item.append("uoms", {"uom": make_uom(uom), "conversion_factor": factor})
+		item.save()
 
 
 def receive(item_code, qty):

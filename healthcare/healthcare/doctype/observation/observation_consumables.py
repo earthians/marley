@@ -8,6 +8,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from erpnext.stock.doctype.item.item import get_uom_conv_factor
+
 from healthcare.healthcare.ward_stock import StockIssue
 
 
@@ -17,16 +19,102 @@ def issue_consumables(doc):
 	A corrected result carries the original's issue; the test was not run again.
 	Every quantity set to 0 in the review leaves nothing to issue.
 	"""
-	items = [
-		{"item_code": row.item_code, "quantity": row.qty, "batch_no": row.batch_no}
-		for row in doc.consumables
-		if flt(row.qty) > 0
-	]
+	items = [stock_item(row) for row in doc.consumables if flt(row.qty) > 0]
 	if doc.stock_entry or not doc.consume_stock or not items:
 		return
 	if not doc.warehouse:
 		frappe.throw(_("Set a Warehouse to issue the consumables from"))
 	doc.db_set("stock_entry", StockIssue(doc.company, doc.warehouse, doc.patient).issue(items))
+
+
+def stock_item(row):
+	"""A row as a Material Issue item: its quantity in its own UOM, converted on issue."""
+	check_stock_precision(row.item_code, row.qty, row.uom, row.conversion_factor)
+	return {
+		"item_code": row.item_code,
+		"quantity": row.qty,
+		"uom": row.uom,
+		"conversion_factor": row.conversion_factor,
+		"batch_no": row.batch_no,
+	}
+
+
+def set_consumable_uom(row):
+	"""A template row's UOM, the item's stock UOM unless chosen, with its conversion."""
+	row.uom = row.uom or frappe.db.get_value("Item", row.item_code, "stock_uom")
+	row.conversion_factor = conversion_factor(row.item_code, row.uom)
+	if not row.conversion_factor:
+		frappe.throw(
+			_("Row #{0}: {1} has no conversion from {2} to its stock UOM").format(
+				row.idx, frappe.bold(row.item_code), frappe.bold(row.uom)
+			)
+		)
+	check_stock_precision(row.item_code, row.qty, row.uom, row.conversion_factor)
+
+
+def check_stock_precision(item_code, qty, uom, conversion_factor):
+	"""Stock quantities are rounded to the site's precision, so 2.5 ml of a reagent stocked
+	by the 100 ml bottle (0.025) would issue 0.03 bottles, 3 ml. Refuse instead."""
+	stock_qty = flt(qty) * (flt(conversion_factor) or 1)
+	precision = frappe.get_precision("Stock Entry Detail", "transfer_qty")
+	if abs(flt(stock_qty, precision) - stock_qty) > 1e-9:
+		frappe.throw(
+			_(
+				"{0} {1} of {2} is {3} in its stock UOM, finer than stock quantities are kept. "
+				"Stock the item in a smaller unit, or raise the Float Precision."
+			).format(qty, uom, frappe.bold(item_code), stock_qty)
+		)
+
+
+def conversion_factor(item_code, uom):
+	"""Stock units per `uom`: the Item's own conversion, else a general one, else none.
+	ERPNext's get_conversion_factor answers 1 when it finds nothing, which would issue
+	2.5 bottles for 2.5 ml, so it is not used here."""
+	stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+	if uom == stock_uom:
+		return 1
+	own = frappe.db.get_value(
+		"UOM Conversion Detail",
+		{"parent": item_code, "parenttype": "Item", "uom": uom},
+		"conversion_factor",
+	)
+	return flt(own) or flt(get_uom_conv_factor(uom, stock_uom))
+
+
+def set_stock_qty(doc):
+	"""The quantity each row takes from stock, in a UOM no save can change: a saved row
+	keeps its own, a new one takes its template row's, else the item's stock UOM."""
+	saved = saved_units(doc)
+	for row in doc.get("consumables") or []:
+		row.uom, row.conversion_factor = saved.get(row.name) or template_units(row)
+		row.stock_qty = flt(row.qty) * row.conversion_factor
+
+
+def saved_units(doc):
+	if not doc.get("name"):
+		return {}
+	rows = frappe.get_all(
+		"Observation Consumable",
+		filters={"parent": doc.name, "parenttype": doc.doctype},
+		fields=["name", "uom", "conversion_factor"],
+	)
+	return {row.name: (row.uom, flt(row.conversion_factor) or 1) for row in rows if row.uom}
+
+
+def template_units(row):
+	unit = row.observation_template and frappe.db.get_value(
+		"Observation Template Consumable",
+		{
+			"parent": row.observation_template,
+			"parenttype": "Observation Template",
+			"item_code": row.item_code,
+			"consumed_at": row.consumed_at,
+		},
+		["uom", "conversion_factor"],
+	)
+	if unit and unit[0]:
+		return unit[0], flt(unit[1]) or 1
+	return frappe.db.get_value("Item", row.item_code, "stock_uom"), 1
 
 
 def apply_edits(doc, edits):
@@ -58,18 +146,29 @@ def template_consumables(templates, stages):
 			"parenttype": "Observation Template",
 			"consumed_at": ["in", stages],
 		},
-		fields=["parent as observation_template", "item_code", "consumed_at", "qty"],
+		fields=[
+			"parent as observation_template",
+			"item_code",
+			"consumed_at",
+			"qty",
+			"uom",
+			"conversion_factor",
+		],
 		order_by="parent, idx",
 	)
 
 
 def item_row(row):
 	item_name, stock_uom = frappe.db.get_value("Item", row.item_code, ["item_name", "stock_uom"])
+	conversion_factor = flt(row.conversion_factor) or 1
 	return {
 		"item_code": row.item_code,
 		"item_name": item_name,
 		"stock_uom": stock_uom,
+		"uom": row.uom or stock_uom,
+		"conversion_factor": conversion_factor,
 		"qty": row.qty,
+		"stock_qty": flt(row.qty) * conversion_factor,
 		"consumed_at": row.consumed_at,
 		"observation_template": row.observation_template,
 	}
@@ -110,6 +209,7 @@ def prefill_consumables(doc):
 
 def validate_stock(doc):
 	"""Where an Observation is performed, and what it uses there."""
+	set_stock_qty(doc)
 	set_service_unit(doc)
 	validate_service_unit(doc)
 	validate_issued(doc)
@@ -201,7 +301,7 @@ def observation_unit_type(doc):
 
 
 def issued(doc):
-	rows = sorted((row.item_code, flt(row.qty), row.batch_no or "") for row in doc.consumables)
+	rows = sorted((row.item_code, flt(row.qty), row.uom or "", row.batch_no or "") for row in doc.consumables)
 	return doc.consume_stock, doc.warehouse, rows
 
 

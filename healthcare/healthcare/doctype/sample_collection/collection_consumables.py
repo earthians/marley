@@ -8,6 +8,7 @@ from frappe.utils import flt
 from healthcare.healthcare.doctype.observation.observation_consumables import (
 	apply_edits,
 	item_row,
+	stock_item,
 	template_consumables,
 )
 from healthcare.healthcare.ward_stock import StockIssue
@@ -56,6 +57,7 @@ def recorded_rows(sample_collection):
 			"item_code",
 			"consumed_at",
 			"qty",
+			"conversion_factor",
 			"suggested_qty",
 			"stock_entry",
 			"collect_action",
@@ -72,26 +74,40 @@ def container_of(row, entry):
 
 
 def add_consumable(context, row, container, specimen):
+	"""Compared in stock units, so templates may list the same item in different UOMs."""
 	matches = matching_rows(context.rows, row.item_code, row.consumed_at, container)
-	extra = max(flt(row.qty) - sum(flt(match.qty) for match in matches), 0)
+	wanted = flt(row.qty) * factor(row)
+	extra = max(wanted - sum(flt(match.qty) * factor(match) for match in matches), 0)
 	counted_earlier = any(match.collect_action != context.collect_action for match in matches)
-	suggested = flt(row.qty) if counted_earlier else 0
+	suggested = wanted if counted_earlier else 0
 	# Recorded by this action and not yet issued, so still open to change.
 	current = next(
 		(m for m in matches if m.collect_action == context.collect_action and not m.stock_entry), None
 	)
 	if current:
 		update_consumable(
-			context, current, flt(current.qty) + extra, max(flt(current.suggested_qty), suggested)
+			context,
+			current,
+			flt(current.qty) + extra / factor(current),
+			max(flt(current.suggested_qty), suggested / factor(current)),
 		)
 	elif extra or suggested:
-		insert_consumable(context, row, container, specimen, extra, suggested)
+		insert_consumable(context, row, container, specimen, extra / factor(row), suggested / factor(row))
+
+
+def factor(row):
+	"""Stock units per unit of the row's UOM; rows made before UOMs are in the stock UOM."""
+	return flt(row.conversion_factor) or 1
 
 
 def update_consumable(context, row, qty, suggested_qty):
 	row.qty, row.suggested_qty = qty, suggested_qty
 	if not context.dry_run:
-		frappe.db.set_value("Observation Consumable", row.name, {"qty": qty, "suggested_qty": suggested_qty})
+		frappe.db.set_value(
+			"Observation Consumable",
+			row.name,
+			{"qty": qty, "suggested_qty": suggested_qty, "stock_qty": qty * factor(row)},
+		)
 
 
 def matching_rows(rows, item_code, consumed_at, container):
@@ -116,6 +132,7 @@ def insert_consumable(context, row, container, specimen, qty, suggested_qty):
 			**container,
 			**item_row(row),
 			"qty": qty,
+			"stock_qty": qty * factor(row),
 			"suggested_qty": suggested_qty,
 			"collect_action": context.collect_action,
 		}
@@ -138,7 +155,7 @@ def issue_collection(doc, reviewed=None):
 	if not doc.warehouse:
 		frappe.throw(_("Set a Warehouse to issue the consumables from"))
 
-	items = [{"item_code": row.item_code, "quantity": row.qty, "batch_no": row.batch_no} for row in pending]
+	items = [stock_item(row) for row in pending]
 	stock_entry = StockIssue(doc.company, doc.warehouse, doc.patient).issue(items)
 	for row in pending:
 		row.db_set({"issued_qty": row.qty, "stock_entry": stock_entry})

@@ -15,15 +15,18 @@ from healthcare.tests.test_observation_consumables import (
 	LABEL,
 	NEEDLE,
 	WAREHOUSE,
+	add_uom_conversion,
 	collection_for,
 	consuming_template,
 	make_stock_item,
+	make_uom,
 	receive,
 	stock_qty,
 )
 from healthcare.tests.utils import HealthcareTestSuite
 
 REAGENT, TUBE = "_Test Consumable Reagent", "_Test Consumable Tube"
+BOTTLED, MEASURED = "_Test Consumable Bottled Reagent", "_Test Consumable Measured Reagent"
 ANALYSER = "_Test Consumables Analyser"
 LAB_STORE, PICKED_STORE = "_Test Warehouse 1 - _TC", "Finished Goods - _TC"
 
@@ -172,6 +175,69 @@ class TestObservationStock(HealthcareTestSuite):
 
 		self.assertEqual(replacement.warehouse, WAREHOUSE)
 
+	def test_a_reagent_is_issued_in_the_uom_its_template_names(self):
+		# Stocked in its smallest unit, as reagents should be; the template counts in litres.
+		make_stock_item(MEASURED, stock_uom=make_uom("_Test Millilitre"))
+		add_uom_conversion(MEASURED, "_Test Litre", 1000)
+		receive(MEASURED, 1000)
+		template = measured_template("Stock Litre Reagent", 0.25, "_Test Litre")
+		observation = new_observation(template, warehouse=WAREHOUSE)
+		before = stock_qty(MEASURED)
+
+		observation.submit()
+
+		self.assertEqual(observation.consumables[0].stock_qty, 250)
+		self.assertEqual(stock_qty(MEASURED), before - 250)
+
+	def test_a_quantity_finer_than_stock_is_kept_is_refused(self):
+		# 2.5 ml of a 500 ml bottle is 0.005 bottles: it would round, so it is refused.
+		make_stock_item(BOTTLED, stock_uom=make_uom("_Test Bottle"))
+		add_uom_conversion(BOTTLED, "_Test Millilitre", 0.002)
+
+		with self.assertRaises(frappe.ValidationError):
+			measured_template("Stock Bottled Reagent", 2.5, "_Test Millilitre", item_code=BOTTLED)
+
+	def test_a_saved_rows_uom_cannot_be_changed(self):
+		add_uom_conversion(REAGENT, "_Test Pair", 2)
+		observation = new_observation(reagent_template("Stock Fixed Unit"))
+		row = observation.consumables[0]
+		row.uom, row.conversion_factor = "_Test Pair", 2
+
+		observation.save()
+
+		row = observation.reload().consumables[0]
+		self.assertEqual((row.uom, row.conversion_factor, row.stock_qty), ("Nos", 1, 2))
+
+	def test_a_row_added_by_hand_counts_in_the_stock_uom(self):
+		make_uom("_Test Pair")
+		observation = new_observation(reagent_template("Stock Hand Added"))
+		observation.append(
+			"consumables",
+			{
+				"item_code": TUBE,
+				"consumed_at": "Observation",
+				"qty": 1,
+				"uom": "_Test Pair",
+				"conversion_factor": 5,
+			},
+		)
+
+		observation.save()
+
+		row = observation.reload().consumables[-1]
+		self.assertEqual((row.uom, row.conversion_factor), ("Nos", 1))
+
+	def test_a_uom_the_item_cannot_convert_is_refused(self):
+		template = create_lab_sample_leaf("Stock Gram Refusal", None)
+		template.consume_stock = 1
+		template.set(
+			"consumables",
+			[{"item_code": REAGENT, "consumed_at": "Observation", "qty": 1, "uom": make_uom("_Test Gram")}],
+		)
+
+		with self.assertRaises(frappe.ValidationError):
+			template.save()
+
 	def test_rows_alike_but_for_a_batch_can_be_compared(self):
 		rows = [
 			frappe._dict(item_code=REAGENT, qty=1, batch_no="_Test Batch"),
@@ -236,6 +302,16 @@ class TestObservationStock(HealthcareTestSuite):
 
 		self.assertEqual(replacement.consumables, [])
 		self.assertEqual(stock_qty(REAGENT), before)
+
+
+def measured_template(name, qty, uom, item_code=MEASURED):
+	template = create_lab_sample_leaf(name, None)
+	template.consume_stock = 1
+	template.set(
+		"consumables", [{"item_code": item_code, "consumed_at": "Observation", "qty": qty, "uom": uom}]
+	)
+	template.save()
+	return template
 
 
 def reagent_template(name, unit_type=None):

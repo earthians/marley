@@ -69,7 +69,7 @@ def approval_rows(roots):
 	rows = frappe.get_all(
 		"Observation Consumable",
 		filters={"parent": ["in", list(observations)], "parenttype": "Observation"},
-		fields=["name as row_name", "parent", "item_code", "consumed_at", "qty", "batch_no"],
+		fields=["name as row_name", "parent", "item_code", "consumed_at", "qty", "uom", "batch_no"],
 		order_by="parent, idx",
 	)
 	for row in rows:
