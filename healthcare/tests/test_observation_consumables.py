@@ -90,6 +90,24 @@ class TestCollectionConsumables(HealthcareTestSuite):
 			{row["item_code"]: (row["qty"], row["suggested_qty"]) for row in preview}, offered(doc, "press")
 		)
 
+	def test_the_review_matches_the_collect_when_given_its_order(self):
+		# The tree collects in groups and previews in that same order, so units agree.
+		add_uom_conversion(TUBE, "_Test Pair", 2)
+		single = consuming_template("Consumables Unit Order Single", BLOOD)
+		paired = consuming_template("Consumables Unit Order Paired", BLOOD)
+		paired.consumables[0].uom = "_Test Pair"
+		paired.save()
+		doc = collection_for(single, paired)
+		first, second = doc.observation_sample_collection
+
+		preview = preview_of(doc, [first, second], "press")
+		collect(doc, [first], collect_action="press")
+		collect(doc, [second], collect_action="press")
+
+		tube = next(row for row in doc.reload().consumables if row.item_code == TUBE)
+		shown = next(row for row in preview if row["item_code"] == TUBE)
+		self.assertEqual((shown["qty"], shown["uom"]), (tube.qty, tube.uom))
+
 	def test_a_collect_reviewed_beforehand_issues_the_reviewed_quantities(self):
 		doc = collection_for(consuming_template("Consumables Phenytoin", BLOOD, labels=2))
 		rows = doc.observation_sample_collection
