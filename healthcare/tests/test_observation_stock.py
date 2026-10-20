@@ -287,6 +287,20 @@ class TestObservationStock(HealthcareTestSuite):
 
 		self.assertEqual(component.service_unit, spectrometer)
 
+	def test_a_correction_keeps_the_original_units_after_the_template_changes(self):
+		add_uom_conversion(REAGENT, "_Test Pair", 2)
+		template = reagent_template("Stock Unit Changed")
+		original = new_observation(template, warehouse=WAREHOUSE)
+		set_observation_status(original.name, "Approved")
+		reagent = next(row for row in template.reload().consumables if row.item_code == REAGENT)
+		reagent.uom = "_Test Pair"
+		template.save()
+
+		set_observation_status(original.name, "Rejected", reason="Wrong unit typed")
+
+		row = replacement_of(template).consumables[0]
+		self.assertEqual((row.uom, row.conversion_factor, row.stock_qty), ("Nos", 1, 2))
+
 	def test_a_correction_of_a_result_without_consumables_issues_none(self):
 		template = reagent_template("Stock Unconfigured")
 		original = new_observation(template, warehouse=WAREHOUSE)
