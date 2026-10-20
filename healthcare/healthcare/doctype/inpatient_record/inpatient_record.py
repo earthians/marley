@@ -329,6 +329,7 @@ class InpatientRecord(Document):
 
 @frappe.whitelist()
 def schedule_inpatient(admission_order):
+	frappe.has_permission("Inpatient Record", "create", throw=True)
 	if isinstance(admission_order, str):
 		admission_order = json.loads(admission_order)  # admission order via Encounter
 
@@ -399,6 +400,7 @@ def schedule_discharge(discharge_order: str):
 	inpatient_record_id = frappe.db.get_value("Patient", discharge_order["patient"], "inpatient_record")
 
 	if inpatient_record_id:
+		frappe.has_permission("Inpatient Record", "write", inpatient_record_id, throw=True)
 		inpatient_record = frappe.get_doc("Inpatient Record", inpatient_record_id)
 
 		set_details_from_ip_order(inpatient_record, discharge_order)
@@ -702,6 +704,7 @@ def is_service_unit_billable(service_unit):
 
 @frappe.whitelist()
 def set_ip_order_cancelled(inpatient_record, reason, encounter=None):
+	frappe.has_permission("Inpatient Record", "write", inpatient_record, throw=True)
 	inpatient_record = frappe.get_doc("Inpatient Record", inpatient_record)
 	if inpatient_record.status == "Admission Scheduled":
 		inpatient_record.status = "Cancelled"

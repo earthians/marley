@@ -591,6 +591,7 @@ def edit_observation(observation: str, data_type: str, result: str) -> None:
 
 @frappe.whitelist()
 def add_observation(**kwargs: str) -> str:
+	frappe.has_permission("Observation", "create", throw=True)
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
 	observation_doc.patient = kwargs.get("patient")
