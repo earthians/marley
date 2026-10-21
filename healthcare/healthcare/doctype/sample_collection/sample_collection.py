@@ -139,6 +139,10 @@ def preview_collect(sample_collection: str, selected: str, collect_action: str) 
 			"qty": row.qty,
 			"uom": row.uom,
 			"suggested_qty": row.suggested_qty,
+			# Which container: two tubes of one kind would otherwise look alike.
+			"sample": row.sample,
+			"medical_department": row.medical_department,
+			"container_closure_color": row.container_closure_color,
 		}
 		for row in rows
 	]

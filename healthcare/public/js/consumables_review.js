@@ -34,6 +34,9 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				uom: row.uom,
 				suggested_qty: row.suggested_qty,
 				batch_no: row.batch_no,
+				sample: row.sample,
+				medical_department: row.medical_department,
+				container_closure_color: row.container_closure_color,
 			})),
 			warehouse: frm.doc.warehouse,
 			company: frm.doc.company,
@@ -242,6 +245,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				data: this.rows.map(row => ({
 					...row,
 					observation: this.observation_label(row),
+					stage: this.stage_label(row),
 				})),
 				fields: this.item_fields(),
 			},
@@ -262,6 +266,20 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 		)}`;
 	}
 
+	// The stage, and for a container its sample, department and closure color.
+	stage_label(row) {
+		const container = [
+			row.sample,
+			row.medical_department,
+			row.container_closure_color,
+		]
+			.filter(Boolean)
+			.join(", ");
+		return container
+			? `${__(row.consumed_at)} (${container})`
+			: __(row.consumed_at);
+	}
+
 	observation_label(row) {
 		return row.warehouse
 			? `${row.observation} (${row.warehouse})`
@@ -275,7 +293,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 					label: __("Observation (Issue From)"),
 					columns: 3,
 			  }
-			: { fieldname: "consumed_at", label: __("Consumed At"), columns: 2 };
+			: { fieldname: "stage", label: __("Consumed At (Container)"), columns: 3 };
 		return [
 			{ fieldname: "row_name", fieldtype: "Data", hidden: 1 },
 			{ ...context, fieldtype: "Data", read_only: 1, in_list_view: 1 },
@@ -293,7 +311,7 @@ healthcare.ConsumablesReview = class ConsumablesReview {
 				fieldtype: "Float",
 				label: __("To Issue"),
 				in_list_view: 1,
-				columns: 2,
+				columns: this.for_approval ? 2 : 1,
 			},
 			{
 				// Set on the template; the quantity is entered in it.
