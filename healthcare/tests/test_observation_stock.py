@@ -157,6 +157,12 @@ class TestObservationStock(HealthcareTestSuite):
 		with self.assertRaises(frappe.ValidationError):
 			replacement.save()
 
+	def test_a_new_result_cannot_arrive_already_issued(self):
+		issued_elsewhere = self.corrected("Stock Arrives Issued Source").stock_entry
+
+		with self.assertRaises(frappe.ValidationError):
+			new_observation(reagent_template("Stock Arrives Issued"), stock_entry=issued_elsewhere)
+
 	def test_a_result_cannot_claim_an_issue_it_did_not_make(self):
 		issued_elsewhere = self.corrected("Stock Correction Source").stock_entry
 		observation = new_observation(reagent_template("Stock Unissued Claim"), warehouse=WAREHOUSE)

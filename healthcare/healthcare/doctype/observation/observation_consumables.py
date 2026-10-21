@@ -237,6 +237,9 @@ def validate_issued(doc):
 	"""
 	before = doc.get_doc_before_save()
 	if not before:
+		# Only a correction the server is creating arrives already issued.
+		if doc.stock_entry and not doc.flags.correction:
+			frappe.throw(_("A new Observation cannot carry a Stock Entry"))
 		return
 	if (doc.stock_entry or None) != (before.stock_entry or None):
 		frappe.throw(_("The Stock Entry that issued the consumables cannot be changed"))
