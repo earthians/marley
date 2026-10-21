@@ -203,6 +203,19 @@ class TestCollectionConsumables(HealthcareTestSuite):
 		tube_rows = [row for row in doc.reload().consumables if row.item_code == TUBE]
 		self.assertEqual(sum(row.stock_qty for row in tube_rows), 2)
 
+	def test_the_review_says_which_container_each_row_is_for(self):
+		lavender = consuming_template("Consumables Review Lavender", BLOOD, color="_Test Lavender")
+		gold = consuming_template("Consumables Review Gold", BLOOD, color="_Test Gold")
+		doc = collection_for(lavender, gold)
+		# A standalone row carries its own closure color.
+		for row, template in zip(doc.observation_sample_collection, (lavender, gold), strict=True):
+			row.container_closure_color = template.container_closure_color
+
+		preview = preview_of(doc, doc.observation_sample_collection, "press")
+
+		tubes = {row["container_closure_color"] for row in preview if row["item_code"] == TUBE}
+		self.assertEqual(tubes, {"_Test Lavender", "_Test Gold"})
+
 	def test_template_not_consuming_stock_records_nothing(self):
 		template = consuming_template("Consumables Switched Off", BLOOD)
 		frappe.db.set_value("Observation Template", template.name, "consume_stock", 0)
