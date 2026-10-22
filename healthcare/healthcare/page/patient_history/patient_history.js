@@ -296,10 +296,10 @@ class PatientHistory {
 		const today = moment(frappe.datetime.get_today(), "YYYY-MM-DD", true);
 		if (!birth.isValid() || birth.isAfter(today)) return null;
 
-		const years = today.diff(birth, "years");
-		const after_years = birth.clone().add(years, "years");
-		const months = today.diff(after_years, "months");
-		const days = today.diff(after_years.add(months, "months"), "days");
+		const total_months = today.diff(birth, "months");
+		const years = Math.floor(total_months / 12);
+		const months = total_months % 12;
+		const days = today.diff(birth.clone().add(total_months, "months"), "days");
 
 		return `${years}Y ${months}M ${days}D`;
 	}
