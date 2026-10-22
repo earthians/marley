@@ -282,10 +282,26 @@ class PatientHistory {
 						patient_name: this.patient.patient_name,
 						patient_gender: this.patient.sex,
 						patient_mobile: this.patient.mobile,
+						patient_age: this.get_patient_age(),
 					}),
 				);
 			this.show_patient_details();
 		});
+	}
+
+	get_patient_age() {
+		if (!this.patient.dob) return null;
+
+		const birth = moment(this.patient.dob, "YYYY-MM-DD", true);
+		const today = moment(frappe.datetime.get_today(), "YYYY-MM-DD", true);
+		if (!birth.isValid() || birth.isAfter(today)) return null;
+
+		const years = today.diff(birth, "years");
+		const after_years = birth.clone().add(years, "years");
+		const months = today.diff(after_years, "months");
+		const days = today.diff(after_years.add(months, "months"), "days");
+
+		return `${years}Y ${months}M ${days}D`;
 	}
 
 	show_patient_details() {
