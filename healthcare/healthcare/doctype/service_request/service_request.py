@@ -131,7 +131,7 @@ def set_service_request_status(service_request, status):
 
 
 @frappe.whitelist()
-def make_clinical_procedure(service_request, appointment=None):
+def make_clinical_procedure(service_request: str, appointment: str | None = None):
 	if not service_request:
 		return
 
