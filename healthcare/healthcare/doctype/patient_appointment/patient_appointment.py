@@ -1211,6 +1211,7 @@ def get_events(start: str, end: str, filters: str | None = None) -> list[dict]:
 
 @frappe.whitelist()
 def get_procedure_prescribed(patient: str) -> list[tuple]:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	return frappe.db.sql(
 		"""
 			SELECT
@@ -1229,6 +1230,7 @@ def get_procedure_prescribed(patient: str) -> list[tuple]:
 
 @frappe.whitelist()
 def get_prescribed_therapies(patient: str) -> list[tuple]:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	return frappe.db.sql(
 		"""
 			SELECT
