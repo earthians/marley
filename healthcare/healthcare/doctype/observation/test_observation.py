@@ -11,7 +11,13 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
-from healthcare.healthcare.doctype.observation.observation import add_note, record_observation_result
+from healthcare.healthcare.doctype.observation.observation import (
+	add_note,
+	is_numbers_with_exceptions,
+	numeric_value_in_band,
+	record_observation_result,
+	set_observation_status,
+)
 from healthcare.healthcare.doctype.observation_template.test_observation_template import (
 	create_observation_template,
 )
@@ -473,6 +479,39 @@ class TestObservation(HealthcareTestSuite):
 		observation = self.create_lab_observation(self.get_test_patient(), template.name, "Yes", "Boolean")
 
 		self.assertEqual(observation.result, "Yes")
+
+	def test_numeric_decimal_places_survive_save_and_approval(self):
+		patient = self.get_test_patient()
+		for data_type in ("Numeric", "Quantity"):
+			template = create_observation_template(f"_Test {data_type} Precision", sample_required=False)
+			template.permitted_data_type = data_type
+			template.abbr = f"T{data_type}Precision"
+			template.save()
+			for value in ("1.0", "1.2", "1.00", "0.0", "12,000", "12,000.00"):
+				for entry_path in ("form", "report"):
+					with self.subTest(data_type=data_type, value=value, entry_path=entry_path):
+						observation = self.create_lab_observation(
+							patient, template.name, value if entry_path == "form" else "", data_type
+						)
+						if entry_path == "report":
+							record_observation_result(
+								json.dumps([{"observation": observation.name, "result": value}])
+							)
+						observation.reload()
+						self.assertEqual(observation.result, value)
+
+						set_observation_status(observation.name, "Approved")
+						observation.reload()
+						self.assertEqual(observation.docstatus, 1)
+						self.assertEqual(observation.result, value)
+
+	def test_grouped_numeric_results_require_valid_thousands_separators(self):
+		for data_type in ("Numeric", "Quantity"):
+			self.assertTrue(is_numbers_with_exceptions("12,000.00", data_type))
+			self.assertFalse(is_numbers_with_exceptions("12,00", data_type))
+			self.assertFalse(is_numbers_with_exceptions("1,234,5", data_type))
+		self.assertTrue(numeric_value_in_band("12,000", 10000, 16000))
+		self.assertFalse(numeric_value_in_band("12,000", 4000, 10000))
 
 	def test_range_result_saved_from_diagnostic_report(self):
 		template = create_observation_template("_Test Report Range Template", sample_required=False)
