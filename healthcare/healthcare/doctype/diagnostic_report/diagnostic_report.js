@@ -8,6 +8,16 @@ frappe.ui.form.on("Diagnostic Report", {
 			frm.add_custom_button(__(`Get PDF`), function () {
 				generate_pdf_with_print_format(frm);
 			});
+			if (frm.doc.status !== "Approved") {
+				frm.add_custom_button(__("Approve All"), function () {
+					confirm_approve_all(frm);
+				});
+			}
+			if (["Approved", "Partially Approved"].includes(frm.doc.status)) {
+				frm.add_custom_button(__("Reject All"), function () {
+					prompt_reject_all(frm);
+				});
+			}
 		}
 	},
 	before_save: function (frm) {
@@ -35,6 +45,110 @@ var show_diagnostic_report = function (frm) {
 		});
 		this.diagnostic_report.refresh();
 	}
+};
+
+var confirm_approve_all = function (frm) {
+	frappe.confirm(
+		__("Are you sure you want to approve all Observations in this report?"),
+		function () {
+			save_pending_results(frm).then(function () {
+				approve_all_observations(frm);
+			});
+		},
+	);
+};
+
+var save_pending_results = function (frm) {
+	return frm.is_dirty() ? frm.save() : Promise.resolve();
+};
+
+var approve_all_observations = function (frm) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.observation.observation.approve_all_observations",
+		args: {
+			diagnostic_report: frm.doc.name,
+		},
+		freeze: true,
+		freeze_message: __("Approving Observations"),
+		callback: function (r) {
+			if (r.exc) return;
+			show_approval_summary(r.message);
+			frm.reload_doc();
+		},
+	});
+};
+
+var show_approval_summary = function (summary) {
+	const approved = (summary && summary.approved) || [];
+	const skipped = (summary && summary.skipped) || [];
+	show_bulk_summary(
+		__("Approved {0} Observation(s)", [approved.length]),
+		skipped,
+		__("Observations without a result were skipped: {0}", [skipped.join(", ")]),
+		"green",
+	);
+};
+
+var show_rejection_summary = function (summary) {
+	const rejected = (summary && summary.rejected) || [];
+	const skipped = (summary && summary.skipped) || [];
+	show_bulk_summary(
+		__("Rejected {0} Observation(s)", [rejected.length]),
+		skipped,
+		__("Observations that are not approved were skipped: {0}", [
+			skipped.join(", "),
+		]),
+		"orange",
+	);
+};
+
+var show_bulk_summary = function (title, skipped, skipped_message, indicator) {
+	if (skipped.length) {
+		frappe.msgprint({
+			title: title,
+			message: skipped_message,
+			indicator: "orange",
+		});
+	} else {
+		frappe.show_alert({ message: title, indicator: indicator });
+	}
+};
+
+var prompt_reject_all = function (frm) {
+	frappe.prompt(
+		[
+			{
+				label: __("Reason"),
+				fieldname: "reason",
+				fieldtype: "Text",
+				reqd: 1,
+			},
+		],
+		function (values) {
+			save_pending_results(frm).then(function () {
+				reject_all_observations(frm, values.reason);
+			});
+		},
+		__("Reason For Rejection"),
+		__("Reject All"),
+	);
+};
+
+var reject_all_observations = function (frm, reason) {
+	frappe.call({
+		method: "healthcare.healthcare.doctype.observation.observation.reject_all_observations",
+		args: {
+			diagnostic_report: frm.doc.name,
+			reason: reason,
+		},
+		freeze: true,
+		freeze_message: __("Rejecting Observations"),
+		callback: function (r) {
+			if (r.exc) return;
+			show_rejection_summary(r.message);
+			frm.reload_doc();
+		},
+	});
 };
 
 var generate_pdf_with_print_format = function (frm) {

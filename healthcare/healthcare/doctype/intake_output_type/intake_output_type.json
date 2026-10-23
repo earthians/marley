@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "creation": "2026-08-24 16:29:06.520767",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "intake_output_type",
+  "direction",
+  "column_break_dir",
+  "default_uom",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "intake_output_type",
+   "fieldtype": "Data",
+   "label": "Intake Output Type",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "direction",
+   "fieldtype": "Select",
+   "label": "Direction",
+   "options": "Intake\nOutput",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_dir",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_uom",
+   "fieldtype": "Link",
+   "label": "Default UOM",
+   "options": "UOM",
+   "default": "Millilitre"
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-24 16:29:06.520767",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Intake Output Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Healthcare Administrator",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Physician",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Nursing User",
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:intake_output_type",
+ "naming_rule": "By fieldname"
+}

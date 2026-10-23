@@ -131,7 +131,7 @@ def set_service_request_status(service_request, status):
 
 
 @frappe.whitelist()
-def make_clinical_procedure(service_request, appointment=None):
+def make_clinical_procedure(service_request: str, appointment: str | None = None):
 	if not service_request:
 		return
 
@@ -168,7 +168,7 @@ def make_clinical_procedure(service_request, appointment=None):
 	doc.insurance_coverage = service_request.insurance_coverage
 	doc.coverage_status = service_request.coverage_status
 	doc.consume_stock = procedure_template.consume_stock
-	doc.warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+	doc.warehouse = frappe.db.get_value("Company", service_request.company, "default_warehouse")
 
 	if not doc.codification_table and procedure_template.codification_table:
 		for code in procedure_template.codification_table:
