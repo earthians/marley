@@ -303,6 +303,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 						doc="Patient Encounter",
 						docname=service_request.order_group,
 						parent=observation.name,
+						practitioner=service_request.practitioner,
 					)
 					create_non_sample_observations(
 						comp,
@@ -312,6 +313,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 							"company": service_request.company,
 							"doc": "Patient Encounter",
 							"docname": service_request.order_group,
+							"practitioner": service_request.practitioner,
 						},
 					)
 				else:
@@ -322,6 +324,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 						doc="Patient Encounter",
 						docname=service_request.order_group,
 						parent=observation.name,
+						practitioner=service_request.practitioner,
 					)
 
 		# A nested sub-panel with nothing sample-required directly on this
@@ -359,6 +362,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 					"sample_qty": obs_template.sample_qty,
 					"component_observation_parent": observation.name,
 					"service_request": service_request.name,
+					"practitioner": service_request.practitioner,
 				},
 			)
 
@@ -384,6 +388,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 						"status": "Open",
 						"sample_qty": template.sample_qty,
 						"service_request": service_request.name,
+						"practitioner": service_request.practitioner,
 					},
 				)
 				sample_collection.save(ignore_permissions=True)
@@ -416,6 +421,7 @@ def create_sample_collection(patient, service_request, appointment=None, templat
 	sample_collection.patient_sex = patient.sex
 	sample_collection.appointment = appointment
 	sample_collection.company = service_request.company
+	sample_collection.referring_practitioner = service_request.practitioner
 	sample_collection.reference_doc = service_request.source_doc
 	sample_collection.reference_name = service_request.order_group
 	if template:
@@ -431,6 +437,7 @@ def create_sample_collection(patient, service_request, appointment=None, templat
 				"uom": template.uom,
 				"sample_qty": template.sample_qty,
 				"service_request": service_request.name,
+				"practitioner": service_request.practitioner,
 			},
 		)
 		sample_collection.save(ignore_permissions=True)
@@ -444,6 +451,7 @@ def create_observation(service_request, appointment=None):
 	doc.company = service_request.company
 	doc.appointment = appointment
 	doc.observation_template = service_request.template_dn
+	doc.healthcare_practitioner = service_request.practitioner
 	doc.reference_doctype = "Patient Encounter"
 	doc.reference_docname = service_request.order_group
 	doc.service_request = service_request.name
