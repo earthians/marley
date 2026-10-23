@@ -5,7 +5,7 @@
  "doctype": "Page", 
  "icon": "", 
  "idx": 0, 
- "modified": "2018-08-08 17:09:55.969424", 
+ "modified": "2026-10-23 16:30:00.000000", 
  "modified_by": "Administrator", 
  "module": "Healthcare", 
  "name": "patient_history", 
@@ -18,6 +18,9 @@
   }, 
   {
    "role": "Physician"
+  }, 
+  {
+   "role": "Nursing User"
   }
  ], 
  "script": null, 
