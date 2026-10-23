@@ -1404,7 +1404,8 @@ def get_patient_vitals(patient, from_date=None, to_date=None):
 	if not patient:
 		return
 
-	vitals = frappe.db.get_all(
+	frappe.has_permission("Patient", "read", patient, throw=True)
+	vitals = frappe.get_list(
 		"Vital Signs",
 		filters={"docstatus": 1, "patient": patient},
 		order_by="signs_date, signs_time",
@@ -1430,6 +1431,7 @@ def render_doc_as_html(doctype, docname, exclude_fields=None):
 	"""
 	Render document as HTML
 	"""
+	frappe.has_permission(doctype, "read", docname, throw=True)
 	exclude_fields = exclude_fields or []
 	doc = frappe.get_doc(doctype, docname)
 	meta = frappe.get_meta(doctype)
