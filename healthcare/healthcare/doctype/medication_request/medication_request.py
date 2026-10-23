@@ -93,6 +93,6 @@ class MedicationRequest(ServiceRequestController):
 
 
 @frappe.whitelist()
-def set_medication_request_status(medication_request, status):
+def set_medication_request_status(medication_request: str, status: str) -> None:
 	frappe.has_permission("Medication Request", "write", medication_request, throw=True)
 	frappe.db.set_value("Medication Request", medication_request, "status", status)
