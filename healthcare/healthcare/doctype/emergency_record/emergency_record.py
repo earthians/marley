@@ -345,6 +345,7 @@ def get_billable_service_unit_type(service_unit):
 
 @frappe.whitelist()
 def get_active_triage(patient: str) -> dict | None:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	records = frappe.get_all(
 		"Emergency Record",
 		filters={"patient": patient, "status": ["not in", ["Closed", "Cancelled"]]},
