@@ -13,6 +13,8 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 )
 from healthcare.healthcare.doctype.observation.observation import (
 	add_note,
+	is_numbers_with_exceptions,
+	numeric_value_in_band,
 	record_observation_result,
 	set_observation_status,
 )
@@ -642,7 +644,7 @@ class TestObservation(HealthcareTestSuite):
 			template.permitted_data_type = data_type
 			template.abbr = f"T{data_type}Precision"
 			template.save()
-			for value in ("1.0", "1.2", "1.00", "0.0"):
+			for value in ("1.0", "1.2", "1.00", "0.0", "12,000", "12,000.00"):
 				for entry_path in ("form", "report"):
 					with self.subTest(data_type=data_type, value=value, entry_path=entry_path):
 						observation = self.create_lab_observation(
@@ -659,6 +661,14 @@ class TestObservation(HealthcareTestSuite):
 						observation.reload()
 						self.assertEqual(observation.docstatus, 1)
 						self.assertEqual(observation.result, value)
+
+	def test_grouped_numeric_results_require_valid_thousands_separators(self):
+		for data_type in ("Numeric", "Quantity"):
+			self.assertTrue(is_numbers_with_exceptions("12,000.00", data_type))
+			self.assertFalse(is_numbers_with_exceptions("12,00", data_type))
+			self.assertFalse(is_numbers_with_exceptions("1,234,5", data_type))
+		self.assertTrue(numeric_value_in_band("12,000", 10000, 16000))
+		self.assertFalse(numeric_value_in_band("12,000", 4000, 10000))
 
 	def test_range_result_saved_from_diagnostic_report(self):
 		template = create_observation_template("_Test Report Range Template", sample_required=False)
