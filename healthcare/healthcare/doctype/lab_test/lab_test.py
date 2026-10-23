@@ -432,6 +432,7 @@ def get_employee_by_user_id(user_id):
 
 @frappe.whitelist()
 def get_lab_test_prescribed(patient):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	sr = frappe.qb.DocType("Service Request")
 	return (
 		frappe.qb.from_(sr)
