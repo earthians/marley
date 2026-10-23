@@ -164,7 +164,7 @@ def update_item(doc):
 
 
 @frappe.whitelist()
-def change_item_code(item, item_code, doc_name):
+def change_item_code(item: str, item_code: str, doc_name: str) -> None:
 	if frappe.db.exists({"doctype": "Item", "item_code": item_code}):
 		frappe.throw(_("Item with Item Code {0} already exists").format(item_code))
 	else:
