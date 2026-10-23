@@ -129,7 +129,7 @@ def create_item_from_therapy(doc):
 
 
 @frappe.whitelist()
-def change_item_code_from_therapy(item_code, doc):
+def change_item_code_from_therapy(item_code: str, doc: str) -> None:
 	doc = frappe._dict(json.loads(doc))
 
 	if frappe.db.exists("Item", {"item_code": item_code}):

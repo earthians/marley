@@ -177,7 +177,7 @@ def make_item_price(item, item_price, price_list):
 
 
 @frappe.whitelist()
-def change_item_code_from_medication(item_code, doc):
+def change_item_code_from_medication(item_code: str, doc: str) -> None:
 	doc = frappe._dict(json.loads(doc))
 
 	if frappe.db.exists("Item", {"item_code": item_code}):

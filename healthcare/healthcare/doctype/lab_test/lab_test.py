@@ -127,7 +127,7 @@ def create_test_from_template(lab_test):
 
 
 @frappe.whitelist()
-def update_status(status, name):
+def update_status(status: str, name: str) -> None:
 	if name and status:
 		frappe.has_permission("Lab Test", "write", name, throw=True)
 		frappe.db.set_value("Lab Test", name, {"status": status, "approved_date": getdate()})
