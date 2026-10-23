@@ -638,9 +638,10 @@ def get_encounter_details(doc):
 		doc = frappe.get_doc(doc.doctype, doc.docname)
 	medication_requests = []
 	service_requests = []
+	frappe.has_permission("Patient", "read", doc.get("patient"), throw=True)
 	filters = {"patient": doc.get("patient"), "docstatus": 1}
-	medication_requests = frappe.get_all("Medication Request", filters, ["*"])
-	service_requests = frappe.get_all("Service Request", filters, ["*"])
+	medication_requests = frappe.get_list("Medication Request", filters=filters, fields=["*"])
+	service_requests = frappe.get_list("Service Request", filters=filters, fields=["*"])
 	status_codes = frappe.db.get_all(
 		"Code Value",
 		filters={
@@ -659,8 +660,8 @@ def get_encounter_details(doc):
 				)
 				if subject:
 					service_request["lab_details"] = subject
-	clinical_notes = frappe.get_all(
-		"Clinical Note", {"patient": doc.get("patient")}, ["posting_date", "note"]
+	clinical_notes = frappe.get_list(
+		"Clinical Note", filters={"patient": doc.get("patient")}, fields=["posting_date", "note"]
 	)
 
 	return medication_requests, service_requests, clinical_notes, status_code_map

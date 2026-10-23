@@ -394,6 +394,7 @@ def make_procedure(source_name: str, target_doc: Document | None = None) -> Docu
 
 @frappe.whitelist()
 def get_procedure_prescribed(patient: str) -> Document:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	hso = frappe.qb.DocType("Service Request")
 	return (
 		frappe.qb.from_(hso)

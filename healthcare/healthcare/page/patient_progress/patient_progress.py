@@ -8,6 +8,7 @@ from frappe.utils import get_timespan_date_range, getdate
 
 @frappe.whitelist()
 def get_therapy_sessions_count(patient):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	total = frappe.db.count("Therapy Session", filters={"docstatus": 1, "patient": patient})
 
 	month_start = datetime.today().replace(day=1)
@@ -20,6 +21,7 @@ def get_therapy_sessions_count(patient):
 
 @frappe.whitelist()
 def get_patient_heatmap_data(patient, date):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	return dict(
 		frappe.db.sql(
 			"""
@@ -40,6 +42,7 @@ def get_patient_heatmap_data(patient, date):
 
 @frappe.whitelist()
 def get_therapy_sessions_distribution_data(patient, field):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	if field == "therapy_type":
 		result = frappe.db.get_all(
 			"Therapy Session",
@@ -73,6 +76,7 @@ def get_therapy_sessions_distribution_data(patient, field):
 
 @frappe.whitelist()
 def get_therapy_progress_data(patient, therapy_type, time_span):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	date_range = get_date_range(time_span)
 	query_values = {
 		"from_date": date_range[0],
@@ -107,6 +111,7 @@ def get_therapy_progress_data(patient, therapy_type, time_span):
 
 @frappe.whitelist()
 def get_patient_assessment_data(patient, assessment_template, time_span):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	date_range = get_date_range(time_span)
 	query_values = {
 		"from_date": date_range[0],
@@ -139,6 +144,7 @@ def get_patient_assessment_data(patient, assessment_template, time_span):
 
 @frappe.whitelist()
 def get_therapy_assessment_correlation_data(patient, assessment_template, time_span):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	date_range = get_date_range(time_span)
 	query_values = {
 		"from_date": date_range[0],
@@ -181,6 +187,7 @@ def get_therapy_assessment_correlation_data(patient, assessment_template, time_s
 
 @frappe.whitelist()
 def get_assessment_parameter_data(patient, parameter, time_span):
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	date_range = get_date_range(time_span)
 	query_values = {
 		"from_date": date_range[0],
