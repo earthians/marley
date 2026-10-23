@@ -138,7 +138,7 @@ def create_item_from_template(doc):
 
 
 @frappe.whitelist()
-def change_test_code_from_template(lab_test_code, doc):
+def change_test_code_from_template(lab_test_code: str, doc: str) -> str:
 	doc = frappe._dict(json.loads(doc))
 	if frappe.db.exists({"doctype": "Item", "item_code": lab_test_code}):
 		frappe.throw(_("Lab Test Item {0} already exist").format(lab_test_code))

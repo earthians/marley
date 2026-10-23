@@ -3,6 +3,7 @@ import json
 import requests
 
 import frappe
+from frappe.model.document import Document
 
 from healthcare.regional.india.abdm.abdm_config import get_url
 
@@ -56,7 +57,14 @@ def get_authorization_token():
 
 
 @frappe.whitelist()
-def abdm_request(payload, url_key, req_type, rec_headers=None, to_be_enc=None, patient_name=None):
+def abdm_request(
+	payload: str | dict,
+	url_key: str,
+	req_type: str,
+	rec_headers: str | dict | None = None,
+	to_be_enc: str | None = None,
+	patient_name: str | None = None,
+) -> dict | Document | None:
 	frappe.has_permission("Patient", "write", throw=True)
 	if payload and isinstance(payload, str):
 		payload = json.loads(payload)
@@ -205,7 +213,7 @@ def get_rsa_encrypted_message(message, pub_key):
 
 
 @frappe.whitelist()
-def get_health_data(otp, txnId, auth_method):
+def get_health_data(otp: str, txnId: str, auth_method: str) -> tuple[dict | None, str | None]:
 	frappe.has_permission("Patient", "write", throw=True)
 	confirm_w_otp_payload = {"to_encrypt": otp, "txnId": txnId}
 	if auth_method == "AADHAAR_OTP":
