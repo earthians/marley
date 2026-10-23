@@ -713,11 +713,14 @@ def is_numbers_with_exceptions(value, permitted_data_type=None):
 	if permitted_data_type == "Range" and is_range_result(value):
 		return True
 
-	# Numeric-typed controls (Float/Percent) submit an actual
-	# JSON number, not a string, once decoded — only Data-style free text
-	# results ever reach here as a str.
-	pattern = r"^[0-9{}]+$".format(re.escape(".<>"))
-	return re.match(pattern, str(value)) is not None
+	# Match a complete decimal, optionally prefixed by a comparison operator.
+	# Validate the text without converting it, preserving entered trailing zeros.
+	whole = r"[0-9]+"
+	if permitted_data_type in ("Quantity", "Numeric"):
+		# Keep correctly grouped counts such as 12,000.00 as entered.
+		whole = r"(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)"
+	number = rf"[+-]?(?:{whole}(?:\.[0-9]*)?|\.[0-9]+)"
+	return re.fullmatch(rf"(?:<=|>=|<|>)?\s*{number}", str(value)) is not None
 
 
 @frappe.whitelist()

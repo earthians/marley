@@ -6,8 +6,9 @@ frappe.provide("healthcare.observation");
 // control (it needs a from/to pair) so it falls back to a plain Data input
 // here; the Observation form itself renders a proper two-datetime control.
 healthcare.observation.CONTROL_FIELDTYPE_MAP = {
-	Quantity: "Float",
-	Numeric: "Float",
+	// Preserve entered decimal places ("1.0", "1.00"); the server validates numbers.
+	Quantity: "Data",
+	Numeric: "Data",
 	// Keep ranges literal: Float evaluates "12-15" as subtraction.
 	Range: "Data",
 	Percent: "Percent",
