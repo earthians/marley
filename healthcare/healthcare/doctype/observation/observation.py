@@ -698,7 +698,11 @@ def is_numbers_with_exceptions(value, permitted_data_type=None):
 
 	# Match a complete decimal, optionally prefixed by a comparison operator.
 	# Validate the text without converting it, preserving entered trailing zeros.
-	number = r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)"
+	whole = r"[0-9]+"
+	if permitted_data_type in ("Quantity", "Numeric"):
+		# Keep correctly grouped counts such as 12,000.00 as entered.
+		whole = r"(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)"
+	number = rf"[+-]?(?:{whole}(?:\.[0-9]*)?|\.[0-9]+)"
 	return re.fullmatch(rf"(?:<=|>=|<|>)?\s*{number}", str(value)) is not None
 
 
