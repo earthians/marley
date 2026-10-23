@@ -591,6 +591,13 @@ def edit_observation(observation: str, data_type: str, result: str) -> None:
 
 @frappe.whitelist()
 def add_observation(**kwargs: str) -> str:
+	frappe.has_permission("Observation", "create", throw=True)
+	return new_observation(**kwargs)
+
+
+def new_observation(**kwargs: str) -> str:
+	"""Create an Observation for server code that has already checked access
+	to the record the observation comes from, such as a Sample Collection."""
 	observation_doc = frappe.new_doc("Observation")
 	observation_doc.posting_datetime = now_datetime()
 	observation_doc.patient = kwargs.get("patient")
@@ -680,6 +687,7 @@ def record_observation_result(values: str) -> None:
 @frappe.whitelist()
 def add_note(note: str, observation: str) -> None:
 	if note and observation:
+		frappe.has_permission("Observation", "write", observation, throw=True)
 		frappe.db.set_value("Observation", observation, "note", frappe.utils.sanitize_html(note))
 
 

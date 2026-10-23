@@ -9,7 +9,7 @@ from frappe.utils import get_link_to_form, getdate, now_datetime
 
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.service_request.service_request import (
-	set_service_request_status,
+	update_service_request_status,
 )
 
 
@@ -27,12 +27,12 @@ class LabTest(Document):
 		self.db_set("status", "Completed")
 
 		if self.service_request:
-			set_service_request_status(self.service_request, "completed-Request Status")
+			update_service_request_status(self.service_request, "completed-Request Status")
 
 	def on_cancel(self):
 		self.db_set("status", "Cancelled")
 		if self.service_request:
-			set_service_request_status(self.service_request, "active-Request Status")
+			update_service_request_status(self.service_request, "active-Request Status")
 		self.reload()
 
 	def before_save(self):
@@ -127,8 +127,9 @@ def create_test_from_template(lab_test):
 
 
 @frappe.whitelist()
-def update_status(status, name):
+def update_status(status: str, name: str) -> None:
 	if name and status:
+		frappe.has_permission("Lab Test", "write", name, throw=True)
 		frappe.db.set_value("Lab Test", name, {"status": status, "approved_date": getdate()})
 
 
