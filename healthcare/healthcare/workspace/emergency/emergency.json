@@ -1,7 +1,7 @@
 {
  "app": "healthcare",
  "charts": [],
- "content": "[{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}},{\"id\":\"ed_spacer\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ed_card1\",\"type\":\"card\",\"data\":{\"card_name\":\"Emergency\",\"col\":4}},{\"id\":\"ed_card3\",\"type\":\"card\",\"data\":{\"card_name\":\"Clinical\",\"col\":4}},{\"id\":\"ed_card2\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}},{\"id\":\"ed_spacer\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ed_card1\",\"type\":\"card\",\"data\":{\"card_name\":\"Emergency\",\"col\":4}},{\"id\":\"ed_card3\",\"type\":\"card\",\"data\":{\"card_name\":\"Clinical\",\"col\":4}},{\"id\":\"ed_card2\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
  "creation": "2026-06-16 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -101,7 +101,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-16 16:05:04.000175",
+ "modified": "2026-10-24 21:17:32.945426",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Emergency",

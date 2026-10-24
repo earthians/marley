@@ -6,7 +6,7 @@
    "label": "Insurance Claim Status"
   }
  ],
- "content": "[{\"id\":\"xD5yV5M01A\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Insurance Claim Status\",\"col\":12}},{\"id\":\"QPKJARhNlP\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"7R5geM0eiC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims\",\"col\":3}},{\"id\":\"7tV1Skv4y5\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims Value\",\"col\":3}},{\"id\":\"wJURP86-v3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims\",\"col\":3}},{\"id\":\"-b4MdATviZ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims Value\",\"col\":3}},{\"id\":\"4cQDF7WK7s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"X5YMfgIhuK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Insurance Claim\",\"col\":3}},{\"id\":\"U6WaTxAcSl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Coverage\",\"col\":3}},{\"id\":\"rTiJyM7gp6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Eligibility Plan\",\"col\":3}},{\"id\":\"ZlXP-idVZh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"Q5Rn2qsmAk\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PnwFws27dZ\",\"type\":\"card\",\"data\":{\"card_name\":\"Insurance\",\"col\":4}},{\"id\":\"TKIu6RFgSI\",\"type\":\"card\",\"data\":{\"card_name\":\"Eligibility\",\"col\":4}},{\"id\":\"4LdIDU-094\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}}]",
+ "content": "[{\"id\":\"6987cdde46\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Insurance Onboarding\",\"col\":12}},{\"id\":\"xD5yV5M01A\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Insurance Claim Status\",\"col\":12}},{\"id\":\"QPKJARhNlP\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"7R5geM0eiC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims\",\"col\":3}},{\"id\":\"7tV1Skv4y5\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims Value\",\"col\":3}},{\"id\":\"wJURP86-v3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims\",\"col\":3}},{\"id\":\"-b4MdATviZ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims Value\",\"col\":3}},{\"id\":\"4cQDF7WK7s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"X5YMfgIhuK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Insurance Claim\",\"col\":3}},{\"id\":\"U6WaTxAcSl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Coverage\",\"col\":3}},{\"id\":\"rTiJyM7gp6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Eligibility Plan\",\"col\":3}},{\"id\":\"ZlXP-idVZh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"Q5Rn2qsmAk\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PnwFws27dZ\",\"type\":\"card\",\"data\":{\"card_name\":\"Insurance\",\"col\":4}},{\"id\":\"TKIu6RFgSI\",\"type\":\"card\",\"data\":{\"card_name\":\"Eligibility\",\"col\":4}},{\"id\":\"4LdIDU-094\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}}]",
  "creation": "2025-05-30 17:40:59.886349",
  "custom_blocks": [],
  "docstatus": 0,
@@ -128,7 +128,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-11-23 20:17:55.487201",
+ "modified": "2026-10-24 20:53:18.588023",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance",
