@@ -1,0 +1,43 @@
+{
+ "allow_roles": [
+  {
+   "role": "Healthcare Administrator"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "creation": "2026-10-24 18:29:21.290640",
+ "docstatus": 0,
+ "doctype": "Module Onboarding",
+ "idx": 0,
+ "is_complete": 0,
+ "modified": "2026-10-24 18:29:21.290640",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Outpatient Onboarding",
+ "owner": "Administrator",
+ "steps": [
+  {
+   "is_optional": 0,
+   "step": "Create Appointment Type"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Patient"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Patient Appointment"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Patient Encounter"
+  },
+  {
+   "is_optional": 1,
+   "step": "Create Vital Signs"
+  }
+ ],
+ "title": "Run your outpatient clinic"
+}

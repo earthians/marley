@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Triage Level",
+ "creation": "2026-10-24 21:17:32.945426",
+ "description": "The acuity levels, with their priority and colour, used to sort patients in the emergency queue.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 21:17:32.945426",
+ "modified_by": "Administrator",
+ "name": "Create Triage Level",
+ "owner": "Administrator",
+ "reference_document": "Triage Level",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Review triage levels",
+ "validate_action": 1
+}

@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Patient Insurance Coverage",
+ "creation": "2026-10-24 18:29:21.290640",
+ "description": "A patient's insurance policy, linked to a payor and eligibility plan.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 18:29:21.290640",
+ "modified_by": "Administrator",
+ "name": "Create Patient Insurance Coverage",
+ "owner": "Administrator",
+ "reference_document": "Patient Insurance Coverage",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Add patient coverage",
+ "validate_action": 1
+}
