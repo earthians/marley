@@ -1,7 +1,7 @@
 {
  "app": "healthcare",
  "charts": [],
- "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}},{\"id\":\"ed_spacer\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ed_card1\",\"type\":\"card\",\"data\":{\"card_name\":\"Emergency\",\"col\":4}},{\"id\":\"ed_card3\",\"type\":\"card\",\"data\":{\"card_name\":\"Clinical\",\"col\":4}},{\"id\":\"ed_card2\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}}]",
  "creation": "2026-06-16 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,95 +13,8 @@
  "indicator_color": "red",
  "is_hidden": 0,
  "label": "Emergency",
- "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Emergency",
-   "link_count": 2,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Emergency Record",
-   "link_count": 0,
-   "link_to": "Emergency Record",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Triage Level",
-   "link_count": 0,
-   "link_to": "Triage Level",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Clinical",
-   "link_count": 3,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Patient Encounter",
-   "link_count": 0,
-   "link_to": "Patient Encounter",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Service Request",
-   "link_count": 0,
-   "link_to": "Service Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Medication Request",
-   "link_count": 0,
-   "link_to": "Medication Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Emergency Triage Queue",
-   "link_to": "Emergency Triage Queue",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  }
- ],
- "modified": "2026-10-24 21:17:32.945426",
+ "links": [],
+ "modified": "2026-10-24 22:09:45.077699",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Emergency",
