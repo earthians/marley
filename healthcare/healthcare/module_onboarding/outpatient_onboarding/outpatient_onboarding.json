@@ -5,6 +5,12 @@
   },
   {
    "role": "System Manager"
+  },
+  {
+   "role": "Physician"
+  },
+  {
+   "role": "Nursing User"
   }
  ],
  "creation": "2026-10-24 18:29:21.290640",
@@ -12,7 +18,7 @@
  "doctype": "Module Onboarding",
  "idx": 0,
  "is_complete": 0,
- "modified": "2026-10-24 18:29:21.290640",
+ "modified": "2026-10-24 22:54:13.843788",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Outpatient Onboarding",
