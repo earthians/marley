@@ -74,9 +74,9 @@ let set_dob_max_date = function (frm) {
 
 frappe.ui.form.on('Patient', 'dob', function(frm) {
 	if (frm.doc.dob) {
-		let today = new Date();
-		let birthDate = new Date(frm.doc.dob);
-		if (today < birthDate) {
+		let today = moment(frappe.datetime.get_today(), 'YYYY-MM-DD', true);
+		let birthDate = moment(frm.doc.dob, 'YYYY-MM-DD', true);
+		if (birthDate.isAfter(today)) {
 			frappe.msgprint(__('Please select a valid Date'));
 			frappe.model.set_value(frm.doctype,frm.docname, 'dob', '');
 		} else {
@@ -112,10 +112,13 @@ let create_medical_record = function (frm) {
 };
 
 let get_age = function (birth) {
-	let birth_moment = moment(birth);
-	let current_moment = moment(Date());
-	let diff = moment.duration(current_moment.diff(birth_moment));
-	return `${diff.years()} ${__('Year(s)')} ${diff.months()} ${__('Month(s)')} ${diff.days()} ${__('Day(s)')}`
+	let birth_moment = moment(birth, 'YYYY-MM-DD', true);
+	let today = moment(frappe.datetime.get_today(), 'YYYY-MM-DD', true);
+	let total_months = today.diff(birth_moment, 'months');
+	let years = Math.floor(total_months / 12);
+	let months = total_months % 12;
+	let days = today.diff(birth_moment.add(total_months, 'months'), 'days');
+	return `${years} ${__('Year(s)')} ${months} ${__('Month(s)')} ${days} ${__('Day(s)')}`;
 };
 
 let create_vital_signs = function (frm) {
