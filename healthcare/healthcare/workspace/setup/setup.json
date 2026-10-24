@@ -1,7 +1,7 @@
 {
  "app": "healthcare",
  "charts": [],
- "content": "[{\"id\":\"GtXhnj2swW\",\"type\":\"header\",\"data\":{\"text\":\"<b>Your Shortcuts</b>\",\"col\":12}},{\"id\":\"EXFC_Q2fxp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Settings\",\"col\":4}},{\"id\":\"ScDzGn33Bs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History Settings\",\"col\":4}},{\"id\":\"xiSIReq4dD\",\"type\":\"paragraph\",\"data\":{\"text\":\"Masters\",\"col\":12}},{\"id\":\"9Q-fr9fJYx\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Definitions\",\"col\":4}},{\"id\":\"FGNv5pNQdN\",\"type\":\"card\",\"data\":{\"card_name\":\"Outpatient Setup\",\"col\":4}},{\"id\":\"l2qtU2Bx15\",\"type\":\"card\",\"data\":{\"card_name\":\"Rehabilitation and Physiotherapy\",\"col\":4}},{\"id\":\"6PT1MQrHdm\",\"type\":\"card\",\"data\":{\"card_name\":\"Diagnostics Setup\",\"col\":4}},{\"id\":\"abzKRjKbI3\",\"type\":\"card\",\"data\":{\"card_name\":\"Facility\",\"col\":4}},{\"id\":\"7g9GbE7-Xm\",\"type\":\"card\",\"data\":{\"card_name\":\"Terminology (Medical Codes)\",\"col\":4}},{\"id\":\"U5_WlsHmFy\",\"type\":\"card\",\"data\":{\"card_name\":\"Insurance Setup\",\"col\":4}}]",
+ "content": "[{\"id\":\"d8cab45e92\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Healthcare Setup Onboarding\",\"col\":12}},{\"id\":\"GtXhnj2swW\",\"type\":\"header\",\"data\":{\"text\":\"<b>Your Shortcuts</b>\",\"col\":12}},{\"id\":\"EXFC_Q2fxp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Settings\",\"col\":4}},{\"id\":\"ScDzGn33Bs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History Settings\",\"col\":4}},{\"id\":\"xiSIReq4dD\",\"type\":\"paragraph\",\"data\":{\"text\":\"Masters\",\"col\":12}},{\"id\":\"9Q-fr9fJYx\",\"type\":\"card\",\"data\":{\"card_name\":\"Service Definitions\",\"col\":4}},{\"id\":\"FGNv5pNQdN\",\"type\":\"card\",\"data\":{\"card_name\":\"Outpatient Setup\",\"col\":4}},{\"id\":\"l2qtU2Bx15\",\"type\":\"card\",\"data\":{\"card_name\":\"Rehabilitation and Physiotherapy\",\"col\":4}},{\"id\":\"6PT1MQrHdm\",\"type\":\"card\",\"data\":{\"card_name\":\"Diagnostics Setup\",\"col\":4}},{\"id\":\"abzKRjKbI3\",\"type\":\"card\",\"data\":{\"card_name\":\"Facility\",\"col\":4}},{\"id\":\"7g9GbE7-Xm\",\"type\":\"card\",\"data\":{\"card_name\":\"Terminology (Medical Codes)\",\"col\":4}},{\"id\":\"U5_WlsHmFy\",\"type\":\"card\",\"data\":{\"card_name\":\"Insurance Setup\",\"col\":4}}]",
  "creation": "2025-05-30 17:41:45.919373",
  "custom_blocks": [],
  "docstatus": 0,
@@ -449,7 +449,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-09-15 16:34:37.722704",
+ "modified": "2026-10-24 20:53:18.588023",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Setup",
