@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Therapy Type",
+ "creation": "2026-10-24 18:29:21.290640",
+ "description": "A therapy with its default duration, exercises and charges.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 18:29:21.290640",
+ "modified_by": "Administrator",
+ "name": "Create Therapy Type",
+ "owner": "Administrator",
+ "reference_document": "Therapy Type",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Define a therapy type",
+ "validate_action": 1
+}
