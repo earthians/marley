@@ -632,7 +632,11 @@ def create_service_request_from_widget(encounter, data, medication_request=False
 
 
 @frappe.whitelist()
+<<<<<<< HEAD
 def get_encounter_details(doc):
+=======
+def get_encounter_details(doc: str) -> tuple[list, list, list, dict]:
+>>>>>>> 1031b87 (refactor: add type hints to the patient-data endpoints)
 	doc = json.loads(doc)
 	if doc.get("__islocal") == 0:
 		doc = frappe.get_doc(doc.doctype, doc.docname)

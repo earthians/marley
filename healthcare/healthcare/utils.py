@@ -1400,7 +1400,9 @@ def get_children(doctype, parent=None, company=None, is_root=False, include_disa
 
 
 @frappe.whitelist()
-def get_patient_vitals(patient, from_date=None, to_date=None):
+def get_patient_vitals(
+	patient: str, from_date: str | None = None, to_date: str | None = None
+) -> list | bool | None:
 	if not patient:
 		return
 
@@ -1427,7 +1429,7 @@ def render_docs_as_html(docs):
 
 
 @frappe.whitelist()
-def render_doc_as_html(doctype, docname, exclude_fields=None):
+def render_doc_as_html(doctype: str, docname: str, exclude_fields: str | list | None = None) -> dict:
 	"""
 	Render document as HTML
 	"""

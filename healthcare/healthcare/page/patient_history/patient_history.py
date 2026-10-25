@@ -9,9 +9,15 @@ from frappe.utils import cint
 
 
 @frappe.whitelist()
-def get_feed(name, document_types=None, date_range=None, start=0, page_length=20):
-	frappe.has_permission("Patient", "read", name, throw=True)
+def get_feed(
+	name: str,
+	document_types: str | None = None,
+	date_range: str | None = None,
+	start: int = 0,
+	page_length: int = 20,
+) -> list:
 	"""get feed"""
+	frappe.has_permission("Patient", "read", name, throw=True)
 	filters = get_filters(name, document_types, date_range)
 
 	result = frappe.get_list(
@@ -45,7 +51,7 @@ def get_filters(name, document_types=None, date_range=None):
 
 
 @frappe.whitelist()
-def get_feed_for_dt(doctype, docname):
+def get_feed_for_dt(doctype: str, docname: str) -> list:
 	"""get feed"""
 	frappe.has_permission(doctype, "read", docname, throw=True)
 	result = frappe.get_list(
