@@ -106,7 +106,7 @@ def validate_service_item(item):
 
 
 @frappe.whitelist()
-def get_sms_text(doc):
+def get_sms_text(doc: str) -> dict:
 	frappe.has_permission("Lab Test", "read", doc, throw=True)
 	sms_text = {}
 	doc = frappe.get_doc("Lab Test", doc)

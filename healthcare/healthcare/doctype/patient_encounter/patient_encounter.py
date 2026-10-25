@@ -632,7 +632,7 @@ def create_service_request_from_widget(encounter: str, data: str, medication_req
 
 
 @frappe.whitelist()
-def get_encounter_details(doc: str):
+def get_encounter_details(doc: str) -> tuple[list, list, list, dict]:
 	doc = json.loads(doc)
 	if doc.get("__islocal") == 0:
 		doc = frappe.get_doc(doc.doctype, doc.docname)
