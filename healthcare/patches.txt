@@ -40,9 +40,5 @@ healthcare.patches.v16_0.create_clinical_note_types
 healthcare.patches.v16_0.set_medication_order_entry_status
 healthcare.patches.v16_0.unify_observation_result_field
 healthcare.patches.v16_0.setup_observation_reference_types
-<<<<<<< HEAD
-healthcare.patches.v16_0.backfill_observation_result_flag
-=======
 healthcare.patches.v16_0.backfill_observation_result_flag
 healthcare.patches.v16_0.remove_legacy_healthcare_onboarding
->>>>>>> 34f64ad (feat(onboarding): per-workspace onboardings for Healthcare)
