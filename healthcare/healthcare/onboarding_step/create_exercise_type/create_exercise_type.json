@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Exercise Type",
+ "creation": "2026-10-24 18:29:21.290640",
+ "description": "An exercise with its steps and difficulty, for use in therapies.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 18:29:21.290640",
+ "modified_by": "Administrator",
+ "name": "Create Exercise Type",
+ "owner": "Administrator",
+ "reference_document": "Exercise Type",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Define an exercise",
+ "validate_action": 1
+}

@@ -24,22 +24,6 @@
   {
    "added": 0,
    "hidden": 0,
-   "icon": "bed",
-   "link_to": "Inpatient",
-   "link_type": "Sidebar",
-   "title": "Inpatient"
-  },
-  {
-   "added": 0,
-   "hidden": 0,
-   "icon": "heart-handshake",
-   "link_to": "Insurance",
-   "link_type": "Sidebar",
-   "title": "Insurance"
-  },
-  {
-   "added": 0,
-   "hidden": 0,
    "icon": "users",
    "link_to": "Outpatient",
    "link_type": "Sidebar",
@@ -56,10 +40,26 @@
   {
    "added": 0,
    "hidden": 0,
+   "icon": "bed",
+   "link_to": "Inpatient",
+   "link_type": "Sidebar",
+   "title": "Inpatient"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
    "icon": "hand-heart",
    "link_to": "Rehabilitation",
    "link_type": "Sidebar",
    "title": "Rehabilitation"
+  },
+  {
+   "added": 0,
+   "hidden": 0,
+   "icon": "heart-handshake",
+   "link_to": "Insurance",
+   "link_type": "Sidebar",
+   "title": "Insurance"
   },
   {
    "added": 0,
@@ -70,7 +70,7 @@
    "title": "Setup"
   }
  ],
- "modified": "2026-10-08 14:56:40.987653",
+ "modified": "2026-10-24 21:27:30.218085",
  "modified_by": "Administrator",
  "name": "healthcare",
  "owner": "Administrator",

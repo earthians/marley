@@ -1,0 +1,46 @@
+{
+ "allow_roles": [
+  {
+   "role": "Healthcare Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Laboratory User"
+  }
+ ],
+ "creation": "2026-10-24 18:29:21.290640",
+ "docstatus": 0,
+ "doctype": "Module Onboarding",
+ "idx": 0,
+ "is_complete": 0,
+ "modified": "2026-10-24 22:54:13.843788",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Diagnostics Onboarding",
+ "owner": "Administrator",
+ "steps": [
+  {
+   "is_optional": 0,
+   "step": "Create Sample Type"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Lab Test Sample"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Observation Template"
+  },
+  {
+   "is_optional": 1,
+   "step": "Create Sample Collection"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Observation"
+  }
+ ],
+ "title": "Set up diagnostics"
+}
