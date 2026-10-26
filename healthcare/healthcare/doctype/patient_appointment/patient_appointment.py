@@ -1252,5 +1252,7 @@ def update_appointment_status():
 
 	for appointment in appointments:
 		appointment_doc = frappe.get_doc("Patient Appointment", appointment.name)
+		previous_status = appointment_doc.status
 		appointment_doc.set_status()
-		appointment_doc.save()
+		if appointment_doc.status != previous_status:
+			frappe.db.set_value("Patient Appointment", appointment.name, "status", appointment_doc.status)
