@@ -6,6 +6,7 @@ import json
 
 import frappe
 from frappe import _
+from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import now_datetime
 
@@ -494,7 +495,7 @@ def check_observation_sample_exist(service_request):
 
 
 @frappe.whitelist()
-def make_appointment(source_name, target_doc=None, ignore_permissions=False):
+def make_appointment(source_name: str, target_doc: Document | None = None, ignore_permissions: bool = False):
 	def postprocess(source, target):
 		set_missing_values(source, target)
 
