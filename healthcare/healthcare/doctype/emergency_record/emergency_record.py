@@ -12,7 +12,7 @@ from frappe.model.naming import make_autoname
 from frappe.utils import flt, get_datetime, now_datetime, time_diff_in_hours, today
 
 from healthcare.healthcare.doctype.observation.observation import (
-	add_observation,
+	new_observation,
 	record_observation_result,
 )
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
@@ -172,7 +172,7 @@ class EmergencyRecord(Document):
 
 	def create_vital_observation(self, vital):
 		template = frappe.get_cached_doc("Observation Template", vital.get("template"))
-		observation = add_observation(
+		observation = new_observation(
 			patient=self.patient,
 			template=template.name,
 			data_type=template.permitted_data_type,
@@ -344,6 +344,7 @@ def get_billable_service_unit_type(service_unit):
 
 @frappe.whitelist()
 def get_active_triage(patient: str) -> dict | None:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	records = frappe.get_all(
 		"Emergency Record",
 		filters={"patient": patient, "status": ["not in", ["Closed", "Cancelled"]]},
