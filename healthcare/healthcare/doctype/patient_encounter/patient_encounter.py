@@ -513,6 +513,7 @@ def create_service_request(encounter: str) -> None:
 
 @frappe.whitelist()
 def create_medication_request(encounter: str) -> None:
+	frappe.has_permission("Patient Encounter", "write", encounter, throw=True)
 	encounter_doc = frappe.get_doc("Patient Encounter", encounter)
 	if not frappe.db.exists("Medication Request", {"order_group": encounter}):
 		encounter_doc.make_medication_request()
