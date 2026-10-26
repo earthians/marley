@@ -34,6 +34,10 @@ from healthcare.healthcare.doctype.observation_template.observation_template imp
 def get_healthcare_services_to_invoice(
 	patient: str, customer: str, company: str, link_customer: bool = False
 ) -> list[dict]:
+	frappe.has_permission("Sales Invoice", "create", throw=True)
+	frappe.has_permission("Patient", "read", patient, throw=True)
+	if link_customer:
+		frappe.has_permission("Patient", "write", patient, throw=True)
 	patient = frappe.get_doc("Patient", patient)
 	items_to_invoice = []
 	if patient:

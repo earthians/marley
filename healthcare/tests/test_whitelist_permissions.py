@@ -54,7 +54,11 @@ from healthcare.healthcare.doctype.treatment_counselling.treatment_counselling i
 )
 from healthcare.healthcare.page.patient_history.patient_history import get_feed, get_feed_for_dt
 from healthcare.healthcare.page.patient_progress import patient_progress
-from healthcare.healthcare.utils import get_patient_vitals, render_doc_as_html
+from healthcare.healthcare.utils import (
+	get_healthcare_services_to_invoice,
+	get_patient_vitals,
+	render_doc_as_html,
+)
 from healthcare.regional.india.abdm.utils import abdm_request, get_health_data
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -416,3 +420,23 @@ class TestMedicationRequestCreation(WhitelistPermissionTestCase):
 		frappe.set_user(NURSE)
 
 		self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
+
+
+class TestBillableServices(WhitelistPermissionTestCase):
+	"""The Sales Invoice "Get Items From > Healthcare Services" endpoint."""
+
+	def setUp(self):
+		super().setUp()
+		self.company = frappe.get_all("Company", pluck="name", limit=1)[0]
+		self.customer = frappe.get_all("Customer", pluck="name", limit=1)[0]
+
+	def test_billable_services_need_sales_invoice_create(self):
+		frappe.set_user(PHYSICIAN)  # may read the patient, but cannot invoice
+
+		self.assertRaises(
+			frappe.PermissionError,
+			get_healthcare_services_to_invoice,
+			self.patient,
+			self.customer,
+			self.company,
+		)
