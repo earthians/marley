@@ -1255,4 +1255,13 @@ def update_appointment_status():
 		previous_status = appointment_doc.status
 		appointment_doc.set_status()
 		if appointment_doc.status != previous_status:
-			frappe.db.set_value("Patient Appointment", appointment.name, "status", appointment_doc.status)
+			frappe.db.set_value(
+				"Patient Appointment",
+				{
+					"name": appointment.name,
+					"modified": appointment_doc.modified,
+					"status": previous_status,
+				},
+				"status",
+				appointment_doc.status,
+			)
