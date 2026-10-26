@@ -39,7 +39,10 @@ from healthcare.healthcare.doctype.patient_appointment.patient_appointment impor
 from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
 	update_status as update_appointment_status,
 )
-from healthcare.healthcare.doctype.patient_encounter.patient_encounter import get_encounter_details
+from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
+	create_medication_request,
+	get_encounter_details,
+)
 from healthcare.healthcare.doctype.sample_collection.sample_collection import create_observation
 from healthcare.healthcare.doctype.service_request.service_request import (
 	set_service_request_status,
@@ -392,3 +395,24 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 		for name, args in calls.items():
 			with self.subTest(endpoint=name):
 				self.assert_denied(getattr(patient_progress, name), self.patient, *args)
+
+
+class TestMedicationRequestCreation(WhitelistPermissionTestCase):
+	"""Orders are created from an encounter, so the caller must be allowed to edit it."""
+
+	def setUp(self):
+		super().setUp()
+		self.encounter = stored("Patient Encounter", patient=self.patient)
+
+	def requests(self):
+		return frappe.db.count("Medication Request", {"order_group": self.encounter})
+
+	def test_creating_medication_requests_needs_write_on_the_encounter(self):
+		self.assert_denied(create_medication_request, self.encounter)
+		self.assertEqual(self.requests(), 0)
+
+	def test_a_nurse_cannot_create_medication_requests(self):
+		make_user(NURSE, "Nursing User")
+		frappe.set_user(NURSE)
+
+		self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
