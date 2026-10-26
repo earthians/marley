@@ -347,9 +347,9 @@ def create_customer(doc):
 def make_invoice(patient, company):
 	uom = frappe.db.exists("UOM", "Nos") or frappe.db.get_single_value("Stock Settings", "stock_uom")
 	registration_item = frappe.db.get_single_value("Healthcare Settings", "registration_item") or None
-	customer_doc = frappe.get_cached_doc("Customer", sales_invoice.customer)
 	sales_invoice = frappe.new_doc("Sales Invoice")
 	sales_invoice.customer = frappe.db.get_value("Patient", patient, "customer")
+	customer_doc = frappe.get_cached_doc("Customer", sales_invoice.customer)
 	sales_invoice.patient = patient
 	sales_invoice.due_date = getdate()
 	sales_invoice.company = company
