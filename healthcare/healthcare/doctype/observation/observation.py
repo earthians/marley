@@ -781,7 +781,7 @@ def set_observation_status(
 
 
 def get_component_observations(observation, status):
-	filters = {"parent_observation": observation}
+	filters = {"parent_observation": observation, "docstatus": ["!=", 2]}
 	if status == "Approved":
 		# already approved components are submitted, approving them again is not possible
 		filters.update({"status": ["!=", "Approved"], "docstatus": 0})
@@ -828,17 +828,28 @@ def approve_observation_and_components(observation_name, approved, skipped):
 	approved.append(observation_doc.name)
 
 
-def get_approvable_observations(observation_name):
+def get_approvable_observations(observation_name, incomplete=None):
 	"""Observations under `observation_name` (itself included) that are currently
 	eligible for Approve All to submit - mirrors `approve_observation_and_components`'s
 	decisions without side effects, so the consumables review can show the same set
-	that will actually be issued, even inside an otherwise-incomplete panel."""
+	that will actually be issued, even inside an otherwise-incomplete panel.
+
+	`incomplete` is shared across the whole recursion, the same way `skipped` is
+	in `approve_observation_and_components`: whether a sub-panel belongs in its own
+	parent's count depends on everything beneath it, at any depth, not just on
+	whether it happened to contribute any names of its own."""
+	if incomplete is None:
+		incomplete = []
+
 	observation_doc = frappe.get_doc("Observation", observation_name)
 	if observation_doc.status == "Approved" or observation_doc.docstatus != 0:
 		return []
 
 	if not observation_doc.has_component:
-		return [observation_doc.name] if observation_doc.is_ready_for_approval() else []
+		if observation_doc.is_ready_for_approval():
+			return [observation_doc.name]
+		incomplete.append(observation_doc.name)
+		return []
 
 	component_names = frappe.get_all(
 		"Observation",
@@ -846,15 +857,11 @@ def get_approvable_observations(observation_name):
 		pluck="name",
 	)
 	found = []
-	panel_complete = True
+	incomplete_before = len(incomplete)
 	for component_name in component_names:
-		component_found = get_approvable_observations(component_name)
-		found.extend(component_found)
-		already_approved = frappe.db.get_value("Observation", component_name, "status") == "Approved"
-		if not component_found and not already_approved:
-			panel_complete = False
+		found.extend(get_approvable_observations(component_name, incomplete))
 
-	if panel_complete:
+	if len(incomplete) == incomplete_before:
 		found.append(observation_doc.name)
 	return found
 
