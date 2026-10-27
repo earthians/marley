@@ -771,18 +771,37 @@ def approve_all_observations(diagnostic_report: str) -> dict[str, list[str]]:
 	approved, skipped = [], []
 
 	for observation in get_root_observations(diagnostic_report):
-		if observation.get("status") == "Approved" or observation.get("docstatus") != 0:
-			continue
-
-		observation_doc = frappe.get_doc("Observation", observation.get("name"))
-		if not observation_doc.is_ready_for_approval():
-			skipped.append(get_observation_label(observation_doc))
-			continue
-
-		set_observation_status(observation_doc.name, "Approved")
-		approved.append(observation_doc.name)
+		approve_observation_and_components(observation.get("name"), approved, skipped)
 
 	return {"approved": approved, "skipped": skipped}
+
+
+def approve_observation_and_components(observation_name, approved, skipped):
+	observation_doc = frappe.get_doc("Observation", observation_name)
+	if observation_doc.status == "Approved" or observation_doc.docstatus != 0:
+		return
+
+	if observation_doc.has_component:
+		component_names = frappe.get_all(
+			"Observation",
+			{"parent_observation": observation_name, "docstatus": ["!=", 2]},
+			pluck="name",
+		)
+		skipped_before = len(skipped)
+		for component_name in component_names:
+			approve_observation_and_components(component_name, approved, skipped)
+		if len(skipped) == skipped_before:
+			# Every component just got approved (or already was) - the panel itself is complete.
+			set_observation_status(observation_doc.name, "Approved")
+			approved.append(observation_doc.name)
+		return
+
+	if not observation_doc.is_ready_for_approval():
+		skipped.append(get_observation_label(observation_doc))
+		return
+
+	set_observation_status(observation_doc.name, "Approved")
+	approved.append(observation_doc.name)
 
 
 @frappe.whitelist()
