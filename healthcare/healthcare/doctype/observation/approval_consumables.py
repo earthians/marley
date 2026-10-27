@@ -50,14 +50,14 @@ def save_edits(observation, edits):
 
 def report_roots(diagnostic_report):
 	"""The report's Observations that Approve All will approve."""
-	from healthcare.healthcare.doctype.observation.observation import get_root_observations
+	from healthcare.healthcare.doctype.observation.observation import (
+		get_approvable_observations,
+		get_root_observations,
+	)
 
 	roots = []
 	for observation in get_root_observations(diagnostic_report):
-		if observation.get("status") == "Approved" or observation.get("docstatus") != 0:
-			continue
-		if frappe.get_doc("Observation", observation.get("name")).is_ready_for_approval():
-			roots.append(observation.get("name"))
+		roots.extend(get_approvable_observations(observation.get("name")))
 	return roots
 
 
