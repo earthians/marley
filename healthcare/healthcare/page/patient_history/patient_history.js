@@ -1,4 +1,5 @@
 frappe.provide("frappe.pages");
+
 frappe.pages["patient_history"].on_page_load = function(wrapper) {
     frappe.ui.make_app_page({
         parent: wrapper,
@@ -17,14 +18,15 @@ frappe.pages["patient_history"].on_page_load = function(wrapper) {
     const root = document.createElement("div");
     state.root = root;
     root.id = "patient-history-vue";
-    page.main[0].replaceChildren(root);
+    const existingRoot = page.main[0].querySelector("#patient-history-vue");
+    if (existingRoot) existingRoot.remove();
+    page.main[0].appendChild(root);
 
     if (!document.getElementById("patient-history-vue-css")) {
         const stylesheet = document.createElement("link");
         stylesheet.id = "patient-history-vue-css";
         stylesheet.rel = "stylesheet";
-        stylesheet.href =
-            "/assets/healthcare/patient_history/patient_history.css?v=20261014-14";
+        stylesheet.href = "/assets/healthcare/patient_history/patient_history.css?v=20261028-1";
         document.head.appendChild(stylesheet);
     }
 
@@ -33,12 +35,28 @@ frappe.pages["patient_history"].on_page_load = function(wrapper) {
         options: "Patient",
         fieldname: "patient",
         label: __("Patient"),
+        placeholder: __("Search patient by name or ID"),
         change() {
             state.patient = patientField.get_value() || "";
-            state.app?.setPatient(state.patient);
+            if (state.app) state.app.setPatient(state.patient);
+            toggleClearButton();
         },
     });
     state.patientField = patientField;
+
+    const clearButton = $(
+        `<button type="button" class="ph-patient-clear hide" title="${__("Clear")}" aria-label="${__(
+			"Clear patient"
+		)}">${frappe.utils.icon("x", "sm")}</button>`
+    ).appendTo(patientField.$input.parent());
+    const toggleClearButton = () => clearButton.toggleClass("hide", !patientField.$input.val());
+    state.toggleClearButton = toggleClearButton;
+    patientField.$input.on("input change blur awesomplete-selectcomplete", toggleClearButton);
+    clearButton.on("click", () => {
+        patientField.set_value("");
+        patientField.$input.val("").trigger("focus");
+        toggleClearButton();
+    });
     page.set_primary_action(__("Open Patient"), () => {
         if (state.patient) frappe.set_route("Form", "Patient", state.patient);
     });
@@ -49,20 +67,15 @@ frappe.pages["patient_history"].on_page_show = function(wrapper) {
     const state = wrapper.patientHistoryState;
     if (!state || state.destroyed) return;
     state.visible = true;
-    const routed = frappe.route_options?.patient;
+    const routed = frappe.route_options && frappe.route_options.patient;
     if (routed) {
         state.patient = routed;
-        state.patientField.set_value(routed);
+        state.patientField.set_value(routed).then(state.toggleClearButton);
         delete frappe.route_options.patient;
     }
 
     function mount() {
-        if (
-            state.visible &&
-            !state.destroyed &&
-            !state.app &&
-            window.mountPatientHistory
-        ) {
+        if (state.visible && !state.destroyed && !state.app && window.mountPatientHistory) {
             state.app = window.mountPatientHistory(state.root, {
                 patient: state.patient,
                 currentUser: frappe.session.user,
@@ -83,15 +96,17 @@ frappe.pages["patient_history"].on_page_show = function(wrapper) {
 };
 
 frappe.pages["patient_history"].on_page_hide = function(wrapper) {
-    if (wrapper.patientHistoryState) wrapper.patientHistoryState.visible = false;
-    wrapper.patientHistoryState?.app?.unmount();
-    if (wrapper.patientHistoryState) wrapper.patientHistoryState.app = null;
+    const state = wrapper.patientHistoryState;
+    if (!state) return;
+    state.visible = false;
+    if (state.app) state.app.unmount();
+    state.app = null;
 };
 
 frappe.pages["patient_history"].on_page_destroy = function(wrapper) {
     const state = wrapper.patientHistoryState;
     if (!state) return;
     state.destroyed = true;
-    state.app?.unmount();
+    if (state.app) state.app.unmount();
     state.app = null;
 };
