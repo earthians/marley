@@ -757,7 +757,7 @@ def set_observation_status(
 
 
 def get_component_observations(observation, status):
-	filters = {"parent_observation": observation}
+	filters = {"parent_observation": observation, "docstatus": ["!=", 2]}
 	if status == "Approved":
 		# already approved components are submitted, approving them again is not possible
 		filters.update({"status": ["!=", "Approved"], "docstatus": 0})
@@ -771,37 +771,113 @@ def approve_all_observations(diagnostic_report: str) -> dict[str, list[str]]:
 	approved, skipped = [], []
 
 	for observation in get_root_observations(diagnostic_report):
-		if observation.get("status") == "Approved" or observation.get("docstatus") != 0:
-			continue
-
-		observation_doc = frappe.get_doc("Observation", observation.get("name"))
-		if not observation_doc.is_ready_for_approval():
-			skipped.append(get_observation_label(observation_doc))
-			continue
-
-		set_observation_status(observation_doc.name, "Approved")
-		approved.append(observation_doc.name)
+		approve_observation_and_components(observation.get("name"), approved, skipped)
 
 	return {"approved": approved, "skipped": skipped}
 
 
+def approve_observation_and_components(observation_name, approved, skipped):
+	observation_doc = frappe.get_doc("Observation", observation_name)
+	if observation_doc.status == "Approved" or observation_doc.docstatus != 0:
+		return
+
+	if observation_doc.has_component:
+		component_names = frappe.get_all(
+			"Observation",
+			{"parent_observation": observation_name, "docstatus": ["!=", 2]},
+			pluck="name",
+		)
+		skipped_before = len(skipped)
+		for component_name in component_names:
+			approve_observation_and_components(component_name, approved, skipped)
+		if len(skipped) == skipped_before:
+			# Every component just got approved (or already was) - the panel itself is complete.
+			set_observation_status(observation_doc.name, "Approved")
+			approved.append(observation_doc.name)
+		return
+
+	if not observation_doc.is_ready_for_approval():
+		skipped.append(get_observation_label(observation_doc))
+		return
+
+	set_observation_status(observation_doc.name, "Approved")
+	approved.append(observation_doc.name)
+
+
+def get_approvable_observations(observation_name, incomplete=None):
+	"""Observations under `observation_name` (itself included) that are currently
+	eligible for Approve All to submit - mirrors `approve_observation_and_components`'s
+	decisions without side effects, so the consumables review can show the same set
+	that will actually be issued, even inside an otherwise-incomplete panel.
+
+	`incomplete` is shared across the whole recursion, the same way `skipped` is
+	in `approve_observation_and_components`: whether a sub-panel belongs in its own
+	parent's count depends on everything beneath it, at any depth, not just on
+	whether it happened to contribute any names of its own."""
+	if incomplete is None:
+		incomplete = []
+
+	observation_doc = frappe.get_doc("Observation", observation_name)
+	if observation_doc.status == "Approved" or observation_doc.docstatus != 0:
+		return []
+
+	if not observation_doc.has_component:
+		if observation_doc.is_ready_for_approval():
+			return [observation_doc.name]
+		incomplete.append(observation_doc.name)
+		return []
+
+	component_names = frappe.get_all(
+		"Observation",
+		{"parent_observation": observation_name, "docstatus": ["!=", 2]},
+		pluck="name",
+	)
+	found = []
+	incomplete_before = len(incomplete)
+	for component_name in component_names:
+		found.extend(get_approvable_observations(component_name, incomplete))
+
+	if len(incomplete) == incomplete_before:
+		found.append(observation_doc.name)
+	return found
+
+
 @frappe.whitelist()
-def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, list[str]]:
-	"""Reject every approved Observation of the report"""
+def reject_all_observations(
+	diagnostic_report: str, reason: str, repeat_test: bool = False
+) -> dict[str, list[str]]:
+	"""Reject every approved Observation of the report, including components
+	already approved inside a panel that is itself still incomplete."""
 	if not reason:
 		frappe.throw(_("Please enter a reason to Reject."))
 
 	rejected, skipped = [], []
 
 	for observation in get_root_observations(diagnostic_report):
-		if observation.get("status") != "Approved":
-			skipped.append(get_observation_label(observation))
-			continue
-
-		set_observation_status(observation.get("name"), "Rejected", reason)
-		rejected.append(observation.get("name"))
+		reject_observation_and_components(observation.get("name"), reason, repeat_test, rejected, skipped)
 
 	return {"rejected": rejected, "skipped": skipped}
+
+
+def reject_observation_and_components(observation_name, reason, repeat_test, rejected, skipped):
+	observation_doc = frappe.get_doc("Observation", observation_name)
+
+	if observation_doc.has_component and observation_doc.status != "Approved":
+		component_names = frappe.get_all(
+			"Observation",
+			{"parent_observation": observation_name, "docstatus": ["!=", 2]},
+			pluck="name",
+		)
+		for component_name in component_names:
+			reject_observation_and_components(component_name, reason, repeat_test, rejected, skipped)
+		return
+
+	if observation_doc.status != "Approved":
+		skipped.append(get_observation_label(observation_doc))
+		return
+
+	set_observation_status(observation_doc.name, "Rejected", reason, repeat_test=repeat_test)
+	rejected.append(observation_doc.name)
 
 
 def get_observation_label(observation_doc):
