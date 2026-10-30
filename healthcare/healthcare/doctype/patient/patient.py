@@ -355,9 +355,9 @@ def make_invoice(patient, company):
 	sales_invoice.company = company
 	sales_invoice.is_pos = 0
 	sales_invoice.debit_to = get_receivable_account(company)
-	sales_invoice.customer_name  = customer_doc.customer_name
+	sales_invoice.customer_name = customer_doc.customer_name
 	sales_invoice.customer_group = customer_doc.customer_group
-	sales_invoice.territory      = customer_doc.territory
+	sales_invoice.territory = customer_doc.territory
 	if customer_doc.default_price_list:
 		sales_invoice.selling_price_list = customer_doc.default_price_list
 
