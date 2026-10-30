@@ -14,7 +14,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.service_request.service_request import (
-	set_service_request_status,
+	update_service_request_status,
 )
 from healthcare.healthcare.utils import validate_nursing_tasks
 
@@ -52,7 +52,7 @@ class ClinicalProcedure(Document):
 
 	def on_cancel(self):
 		if self.service_request:
-			set_service_request_status(self.service_request, "active-Request Status")
+			update_service_request_status(self.service_request, "active-Request Status")
 
 	def after_insert(self):
 		if self.appointment:
@@ -74,7 +74,7 @@ class ClinicalProcedure(Document):
 			if sessions_completed:
 				status = "completed-Request Status"
 
-			set_service_request_status(self.service_request, status)
+			update_service_request_status(self.service_request, status)
 
 	def create_nursing_tasks(self, post_event=True):
 		if post_event:
@@ -200,7 +200,7 @@ class ClinicalProcedure(Document):
 		self.db_set(update_fields)
 
 		if self.service_request:
-			set_service_request_status(self.service_request, "completed-Request Status")
+			update_service_request_status(self.service_request, "completed-Request Status")
 
 		# post op nursing tasks
 		if self.procedure_template:
@@ -393,7 +393,8 @@ def make_procedure(source_name: str, target_doc: Document | None = None) -> Docu
 
 
 @frappe.whitelist()
-def get_procedure_prescribed(patient: str) -> Document:
+def get_procedure_prescribed(patient: str) -> list[tuple]:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	hso = frappe.qb.DocType("Service Request")
 	return (
 		frappe.qb.from_(hso)

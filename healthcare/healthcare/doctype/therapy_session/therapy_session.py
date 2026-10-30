@@ -16,7 +16,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 )
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.service_request.service_request import (
-	set_service_request_status,
+	update_service_request_status,
 )
 from healthcare.healthcare.utils import validate_nursing_tasks
 
@@ -89,7 +89,7 @@ class TherapySession(Document):
 			if sessions_completed:
 				status = "completed-Request Status"
 
-			set_service_request_status(self.service_request, status)
+			update_service_request_status(self.service_request, status)
 
 	def create_nursing_tasks(self, post_event=True):
 		template = frappe.db.get_value("Therapy Type", self.therapy_type, "nursing_checklist_template")

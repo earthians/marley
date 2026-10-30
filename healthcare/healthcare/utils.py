@@ -24,7 +24,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 )
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
-from healthcare.healthcare.doctype.observation.observation import add_observation
+from healthcare.healthcare.doctype.observation.observation import new_observation
 from healthcare.healthcare.doctype.observation_template.observation_template import (
 	get_observation_template_details,
 )
@@ -34,6 +34,10 @@ from healthcare.healthcare.doctype.observation_template.observation_template imp
 def get_healthcare_services_to_invoice(
 	patient: str, customer: str, company: str, link_customer: bool = False
 ) -> list[dict]:
+	frappe.has_permission("Sales Invoice", "create", throw=True)
+	frappe.has_permission("Patient", "read", patient, throw=True)
+	if link_customer:
+		frappe.has_permission("Patient", "write", patient, throw=True)
 	patient = frappe.get_doc("Patient", patient)
 	items_to_invoice = []
 	if patient:
@@ -1400,11 +1404,14 @@ def get_children(doctype, parent=None, company=None, is_root=False, include_disa
 
 
 @frappe.whitelist()
-def get_patient_vitals(patient, from_date=None, to_date=None):
+def get_patient_vitals(
+	patient: str, from_date: str | None = None, to_date: str | None = None
+) -> list | bool | None:
 	if not patient:
 		return
 
-	vitals = frappe.db.get_all(
+	frappe.has_permission("Patient", "read", patient, throw=True)
+	vitals = frappe.get_list(
 		"Vital Signs",
 		filters={"docstatus": 1, "patient": patient},
 		order_by="signs_date, signs_time",
@@ -1426,10 +1433,11 @@ def render_docs_as_html(docs):
 
 
 @frappe.whitelist()
-def render_doc_as_html(doctype, docname, exclude_fields=None):
+def render_doc_as_html(doctype: str, docname: str, exclude_fields: str | list | None = None) -> dict:
 	"""
 	Render document as HTML
 	"""
+	frappe.has_permission(doctype, "read", docname, throw=True)
 	exclude_fields = exclude_fields or []
 	doc = frappe.get_doc(doctype, docname)
 	meta = frappe.get_meta(doctype)
@@ -1766,7 +1774,7 @@ def insert_observation_and_sample_collection(
 		# non-sample children to parent - its sample side is chained later.
 		current_parent_observation = None
 		if parent_observation is None or non_sample_reqd_component_obs:
-			current_parent_observation = add_observation(
+			current_parent_observation = new_observation(
 				patient=patient,
 				template=grp.get("name"),
 				company=doc.company,
@@ -1802,7 +1810,7 @@ def insert_observation_and_sample_collection(
 					continue
 				if comp_has_component:
 					# Pure non-sample sub-panel - never chained elsewhere.
-					sub_observation = add_observation(
+					sub_observation = new_observation(
 						patient=patient,
 						template=comp,
 						company=doc.company,
@@ -1823,7 +1831,7 @@ def insert_observation_and_sample_collection(
 						},
 					)
 				else:
-					add_observation(
+					new_observation(
 						patient=patient,
 						template=comp,
 						company=doc.company,
@@ -1865,7 +1873,7 @@ def insert_observation_and_sample_collection(
 		diag_report_required = True
 		# create observation for non sample_collection_reqd individual templates
 		if not grp.get("sample_collection_required"):
-			add_observation(
+			new_observation(
 				patient=patient,
 				template=grp.get("name"),
 				company=doc.company,
@@ -1918,7 +1926,7 @@ def create_non_sample_observations(template, parent_observation, observation_kwa
 		comp_has_component = frappe.db.get_value("Observation Template", comp, "has_component")
 		if comp_has_component and has_sample_required_component(comp):
 			continue
-		observation_name = add_observation(template=comp, parent=parent_observation, **observation_kwargs)
+		observation_name = new_observation(template=comp, parent=parent_observation, **observation_kwargs)
 		if comp_has_component:
 			create_non_sample_observations(comp, observation_name, observation_kwargs)
 
