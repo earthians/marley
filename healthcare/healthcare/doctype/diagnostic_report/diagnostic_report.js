@@ -47,15 +47,16 @@ var show_diagnostic_report = function (frm) {
 	}
 };
 
+// The consumables review is the confirmation when approving issues any.
 var confirm_approve_all = function (frm) {
-	frappe.confirm(
-		__("Are you sure you want to approve all Observations in this report?"),
-		function () {
-			save_pending_results(frm).then(function () {
-				approve_all_observations(frm);
-			});
-		},
-	);
+	save_pending_results(frm)
+		.then(() =>
+			healthcare.review_approval_consumables(
+				{ diagnostic_report: frm.doc.name },
+				__("Are you sure you want to approve all Observations in this report?"),
+			),
+		)
+		.then(confirmed => confirmed && approve_all_observations(frm));
 };
 
 var save_pending_results = function (frm) {
@@ -123,10 +124,18 @@ var prompt_reject_all = function (frm) {
 				fieldtype: "Text",
 				reqd: 1,
 			},
+			{
+				label: __("Repeat the tests"),
+				fieldname: "repeat_test",
+				fieldtype: "Check",
+				description: __(
+					"Tick if the tests are run again. Their consumables are issued again when the new results are approved.",
+				),
+			},
 		],
 		function (values) {
 			save_pending_results(frm).then(function () {
-				reject_all_observations(frm, values.reason);
+				reject_all_observations(frm, values.reason, values.repeat_test);
 			});
 		},
 		__("Reason For Rejection"),
@@ -134,12 +143,13 @@ var prompt_reject_all = function (frm) {
 	);
 };
 
-var reject_all_observations = function (frm, reason) {
+var reject_all_observations = function (frm, reason, repeat_test) {
 	frappe.call({
 		method: "healthcare.healthcare.doctype.observation.observation.reject_all_observations",
 		args: {
 			diagnostic_report: frm.doc.name,
 			reason: reason,
+			repeat_test: !!repeat_test,
 		},
 		freeze: true,
 		freeze_message: __("Rejecting Observations"),

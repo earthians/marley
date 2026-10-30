@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "creation": "2026-10-11 18:46:40.272531",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "consumed_at",
+  "qty",
+  "uom",
+  "conversion_factor",
+  "stock_qty",
+  "stock_uom",
+  "column_break_batch",
+  "batch_no",
+  "issued_qty",
+  "stock_entry",
+  "suggested_qty",
+  "collect_action",
+  "specimen",
+  "sample",
+  "container_closure_color",
+  "medical_department",
+  "observation_template"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "link_filters": "[[\"Item\",\"is_stock_item\",\"=\",1],[\"Item\",\"disabled\",\"=\",0]]",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "consumed_at",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Consumed At",
+   "options": "\nSpecimen\nSample Collection\nObservation",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "default": "1",
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "conversion_factor",
+   "fieldtype": "Float",
+   "label": "Conversion Factor",
+   "read_only": 1
+  },
+  {
+   "description": "Quantity in the stock UOM, which is what is issued",
+   "fieldname": "stock_qty",
+   "fieldtype": "Float",
+   "label": "Stock Qty",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "item_code.stock_uom",
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_batch",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 2,
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Batch",
+   "options": "Batch"
+  },
+  {
+   "depends_on": "stock_entry",
+   "description": "Issued and fixed; more of this item goes on a new row",
+   "fieldname": "issued_qty",
+   "fieldtype": "Float",
+   "label": "Issued Quantity",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "stock_entry",
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Entry",
+   "no_copy": 1,
+   "options": "Stock Entry",
+   "read_only": 1
+  },
+  {
+   "depends_on": "suggested_qty",
+   "description": "Counted by an earlier collect; the quantity if this collect used a new container or draw",
+   "fieldname": "suggested_qty",
+   "fieldtype": "Float",
+   "label": "If New Container",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "collect_action",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Collect Action",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "specimen",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Specimen",
+   "options": "Specimen",
+   "read_only": 1
+  },
+  {
+   "fieldname": "observation_template",
+   "fieldtype": "Link",
+   "label": "Observation Template",
+   "options": "Observation Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "options": "Lab Test Sample",
+   "read_only": 1
+  },
+  {
+   "fieldname": "container_closure_color",
+   "fieldtype": "Data",
+   "label": "Closure Color",
+   "read_only": 1
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-19 19:04:21.092860",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Observation Consumable",
+ "owner": "Administrator",
+ "permissions": [],
+ "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

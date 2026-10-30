@@ -63,37 +63,11 @@ class WardIssue:
 	def __init__(self, inpatient_record, warehouse):
 		self.admission = frappe.get_doc("Inpatient Record", inpatient_record)
 		self.warehouse = warehouse
-		self.company = self.admission.company
 
 	def record(self, items):
-		stock_entry = self.issue(items)
+		stock_entry = StockIssue(self.admission.company, self.warehouse, self.admission.patient).issue(items)
 		self.add_to_billables(items, stock_entry)
 		return stock_entry
-
-	def issue(self, items):
-		stock_entry = frappe.new_doc("Stock Entry")
-		stock_entry.stock_entry_type = "Material Issue"
-		stock_entry.from_warehouse = self.warehouse
-		stock_entry.company = self.company
-
-		for item in items:
-			self.add_item(stock_entry, item)
-
-		stock_entry.save(ignore_permissions=True)
-		stock_entry.submit()
-		return stock_entry.name
-
-	def add_item(self, stock_entry, item):
-		row = stock_entry.append("items")
-		row.item_code = item.get("item_code")
-		row.qty = flt(item.get("quantity"))
-		row.s_warehouse = self.warehouse
-		row.cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
-		row.expense_account = get_account(None, "expense_account", "Healthcare Settings", self.company)
-		if item.get("batch_no"):
-			set_batch(row, item.get("batch_no"))
-		row.patient = self.admission.patient
-		return row
 
 	def add_to_billables(self, items, stock_entry):
 		"""A billable row only invoices once it carries its stock entry."""
@@ -113,3 +87,45 @@ class WardIssue:
 			"conversion_factor": 1,
 			"stock_entry": stock_entry,
 		}
+
+
+class StockIssue:
+	"""A submitted Material Issue of a patient's items from one warehouse.
+
+	Each item is a dict of item_code, quantity, and an optional batch_no, and uom
+	with its conversion_factor when the quantity is not in the stock UOM.
+	"""
+
+	def __init__(self, company, warehouse, patient):
+		self.company = company
+		self.warehouse = warehouse
+		self.patient = patient
+
+	def issue(self, items):
+		stock_entry = frappe.new_doc("Stock Entry")
+		stock_entry.stock_entry_type = "Material Issue"
+		stock_entry.from_warehouse = self.warehouse
+		stock_entry.company = self.company
+
+		for item in items:
+			self.add_item(stock_entry, item)
+
+		stock_entry.save(ignore_permissions=True)
+		stock_entry.submit()
+		return stock_entry.name
+
+	def add_item(self, stock_entry, item):
+		row = stock_entry.append("items")
+		row.item_code = item.get("item_code")
+		row.qty = flt(item.get("quantity"))
+		# A quantity in another UOM is converted to stock by the Stock Entry itself.
+		if item.get("uom"):
+			row.uom = item.get("uom")
+			row.conversion_factor = flt(item.get("conversion_factor")) or 1
+		row.s_warehouse = self.warehouse
+		row.cost_center = frappe.get_cached_value("Company", self.company, "cost_center")
+		row.expense_account = get_account(None, "expense_account", "Healthcare Settings", self.company)
+		if item.get("batch_no"):
+			set_batch(row, item.get("batch_no"))
+		row.patient = self.patient
+		return row

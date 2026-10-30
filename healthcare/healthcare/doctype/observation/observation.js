@@ -19,6 +19,9 @@ frappe.ui.form.on("Observation", {
 			};
 		});
 
+		set_service_unit_query(frm);
+		healthcare.ConsumablesReview.set_batch_query(frm);
+		healthcare.ConsumablesReview.ask_once_before_submit(frm);
 		render_period_control(frm);
 	},
 	onload_post_render: function (frm) {
@@ -70,6 +73,10 @@ frappe.ui.form.on("Observation", {
 
 	observation_template: function (frm) {
 		get_medical_codes(frm);
+		set_service_unit_query(frm);
+	},
+	service_request: function (frm) {
+		set_service_unit_query(frm);
 	},
 });
 
@@ -222,3 +229,19 @@ var get_medical_codes = function (frm) {
 		frm.refresh_field("codification_table");
 	}
 };
+
+// Only units of the type that can perform this observation, such as a modality type.
+async function set_service_unit_query(frm) {
+	const { message: service_unit_type } = await frappe.call({
+		method: "healthcare.healthcare.doctype.observation.observation_consumables.get_service_unit_type",
+		args: {
+			observation_template: frm.doc.observation_template,
+			service_request: frm.doc.service_request,
+		},
+	});
+	frm.set_query("service_unit", () => {
+		const filters = { company: frm.doc.company, is_group: 0 };
+		if (service_unit_type) filters.service_unit_type = service_unit_type;
+		return { filters };
+	});
+}

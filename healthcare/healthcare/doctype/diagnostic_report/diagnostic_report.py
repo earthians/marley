@@ -6,6 +6,7 @@ from frappe.model.document import Document
 from frappe.model.workflow import get_workflow_name, get_workflow_state_field
 
 from healthcare.healthcare.doctype.observation.observation import get_observation_details
+from healthcare.healthcare.doctype.observation.observation_consumables import replace_consumables
 
 
 class DiagnosticReport(Document):
@@ -78,7 +79,7 @@ def set_diagnostic_status(doc):
 
 
 @frappe.whitelist()
-def set_observation_status(docname):
+def set_observation_status(docname: str) -> None:
 	doc = frappe.get_doc("Diagnostic Report", docname)
 	if doc.ref_doctype == "Sales Invoice":
 		observations = frappe.db.get_all(
@@ -105,5 +106,8 @@ def set_observation_status(docname):
 						if doc.status == "Rejected" and observation_doc.status == "Approved":
 							new_doc = frappe.copy_doc(observation_doc)
 							new_doc.status = ""
+							# A workflow action cannot ask whether the test is repeated,
+							# so the replacement is treated as a correction.
+							replace_consumables(new_doc, observation_doc, repeat_test=False)
 							new_doc.insert()
 							observation_doc.cancel()

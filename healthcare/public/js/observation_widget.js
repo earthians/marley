@@ -574,16 +574,34 @@ healthcare.ObservationWidget = class {
 		d.get_close_btn().show();
 	}
 
+	// The results typed into the widget, saved as the report's own save would.
+	save_typed_results() {
+		if (!this.result || !this.result.length) return Promise.resolve();
+		return frappe.call({
+			method: "healthcare.healthcare.doctype.observation.observation.record_observation_result",
+			args: { values: this.result },
+			freeze: true,
+		});
+	}
+
 	auth_observation(observation, status) {
 		var me = this;
 		if (status == "Approved") {
-			frappe.confirm(
-				__(
-					"Are you sure you want to authorise Observation <b>" +
-						observation +
-						"</b>",
-				),
-				function () {
+			// A result typed but not yet saved must be saved before it can be approved.
+			// Approving issues the consumables, so their review is the confirmation.
+			me.save_typed_results()
+				.then(() =>
+					healthcare.review_approval_consumables(
+						{ observation: observation },
+						__(
+							"Are you sure you want to authorise Observation <b>" +
+								observation +
+								"</b>",
+						),
+					),
+				)
+				.then(confirmed => {
+					if (!confirmed) return;
 					frappe.call({
 						method: "healthcare.healthcare.doctype.observation.observation.set_observation_status",
 						args: {
@@ -594,8 +612,7 @@ healthcare.ObservationWidget = class {
 							me.frm.reload_doc();
 						},
 					});
-				},
-			);
+				});
 		} else if (status == "Rejected") {
 			var d = new frappe.ui.Dialog({
 				title: __("Reason For Rejection"),
@@ -606,6 +623,14 @@ healthcare.ObservationWidget = class {
 						fieldtype: "Text",
 						reqd: 1,
 					},
+					{
+						label: __("Repeat the test"),
+						fieldname: "repeat_test",
+						fieldtype: "Check",
+						description: __(
+							"Tick if the test is run again. Its consumables are issued again when the new result is approved.",
+						),
+					},
 				],
 				primary_action: function () {
 					var data = d.get_values();
@@ -615,6 +640,7 @@ healthcare.ObservationWidget = class {
 							observation: observation,
 							status: status,
 							reason: data.unauthorisation_reason,
+							repeat_test: !!data.repeat_test,
 						},
 						freeze: true,
 						callback: function (r) {

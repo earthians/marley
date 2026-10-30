@@ -288,33 +288,63 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 
 	update_selection() {
 		const count = this.selected_units().length;
-		this.toolbar.find(".mark-selected-btn").prop("disabled", count === 0);
 		this.toolbar
 			.find(".sample-tree-selection")
 			.text(count ? __("{0} selected", [count]) : "");
+		this.show_relevant_buttons(count);
 	}
 
-	run_collection(nodes) {
-		frappe.confirm(
+	// Each button shows only when it can do something.
+	show_relevant_buttons(selected_count) {
+		const boxes = this.wrapper.find(".sample-tree-check");
+		const checked = boxes.filter(":checked").length;
+		const draft = this.frm.doc.docstatus === 0;
+		this.toolbar.find(".select-all-btn").toggle(draft && checked < boxes.length);
+		this.toolbar.find(".unselect-all-btn").toggle(draft && checked > 0);
+		this.toolbar.find(".mark-selected-btn").toggle(draft && selected_count > 0);
+		this.toolbar
+			.find(".expand-all-btn")
+			.toggle(this.wrapper.find(".sample-tree-children").length > 0);
+	}
+
+	async run_collection(nodes) {
+		// One id for the whole action: its calls share containers.
+		const collect_action = frappe.utils.get_random(10);
+		// The review previews the samples in the order they are collected: when two
+		// templates list an item in different units, the first one recorded sets the unit.
+		const groups = this.group_by_parent(nodes);
+		const review = await healthcare.ConsumablesReview.before_collect(
+			this.frm,
+			groups.flatMap(group => group.rows),
+			collect_action,
 			__("Are you sure you want to mark {0} sample(s) as Collected?", [
 				nodes.length,
 			]),
-			async () => {
-				frappe.dom.freeze(__("Marking Collected..."));
-				try {
-					// Run groups one at a time: parallel requests race on the
-					// same Sample Collection and only one set of writes survives.
-					for (const group of this.group_by_parent(nodes)) {
-						await this.collect_call(group);
-					}
-					await this.frm.reload_doc();
-				} catch (error) {
-					frappe.throw(__("Failed to mark samples as Collected"));
-				} finally {
-					frappe.dom.unfreeze();
-				}
-			},
 		);
+		if (!review) return;
+
+		frappe.dom.freeze(__("Marking Collected..."));
+		try {
+			// Run groups one at a time: parallel requests race on the
+			// same Sample Collection and only one set of writes survives.
+			for (const group of groups) {
+				await this.collect_call(group, collect_action);
+			}
+		} catch (error) {
+			frappe.throw(__("Failed to mark samples as Collected"));
+		} finally {
+			frappe.dom.unfreeze();
+		}
+		// Collected either way; a failed issue shows its own message and waits for submit.
+		try {
+			await healthcare.ConsumablesReview.issue_collected(
+				this.frm,
+				collect_action,
+				review,
+			);
+		} finally {
+			await this.frm.reload_doc();
+		}
 	}
 
 	group_by_parent(nodes) {
@@ -331,10 +361,11 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 		return [...groups.values()];
 	}
 
-	collect_call(group) {
+	collect_call(group, collect_action) {
 		const args = {
 			selected: JSON.stringify(group.rows),
 			sample_collection: this.frm.doc.name,
+			collect_action: collect_action,
 		};
 		if (group.parent) {
 			args.component_observations = group.top_row.component_observations;
