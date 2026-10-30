@@ -342,9 +342,12 @@ def create_custom_records():
 	create_sensitivity()
 	create_triage_levels()
 	create_vital_sign_observation_templates()
+	create_intake_output_types()
+	create_clinical_note_types()
 	setup_patient_history_settings()
 	setup_service_request_masters()
 	setup_order_status_codes()
+	setup_observation_reference_types()
 
 
 def create_medical_departments():
@@ -563,6 +566,30 @@ def create_antibiotics():
 
 def create_lab_test_uom():
 	records = [
+		{
+			"doctype": "Lab Test UOM",
+			"name": "/min",
+			"lab_test_uom": "/min",
+			"uom_description": "per minute (UCUM: /min)",
+		},
+		{
+			"doctype": "Lab Test UOM",
+			"name": "mmHg",
+			"lab_test_uom": "mmHg",
+			"uom_description": "millimetre of mercury (UCUM: mm[Hg])",
+		},
+		{
+			"doctype": "Lab Test UOM",
+			"name": "°C",
+			"lab_test_uom": "°C",
+			"uom_description": "degree Celsius (UCUM: Cel)",
+		},
+		{
+			"doctype": "Lab Test UOM",
+			"name": "Score",
+			"lab_test_uom": "Score",
+			"uom_description": "rating on a fixed scale, such as 0-10 (UCUM: {score})",
+		},
 		{"doctype": "Lab Test UOM", "name": "umol/L", "lab_test_uom": "umol/L", "uom_description": None},
 		{"doctype": "Lab Test UOM", "name": "mg/L", "lab_test_uom": "mg/L", "uom_description": None},
 		{
@@ -882,14 +909,82 @@ def create_triage_levels():
 	insert_record(records)
 
 
+def create_clinical_note_types():
+	# F-DAR carries its own four parts; the rest are written as free text.
+	# Shift Handover is its own pane, with SBAR and the items it carries
+	# forward, so it is not one of these.
+	types = [
+		_("Nursing Progress"),
+		_("Admission Note"),
+		_("Transfer Note"),
+		_("Discharge Note"),
+		_("Incident Note"),
+		_("Patient Education"),
+	]
+	records = [{"doctype": "Clinical Note Type", "clinical_note_type": _("F-DAR"), "is_fdar": 1}]
+	records += [{"doctype": "Clinical Note Type", "clinical_note_type": note_type} for note_type in types]
+	insert_record(records)
+
+
+INTAKE_OUTPUT_UOM = "Millilitre"
+
+
+def create_intake_output_uom():
+	"""The UOM every intake and output volume links to.
+
+	ERPNext seeds its UOMs from the setup wizard, so a site that installs
+	Healthcare before finishing setup has none of them yet.
+	"""
+	records = [
+		{"doctype": "UOM Category", "category_name": "Volume"},
+		{
+			"doctype": "UOM",
+			"uom_name": INTAKE_OUTPUT_UOM,
+			"symbol": "ml",
+			"common_code": "MLT",
+			"category": "Volume",
+			"must_be_whole_number": 0,
+		},
+	]
+	insert_record(records)
+
+
+def create_intake_output_types():
+	create_intake_output_uom()
+
+	types = [
+		(_("Oral"), "Intake"),
+		(_("IV Fluid"), "Intake"),
+		(_("Nasogastric Feed"), "Intake"),
+		(_("Blood Product"), "Intake"),
+		(_("Urine"), "Output"),
+		(_("Drain"), "Output"),
+		(_("Emesis"), "Output"),
+		(_("Stool"), "Output"),
+		(_("Blood Loss"), "Output"),
+	]
+	records = [
+		{
+			"doctype": "Intake Output Type",
+			"intake_output_type": intake_output_type,
+			"direction": direction,
+			"default_uom": INTAKE_OUTPUT_UOM,
+		}
+		for intake_output_type, direction in types
+	]
+	insert_record(records)
+
+
 def create_vital_sign_observation_templates():
+	# observation, abbreviation, unit — permitted_unit is mandatory for Quantity
 	vitals = [
-		(_("Pulse"), "PR"),
-		(_("Respiratory Rate"), "RR"),
-		(_("Temperature"), "TEMP"),
-		(_("BP Systolic"), "BPS"),
-		(_("BP Diastolic"), "BPD"),
-		(_("SpO2"), "SPO2"),
+		(_("Pulse"), "PR", "/min"),
+		(_("Respiratory Rate"), "RR", "/min"),
+		(_("Temperature"), "TEMP", "°C"),
+		(_("BP Systolic"), "BPS", "mmHg"),
+		(_("BP Diastolic"), "BPD", "mmHg"),
+		(_("SpO2"), "SPO2", "%"),
+		(_("Pain Score"), "PAIN", "Score"),
 	]
 	records = [
 		{
@@ -898,10 +993,20 @@ def create_vital_sign_observation_templates():
 			"abbr": abbr,
 			"observation_category": "Vital Signs",
 			"permitted_data_type": "Quantity",
+			"permitted_unit": unit,
 		}
-		for observation, abbr in vitals
+		for observation, abbr, unit in vitals
 	]
 	insert_record(records)
+	set_vital_sign_units(vitals)
+
+
+def set_vital_sign_units(vitals):
+	"""Templates seeded before units existed keep their blank permitted_unit."""
+	for _observation, abbr, unit in vitals:
+		name = frappe.db.get_value("Observation Template", {"abbr": abbr}, "name")
+		if name and not frappe.db.get_value("Observation Template", name, "permitted_unit"):
+			frappe.db.set_value("Observation Template", name, "permitted_unit", unit)
 
 
 def create_sensitivity():
@@ -1806,6 +1911,148 @@ def get_medication_request_codes():
 				"The authoring/source system does not know which of the status values currently applies for this request. Note: This concept is not to be used for 'other' - one of the listed statuses is presumed to apply, but the authoring/source system does not know which."
 			),
 			"official_url": "http://hl7.org/fhir/ValueSet/medicationrequest-status",
+		},
+	]
+
+
+def setup_observation_reference_types():
+	code_systems = get_observation_reference_type_code_systems()
+	insert_record(code_systems)
+	codes = get_observation_reference_type_codes()
+	insert_record(codes)
+
+
+def get_observation_reference_type_code_systems():
+	return [
+		{
+			"doctype": "Code System",
+			"is_fhir_defined": 1,
+			"uri": "http://terminology.hl7.org/CodeSystem/referencerange-meaning",
+			"code_system": _("Reference Type"),
+			"description": _("Meaning of a reference range, used by Observation Reference Range."),
+			"experimental": 0,
+			"immutable": 0,
+			"custom": 0,
+		},
+	]
+
+
+def get_observation_reference_type_codes():
+	return [
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "type",
+			"display": _("Type"),
+			"definition": _("General types of reference range."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "normal",
+			"display": _("Normal Range"),
+			"definition": _(
+				"Values expected for a normal member of the relevant control population being measured."
+				" Typically each results producer such as a laboratory has specific normal ranges and they"
+				" are usually defined as within two standard deviations from the mean and account for"
+				" 95.45% of this population."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "recommended",
+			"display": _("Recommended Range"),
+			"definition": _("The range that is recommended by a relevant professional body."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "treatment",
+			"display": _("Treatment Range"),
+			"definition": _("The range at which treatment would/should be considered."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "therapeutic",
+			"display": _("Therapeutic Desired Level"),
+			"definition": _("The optimal range for best therapeutic outcomes."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "pre",
+			"display": _("Pre Therapeutic Desired Level"),
+			"definition": _(
+				"The optimal range for best therapeutic outcomes for a specimen taken immediately"
+				" before administration."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "post",
+			"display": _("Post Therapeutic Desired Level"),
+			"definition": _(
+				"The optimal range for best therapeutic outcomes for a specimen taken immediately"
+				" after administration."
+			),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "endocrine",
+			"display": _("Endocrine"),
+			"definition": _("Endocrine related states that change the expected value."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "pre-puberty",
+			"display": _("Pre-Puberty"),
+			"definition": _("An expected range in an individual prior to puberty."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "follicular",
+			"display": _("Follicular Stage"),
+			"definition": _("An expected range in an individual during the follicular stage of the cycle."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "midcycle",
+			"display": _("MidCycle"),
+			"definition": _("An expected range in an individual during the midcycle stage of the cycle."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "luteal",
+			"display": _("Luteal"),
+			"definition": _("An expected range in an individual during the luteal stage of the cycle."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
+		},
+		{
+			"doctype": "Code Value",
+			"code_system": _("Reference Type"),
+			"code_value": "postmenopausal",
+			"display": _("Post-Menopause"),
+			"definition": _("An expected range in an individual post-menopause."),
+			"official_url": "http://hl7.org/fhir/ValueSet/referencerange-meaning",
 		},
 	]
 
