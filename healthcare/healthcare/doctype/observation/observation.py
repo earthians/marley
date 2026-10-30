@@ -843,32 +843,18 @@ def get_approvable_observations(observation_name, incomplete=None):
 
 
 @frappe.whitelist()
-<<<<<<< HEAD
-def reject_all_observations(diagnostic_report: str, reason: str) -> dict[str, list[str]]:
-	"""Reject every approved Observation of the report"""
-=======
 def reject_all_observations(
 	diagnostic_report: str, reason: str, repeat_test: bool = False
 ) -> dict[str, list[str]]:
 	"""Reject every approved Observation of the report, including components
 	already approved inside a panel that is itself still incomplete."""
->>>>>>> 699ef68 (fix(observation): reject and preview consumables for panel components individually)
 	if not reason:
 		frappe.throw(_("Please enter a reason to Reject."))
 
 	rejected, skipped = [], []
 
 	for observation in get_root_observations(diagnostic_report):
-<<<<<<< HEAD
-		if observation.get("status") != "Approved":
-			skipped.append(get_observation_label(observation))
-			continue
-
-		set_observation_status(observation.get("name"), "Rejected", reason)
-		rejected.append(observation.get("name"))
-=======
 		reject_observation_and_components(observation.get("name"), reason, repeat_test, rejected, skipped)
->>>>>>> 699ef68 (fix(observation): reject and preview consumables for panel components individually)
 
 	return {"rejected": rejected, "skipped": skipped}
 
