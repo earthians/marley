@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Appointment Type",
+ "creation": "2026-10-24 18:29:21.290640",
+ "description": "The kind of visit, such as a consultation or follow-up, with its duration and charges.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 18:29:21.290640",
+ "modified_by": "Administrator",
+ "name": "Create Appointment Type",
+ "owner": "Administrator",
+ "reference_document": "Appointment Type",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Define an appointment type",
+ "validate_action": 1
+}
