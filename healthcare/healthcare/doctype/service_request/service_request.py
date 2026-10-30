@@ -11,7 +11,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import now_datetime
 
 from healthcare.controllers.service_request_controller import ServiceRequestController
-from healthcare.healthcare.doctype.observation.observation import add_observation
+from healthcare.healthcare.doctype.observation.observation import new_observation
 from healthcare.healthcare.doctype.observation_template.observation_template import (
 	get_observation_template_details,
 )
@@ -132,6 +132,13 @@ class ServiceRequest(ServiceRequestController):
 
 @frappe.whitelist()
 def set_service_request_status(service_request: str, status: str) -> None:
+	frappe.has_permission("Service Request", "write", service_request, throw=True)
+	update_service_request_status(service_request, status)
+
+
+def update_service_request_status(service_request: str, status: str) -> None:
+	"""For the submit and cancel hooks of the records that fulfil a request. The
+	user may submit a Lab Test without having write access to its request."""
 	frappe.db.set_value("Service Request", service_request, "status", status)
 
 
@@ -296,7 +303,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 					continue
 				if comp_has_component:
 					# Pure non-sample sub-panel - never chained elsewhere.
-					sub_observation = add_observation(
+					sub_observation = new_observation(
 						patient=service_request.patient,
 						template=comp,
 						company=service_request.company,
@@ -315,7 +322,7 @@ def make_observation(service_request: str, appointment: str | None = None) -> tu
 						},
 					)
 				else:
-					add_observation(
+					new_observation(
 						patient=service_request.patient,
 						template=comp,
 						company=service_request.company,
