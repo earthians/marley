@@ -118,13 +118,15 @@ def make_item_price(item, item_price):
 
 
 @frappe.whitelist()
-def change_item_code_from_template(item_code, doc):
+def change_item_code_from_template(item_code: str, doc: str) -> None:
 	doc = frappe._dict(json.loads(doc))
 
 	if frappe.db.exists("Item", {"item_code": item_code}):
 		frappe.throw(_("Item with Item Code {0} already exists").format(item_code))
 	else:
-		rename_doc("Item", doc.item_code, item_code, ignore_permissions=True)
+		frappe.has_permission("Clinical Procedure Template", "write", doc.name, throw=True)
+		item = frappe.db.get_value("Clinical Procedure Template", doc.name, "item")
+		rename_doc("Item", item, item_code, ignore_permissions=True)
 		frappe.db.set_value("Clinical Procedure Template", doc.name, "item_code", item_code)
 	return
 
