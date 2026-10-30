@@ -233,7 +233,7 @@ def make_lab_test(service_request):
 
 
 @frappe.whitelist()
-def make_observation(service_request, appointment=None):
+def make_observation(service_request: str, appointment: str | None = None):
 	if not service_request:
 		return
 
