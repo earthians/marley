@@ -1,0 +1,31 @@
+{
+ "allow_roles": [
+  {
+   "role": "Healthcare Administrator"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
+ "creation": "2026-10-24 21:17:32.945426",
+ "docstatus": 0,
+ "doctype": "Module Onboarding",
+ "idx": 0,
+ "is_complete": 0,
+ "modified": "2026-10-24 21:17:32.945426",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Emergency Onboarding",
+ "owner": "Administrator",
+ "steps": [
+  {
+   "is_optional": 0,
+   "step": "Create Triage Level"
+  },
+  {
+   "is_optional": 0,
+   "step": "Create Emergency Record"
+  }
+ ],
+ "title": "Run your emergency department"
+}

@@ -8,7 +8,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "clinical_note_type"
+  "clinical_note_type",
+  "is_fdar",
+  "disabled"
  ],
  "fields": [
   {
@@ -17,11 +19,23 @@
    "fieldtype": "Data",
    "label": "Clinical Note Type",
    "unique": 1
+  },
+  {
+   "fieldname": "is_fdar",
+   "fieldtype": "Check",
+   "label": "Focus, Data, Action, Response",
+   "description": "Notes of this type are written as F-DAR rather than free text"
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled",
+   "description": "Hidden when writing a new note; existing notes keep their type"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-25 09:36:28.381230",
+ "modified": "2026-08-25 13:47:01.921982",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Note Type",

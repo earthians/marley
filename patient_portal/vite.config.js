@@ -25,7 +25,7 @@ export default defineConfig({
   },
   build: {
     manifest: true,
-    outDir: path.resolve(__dirname, "../healthcare/public/patient_portal/assets"),
+    outDir: path.resolve(__dirname, "../healthcare/public/frontend"),
 		emptyOutDir: true,
     rollupOptions: {
       input: path.resolve(__dirname, "src/patient_portal.js"),

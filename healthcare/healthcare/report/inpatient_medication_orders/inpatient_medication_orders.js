@@ -49,7 +49,7 @@ frappe.query_reports["Inpatient Medication Orders"] = {
 		},
 		{
 			fieldname: "show_completed_orders",
-			label: __("Show Completed Orders"),
+			label: __("Show All Orders"),
 			fieldtype: "Check",
 			default: 1,
 		},

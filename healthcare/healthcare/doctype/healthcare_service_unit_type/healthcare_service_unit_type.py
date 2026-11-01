@@ -164,9 +164,11 @@ def update_item(doc):
 
 
 @frappe.whitelist()
-def change_item_code(item, item_code, doc_name):
+def change_item_code(item: str, item_code: str, doc_name: str) -> None:
 	if frappe.db.exists({"doctype": "Item", "item_code": item_code}):
 		frappe.throw(_("Item with Item Code {0} already exists").format(item_code))
 	else:
+		frappe.has_permission("Healthcare Service Unit Type", "write", doc_name, throw=True)
+		item = frappe.db.get_value("Healthcare Service Unit Type", doc_name, "item")
 		rename_doc("Item", item, item_code, ignore_permissions=True)
 		frappe.db.set_value("Healthcare Service Unit Type", doc_name, "item_code", item_code)

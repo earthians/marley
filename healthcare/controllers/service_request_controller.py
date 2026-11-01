@@ -89,6 +89,12 @@ class ServiceRequestController(Document):
 			self.total_dispensable_quantity = self.quantity
 
 
+REQUEST_DOCTYPES = ("Medication Request", "Service Request")
+
+
 @frappe.whitelist()
-def set_request_status(doctype, request, status):
+def set_request_status(doctype: str, request: str, status: str) -> None:
+	if doctype not in REQUEST_DOCTYPES:
+		frappe.throw(_("Cannot set the status of {0}").format(_(doctype)), frappe.PermissionError)
+	frappe.has_permission(doctype, "write", request, throw=True)
 	frappe.db.set_value(doctype, request, "status", status)

@@ -8,6 +8,9 @@
  "field_order": [
   "permitted_data_type",
   "reference_type",
+  "column_break_jduv",
+  "indicator_color",
+  "show_indicator_on_report",
   "section_break_jkn1",
   "applies_to",
   "column_break_1wpd",
@@ -34,35 +37,6 @@
   "to_duration",
   "short_interpretation",
   "long_interpretation",
-  "section_break_ml0p",
-  "normal_boolean_value",
-  "normal_ratio",
-  "normal_from",
-  "normal_select",
-  "normal_condition",
-  "normal_interpretation",
-  "normal_to",
-  "normal_long_interpretation",
-  "abnormal_section",
-  "abnormal_boolean_value",
-  "abnormal_from",
-  "abnormal_ratio",
-  "abnormal_select",
-  "abnormal_condition",
-  "abnormal_interpretation",
-  "column_break_rdlf",
-  "abnormal_to",
-  "abnormal_long_interpretation",
-  "critical_section",
-  "critical_boolean_value",
-  "critical_from",
-  "critical_ratio",
-  "critical_select",
-  "critical_condition",
-  "critical_interpretation",
-  "column_break_uqpz",
-  "critical_to",
-  "critical_long_interpretation",
   "section_break_jxbb",
   "reference_text"
  ],
@@ -103,8 +77,21 @@
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Permitted Data Type",
-   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod",
+   "options": "Quantity\nSelect\nText\nBoolean\nNumeric\nRange\nRatio\nTime\nDateTime\nPeriod\nDuration\nPercent",
    "read_only": 1
+  },
+  {
+   "fieldname": "indicator_color",
+   "fieldtype": "Color",
+   "in_list_view": 1,
+   "label": "Indicator Color"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_indicator_on_report",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show Indicator on Report"
   },
   {
    "depends_on": "eval:doc.permitted_data_type==\"DateTime\";",
@@ -129,40 +116,6 @@
   {
    "fieldname": "column_break_t4bi",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_rdlf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "section_break_ml0p",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Normal"
-  },
-  {
-   "fieldname": "column_break_uqpz",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
-   "fieldname": "normal_boolean_value",
-   "fieldtype": "Select",
-   "label": "Normal Value",
-   "options": "Yes\nNo"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "normal_from",
-   "fieldtype": "Float",
-   "label": "Normal From"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "normal_to",
-   "fieldtype": "Float",
-   "label": "Normal To"
   },
   {
    "depends_on": "eval:doc.permitted_data_type==\"Period\";",
@@ -193,104 +146,16 @@
    "options": "Years\nMonths\nDays"
   },
   {
-   "collapsible": 1,
-   "fieldname": "abnormal_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Abnormal"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
-   "fieldname": "abnormal_boolean_value",
-   "fieldtype": "Select",
-   "label": "Abnormal Value",
-   "options": "Yes\nNo"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "abnormal_from",
-   "fieldtype": "Float",
-   "label": "Abnormal From"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "abnormal_to",
-   "fieldtype": "Float",
-   "label": "Abnormal To"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "critical_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Critical"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Boolean\";",
-   "fieldname": "critical_boolean_value",
-   "fieldtype": "Select",
-   "label": "Critical Value",
-   "options": "Yes\nNo"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "critical_from",
-   "fieldtype": "Float",
-   "label": "Critical From"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "critical_to",
-   "fieldtype": "Float",
-   "label": "Critical To"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
-   "fieldname": "normal_ratio",
-   "fieldtype": "Data",
-   "label": "Normal Ratio"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
-   "fieldname": "abnormal_ratio",
-   "fieldtype": "Data",
-   "label": "Abnormal Ratio"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Ratio\";",
-   "fieldname": "critical_ratio",
-   "fieldtype": "Data",
-   "label": "Critical Ratio"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Time\";",
+   "depends_on": "eval:[\"Time\", \"Duration\"].includes(doc.permitted_data_type);",
    "fieldname": "from_duration",
    "fieldtype": "Duration",
    "label": "From Duration"
   },
   {
-   "depends_on": "eval:doc.permitted_data_type==\"Time\";",
+   "depends_on": "eval:[\"Time\", \"Duration\"].includes(doc.permitted_data_type);",
    "fieldname": "to_duration",
    "fieldtype": "Duration",
    "label": "To Duration"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
-   "fieldname": "normal_select",
-   "fieldtype": "Select",
-   "label": "Normal Options"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
-   "fieldname": "abnormal_select",
-   "fieldtype": "Select",
-   "label": "Abnormal Options"
-  },
-  {
-   "depends_on": "eval:doc.permitted_data_type==\"Select\";",
-   "fieldname": "critical_select",
-   "fieldtype": "Select",
-   "label": "Critical Options"
   },
   {
    "fieldname": "age",
@@ -298,60 +163,6 @@
    "in_list_view": 1,
    "label": "Age",
    "options": "All\nRange"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "normal_condition",
-   "fieldtype": "Code",
-   "label": "Normal Condition"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "abnormal_condition",
-   "fieldtype": "Code",
-   "label": "Abnormal Condition"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "critical_condition",
-   "fieldtype": "Code",
-   "label": "Critical Condition"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "normal_interpretation",
-   "fieldtype": "Data",
-   "label": "Normal Interpretation"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "abnormal_interpretation",
-   "fieldtype": "Data",
-   "label": "Abnormal Interpretation"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "critical_interpretation",
-   "fieldtype": "Data",
-   "label": "Critical Interpretation"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "normal_long_interpretation",
-   "fieldtype": "Text",
-   "label": "Normal Long Interpretation"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "abnormal_long_interpretation",
-   "fieldtype": "Text",
-   "label": "Abnormal Long Interpretation"
-  },
-  {
-   "depends_on": "eval:[\"Numeric\", \"Quantity\"].includes(doc.permitted_data_type);",
-   "fieldname": "critical_long_interpretation",
-   "fieldtype": "Text",
-   "label": "Critical Long Interpretation"
   },
   {
    "fieldname": "section_break_d8yi",
@@ -377,16 +188,22 @@
    "label": "Options"
   },
   {
+   "description": "Evaluated against the result's numeric value, e.g. \"value > 239\". Takes priority over From/To when set.",
    "fieldname": "conditions",
    "fieldtype": "Code",
    "label": "Conditions"
   },
   {
+   "fetch_from": "reference_type.display",
+   "fetch_if_empty": 1,
    "fieldname": "short_interpretation",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Short Interpretation"
   },
   {
+   "fetch_from": "reference_type.definition",
+   "fetch_if_empty": 1,
    "fieldname": "long_interpretation",
    "fieldtype": "Small Text",
    "label": "Long Interpretation"
@@ -408,22 +225,28 @@
    "options": "Code Value"
   },
   {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\", \"Percent\"].includes(doc.permitted_data_type);",
    "fieldname": "reference_from",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "From"
   },
   {
-   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\"].includes(doc.permitted_data_type);",
+   "depends_on": "eval:[\"Numeric\", \"Range\", \"Quantity\", \"Percent\"].includes(doc.permitted_data_type);",
    "fieldname": "reference_to",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "To"
+  },
+  {
+   "fieldname": "column_break_jduv",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-25 09:36:32.144255",
+ "modified": "2026-10-02 21:46:26.249540",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Reference Range",

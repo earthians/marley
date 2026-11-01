@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Sample Type",
+ "creation": "2026-10-24 21:17:32.945426",
+ "description": "A kind of specimen, such as Blood, Urine or Swab.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 21:17:32.945426",
+ "modified_by": "Administrator",
+ "name": "Create Sample Type",
+ "owner": "Administrator",
+ "reference_document": "Sample Type",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Define a sample type",
+ "validate_action": 1
+}

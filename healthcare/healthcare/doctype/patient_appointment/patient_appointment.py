@@ -1055,6 +1055,7 @@ def check_in_appointment(
 
 @frappe.whitelist()
 def update_status(appointment_id: str, status: str) -> None:
+	frappe.has_permission("Patient Appointment", "write", appointment_id, throw=True)
 	if status == "Cancelled":
 		validate_fee_validity_cancellation(frappe.get_doc("Patient Appointment", appointment_id))
 
@@ -1210,6 +1211,7 @@ def get_events(start: str, end: str, filters: str | None = None) -> list[dict]:
 
 @frappe.whitelist()
 def get_procedure_prescribed(patient: str) -> list[tuple]:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	return frappe.db.sql(
 		"""
 			SELECT
@@ -1228,6 +1230,7 @@ def get_procedure_prescribed(patient: str) -> list[tuple]:
 
 @frappe.whitelist()
 def get_prescribed_therapies(patient: str) -> list[tuple]:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	return frappe.db.sql(
 		"""
 			SELECT

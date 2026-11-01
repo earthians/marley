@@ -3,6 +3,7 @@ from datetime import datetime
 
 import frappe
 from frappe import _
+from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import get_datetime, get_time, getdate
 
@@ -142,7 +143,9 @@ def get_slots(practitioner, date):
 
 
 @frappe.whitelist()
-def make_appointment(practitioner, patient, date, slot):
+def make_appointment(practitioner: str, patient: str, date: str, slot: str) -> Document:
+	if patient not in get_patients_with_relations():
+		frappe.throw(_("You cannot book an appointment for {0}").format(patient), frappe.PermissionError)
 	doc = frappe.new_doc("Patient Appointment")
 	doc.appointment_type = frappe.db.get_single_value("Healthcare Settings", "default_appointment_type")
 	doc.appointment_for = frappe.db.get_value("Appointment Type", doc.appointment_type, "allow_booking_for")
@@ -471,9 +474,7 @@ def get_data_from_service_requests(patients):
 		)
 		.select(
 			observation.name.as_("observation"),
-			observation.result_data,
-			observation.result_text,
-			observation.result_select,
+			observation.result,
 		)
 		.select(
 			observation_template.permitted_unit,
@@ -568,9 +569,7 @@ def get_data_from_invoices(patients):
 		)
 		.select(
 			observation.name.as_("observation"),
-			observation.result_data,
-			observation.result_text,
-			observation.result_select,
+			observation.result,
 		)
 		.select(
 			sample_collection_item.name.as_("observation_sample_collection"),
@@ -597,16 +596,7 @@ def get_data_from_invoices(patients):
 
 
 def get_observation_result(obs_data):
-	result = None
-	template_doc = frappe.get_doc("Observation Template", obs_data.observation_template)
-	if template_doc.permitted_data_type in ["Range", "Ratio", "Quantity", "Numeric"]:
-		result = obs_data.result_data
-	elif obs_data.permitted_data_type == "Text":
-		result = obs_data.result_text
-	elif obs_data.permitted_data_type == "Select":
-		result = obs_data.result_select
-
-	return result
+	return obs_data.get("result")
 
 
 def get_payment_gateway():

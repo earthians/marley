@@ -9,6 +9,10 @@ from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedur
 	make_item_price,
 	update_item_and_item_price,
 )
+from healthcare.healthcare.doctype.observation.observation_consumables import set_consumable_uom
+
+# Stages whose items are issued by the Sample Collection, not the Observation.
+COLLECTION_STAGES = ("Specimen", "Sample Collection")
 
 
 class ObservationTemplate(Document):
@@ -76,6 +80,31 @@ class ObservationTemplate(Document):
 					)
 		else:
 			self.validate_abbr()
+
+		self.validate_consumables()
+
+	def validate_consumables(self):
+		listed = set()
+		for row in self.consumables:
+			# Rows are told apart by item and stage, so each pair is listed once.
+			if (row.item_code, row.consumed_at) in listed:
+				frappe.throw(
+					_(
+						"Row #{0}: {1} is already listed for {2}. List it once with the total quantity."
+					).format(row.idx, frappe.bold(row.item_code), _(row.consumed_at))
+				)
+			listed.add((row.item_code, row.consumed_at))
+			if not frappe.db.get_value("Item", row.item_code, "is_stock_item"):
+				frappe.throw(
+					_("Row #{0}: {1} is not a stock item").format(row.idx, frappe.bold(row.item_code))
+				)
+			if row.consumed_at in COLLECTION_STAGES and not self.sample_collection_required:
+				frappe.throw(
+					_("Row #{0}: items consumed at {1} need Sample Collection Required").format(
+						row.idx, _(row.consumed_at)
+					)
+				)
+			set_consumable_uom(row)
 
 	@staticmethod
 	def is_parent_in_child(child_name, parent_name):

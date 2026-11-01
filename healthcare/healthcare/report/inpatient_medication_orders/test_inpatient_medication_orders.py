@@ -57,6 +57,8 @@ class TestInpatientMedicationOrders(HealthcareTestSuite):
 				"dosage_form": "Tablet",
 				"date": getdate(),
 				"time": datetime.timedelta(seconds=32400),
+				"status": "Pending",
+				"stop_reason": None,
 				"is_completed": 0,
 				"healthcare_service_unit": "_Test HSU - Occupancy - _TC",
 			},
@@ -70,6 +72,8 @@ class TestInpatientMedicationOrders(HealthcareTestSuite):
 				"dosage_form": "Tablet",
 				"date": getdate(),
 				"time": datetime.timedelta(seconds=50400),
+				"status": "Pending",
+				"stop_reason": None,
 				"is_completed": 0,
 				"healthcare_service_unit": "_Test HSU - Occupancy - _TC",
 			},
@@ -83,6 +87,8 @@ class TestInpatientMedicationOrders(HealthcareTestSuite):
 				"dosage_form": "Tablet",
 				"date": getdate(),
 				"time": datetime.timedelta(seconds=75600),
+				"status": "Pending",
+				"stop_reason": None,
 				"is_completed": 0,
 				"healthcare_service_unit": "_Test HSU - Occupancy - _TC",
 			},
@@ -105,6 +111,33 @@ class TestInpatientMedicationOrders(HealthcareTestSuite):
 
 		report = execute(filters)
 		self.assertEqual(len(report[1]), 0)
+
+	def test_stopped_orders_are_not_reported_as_pending(self):
+		ipmo = frappe.get_last_doc(
+			"Inpatient Medication Order", filters={"patient": self.patient, "company": "_Test Company"}
+		)
+		today_rows = [entry.name for entry in ipmo.medication_orders if entry.date == getdate()]
+		ipmo.stop_medication_orders([today_rows[0]], "Treatment changed")
+
+		filters = {
+			"company": "_Test Company",
+			"from_date": getdate(),
+			"to_date": getdate(),
+			"patient": "_Test IPD Patient",
+			"service_unit": "_Test HSU - Occupancy - _TC",
+			"show_completed_orders": 0,
+		}
+
+		report = execute(filters)
+		self.assertEqual(len(report[1]), 2)
+		self.assertTrue(all(entry.status == "Pending" for entry in report[1]))
+
+		filters["show_completed_orders"] = 1
+		report = execute(filters)
+		stopped_rows = [entry for entry in report[1] if entry.status == "Stopped"]
+
+		self.assertEqual(len(stopped_rows), 1)
+		self.assertEqual(stopped_rows[0].stop_reason, "Treatment changed")
 
 	def tearDown(self):
 		if frappe.db.get_value("Patient", self.patient, "inpatient_record"):

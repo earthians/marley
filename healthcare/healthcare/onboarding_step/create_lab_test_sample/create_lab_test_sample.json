@@ -1,0 +1,21 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create Lab Test Sample",
+ "creation": "2026-10-24 21:17:32.945426",
+ "description": "A specimen with its sample type, unit and container colour, used by observation templates.",
+ "docstatus": 0,
+ "doctype": "Onboarding Step",
+ "idx": 0,
+ "is_complete": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "modified": "2026-10-24 21:17:32.945426",
+ "modified_by": "Administrator",
+ "name": "Create Lab Test Sample",
+ "owner": "Administrator",
+ "reference_document": "Lab Test Sample",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Define a specimen",
+ "validate_action": 1
+}

@@ -1,0 +1,747 @@
+// Nursing Dialog — desk dialog and the inline snapshot on Inpatient / Emergency Record.
+// Colours come from desk variables so light and dark themes follow the user's setting.
+
+// Shared top offset so the rail, the form and the snapshot start on one line.
+$nursing-pane-top: 0.85rem;
+
+// Patient banner across the top of the dialog.
+.nursing-banner {
+	display: flex;
+	align-items: flex-end;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	padding: 0.6rem 0.9rem;
+	background-color: var(--subtle-fg);
+	border-bottom: 1px solid var(--border-color);
+	min-height: 3rem;
+}
+
+// Patient and doctor names can be long, so they own the first line and the
+// remaining details wrap onto the second.
+.nursing-banner-primary {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.6rem;
+	min-width: 0;
+	line-height: 1.3;
+}
+
+.nursing-banner-name {
+	font-weight: 600;
+	color: var(--heading-color);
+}
+
+.nursing-banner-doctor {
+	font-size: var(--text-sm);
+	color: var(--text-color);
+
+	i {
+		font-style: normal;
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+}
+
+.nursing-banner-search {
+	margin-left: auto;
+	flex: 0 0 260px;
+	max-width: 260px;
+
+	// The control has no label, but frappe still renders the row it lives in.
+	.clearfix {
+		display: none;
+	}
+
+	.form-group,
+	.control-input-wrapper,
+	.control-input {
+		margin: 0;
+	}
+
+	input {
+		width: 100%;
+		text-overflow: ellipsis;
+	}
+}
+
+.nursing-banner-info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.3rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.nursing-banner-facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.nursing-fact {
+	font-size: var(--text-sm);
+	color: var(--text-color);
+	background-color: var(--fg-color);
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-full);
+	padding: 0.15rem 0.45rem;
+
+	i {
+		font-style: normal;
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+
+	&.nursing-fact-alert {
+		background-color: var(--bg-red);
+		border-color: transparent;
+		color: var(--text-on-red);
+		font-weight: 500;
+
+		i {
+			color: inherit;
+			opacity: 0.75;
+		}
+	}
+}
+
+// The panels run edge to edge, so this dialog drops the modal body padding
+// instead of pulling the grid out with negative margins.
+.nursing-station-dialog {
+	.modal-content {
+		overflow: hidden;
+	}
+
+	.modal-body {
+		padding: 0;
+	}
+
+	// Nothing is saved from the footer; the header close is the way out.
+	.modal-footer {
+		display: none;
+	}
+}
+
+// Three cards of equal height: tops and bottoms line up, each scrolls inside.
+.nursing-station {
+	display: grid;
+	grid-template-columns: 186px minmax(0, 1fr) 304px;
+	grid-template-areas: "rail pane snapshot";
+	gap: 0.6rem;
+	padding: 0.6rem;
+	height: 62vh;
+	min-height: 420px;
+
+	> * {
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-lg);
+		background-color: var(--fg-color);
+		min-height: 0;
+		overflow-y: auto;
+	}
+
+	.nursing-rail {
+		grid-area: rail;
+		// The same ground the desk sidebar uses, so its hover and active
+		// tokens read against it. On --subtle-fg the hover grey is invisible.
+		background: var(--surface-sidebar);
+		padding: $nursing-pane-top 0.5rem;
+	}
+
+	.nursing-pane {
+		grid-area: pane;
+		padding: $nursing-pane-top 1.25rem;
+		min-width: 0;
+	}
+
+	.nursing-snapshot {
+		grid-area: snapshot;
+		background-color: var(--subtle-fg);
+		padding: $nursing-pane-top 0.75rem;
+	}
+}
+
+// Tablet: the snapshot drops below the form and spreads into columns.
+@media (max-width: 1080px) {
+	.nursing-station {
+		height: auto;
+		grid-template-columns: 170px minmax(0, 1fr);
+		grid-template-areas:
+			"rail pane"
+			"snapshot snapshot";
+
+		.nursing-snapshot {
+			overflow: visible;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 0.6rem;
+			align-items: start;
+
+			.nursing-card {
+				margin-bottom: 0;
+			}
+		}
+	}
+}
+
+// Phone: the rail becomes a scrolling strip of chips above the form.
+@media (max-width: 767px) {
+	.nursing-station {
+		height: auto;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			"rail"
+			"pane";
+
+		// No room for the snapshot on a phone — recording wins the screen.
+		.nursing-snapshot {
+			display: none;
+		}
+
+		.nursing-rail {
+			display: flex;
+			gap: 0.25rem;
+			overflow-x: auto;
+			overflow-y: hidden;
+			padding: 0.5rem;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.nursing-pane {
+			padding: 0.75rem;
+		}
+	}
+
+	.nursing-rail-label {
+		display: none;
+	}
+
+	.nursing-rail-item {
+		width: auto;
+		white-space: nowrap;
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-full);
+	}
+
+	.nursing-rail-soon {
+		margin-left: 0.35rem;
+	}
+}
+
+.nursing-rail-label {
+	font-size: var(--text-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+	padding: 0.75rem 0.5rem 0.25rem;
+
+	&:first-child {
+		padding-top: 0;
+	}
+}
+
+// Matches the desk sidebar: same tokens, same states.
+.nursing-rail-item {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	min-height: 28px;
+	text-align: left;
+	gap: 0.5rem;
+	padding: 0.25rem 0.5rem;
+	margin-bottom: 1px;
+	border: none;
+	border-radius: 8px;
+	background: none;
+	color: var(--ink-gray-6);
+	font-size: var(--text-sm);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+	&:not(.selected):not(:disabled):hover {
+		background-color: var(--sidebar-hover-color);
+		text-decoration: none;
+	}
+
+	&.selected {
+		background: var(--sidebar-active-color);
+		box-shadow: var(--sidebar-active-shadow);
+		color: var(--text-color);
+	}
+
+	&:disabled {
+		color: var(--text-light);
+		cursor: not-allowed;
+	}
+}
+
+.nursing-rail-soon {
+	margin-left: auto;
+	font-size: var(--text-xs);
+	color: var(--text-light);
+}
+
+// Something on this pane is waiting for the nurse looking at it. Flagged, not
+// enforced: nothing clinical is held up by an administrative step.
+.nursing-rail-dot {
+	margin-left: auto;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background-color: var(--red-500);
+	flex: none;
+}
+
+.nursing-pane-title {
+	margin-top: 0;
+	line-height: 1.3;
+	font-size: var(--text-lg);
+	font-weight: 600;
+	color: var(--heading-color);
+}
+
+.nursing-pane-head {
+	margin-bottom: 0.75rem;
+}
+
+// A pane that collects a form carries its own save; the others record as they go.
+.nursing-pane-actions {
+	margin-top: 0.9rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--border-color);
+
+	// Same treatment as the row actions, so every button in the dialog
+	// is wide enough for its own label.
+	.btn {
+		min-width: 7.5rem;
+		padding-left: 0.4rem;
+		padding-right: 0.4rem;
+	}
+}
+
+.nursing-fields {
+	.form-control,
+	.input-with-feedback,
+	select {
+		border-radius: var(--radius);
+	}
+
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 0.5rem 1rem;
+	align-items: start;
+}
+
+// Paired readings, such as systolic over diastolic, share one field.
+// Two columns wide so each input stays full size.
+.nursing-field-group {
+	grid-column: span 2;
+}
+
+.nursing-field > .control-label {
+	display: block;
+	margin-bottom: 4px;
+}
+
+.nursing-group {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.nursing-group-slot {
+	flex: 1;
+	min-width: 0;
+
+	// These controls carry no label of their own — the group is labelled once —
+	// but frappe still renders the row, which pushed the inputs out of line
+	// with the single fields beside them.
+	.clearfix {
+		display: none;
+	}
+
+	.form-group,
+	.control-input-wrapper,
+	.control-input {
+		margin: 0;
+	}
+}
+
+.nursing-group-separator {
+	color: var(--text-muted);
+	font-size: var(--text-lg);
+	line-height: 1;
+	align-self: center;
+}
+
+.nursing-group-unit {
+	font-size: var(--text-xs);
+	color: var(--text-muted);
+	margin-top: 0.15rem;
+}
+
+.nursing-section-break {
+	grid-column: 1 / -1;
+	border-top: 1px solid var(--border-color);
+	margin: 0.5rem 0 0.1rem;
+}
+
+// Pain score: picked on a scale rather than typed.
+.nursing-field-wide {
+	grid-column: 1 / -1;
+	margin-top: 0.35rem;
+}
+
+.nursing-scale {
+	display: flex;
+	gap: 0.25rem;
+	margin-top: 0.25rem;
+}
+
+.nursing-scale-step {
+	flex: 1;
+	min-width: 0;
+	padding: 0.3rem 0;
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+	background-color: var(--fg-color);
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius);
+
+	&:hover {
+		border-color: var(--text-muted);
+	}
+
+	&.selected {
+		font-weight: 600;
+	}
+}
+
+// Severity bands: colour carries the same information as the number.
+.nursing-scale-step {
+	&.nursing-band-green:hover {
+		border-color: var(--green-400);
+	}
+
+	&.nursing-band-orange:hover {
+		border-color: var(--orange-400);
+	}
+
+	&.nursing-band-red:hover {
+		border-color: var(--red-400);
+	}
+
+	&.nursing-band-green.selected {
+		background-color: var(--bg-green);
+		border-color: var(--green-400);
+		color: var(--text-on-green);
+	}
+
+	&.nursing-band-orange.selected {
+		background-color: var(--bg-orange);
+		border-color: var(--orange-400);
+		color: var(--text-on-orange);
+	}
+
+	&.nursing-band-red.selected {
+		background-color: var(--bg-red);
+		border-color: var(--red-400);
+		color: var(--text-on-red);
+	}
+}
+
+.nursing-scale-band {
+	margin-left: 0.35rem;
+	font-size: var(--text-xs);
+}
+
+.nursing-scale-legend {
+	display: flex;
+	justify-content: space-between;
+	font-size: var(--text-xs);
+	color: var(--text-light);
+	margin-top: 0.25rem;
+}
+
+// Medication round: one row per dose, with its outcome on the right.
+.nursing-dose-table {
+	font-size: var(--text-sm);
+
+	th {
+		font-weight: 500;
+		color: var(--text-muted);
+	}
+
+	td {
+		vertical-align: middle;
+	}
+}
+
+// One action plus a caret, so a row stays one line however many outcomes
+// there are.
+.nursing-row-actions {
+	.btn {
+		white-space: nowrap;
+	}
+
+	.dropdown-item {
+		font-size: var(--text-sm);
+		padding: 0.25rem 0.75rem;
+		width: 100%;
+		text-align: left;
+		border: none;
+		background: none;
+		color: var(--text-color);
+
+		&:hover {
+			background-color: var(--sidebar-hover-color);
+		}
+	}
+}
+
+// Intake and output: staged rows above a running balance.
+.nursing-pane-actions {
+	margin: 0.5rem 0;
+}
+
+.nursing-table {
+	font-size: var(--text-sm);
+	margin-bottom: 0.5rem;
+
+	th {
+		font-weight: 500;
+		color: var(--text-muted);
+	}
+}
+
+.nursing-totals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.9rem;
+	align-items: baseline;
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--border-color);
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+
+	b {
+		color: var(--heading-color);
+		font-weight: 600;
+	}
+}
+
+.nursing-card {
+	margin-top: 0;
+	background-color: var(--fg-color);
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-md);
+	padding: 0.6rem 0.75rem;
+	margin-bottom: 0.6rem;
+}
+
+.nursing-card-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	margin-bottom: 0.4rem;
+}
+
+.nursing-card-title {
+	font-size: var(--text-xs);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+}
+
+.nursing-vital-selector {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2rem;
+	margin-bottom: 0.4rem;
+	max-height: 3.6rem;
+	overflow-y: auto;
+}
+
+.nursing-vital {
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-full);
+	background: none;
+	color: var(--text-muted);
+	font-size: var(--text-xs);
+	padding: 0.15rem 0.55rem;
+
+	&.selected {
+		background-color: var(--bg-blue);
+		border-color: var(--blue-300);
+		color: var(--text-on-blue);
+	}
+}
+
+.nursing-chart {
+	min-height: 150px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+	.chart-container {
+		margin: 0;
+		padding: 0;
+	}
+}
+
+.nursing-snapshot-wide .nursing-chart {
+	min-height: 200px;
+}
+
+.nursing-reading {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	padding: 0.5rem 0 0.1rem;
+}
+
+.nursing-reading-value {
+	font-size: 1.75rem;
+	line-height: 1;
+	font-weight: 600;
+	color: var(--heading-color);
+}
+
+.nursing-reading-time {
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+}
+
+.nursing-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	font-size: var(--text-sm);
+	padding: 0.3rem 0;
+	border-bottom: 1px solid var(--border-color);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	.nursing-row-time {
+		color: var(--text-muted);
+		white-space: nowrap;
+	}
+
+	.nursing-row-label {
+		color: var(--text-color);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.nursing-row-status {
+		margin-left: auto;
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+		white-space: nowrap;
+	}
+}
+
+// Narrow rail: label on one line, its details on the next.
+.nursing-stacked-row {
+	padding: 0.25rem 0;
+	border-bottom: 1px solid var(--border-color);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.nursing-stacked-label {
+	font-size: var(--text-sm);
+	color: var(--text-color);
+	line-height: 1.35;
+}
+
+.nursing-stacked-meta {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: var(--text-xs);
+	color: var(--text-muted);
+}
+
+.nursing-note {
+	font-size: var(--text-sm);
+	color: var(--text-color);
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.nursing-note-meta {
+	font-size: var(--text-xs);
+	color: var(--text-muted);
+	margin-top: 0.3rem;
+}
+
+.nursing-empty {
+	font-size: var(--text-sm);
+	color: var(--text-light);
+	padding: 0.4rem 0;
+}
+
+// Inline on Inpatient Record and Emergency Record: cards flow into columns.
+// On a form there is a whole page of width, so the cards sit two abreast and
+// fall back to one column when the page is too narrow to divide.
+.nursing-snapshot-wide {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	// cards in a row share a bottom edge, so the two columns stay level
+	align-items: stretch;
+	gap: 0.6rem;
+	width: 100%;
+
+	@media (max-width: 991px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.nursing-card {
+		margin-bottom: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	// Time on the left, what it is in the middle, the figure on the right edge.
+	.nursing-row {
+		display: grid;
+		grid-template-columns: 6rem minmax(0, 1fr) auto;
+		gap: 0.75rem;
+	}
+
+	.nursing-row-status {
+		margin-left: 0;
+		text-align: right;
+	}
+
+	// The rail stacks a label over its details for want of width. With a page
+	// to work with they sit on one line, like every other row here.
+	.nursing-stacked-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: baseline;
+		gap: 0.75rem;
+		padding: 0.3rem 0;
+	}
+
+	.nursing-stacked-meta {
+		justify-content: flex-end;
+		gap: 0.75rem;
+	}
+
+	// Clamping to three lines is a rail compromise; there is room here.
+	.nursing-note {
+		display: block;
+		-webkit-line-clamp: none;
+		overflow: visible;
+	}
+}

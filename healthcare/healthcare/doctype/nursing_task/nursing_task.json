@@ -89,7 +89,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nRequested\nReceived\nAccepted\nRejected\nReady\nIn Progress\nOn Hold\nCompleted\nFailed\nCancelled\nEntered in Error",
+   "options": "Draft\nRequested\nReceived\nAccepted\nRejected\nReady\nIn Progress\nOn Hold\nMissed\nCompleted\nFailed\nCancelled\nEntered in Error",
    "read_only": 1,
    "reqd": 1
   },
@@ -324,7 +324,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-01-19 15:34:31.760433",
+ "modified": "2026-08-25 12:13:57.464864",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Nursing Task",
