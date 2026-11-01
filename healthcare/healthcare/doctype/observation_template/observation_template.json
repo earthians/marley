@@ -423,11 +423,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
-<<<<<<< HEAD
  "modified": "2026-10-24 22:54:13.843788",
-=======
- "modified": "2026-10-11 18:43:13.317216",
->>>>>>> 68b8f3a (feat(observation template): add consumables with consumed-at stage)
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
