@@ -81,6 +81,27 @@ class TestClinicalProcedure(HealthcareTestSuite):
 		procedure.complete_procedure()
 		self.assertRaises(frappe.ValidationError, procedure.complete_procedure)
 
+	def test_a_stale_copy_cannot_complete_the_procedure_again(self):
+		procedure_template = create_template(
+			"_Test Procedure - Post-op Only", post_op_nursing_checklist_template="Discharge checklist"
+		)
+		procedure = create_procedure(procedure_template, self.patient, self.practitioner)
+		procedure.start_procedure()
+		stale = frappe.get_doc("Clinical Procedure", procedure.name)
+
+		procedure.complete_procedure()
+
+		self.assertRaises(frappe.ValidationError, stale.complete_procedure)
+		self.assertEqual(count_nursing_tasks(procedure), 1)
+
+	def test_a_stale_copy_cannot_start_the_procedure_again(self):
+		procedure = create_procedure(create_clinical_procedure_template(), self.patient, self.practitioner)
+		stale = frappe.get_doc("Clinical Procedure", procedure.name)
+
+		procedure.start_procedure()
+
+		self.assertRaises(frappe.ValidationError, stale.start_procedure)
+
 	def test_template_sample_creates_a_sample_collection(self):
 		procedure_template = create_template("_Test Procedure - Biopsy", sample="_Test Sample - Blood Sample")
 		procedure = create_procedure(procedure_template, self.patient, self.practitioner, submit=False)
