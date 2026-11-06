@@ -113,6 +113,7 @@ class PatientProgress {
 							patient_name: this.patient.patient_name,
 							patient_gender: this.patient.sex,
 							patient_mobile: this.patient.mobile,
+							patient_age: this.get_patient_age(),
 							total_therapy_sessions: this.total_therapy_sessions,
 							therapy_sessions_this_month:
 								this.therapy_sessions_this_month,
@@ -122,6 +123,21 @@ class PatientProgress {
 				this.setup_patient_profile_links();
 			});
 		});
+	}
+
+	get_patient_age() {
+		if (!this.patient.dob) return null;
+
+		const birth = moment(this.patient.dob, "YYYY-MM-DD", true);
+		const today = moment(frappe.datetime.get_today(), "YYYY-MM-DD", true);
+		if (!birth.isValid() || birth.isAfter(today)) return null;
+
+		const total_months = today.diff(birth, "months");
+		const years = Math.floor(total_months / 12);
+		const months = total_months % 12;
+		const days = today.diff(birth.clone().add(total_months, "months"), "days");
+
+		return `${years}Y ${months}M ${days}D`;
 	}
 
 	setup_patient_profile_links() {
