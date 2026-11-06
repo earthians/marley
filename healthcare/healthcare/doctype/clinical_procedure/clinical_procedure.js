@@ -354,7 +354,8 @@ let add_complete_button = function (frm) {
 
 	frm.add_custom_button(label, function () {
 		frappe.confirm(message, () => complete_procedure(frm));
-	}).addClass("btn-primary");
+	});
+	frm.change_custom_button_type(label, null, "primary");
 };
 
 let complete_procedure = function (frm) {
@@ -389,7 +390,8 @@ let add_start_button = function (frm) {
 				}
 			},
 		});
-	}).addClass("btn-primary");
+	});
+	frm.change_custom_button_type(__("Start"), null, "primary");
 };
 
 let offer_material_receipt = function (frm) {
