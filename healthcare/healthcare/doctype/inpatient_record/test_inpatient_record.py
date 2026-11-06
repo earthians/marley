@@ -149,6 +149,38 @@ class TestInpatientRecord(HealthcareTestSuite):
 		self.assertEqual(care_plan.status, "Closed")
 		self.assertTrue(care_plan.closed_on)
 
+	def test_discharge_closes_legacy_mismatched_care_plan(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		other_patients = frappe.get_list("Patient", filters={"name": ["!=", patient]}, pluck="name", limit=1)
+		other_patient = other_patients[0]
+		ip_record = create_inpatient(patient)
+		ip_record.expected_length_of_stay = 0
+		ip_record.save(ignore_permissions=True)
+
+		service_unit = get_healthcare_service_unit()
+		admit_patient(ip_record, service_unit, now_datetime())
+		care_plan = frappe.get_doc(
+			{
+				"doctype": "Nursing Care Plan",
+				"patient": patient,
+				"inpatient_record": ip_record.name,
+				"goals": [{"goal": "Patient remains comfortable"}],
+			}
+		).insert(ignore_permissions=True)
+		# Simulate a plan created before the patient/admission check was added.
+		frappe.db.set_value("Nursing Care Plan", care_plan.name, "patient", other_patient)
+
+		schedule_discharge(frappe.as_json({"patient": patient}))
+		ip_record = frappe.get_doc("Inpatient Record", ip_record.name)
+		mark_invoiced_inpatient_occupancy(ip_record)
+		discharge_patient(ip_record)
+
+		care_plan.reload()
+		self.assertEqual(care_plan.status, "Closed")
+		self.assertIsNone(care_plan.inpatient_record)
+		self.assertTrue(care_plan.closed_on)
+
 	def test_disallow_discharge_with_pending_healthcare_services(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		previous_pending_services = frappe.db.get_single_value(
