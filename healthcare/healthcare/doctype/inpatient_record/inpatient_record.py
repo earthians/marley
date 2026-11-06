@@ -386,7 +386,6 @@ def create_inpatient_record(admission_order):
 		set_ip_child_records(inpatient_record, "procedure_prescription", encounter.procedure_prescription)
 
 	if encounter and encounter.therapies:  # Therapies
-		inpatient_record.therapy_plan = encounter.therapy_plan
 		set_ip_child_records(inpatient_record, "therapies", encounter.therapies)
 
 	inpatient_record.insurance_policy = encounter.insurance_policy
