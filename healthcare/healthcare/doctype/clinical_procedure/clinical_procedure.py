@@ -145,11 +145,17 @@ class ClinicalProcedure(Document):
 	def set_title(self):
 		self.title = _("{0} - {1}").format(self.patient_name or self.patient, self.procedure_template)[:100]
 
+	def lock_with_status(self, expected_status, message):
+		"""Lock the saved row and check its status, so a second request that loaded the
+		procedure before the first one finished cannot repeat the same step"""
+		saved_status = frappe.db.get_value(self.doctype, self.name, "status", for_update=True)
+		if saved_status != expected_status:
+			frappe.throw(message)
+
 	@frappe.whitelist()
 	def complete_procedure(self):
 		self.check_permission("write")
-		if self.status != "In Progress":
-			frappe.throw(_("Only a procedure that is In Progress can be completed"))
+		self.lock_with_status("In Progress", _("Only a procedure that is In Progress can be completed"))
 
 		stock_entry = make_stock_entry(self) if self.consume_stock and self.items else None
 
@@ -221,8 +227,7 @@ class ClinicalProcedure(Document):
 	@frappe.whitelist()
 	def start_procedure(self):
 		self.check_permission("write")
-		if self.status != "Pending":
-			frappe.throw(_("Only a Pending procedure can be started"))
+		self.lock_with_status("Pending", _("Only a Pending procedure can be started"))
 
 		if self.consume_stock and not self.has_required_qty():
 			return "insufficient stock"
