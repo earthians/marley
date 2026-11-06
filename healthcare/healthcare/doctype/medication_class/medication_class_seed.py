@@ -2,6 +2,10 @@
 # For license information, please see license.txt
 
 import frappe
+<<<<<<< HEAD
+=======
+from frappe import get_file_json
+>>>>>>> 2a8216d (fix(medication_class_seed): Fix suggested greptile-apps Installation still fails same import from utils insted frappe)
 
 SEED_DIRECTORY = ("healthcare", "healthcare", "doctype", "medication_class")
 TAXONOMY_FILE = "medication_class_seed.json"
