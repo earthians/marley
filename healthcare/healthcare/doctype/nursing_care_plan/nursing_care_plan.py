@@ -13,9 +13,22 @@ class NursingCarePlan(Document):
 		self.started_on = now_datetime()
 
 	def validate(self):
+		self.validate_inpatient_patient()
 		self.validate_active_admission()
 		self.validate_single_active_plan()
 		self.stamp_closure()
+
+	def validate_inpatient_patient(self):
+		if not self.inpatient_record:
+			return
+
+		inpatient_patient = frappe.db.get_value("Inpatient Record", self.inpatient_record, "patient")
+		if inpatient_patient != self.patient:
+			frappe.throw(
+				_("Inpatient Record {0} does not belong to patient {1}").format(
+					self.inpatient_record, self.patient
+				)
+			)
 
 	def validate_active_admission(self):
 		if self.status != "Active" or not self.inpatient_record:
