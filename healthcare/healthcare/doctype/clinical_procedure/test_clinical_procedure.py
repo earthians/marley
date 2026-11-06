@@ -3,11 +3,16 @@
 
 
 import frappe
+from frappe.utils import add_to_date, get_datetime
 
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestClinicalProcedure(HealthcareTestSuite):
+	def setUp(self):
+		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+
 	def test_disable_procedure_template_item(self):
 		procedure_template = create_clinical_procedure_template()
 		self.assertTrue(frappe.db.exists("Item", procedure_template.item))
@@ -17,24 +22,9 @@ class TestClinicalProcedure(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("Item", procedure_template.item, "disabled"), 1)
 
 	def test_consumables(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
-
-		procedure_template = frappe.get_list("Clinical Procedure Template", pluck="name")[0]
-		procedure_template = frappe.get_doc("Clinical Procedure Template", procedure_template)
-		procedure_template.consume_stock = True
-		consumable = create_consumable()
-		procedure_template.append(
-			"items",
-			{
-				"item_code": consumable.item_code,
-				"qty": 1,
-				"uom": consumable.stock_uom,
-				"stock_uom": consumable.stock_uom,
-			},
-		)
-		procedure_template.save()
-		procedure = create_procedure(procedure_template, patient, practitioner)
+		procedure_template = create_template("_Test Procedure - Dressing", consume_stock=1)
+		add_consumable(procedure_template)
+		procedure = create_procedure(procedure_template, self.patient, self.practitioner)
 		result = procedure.start_procedure()
 		if result == "insufficient stock":
 			procedure.make_material_receipt(submit=True)
@@ -45,18 +35,10 @@ class TestClinicalProcedure(HealthcareTestSuite):
 		self.assertTrue(frappe.db.exists("Stock Entry", result))
 
 	def test_start_and_end_time(self):
-		# check planned end time is calculated
-		# check start and complete sets actual start / end times
-		procedure_template = create_clinical_procedure_template()
-		procedure_template.default_duration = 3600
-		procedure_template.consume_stock = False
-		procedure_template.save()
-
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
-
-		procedure = create_procedure(procedure_template, patient, practitioner)
-		self.assertTrue(procedure.planned_end_datetime)
+		procedure_template = create_template("_Test Procedure - Timed", default_duration=3600)
+		procedure = create_procedure(procedure_template, self.patient, self.practitioner)
+		start = get_datetime(f"{procedure.start_date} {procedure.start_time}")
+		self.assertEqual(get_datetime(procedure.planned_end_datetime), add_to_date(start, seconds=3600))
 
 		procedure.start_procedure()
 		self.assertEqual(procedure.status, "In Progress")
@@ -65,6 +47,81 @@ class TestClinicalProcedure(HealthcareTestSuite):
 		procedure.complete_procedure()
 		self.assertEqual(procedure.status, "Completed")
 		self.assertTrue(procedure.actual_end_datetime)
+
+	def test_status_follows_docstatus(self):
+		procedure = create_procedure(
+			create_clinical_procedure_template(), self.patient, self.practitioner, submit=False
+		)
+		self.assertEqual(procedure.status, "Draft")
+
+		procedure.submit()
+		self.assertEqual(procedure.status, "Pending")
+
+		procedure.cancel()
+		self.assertEqual(procedure.status, "Cancelled")
+
+	def test_complete_summarises_consumables_invoiced_separately(self):
+		procedure_template = create_template("_Test Procedure - Separate Consumables")
+		consumable = add_consumable(procedure_template, invoice_separately=1)
+		procedure = create_procedure(procedure_template, self.patient, self.practitioner)
+		set_selling_price(consumable.item_code, procedure.price_list, 40)
+
+		procedure.start_procedure()
+		procedure.complete_procedure()
+		procedure.reload()
+
+		self.assertEqual(procedure.consumable_total_amount, 40)
+		self.assertIn(consumable.item_name, procedure.consumption_details)
+		self.assertTrue(procedure.invoice_separately_as_consumables)
+
+
+def set_selling_price(item_code, price_list, rate):
+	if not frappe.db.exists("Item Price", {"item_code": item_code, "price_list": price_list}):
+		frappe.get_doc(
+			{
+				"doctype": "Item Price",
+				"item_code": item_code,
+				"price_list": price_list,
+				"price_list_rate": rate,
+			}
+		).insert()
+
+
+def create_template(name, **fields):
+	if frappe.db.exists("Clinical Procedure Template", name):
+		template = frappe.get_doc("Clinical Procedure Template", name)
+		template.update(fields)
+		template.items = []
+		return template.save()
+	template = frappe.get_doc(
+		{
+			"doctype": "Clinical Procedure Template",
+			"template": name,
+			"item_code": name,
+			"item_group": "Services",
+			"description": name,
+			"is_billable": 1,
+			"rate": 1000,
+			**fields,
+		}
+	)
+	return template.insert()
+
+
+def add_consumable(procedure_template, invoice_separately=0):
+	consumable = create_consumable()
+	procedure_template.append(
+		"items",
+		{
+			"item_code": consumable.item_code,
+			"qty": 1,
+			"uom": consumable.stock_uom,
+			"stock_uom": consumable.stock_uom,
+			"invoice_separately_as_consumables": invoice_separately,
+		},
+	)
+	procedure_template.save()
+	return consumable
 
 
 def create_consumable():
@@ -79,7 +136,7 @@ def create_consumable():
 	return consumable
 
 
-def create_procedure(procedure_template, patient, practitioner):
+def create_procedure(procedure_template, patient, practitioner, submit=True):
 	procedure = frappe.new_doc("Clinical Procedure")
 	procedure.procedure_template = procedure_template.name
 	procedure.patient = patient
@@ -90,7 +147,10 @@ def create_procedure(procedure_template, patient, practitioner):
 	procedure.warehouse = "_Test Warehouse - _TC"
 	procedure.start_date = frappe.utils.getdate()
 	procedure.start_time = frappe.utils.nowtime()
-	procedure.submit()
+	if submit:
+		procedure.submit()
+	else:
+		procedure.insert()
 	return procedure
 
 
