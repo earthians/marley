@@ -2,6 +2,10 @@
 # For license information, please see license.txt
 
 import frappe
+<<<<<<< HEAD
+=======
+from frappe import get_file_json
+>>>>>>> 7b9d441 (fix(allery_seed): resolve ImportError for get_file_json during installation)
 
 SEED_FILE = ("healthcare", "healthcare", "doctype", "allergy", "allergy_seed.json")
 
