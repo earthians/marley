@@ -50,7 +50,7 @@ healthcare.ServiceRequestPicker = class ServiceRequestPicker {
 		});
 
 		if (!requests || !requests.length) {
-			this.dialog.$wrapper.find(".modal-footer .btn-primary").hide();
+			this.dialog.get_primary_btn().addClass("hide");
 			return;
 		}
 		this.wrapper = this.dialog.fields_dict.service_html.$wrapper;
