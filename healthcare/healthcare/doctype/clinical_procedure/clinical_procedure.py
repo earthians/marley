@@ -50,6 +50,9 @@ class ClinicalProcedure(Document):
 
 		self.set_price_list()
 
+	def before_cancel(self):
+		self.set_status()
+
 	def on_cancel(self):
 		if self.service_request:
 			update_service_request_status(self.service_request, "active-Request Status")
@@ -171,6 +174,9 @@ class ClinicalProcedure(Document):
 						{
 							"doctype": "Sales Invoice",
 							"item_code": item.item_code,
+							"qty": item.qty,
+							"uom": item.uom,
+							"transaction_date": nowdate(),
 							"company": self.company,
 							"warehouse": self.warehouse,
 							"customer": customer,
