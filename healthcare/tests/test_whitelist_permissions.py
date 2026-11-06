@@ -8,7 +8,14 @@ import frappe
 from healthcare.controllers.service_request_controller import set_request_status
 from healthcare.healthcare.api.patient_portal import make_appointment
 from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import (
+	get_procedure_consumables,
+)
+from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import (
 	get_procedure_prescribed as get_procedures_to_perform,
+)
+from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import (
+	create_clinical_procedure_template,
+	create_procedure,
 )
 from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template import (
 	change_item_code_from_template,
@@ -440,3 +447,31 @@ class TestBillableServices(WhitelistPermissionTestCase):
 			self.customer,
 			self.company,
 		)
+
+
+class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
+	def setUp(self):
+		super().setUp()
+		practitioner = frappe.get_all("Healthcare Practitioner", pluck="name", limit=1)[0]
+		self.template = create_clinical_procedure_template()
+		self.procedure = create_procedure(self.template, self.patient, practitioner)
+
+	def test_start_needs_write_on_the_procedure(self):
+		self.assert_denied(self.procedure.start_procedure)
+		self.assertEqual(frappe.db.get_value("Clinical Procedure", self.procedure.name, "status"), "Pending")
+
+	def test_complete_needs_write_on_the_procedure(self):
+		self.procedure.start_procedure()
+
+		self.assert_denied(self.procedure.complete_procedure)
+
+	def test_consumables_need_read_on_the_template(self):
+		self.assert_denied(get_procedure_consumables, self.template.name)
+
+	def test_a_nurse_may_start_and_complete(self):
+		make_user(NURSE, "Nursing User")
+		frappe.set_user(NURSE)
+		self.procedure.start_procedure()
+		self.procedure.complete_procedure()
+
+		self.assertEqual(self.procedure.status, "Completed")

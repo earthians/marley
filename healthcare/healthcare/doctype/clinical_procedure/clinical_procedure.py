@@ -147,6 +147,10 @@ class ClinicalProcedure(Document):
 
 	@frappe.whitelist()
 	def complete_procedure(self):
+		self.check_permission("write")
+		if self.status != "In Progress":
+			frappe.throw(_("Only a procedure that is In Progress can be completed"))
+
 		stock_entry = make_stock_entry(self) if self.consume_stock and self.items else None
 
 		self.db_set(
@@ -216,6 +220,10 @@ class ClinicalProcedure(Document):
 
 	@frappe.whitelist()
 	def start_procedure(self):
+		self.check_permission("write")
+		if self.status != "Pending":
+			frappe.throw(_("Only a Pending procedure can be started"))
+
 		if self.consume_stock and not self.has_required_qty():
 			return "insufficient stock"
 
@@ -276,10 +284,10 @@ def get_stock_qty(item_code, warehouse):
 
 @frappe.whitelist()
 def get_procedure_consumables(procedure_template: str) -> list:
+	frappe.has_permission("Clinical Procedure Template", "read", procedure_template, throw=True)
 	return get_items("Clinical Procedure Item", procedure_template, "Clinical Procedure Template")
 
 
-@frappe.whitelist()
 def set_stock_items(doc, stock_detail_parent, parenttype):
 	for item in get_items("Clinical Procedure Item", stock_detail_parent, parenttype):
 		row = append_stock_row(doc, item, item.qty)
@@ -308,7 +316,6 @@ def get_items(table, parent, parenttype):
 	return frappe.db.get_all(table, filters={"parent": parent, "parenttype": parenttype}, fields=["*"])
 
 
-@frappe.whitelist()
 def make_stock_entry(doc):
 	stock_entry = frappe.new_doc("Stock Entry")
 	stock_entry = set_stock_items(stock_entry, doc.name, "Clinical Procedure")
