@@ -63,6 +63,24 @@ class TestClinicalProcedure(HealthcareTestSuite):
 		procedure.cancel()
 		self.assertEqual(procedure.status, "Cancelled")
 
+	def test_only_a_pending_procedure_can_be_started(self):
+		procedure = create_procedure(
+			create_clinical_procedure_template(), self.patient, self.practitioner, submit=False
+		)
+		self.assertRaises(frappe.ValidationError, procedure.start_procedure)
+
+		procedure.submit()
+		procedure.start_procedure()
+		self.assertRaises(frappe.ValidationError, procedure.start_procedure)
+
+	def test_only_a_procedure_in_progress_can_be_completed(self):
+		procedure = create_procedure(create_clinical_procedure_template(), self.patient, self.practitioner)
+		self.assertRaises(frappe.ValidationError, procedure.complete_procedure)
+
+		procedure.start_procedure()
+		procedure.complete_procedure()
+		self.assertRaises(frappe.ValidationError, procedure.complete_procedure)
+
 	def test_template_sample_creates_a_sample_collection(self):
 		procedure_template = create_template("_Test Procedure - Biopsy", sample="_Test Sample - Blood Sample")
 		procedure = create_procedure(procedure_template, self.patient, self.practitioner, submit=False)
