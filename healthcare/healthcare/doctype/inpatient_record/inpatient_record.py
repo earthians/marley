@@ -475,6 +475,9 @@ def close_active_nursing_care_plans(inpatient_record):
 
 	for plan_name in active_plans:
 		plan = frappe.get_doc("Nursing Care Plan", plan_name)
+		if plan.patient != inpatient_record.patient:
+			# Legacy mismatches must not block discharge or retain the wrong admission.
+			plan.inpatient_record = None
 		plan.status = "Closed"
 		plan.save(ignore_permissions=True)
 

@@ -83,9 +83,10 @@ class TestNursingCarePlan(HealthcareTestSuite):
 		self.assertRaises(frappe.ValidationError, care_plan.insert)
 
 	def test_plan_cannot_be_linked_to_another_patients_admission(self):
-		other_patient = frappe.get_list(
+		other_patients = frappe.get_list(
 			"Patient", filters={"name": ["!=", self.patient]}, pluck="name", limit=1
-		)[0]
+		)
+		other_patient = other_patients[0]
 		ip_record = create_inpatient(other_patient)
 		ip_record.insert(ignore_permissions=True)
 
