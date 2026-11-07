@@ -23,6 +23,8 @@
   "section_break_i70a",
   "patient",
   "patient_name",
+  "inpatient_record",
+  "inpatient_status",
   "column_break_qxq5",
   "age",
   "gender",
@@ -228,6 +230,22 @@
    "fieldname": "patient_name",
    "fieldtype": "Data",
    "label": "Patient Name"
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_status",
+   "fieldname": "inpatient_status",
+   "fieldtype": "Data",
+   "label": "Inpatient Status",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_wwnp",
