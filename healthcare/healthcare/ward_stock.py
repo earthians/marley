@@ -30,7 +30,7 @@ class WardStore:
 		return occupancy[-1].service_unit if occupancy else None
 
 	def company_warehouse(self):
-		return frappe.db.get_value("Company", self.admission.company, "default_warehouse")
+		return frappe.db.get_single_value("Stock Settings", "default_warehouse")
 
 
 def bed_warehouse(service_unit):

@@ -587,10 +587,7 @@ def get_actual_quantities(item_codes, warehouse):
 
 
 def get_default_warehouse(company=None):
-	company = company or frappe.defaults.get_user_default("Company")
-	if not company:
-		return None
-	return frappe.get_cached_value("Company", company, "default_warehouse")
+	return frappe.db.get_single_value("Stock Settings", "default_warehouse")
 
 
 def get_search_columns(row, warehouse, quantities, flagged=None):

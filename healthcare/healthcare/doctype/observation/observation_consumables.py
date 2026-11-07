@@ -208,7 +208,7 @@ def follows_unit(doc, unit_field):
 
 def unit_warehouse(company, service_unit):
 	return (service_unit and frappe.db.get_value("Healthcare Service Unit", service_unit, "warehouse")) or (
-		frappe.db.get_value("Company", company, "default_warehouse")
+		frappe.db.get_single_value("Stock Settings", "default_warehouse")
 	)
 
 
