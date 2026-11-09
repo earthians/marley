@@ -82,6 +82,25 @@ class TestNursingCarePlan(HealthcareTestSuite):
 
 		self.assertRaises(frappe.ValidationError, care_plan.insert)
 
+	def test_plan_cannot_be_linked_to_another_patients_admission(self):
+		other_patients = frappe.get_list(
+			"Patient", filters={"name": ["!=", self.patient]}, pluck="name", limit=1
+		)
+		other_patient = other_patients[0]
+		ip_record = create_inpatient(other_patient)
+		ip_record.insert(ignore_permissions=True)
+
+		care_plan = frappe.get_doc(
+			{
+				"doctype": "Nursing Care Plan",
+				"patient": self.patient,
+				"inpatient_record": ip_record.name,
+				"goals": [{"goal": "Patient remains comfortable"}],
+			}
+		)
+
+		self.assertRaises(frappe.ValidationError, care_plan.insert)
+
 	def test_active_orders_exclude_finished_ones(self):
 		orders = get_active_orders(self.patient)
 
