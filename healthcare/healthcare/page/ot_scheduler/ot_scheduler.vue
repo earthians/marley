@@ -4,7 +4,7 @@
 // time below it, blocked theatre time is hatched, and the practitioners away that day are listed
 // above the board. A request from the pane dropped into a column is booked there; a case dragged
 // elsewhere moves. The server checks every drop, so a refused one stays where it was.
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { Badge, Dialog, FormControl, ToastProvider } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
 
@@ -30,6 +30,7 @@ import {
 	DAY_SIZE,
 	HOUR_SIZE,
 	HOURS,
+	minutesNow,
 	minutesOf,
 	pastUntil,
 	placed,
@@ -92,11 +93,17 @@ const theatres = computed(() => board.value.complexes.flatMap(group => group.the
 const workStart = computed(() => minutesOf(board.value?.day_start || "08:00"));
 const workEnd = computed(() => minutesOf(board.value?.day_end || "20:00"));
 let scrolledDay = null;
+// the current time, a thin red line across today's board, moved on every minute
+const now = ref(minutesNow());
+const nowLine = computed(() => (boardDay() === today() ? now.value : null));
+let clockTimer = null;
 
 onMounted(() => {
 	emit("title", "OT Scheduler");
 	load();
+	clockTimer = setInterval(() => (now.value = minutesNow()), 60000);
 });
+onUnmounted(() => clearInterval(clockTimer));
 useBoardFeed(load);
 // a new day opens at the start of working hours; a reload of the same day stays where it is
 watch(board, scrollToWorkingHours, { flush: "post" });
@@ -369,6 +376,11 @@ function openBooking(name) {
 									:gap="picked"
 									@book="slots.book"
 									@clear="picked = null"
+								/>
+								<span
+									v-if="nowLine !== null"
+									class="pointer-events-none absolute inset-x-0 z-10 border-t border-outline-red-5"
+									:style="span(nowLine, nowLine)"
 								/>
 							</div>
 						</template>

@@ -57,8 +57,12 @@ export function clock(value) {
 export function pastUntil(day) {
 	if (day < today()) return DAY_MINUTES;
 	if (day > today()) return 0;
+	return minutesNow() - 15;
+}
+
+export function minutesNow() {
 	const now = new Date();
-	return now.getHours() * 60 + now.getMinutes() - 15;
+	return now.getHours() * 60 + now.getMinutes();
 }
 
 export function twoDigits(number) {
