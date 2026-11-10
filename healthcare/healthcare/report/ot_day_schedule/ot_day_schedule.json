@@ -1,0 +1,43 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2026-11-10 18:30:14.857101",
+ "disable_prepared_report": 1,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{}",
+ "letterhead": null,
+ "modified": "2026-11-10 18:30:14.857101",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "OT Day Schedule",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "OT Booking",
+ "report_name": "OT Day Schedule",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "OT Coordinator"
+  },
+  {
+   "role": "OT Manager"
+  },
+  {
+   "role": "Healthcare Administrator"
+  },
+  {
+   "role": "Physician"
+  },
+  {
+   "role": "Nursing User"
+  },
+  {
+   "role": "System Manager"
+  }
+ ]
+}

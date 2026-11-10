@@ -118,7 +118,21 @@ function sendActions([count, editable, shownDay]) {
 	};
 	const context = { ...day, filters: boardFilters(), host, reload: load };
 	const newBooking = () => host.navigate?.("ot-booking/new");
-	emit("actions", dayActions({ editable, count, shownDay, newBooking, ...context }));
+	const report = () => openDaySchedule();
+	emit(
+		"actions",
+		dayActions({ editable, count, shownDay, newBooking, report, ...context }),
+	);
+}
+
+// The OT Day Schedule report in a new tab, for the cases the board and its filters show. It groups
+// by theatre, or by practitioner when chosen there, and prints from there.
+function openDaySchedule() {
+	const params = { date: day.value, ...boardFilters(), ...filters.sheetFilters() };
+	window.open(
+		`/desk/query-report/OT%20Day%20Schedule?${new URLSearchParams(params)}`,
+		"_blank",
+	);
 }
 
 function countOf(status) {

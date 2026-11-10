@@ -6,11 +6,14 @@ import { post, showError, toastError, toastSuccess } from "./api.js";
 import { playDropSound } from "./sounds.js";
 import { today } from "./time.js";
 
-// The board's ⋯ menu for an editor; `count` is the day's Tentative cases. Start Over is for today
-// or a day to come: nothing can be placed at a time that has passed.
-export function dayActions({ editable, count, shownDay, newBooking, ...day }) {
-	if (!editable) return [];
-	const actions = [{ label: "New OT Booking", onClick: newBooking }];
+// The board's ⋯ menu. Anyone who can see the board can view it as the OT Day Schedule report, to
+// group by theatre or practitioner and print;
+// the rest is for editors, and `count` is the day's Tentative cases. Start Over is for today or a
+// day to come: nothing can be placed at a time that has passed.
+export function dayActions({ editable, count, shownDay, newBooking, report, ...day }) {
+	const viewing = [{ label: "View as Report", onClick: report }];
+	if (!editable) return viewing;
+	const actions = [{ label: "New OT Booking", onClick: newBooking }, ...viewing];
 	if (shownDay >= today() && count)
 		actions.push({
 			label: "Start Over",

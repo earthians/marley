@@ -1,0 +1,55 @@
+<style>
+	.ot-day h1 { font-size: 16px; margin: 0 0 4px; }
+	.ot-day .ot-day-subtitle { color: #525252; margin-bottom: 16px; }
+	.ot-day h2 { font-size: 13px; margin: 18px 0 6px; }
+	/* one set of column widths, so the columns line up from section to section */
+	.ot-day table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+	.ot-day th, .ot-day td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #ddd; vertical-align: top; }
+	.ot-day th { font-weight: 600; color: #525252; }
+	.ot-day section { break-inside: avoid; }
+</style>
+{% var by_practitioner = filters.group_by === "Practitioner"; %}
+{% var groups = []; %}
+{% for (var i = 0; i < data.length; i++) { %}
+	{% if (!groups.length || groups[groups.length - 1].name !== data[i].group) { groups.push({ name: data[i].group, rows: [] }); } %}
+	{% groups[groups.length - 1].rows.push(data[i]); %}
+{% } %}
+<div class="ot-day">
+	<h1>{%= __("OT Schedule by {0}", [by_practitioner ? __("Practitioner") : __("Theatre")]) %}</h1>
+	<p class="ot-day-subtitle">
+		{%= frappe.datetime.str_to_user(filters.date) %}
+		{% if (filters.company) { %} &middot; {%= frappe.utils.escape_html(filters.company || "") %}{% } %}
+		{% if (filters.department) { %} &middot; {%= frappe.utils.escape_html(filters.department || "") %}{% } %}
+	</p>
+	{% for (var g = 0; g < groups.length; g++) { %}
+	<section>
+		<h2>{%= frappe.utils.escape_html(groups[g].name || "") %}</h2>
+		<table>
+			<colgroup>
+				{% if (by_practitioner) { %}
+				<col style="width: 9%"><col style="width: 8%"><col style="width: 10%"><col style="width: 19%"><col style="width: 20%"><col style="width: 18%"><col style="width: 7%"><col style="width: 9%">
+				{% } else { %}
+				<col style="width: 10%"><col style="width: 22%"><col style="width: 25%"><col style="width: 23%"><col style="width: 9%"><col style="width: 11%">
+				{% } %}
+			</colgroup>
+			<thead><tr>
+				<th>{%= __("Time") %}</th>
+				{% if (by_practitioner) { %}<th>{%= __("Theatre") %}</th><th>{%= __("Role") %}</th>{% } %}
+				<th>{%= __("Patient") %}</th><th>{%= __("Procedures") %}</th><th>{%= __("Team") %}</th>
+				<th>{%= __("Priority") %}</th><th>{%= __("Status") %}</th>
+			</tr></thead>
+			<tbody>
+				{% for (var r = 0; r < groups[g].rows.length; r++) { var row = groups[g].rows[r]; %}
+				<tr>
+					<td>{%= frappe.utils.escape_html(row.time || "") %}</td>
+					{% if (by_practitioner) { %}<td>{%= frappe.utils.escape_html(row.theatre || "") %}</td><td>{%= frappe.utils.escape_html(row.role || "") %}</td>{% } %}
+					<td>{%= frappe.utils.escape_html(row.patient || "") %}</td><td>{%= frappe.utils.escape_html(row.procedures || "") %}</td><td>{%= frappe.utils.escape_html(row.team || "") %}</td>
+					<td>{%= frappe.utils.escape_html(row.priority || "") %}</td><td>{%= frappe.utils.escape_html(row.status || "") %}</td>
+				</tr>
+				{% } %}
+			</tbody>
+		</table>
+	</section>
+	{% } %}
+	{% if (!groups.length) { %}<p>{%= __("No cases.") %}</p>{% } %}
+</div>
