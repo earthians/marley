@@ -622,7 +622,7 @@
   }
  ],
  "max_attachments": 50,
- "modified": "2026-06-18 13:50:07.543590",
+ "modified": "2026-11-10 14:32:52.748299",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Patient",
@@ -675,6 +675,16 @@
    "role": "Nursing User",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Coordinator",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Manager",
+   "select": 1
   }
  ],
  "quick_entry": 1,

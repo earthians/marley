@@ -4,6 +4,7 @@
 import frappe
 from frappe.utils import add_days, add_to_date, get_datetime, now_datetime, nowdate
 
+from healthcare.healthcare.doctype.ot_booking.board import get_board
 from healthcare.healthcare.doctype.ot_booking.priority import priority_named
 from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	HOUR,
@@ -100,6 +101,14 @@ class TestFasting(HealthcareTestSuite):
 		self.complete_task(booking)
 
 		self.assertTrue(self.confirmed(booking))
+
+	def test_the_board_shows_confirmed_fasting(self):
+		booking = self.scheduled()
+		self.complete_task(booking)
+
+		[shown] = get_board(self.day, "_Test Company")["bookings"]
+
+		self.assertTrue(shown.fasting_confirmed)
 
 	def test_a_procedure_that_needs_no_fasting_sends_no_task(self):
 		frappe.db.set_value("Clinical Procedure Template", self.template.name, "requires_fasting", 0)

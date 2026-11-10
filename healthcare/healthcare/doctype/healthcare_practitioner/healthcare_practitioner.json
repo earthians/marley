@@ -444,7 +444,7 @@
    "link_fieldname": "practitioner"
   }
  ],
- "modified": "2026-11-10 10:48:01.340930",
+ "modified": "2026-11-10 14:32:52.745614",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",
@@ -500,6 +500,16 @@
    "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Coordinator",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Manager",
+   "select": 1
   }
  ],
  "quick_entry": 1,

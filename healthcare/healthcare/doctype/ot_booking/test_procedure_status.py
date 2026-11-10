@@ -4,6 +4,7 @@
 import frappe
 from frappe.utils import add_days, get_datetime, nowdate
 
+from healthcare.healthcare.doctype.ot_booking.board import get_board
 from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	HOUR,
 	create_ot_template,
@@ -97,6 +98,21 @@ class TestProcedureStatus(HealthcareTestSuite):
 		booking.update({"status": "Cancelled", "change_reason": "Patient unfit for surgery"})
 
 		self.assertRaisesRegex(frappe.ValidationError, "already submitted", booking.save)
+
+	def test_the_board_offers_cancel_once_the_started_cases_procedures_are_cancelled(self):
+		booking, (first, second) = self.booking_with_procedures()
+		first.start_procedure()
+		self.assertNotIn("Cancelled", self.next_statuses(booking))
+
+		for procedure in (first, second):
+			procedure.reload()
+			procedure.cancel()
+
+		self.assertIn("Cancelled", self.next_statuses(booking))
+
+	def next_statuses(self, booking):
+		bookings = get_board(str(self.day), "_Test Company")["bookings"]
+		return next(row.next_statuses for row in bookings if row.name == booking.name)
 
 
 def submitted(procedure):

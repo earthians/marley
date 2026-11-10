@@ -279,7 +279,7 @@
    "table_fieldname": "practitioner_schedules"
   }
  ],
- "modified": "2026-11-09 20:51:36.014130",
+ "modified": "2026-11-10 14:32:52.747508",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Service Unit",
@@ -317,6 +317,16 @@
    "role": "Physician",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Coordinator",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Manager",
+   "select": 1
   }
  ],
  "quick_entry": 1,
