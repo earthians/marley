@@ -174,6 +174,7 @@ def make_clinical_procedure(service_request: str, appointment: str | None = None
 	doc.start_date = service_request.occurrence_date
 	doc.start_time = service_request.occurrence_time
 	doc.medical_department = service_request.medical_department
+	doc.priority = service_request.priority
 	doc.invoiced = 1 if service_request.billing_status == "Invoiced" else 0
 	doc.insurance_policy = service_request.insurance_policy
 	doc.insurance_payor = service_request.insurance_payor

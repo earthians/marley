@@ -55,9 +55,11 @@
   "ot_tab",
   "ot_cleaning_minutes",
   "ot_holiday_list",
+  "ot_fasting_hours",
   "column_break_ot",
   "ot_day_start_time",
   "ot_day_end_time",
+  "ot_fasting_activity",
   "billing_accounts",
   "healthcare_service_items",
   "inpatient_visit_charge_item",
@@ -238,6 +240,14 @@
    "options": "Holiday List"
   },
   {
+   "default": "6",
+   "description": "How long before a case the patient stops eating and drinking, for a procedure that needs fasting but sets no hours of its own",
+   "fieldname": "ot_fasting_hours",
+   "fieldtype": "Float",
+   "label": "Fasting Hours",
+   "non_negative": 1
+  },
+  {
    "fieldname": "column_break_ot",
    "fieldtype": "Column Break"
   },
@@ -252,6 +262,13 @@
    "fieldname": "ot_day_end_time",
    "fieldtype": "Time",
    "label": "Day End Time"
+  },
+  {
+   "description": "The ward's Nursing Task for a Scheduled case's fasting. Leave empty to send none",
+   "fieldname": "ot_fasting_activity",
+   "fieldtype": "Link",
+   "label": "Fasting Activity",
+   "options": "Healthcare Activity"
   },
   {
    "fieldname": "laboratory_sms_alerts",
@@ -666,7 +683,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-11-09 20:51:36.044231",
+ "modified": "2026-11-10 11:23:23.580995",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

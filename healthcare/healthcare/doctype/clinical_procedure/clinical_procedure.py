@@ -21,6 +21,7 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
+from healthcare.healthcare.doctype.ot_booking.procedure_status import follow_procedure
 from healthcare.healthcare.doctype.service_request.service_request import (
 	update_service_request_status,
 )
@@ -127,6 +128,8 @@ class ClinicalProcedure(Document):
 	def set_planned_endtime(self):
 		if not self.procedure_template or not self.start_time:
 			return
+		if self.ot_booking and self.planned_end_datetime:
+			return  # its OT Booking gave it the end of the slot booked for it
 
 		duration = self.get_template_value("default_duration")
 		if duration:
@@ -171,6 +174,7 @@ class ClinicalProcedure(Document):
 			update_service_request_status(self.service_request, "completed-Request Status")
 
 		self.create_post_op_tasks()
+		follow_procedure(self)
 		return stock_entry
 
 	def get_consumption_summary(self):
@@ -235,6 +239,7 @@ class ClinicalProcedure(Document):
 		validate_nursing_tasks(self)
 		self.db_set({"status": "In Progress", "actual_start_datetime": now_datetime()})
 		self.notify_update()
+		follow_procedure(self)
 		return "success"
 
 	def has_required_qty(self):

@@ -20,6 +20,8 @@
   "default_duration",
   "requires_ot",
   "required_theatre_type",
+  "requires_fasting",
+  "fasting_hours",
   "billing_section",
   "column_break_ea5h",
   "link_existing_item",
@@ -283,6 +285,21 @@
    "fieldtype": "Link",
    "label": "Required Theatre Type",
    "options": "Healthcare Service Unit Type"
+  },
+  {
+   "default": "1",
+   "depends_on": "requires_ot",
+   "fieldname": "requires_fasting",
+   "fieldtype": "Check",
+   "label": "Requires Fasting"
+  },
+  {
+   "depends_on": "eval:doc.requires_ot && doc.requires_fasting",
+   "description": "Leave 0 to use the Fasting Hours in Healthcare Settings",
+   "fieldname": "fasting_hours",
+   "fieldtype": "Float",
+   "label": "Fasting Hours",
+   "non_negative": 1
   }
  ],
  "links": [
@@ -291,7 +308,7 @@
    "link_fieldname": "procedure_template"
   }
  ],
- "modified": "2026-11-09 20:51:35.980059",
+ "modified": "2026-11-10 11:23:23.548769",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",

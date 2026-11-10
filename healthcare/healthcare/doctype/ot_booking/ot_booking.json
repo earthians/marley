@@ -28,6 +28,7 @@
   "team",
   "consent_section",
   "consent_signed",
+  "fasting_confirmed",
   "column_break_consent",
   "consent_form",
   "change_section",
@@ -181,6 +182,14 @@
    "label": "Consent Signed"
   },
   {
+   "description": "Shown once the ward completes the patient's fasting task for this case's time",
+   "fieldname": "fasting_confirmed",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Fasting Confirmed",
+   "read_only": 1
+  },
+  {
    "fieldname": "column_break_consent",
    "fieldtype": "Column Break"
   },
@@ -204,7 +213,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-10 10:48:01.375202",
+ "modified": "2026-11-10 11:23:23.613345",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "OT Booking",

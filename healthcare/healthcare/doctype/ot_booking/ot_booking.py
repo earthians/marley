@@ -12,13 +12,23 @@ from frappe.model.document import Document
 from frappe.utils import add_to_date, cint, getdate
 
 from healthcare.healthcare.doctype.ot_booking.availability import validate_availability
+from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
 from healthcare.healthcare.doctype.ot_booking.day_rules import log_change_reason, validate_day_rules
+from healthcare.healthcare.doctype.ot_booking.fasting import is_fasting_confirmed, sync_fasting_task
 from healthcare.healthcare.doctype.ot_booking.priority import set_priority
+from healthcare.healthcare.doctype.ot_booking.procedure_status import procedures_of
+from healthcare.healthcare.doctype.ot_booking.procedures import (
+	create_procedures,
+	update_procedures,
+	validate_procedures_held,
+)
+from healthcare.healthcare.doctype.ot_booking.same_patient import warn_other_cases
 
 STATUS_CHANGES = {
 	"Tentative": ("Scheduled", "Postponed", "Cancelled"),
 	"Scheduled": ("Tentative", "In Progress", "Postponed", "Cancelled"),
-	"In Progress": ("Completed",),
+	# a started case can be cancelled only once its procedures are (procedures.py)
+	"In Progress": ("Completed", "Cancelled"),
 	"Postponed": ("Tentative", "Cancelled"),
 }
 NEW_STATUSES = ("Tentative", "Scheduled")
@@ -27,6 +37,14 @@ A_DAY = 24 * 60 * 60
 
 
 class OTBooking(Document):
+	@property
+	def fasting_confirmed(self):
+		"""A virtual field, read from the ward's fasting task (fasting.py)"""
+		return is_fasting_confirmed(self, [row.procedure_template for row in self.procedures])
+
+	def onload(self):
+		self.set_onload("procedures_to_create", len(self.procedures) - len(procedures_of(self)))
+
 	def validate(self):
 		self.patient_name = frappe.db.get_value("Patient", self.patient, "patient_name")
 		set_priority(self)
@@ -39,10 +57,24 @@ class OTBooking(Document):
 		self.validate_inpatient_record()
 		self.validate_primary_surgeon()
 		validate_day_rules(self)
+		validate_procedures_held(self)
 		validate_availability(self)
 
 	def on_update(self):
+		update_procedures(self)
+		sync_fasting_task(self)
 		log_change_reason(self)
+		warn_other_cases(self)
+
+	@frappe.whitelist()
+	def create_clinical_procedures(self):
+		"""From the saved booking, never from unsaved edits a form sent along with the call"""
+		saved = frappe.get_doc(self.doctype, self.name)
+		saved.check_permission("write")
+		frappe.has_permission("Clinical Procedure", "create", throw=True)
+		if saved.status in (*INACTIVE_STATUSES, "Completed"):
+			frappe.throw(_("Procedures cannot be created for a {0} case").format(_(saved.status)))
+		return create_procedures(saved)
 
 	def validate_status_change(self):
 		before = self.get_doc_before_save()

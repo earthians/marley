@@ -20,6 +20,7 @@
   "inpatient_record",
   "column_break_7",
   "status",
+  "priority",
   "practitioner",
   "practitioner_name",
   "medical_department",
@@ -50,6 +51,8 @@
   "sb_refs",
   "column_break_34",
   "service_request",
+  "ot_booking",
+  "ot_booking_row",
   "invoiced",
   "prescription",
   "amended_from"
@@ -241,6 +244,15 @@
    "read_only": 1
   },
   {
+   "fetch_from": "service_request.priority",
+   "fetch_if_empty": 1,
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "options": "Code Value"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -326,6 +338,25 @@
    "search_index": 1
   },
   {
+   "fieldname": "ot_booking",
+   "fieldtype": "Link",
+   "label": "OT Booking",
+   "options": "OT Booking",
+   "read_only": 1,
+   "search_index": 1,
+   "no_copy": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "ot_booking_row",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "OT Booking Row",
+   "no_copy": 1,
+   "read_only": 1,
+   "description": "The OT Booking procedure row this procedure performs"
+  },
+  {
    "fieldname": "section_break_igrj",
    "fieldtype": "Section Break"
   },
@@ -374,7 +405,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2026-02-16 18:35:08.776702",
+ "modified": "2026-11-10 19:17:16.630916",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",
@@ -407,6 +438,18 @@
    "share": 1,
    "submit": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "OT Coordinator"
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "OT Manager"
   }
  ],
  "restrict_to_domain": "Healthcare",
@@ -415,5 +458,6 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "title",
- "track_changes": 1
+ "track_changes": 1,
+ "search_fields": "ot_booking"
 }

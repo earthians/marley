@@ -25,4 +25,27 @@ frappe.ui.form.on("OT Booking", {
 	patient: function (frm) {
 		frm.set_value("inpatient_record", null);
 	},
+
+	refresh: function (frm) {
+		const open = !["Cancelled", "Postponed", "Completed"].includes(frm.doc.status);
+		if (frm.is_new() || !open || !frm.doc.__onload?.procedures_to_create) return;
+		frm.add_custom_button(__("Create Procedures"), () => create_procedures(frm));
+		frm.change_custom_button_type(__("Create Procedures"), null, "primary");
+	},
 });
+
+function create_procedures(frm) {
+	frappe.call({
+		doc: frm.doc,
+		method: "create_clinical_procedures",
+		freeze: true,
+		callback: function (r) {
+			if (r.exc) return;
+			frappe.show_alert({
+				message: __("{0} Clinical Procedure(s) created", [r.message.length]),
+				indicator: "green",
+			});
+			frm.reload_doc();
+		},
+	});
+}
