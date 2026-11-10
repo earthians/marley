@@ -15,12 +15,15 @@ import DropGhost from "./components/drop_ghost.vue";
 import HourScale from "./components/hour_scale.vue";
 import RequestPanel from "./components/request_panel.vue";
 import RowWash from "./components/row_wash.vue";
+import SlotHighlight from "./components/slot_highlight.vue";
 import UnavailableBlock from "./components/unavailable_block.vue";
 import { useBoardFeed } from "./composables/feed.js";
 import { useBoardFilters } from "./composables/use_board_filters.js";
 import { useBoardLoad } from "./composables/use_board_load.js";
 import { useCaseActions } from "./composables/use_case_actions.js";
 import { useDrop } from "./composables/use_drop.js";
+import { useSlots } from "./composables/use_slots.js";
+import { dayActions } from "./publish.js";
 import {
 	caseOnDay,
 	clock,
@@ -44,7 +47,14 @@ const host = useHost();
 const day = ref(props.query.date || today());
 const company = ref(props.query.company || "");
 const department = ref(props.query.department || "");
-const { board, requests, postponed, load, current } = useBoardLoad({
+const {
+	board,
+	requests,
+	postponed,
+	load,
+	filters: boardFilters,
+	current,
+} = useBoardLoad({
 	day,
 	company,
 	department,
@@ -64,6 +74,11 @@ const drag = useDrop({
 	reschedule: actions.reschedule,
 });
 const { dragged, dropTheatre, plan } = drag;
+const slots = useSlots({ day, filters: boardFilters, change: actions.change });
+const { finder, picked } = slots;
+// slots found for other theatres no longer apply
+watch([company, department], slots.close);
+const tentativeCount = computed(() => countOf("Tentative"));
 
 // The whole day, midnight to midnight; any hour is bookable. A theatre's column is at least
 // 144px wide and shares out whatever room the board has left.
@@ -85,8 +100,8 @@ onMounted(() => {
 useBoardFeed(load);
 // a new day opens at the start of working hours; a reload of the same day stays where it is
 watch(board, scrollToWorkingHours, { flush: "post" });
-// the page menu (the three dots)
-watch(canEdit, editable => emit("actions", pageActions(editable)), { immediate: true });
+// the page menu (the three dots) offers Publish while the day has Tentative cases
+watch([tentativeCount, canEdit, day], sendActions, { immediate: true });
 
 function scrollToWorkingHours() {
 	if (!timeline.value || scrolledDay === day.value) return;
@@ -95,11 +110,21 @@ function scrollToWorkingHours() {
 	scrolledDay = day.value;
 }
 
-function pageActions(editable) {
-	if (!editable) return [];
-	return [
-		{ label: "New OT Booking", onClick: () => host.navigate?.("ot-booking/new") },
-	];
+function sendActions([count, editable, shownDay]) {
+	const day = {
+		day: shownDay,
+		company: board.value?.company,
+		department: department.value,
+	};
+	const context = { ...day, filters: boardFilters(), host, reload: load };
+	const newBooking = () => host.navigate?.("ot-booking/new");
+	emit("actions", dayActions({ editable, count, shownDay, newBooking, ...context }));
+}
+
+function countOf(status) {
+	return (
+		board.value?.bookings.filter(booking => booking.status === status).length || 0
+	);
 }
 
 // The day the board's cases are for. Next and Previous change `day` at once, but the cases shown
@@ -199,6 +224,10 @@ function openBooking(name) {
 				@unschedule="drag.unschedule"
 				@over="drag.clearGhost"
 				@done="drag.endDrag"
+				:finder="finder"
+				:picked="picked"
+				@find="slots.find"
+				@pick-slot="slots.pick"
 			/>
 
 			<p
@@ -308,6 +337,19 @@ function openBooking(name) {
 								<DropGhost
 									v-if="plan && dropTheatre === theatre.name"
 									:plan="plan"
+								/>
+								<SlotHighlight
+									v-if="slots.slotIn(theatre.name)"
+									:place="
+										placed(
+											minutesOf(picked.start),
+											minutesOf(picked.end) +
+												board.cleaning_minutes,
+										)
+									"
+									:gap="picked"
+									@book="slots.book"
+									@clear="picked = null"
 								/>
 							</div>
 						</template>

@@ -1,5 +1,7 @@
 <script setup>
-// A case's details on hover, like desk's link preview, so it can be read without leaving the board.
+// A case's details on hover, like desk's link preview, so it can be read without leaving the board:
+// a case in a theatre, or a waiting one in the pane (a postponed case, or a request shaped like a
+// case by request_panel.vue). Only the rows a case has are shown.
 import { Badge } from "frappe-ui";
 
 import { patientFacts } from "../patient.js";
@@ -15,6 +17,8 @@ const STATUS_THEMES = {
 	Scheduled: "blue",
 	"In Progress": "amber",
 	Completed: "green",
+	Postponed: "amber",
+	Ordered: "violet",
 };
 </script>
 
@@ -41,12 +45,18 @@ const STATUS_THEMES = {
 			</li>
 		</ul>
 		<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-			<dt class="text-ink-gray-5">Theatre</dt>
-			<dd class="text-ink-gray-8">{{ theatre }}</dd>
-			<dt class="text-ink-gray-5">Time</dt>
-			<dd class="text-ink-gray-8">{{ time }}</dd>
+			<template v-if="theatre">
+				<dt class="text-ink-gray-5">Theatre</dt>
+				<dd class="text-ink-gray-8">{{ theatre }}</dd>
+				<dt class="text-ink-gray-5">Time</dt>
+				<dd class="text-ink-gray-8">{{ time }}</dd>
+			</template>
 			<dt class="text-ink-gray-5">Surgeon</dt>
 			<dd class="text-ink-gray-8">{{ booking.surgeon }}</dd>
+			<template v-if="booking.team_names?.length">
+				<dt class="text-ink-gray-5">Team</dt>
+				<dd class="text-ink-gray-8">{{ booking.team_names.join(", ") }}</dd>
+			</template>
 			<dt class="text-ink-gray-5">Priority</dt>
 			<dd :class="booking.is_emergency ? 'text-ink-red-7' : 'text-ink-gray-8'">
 				{{ booking.priority_label }}
@@ -57,10 +67,12 @@ const STATUS_THEMES = {
 					<p v-for="other in booking.other_cases" :key="other">{{ other }}</p>
 				</dd>
 			</template>
-			<dt class="text-ink-gray-5">Fasting</dt>
-			<dd class="text-ink-gray-8">
-				{{ booking.fasting_confirmed ? "Confirmed" : "Not confirmed" }}
-			</dd>
+			<template v-if="'fasting_confirmed' in booking">
+				<dt class="text-ink-gray-5">Fasting</dt>
+				<dd class="text-ink-gray-8">
+					{{ booking.fasting_confirmed ? "Confirmed" : "Not confirmed" }}
+				</dd>
+			</template>
 		</dl>
 		<p class="text-xs text-ink-gray-5">{{ booking.name }}</p>
 	</div>

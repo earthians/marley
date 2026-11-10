@@ -5,7 +5,9 @@ import { computed, ref } from "vue";
 import { FormControl } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
 
+import FinderButton from "./finder_button.vue";
 import PaneCard from "./pane_card.vue";
+import SlotList from "./slot_list.vue";
 import { caseMinutes } from "../time.js";
 
 const props = defineProps({
@@ -13,8 +15,19 @@ const props = defineProps({
 	postponed: { type: Array, default: () => [] },
 	// a booked case is being dragged, so the pane offers to take it
 	dropping: { type: Boolean, default: false },
+	// the slot finder: which card it is open on and what it found (use_slots.js)
+	finder: { type: Object, required: true },
+	picked: { type: Object, default: null },
 });
-const emit = defineEmits(["pick", "pickPostponed", "unschedule", "over", "done"]);
+const emit = defineEmits([
+	"pick",
+	"pickPostponed",
+	"unschedule",
+	"over",
+	"done",
+	"find",
+	"pickSlot",
+]);
 
 const host = useHost();
 const search = ref("");
@@ -38,15 +51,30 @@ function matching(rows, details) {
 	);
 }
 
+// a length such as 2h 30m, 3h or 45m
 function duration(seconds) {
 	const total = Math.round((seconds || 0) / 60);
-	return total >= 60 ? `${Math.floor(total / 60)}h ${total % 60}m` : `${total}m`;
+	const hours = Math.floor(total / 60);
+	const minutes = total % 60;
+	return [hours && `${hours}h`, (minutes || !hours) && `${minutes}m`]
+		.filter(Boolean)
+		.join(" ");
 }
 
 function ordered(request) {
 	return `Ordered ${
 		host.format?.(request.order_date, { fieldtype: "Date" }) ?? request.order_date
 	}`;
+}
+
+// a request shaped like a case, so the pane shows it with the board's hover preview
+function requestPreview(request) {
+	return {
+		...request,
+		status: "Ordered",
+		procedures: [request.procedure],
+		surgeon: request.practitioner_name,
+	};
 }
 
 function drop() {
@@ -91,15 +119,28 @@ function drop() {
 				v-for="request in shownRequests"
 				:key="request.name"
 				:row="request"
+				:route="`service-request/${request.name}`"
+				:preview="requestPreview(request)"
 				:procedures="request.procedure"
-				:details="[
-					duration(request.duration),
-					request.practitioner_name,
-					ordered(request),
-				]"
+				:duration="duration(request.duration)"
+				:details="[request.practitioner_name, ordered(request)]"
 				@pick="event => emit('pick', request, event)"
 				@done="emit('done')"
-			/>
+			>
+				<template #actions>
+					<FinderButton
+						:open="finder.for === request.name"
+						@click="emit('find', { request })"
+					/>
+				</template>
+				<SlotList
+					v-if="finder.for === request.name"
+					class="mt-2"
+					:finder="finder"
+					:picked="picked"
+					@pick="slot => emit('pickSlot', slot)"
+				/>
+			</PaneCard>
 			<p
 				v-if="shownPostponed.length"
 				class="pt-2 text-sm font-semibold text-ink-gray-7"
@@ -110,16 +151,29 @@ function drop() {
 				v-for="booking in shownPostponed"
 				:key="booking.name"
 				:row="booking"
+				:route="`ot-booking/${booking.name}`"
+				:preview="booking"
 				postponed
 				:procedures="booking.procedures.join(', ')"
-				:details="[
-					duration(caseMinutes(booking) * 60),
-					booking.surgeon,
-					booking.name,
-				]"
+				:duration="duration(caseMinutes(booking) * 60)"
+				:details="[booking.surgeon, booking.name]"
 				@pick="event => emit('pickPostponed', booking, event)"
 				@done="emit('done')"
-			/>
+			>
+				<template #actions>
+					<FinderButton
+						:open="finder.for === booking.name"
+						@click="emit('find', { booking })"
+					/>
+				</template>
+				<SlotList
+					v-if="finder.for === booking.name"
+					class="mt-2"
+					:finder="finder"
+					:picked="picked"
+					@pick="slot => emit('pickSlot', slot)"
+				/>
+			</PaneCard>
 		</div>
 	</aside>
 </template>
