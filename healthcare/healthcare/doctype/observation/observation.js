@@ -114,7 +114,7 @@ function apply_imaging_template(frm, template_field, result_field) {
 		frappe.call({
 			method: "healthcare.healthcare.doctype.observation.observation.get_observation_result_template",
 			args: { template_name: selected, observation: frm.doc.name },
-			callback: (r) => {
+			callback: r => {
 				if (frm.doc[template_field] !== selected) return;
 				if (r.exc) {
 					restore_selection();
@@ -130,8 +130,12 @@ function apply_imaging_template(frm, template_field, result_field) {
 	if (frm.doc[result_field]) {
 		frappe.confirm(
 			template_field === "result_template"
-				? __("Replace the existing result template with the content from the selected template?")
-				: __("Replace the existing interpretation template with the content from the selected template?"),
+				? __(
+						"Replace the existing result template with the content from the selected template?",
+				  )
+				: __(
+						"Replace the existing interpretation template with the content from the selected template?",
+				  ),
 			render_selected,
 			restore_selection,
 		);
