@@ -42,6 +42,9 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
 	make_insurance_coverage as generate_insurance_coverage,
 )
+from healthcare.healthcare.doctype.practitioner_availability.practitioner_availability import (
+	find_unavailable_blocks,
+)
 from healthcare.healthcare.utils import get_appointment_billing_item_and_rate
 
 
@@ -323,27 +326,7 @@ class PatientAppointment(Document):
 		if end_dt <= start_dt:
 			frappe.throw(_("Appointment end must be after start."))
 
-		rows = frappe.get_all(
-			"Practitioner Availability",
-			fields=["name", "start_date", "end_date", "start_time", "end_time"],
-			filters={"type": "Unavailable", "docstatus": ("!=", 2), "scope": ["in", scopes]},
-			order_by="start_date asc, start_time asc",
-		)
-
-		conflicts = []
-		for r in rows:
-			existing_start_date = getdate(r.start_date)
-			existing_end_date = getdate(r.end_date)
-			existing_start_time = get_time(r.start_time)
-			existing_end_time = get_time(r.end_time)
-
-			overlap_start_date = max(getdate(start_dt), existing_start_date)
-			overlap_end_date = min(getdate(end_dt), existing_end_date)
-			if overlap_start_date <= overlap_end_date:
-				# Check if the daily times overlap
-				if get_time(start_dt) < existing_end_time and existing_start_time < get_time(end_dt):
-					conflicts.append(r["name"])
-
+		conflicts = [block.name for block in find_unavailable_blocks(scopes, start_dt, end_dt)]
 		if conflicts:
 			msg = ", ".join(frappe.bold(n) for n in conflicts)
 			frappe.throw(

@@ -11,6 +11,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, cint, getdate
 
+from healthcare.healthcare.doctype.ot_booking.availability import validate_availability
+from healthcare.healthcare.doctype.ot_booking.day_rules import log_change_reason, validate_day_rules
 from healthcare.healthcare.doctype.ot_booking.priority import set_priority
 
 STATUS_CHANGES = {
@@ -20,7 +22,6 @@ STATUS_CHANGES = {
 	"Postponed": ("Tentative", "Cancelled"),
 }
 NEW_STATUSES = ("Tentative", "Scheduled")
-INACTIVE_STATUSES = ("Cancelled", "Postponed")
 ACTIVE_REQUEST_STATUS = "active-Request Status"
 A_DAY = 24 * 60 * 60
 
@@ -37,6 +38,11 @@ class OTBooking(Document):
 		self.validate_service_requests()
 		self.validate_inpatient_record()
 		self.validate_primary_surgeon()
+		validate_day_rules(self)
+		validate_availability(self)
+
+	def on_update(self):
+		log_change_reason(self)
 
 	def validate_status_change(self):
 		before = self.get_doc_before_save()

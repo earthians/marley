@@ -29,7 +29,9 @@
   "consent_section",
   "consent_signed",
   "column_break_consent",
-  "consent_form"
+  "consent_form",
+  "change_section",
+  "change_reason"
  ],
  "fields": [
   {
@@ -187,11 +189,22 @@
    "fieldname": "consent_form",
    "fieldtype": "Attach",
    "label": "Consent Form"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "change_section",
+   "fieldtype": "Section Break",
+   "label": "Changes"
+  },
+  {
+   "fieldname": "change_reason",
+   "fieldtype": "Small Text",
+   "label": "Change Reason"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-09 22:14:58.686480",
+ "modified": "2026-11-10 10:48:01.375202",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "OT Booking",

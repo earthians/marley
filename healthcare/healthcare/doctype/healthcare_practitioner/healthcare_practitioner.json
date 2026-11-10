@@ -34,6 +34,8 @@
   "practitioner_schedules",
   "google_calendar",
   "show_in_portal",
+  "operation_theatre_section",
+  "allow_overlapping_theatres",
   "charges",
   "op_consulting_charge_item",
   "op_consulting_charge",
@@ -393,6 +395,19 @@
    "fieldname": "show_in_portal",
    "fieldtype": "Check",
    "label": "Show in Portal"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "operation_theatre_section",
+   "fieldtype": "Section Break",
+   "label": "Operation Theatre"
+  },
+  {
+   "default": "0",
+   "description": "Can be booked in two theatres at the same time, for example a consultant anaesthetist supervising two rooms",
+   "fieldname": "allow_overlapping_theatres",
+   "fieldtype": "Check",
+   "label": "Allow Overlapping Theatres"
   }
  ],
  "grid_page_length": 50,
@@ -429,7 +444,7 @@
    "link_fieldname": "practitioner"
   }
  ],
- "modified": "2026-10-24 22:54:13.843788",
+ "modified": "2026-11-10 10:48:01.340930",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Practitioner",
