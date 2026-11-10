@@ -191,22 +191,11 @@ var rebuild_result_control = function (frm, fieldtype, options) {
 	docfield.fieldtype = fieldtype;
 	docfield.options = options;
 
-	const $anchor = field.$wrapper;
-	const new_field = frappe.ui.form.make_control({
-		df: docfield,
-		doctype: frm.doctype,
-		docname: frm.docname,
-		parent: $("<div>"),
-		frm: frm,
-		doc: frm.doc,
-		render_input: true,
-	});
-	new_field.layout = frm.layout;
-	new_field.$wrapper.insertBefore($anchor);
-	$anchor.remove();
-
-	frm.fields_dict.result = new_field;
-	new_field.set_value(frm.doc.result);
+	frm.layout.replace_field("result", docfield, true);
+	const new_field = frm.fields_dict.result;
+	new_field.docname = frm.docname;
+	new_field.doc = frm.doc;
+	new_field.refresh();
 };
 
 // Renders two Datetime pickers in place of the (hidden) native result
