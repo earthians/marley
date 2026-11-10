@@ -1,0 +1,40 @@
+{
+ "content": null,
+ "creation": "2026-11-06 23:45:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "island": null,
+ "modified": "2026-11-07 13:51:38.890514",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "ot-scheduler",
+ "owner": "Administrator",
+ "page_name": "ot-scheduler",
+ "roles": [
+  {
+   "role": "OT Coordinator"
+  },
+  {
+   "role": "OT Manager"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Healthcare Administrator"
+  },
+  {
+   "role": "Physician"
+  },
+  {
+   "role": "Nursing User"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "OT Scheduler",
+ "type": "Frappe UI"
+}

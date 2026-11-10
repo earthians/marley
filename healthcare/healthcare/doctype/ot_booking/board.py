@@ -107,7 +107,7 @@ def add_case_details(bookings):
 	"""What a card and its menu need: the team, the procedures and how far they have got, fasting,
 	priority, the statuses the case may move to and whether that needs a reason"""
 	names = [booking.name for booking in bookings]
-	team = child_rows("OT Booking Team", names, ["practitioner_name", "role", "is_primary"])
+	team = child_rows("OT Booking Team", names, ["practitioner", "practitioner_name", "role", "is_primary"])
 	rows = child_rows("OT Booking Procedure", names, ["procedure_template"])
 	made = frappe.get_all(
 		"Clinical Procedure",
@@ -119,6 +119,7 @@ def add_case_details(bookings):
 		members = [member for member in team if member.parent == booking.name]
 		booking.surgeon = next((m.practitioner_name for m in members if m.is_primary), None)
 		booking.team_names = [member.practitioner_name for member in members]
+		booking.team_ids = [member.practitioner for member in members]
 		booking.team_roles = [{"name": m.practitioner_name, "role": m.role} for m in members]
 		booking.procedures = [row.procedure_template for row in rows if row.parent == booking.name]
 		procedures = [procedure for procedure in made if procedure.ot_booking == booking.name]
