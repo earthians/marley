@@ -3,6 +3,8 @@
 
 frappe.ui.form.on("Observation", {
 	refresh: function (frm) {
+		frm._selected_result_template = frm.doc.result_template;
+		frm._selected_interpretation_template = frm.doc.interpretation_template;
 		frm.set_query("patient", function () {
 			return {
 				filters: { status: ["!=", "Disabled"] },
@@ -75,10 +77,68 @@ frappe.ui.form.on("Observation", {
 		get_medical_codes(frm);
 		set_service_unit_query(frm);
 	},
+	result_template: function (frm) {
+		apply_imaging_template(frm, "result_template", "result");
+	},
+	interpretation_template: function (frm) {
+		apply_imaging_template(frm, "interpretation_template", "result_interpretation");
+	},
 	service_request: function (frm) {
 		set_service_unit_query(frm);
 	},
 });
+
+function apply_imaging_template(frm, template_field, result_field) {
+	const selected_key = `_selected_${template_field}`;
+	const selected = frm.doc[template_field];
+	const previous = frm[selected_key];
+	if (selected === previous) return;
+
+	const restore_selection = () => {
+		frm[selected_key] = previous;
+		frm.set_value(template_field, previous || "");
+	};
+
+	if (!selected || !frm.doc.patient || frm.doc.observation_category !== "Imaging") {
+		frm[selected_key] = selected;
+		return;
+	}
+
+	const render_selected = () => {
+		if (frm.is_new()) {
+			// before_insert renders the chosen template when its result is empty.
+			frm[selected_key] = selected;
+			if (frm.doc[result_field]) frm.set_value(result_field, "");
+			return;
+		}
+		frappe.call({
+			method: "healthcare.healthcare.doctype.observation.observation.get_observation_result_template",
+			args: { template_name: selected, observation: frm.doc.name },
+			callback: (r) => {
+				if (frm.doc[template_field] !== selected) return;
+				if (r.exc) {
+					restore_selection();
+					return;
+				}
+				frm[selected_key] = selected;
+				frm.set_value(result_field, r.message || "");
+			},
+			error: restore_selection,
+		});
+	};
+
+	if (frm.doc[result_field]) {
+		frappe.confirm(
+			template_field === "result_template"
+				? __("Replace the existing result template with the content from the selected template?")
+				: __("Replace the existing interpretation template with the content from the selected template?"),
+			render_selected,
+			restore_selection,
+		);
+	} else {
+		render_selected();
+	}
+}
 
 // Destroys the current "result" control and replaces it with a freshly
 // constructed one of the right type, in the same spot in the layout.
