@@ -166,21 +166,7 @@ function apply_imaging_template(frm, template_field, result_field) {
 		});
 	};
 
-	if (frm.doc[result_field]) {
-		frappe.confirm(
-			template_field === "result_template"
-				? __(
-						"Replace the existing result template with the content from the selected template?",
-				  )
-				: __(
-						"Replace the existing interpretation template with the content from the selected template?",
-				  ),
-			render_selected,
-			restore_selection,
-		);
-	} else {
-		render_selected();
-	}
+	render_selected();
 }
 
 // Destroys the current "result" control and replaces it with a freshly
