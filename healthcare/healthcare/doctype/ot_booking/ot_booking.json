@@ -1,0 +1,255 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-11-06 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "patient",
+  "patient_name",
+  "inpatient_record",
+  "company",
+  "column_break_case",
+  "status",
+  "priority",
+  "anaesthesia_type",
+  "is_day_care",
+  "slot_section",
+  "theatre",
+  "scheduled_start",
+  "column_break_slot",
+  "scheduled_date",
+  "scheduled_end",
+  "procedures_section",
+  "procedures",
+  "team_section",
+  "team",
+  "consent_section",
+  "consent_signed",
+  "column_break_consent",
+  "consent_form"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HLC-OTB-.YYYY.-",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_case",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Tentative",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Tentative\nScheduled\nIn Progress\nCompleted\nPostponed\nCancelled",
+   "reqd": 1
+  },
+  {
+   "description": "STAT is an emergency: it can be added on the day of surgery",
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "link_filters": "[[\"Code Value\",\"code_system\",\"=\",\"Priority\"]]",
+   "options": "Code Value"
+  },
+  {
+   "fieldname": "anaesthesia_type",
+   "fieldtype": "Select",
+   "label": "Anaesthesia Type",
+   "options": "\nGeneral\nRegional\nLocal\nSedation"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_day_care",
+   "fieldtype": "Check",
+   "label": "Is Day Care"
+  },
+  {
+   "fieldname": "slot_section",
+   "fieldtype": "Section Break",
+   "label": "Slot"
+  },
+  {
+   "fieldname": "theatre",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Theatre",
+   "options": "Healthcare Service Unit",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scheduled_start",
+   "fieldtype": "Datetime",
+   "label": "Scheduled Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_slot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "scheduled_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Scheduled Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scheduled_end",
+   "fieldtype": "Datetime",
+   "label": "Scheduled End",
+   "read_only": 1
+  },
+  {
+   "fieldname": "procedures_section",
+   "fieldtype": "Section Break",
+   "label": "Procedures"
+  },
+  {
+   "fieldname": "procedures",
+   "fieldtype": "Table",
+   "label": "Procedures",
+   "options": "OT Booking Procedure",
+   "reqd": 1
+  },
+  {
+   "fieldname": "team_section",
+   "fieldtype": "Section Break",
+   "label": "Team"
+  },
+  {
+   "fieldname": "team",
+   "fieldtype": "Table",
+   "label": "Team",
+   "options": "OT Booking Team",
+   "reqd": 1
+  },
+  {
+   "fieldname": "consent_section",
+   "fieldtype": "Section Break",
+   "label": "Readiness"
+  },
+  {
+   "default": "0",
+   "fieldname": "consent_signed",
+   "fieldtype": "Check",
+   "label": "Consent Signed"
+  },
+  {
+   "fieldname": "column_break_consent",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "consent_signed",
+   "fieldname": "consent_form",
+   "fieldtype": "Attach",
+   "label": "Consent Form"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-09 22:14:58.686480",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "OT Booking",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "OT Coordinator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "OT Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Healthcare Administrator",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Physician",
+   "share": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Nursing User"
+  }
+ ],
+ "restrict_to_domain": "Healthcare",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient_name",
+ "track_changes": 1
+}

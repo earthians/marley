@@ -130,6 +130,7 @@ frappe.ui.form.on("Service Request", {
 				},
 				__("Create"),
 			);
+			frm.trigger("add_ot_booking_button");
 		} else if (frm.doc.template_dt === "Lab Test Template") {
 			frm.add_custom_button(
 				__("Lab Test"),
@@ -258,6 +259,31 @@ frappe.ui.form.on("Service Request", {
 		}
 
 		frm.page.set_inner_btn_group_as_primary(__("Create"));
+	},
+
+	add_ot_booking_button: function (frm) {
+		frappe.db
+			.get_value("Clinical Procedure Template", frm.doc.template_dn, "requires_ot")
+			.then(({ message }) => {
+				if (!message || !cint(message.requires_ot)) return;
+				frm.add_custom_button(
+					__("OT Booking"),
+					() => frm.trigger("make_ot_booking"),
+					__("Create"),
+				);
+			});
+	},
+
+	make_ot_booking: function (frm) {
+		frappe.call({
+			method: "healthcare.healthcare.doctype.ot_booking.ot_booking.make_ot_booking",
+			args: { service_request: frm.doc.name },
+			freeze: true,
+			callback: function (r) {
+				const doclist = frappe.model.sync(r.message);
+				frappe.set_route("Form", doclist[0].doctype, doclist[0].name);
+			},
+		});
 	},
 
 	make_clinical_procedure: function (frm) {

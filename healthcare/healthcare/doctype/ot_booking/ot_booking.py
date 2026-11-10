@@ -1,0 +1,226 @@
+# Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+"""A case in an operation theatre: its patient, theatre, start, procedures and team. The end
+follows from the procedures' durations. A case starts Tentative (or Scheduled), is published as
+Scheduled, then moves with its Clinical Procedures to In Progress and Completed. Postponed sends
+it back to wait for a new day; Cancelled ends it."""
+
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import add_to_date, cint, getdate
+
+from healthcare.healthcare.doctype.ot_booking.priority import set_priority
+
+STATUS_CHANGES = {
+	"Tentative": ("Scheduled", "Postponed", "Cancelled"),
+	"Scheduled": ("Tentative", "In Progress", "Postponed", "Cancelled"),
+	"In Progress": ("Completed",),
+	"Postponed": ("Tentative", "Cancelled"),
+}
+NEW_STATUSES = ("Tentative", "Scheduled")
+INACTIVE_STATUSES = ("Cancelled", "Postponed")
+ACTIVE_REQUEST_STATUS = "active-Request Status"
+A_DAY = 24 * 60 * 60
+
+
+class OTBooking(Document):
+	def validate(self):
+		self.patient_name = frappe.db.get_value("Patient", self.patient, "patient_name")
+		set_priority(self)
+		self.validate_status_change()
+		self.set_procedure_rows()
+		self.set_schedule()
+		self.validate_theatre()
+		self.validate_procedures()
+		self.validate_service_requests()
+		self.validate_inpatient_record()
+		self.validate_primary_surgeon()
+
+	def validate_status_change(self):
+		before = self.get_doc_before_save()
+		if not before:
+			if self.status not in NEW_STATUSES:
+				frappe.throw(_("A new case cannot be {0}").format(_(self.status)), title=_("Not Allowed"))
+		elif self.status != before.status and self.status not in STATUS_CHANGES.get(before.status, ()):
+			frappe.throw(
+				_("A {0} case cannot become {1}").format(_(before.status), _(self.status)),
+				title=_("Not Allowed"),
+			)
+
+	def set_procedure_rows(self):
+		"""A row booked from a Service Request performs the procedure that was ordered; a row takes
+		its procedure's usual duration unless given one, and must take some time"""
+		for row in self.procedures:
+			if row.service_request:
+				row.procedure_template = frappe.db.get_value(
+					"Service Request", row.service_request, "template_dn"
+				)
+			row.duration = row.duration or template_duration(row.procedure_template)
+			if cint(row.duration) <= 0:
+				frappe.throw(
+					_("Row {0}: the duration of {1} must be greater than zero").format(
+						row.idx, frappe.bold(row.procedure_template)
+					)
+				)
+
+	def set_schedule(self):
+		"""The end follows from the durations. A case is shorter than a day, which the clash checks
+		and the board rely on when they look one day back for cases still running."""
+		length = sum(cint(row.duration) for row in self.procedures)
+		if length >= A_DAY:
+			frappe.throw(_("A case must take less than 24 hours"), title=_("Case Too Long"))
+		self.scheduled_date = getdate(self.scheduled_start)
+		self.scheduled_end = add_to_date(self.scheduled_start, seconds=length)
+
+	def validate_theatre(self):
+		is_ot, company = frappe.db.get_value("Healthcare Service Unit", self.theatre, ["is_ot", "company"])
+		if not is_ot:
+			frappe.throw(_("{0} is not an operation theatre").format(frappe.bold(self.theatre)))
+		if company != self.company:
+			frappe.throw(
+				_("Theatre {0} belongs to {1}, not to {2}").format(
+					frappe.bold(self.theatre), frappe.bold(company), frappe.bold(self.company)
+				)
+			)
+
+	def validate_procedures(self):
+		theatre_type = frappe.db.get_value("Healthcare Service Unit", self.theatre, "service_unit_type")
+		for row in self.procedures:
+			requires_ot, required_type = frappe.db.get_value(
+				"Clinical Procedure Template",
+				row.procedure_template,
+				["requires_ot", "required_theatre_type"],
+			)
+			template = frappe.bold(row.procedure_template)
+			if not requires_ot:
+				refuse_row(row, _("{0} does not require an operation theatre").format(template))
+			if required_type and required_type != theatre_type:
+				refuse_row(row, _("{0} needs a {1} theatre").format(template, frappe.bold(required_type)))
+
+	def validate_service_requests(self):
+		"""Each request once, the patient's own, and in no other active booking. One newly attached
+		must still be an open surgical order: one put on hold or revoked reserves no time."""
+		before = self.get_doc_before_save()
+		attached = {row.name: row.service_request for row in before.procedures} if before else {}
+		seen = set()
+		for row in self.procedures:
+			if not row.service_request:
+				continue
+			request_name = frappe.bold(row.service_request)
+			if row.service_request in seen:
+				refuse_row(row, _("Service Request {0} is already in this booking").format(request_name))
+			seen.add(row.service_request)
+			request = request_details(row.service_request)
+			if attached.get(row.name) != row.service_request:
+				validate_open_surgical_request(request)
+			if request.patient != self.patient:
+				refuse_row(row, _("Service Request {0} is for another patient").format(request_name))
+			other = find_active_booking(row.service_request, exclude=self.name)
+			if other:
+				message = _("Service Request {0} is already booked in {1}")
+				refuse_row(row, message.format(request_name, frappe.bold(other)))
+
+	def validate_inpatient_record(self):
+		"""The admission is the patient's own, so its bed and record are theirs"""
+		if not self.inpatient_record:
+			return
+		if frappe.db.get_value("Inpatient Record", self.inpatient_record, "patient") != self.patient:
+			frappe.throw(
+				_("Inpatient Record {0} is not this patient's admission").format(
+					frappe.bold(self.inpatient_record)
+				),
+				title=_("Another Patient's Admission"),
+			)
+
+	def validate_primary_surgeon(self):
+		primary = [member for member in self.team if member.is_primary]
+		if len(primary) != 1:
+			frappe.throw(_("Mark exactly one team member as the primary surgeon"))
+		if primary[0].role != "Surgeon":
+			frappe.throw(_("The primary team member must have the role Surgeon"))
+
+
+def refuse_row(row, message):
+	frappe.throw(_("Row {0}: {1}").format(row.idx, message))
+
+
+@frappe.whitelist()
+def make_ot_booking(service_request: str) -> Document:
+	"""A new, unsaved booking for an open surgical Service Request"""
+	frappe.has_permission("Service Request", "read", service_request, throw=True)
+	frappe.has_permission("OT Booking", "create", throw=True)
+	request = frappe.get_doc("Service Request", service_request)
+	validate_open_surgical_request(request)
+	booking = find_active_booking(request.name)
+	if booking:
+		frappe.throw(
+			_("Service Request {0} is already booked in {1}").format(
+				frappe.bold(request.name), frappe.bold(booking)
+			)
+		)
+	surgeon = request.referred_to_practitioner or request.practitioner
+	return frappe.get_doc(
+		{
+			"doctype": "OT Booking",
+			"patient": request.patient,
+			"company": request.company,
+			"inpatient_record": request.inpatient_record,
+			"priority": request.priority,
+			"procedures": [
+				{
+					"service_request": request.name,
+					"procedure_template": request.template_dn,
+					"duration": template_duration(request.template_dn),
+				}
+			],
+			"team": [{"practitioner": surgeon, "role": "Surgeon", "is_primary": 1}],
+		}
+	)
+
+
+def request_details(service_request):
+	fields = ["name", "patient", "template_dt", "template_dn", "docstatus", "status"]
+	return frappe.db.get_value("Service Request", service_request, fields, as_dict=True)
+
+
+def validate_open_surgical_request(request):
+	"""A submitted, active order for a procedure that needs an operation theatre"""
+	is_surgical = request.template_dt == "Clinical Procedure Template" and frappe.db.get_value(
+		"Clinical Procedure Template", request.template_dn, "requires_ot"
+	)
+	if not is_surgical:
+		frappe.throw(
+			_("Service Request {0} is not for a procedure that requires an operation theatre").format(
+				frappe.bold(request.name)
+			)
+		)
+	if request.docstatus != 1 or request.status != ACTIVE_REQUEST_STATUS:
+		frappe.throw(_("Service Request {0} is not active").format(frappe.bold(request.name)))
+
+
+def find_active_booking(service_request, exclude=None):
+	"""The booking holding a request. A Postponed one still holds it; only a cancel frees it."""
+	booking = frappe.qb.DocType("OT Booking")
+	row = frappe.qb.DocType("OT Booking Procedure")
+	found = (
+		frappe.qb.from_(row)
+		.join(booking)
+		.on(booking.name == row.parent)
+		.select(booking.name)
+		.where(row.parenttype == "OT Booking")
+		.where(row.service_request == service_request)
+		.where(booking.status != "Cancelled")
+		.where(booking.name != (exclude or ""))
+		.limit(1)
+	).run()
+	return found[0][0] if found else None
+
+
+def template_duration(template):
+	return frappe.db.get_value("Clinical Procedure Template", template, "default_duration")
+
+
+def on_doctype_update():
+	frappe.db.add_index("OT Booking", ["theatre", "scheduled_date"])
