@@ -74,9 +74,9 @@ def change_case(name, change):
 
 
 def publish(booking):
+	"""Scheduled, with its Clinical Procedures, which the save makes (procedures.py)"""
 	booking.status = "Scheduled"
 	booking.save()
-	booking.create_clinical_procedures()
 
 
 def reschedule(booking):

@@ -17,6 +17,8 @@ from healthcare.healthcare.doctype.ot_booking.procedure_status import procedures
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
 
 ACTIVE_REQUEST_STATUS = "active-Request Status"
+# a case in these statuses has its clinical work: a procedure for each row
+WITH_PROCEDURES = ("Scheduled", "In Progress", "Completed")
 
 
 def create_procedures(booking):
@@ -85,7 +87,8 @@ def place_of(procedure):
 
 
 def update_procedures(booking):
-	"""After a save: a case that stopped gives up its drafts; otherwise the drafts follow it"""
+	"""After a save: a case that stopped gives up its drafts; otherwise the drafts follow it, and a
+	Scheduled, started or completed case gets a procedure for each row that has none yet"""
 	held = procedures_of(booking)
 	if is_stopping(booking):
 		for procedure in held.values():
@@ -95,6 +98,8 @@ def update_procedures(booking):
 		procedure = held.get(row.name)
 		if procedure and procedure.docstatus == 0:
 			frappe.db.set_value("Clinical Procedure", procedure.name, schedule(booking, row, start))
+	if booking.status in WITH_PROCEDURES:
+		create_procedures(booking)
 
 
 def is_stopping(booking):

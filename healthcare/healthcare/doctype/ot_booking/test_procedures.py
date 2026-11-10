@@ -75,6 +75,29 @@ class TestProcedures(HealthcareTestSuite):
 		self.assertEqual(str(self.first_procedure(booking).start_time), "9:00:00")
 		self.assertEqual(booking.create_clinical_procedures(), [])
 
+	def made_for(self, booking):
+		return frappe.db.count("Clinical Procedure", {"ot_booking": booking.name, "docstatus": ["<", 2]})
+
+	def test_a_scheduled_case_gets_its_procedures_and_a_tentative_one_none(self):
+		booking = make_booking(self, self.at(9))
+		self.assertEqual(self.made_for(booking), 0)
+
+		booking.status = "Scheduled"
+		booking.save()
+
+		self.assertEqual(self.made_for(booking), 1)
+
+	def test_a_started_or_completed_case_gets_any_procedure_still_missing(self):
+		for before, after in (("Scheduled", "In Progress"), ("In Progress", "Completed")):
+			booking = make_booking(self, self.at(9 if before == "Scheduled" else 13), patient=0)
+			booking.db_set("status", before)
+			booking.reload()
+
+			booking.status = after
+			booking.save()
+
+			self.assertEqual(self.made_for(booking), 1, after)
+
 	def test_a_procedure_keeps_its_booked_duration_when_submitted(self):
 		booking = make_booking(self, self.at(9))
 		booking.procedures[0].duration = 2 * HOUR
