@@ -173,9 +173,14 @@ function casePlace(booking) {
 	return placed(start, end);
 }
 
+// a case keeps the cleaning time it was booked with
+function cleaningOf(booking) {
+	return booking.cleaning_minutes ?? board.value.cleaning_minutes;
+}
+
 function cleaningPlace(booking) {
 	const { end } = caseOnDay(booking, boardDay());
-	return placed(end, end + board.value.cleaning_minutes);
+	return placed(end, end + cleaningOf(booking));
 }
 
 function theatreLabel(theatre) {
@@ -331,7 +336,7 @@ function openBooking(name) {
 									:booking="booking"
 									:dimmed="filters.caseDimmed(booking)"
 									:theatre-label="theatreLabel(theatre)"
-									:cleaning-minutes="board.cleaning_minutes"
+									:cleaning-minutes="cleaningOf(booking)"
 									:menu-options="actions.menuOf(booking)"
 									:menu-open="menuFor === booking.name"
 									@update:menu-open="

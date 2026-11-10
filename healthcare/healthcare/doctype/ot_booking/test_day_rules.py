@@ -149,6 +149,12 @@ class TestDayRules(HealthcareTestSuite):
 
 		self.assertRaisesRegex(frappe.ValidationError, "cannot be moved", booking.save)
 
+	def test_a_case_whose_time_has_passed_keeps_its_cleaning_time(self):
+		booking = self.past_booking()
+		booking.cleaning_minutes = booking.cleaning_minutes + 15
+
+		self.assertRaisesRegex(frappe.ValidationError, "cleaning time cannot change", booking.save)
+
 	def test_a_case_whose_time_has_passed_can_be_rescheduled_or_cancelled(self):
 		for status in ("Postponed", "Cancelled"):
 			booking = self.past_booking("Scheduled")

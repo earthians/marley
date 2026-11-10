@@ -67,6 +67,12 @@ class TestAvailability(HealthcareTestSuite):
 		self.assertIn(f"{surgeon}</strong> is in theatre", str(refused.exception))
 		self.assertIn(f"with {first.patient_name}", str(refused.exception))
 
+	def test_an_earlier_case_keeps_its_own_cleaning_time(self):
+		make_booking(self, self.at(9)).db_set("cleaning_minutes", 60)
+
+		self.assert_refused("minutes of cleaning", self.at(10), patient=1, surgeon=1)
+		make_booking(self, self.at(11), patient=1, surgeon=1)
+
 	def test_a_surgeon_needs_no_cleaning_gap_between_theatres(self):
 		make_booking(self, self.at(9))
 

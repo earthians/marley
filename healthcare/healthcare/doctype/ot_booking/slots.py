@@ -18,7 +18,7 @@ from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
 
 from healthcare.healthcare.doctype.healthcare_practitioner.practitioner_leave import find_leaves
 from healthcare.healthcare.doctype.ot_booking.availability import allowed_to_overlap, theatre_holiday_list
-from healthcare.healthcare.doctype.ot_booking.busy import cases_between, cleaning_time, slot
+from healthcare.healthcare.doctype.ot_booking.busy import cases_between, cleaning_of, slot
 from healthcare.healthcare.doctype.ot_booking.ot_booking import make_ot_booking
 from healthcare.healthcare.doctype.ot_booking.priority import is_emergency
 from healthcare.healthcare.doctype.ot_booking.scheduling import check_drop
@@ -90,13 +90,13 @@ def day_candidates(case, company, theatres, day):
 	start, end = day_window(day)
 	if day == getdate(today()):
 		start = max(start, rounded_up(now_datetime()))
-	cleaning = cleaning_time()
-	cases = cases_between(start - cleaning, end + cleaning, exclude=case.name)
+	cleaning = cleaning_of(case)
+	cases = cases_between(start - timedelta(days=1), end + cleaning, exclude=case.name)
 	people_busy, may_overlap_ends = people_times(case, cases, start, end)
 	candidates = []
 	for theatre in theatres:
 		busy = theatre_times(theatre.name, cases, cleaning, start, end) + people_busy
-		for gap in free_starts(start, end, case.length, busy, also=may_overlap_ends):
+		for gap in free_starts(start, end, case.length, cleaning, busy, also=may_overlap_ends):
 			candidates.append(candidate(case, theatre, gap))
 	return candidates
 
@@ -110,11 +110,11 @@ def skipped_day(case, company, day):
 
 
 def theatre_times(theatre, cases, cleaning, start, end):
-	"""The theatre's cases with their cleaning time either side, and its blocks"""
-	ours = [slot(other) for other in cases if other.theatre == theatre]
-	return [(case_start - cleaning, case_end + cleaning) for case_start, case_end in ours] + block_times(
-		[theatre], start, end
-	)
+	"""The theatre's cases, each with its own cleaning time after it and the new case's before it,
+	and its blocks"""
+	ours = [other for other in cases if other.theatre == theatre]
+	busy = [(slot(other)[0] - cleaning, slot(other)[1] + cleaning_of(other)) for other in ours]
+	return busy + block_times([theatre], start, end)
 
 
 def people_times(case, cases, start, end):
@@ -142,10 +142,11 @@ def block_times(scopes, start, end):
 	]
 
 
-def free_starts(start, end, length, busy, also=()):
-	"""The start of each free gap, on the 15-minute grid, where `length` and the cleaning after it
-	fit between `start` and `end` without entering a busy time; earliest first"""
-	needed = length + cleaning_time()
+def free_starts(start, end, length, cleaning, busy, also=()):
+	"""The start of each free gap, on the 15-minute grid, where the case and its cleaning fit before
+	`end` and the case is clear of every busy time (which hold the cleaning between cases);
+	earliest first"""
+	needed = length + cleaning
 	moments = [busy_end for _, busy_end in busy] + list(also)
 	starts = sorted({start, *(max(rounded_up(moment), start) for moment in moments)})
 	return [

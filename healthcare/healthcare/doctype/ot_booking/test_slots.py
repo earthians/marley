@@ -70,11 +70,12 @@ class TestSlots(HealthcareTestSuite):
 
 		self.assertEqual(self.first_start(), self.at(9, 30))
 
-	def test_cleaning_time_is_kept_on_both_sides(self):
-		self.busy(self.at(8), 9)
-		self.busy(self.at(10, 30), 11, patient=2, surgeon=2)
+	def test_cleaning_time_is_kept_on_both_sides_with_each_cases_own_minutes(self):
+		self.busy(self.at(8), 9).db_set("cleaning_minutes", 90)
+		self.assertEqual(self.first_start(), self.at(10, 30))
 
-		self.assertEqual(self.first_start(), self.at(12))
+		self.busy(self.at(11), 12, patient=2, surgeon=2)
+		self.assertEqual(self.first_start(), self.at(12, 30))
 
 	def test_a_theatre_block_is_skipped(self):
 		create_unavailable_block(
@@ -89,13 +90,10 @@ class TestSlots(HealthcareTestSuite):
 
 		self.assertEqual(self.slots(), [])
 
-	def test_a_theatre_holiday_is_skipped(self):
+	def test_a_theatre_holiday_is_skipped_even_for_an_emergency(self):
 		self.use_settings(ot_holiday_list=create_holiday_list(self.tomorrow))
-
 		self.assertEqual(getdate(self.first_start()), add_days(self.tomorrow, 1))
 
-	def test_an_emergency_is_not_offered_a_holiday_either(self):
-		self.use_settings(ot_holiday_list=create_holiday_list(self.tomorrow))
 		self.request.db_set("priority", priority_named("STAT"))
 		create_unavailable_block(self.theatre, "Healthcare Service Unit", nowdate(), "00:00:00", "23:59:00")
 

@@ -44,6 +44,16 @@ class TestPush(HealthcareTestSuite):
 		self.assertEqual(self.start_of(first), self.at(10, self.cleaning))
 		self.assertEqual(self.start_of(second), self.at(11, 2 * self.cleaning))
 
+	def test_a_pushed_case_keeps_its_own_cleaning_time(self):
+		first = make_booking(self, self.at(9), patient=1, surgeon=1)
+		first.db_set("cleaning_minutes", 60)
+		second = make_booking(self, self.at(11), patient=2, surgeon=2)
+
+		self.drop_request(9)
+
+		self.assertEqual(self.start_of(first), self.at(10, self.cleaning))
+		self.assertEqual(self.start_of(second), self.at(12, self.cleaning))
+
 	def test_a_gap_that_holds_the_case_ends_the_push(self):
 		first = make_booking(self, self.at(9), patient=1, surgeon=1)
 		far = make_booking(self, self.at(15), patient=2, surgeon=2)

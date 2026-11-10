@@ -7,6 +7,8 @@ overlap theatres may be in two at once, never three; or the patient. A theatre h
 Unavailable block of the theatre or a team member, and a team member's leave refuse an elective
 case and are only warned about for an emergency. A half-day leave is only warned about."""
 
+from datetime import timedelta
+
 import frappe
 from frappe import _
 from frappe.utils import format_date, format_datetime, format_time
@@ -21,9 +23,10 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 from healthcare.healthcare.doctype.ot_booking.busy import (
 	INACTIVE_STATUSES,
 	cases_between,
-	cleaning_time,
+	cleaning_of,
 	overlaps,
 	slot,
+	theatre_clash,
 )
 from healthcare.healthcare.doctype.ot_booking.priority import is_emergency
 from healthcare.healthcare.doctype.practitioner_availability.practitioner_availability import (
@@ -52,27 +55,27 @@ def validate_availability(booking):
 
 
 def clash_messages(booking):
-	"""The theatre's cases within the cleaning time either side, and the team's and the patient's
-	cases at the same time"""
+	"""The theatre's cases too close for each one's cleaning time, and the team's and the patient's
+	cases at the same time. A case is shorter than a day, so a day back finds every earlier one."""
 	start, end = slot(booking)
-	cleaning = cleaning_time()
-	cases = cases_between(start - cleaning, end + cleaning, exclude=booking.name)
+	cleaning = cleaning_of(booking)
+	cases = cases_between(start - timedelta(days=1), end + cleaning, exclude=booking.name)
 	running = [case for case in cases if overlaps(case, start, end)]
 	return (
-		theatre_clashes(booking, cases, cleaning)
+		theatre_clashes(booking, cases, start, end, cleaning)
 		+ team_clashes(booking, running, start, end)
 		+ patient_clashes(booking, running)
 	)
 
 
-def theatre_clashes(booking, cases, cleaning):
+def theatre_clashes(booking, cases, start, end, cleaning):
 	message = _(
-		"Theatre {0} is booked from {1} to {2} for {3}, and needs {4} minutes of cleaning after each case"
+		"Theatre {0} is booked from {1} to {2} for {3}, and each case needs its minutes of cleaning after it"
 	)
 	return [
-		message.format(frappe.bold(booking.theatre), *times(case), case.patient_name, cleaning.seconds // 60)
+		message.format(frappe.bold(booking.theatre), *times(case), case.patient_name)
 		for case in cases
-		if case.theatre == booking.theatre
+		if case.theatre == booking.theatre and theatre_clash(case, start, end, cleaning)
 	]
 
 

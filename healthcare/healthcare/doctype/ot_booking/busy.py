@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 
 """What keeps a theatre, a practitioner or a patient busy: the active cases around a time, each
-with its team. A Cancelled or Postponed case takes no time. A theatre also needs its cleaning
-time after every case. The save-time checks (availability.py) and the slot finder read the
+with its team. A Cancelled or Postponed case takes no time. A theatre also needs each case's own
+cleaning time after it, which the case keeps from when it was booked. The save-time checks (availability.py) and the slot finder read the
 same cases, so the two always agree."""
 
 from datetime import timedelta
@@ -21,7 +21,15 @@ def cases_between(start, end, exclude=None):
 	is shorter than a day, so looking from the day before finds those running past midnight."""
 	cases = frappe.get_all(
 		"OT Booking",
-		fields=["name", "patient", "patient_name", "theatre", "scheduled_start", "scheduled_end"],
+		fields=[
+			"name",
+			"patient",
+			"patient_name",
+			"theatre",
+			"scheduled_start",
+			"scheduled_end",
+			"cleaning_minutes",
+		],
 		filters={
 			"name": ["!=", exclude or ""],
 			"status": ["not in", INACTIVE_STATUSES],
@@ -58,4 +66,19 @@ def overlaps(case, start, end):
 
 
 def cleaning_time():
+	"""The cleaning time a newly booked case starts with"""
 	return timedelta(minutes=cint(ot_setting("ot_cleaning_minutes")))
+
+
+def cleaning_of(case):
+	"""A case's own cleaning time; one not yet given any takes the setting's"""
+	if case.get("cleaning_minutes") in (None, ""):
+		return cleaning_time()
+	return timedelta(minutes=cint(case.cleaning_minutes))
+
+
+def theatre_clash(case, start, end, cleaning):
+	"""Whether `case`, in the same theatre, leaves no cleaning between itself and a case from
+	`start` to `end` that needs `cleaning` after it"""
+	case_start, case_end = slot(case)
+	return case_start < end + cleaning and start < case_end + cleaning_of(case)

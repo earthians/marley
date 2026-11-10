@@ -79,7 +79,16 @@ def get_postponed(company: str | None = None, department: str | None = None) -> 
 	frappe.has_permission("OT Booking", "read", throw=True)
 	bookings = frappe.get_list(
 		"OT Booking",
-		fields=["name", "patient", "patient_name", "status", "priority", "scheduled_start", "scheduled_end"],
+		fields=[
+			"name",
+			"patient",
+			"patient_name",
+			"status",
+			"priority",
+			"scheduled_start",
+			"scheduled_end",
+			"cleaning_minutes",
+		],
 		filters=company_filter(company, {"status": "Postponed"}),
 		order_by="scheduled_start asc",
 		limit=0,

@@ -14,7 +14,7 @@ current time."""
 
 import frappe
 from frappe import _
-from frappe.utils import add_to_date, get_datetime, getdate, now_datetime, today
+from frappe.utils import add_to_date, cint, get_datetime, getdate, now_datetime, today
 
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
 from healthcare.healthcare.doctype.ot_booking.priority import is_emergency
@@ -32,9 +32,14 @@ def validate_day_rules(booking):
 
 
 def validate_not_in_the_past(booking, before):
-	"""Only a case that is placed, by being added, moved or restored, is checked"""
+	"""Only a case that is placed, by being added, moved or restored, is checked. A case whose time
+	has passed also keeps its cleaning time."""
 	if booking.status in INACTIVE_STATUSES:
 		return
+	if before and cint(booking.cleaning_minutes) != cint(before.cleaning_minutes) and has_passed(before):
+		frappe.throw(
+			_("This case's time has passed, so its cleaning time cannot change"), title=_("Case Already Due")
+		)
 	restored = before and before.status in INACTIVE_STATUSES
 	if before and not restored and not is_moved(booking, before):
 		return

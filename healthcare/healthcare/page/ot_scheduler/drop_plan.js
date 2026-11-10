@@ -21,14 +21,15 @@ export function hideDragImage(event) {
 }
 
 // A first drop lands where it is dropped, on the grid, unless that is inside the case before it,
-// its cleaning, or just after them: then it snaps straight after that case
+// its cleaning, or just after them: then it snaps straight after that case. Every case keeps
+// its own cleaning time (`cleaning` on each).
 const MAGNET_MINUTES = 30;
 
-export function snapFirstDrop(cases, at, cleaning) {
+export function snapFirstDrop(cases, at) {
 	const dropped = snapToGrid(at);
 	const before = cases.filter(item => item.start < at);
 	if (!before.length) return dropped;
-	const free = Math.max(...before.map(item => item.end)) + cleaning;
+	const free = Math.max(...before.map(item => item.end + item.cleaning));
 	return dropped < free + MAGNET_MINUTES ? free : dropped;
 }
 
@@ -55,7 +56,7 @@ export function planDrop({
 			? "That time has passed"
 			: holiday && !emergency
 			  ? `${holiday} is a theatre holiday`
-			  : findProblem({ cases, blocks, start, end, pushes, cleaning, emergency });
+			  : findProblem({ cases, blocks, start, end, pushes, emergency });
 	const lastEnd = Math.max(end, ...pushes.map(push => push.end));
 	const late = lastEnd > dayEnd ? `Runs past ${hourMinute(dayEnd)}` : "";
 	const overBlock = emergency && blockedBy(blocks, [{ start, end }]);
@@ -72,7 +73,8 @@ export function planDrop({
 	};
 }
 
-// The cases after the drop that must move back, just enough to keep the cleaning time between them
+// The cases after the drop that must move back, just enough to keep each one's cleaning time
+// before the next; `cleaning` is the dropped case's own
 function pushesAfter(cases, start, end, cleaning) {
 	const pushes = [];
 	let freeFrom = end + cleaning;
@@ -87,16 +89,16 @@ function pushesAfter(cases, start, end, cleaning) {
 			end: freeFrom + length,
 			shift: freeFrom - item.start,
 		});
-		freeFrom += length + cleaning;
+		freeFrom += length + item.cleaning;
 	}
 	return pushes;
 }
 
 // An emergency may go into blocked theatre time (the server only warns), so only the
 // non-emergency cases, the dropped one and those it pushes, are checked against blocks
-function findProblem({ cases, blocks, start, end, pushes, cleaning, emergency }) {
+function findProblem({ cases, blocks, start, end, pushes, emergency }) {
 	const overlapped = cases.find(
-		item => item.start < start && item.end + cleaning > start,
+		item => item.start < start && item.end + item.cleaning > start,
 	);
 	if (overlapped) return `Overlaps ${overlapped.patient_name}`;
 	const underWay = pushes.find(push => UNDER_WAY.includes(push.status));

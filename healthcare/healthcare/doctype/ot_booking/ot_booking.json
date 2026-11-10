@@ -22,6 +22,7 @@
   "column_break_slot",
   "scheduled_date",
   "scheduled_end",
+  "cleaning_minutes",
   "procedures_section",
   "procedures",
   "team_section",
@@ -147,6 +148,13 @@
    "read_only": 1
   },
   {
+   "description": "Time after this case before the next one in its theatre. Taken from Healthcare Settings when the case is booked, and fixed once its time has passed.",
+   "fieldname": "cleaning_minutes",
+   "fieldtype": "Int",
+   "label": "Cleaning Minutes",
+   "non_negative": 1
+  },
+  {
    "fieldname": "procedures_section",
    "fieldtype": "Section Break",
    "label": "Procedures"
@@ -213,7 +221,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-10 11:23:23.613345",
+ "modified": "2026-11-10 18:57:41.583846",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "OT Booking",

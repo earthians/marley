@@ -86,6 +86,7 @@ def get_bookings(date, theatres):
 			"scheduled_date",
 			"scheduled_start",
 			"scheduled_end",
+			"cleaning_minutes",
 		],
 		filters={
 			"scheduled_date": ["between", [add_days(date, -1), date]],

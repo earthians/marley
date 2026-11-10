@@ -11,6 +11,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, cint, getdate
 
+from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import ot_setting
 from healthcare.healthcare.doctype.ot_booking.availability import validate_availability
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
 from healthcare.healthcare.doctype.ot_booking.day_rules import log_change_reason, validate_day_rules
@@ -111,6 +112,8 @@ class OTBooking(Document):
 			frappe.throw(_("A case must take less than 24 hours"), title=_("Case Too Long"))
 		self.scheduled_date = getdate(self.scheduled_start)
 		self.scheduled_end = add_to_date(self.scheduled_start, seconds=length)
+		if self.cleaning_minutes in (None, ""):
+			self.cleaning_minutes = cint(ot_setting("ot_cleaning_minutes"))
 
 	def validate_theatre(self):
 		is_ot, company = frappe.db.get_value("Healthcare Service Unit", self.theatre, ["is_ot", "company"])

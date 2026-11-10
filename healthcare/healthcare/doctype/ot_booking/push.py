@@ -10,7 +10,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_datetime, getdate
 
-from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES, cleaning_time, slot
+from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES, cleaning_of, slot
 
 PUSHABLE_STATUSES = ("Tentative", "Scheduled")
 
@@ -34,9 +34,10 @@ def push_following(booking, reason=None):
 
 
 def planned_pushes(booking):
-	"""(case, new start) for each case after `booking` in its theatre that must move to make room"""
-	cleaning = cleaning_time()
+	"""(case, new start) for each case after `booking` in its theatre that must move to make room,
+	each after the one before it and that one's own cleaning time"""
 	start, end = slot(booking)
+	cleaning = cleaning_of(booking)
 	pushes = []
 	for case in later_cases(booking, start):
 		case_start = get_datetime(case.scheduled_start)
@@ -45,13 +46,14 @@ def planned_pushes(booking):
 			break
 		pushes.append((case, new_start))
 		end = new_start + (get_datetime(case.scheduled_end) - case_start)
+		cleaning = cleaning_of(case)
 	return pushes
 
 
 def later_cases(booking, start):
 	return frappe.get_all(
 		"OT Booking",
-		fields=["name", "scheduled_start", "scheduled_end"],
+		fields=["name", "scheduled_start", "scheduled_end", "cleaning_minutes"],
 		filters={
 			"theatre": booking.theatre,
 			"scheduled_date": getdate(start),

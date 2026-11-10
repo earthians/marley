@@ -22,11 +22,24 @@ frappe.ui.form.on("OT Booking", {
 		}));
 	},
 
+	onload: function (frm) {
+		if (!frm.is_new() || frm.doc.cleaning_minutes) return;
+		frappe.db
+			.get_single_value("Healthcare Settings", "ot_cleaning_minutes")
+			.then(minutes => frm.set_value("cleaning_minutes", minutes));
+	},
+
 	patient: function (frm) {
 		frm.set_value("inpatient_record", null);
 	},
 
 	refresh: function (frm) {
+		// a case whose time has passed keeps its cleaning time, as the board locks it
+		const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+		const passed =
+			!frm.is_new() &&
+			frappe.datetime.str_to_obj(frm.doc.scheduled_start) < fifteenMinutesAgo;
+		frm.set_df_property("cleaning_minutes", "read_only", passed ? 1 : 0);
 		const open = !["Cancelled", "Postponed", "Completed"].includes(frm.doc.status);
 		if (frm.is_new() || !open || !frm.doc.__onload?.procedures_to_create) return;
 		frm.add_custom_button(__("Create Procedures"), () => create_procedures(frm));

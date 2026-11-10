@@ -45,6 +45,17 @@ class TestOTBooking(HealthcareTestSuite):
 		self.assertEqual(str(booking.scheduled_date), self.day)
 		self.assertEqual(get_datetime(booking.scheduled_end), add_to_date(self.at(9), seconds=HOUR * 1.5))
 
+	def test_a_case_keeps_the_cleaning_time_it_was_booked_with(self):
+		setting = frappe.db.get_single_value("Healthcare Settings", "ot_cleaning_minutes")
+		booking = make_booking(self, self.at(9))
+		frappe.db.set_single_value("Healthcare Settings", "ot_cleaning_minutes", setting + 15)
+		self.addCleanup(frappe.db.set_single_value, "Healthcare Settings", "ot_cleaning_minutes", setting)
+
+		booking.reload()
+		booking.save()
+
+		self.assertEqual(booking.cleaning_minutes, setting)
+
 	def test_a_new_booking_is_routine(self):
 		self.assertEqual(make_booking(self, self.at(9)).priority, priority_named("Routine"))
 

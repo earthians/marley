@@ -85,13 +85,16 @@ export function useDrop({
 		if (!canEdit.value || !dragged.value) return;
 		dropTheatre.value = theatre;
 		const drag = dragged.value;
-		const cleaning = board.value.cleaning_minutes;
+		// the dragged case keeps its own cleaning time; a request takes the setting's
+		const cleaning = drag.booking
+			? cleaningOf(drag.booking)
+			: board.value.cleaning_minutes;
 		const cases = columnCases(theatre, drag.booking?.name);
 		const workStart = minutesOf(board.value.day_start);
 		const at = event ? cursorMinutes(event) : workStart;
 		const start =
 			drag.grab === null
-				? snapFirstDrop(cases, at, cleaning)
+				? snapFirstDrop(cases, at)
 				: event
 				  ? snapToGrid(at - drag.grab)
 				  : workStart;
@@ -128,8 +131,13 @@ export function useDrop({
 				patient_name: booking.patient_name,
 				status: booking.status,
 				is_emergency: booking.is_emergency,
+				cleaning: cleaningOf(booking),
 				...caseOnDay(booking, String(board.value.date)),
 			}));
+	}
+
+	function cleaningOf(booking) {
+		return booking.cleaning_minutes ?? board.value.cleaning_minutes;
 	}
 
 	function cursorMinutes(event) {
