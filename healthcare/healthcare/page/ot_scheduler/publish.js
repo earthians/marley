@@ -3,7 +3,6 @@
 // the pane, and published (Scheduled) cases stay. Desk's own confirm asks first. A case that fails
 // its checks stays as it is and is reported on its own.
 import { post, showError, toastError, toastSuccess } from "./api.js";
-import { playDropSound } from "./sounds.js";
 import { today } from "./time.js";
 
 // The board's ⋯ menu. Anyone who can see the board can view it as the OT Day Schedule report, to
@@ -72,10 +71,8 @@ async function dayChange(method, params, doneKey, doneLabel, reload) {
 			toastSuccess(`${doneLabel} ${result[doneKey].length} case(s)`);
 		for (const row of result.failed)
 			toastError(`${row.patient_name || row.name}: ${row.message}`);
-		playDropSound(result.failed.length ? "refused" : "placed");
 	} catch (error) {
 		showError(error);
-		playDropSound("refused");
 	}
 	reload();
 }

@@ -56,7 +56,7 @@ export function useDrop({
 	function unschedule() {
 		const booking = dragged.value?.booking;
 		endDrag();
-		if (booking && booking.status !== "Postponed") reschedule(booking);
+		if (booking && booking.status !== "Postponed") reschedule(booking, true);
 	}
 
 	// The ghost belongs to a column, so it goes as soon as the case is anywhere else: over the
@@ -174,13 +174,13 @@ export function useDrop({
 		if (drag.request) {
 			const booking = { service_request: drag.request.name, theatre, start };
 			if (landing.needsReason)
-				return askIfPossible("book_request", booking, "Add");
-			return change("book_request", booking);
+				return askIfPossible("book_request", booking, "Add", true);
+			return change("book_request", booking, true);
 		}
 		const move = { name: drag.booking.name, theatre, start };
 		if (drag.booking.needs_reason || landing.needsReason)
-			return askIfPossible("move_booking", move, "Move");
-		change("move_booking", move);
+			return askIfPossible("move_booking", move, "Move", true);
+		change("move_booking", move, true);
 	}
 
 	return {
