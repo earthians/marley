@@ -21,7 +21,10 @@ from erpnext.stock.stock_ledger import get_previous_sle
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-from healthcare.healthcare.doctype.ot_booking.procedure_status import follow_procedure
+from healthcare.healthcare.doctype.ot_booking.procedure_status import (
+	follow_procedure,
+	keep_booked_place,
+)
 from healthcare.healthcare.doctype.service_request.service_request import (
 	update_service_request_status,
 )
@@ -33,6 +36,7 @@ class ClinicalProcedure(Document):
 		self.set_status()
 		self.set_title()
 		self.set_planned_start_date_and_time()
+		keep_booked_place(self)
 		self.set_planned_endtime()
 		self.invoice_separately_as_consumables = any(
 			item.invoice_separately_as_consumables for item in self.items

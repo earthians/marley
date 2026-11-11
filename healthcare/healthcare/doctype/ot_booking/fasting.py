@@ -60,18 +60,23 @@ def current_task(booking):
 	return frappe.db.get_value(
 		"Nursing Task",
 		{"reference_doctype": "OT Booking", "reference_name": booking, "status": ["!=", "Cancelled"]},
-		["name", "status", "requested_end_time", "duration"],
+		["name", "status", "patient", "requested_end_time", "duration"],
 		as_dict=True,
 		order_by="creation desc",
 	)
 
 
 def out_of_date(task, booking, hours):
-	"""Whether the task no longer asks for the fasting the case now needs: the case moved, or its
-	procedures now need a different number of hours. It is matched on its end and duration, not
-	its start: a task made after its fasting should have begun has its start moved to now."""
+	"""Whether the task no longer asks for the fasting the case now needs: the case moved, its
+	procedures now need a different number of hours, or it names another patient. It is matched on
+	its end and duration, not its start: a task made after its fasting should have begun has its
+	start moved to now."""
 	case_start = get_datetime(booking.scheduled_start)
-	return get_datetime(task.requested_end_time) != case_start or flt(task.duration) != hours * 3600
+	return (
+		get_datetime(task.requested_end_time) != case_start
+		or flt(task.duration) != hours * 3600
+		or (booking.get("patient") and task.patient != booking.patient)
+	)
 
 
 def cancel_if_open(task):

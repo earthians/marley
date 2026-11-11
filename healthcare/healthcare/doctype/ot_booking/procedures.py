@@ -9,11 +9,16 @@ surgeon it was submitted with, so the case cannot change them, nor stop, while i
 
 import frappe
 from frappe import _
-from frappe.utils import add_to_date, cint, get_datetime, get_time, getdate
+from frappe.utils import add_to_date, cint, get_time, getdate
 
 from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import set_stock_items
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
-from healthcare.healthcare.doctype.ot_booking.procedure_status import procedures_of
+from healthcare.healthcare.doctype.ot_booking.procedure_status import (
+	place_of,
+	primary_surgeon,
+	procedures_of,
+	rows_with_start,
+)
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
 
 ACTIVE_REQUEST_STATUS = "active-Request Status"
@@ -34,11 +39,19 @@ def create_procedures(booking):
 
 
 def validate_procedures_held(booking):
-	"""A row whose procedure is made keeps its procedure and stays; a submitted procedure keeps its
+	"""A case with procedures keeps its patient (cancel it and book again for another); a row whose
+	procedure is made keeps its procedure and stays; a submitted procedure keeps its
 	theatre, times and surgeon, and stops the case from being cancelled or postponed"""
 	if booking.is_new():
 		return
 	held = procedures_of(booking)
+	if held and booking.has_value_changed("patient"):
+		frappe.throw(
+			_("Clinical Procedure {0} is made for this case, so its patient cannot change").format(
+				frappe.bold(next(iter(held.values())).name)
+			),
+			title=_("Procedure Made"),
+		)
 	rows = {row.name: row for row in booking.procedures}
 	for row_name, procedure in held.items():
 		validate_row_kept(rows.get(row_name), procedure)
@@ -80,12 +93,6 @@ def moved(procedure, planned):
 	return place_of(procedure) != place_of(frappe._dict(planned))
 
 
-def place_of(procedure):
-	start = get_datetime(f"{procedure.start_date} {procedure.start_time}")
-	end = get_datetime(procedure.planned_end_datetime)
-	return procedure.service_unit, start, end, procedure.practitioner
-
-
 def update_procedures(booking):
 	"""After a save: a case that stopped gives up its drafts; otherwise the drafts follow it, and a
 	Scheduled, started or completed case gets a procedure for each row that has none yet"""
@@ -105,13 +112,6 @@ def update_procedures(booking):
 def is_stopping(booking):
 	before = booking.get_doc_before_save()
 	return booking.status in INACTIVE_STATUSES and bool(before) and before.status not in INACTIVE_STATUSES
-
-
-def rows_with_start(booking):
-	start = get_datetime(booking.scheduled_start)
-	for row in booking.procedures:
-		yield row, start
-		start = add_to_date(start, seconds=cint(row.duration))
 
 
 def new_procedure(booking, row, start):
@@ -158,7 +158,7 @@ def procedure_from_template(booking, template):
 def schedule(booking, row, start):
 	"""What the case gives the row's procedure: its theatre and the theatre's store, its slot in
 	the case, and the primary surgeon with their name (fetched only in the browser otherwise)"""
-	surgeon = next((member.practitioner for member in booking.team if member.is_primary), None)
+	surgeon = primary_surgeon(booking)
 	return {
 		"service_unit": booking.theatre,
 		"warehouse": theatre_warehouse(booking),

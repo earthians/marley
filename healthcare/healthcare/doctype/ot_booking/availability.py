@@ -73,7 +73,7 @@ def theatre_clashes(booking, cases, start, end, cleaning):
 		"Theatre {0} is booked from {1} to {2} for {3}, and each case needs its minutes of cleaning after it"
 	)
 	return [
-		message.format(frappe.bold(booking.theatre), *times(case), case.patient_name)
+		message.format(frappe.bold(booking.theatre), *times(case), patient_shown(case))
 		for case in cases
 		if case.theatre == booking.theatre and theatre_clash(case, start, end, cleaning)
 	]
@@ -94,8 +94,15 @@ def team_clashes(booking, running, start, end):
 def team_clash(practitioner, case):
 	name = next(member.practitioner_name for member in case.team if member.practitioner == practitioner)
 	return _("{0} is in theatre {1} from {2} to {3}, with {4}").format(
-		frappe.bold(name or practitioner), case.theatre, *times(case), case.patient_name
+		frappe.bold(name or practitioner), case.theatre, *times(case), patient_shown(case)
 	)
+
+
+def patient_shown(case):
+	"""Every case counts in the clash checks, but only one the user may read is named"""
+	if frappe.has_permission("OT Booking", "read", case.name):
+		return case.patient_name
+	return _("another patient")
 
 
 def most_at_once(cases, start, end):

@@ -1,11 +1,13 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""A case's procedures as the case reads them, and the case following them: In Progress once
-one starts, Completed once every row's is, never backwards. Clinical Procedure calls this, so it
-never imports Clinical Procedure itself."""
+"""A case's procedures as the case reads them, where the case puts each one, and the case
+following them: In Progress once one starts, Completed once every row's is, never backwards.
+Clinical Procedure calls this, so it never imports Clinical Procedure itself."""
 
 import frappe
+from frappe import _
+from frappe.utils import add_to_date, cint, get_datetime, get_time, getdate
 
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
 from healthcare.healthcare.doctype.ot_booking.fasting import sync_fasting_task
@@ -34,6 +36,65 @@ def procedures_of(booking):
 		filters={"ot_booking": booking.name, "ot_booking_row": ["is", "set"], "docstatus": ["<", 2]},
 	)
 	return {procedure.ot_booking_row: procedure for procedure in procedures}
+
+
+def keep_booked_place(procedure):
+	"""A procedure made for a case is where the case puts it: its theatre, times and surgeon change
+	on the case, never on the procedure. A new one, such as an amendment, takes them from the case."""
+	if not (procedure.ot_booking and procedure.ot_booking_row):
+		return
+	booking = frappe.get_doc("OT Booking", procedure.ot_booking)
+	planned = booked_place(booking, procedure.ot_booking_row)
+	if not planned or place_of(procedure) == planned:
+		return
+	if procedure.is_new():
+		return take_place(procedure, planned)
+	frappe.throw(
+		_("Its theatre, times and surgeon come from OT Booking {0}, so change them there").format(
+			frappe.bold(booking.name)
+		),
+		title=_("Booked Procedure"),
+	)
+
+
+def booked_place(booking, row_name):
+	"""The theatre, start, end and surgeon the case gives a row's procedure"""
+	for row, start in rows_with_start(booking):
+		if row.name == row_name:
+			end = add_to_date(start, seconds=cint(row.duration))
+			return booking.theatre, start, end, primary_surgeon(booking)
+
+
+def take_place(procedure, planned):
+	theatre, start, end, surgeon = planned
+	procedure.update(
+		{
+			"service_unit": theatre,
+			"start_date": getdate(start),
+			"start_time": get_time(start),
+			"planned_end_datetime": end,
+			"practitioner": surgeon,
+			"practitioner_name": surgeon
+			and frappe.db.get_value("Healthcare Practitioner", surgeon, "practitioner_name", cache=True),
+		}
+	)
+
+
+def place_of(procedure):
+	start = get_datetime(f"{procedure.start_date} {procedure.start_time}")
+	end = get_datetime(procedure.planned_end_datetime)
+	return procedure.service_unit or None, start, end, procedure.practitioner or None
+
+
+def rows_with_start(booking):
+	start = get_datetime(booking.scheduled_start)
+	for row in booking.procedures:
+		yield row, start
+		start = add_to_date(start, seconds=cint(row.duration))
+
+
+def primary_surgeon(booking):
+	return next((member.practitioner for member in booking.team if member.is_primary), None)
 
 
 def follow_procedure(procedure):

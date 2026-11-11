@@ -10,6 +10,7 @@ from healthcare.healthcare.doctype.healthcare_practitioner.test_practitioner_lea
 	skip_without_hrms,
 )
 from healthcare.healthcare.doctype.ot_booking.priority import priority_named
+from healthcare.healthcare.doctype.ot_booking.test_day_rules import create_user
 from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	HOUR,
 	create_ot_template,
@@ -66,6 +67,21 @@ class TestAvailability(HealthcareTestSuite):
 
 		self.assertIn(f"{surgeon}</strong> is in theatre", str(refused.exception))
 		self.assertIn(f"with {first.patient_name}", str(refused.exception))
+
+	def test_a_clash_with_a_case_the_user_cannot_read_does_not_name_its_patient(self):
+		hidden = make_booking(self, self.at(9))
+		user = create_user("_test_ot_coordinator_one_patient@example.com", "OT Coordinator")
+		frappe.get_doc(
+			{"doctype": "User Permission", "user": user, "allow": "Patient", "for_value": self.patients[1]}
+		).insert(ignore_permissions=True)
+		frappe.set_user(user)
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		for theatre, surgeon in ((self.theatre, 1), (self.other_theatre, 0)):
+			with self.assertRaises(frappe.ValidationError) as refused:
+				make_booking(self, self.at(9), theatre=theatre, patient=1, surgeon=surgeon)
+			self.assertIn("another patient", str(refused.exception))
+			self.assertNotIn(hidden.patient_name, str(refused.exception))
 
 	def test_an_earlier_case_keeps_its_own_cleaning_time(self):
 		make_booking(self, self.at(9)).db_set("cleaning_minutes", 60)

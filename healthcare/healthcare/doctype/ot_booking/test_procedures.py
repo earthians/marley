@@ -150,6 +150,15 @@ class TestProcedures(HealthcareTestSuite):
 
 		self.assertRaisesRegex(frappe.ValidationError, "already submitted", booking.save)
 
+	def test_a_case_with_a_procedure_keeps_its_patient(self):
+		booking = make_booking(self, self.at(9))
+		booking.create_clinical_procedures()
+		booking.reload()
+
+		booking.patient = self.patients[1]
+
+		self.assertRaisesRegex(frappe.ValidationError, "patient cannot change", booking.save)
+
 	def test_a_row_with_a_procedure_keeps_it_and_stays(self):
 		booking = make_booking(self, self.at(9))
 		booking.create_clinical_procedures()
@@ -185,6 +194,31 @@ class TestProcedures(HealthcareTestSuite):
 
 		self.assertEqual(amended.ot_booking_row, booking.procedures[0].name)
 		self.assertEqual(booking.create_clinical_procedures(), [])
+
+	def test_a_procedure_changes_its_place_only_on_its_case(self):
+		booking = make_booking(self, self.at(9))
+		procedure = self.first_procedure(booking)
+
+		procedure.start_time = "13:00:00"
+		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.save)
+		procedure.reload()
+		procedure.practitioner = self.practitioners[1]
+		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.submit)
+
+	def test_an_amendment_takes_the_place_its_case_moved_to(self):
+		booking = make_booking(self, self.at(9))
+		cancelled = self.submitted(booking)
+		cancelled.cancel()
+		booking.reload()
+		booking.update({"scheduled_start": self.at(13), "change_reason": "Patient unwell"})
+		booking.save()
+
+		amended = frappe.copy_doc(cancelled)
+		amended.update({"amended_from": cancelled.name, "docstatus": 0})
+		amended.insert()
+
+		self.assertEqual(start_of(amended), self.at(13))
+		self.assertEqual(get_datetime(amended.planned_end_datetime), self.at(14))
 
 	def test_a_duplicated_procedure_is_not_the_cases(self):
 		booking = make_booking(self, self.at(9))

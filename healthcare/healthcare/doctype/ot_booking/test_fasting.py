@@ -5,6 +5,7 @@ import frappe
 from frappe.utils import add_days, add_to_date, get_datetime, now_datetime, nowdate
 
 from healthcare.healthcare.doctype.ot_booking.board import get_board
+from healthcare.healthcare.doctype.ot_booking.fasting import sync_fasting_task
 from healthcare.healthcare.doctype.ot_booking.priority import priority_named
 from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	HOUR,
@@ -72,6 +73,18 @@ class TestFasting(HealthcareTestSuite):
 
 		self.assertEqual(task.status, "Requested")
 		self.assertEqual(get_datetime(task.requested_start_time), add_to_date(self.at(9), hours=-6))
+
+	def test_a_task_naming_another_patient_is_replaced(self):
+		booking = self.scheduled()
+		[old] = self.tasks(booking)
+		other = frappe.get_all("Patient", filters={"name": ["!=", booking.patient]}, pluck="name")[0]
+		frappe.db.set_value("Nursing Task", old.name, "patient", other)
+
+		sync_fasting_task(booking)
+
+		[current] = self.tasks(booking, "Requested")
+		self.assertNotEqual(current.name, old.name)
+		self.assertEqual(frappe.db.get_value("Nursing Task", current.name, "patient"), booking.patient)
 
 	def test_a_tentative_case_sends_no_task(self):
 		booking = make_booking(self, self.at(9))
