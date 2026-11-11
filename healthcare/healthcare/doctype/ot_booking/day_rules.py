@@ -45,7 +45,7 @@ def validate_not_in_the_past(booking, before):
 		return
 	if before and not restored and has_passed(before):
 		frappe.throw(
-			_("This case's time has passed, so it cannot be moved. Reschedule it instead."),
+			_("This case's time has passed, so it cannot be moved or change length. Reschedule it instead."),
 			title=_("Case Already Due"),
 		)
 	if has_passed(booking):
@@ -84,8 +84,10 @@ def validate_same_day_addition(booking):
 
 
 def is_moved(booking, before):
-	return booking.theatre != before.theatre or get_datetime(booking.scheduled_start) != get_datetime(
-		before.scheduled_start
+	"""Another theatre, start or end: a longer or shorter case changes its slot too"""
+	return booking.theatre != before.theatre or any(
+		get_datetime(booking.get(field)) != get_datetime(before.get(field))
+		for field in ("scheduled_start", "scheduled_end")
 	)
 
 

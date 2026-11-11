@@ -149,6 +149,22 @@ class TestDayRules(HealthcareTestSuite):
 
 		self.assertRaisesRegex(frappe.ValidationError, "cannot be moved", booking.save)
 
+	def test_a_case_whose_time_has_passed_keeps_its_length(self):
+		booking = self.past_booking("Scheduled")
+		booking.procedures[0].duration = 2 * HOUR
+
+		self.assertRaisesRegex(frappe.ValidationError, "change length", booking.save)
+
+	def test_a_scheduled_case_needs_a_reason_to_change_length(self):
+		booking = self.scheduled_booking()
+		booking.procedures[0].duration = 2 * HOUR
+		self.assertRaisesRegex(frappe.ValidationError, "Change Reason", booking.save)
+
+		booking.reload()
+		booking.procedures[0].duration = 2 * HOUR
+		booking.change_reason = "Second procedure added to the plan"
+		booking.save()
+
 	def test_a_case_whose_time_has_passed_keeps_its_cleaning_time(self):
 		booking = self.past_booking()
 		booking.cleaning_minutes = booking.cleaning_minutes + 15
