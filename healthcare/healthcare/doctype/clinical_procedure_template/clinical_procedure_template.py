@@ -133,7 +133,12 @@ def change_item_code_from_template(item_code: str, doc: str) -> None:
 
 def update_item_and_item_price(doc):
 	if doc.is_billable and doc.item:
-		item_name = doc.lab_test_name if doc.get("doctype") == "Lab Test Template" else doc.template
+		if doc.get("doctype") == "Lab Test Template":
+			item_name = doc.lab_test_name
+		elif doc.get("doctype") == "Observation Template":
+			item_name = doc.observation
+		else:
+			item_name = doc.template
 		rate = doc.lab_test_rate if doc.get("doctype") == "Lab Test Template" else doc.rate
 		item_group = doc.lab_test_group if doc.get("doctype") == "Lab Test Template" else doc.item_group
 
