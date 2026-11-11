@@ -39,6 +39,7 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
+from healthcare.healthcare.doctype.ot_booking.availability import theatre_case_messages
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
 	make_insurance_coverage as generate_insurance_coverage,
 )
@@ -64,6 +65,7 @@ class PatientAppointment(Document):
 		self.set_appointment_datetime()
 		self.validate_practitioner_unavailability()
 		self.validate_practitioner_leave()
+		self.validate_theatre_cases()
 		self.validate_customer_created()
 		self.set_status()
 		self.set_title()
@@ -348,6 +350,20 @@ class PatientAppointment(Document):
 			if not leave.is_half_day:
 				frappe.throw(leave_message(leave), title=_("Not Available"))
 			frappe.msgprint(leave_message(leave), title=_("Not Available"), indicator="orange")
+
+	def validate_theatre_cases(self):
+		"""Not during the practitioner's or the patient's surgery. Checked only when the time or the
+		people change, so a case booked later does not stop the appointment being checked in."""
+		if self.status == "Cancelled" or not (self.is_new() or self.is_rebooked()):
+			return
+		start, end = get_datetime(self.appointment_datetime), get_datetime(self.appointment_end_datetime)
+		clashes = theatre_case_messages(self.practitioner, self.patient, start, end)
+		if clashes:
+			frappe.throw(clashes, title=_("In Theatre"), as_list=True)
+
+	def is_rebooked(self):
+		fields = ("patient", "practitioner", "appointment_date", "appointment_time", "duration")
+		return any(self.has_value_changed(field) for field in fields)
 
 	def set_appointment_datetime(self):
 		self.appointment_datetime = f"{self.appointment_date} {self.appointment_time or '00:00:00'}"

@@ -18,6 +18,7 @@ from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	make_booking,
 )
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment,
 	create_practitioner_availability,
 )
 from healthcare.tests.utils import HealthcareTestSuite
@@ -82,6 +83,35 @@ class TestAvailability(HealthcareTestSuite):
 				make_booking(self, self.at(9), theatre=theatre, patient=1, surgeon=surgeon)
 			self.assertIn("another patient", str(refused.exception))
 			self.assertNotIn(hidden.patient_name, str(refused.exception))
+
+	def appointment(self, patient, practitioner, hour):
+		return create_appointment(
+			self.patients[patient],
+			self.practitioners[practitioner],
+			appointment_date=self.day,
+			appointment_time=f"{hour:02d}:30:00",
+			duration=30,
+		)
+
+	def test_a_surgeons_clinic_appointment_refuses_an_elective_case_without_naming_its_patient(self):
+		self.appointment(patient=2, practitioner=0, hour=9)
+		visitor = frappe.db.get_value("Patient", self.patients[2], "patient_name")
+
+		with self.assertRaises(frappe.ValidationError) as refused:
+			make_booking(self, self.at(9))
+
+		self.assertIn("has a clinic appointment", str(refused.exception))
+		self.assertNotIn(visitor, str(refused.exception))
+		make_booking(self, self.at(9), priority=priority_named("STAT"))  # an emergency is only warned
+
+	def test_a_clinic_appointment_cannot_fall_during_the_practitioners_or_patients_case(self):
+		make_booking(self, self.at(9))
+
+		for patient, practitioner in ((1, 0), (0, 1)):
+			self.assertRaisesRegex(
+				frappe.ValidationError, "is in theatre", self.appointment, patient, practitioner, 9
+			)
+		self.appointment(patient=1, practitioner=1, hour=10)  # after the case, or for others, is free
 
 	def test_an_earlier_case_keeps_its_own_cleaning_time(self):
 		make_booking(self, self.at(9)).db_set("cleaning_minutes", 60)
