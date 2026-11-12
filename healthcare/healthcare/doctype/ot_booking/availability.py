@@ -1,14 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""Whether a case's time is free. A clash with another case is always refused: the theatre, with
-its cleaning time after each case; a team member in another theatre, where one allowed to
-overlap theatres may be in two at once, never three; or the patient. A theatre holiday, an
-Unavailable block of the theatre or a team member, and a team member's leave refuse an elective
-case and are only warned about for an emergency, as is a clinic appointment of the patient or a
-team member. A half-day leave is only warned about. The other way round, a clinic appointment
-cannot fall during its practitioner's or patient's case."""
-
 from datetime import timedelta
 
 import frappe
@@ -36,7 +28,6 @@ from healthcare.healthcare.doctype.practitioner_availability.practitioner_availa
 )
 
 MAX_OVERLAPPING_THEATRES = 2
-# appointments that no longer hold their time, as Patient Appointment's own overlap check counts them
 FINISHED_APPOINTMENT_STATUSES = ("Closed", "Cancelled")
 
 
@@ -46,23 +37,25 @@ def validate_availability(booking):
 	clashes = clash_messages(booking)
 	if clashes:
 		frappe.throw(clashes, title=_("Booking Conflict"), as_list=True)
+	refusals, warnings = unavailable_messages(booking)
+	if refusals and not is_emergency(booking.priority):
+		frappe.throw(refusals, title=_("Not Available"), as_list=True)
+	if refusals or warnings:
+		frappe.msgprint(refusals + warnings, title=_("Not Available"), indicator="orange", as_list=True)
+
+
+def unavailable_messages(booking):
 	leaves = find_leaves(team_of(booking), *slot(booking))
 	refusals = holiday_messages(booking) + blocked_messages(booking) + appointment_messages(booking)
 	refusals += [leave_message(leave) for leave in leaves if not leave.is_half_day]
 	warnings = [leave_message(leave) for leave in leaves if leave.is_half_day]
-	if is_emergency(booking.priority):
-		warnings = refusals + warnings
-	elif refusals:
-		frappe.throw(refusals, title=_("Not Available"), as_list=True)
-	if warnings:
-		frappe.msgprint(warnings, title=_("Not Available"), indicator="orange", as_list=True)
+	return refusals, warnings
 
 
 def clash_messages(booking):
-	"""The theatre's cases too close for each one's cleaning time, and the team's and the patient's
-	cases at the same time. A case is shorter than a day, so a day back finds every earlier one."""
 	start, end = slot(booking)
 	cleaning = cleaning_of(booking)
+	# a day back, for earlier cases whose own cleaning time runs into this one
 	cases = cases_between(start - timedelta(days=1), end + cleaning, exclude=booking.name)
 	running = [case for case in cases if overlaps(case, start, end)]
 	return (
@@ -96,22 +89,23 @@ def team_clashes(booking, running, start, end):
 
 
 def team_clash(practitioner, case):
-	name = next(member.practitioner_name for member in case.team if member.practitioner == practitioner)
 	return _("{0} is in theatre {1} from {2} to {3}, with {4}").format(
-		frappe.bold(name or practitioner), case.theatre, *times(case), patient_shown(case)
+		frappe.bold(practitioner_name_in(case, practitioner)), case.theatre, *times(case), patient_shown(case)
 	)
 
 
+def practitioner_name_in(case, practitioner):
+	names = [member.practitioner_name for member in case.team if member.practitioner == practitioner]
+	return names[0] if names and names[0] else practitioner
+
+
 def patient_shown(case):
-	"""Every case counts in the clash checks, but only one the user may read is named"""
 	if frappe.has_permission("OT Booking", "read", case.name):
 		return case.patient_name
 	return _("another patient")
 
 
 def most_at_once(cases, start, end):
-	"""The most of `cases` running at one moment within `start` to `end`; one ending as another
-	starts is not an overlap"""
 	moments = sorted(
 		(moment, step)
 		for case in cases
@@ -140,7 +134,6 @@ def allowed_to_overlap(practitioners):
 
 
 def holiday_messages(booking):
-	"""A half-day holiday can still be booked; only a full one closes the theatres"""
 	if not is_holiday(theatre_holiday_list(booking.company), booking.scheduled_date):
 		return []
 	return [_("{0} is a theatre holiday").format(frappe.bold(format_date(booking.scheduled_date)))]
@@ -158,7 +151,6 @@ def blocked_messages(booking):
 
 
 def blocked_message(block):
-	"""Who is away, by name, and why if the block says"""
 	who = frappe.db.get_value("Healthcare Practitioner", block.scope, "practitioner_name", cache=True)
 	message = _("{0} is unavailable from {1} to {2} on {3}").format(
 		frappe.bold(who or block.scope),
@@ -170,7 +162,6 @@ def blocked_message(block):
 
 
 def appointment_messages(booking):
-	"""The clinic appointments of the case's patient and team during the case"""
 	start, end = slot(booking)
 	return [
 		appointment_message(appointment, booking)
@@ -195,20 +186,19 @@ def appointments_between(practitioners, patient, start, end):
 		},
 		or_filters=[["practitioner", "in", practitioners], ["patient", "=", patient]],
 	)
-	return [appointment for appointment in appointments if visit_overlaps(appointment, start, end)]
+	for appointment in appointments:
+		appointment.start, appointment.end = visit_times(appointment)
+	return [
+		appointment for appointment in appointments if appointment.start < end and start < appointment.end
+	]
 
 
-def visit_overlaps(appointment, start, end):
-	visit_start = get_datetime(f"{appointment.appointment_date} {appointment.appointment_time or '00:00:00'}")
-	appointment.start, appointment.end = (
-		visit_start,
-		visit_start + timedelta(minutes=flt(appointment.duration)),
-	)
-	return appointment.start < end and start < appointment.end
+def visit_times(appointment):
+	start = get_datetime(f"{appointment.appointment_date} {appointment.appointment_time or '00:00:00'}")
+	return start, start + timedelta(minutes=flt(appointment.duration))
 
 
 def appointment_message(appointment, booking):
-	"""Named by the case's patient, or else by the practitioner, never by another patient"""
 	own = appointment.patient == booking.patient
 	who = booking.patient_name if own else appointment.practitioner_name or appointment.practitioner
 	return _("{0} has a clinic appointment from {1} to {2}").format(
@@ -217,14 +207,14 @@ def appointment_message(appointment, booking):
 
 
 def theatre_case_messages(practitioner, patient, start, end):
-	"""For a clinic appointment: the theatre cases of its practitioner or patient at the same time,
-	named by the appointment's own patient or practitioner, never by another patient"""
 	messages = []
 	for case in cases_between(start, end):
-		member = next((member for member in case.team if member.practitioner == practitioner), None)
-		if case.patient != patient and not member:
+		if case.patient == patient:
+			who = case.patient_name
+		elif practitioner in team_of(case):
+			who = practitioner_name_in(case, practitioner)
+		else:
 			continue
-		who = case.patient_name if case.patient == patient else member.practitioner_name or practitioner
 		messages.append(
 			_("{0} is in theatre {1} from {2} to {3}").format(frappe.bold(who), case.theatre, *times(case))
 		)

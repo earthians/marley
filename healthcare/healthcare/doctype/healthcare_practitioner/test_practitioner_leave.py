@@ -69,7 +69,6 @@ class TestPractitionerLeave(HealthcareTestSuite):
 
 
 def link_new_employee(test, practitioner):
-	"""Links a fresh Employee to `practitioner` until the test ends"""
 	saved = frappe.db.get_value("Healthcare Practitioner", practitioner, "employee")
 	employee = frappe.get_doc(
 		{
@@ -103,8 +102,6 @@ def create_approved_leave(
 			"docstatus": 1,
 		}
 	)
-	# written straight to the table: HRMS would also need allocations, holiday lists and
-	# approvers, and the leave check reads only the submitted row
 	leave.set_new_name()
 	leave.db_insert()
 	return leave.name

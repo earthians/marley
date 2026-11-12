@@ -70,7 +70,7 @@ class TestProcedures(HealthcareTestSuite):
 
 	def test_procedures_are_made_once_and_from_the_saved_booking(self):
 		booking = make_booking(self, self.at(9))
-		booking.scheduled_start = self.at(13)  # an edit the form has not saved
+		booking.scheduled_start = self.at(13)
 
 		self.assertEqual(str(self.first_procedure(booking).start_time), "9:00:00")
 		self.assertEqual(booking.create_clinical_procedures(), [])
@@ -78,25 +78,20 @@ class TestProcedures(HealthcareTestSuite):
 	def made_for(self, booking):
 		return frappe.db.count("Clinical Procedure", {"ot_booking": booking.name, "docstatus": ["<", 2]})
 
-	def test_a_scheduled_case_gets_its_procedures_and_a_tentative_one_none(self):
+	def test_a_case_gets_its_procedures_when_scheduled_started_or_completed(self):
 		booking = make_booking(self, self.at(9))
 		self.assertEqual(self.made_for(booking), 0)
-
 		booking.status = "Scheduled"
 		booking.save()
-
 		self.assertEqual(self.made_for(booking), 1)
 
-	def test_a_started_or_completed_case_gets_any_procedure_still_missing(self):
 		for before, after in (("Scheduled", "In Progress"), ("In Progress", "Completed")):
-			booking = make_booking(self, self.at(9 if before == "Scheduled" else 13), patient=0)
-			booking.db_set("status", before)
-			booking.reload()
-
-			booking.status = after
-			booking.save()
-
-			self.assertEqual(self.made_for(booking), 1, after)
+			missing = make_booking(self, self.at(13 if before == "Scheduled" else 17))
+			missing.db_set("status", before)
+			missing.reload()
+			missing.status = after
+			missing.save()
+			self.assertEqual(self.made_for(missing), 1, after)
 
 	def test_a_procedure_keeps_its_booked_duration_when_submitted(self):
 		booking = make_booking(self, self.at(9))
@@ -123,7 +118,7 @@ class TestProcedures(HealthcareTestSuite):
 		)
 		self.assertEqual((moved.practitioner, moved.practitioner_name), (self.practitioners[1], surgeon_name))
 		company_store = frappe.db.get_value("Company", booking.company, "default_warehouse")
-		self.assertEqual(moved.warehouse, company_store)  # the new theatre has no store of its own
+		self.assertEqual(moved.warehouse, company_store)
 
 	def test_a_submitted_procedure_keeps_its_theatre_times_and_surgeon(self):
 		booking = make_booking(self, self.at(9))
@@ -177,44 +172,13 @@ class TestProcedures(HealthcareTestSuite):
 		booking.reload()
 
 		booking.update({"scheduled_start": self.at(13), "change_reason": "Patient unwell"})
-		booking.save()  # it can move
-		made = booking.create_clinical_procedures()  # and its row gets a new procedure
+		booking.save()
+		made = booking.create_clinical_procedures()
 
 		self.assertEqual(len(made), 1)
 		self.assertEqual(frappe.db.get_value("Clinical Procedure", cancelled.name, "docstatus"), 2)
 
-	def test_an_amended_procedure_takes_its_rows_place(self):
-		booking = make_booking(self, self.at(9))
-		cancelled = self.submitted(booking)
-		cancelled.cancel()
-
-		amended = frappe.copy_doc(cancelled)  # as Amend copies it, no-copy fields included
-		amended.update({"amended_from": cancelled.name, "docstatus": 0})
-		amended.insert()
-
-		self.assertEqual(amended.ot_booking_row, booking.procedures[0].name)
-		self.assertEqual(booking.create_clinical_procedures(), [])
-
-	def test_a_procedure_changes_its_place_only_on_its_case(self):
-		booking = make_booking(self, self.at(9))
-		procedure = self.first_procedure(booking)
-
-		procedure.start_time = "13:00:00"
-		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.save)
-		procedure.reload()
-		procedure.practitioner = self.practitioners[1]
-		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.submit)
-
-	def test_a_procedure_keeps_its_cases_patient_and_procedure(self):
-		booking = make_booking(self, self.at(9))
-		other_template = create_ot_template("_Test Procedure - Other", HOUR).name
-		procedure = self.first_procedure(booking)
-		for field, value in (("patient", self.patients[1]), ("procedure_template", other_template)):
-			procedure.reload()
-			procedure.set(field, value)
-			self.assertRaisesRegex(frappe.ValidationError, "cannot change", procedure.save)
-
-	def test_an_amendment_takes_the_place_its_case_moved_to(self):
+	def test_an_amended_procedure_takes_its_rows_place_where_the_case_now_is(self):
 		booking = make_booking(self, self.at(9))
 		cancelled = self.submitted(booking)
 		cancelled.cancel()
@@ -226,8 +190,25 @@ class TestProcedures(HealthcareTestSuite):
 		amended.update({"amended_from": cancelled.name, "docstatus": 0})
 		amended.insert()
 
+		self.assertEqual(amended.ot_booking_row, booking.procedures[0].name)
 		self.assertEqual(start_of(amended), self.at(13))
 		self.assertEqual(get_datetime(amended.planned_end_datetime), self.at(14))
+		self.assertEqual(booking.create_clinical_procedures(), [])
+
+	def test_a_procedure_changes_its_place_patient_and_procedure_only_on_its_case(self):
+		booking = make_booking(self, self.at(9))
+		other_template = create_ot_template("_Test Procedure - Other", HOUR).name
+		procedure = self.first_procedure(booking)
+
+		procedure.start_time = "13:00:00"
+		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.save)
+		for field, value in (("patient", self.patients[1]), ("procedure_template", other_template)):
+			procedure.reload()
+			procedure.set(field, value)
+			self.assertRaisesRegex(frappe.ValidationError, "cannot change", procedure.save)
+		procedure.reload()
+		procedure.practitioner = self.practitioners[1]
+		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.submit)
 
 	def test_a_duplicated_procedure_is_not_the_cases(self):
 		booking = make_booking(self, self.at(9))
@@ -250,19 +231,16 @@ class TestProcedures(HealthcareTestSuite):
 			frappe.ValidationError, "already booked", make_ot_booking, booking.procedures[0].service_request
 		)
 
-	def test_a_withdrawn_request_makes_no_procedure(self):
+	def test_no_procedure_for_a_withdrawn_request_or_a_cancelled_case(self):
 		booking = self.from_request()
 		frappe.db.set_value(
 			"Service Request", booking.procedures[0].service_request, "status", "revoked-Request Status"
 		)
-
 		self.assertRaisesRegex(frappe.ValidationError, "no longer active", booking.create_clinical_procedures)
 
-	def test_no_procedures_for_a_cancelled_case(self):
-		booking = make_booking(self, self.at(9))
-		booking.db_set("status", "Cancelled")
-
-		self.assertRaises(frappe.ValidationError, booking.create_clinical_procedures)
+		cancelled = make_booking(self, self.at(13))
+		cancelled.db_set("status", "Cancelled")
+		self.assertRaises(frappe.ValidationError, cancelled.create_clinical_procedures)
 
 	def test_an_ot_coordinator_can_make_procedures_and_no_one_else(self):
 		booking = make_booking(self, self.at(9))
@@ -270,11 +248,10 @@ class TestProcedures(HealthcareTestSuite):
 		frappe.set_user(create_user("_test_ot_coordinator@example.com", "OT Coordinator"))
 		self.assertTrue(booking.create_clinical_procedures())
 
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+		frappe.set_user("test_user@marleyhealth.io")
 		self.assertRaises(frappe.PermissionError, booking.create_clinical_procedures)
 
 	def theatre_store(self):
-		"""A store of the company other than its default, given to the first theatre"""
 		default = frappe.db.get_value("Company", "_Test Company", "default_warehouse")
 		store = frappe.get_all(
 			"Warehouse",

@@ -86,57 +86,36 @@ class TestFasting(HealthcareTestSuite):
 		self.assertNotEqual(current.name, old.name)
 		self.assertEqual(frappe.db.get_value("Nursing Task", current.name, "patient"), booking.patient)
 
-	def test_a_tentative_case_sends_no_task(self):
-		booking = make_booking(self, self.at(9))
+	def test_no_task_for_a_tentative_case_a_procedure_without_fasting_or_no_activity(self):
+		self.assertEqual(self.tasks(make_booking(self, self.at(9))), [])
 
-		self.assertEqual(self.tasks(booking), [])
+		frappe.db.set_value("Clinical Procedure Template", self.template.name, "requires_fasting", 0)
+		self.assertEqual(self.tasks(self.scheduled(hour=13)), [])
 
-	def test_moving_the_case_replaces_its_task(self):
+		frappe.db.set_value("Clinical Procedure Template", self.template.name, "requires_fasting", 1)
+		self.use_fasting(None, 6)
+		self.assertEqual(self.tasks(self.scheduled(hour=17)), [])
+
+	def test_moving_the_case_replaces_its_task_and_cancels_a_missed_one(self):
 		booking = self.scheduled(hour=9)
+		missed = self.tasks(booking)[0].name
+		frappe.db.set_value("Nursing Task", missed, "status", "Missed")
 		booking.update({"scheduled_start": self.at(13), "change_reason": "Surgeon delayed"})
 		booking.save()
 
 		[open_task] = self.tasks(booking, "Requested")
 
 		self.assertEqual(get_datetime(open_task.requested_start_time), add_to_date(self.at(13), hours=-6))
-		self.assertEqual(len(self.tasks(booking, "Cancelled")), 1)
+		self.assertEqual(frappe.db.get_value("Nursing Task", missed, "status"), "Cancelled")
 
-	def test_postponing_the_case_cancels_its_task(self):
-		booking = self.scheduled()
-
-		change_status(booking, "Postponed", "Patient unwell")
-
-		self.assertEqual([task.status for task in self.tasks(booking)], ["Cancelled"])
-
-	def test_completing_the_task_confirms_fasting(self):
+	def test_completing_the_task_confirms_fasting_on_the_case_and_the_board(self):
 		booking = self.scheduled()
 
 		self.complete_task(booking)
 
 		self.assertTrue(self.confirmed(booking))
-
-	def test_the_board_shows_confirmed_fasting(self):
-		booking = self.scheduled()
-		self.complete_task(booking)
-
 		[shown] = get_board(self.day, "_Test Company")["bookings"]
-
 		self.assertTrue(shown.fasting_confirmed)
-
-	def test_a_procedure_that_needs_no_fasting_sends_no_task(self):
-		frappe.db.set_value("Clinical Procedure Template", self.template.name, "requires_fasting", 0)
-
-		booking = self.scheduled()
-
-		self.assertEqual(self.tasks(booking), [])
-
-	def test_the_longest_fasting_of_the_cases_procedures_wins(self):
-		frappe.db.set_value("Clinical Procedure Template", self.template.name, "fasting_hours", 8)
-
-		booking = self.scheduled(hour=9)
-
-		[task] = self.tasks(booking)
-		self.assertEqual(get_datetime(task.requested_start_time), add_to_date(self.at(9), hours=-8))
 
 	def test_a_longer_fasting_replaces_the_task_and_clears_its_confirmation(self):
 		booking = self.scheduled(hour=9)
@@ -150,16 +129,6 @@ class TestFasting(HealthcareTestSuite):
 		self.assertEqual(get_datetime(task.requested_start_time), add_to_date(self.at(9), hours=-8))
 		self.assertFalse(self.confirmed(booking))
 
-	def test_a_missed_task_is_cancelled_when_the_case_moves(self):
-		booking = self.scheduled(hour=9)
-		missed = self.tasks(booking)[0].name
-		frappe.db.set_value("Nursing Task", missed, "status", "Missed")
-		booking.update({"scheduled_start": self.at(13), "change_reason": "Surgeon delayed"})
-
-		booking.save()
-
-		self.assertEqual(frappe.db.get_value("Nursing Task", missed, "status"), "Cancelled")
-
 	def test_an_out_of_date_task_does_not_confirm_fasting(self):
 		booking = self.scheduled(hour=9)
 		frappe.db.set_value("Clinical Procedure Template", self.template.name, "fasting_hours", 8)
@@ -169,7 +138,7 @@ class TestFasting(HealthcareTestSuite):
 		self.assertFalse(self.confirmed(booking))
 
 	def test_starting_the_procedure_cancels_the_fasting_task(self):
-		booking = self.scheduled(hour=9)  # a Scheduled case gets its procedure
+		booking = self.scheduled(hour=9)
 		procedure = frappe.get_doc("Clinical Procedure", {"ot_booking": booking.name})
 		procedure.submit()
 
@@ -189,20 +158,13 @@ class TestFasting(HealthcareTestSuite):
 		self.assertTrue(self.confirmed(booking))
 		self.assertEqual([row.name for row in self.tasks(booking)], [task.name])
 
-	def test_a_postponed_case_loses_its_task_after_fasting_is_switched_off(self):
+	def test_postponing_the_case_cancels_its_task_even_after_fasting_is_switched_off(self):
 		booking = self.scheduled()
 		self.use_fasting(None, 6)
 
 		change_status(booking, "Postponed", "Patient unwell")
 
 		self.assertEqual([task.status for task in self.tasks(booking)], ["Cancelled"])
-
-	def test_no_task_without_a_fasting_activity(self):
-		self.use_fasting(None, 6)
-
-		booking = self.scheduled()
-
-		self.assertEqual(self.tasks(booking), [])
 
 
 def create_activity(name):

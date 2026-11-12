@@ -336,8 +336,7 @@ class PatientAppointment(Document):
 			)
 
 	def validate_practitioner_leave(self):
-		"""Checked only when the practitioner or the day changes, so a leave approved later
-		does not stop the appointment from being checked in or closed"""
+		# only on a change, so a leave approved later does not block check-in
 		if not self.practitioner or self.status == "Cancelled":
 			return
 		if not (
@@ -352,8 +351,7 @@ class PatientAppointment(Document):
 			frappe.msgprint(leave_message(leave), title=_("Not Available"), indicator="orange")
 
 	def validate_theatre_cases(self):
-		"""Not during the practitioner's or the patient's surgery. Checked only when the time or the
-		people change, so a case booked later does not stop the appointment being checked in."""
+		# only on a change, so a case booked later does not block check-in
 		if self.status == "Cancelled" or not (self.is_new() or self.is_rebooked()):
 			return
 		start, end = get_datetime(self.appointment_datetime), get_datetime(self.appointment_end_datetime)

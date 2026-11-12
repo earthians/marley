@@ -1,7 +1,6 @@
 frappe.listview_settings["OT Booking"] = {
 	add_fields: ["status"],
 	get_indicator: function (doc) {
-		// the same colours as the OT Scheduler board
 		var colors = {
 			Tentative: "gray",
 			Scheduled: "blue",

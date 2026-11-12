@@ -4,7 +4,7 @@
 import frappe
 from frappe.utils import add_days, get_datetime, nowdate
 
-from healthcare.healthcare.doctype.ot_booking.publishing import publish_day
+from healthcare.healthcare.doctype.ot_booking.publishing import publish_day, start_over_day
 from healthcare.healthcare.doctype.ot_booking.test_availability import create_unavailable_block
 from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	HOUR,
@@ -76,8 +76,9 @@ class TestPublishing(HealthcareTestSuite):
 		self.assertEqual(result["published"], [shown.name])
 		self.assertEqual(self.status(hidden), "Tentative")
 
-	def test_publishing_needs_permission(self):
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+	def test_publishing_and_starting_over_need_permission(self):
+		frappe.set_user("test_user@marleyhealth.io")
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertRaises(frappe.PermissionError, publish_day, self.day)
+		self.assertRaises(frappe.PermissionError, start_over_day, self.day)

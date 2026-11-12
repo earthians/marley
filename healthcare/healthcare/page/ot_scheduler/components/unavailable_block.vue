@@ -1,7 +1,4 @@
 <script setup>
-// A theatre's unavailable time on its row: hatched, saying why (its reason, then its note).
-// On hover it shows its details like a case does, with a way to open its Practitioner
-// Availability. A block with neither reason nor note falls back to its title.
 import { computed } from "vue";
 import { Button, HoverCard } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
@@ -27,7 +24,6 @@ const days = computed(() => {
 	return `${formatDate(start_date)} to ${formatDate(end_date)}`;
 });
 
-// a date as desk prints a Date field, in the date format of System Settings
 function formatDate(value) {
 	return host.format?.(value, { fieldtype: "Date" }) ?? value;
 }

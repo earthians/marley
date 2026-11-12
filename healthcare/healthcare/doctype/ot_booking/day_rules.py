@@ -1,17 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""Rules for a committed list. Adding a case never needs a reason, but on the day of surgery
-only an emergency, or an OT Manager, can add one or move one in from another day. Once a case
-is published (Scheduled), moving it, rescheduling it, cancelling it or returning it to
-Tentative needs a reason; a Tentative case changes freely. The reason is for that one change:
-once saved it goes to the timeline and the field is emptied for the next one.
-
-The past is fixed: a case whose start has passed is not moved, only rescheduled (to the To
-schedule pane), cancelled or moved on in status, and no case is placed at a time already gone.
-A start up to one grid step (15 minutes) ago still counts as now, for a case dropped on the
-current time."""
-
 import frappe
 from frappe import _
 from frappe.utils import add_to_date, cint, get_datetime, getdate, now_datetime, today
@@ -19,10 +8,11 @@ from frappe.utils import add_to_date, cint, get_datetime, getdate, now_datetime,
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
 from healthcare.healthcare.doctype.ot_booking.priority import is_emergency
 
+# a case dropped on the current 15-minute grid step still starts "now", not in the past
+NOW_GRACE_MINUTES = 15
+
 
 def validate_day_rules(booking):
-	"""A move onto the day of surgery is both an addition to that day and, for a published case,
-	a change that needs its reason"""
 	before = booking.get_doc_before_save()
 	validate_not_in_the_past(booking, before)
 	if is_added_to_surgery_day(booking, before):
@@ -32,45 +22,46 @@ def validate_day_rules(booking):
 
 
 def validate_not_in_the_past(booking, before):
-	"""Only a case that is placed, by being added, moved or restored, is checked. A case whose time
-	has passed also keeps its cleaning time."""
 	if booking.status in INACTIVE_STATUSES:
 		return
-	if before and cint(booking.cleaning_minutes) != cint(before.cleaning_minutes) and has_passed(before):
+	if before and before.status not in INACTIVE_STATUSES and has_passed(before):
+		validate_passed_case_kept(booking, before)
+	elif is_placed(booking, before) and has_passed(booking):
+		frappe.throw(_("A case cannot be placed at a time that has passed"), title=_("Time Has Passed"))
+
+
+def validate_passed_case_kept(booking, before):
+	if cint(booking.cleaning_minutes) != cint(before.cleaning_minutes):
 		frappe.throw(
 			_("This case's time has passed, so its cleaning time cannot change"), title=_("Case Already Due")
 		)
-	restored = before and before.status in INACTIVE_STATUSES
-	if before and not restored and not is_moved(booking, before):
-		return
-	if before and not restored and has_passed(before):
+	if is_moved(booking, before):
 		frappe.throw(
 			_("This case's time has passed, so it cannot be moved or change length. Reschedule it instead."),
 			title=_("Case Already Due"),
 		)
-	if has_passed(booking):
-		frappe.throw(_("A case cannot be placed at a time that has passed"), title=_("Time Has Passed"))
+
+
+def is_placed(booking, before):
+	return not before or before.status in INACTIVE_STATUSES or is_moved(booking, before)
 
 
 def has_passed(booking):
-	return get_datetime(booking.scheduled_start) < add_to_date(now_datetime(), minutes=-15)
+	start = get_datetime(booking.scheduled_start)
+	return start < add_to_date(now_datetime(), minutes=-NOW_GRACE_MINUTES)
 
 
 def is_added_to_surgery_day(booking, before):
-	"""A new case, one moved in from another day, or one restored from Postponed or Cancelled"""
 	if not before or not is_surgery_day(before):
 		return True
 	return before.status in INACTIVE_STATUSES and booking.status not in INACTIVE_STATUSES
 
 
 def is_published_change(booking, before):
-	"""Moving, stopping or unpublishing (back to Tentative) a case changes the published list"""
 	return is_stopped(booking, before) or is_moved(booking, before) or booking.status == "Tentative"
 
 
 def needs_change_reason(booking):
-	"""Whether moving or stopping the case needs a reason: only once its day's list is published,
-	which a started case was"""
 	return booking.status in ("Scheduled", "In Progress")
 
 
@@ -84,7 +75,6 @@ def validate_same_day_addition(booking):
 
 
 def is_moved(booking, before):
-	"""Another theatre, start or end: a longer or shorter case changes its slot too"""
 	return booking.theatre != before.theatre or any(
 		get_datetime(booking.get(field)) != get_datetime(before.get(field))
 		for field in ("scheduled_start", "scheduled_end")

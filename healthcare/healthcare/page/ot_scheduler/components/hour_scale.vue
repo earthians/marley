@@ -1,5 +1,4 @@
 <script setup>
-// The board's hour labels down the left, pinned while the day scrolls
 import { HOURS, span } from "../time.js";
 </script>
 

@@ -1,7 +1,4 @@
 <script setup>
-// A case's details on hover, like desk's link preview, so it can be read without leaving the board:
-// a case in a theatre, or a waiting one in the pane (a postponed case, or a request shaped like a
-// case by request_panel.vue). Only the rows a case has are shown.
 import { Badge } from "frappe-ui";
 
 import { inpatientText, patientFacts } from "../patient.js";

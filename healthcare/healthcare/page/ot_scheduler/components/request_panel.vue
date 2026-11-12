@@ -1,6 +1,4 @@
 <script setup>
-// The cases still waiting for a theatre: open surgical requests, and postponed cases. Drag one
-// onto a theatre's column to book it. Drop a booked case here to postpone it.
 import { computed, ref } from "vue";
 import { FormControl } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
@@ -13,9 +11,7 @@ import { caseMinutes } from "../time.js";
 const props = defineProps({
 	requests: { type: Array, default: () => [] },
 	postponed: { type: Array, default: () => [] },
-	// a booked case is being dragged, so the pane offers to take it
 	dropping: { type: Boolean, default: false },
-	// the slot finder: which card it is open on and what it found (use_slots.js)
 	finder: { type: Object, required: true },
 	picked: { type: Object, default: null },
 });
@@ -51,7 +47,6 @@ function matching(rows, details) {
 	);
 }
 
-// a length such as 2h 30m, 3h or 45m
 function duration(seconds) {
 	const total = Math.round((seconds || 0) / 60);
 	const hours = Math.floor(total / 60);
@@ -67,7 +62,6 @@ function ordered(request) {
 	}`;
 }
 
-// a request shaped like a case, so the pane shows it with the board's hover preview
 function requestPreview(request) {
 	return {
 		...request,

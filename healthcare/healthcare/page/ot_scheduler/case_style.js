@@ -1,6 +1,3 @@
-// How a case looks on the board. The case and its cleaning tail share one border, so the
-// two read as one block: the status colour, or a thicker red one for an emergency.
-
 const STATUS_BORDERS = {
 	Tentative: "border border-dashed border-outline-gray-4",
 	Scheduled: "border border-outline-blue-4",
@@ -21,8 +18,6 @@ export function caseBorder(booking) {
 		: STATUS_BORDERS[booking.status];
 }
 
-// A waiting case in the pane is bordered by its priority: STAT red, as on the board,
-// ASAP and Urgent amber, and Routine grey
 const PRIORITY_THEMES = { STAT: "red", ASAP: "amber", URGENT: "amber" };
 const PRIORITY_BORDERS = {
 	red: "border-2 border-outline-red-3",

@@ -1,6 +1,3 @@
-// Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("OT Booking", {
 	setup: function (frm) {
 		frm.set_query("theatre", () => ({
@@ -34,7 +31,6 @@ frappe.ui.form.on("OT Booking", {
 	},
 
 	refresh: function (frm) {
-		// a case whose time has passed keeps its cleaning time, as the board locks it
 		const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 		const passed =
 			!frm.is_new() &&

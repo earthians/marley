@@ -1,6 +1,3 @@
-// The slot finder on the board: open on a waiting case in the pane, it lists the earliest free
-// slots that fit (ot_booking/slots.py). Picking one moves the board to that day and outlines the
-// gap; Book here books the case there through the same call a drop would make.
 import { ref } from "vue";
 
 import { get } from "../api.js";
@@ -8,14 +5,12 @@ import { get } from "../api.js";
 export function useSlots({ day, filters, change }) {
 	const finder = ref(closedFinder());
 	const picked = ref(null);
-	// each search is numbered, so only the latest one's reply is shown
 	let searches = 0;
 
 	function closedFinder() {
 		return { for: null, target: null, loading: false, slots: [], error: "" };
 	}
 
-	// target is { request } or { booking }; a second click on the same card closes the finder
 	async function find(target) {
 		const name = (target.request || target.booking).name;
 		if (finder.value.for === name) return close();
@@ -33,7 +28,6 @@ export function useSlots({ day, filters, change }) {
 				refusal?.message ||
 				String(refusal);
 		}
-		// a reply that comes after this finder was closed, or opened on another card, is old
 		if (search !== searches) return;
 		Object.assign(finder.value, { slots, error, loading: false });
 	}
@@ -49,7 +43,6 @@ export function useSlots({ day, filters, change }) {
 		picked.value = null;
 		const done = await change(...bookingCall(target, slot));
 		if (done) return close();
-		// taken in the meantime: look again, so the list no longer offers it
 		finder.value.for = null;
 		find(target);
 	}
@@ -61,7 +54,6 @@ export function useSlots({ day, filters, change }) {
 		return ["move_booking", { name: target.booking.name, ...where }];
 	}
 
-	// the picked slot is outlined in its theatre's column, on its own day
 	function slotIn(theatre) {
 		return (
 			picked.value?.theatre === theatre && String(picked.value.date) === day.value

@@ -1,7 +1,4 @@
 <script setup>
-// A case on its theatre's lane: the case and its hatched cleaning time after it, read as one
-// block, the cleaning below the case. A click opens its menu, a hover its preview,
-// and a case that may still move can be dragged.
 import { ContextMenu, HoverCard } from "frappe-ui";
 
 import BedIcon from "~icons/lucide/bed";
@@ -25,7 +22,6 @@ defineProps({
 	passed: { type: Boolean, default: false },
 	place: { type: Object, required: true },
 	cleaningPlace: { type: Object, default: null },
-	// left out by the board's filters
 	dimmed: { type: Boolean, default: false },
 });
 const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop-end"]);

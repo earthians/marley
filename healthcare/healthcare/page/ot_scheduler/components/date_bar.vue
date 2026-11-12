@@ -1,7 +1,4 @@
 <script setup>
-// The board's filters and day. The first row picks what the board shows: the company, the
-// theatres' department and the filters the page passes in. The second picks the day: previous,
-// today and next, a date picker, and the day's theatre holiday.
 import { Badge, Button, DatePicker, FormControl } from "frappe-ui";
 
 import { isoDate, today } from "../time.js";
@@ -22,7 +19,6 @@ function moveDay(days) {
 
 <template>
 	<div class="flex shrink-0 flex-col gap-2">
-		<!-- what the board shows: company and department, then the filters given as the slot -->
 		<div class="flex flex-wrap items-center gap-2">
 			<div v-if="board" class="w-48">
 				<FormControl
@@ -49,7 +45,6 @@ function moveDay(days) {
 				Experimental
 			</span>
 		</div>
-		<!-- which day -->
 		<div class="flex flex-wrap items-center gap-2">
 			<Button @click="moveDay(-1)">Previous</Button>
 			<Button @click="day = today()">Today</Button>

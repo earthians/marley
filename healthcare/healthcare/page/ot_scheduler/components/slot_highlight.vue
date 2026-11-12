@@ -1,7 +1,4 @@
 <script setup>
-// A picked slot on its theatre row: the case and its cleaning time outlined in green, with
-// Book here inside, and a small round ✕ on its top-right corner to let the slot go. Nothing is
-// clipped, so both stay in reach however narrow the slot.
 import { computed } from "vue";
 import { Button } from "frappe-ui";
 import CloseIcon from "~icons/lucide/x";

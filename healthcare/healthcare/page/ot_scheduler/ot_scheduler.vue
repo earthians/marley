@@ -1,9 +1,4 @@
 <script setup>
-// The OT Scheduler: one day of every theatre. Theatres are columns, grouped by OT complex, and
-// the whole day runs down them, scrolled to the usual working hours. Each case shows its cleaning
-// time below it, blocked theatre time is hatched, and the practitioners away that day are listed
-// above the board. A request from the pane dropped into a column is booked there; a case dragged
-// elsewhere moves. The server checks every drop, so a refused one stays where it was.
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { Badge, Dialog, FormControl, ToastProvider } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
@@ -60,7 +55,6 @@ const {
 	company,
 	department,
 });
-// a viewer who cannot change bookings sees the board read-only, as does anyone while it loads
 const canEdit = computed(() => current.value && Boolean(board.value.can_edit));
 const filters = useBoardFilters();
 const actions = useCaseActions({ canEdit, reload: load, open: openBooking });
@@ -77,12 +71,9 @@ const drag = useDrop({
 const { dragged, dropTheatre, plan } = drag;
 const slots = useSlots({ day, filters: boardFilters, change: actions.change });
 const { finder, picked } = slots;
-// slots found for other theatres no longer apply
 watch([company, department], slots.close);
 const tentativeCount = computed(() => countOf("Tentative"));
 
-// The whole day, midnight to midnight; any hour is bookable. A theatre's column is at least
-// 144px wide and shares out whatever room the board has left.
 const timeline = ref(null);
 const boardGrid = computed(() => ({
 	gridTemplateColumns: `56px repeat(${theatres.value.length}, minmax(144px, 1fr))`,
@@ -93,7 +84,6 @@ const theatres = computed(() => board.value.complexes.flatMap(group => group.the
 const workStart = computed(() => minutesOf(board.value?.day_start || "08:00"));
 const workEnd = computed(() => minutesOf(board.value?.day_end || "20:00"));
 let scrolledDay = null;
-// the current time, a thin red line across today's board, moved on every minute
 const now = ref(minutesNow());
 const nowLine = computed(() => (boardDay() === today() ? now.value : null));
 let clockTimer = null;
@@ -105,14 +95,11 @@ onMounted(() => {
 });
 onUnmounted(() => clearInterval(clockTimer));
 useBoardFeed(load);
-// a new day opens at the start of working hours; a reload of the same day stays where it is
 watch(board, scrollToWorkingHours, { flush: "post" });
-// the page menu (the three dots) offers Publish while the day has Tentative cases
 watch([tentativeCount, canEdit, day], sendActions, { immediate: true });
 
 function scrollToWorkingHours() {
 	if (!timeline.value || scrolledDay === day.value) return;
-	// a quarter of an hour early, so a case at the start of the day clears the theatre names
 	timeline.value.scrollTop = ((workStart.value - 15) / 60) * HOUR_SIZE;
 	scrolledDay = day.value;
 }
@@ -132,8 +119,6 @@ function sendActions([count, editable, shownDay]) {
 	);
 }
 
-// The OT Day Schedule report in a new tab, for the cases the board and its filters show. It groups
-// by theatre, or by practitioner when chosen there, and prints from there.
 function openDaySchedule() {
 	const params = { date: day.value, ...boardFilters(), ...filters.sheetFilters() };
 	window.open(
@@ -148,13 +133,11 @@ function countOf(status) {
 	);
 }
 
-// The day the board's cases are for. Next and Previous change `day` at once, but the cases shown
-// are the old day's until the new day loads, and are placed against their own day meanwhile.
+// the day of the cases shown, which lags `day` until a new day loads
 function boardDay() {
 	return String(board.value?.date || day.value);
 }
 
-// a case whose time has passed stays put: it can only be rescheduled or cancelled
 function hasPassed(booking) {
 	return caseOnDay(booking, boardDay()).start < pastUntil(boardDay());
 }
@@ -180,7 +163,6 @@ function casePlace(booking) {
 	return placed(start, end);
 }
 
-// a case keeps the cleaning time it was booked with
 function cleaningOf(booking) {
 	return booking.cleaning_minutes ?? board.value.cleaning_minutes;
 }
@@ -236,8 +218,7 @@ function openBooking(name) {
 		</div>
 
 		<div class="flex min-h-0 flex-1 gap-3">
-			<!-- shown for anyone who may edit, also while a new day loads, so the board does not
-			     shift; dropping waits for the load (use_drop.js checks canEdit) -->
+			<!-- not canEdit, which is false while a day loads and would make the board jump -->
 			<RequestPanel
 				v-if="board?.can_edit"
 				:requests="requests"
@@ -270,7 +251,6 @@ function openBooking(name) {
 				class="flex-1 overflow-auto rounded-4 border border-outline-gray-2"
 				@scroll="previewFor = null"
 			>
-				<!-- one grid, so the hours and the theatres scroll together, with both pinned -->
 				<div class="grid min-h-full w-max min-w-full" :style="boardGrid">
 					<div
 						class="sticky left-0 top-0 z-30 border-b border-outline-gray-2 bg-surface-base"
@@ -408,7 +388,7 @@ function openBooking(name) {
 </template>
 
 <style>
-/* not scoped: unavailable_block.vue hatches its blocks the same way */
+/* not scoped: unavailable_block.vue uses it too */
 .ot-hatch {
 	background-image: repeating-linear-gradient(
 		45deg,

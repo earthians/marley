@@ -1,14 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""Find a time: the earliest free gaps a waiting case fits in, across the theatres the board
-shows, over the coming days. A gap holds the case and its cleaning time inside the theatre day,
-clear of the theatre's other cases and blocks, the team's other cases and blocks, the patient's
-other cases, and the surgeon's full day of leave, never on a full theatre holiday. It reads the
-day's cases as the save checks do (busy.py), and every slot it offers has passed the server's
-own checks in a dry run, so booking it meets no refusal. At most one slot per theatre per day;
-those on or before the case's Expected By come first. It never pushes a case."""
-
 from datetime import datetime, timedelta
 
 import frappe
@@ -21,6 +13,7 @@ from healthcare.healthcare.doctype.ot_booking.availability import allowed_to_ove
 from healthcare.healthcare.doctype.ot_booking.busy import cases_between, cleaning_of, slot
 from healthcare.healthcare.doctype.ot_booking.ot_booking import make_ot_booking
 from healthcare.healthcare.doctype.ot_booking.priority import is_emergency
+from healthcare.healthcare.doctype.ot_booking.procedure_status import primary_surgeon
 from healthcare.healthcare.doctype.ot_booking.scheduling import check_drop
 from healthcare.healthcare.doctype.ot_booking.theatres import day_window, get_theatres
 from healthcare.healthcare.doctype.practitioner_availability.practitioner_availability import (
@@ -52,8 +45,6 @@ def find_slots(
 
 
 def case_to_place(service_request, booking):
-	"""The case as a booking, with what the finder needs: its length, theatre type, surgeon and
-	Expected By"""
 	if service_request:
 		case = make_ot_booking(service_request)
 		case.expected_date = frappe.db.get_value("Service Request", service_request, "expected_date")
@@ -62,7 +53,7 @@ def case_to_place(service_request, booking):
 		case.check_permission("write")
 		case.expected_date = None
 	case.length = timedelta(seconds=sum(int(row.duration or 0) for row in case.procedures))
-	case.surgeon = next((member.practitioner for member in case.team if member.is_primary), None)
+	case.surgeon = primary_surgeon(case)
 	case.theatre_types = {
 		frappe.db.get_value("Clinical Procedure Template", row.procedure_template, "required_theatre_type")
 		for row in case.procedures
@@ -74,17 +65,19 @@ def matching_theatres(case, company, department):
 	if len(case.theatre_types) > 1:
 		return []
 	theatres = get_theatres(company, department).values()
-	return [t for t in theatres if not case.theatre_types or t.service_unit_type in case.theatre_types]
+	return [
+		theatre
+		for theatre in theatres
+		if not case.theatre_types or theatre.service_unit_type in case.theatre_types
+	]
 
 
 def coming_days(case, days):
-	"""From today for an emergency, else from tomorrow: only an emergency is added on the day"""
 	first = getdate(today()) if is_emergency(case.priority) else add_days(getdate(today()), 1)
 	return [add_days(first, offset) for offset in range(days)]
 
 
 def day_candidates(case, company, theatres, day):
-	"""Each theatre's free starts that day"""
 	if not theatres or not case.length or skipped_day(case, company, day):
 		return []
 	start, end = day_window(day)
@@ -102,7 +95,6 @@ def day_candidates(case, company, theatres, day):
 
 
 def skipped_day(case, company, day):
-	"""A full theatre holiday or the surgeon's full day of leave"""
 	if is_holiday(theatre_holiday_list(company), day):
 		return True
 	leaves = find_leaves([case.surgeon], day, day) if case.surgeon else []
@@ -110,18 +102,17 @@ def skipped_day(case, company, day):
 
 
 def theatre_times(theatre, cases, cleaning, start, end):
-	"""The theatre's cases, each with its own cleaning time after it and the new case's before it,
-	and its blocks"""
+	# each case keeps the new case's cleaning before it and its own cleaning after it
 	ours = [other for other in cases if other.theatre == theatre]
 	busy = [(slot(other)[0] - cleaning, slot(other)[1] + cleaning_of(other)) for other in ours]
 	return busy + block_times([theatre], start, end)
 
 
 def people_times(case, cases, start, end):
-	"""The team's and the patient's busy times, and the ends of the cases of team members allowed to
-	overlap theatres: a start worth trying, which the server still checks for a third theatre"""
 	team = {member.practitioner for member in case.team if member.practitioner}
 	may_overlap = allowed_to_overlap(list(team)) if team else set()
+	# a member allowed in two theatres at once is not busy, but the end of their case is a start
+	# worth trying; the dry run still refuses a third theatre
 	busy, ends = block_times(list(team), start, end), []
 	for other in cases:
 		theirs = {member.practitioner for member in other.team} & team
@@ -143,23 +134,25 @@ def block_times(scopes, start, end):
 
 
 def free_starts(start, end, length, cleaning, busy, also=()):
-	"""The start of each free gap, on the 15-minute grid, where the case and its cleaning fit before
-	`end` and the case is clear of every busy time (which hold the cleaning between cases);
-	earliest first"""
-	needed = length + cleaning
-	moments = [busy_end for _, busy_end in busy] + list(also)
-	starts = sorted({start, *(max(rounded_up(moment), start) for moment in moments)})
 	return [
-		candidate
-		for candidate in starts
-		if candidate + needed <= end
-		and not any(candidate < busy_end and busy_start < candidate + length for busy_start, busy_end in busy)
+		moment
+		for moment in candidate_starts(start, busy, also)
+		if moment + length + cleaning <= end and is_free(moment, length, busy)
 	]
+
+
+def candidate_starts(start, busy, also):
+	moments = [busy_end for _busy_start, busy_end in busy] + list(also)
+	return sorted({start, *(max(rounded_up(moment), start) for moment in moments)})
+
+
+def is_free(moment, length, busy):
+	return not any(moment < busy_end and busy_start < moment + length for busy_start, busy_end in busy)
 
 
 def rounded_up(moment):
 	moment = get_datetime(moment).replace(second=0, microsecond=0)
-	extra = timedelta(minutes=moment.minute % 15)
+	extra = timedelta(minutes=moment.minute % (GRID.seconds // 60))
 	return moment + (GRID - extra if extra else timedelta(0))
 
 
@@ -175,8 +168,7 @@ def candidate(case, theatre, start):
 
 
 def confirmed(case, service_request, candidates, limit):
-	"""The first slot the server's own checks accept in each theatre and day, in a dry run that
-	keeps nothing: a refused gap gives way to the next one in that theatre that day"""
+	# each gap is tried as the real drop in a dry run, so a slot offered is never refused
 	slots, taken, checks = [], set(), 0
 	for found in candidates:
 		if len(slots) == limit or checks == MAX_CHECKS:

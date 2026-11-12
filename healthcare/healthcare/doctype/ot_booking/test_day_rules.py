@@ -67,22 +67,19 @@ class TestDayRules(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("OT Booking", booking.name, "status"), "Tentative")
 
 	def test_a_scheduled_case_moved_onto_today_still_needs_a_reason(self):
-		booking = self.scheduled_booking()  # as Administrator, who may add to today
+		booking = self.scheduled_booking()
 		booking.scheduled_start = later_today(self, 2)
 
 		self.assertRaisesRegex(frappe.ValidationError, "Change Reason", booking.save)
 
-	def test_a_scheduled_case_needs_a_reason_to_go_back_to_tentative(self):
+	def test_a_scheduled_case_needs_a_reason_to_go_back_to_tentative_or_be_cancelled(self):
 		booking = self.scheduled_booking()
-		booking.status = "Tentative"
+		for status in ("Tentative", "Cancelled"):
+			with self.subTest(status=status):
+				booking.reload()
+				booking.status = status
 
-		self.assertRaisesRegex(frappe.ValidationError, "Change Reason", booking.save)
-
-	def test_a_scheduled_case_needs_a_reason_to_be_cancelled(self):
-		booking = self.scheduled_booking()
-		booking.status = "Cancelled"
-
-		self.assertRaisesRegex(frappe.ValidationError, "Change Reason", booking.save)
+				self.assertRaisesRegex(frappe.ValidationError, "Change Reason", booking.save)
 
 	def test_a_reason_goes_to_the_timeline_and_is_emptied(self):
 		booking = self.scheduled_booking()
@@ -102,23 +99,17 @@ class TestDayRules(HealthcareTestSuite):
 
 		self.assertRaisesRegex(frappe.ValidationError, "Only an emergency", booking.save)
 
-	def test_a_tentative_case_on_its_own_day_moves_without_a_reason(self):
-		booking = make_booking(self, later_today(self, 2), priority=priority_named("STAT"))
-		booking.scheduled_start = later_today(self, 3)
+	def test_a_tentative_case_moves_or_is_cancelled_without_a_reason(self):
+		today = make_booking(self, later_today(self, 2), priority=priority_named("STAT"))
+		today.scheduled_start = later_today(self, 3)
+		today.save()
 
-		booking.save()
+		later = make_booking(self, self.later_at(9), patient=1, surgeon=1)
+		later.scheduled_start = self.later_at(13)
+		later.save()
 
-	def test_a_tentative_case_is_cancelled_without_a_reason(self):
-		booking = make_booking(self, self.later_at(9))
-		booking.status = "Cancelled"
-
-		booking.save()
-
-	def test_a_tentative_case_on_a_later_day_moves_without_a_reason(self):
-		booking = make_booking(self, self.later_at(9))
-		booking.scheduled_start = self.later_at(13)
-
-		booking.save()
+		later.status = "Cancelled"
+		later.save()
 
 	def past_booking(self, status="Tentative"):
 		booking = make_booking(self, self.later_at(9))
@@ -134,26 +125,26 @@ class TestDayRules(HealthcareTestSuite):
 		)
 		return frappe.get_doc("OT Booking", booking.name)
 
-	def test_a_case_cannot_be_booked_at_a_time_that_has_passed(self):
+	def test_a_case_cannot_be_booked_at_a_time_that_has_passed_but_can_be_for_now(self):
 		self.assertRaisesRegex(frappe.ValidationError, "has passed", make_booking, self, yesterday_at(9))
 
-	def test_a_case_can_be_booked_for_now(self):
 		now = now_datetime().replace(second=0, microsecond=0)
-		start = add_to_date(now, minutes=-(now.minute % 15))  # the grid step just gone
+		make_booking(self, add_to_date(now, minutes=-(now.minute % 15)), priority=priority_named("STAT"))
 
-		make_booking(self, start, priority=priority_named("STAT"))
+	def test_a_case_whose_time_has_passed_keeps_its_time_length_and_cleaning(self):
+		changes = {
+			"cannot be moved": lambda booking: booking.update({"scheduled_start": self.later_at(13)}),
+			"change length": lambda booking: booking.procedures[0].update({"duration": 2 * HOUR}),
+			"cleaning time cannot change": lambda booking: booking.update(
+				{"cleaning_minutes": booking.cleaning_minutes + 15}
+			),
+		}
+		for refusal, change in changes.items():
+			with self.subTest(refusal=refusal):
+				booking = self.past_booking("Scheduled")
+				change(booking)
 
-	def test_a_case_whose_time_has_passed_cannot_be_moved(self):
-		booking = self.past_booking()
-		booking.scheduled_start = self.later_at(13)
-
-		self.assertRaisesRegex(frappe.ValidationError, "cannot be moved", booking.save)
-
-	def test_a_case_whose_time_has_passed_keeps_its_length(self):
-		booking = self.past_booking("Scheduled")
-		booking.procedures[0].duration = 2 * HOUR
-
-		self.assertRaisesRegex(frappe.ValidationError, "change length", booking.save)
+				self.assertRaisesRegex(frappe.ValidationError, refusal, booking.save)
 
 	def test_a_scheduled_case_needs_a_reason_to_change_length(self):
 		booking = self.scheduled_booking()
@@ -164,12 +155,6 @@ class TestDayRules(HealthcareTestSuite):
 		booking.procedures[0].duration = 2 * HOUR
 		booking.change_reason = "Second procedure added to the plan"
 		booking.save()
-
-	def test_a_case_whose_time_has_passed_keeps_its_cleaning_time(self):
-		booking = self.past_booking()
-		booking.cleaning_minutes = booking.cleaning_minutes + 15
-
-		self.assertRaisesRegex(frappe.ValidationError, "cleaning time cannot change", booking.save)
 
 	def test_a_case_whose_time_has_passed_can_be_rescheduled_or_cancelled(self):
 		for status in ("Postponed", "Cancelled"):
@@ -192,7 +177,6 @@ class TestDayRules(HealthcareTestSuite):
 
 
 def later_today(test, hours):
-	"""A whole hour later today; the test is skipped when that would be tomorrow"""
 	start = add_to_date(now_datetime().replace(minute=0, second=0, microsecond=0), hours=hours)
 	if getdate(start) != getdate(nowdate()):
 		test.skipTest("too close to midnight for a case later today")

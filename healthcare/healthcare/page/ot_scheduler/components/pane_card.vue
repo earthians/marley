@@ -1,6 +1,4 @@
 <script setup>
-// A card in the To schedule pane: an open request, or a postponed case (dashed). It is dragged
-// onto a theatre's column to book it there; its open button shows the request or the case.
 import { Badge, HoverCard } from "frappe-ui";
 import BedIcon from "~icons/lucide/bed";
 import OpenIcon from "~icons/lucide/external-link";
@@ -14,20 +12,15 @@ import { today } from "../time.js";
 defineProps({
 	row: { type: Object, required: true },
 	procedures: { type: String, required: true },
-	// how long the case takes, such as 2h 30m, shown large beside its procedures
 	duration: { type: String, required: true },
-	// the surgeon, and the order date or the case
 	details: { type: Array, required: true },
 	postponed: { type: Boolean, default: false },
-	// where the open button goes, such as ot-booking/<name>
 	route: { type: String, required: true },
-	// the case as its hover preview shows it (booking_preview.vue)
 	preview: { type: Object, required: true },
 });
 const emit = defineEmits(["pick", "done"]);
 const host = useHost();
 
-// a date as desk prints a Date field, in the date format of System Settings
 function formatDate(value) {
 	return host.format?.(value, { fieldtype: "Date" }) ?? value;
 }

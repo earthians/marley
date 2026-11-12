@@ -99,8 +99,6 @@ class TestBoard(HealthcareTestSuite):
 		self.assertEqual(
 			(shown.sex, shown.age, shown.fasting_confirmed), (sex, age_text(dob, self.day), False)
 		)
-
-	def test_age_is_in_years_or_in_months_under_a_year(self):
 		self.assertEqual(age_text("1980-05-20", "2026-05-19"), "45y")
 		self.assertEqual(age_text("2026-01-10", "2026-09-15"), "8m")
 		self.assertIsNone(age_text(None, "2026-09-15"))
@@ -116,17 +114,22 @@ class TestBoard(HealthcareTestSuite):
 	def night_before(self, hour):
 		return get_datetime(f"{add_days(self.day, -1)} {hour:02d}:00:00")
 
-	def test_a_case_from_the_night_before_is_shown(self):
+	def test_a_case_from_the_night_before_is_shown_unless_it_ends_at_midnight(self):
 		overnight = create_ot_template("_Test Procedure - Two Hours", duration=2 * HOUR)
-		booking = make_booking(self, self.night_before(23), templates=[overnight.name])
+		into_today = make_booking(self, self.night_before(23), templates=[overnight.name])
+		until_midnight = make_booking(
+			self,
+			self.night_before(22),
+			theatre=create_theatre("_Test OT 2", "_Test General OT"),
+			templates=[overnight.name],
+			patient=1,
+			surgeon=1,
+		)
 
-		self.assertIn(booking.name, [row.name for row in self.board()["bookings"]])
+		shown = [row.name for row in self.board()["bookings"]]
 
-	def test_a_case_ending_at_midnight_stays_on_its_own_day(self):
-		overnight = create_ot_template("_Test Procedure - Two Hours", duration=2 * HOUR)
-		booking = make_booking(self, self.night_before(22), templates=[overnight.name])
-
-		self.assertNotIn(booking.name, [row.name for row in self.board()["bookings"]])
+		self.assertIn(into_today.name, shown)
+		self.assertNotIn(until_midnight.name, shown)
 
 	def test_a_block_says_why(self):
 		block = create_unavailable_block(self.theatre, "Healthcare Service Unit", self.day)
@@ -136,12 +139,17 @@ class TestBoard(HealthcareTestSuite):
 
 		self.assertEqual((shown.reason, shown.note), ("Training", "Laminar flow service"))
 
-	def test_a_blocked_practitioner_is_away(self):
+	def test_a_blocked_practitioner_is_away_and_the_row_names_no_records(self):
 		create_unavailable_block(self.practitioners[0], "Healthcare Practitioner", self.day)
 
-		away = [(row["practitioner"], row["reason"]) for row in self.board()["away"]]
+		rows = self.board()["away"]
 
-		self.assertIn((self.practitioners[0], "Unavailable"), away)
+		self.assertIn(
+			(self.practitioners[0], "Unavailable"), [(row["practitioner"], row["reason"]) for row in rows]
+		)
+		self.assertEqual(
+			set(rows[0]), {"practitioner", "practitioner_name", "reason", "from_time", "to_time"}
+		)
 
 	@skip_without_hrms
 	def test_a_practitioner_on_leave_is_away(self):
@@ -152,20 +160,10 @@ class TestBoard(HealthcareTestSuite):
 
 		self.assertIn((self.practitioners[1], "Half-day Leave"), away)
 
-	def test_away_rows_name_no_records(self):
-		create_unavailable_block(self.practitioners[0], "Healthcare Practitioner", self.day)
-
-		rows = self.board()["away"]
-
-		self.assertTrue(rows)
-		self.assertEqual(
-			set(rows[0]), {"practitioner", "practitioner_name", "reason", "from_time", "to_time"}
-		)
-
 	def test_no_one_is_away_for_a_caller_who_cannot_read_practitioners(self):
 		create_unavailable_block(self.practitioners[0], "Healthcare Practitioner", self.day)
 		start, end = day_window(getdate(self.day))
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+		frappe.set_user("test_user@marleyhealth.io")
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertEqual(get_away(getdate(self.day), start, end, "_Test Company"), [])
@@ -185,7 +183,6 @@ class TestBoard(HealthcareTestSuite):
 		self.assertFalse(self.board()["can_edit"])
 
 	def test_an_inpatient_case_shows_its_admission_and_bed(self):
-		# a new patient, as one left admitted by another test cannot be admitted again
 		patient = frappe.get_doc({"doctype": "Patient", "first_name": "_Test OT Inpatient", "sex": "Female"})
 		self.patients = [patient.insert(ignore_permissions=True).name]
 		admission = create_inpatient(self.patients[0])
@@ -199,14 +196,16 @@ class TestBoard(HealthcareTestSuite):
 
 		self.assertEqual((shown.inpatient_status, shown.bed), ("Admitted", bed))
 
-	def test_an_ot_coordinator_sees_age_and_sex(self):
+	def test_an_ot_coordinator_sees_age_and_sex_and_a_user_who_cannot_read_patients_does_not(self):
 		make_booking(self, self.at(9))
-		frappe.set_user(create_user("_test_ot_coordinator@example.com", "OT Coordinator"))
 		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user(create_user("_test_ot_coordinator@example.com", "OT Coordinator"))
+		self.assertTrue(self.board()["bookings"][0].sex)
 
-		shown = self.board()["bookings"][0]
-
-		self.assertTrue(shown.sex)
+		row = frappe._dict(patient=self.patients[0])
+		frappe.set_user("test_user@marleyhealth.io")
+		add_patient_details([row], self.day)
+		self.assertEqual((row.sex, row.age), (None, None))
 
 	def test_another_companys_board_is_refused(self):
 		create_unavailable_block(self.theatre, "Healthcare Service Unit", self.day)
@@ -216,21 +215,6 @@ class TestBoard(HealthcareTestSuite):
 			{"doctype": "User Permission", "user": user, "allow": "Company", "for_value": other_company}
 		).insert(ignore_permissions=True)
 		frappe.set_user(user)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-		self.assertRaises(frappe.PermissionError, self.board)
-
-	def test_a_caller_who_cannot_read_patients_gets_no_age_or_sex(self):
-		row = frappe._dict(patient=self.patients[0])
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
-		self.addCleanup(frappe.set_user, "Administrator")
-
-		add_patient_details([row], self.day)
-
-		self.assertEqual((row.sex, row.age), (None, None))
-
-	def test_the_board_needs_permission(self):
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertRaises(frappe.PermissionError, self.board)

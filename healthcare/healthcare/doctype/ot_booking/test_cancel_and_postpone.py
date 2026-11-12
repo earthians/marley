@@ -23,7 +23,6 @@ from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 from healthcare.tests.utils import HealthcareTestSuite
 
 DEPARTMENT = "_Test Medical Department"
-# named, not taken from the user's default, which other modules' tests may leave set
 COMPANY = "_Test Company"
 
 

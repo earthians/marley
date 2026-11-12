@@ -32,7 +32,6 @@ class TestSlots(HealthcareTestSuite):
 		self.patients = frappe.get_all("Patient", pluck="name", limit=3)
 		self.practitioners = frappe.get_all("Healthcare Practitioner", pluck="name", limit=3)
 		self.theatre = create_theatre("_Test OT 1", "_Test General OT")
-		# only this theatre is in the department the finder is asked about
 		self.other_theatre = create_theatre("_Test OT 2", "_Test General OT")
 		frappe.db.set_value("Healthcare Service Unit", self.theatre, "medical_department", DEPARTMENT)
 		frappe.db.set_value("Healthcare Service Unit", self.other_theatre, "medical_department", None)
@@ -158,7 +157,6 @@ class TestSlots(HealthcareTestSuite):
 		self.assertEqual(self.first_start(), self.at(9, 30, day=next_day))
 
 	def test_a_refused_gap_gives_way_to_the_next_in_that_theatre(self):
-		# the finder is handed a gap the server refuses (the patient is busy at 08:00)
 		self.busy(self.at(8), 9, theatre=self.other_theatre, patient=0, surgeon=1)
 		case = case_to_place(self.request.name, None)
 		theatre = frappe._dict(name=self.theatre, label="OT 1")
@@ -196,7 +194,7 @@ class TestSlots(HealthcareTestSuite):
 		self.assertEqual(get_datetime(slots[0]["start"]), self.at(8))
 
 	def test_finding_slots_needs_permission(self):
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+		frappe.set_user("test_user@marleyhealth.io")
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertRaises(frappe.PermissionError, self.slots)

@@ -213,8 +213,6 @@ class PractitionerAvailability(Document):
 
 
 def find_unavailable_blocks(scopes, start, end):
-	"""Unavailable blocks of any of `scopes` that overlap `start` to `end`. A block covers
-	its start to end time on every day from its start date to its end date."""
 	start, end = get_datetime(start), get_datetime(end)
 	blocks = frappe.get_all(
 		"Practitioner Availability",
@@ -242,8 +240,7 @@ def find_unavailable_blocks(scopes, start, end):
 
 
 def overlaps_daily_window(block, start, end):
-	"""Whether `start` to `end` meets the block's window on any day both cover, by full date and
-	time, so a case running past midnight meets a window late on its first day"""
+	# compared by date and time, so a case running past midnight meets a window late on its first day
 	first = max(getdate(start), getdate(block.start_date))
 	last = min(getdate(end), getdate(block.end_date))
 	for day in daterange(first, last) if first <= last else ():

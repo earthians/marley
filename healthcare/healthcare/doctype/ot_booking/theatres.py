@@ -1,10 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""The theatres a user works with: a company's operation theatres, optionally one department's,
-in tree order and grouped by their OT complex; and the theatre day, from the Operation Theatre
-settings. A theatre's company ignores user permissions, so the company itself is checked."""
-
 from datetime import datetime
 
 import frappe
@@ -15,7 +11,6 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 
 
 def get_theatres(company, department=None):
-	"""Theatre name → theatre, in tree order: only those the user may read"""
 	check_company_access(company)
 	filters = theatre_filters(company)
 	if department:
@@ -36,7 +31,6 @@ def get_theatres(company, department=None):
 
 
 def theatre_departments(company):
-	"""The departments the company's theatres belong to, for a Department filter"""
 	check_company_access(company)
 	return frappe.get_list(
 		"Healthcare Service Unit",
@@ -71,6 +65,5 @@ def theatre_filters(company):
 
 
 def day_window(date):
-	"""The theatre day's usual working hours on `date`"""
 	start, end = ot_setting("ot_day_start_time"), ot_setting("ot_day_end_time")
 	return datetime.combine(date, get_time(start)), datetime.combine(date, get_time(end))

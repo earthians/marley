@@ -1,15 +1,11 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""What a refused change said, for a check or a step that reports it instead of raising it. A
-refusal may hold several messages, such as a holiday and a blocked surgeon, which its error's
-text does not show; they are in the messages it added."""
-
 import frappe
 
 
 def refusal_text(error, since):
-	"""The refusal's own messages, from those added after the first `since` ones, which are then dropped"""
+	"""The messages a refused change logged since `since`, taken off the log so they do not pop up"""
 	texts = []
 	for entry in frappe.local.message_log[since:]:
 		message = entry.get("message") if isinstance(entry, dict) else entry

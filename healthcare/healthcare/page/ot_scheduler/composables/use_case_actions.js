@@ -1,7 +1,3 @@
-// What the user does to a case on the board: change it through the server (ot_booking/
-// scheduling.py), with a reason when the server needs one, from its menu. A case's menu and its
-// preview never show together, and neither opens over the reason dialog. Only a drag and drop
-// sounds (`dropped`); a change from a menu is silent.
 import { ref } from "vue";
 
 import { caseMenu, statusParams } from "../case_menu.js";
@@ -27,7 +23,6 @@ export function useCaseActions({ canEdit, reload, open }) {
 		return result;
 	}
 
-	// A change the server will refuse without a reason waits here for one
 	function askReason(method, params, action, dropped = false) {
 		reason.value = "";
 		reasonFor.value = { method, params, action, dropped };
@@ -35,7 +30,6 @@ export function useCaseActions({ canEdit, reload, open }) {
 		previewFor.value = null;
 	}
 
-	// The reason is asked for only when the server says the change would otherwise go through
 	async function askIfPossible(method, params, action, dropped = false) {
 		try {
 			const refusal = await post("scheduling.check_drop", {
@@ -50,8 +44,6 @@ export function useCaseActions({ canEdit, reload, open }) {
 		if (dropped) playDropSound("refused");
 	}
 
-	// Back to the To schedule pane, keeping the booking for a new day. A published case needs a
-	// reason; a Tentative one goes straight back.
 	function reschedule(booking, dropped = false) {
 		const params = statusParams(booking, "Postponed");
 		if (booking.needs_reason)

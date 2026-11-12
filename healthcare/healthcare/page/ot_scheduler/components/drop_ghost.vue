@@ -1,8 +1,4 @@
 <script setup>
-// The drop's preview in a theatre's column: the case at its real size where it would land, green
-// when it fits and red when it cannot, with the line that says why, and the cases it would push
-// back outlined at their new times. It takes no pointer events, so the drop still reaches the
-// column.
 import { placed } from "../time.js";
 
 defineProps({

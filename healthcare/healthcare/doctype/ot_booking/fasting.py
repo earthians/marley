@@ -1,27 +1,16 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""The ward's nil-by-mouth Nursing Task for a Scheduled case whose procedures need fasting.
-It starts the longest fasting time any of them needs before the case, follows the case when
-it moves, and goes when the case is no longer Scheduled. Fasting counts as confirmed while the
-current task is Completed. That is read when needed, never written from the task: the ward's
-save locks the task first, while a booking's own saves lock the booking first and then its
-task, so writing the booking from the task could deadlock. The task is the system's, so it is
-made and cancelled without the user's own Nursing Task permissions."""
-
 import frappe
 from frappe import _
 from frappe.utils import add_to_date, flt, format_time, get_datetime
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import ot_setting
 
-# a missed task is cancelled with the open ones, so an old one never stays on the worklist
 OPEN_TASK_STATUSES = ("Requested", "Received", "Accepted", "Ready", "In Progress", "On Hold", "Missed")
 
 
 def sync_fasting_task(booking):
-	"""A task the case no longer needs is cancelled even when new ones are switched off, so
-	clearing the Fasting Activity never leaves an old task on the ward's worklist"""
 	task = current_task(booking.name)
 	hours = fasting_hours([row.procedure_template for row in booking.procedures])
 	if booking.status != "Scheduled" or not hours:
@@ -35,8 +24,6 @@ def sync_fasting_task(booking):
 
 
 def fasting_hours(procedure_templates):
-	"""The longest fasting any of the case's procedures needs, or 0 when none needs it. A
-	procedure with no hours of its own takes the Operation Theatre default."""
 	templates = frappe.get_all(
 		"Clinical Procedure Template",
 		fields=["requires_fasting", "fasting_hours"],
@@ -47,8 +34,8 @@ def fasting_hours(procedure_templates):
 
 
 def is_fasting_confirmed(booking, procedure_templates):
-	"""Whether the ward completed the task for the case's current fasting window, never an old
-	one. `booking` needs its name and scheduled_start."""
+	# read from the task, never written back from it: the ward's save locks the task first and a
+	# booking's save locks the booking first, so a write-back could deadlock
 	task = current_task(booking.name)
 	if not task or task.status != "Completed":
 		return False
@@ -56,7 +43,6 @@ def is_fasting_confirmed(booking, procedure_templates):
 
 
 def current_task(booking):
-	"""The booking's latest fasting task that was not cancelled"""
 	return frappe.db.get_value(
 		"Nursing Task",
 		{"reference_doctype": "OT Booking", "reference_name": booking, "status": ["!=", "Cancelled"]},
@@ -67,15 +53,11 @@ def current_task(booking):
 
 
 def out_of_date(task, booking, hours):
-	"""Whether the task no longer asks for the fasting the case now needs: the case moved, its
-	procedures now need a different number of hours, or it names another patient. It is matched on
-	its end and duration, not its start: a task made after its fasting should have begun has its
-	start moved to now."""
 	case_start = get_datetime(booking.scheduled_start)
 	return (
 		get_datetime(task.requested_end_time) != case_start
 		or flt(task.duration) != hours * 3600
-		or (booking.get("patient") and task.patient != booking.patient)
+		or task.patient != booking.patient
 	)
 
 

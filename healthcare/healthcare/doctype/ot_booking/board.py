@@ -1,10 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""One day of the OT Scheduler: the theatres grouped by OT complex, the day's cases with what a
-card shows of them, the theatre holiday, the time theatres are blocked and the practitioners who
-are away."""
-
 from datetime import datetime, time
 
 from dateutil.relativedelta import relativedelta
@@ -43,7 +39,6 @@ def get_board(date: str, company: str | None = None, department: str | None = No
 		"date": date,
 		"company": company,
 		"department": department or "",
-		# the board is read-only for a viewer who cannot change bookings
 		"can_edit": bool(frappe.has_permission("OT Booking", "write")),
 		"companies": frappe.get_list("Company", pluck="name", order_by="name", limit=0),
 		"departments": theatre_departments(company),
@@ -71,7 +66,6 @@ def get_holiday(company, date):
 
 
 def get_bookings(date, theatres):
-	"""The day's cases, and those of the night before that run on into it"""
 	if not theatres:
 		return []
 	bookings = frappe.get_list(
@@ -105,8 +99,6 @@ def get_bookings(date, theatres):
 
 
 def add_case_details(bookings):
-	"""What a card and its menu need: the team, the procedures and how far they have got, fasting,
-	priority, the statuses the case may move to and whether that needs a reason"""
 	names = [booking.name for booking in bookings]
 	team = child_rows("OT Booking Team", names, ["practitioner", "practitioner_name", "role", "is_primary"])
 	rows = child_rows("OT Booking Procedure", names, ["procedure_template"])
@@ -118,18 +110,22 @@ def add_case_details(bookings):
 	add_priority(bookings)
 	for booking in bookings:
 		members = [member for member in team if member.parent == booking.name]
-		booking.surgeon = next((m.practitioner_name for m in members if m.is_primary), None)
-		booking.team_names = [member.practitioner_name for member in members]
-		booking.team_ids = [member.practitioner for member in members]
-		booking.team_roles = [{"name": m.practitioner_name, "role": m.role} for m in members]
-		booking.procedures = [row.procedure_template for row in rows if row.parent == booking.name]
 		procedures = [procedure for procedure in made if procedure.ot_booking == booking.name]
+		booking.procedures = [row.procedure_template for row in rows if row.parent == booking.name]
+		add_team(booking, members)
 		booking.procedures_pending = booking.status != "Completed" and len(procedures) < len(
 			booking.procedures
 		)
 		booking.next_statuses = next_statuses(booking, procedures)
 		booking.needs_reason = needs_change_reason(booking)
 		booking.fasting_confirmed = is_fasting_confirmed(booking, booking.procedures)
+
+
+def add_team(booking, members):
+	booking.surgeon = next((member.practitioner_name for member in members if member.is_primary), None)
+	booking.team_names = [member.practitioner_name for member in members]
+	booking.team_ids = [member.practitioner for member in members]
+	booking.team_roles = [{"name": member.practitioner_name, "role": member.role} for member in members]
 
 
 def child_rows(doctype, parents, fields):
@@ -142,7 +138,6 @@ def child_rows(doctype, parents, fields):
 
 
 def next_statuses(booking, procedures):
-	"""A started case may be cancelled only once none of its procedures stands submitted"""
 	statuses = STATUS_CHANGES.get(booking.status, ())
 	if any(procedure.docstatus == 1 for procedure in procedures):
 		statuses = tuple(status for status in statuses if status != "Cancelled")
@@ -150,9 +145,6 @@ def next_statuses(booking, procedures):
 
 
 def add_patient_details(rows, on_date):
-	"""Each row's patient `sex`, `age` on `on_date` such as 45y, or 8m under a year, and for an
-	inpatient their `inpatient_status` and current `bed`. A patient the caller cannot read gets
-	none of them."""
 	patients = {}
 	if frappe.has_permission("Patient", "read"):
 		patients = {
@@ -174,7 +166,6 @@ def add_patient_details(rows, on_date):
 
 
 def current_beds(inpatient_records):
-	"""Each admission's bed now: the occupancy not yet left"""
 	records = [record for record in inpatient_records if record]
 	if not records:
 		return {}
@@ -194,8 +185,6 @@ def age_text(dob, on_date):
 
 
 def get_away(date, start, end, company):
-	"""Practitioners the caller can read who are on leave in `company`, or blocked, during the
-	theatre day. Rows say who, why and when, never which record."""
 	if not frappe.has_permission("Healthcare Practitioner", "read"):
 		return []
 	practitioners = dict(

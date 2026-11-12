@@ -1,11 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""Making room on the board. A case dropped among others pushes the cases after it in the same
-theatre back, just enough to keep the cleaning time between them, in their order. A gap that
-already holds the case ends the push. A Scheduled case is pushed too, with the drop's reason;
-a case under way cannot be pushed."""
-
 import frappe
 from frappe import _
 from frappe.utils import get_datetime, getdate
@@ -16,7 +11,7 @@ PUSHABLE_STATUSES = ("Tentative", "Scheduled")
 
 
 def push_following(booking, reason=None):
-	"""Moves the cases after `booking` back, the last one first, so none meets another on the way"""
+	# the last case first, so no pushed case runs into the next one before that one moves
 	for case, start in reversed(planned_pushes(booking)):
 		pushed = frappe.get_doc("OT Booking", case.name)
 		pushed.check_permission("write")
@@ -34,8 +29,6 @@ def push_following(booking, reason=None):
 
 
 def planned_pushes(booking):
-	"""(case, new start) for each case after `booking` in its theatre that must move to make room,
-	each after the one before it and that one's own cleaning time"""
 	start, end = slot(booking)
 	cleaning = cleaning_of(booking)
 	pushes = []

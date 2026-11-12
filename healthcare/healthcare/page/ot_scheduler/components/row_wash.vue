@@ -1,7 +1,4 @@
 <script setup>
-// The faint shading behind a theatre's column for the hours outside the usual working day. The
-// shades share the column's grid cell, below everything else in it (which is isolated for
-// it), so the column's blocks and cases are always drawn over them.
 import { DAY_MINUTES, placed } from "../time.js";
 
 defineProps({

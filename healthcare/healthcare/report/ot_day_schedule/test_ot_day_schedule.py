@@ -55,7 +55,7 @@ class TestOTDaySchedule(HealthcareTestSuite):
 		)
 
 	def test_the_report_needs_permission(self):
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+		frappe.set_user("test_user@marleyhealth.io")
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertRaises(frappe.PermissionError, self.report)

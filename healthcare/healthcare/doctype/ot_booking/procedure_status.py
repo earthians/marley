@@ -1,10 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""A case's procedures as the case reads them, where the case puts each one, and the case
-following them: In Progress once one starts, Completed once every row's is, never backwards.
-Clinical Procedure calls this, so it never imports Clinical Procedure itself."""
-
 import frappe
 from frappe import _
 from frappe.utils import add_to_date, cint, get_datetime, get_time, getdate
@@ -16,8 +12,6 @@ STATUS_ORDER = ("Tentative", "Scheduled", "In Progress", "Completed")
 
 
 def procedures_of(booking):
-	"""Row name → its procedure, leaving out cancelled ones. An amendment keeps its booking and
-	row, so it takes the cancelled one's place; a duplicate keeps neither."""
 	procedures = frappe.get_all(
 		"Clinical Procedure",
 		fields=[
@@ -55,12 +49,11 @@ def validate_same_work(procedure, booking, row):
 
 
 def keep_booked_place(procedure, booking, row):
-	"""A new procedure, such as an amendment, takes its place from the case; a saved one keeps it"""
-	planned = booked_place(booking, row.name)
-	if place_of(procedure) == planned:
+	planned = row_schedule(booking, row.name)
+	if in_place(procedure, planned):
 		return
 	if procedure.is_new():
-		return take_place(procedure, planned)
+		return procedure.update(planned)
 	refuse_change(booking, _("Its theatre, times and surgeon come from OT Booking {0}, so change them there"))
 
 
@@ -68,27 +61,34 @@ def refuse_change(booking, message):
 	frappe.throw(message.format(frappe.bold(booking.name)), title=_("Booked Procedure"))
 
 
-def booked_place(booking, row_name):
-	"""The theatre, start, end and surgeon the case gives a row's procedure"""
+def row_schedule(booking, row_name):
 	for row, start in rows_with_start(booking):
 		if row.name == row_name:
-			end = add_to_date(start, seconds=cint(row.duration))
-			return booking.theatre, start, end, primary_surgeon(booking)
+			return schedule(booking, row, start)
 
 
-def take_place(procedure, planned):
-	theatre, start, end, surgeon = planned
-	procedure.update(
-		{
-			"service_unit": theatre,
-			"start_date": getdate(start),
-			"start_time": get_time(start),
-			"planned_end_datetime": end,
-			"practitioner": surgeon,
-			"practitioner_name": surgeon
-			and frappe.db.get_value("Healthcare Practitioner", surgeon, "practitioner_name", cache=True),
-		}
+def schedule(booking, row, start):
+	surgeon = primary_surgeon(booking)
+	return {
+		"service_unit": booking.theatre,
+		"warehouse": theatre_warehouse(booking),
+		"start_date": getdate(start),
+		"start_time": get_time(start),
+		"planned_end_datetime": add_to_date(start, seconds=cint(row.duration)),
+		"practitioner": surgeon,
+		"practitioner_name": surgeon
+		and frappe.db.get_value("Healthcare Practitioner", surgeon, "practitioner_name", cache=True),
+	}
+
+
+def theatre_warehouse(booking):
+	return frappe.db.get_value("Healthcare Service Unit", booking.theatre, "warehouse") or (
+		frappe.db.get_value("Company", booking.company, "default_warehouse")
 	)
+
+
+def in_place(procedure, planned):
+	return place_of(procedure) == place_of(frappe._dict(planned))
 
 
 def place_of(procedure):
@@ -109,21 +109,20 @@ def primary_surgeon(booking):
 
 
 def follow_procedure(procedure):
-	"""After a procedure starts or completes, its case moves forward to match, never back"""
 	if not procedure.ot_booking:
 		return
 	booking = frappe.get_doc("OT Booking", procedure.ot_booking)
 	status = status_from(booking)
 	if status and booking.status not in INACTIVE_STATUSES and is_ahead(status, booking.status):
 		booking.db_set("status", status)
-		sync_fasting_task(booking)  # a case under way needs no fasting task any more
+		sync_fasting_task(booking)
 		booking.notify_update()
 
 
 def status_from(booking):
-	held = procedures_of(booking)
-	statuses = [procedure.status for procedure in held.values()]
-	if len(held) == len(booking.procedures) and statuses and all(s == "Completed" for s in statuses):
+	statuses = [procedure.status for procedure in procedures_of(booking).values()]
+	every_row_has_one = len(statuses) == len(booking.procedures)
+	if statuses and every_row_has_one and all(status == "Completed" for status in statuses):
 		return "Completed"
 	if any(status in ("In Progress", "Completed") for status in statuses):
 		return "In Progress"

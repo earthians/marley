@@ -1,5 +1,3 @@
-// Keeping the board in step: reload when desk says an OT Booking changed, and on a timer
-// in case the socket drops.
 import { onBeforeUnmount, onMounted } from "vue";
 
 const RELOAD_SECONDS = 60;

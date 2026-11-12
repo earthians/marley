@@ -1,20 +1,15 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""A patient with more than one case on a day. It is allowed, as long as the cases do not
-overlap (availability.py refuses that), but it is worth knowing: placing such a case warns, and
-the board marks it."""
-
 import frappe
 from frappe import _
 from frappe.utils import format_date, get_datetime
 
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
-from healthcare.healthcare.doctype.ot_booking.day_rules import is_moved
+from healthcare.healthcare.doctype.ot_booking.day_rules import is_placed
 
 
 def other_cases(patient, day, name=None):
-	"""The patient's other active cases of the day that the user may read, earliest first"""
 	return frappe.get_list(
 		"OT Booking",
 		fields=["name", "theatre", "scheduled_start", "scheduled_end"],
@@ -30,8 +25,7 @@ def other_cases(patient, day, name=None):
 
 
 def warn_other_cases(booking):
-	"""Once the case is placed on a day (added, moved or restored) where the patient has another"""
-	if booking.status in INACTIVE_STATUSES or not is_placed(booking):
+	if booking.status in INACTIVE_STATUSES or not is_placed(booking, booking.get_doc_before_save()):
 		return
 	cases = other_cases(booking.patient, booking.scheduled_date, booking.name)
 	if not cases:
@@ -46,15 +40,7 @@ def warn_other_cases(booking):
 	)
 
 
-def is_placed(booking):
-	"""New, moved, or restored from Postponed or Cancelled"""
-	before = booking.get_doc_before_save()
-	return not before or before.status in INACTIVE_STATUSES or is_moved(booking, before)
-
-
 def add_other_cases(bookings):
-	"""Each case's `other_cases`: the patient's other cases of its day, in any theatre, as text;
-	only those the user may read, as a case the user may not read shows nothing of itself"""
 	cases = frappe.get_list(
 		"OT Booking",
 		fields=["name", "patient", "theatre", "scheduled_date", "scheduled_start", "scheduled_end"],

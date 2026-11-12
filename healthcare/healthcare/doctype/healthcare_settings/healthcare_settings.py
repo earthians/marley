@@ -201,17 +201,14 @@ def check_payments_app():
 
 
 def ot_setting(fieldname):
-	"""An Operation Theatre setting: its saved value, or its field default when never saved or
-	cleared. A Single applies its field defaults only until one value is saved, so a site that had
-	Healthcare Settings before these fields would otherwise read nothing. A saved 0 is kept."""
+	"""The saved value, else the field default: a Single stops applying defaults once any value is saved"""
 	if stored_value(fieldname) in (None, ""):
 		return frappe.get_meta("Healthcare Settings").get_field(fieldname).default
 	return frappe.db.get_single_value("Healthcare Settings", fieldname)
 
 
 def stored_value(fieldname):
-	"""The raw saved text, or None when nothing is saved: get_single_value would turn an empty
-	Time into midnight and an empty Int into 0"""
+	"""None when unsaved, where get_single_value would give midnight for a Time and 0 for an Int"""
 	singles = frappe.qb.DocType("Singles")
 	rows = (
 		frappe.qb.from_(singles)

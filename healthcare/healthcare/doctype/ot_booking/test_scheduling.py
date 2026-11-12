@@ -25,7 +25,6 @@ from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 from healthcare.tests.utils import HealthcareTestSuite
 
 DEPARTMENT = "_Test Medical Department"
-# named, not taken from the user's default, which other modules' tests may leave set
 COMPANY = "_Test Company"
 
 
@@ -78,7 +77,6 @@ class TestScheduling(HealthcareTestSuite):
 	def test_the_pane_shows_the_default_company_when_none_is_given(self):
 		request = create_service_request(self.patients[0], self.practitioners[0])
 		other_company = frappe.db.get_value("Company", {"name": ["!=", "_Test Company"]})
-		# a Company default is stored under its scrubbed key
 		saved = frappe.defaults.get_user_default("Company")
 		self.addCleanup(frappe.defaults.set_user_default, "company", saved)
 
@@ -202,7 +200,7 @@ class TestScheduling(HealthcareTestSuite):
 
 	def test_the_board_and_moving_need_permission(self):
 		booking = make_booking(self, self.at(9))
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+		frappe.set_user("test_user@marleyhealth.io")
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertRaises(frappe.PermissionError, get_board, str(self.day), COMPANY)

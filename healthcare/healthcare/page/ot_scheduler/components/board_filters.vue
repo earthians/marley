@@ -1,6 +1,4 @@
 <script setup>
-// Narrowing the board to a practitioner, a patient or a theatre: the rest is dimmed, not hidden,
-// so the free time around them still shows. The choices are the day's own.
 import { computed } from "vue";
 import { Button, FormControl } from "frappe-ui";
 
@@ -11,7 +9,6 @@ const practitioner = defineModel("practitioner", { type: String, default: "" });
 const patient = defineModel("patient", { type: String, default: "" });
 const theatre = defineModel("theatre", { type: String, default: "" });
 
-// each choice shows a name and holds the record's ID, so two people of one name stay apart
 const practitioners = computed(() =>
 	choices(
 		props.board.bookings.flatMap(booking =>

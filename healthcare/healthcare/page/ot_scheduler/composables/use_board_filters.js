@@ -1,5 +1,3 @@
-// The board's practitioner, patient and theatre filters (board_filters.vue): what they leave out
-// is dimmed, not hidden, so the free time around the rest still shows.
 import { ref } from "vue";
 
 export function useBoardFilters() {
@@ -18,7 +16,6 @@ export function useBoardFilters() {
 		return Boolean(theatre.value) && name !== theatre.value;
 	}
 
-	// the filters that are set, for the OT Day Schedule report to print the same cases
 	function sheetFilters() {
 		const set = {
 			practitioner: practitioner.value,

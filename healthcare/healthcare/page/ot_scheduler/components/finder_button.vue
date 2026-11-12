@@ -1,5 +1,4 @@
 <script setup>
-// The pane card's way into the slot finder: a calendar with a magnifier
 import FindIcon from "~icons/lucide/calendar-search";
 
 defineProps({ open: { type: Boolean, default: false } });

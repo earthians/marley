@@ -1,33 +1,24 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""A case's Clinical Procedures: one per procedure row, one after the other in the booked slot.
-Each records its booking and row, and the booking reads them from there. A cancelled one no
-longer counts, so its row can have a new one and the case can move or stop. A draft follows the
-case when it moves and goes when the case stops. A submitted one keeps the theatre, times and
-surgeon it was submitted with, so the case cannot change them, nor stop, while it stands."""
-
 import frappe
 from frappe import _
-from frappe.utils import add_to_date, cint, get_time, getdate
 
 from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import set_stock_items
 from healthcare.healthcare.doctype.ot_booking.busy import INACTIVE_STATUSES
 from healthcare.healthcare.doctype.ot_booking.procedure_status import (
-	place_of,
-	primary_surgeon,
+	in_place,
 	procedures_of,
 	rows_with_start,
+	schedule,
 )
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
 
 ACTIVE_REQUEST_STATUS = "active-Request Status"
-# a case in these statuses has its clinical work: a procedure for each row
 WITH_PROCEDURES = ("Scheduled", "In Progress", "Completed")
 
 
 def create_procedures(booking):
-	"""A procedure for each row that has none yet; the names of those made"""
 	held = procedures_of(booking)
 	made = []
 	for row, start in rows_with_start(booking):
@@ -39,29 +30,26 @@ def create_procedures(booking):
 
 
 def validate_procedures_held(booking):
-	"""A case with procedures keeps its patient (cancel it and book again for another); a row whose
-	procedure is made keeps its procedure and stays; a submitted procedure keeps its
-	theatre, times and surgeon, and stops the case from being cancelled or postponed"""
 	if booking.is_new():
 		return
 	held = procedures_of(booking)
-	if held and booking.has_value_changed("patient"):
+	if not held:
+		return
+	validate_patient_kept(booking, held)
+	rows = {row.name: row for row in booking.procedures}
+	for row_name, procedure in held.items():
+		validate_row_kept(rows.get(row_name), procedure)
+	validate_submitted_kept(booking, held)
+
+
+def validate_patient_kept(booking, held):
+	if booking.has_value_changed("patient"):
 		frappe.throw(
 			_("Clinical Procedure {0} is made for this case, so its patient cannot change").format(
 				frappe.bold(next(iter(held.values())).name)
 			),
 			title=_("Procedure Made"),
 		)
-	rows = {row.name: row for row in booking.procedures}
-	for row_name, procedure in held.items():
-		validate_row_kept(rows.get(row_name), procedure)
-	submitted = [procedure for procedure in held.values() if procedure.docstatus == 1]
-	if submitted and is_stopping(booking):
-		refuse_submitted(submitted[0], _("so this case cannot be {0}").format(_(booking.status)))
-	for row, start in rows_with_start(booking):
-		procedure = held.get(row.name)
-		if procedure and procedure.docstatus == 1 and moved(procedure, schedule(booking, row, start)):
-			refuse_submitted(procedure, _("so its theatre, times and surgeon cannot change"))
 
 
 def validate_row_kept(row, procedure):
@@ -71,12 +59,21 @@ def validate_row_kept(row, procedure):
 				frappe.bold(procedure.name)
 			)
 		)
-	if row.procedure_template != procedure.procedure_template or (row.service_request or None) != (
-		procedure.service_request or None
-	):
+	same_request = (row.service_request or None) == (procedure.service_request or None)
+	if row.procedure_template != procedure.procedure_template or not same_request:
 		frappe.throw(
 			_("Row {0}: its Clinical Procedure is made, so its procedure cannot change").format(row.idx)
 		)
+
+
+def validate_submitted_kept(booking, held):
+	submitted = [procedure for procedure in held.values() if procedure.docstatus == 1]
+	if submitted and is_stopping(booking):
+		refuse_submitted(submitted[0], _("so this case cannot be {0}").format(_(booking.status)))
+	for row, start in rows_with_start(booking):
+		procedure = held.get(row.name)
+		if procedure and procedure.docstatus == 1 and not in_place(procedure, schedule(booking, row, start)):
+			refuse_submitted(procedure, _("so its theatre, times and surgeon cannot change"))
 
 
 def refuse_submitted(procedure, consequence):
@@ -88,14 +85,7 @@ def refuse_submitted(procedure, consequence):
 	)
 
 
-def moved(procedure, planned):
-	"""Whether the case would give a procedure another theatre, time or surgeon than it holds"""
-	return place_of(procedure) != place_of(frappe._dict(planned))
-
-
 def update_procedures(booking):
-	"""After a save: a case that stopped gives up its drafts; otherwise the drafts follow it, and a
-	Scheduled, started or completed case gets a procedure for each row that has none yet"""
 	held = procedures_of(booking)
 	if is_stopping(booking):
 		for procedure in held.values():
@@ -136,7 +126,6 @@ def new_procedure(booking, row, start):
 
 
 def validate_request_active(row):
-	"""A request put on hold or revoked since it was booked makes no clinical work"""
 	if frappe.db.get_value("Service Request", row.service_request, "status") != ACTIVE_REQUEST_STATUS:
 		frappe.throw(
 			_("Row {0}: Service Request {1} is no longer active, so no procedure is made for it").format(
@@ -153,26 +142,3 @@ def procedure_from_template(booking, template):
 	if procedure.consume_stock:
 		set_stock_items(procedure, template, "Clinical Procedure Template")
 	return procedure
-
-
-def schedule(booking, row, start):
-	"""What the case gives the row's procedure: its theatre and the theatre's store, its slot in
-	the case, and the primary surgeon with their name (fetched only in the browser otherwise)"""
-	surgeon = primary_surgeon(booking)
-	return {
-		"service_unit": booking.theatre,
-		"warehouse": theatre_warehouse(booking),
-		"start_date": getdate(start),
-		"start_time": get_time(start),
-		"planned_end_datetime": add_to_date(start, seconds=cint(row.duration)),
-		"practitioner": surgeon,
-		"practitioner_name": surgeon
-		and frappe.db.get_value("Healthcare Practitioner", surgeon, "practitioner_name", cache=True),
-	}
-
-
-def theatre_warehouse(booking):
-	"""The theatre's own store for the supplies, else the company's"""
-	return frappe.db.get_value("Healthcare Service Unit", booking.theatre, "warehouse") or (
-		frappe.db.get_value("Company", booking.company, "default_warehouse")
-	)

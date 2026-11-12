@@ -1,5 +1,4 @@
 <script setup>
-// The finder's results under a card in the pane: the earliest slots that fit, or why none do.
 import { useHost } from "@framework/ui/island";
 
 import { clock } from "../time.js";

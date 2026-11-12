@@ -1,10 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-"""The OT Day Schedule: one day's cases as the OT Scheduler board shows them, for its company and
-department, narrowed by theatre, practitioner and patient as the board's filters do, and grouped
-by theatre or by practitioner. Its print format prints each group as a table of its own."""
-
 import frappe
 from frappe import _
 from frappe.utils import get_datetime
@@ -21,7 +17,7 @@ def execute(filters=None):
 def columns(filters):
 	by_practitioner = filters.group_by == "Practitioner"
 	group = _("Practitioner") if by_practitioner else _("Theatre")
-	shown = [
+	return [
 		column(group, "group", 180),
 		column(_("Time"), "time", 110),
 		*([column(_("Theatre"), "theatre", 120), column(_("Role"), "role", 140)] if by_practitioner else []),
@@ -38,7 +34,6 @@ def columns(filters):
 			"width": 160,
 		},
 	]
-	return shown
 
 
 def column(label, fieldname, width):
@@ -46,21 +41,27 @@ def column(label, fieldname, width):
 
 
 def rows(board, filters):
-	"""A row per case, or per case and practitioner, in theatre order or by name, then by time"""
 	theatres = {theatre.name: theatre for group in board["complexes"] for theatre in group["theatres"]}
-	order = {name: index for index, name in enumerate(theatres)}
-	cases = [case for case in board["bookings"] if shown(case, filters)]
+	cases = [case for case in board["bookings"] if matches_filters(case, filters)]
 	if filters.group_by == "Practitioner":
-		found = [
-			practitioner_row(case, member, theatres) for case in cases for member in members_of(case, filters)
-		]
-		return sorted(found, key=lambda row: (row["group"], row["start"]))
+		return practitioner_rows(cases, theatres, filters)
+	return theatre_rows(cases, theatres)
+
+
+def theatre_rows(cases, theatres):
+	order = {name: index for index, name in enumerate(theatres)}
 	found = [case_row(case, theatres[case.theatre].label) for case in cases]
 	return sorted(found, key=lambda row: (order.get(row["theatre_id"], 0), row["start"]))
 
 
-def shown(case, filters):
-	"""As the board's filters leave it clear"""
+def practitioner_rows(cases, theatres, filters):
+	found = [
+		practitioner_row(case, member, theatres) for case in cases for member in members_of(case, filters)
+	]
+	return sorted(found, key=lambda row: (row["group"], row["start"]))
+
+
+def matches_filters(case, filters):
 	if filters.practitioner and filters.practitioner not in case.team_ids:
 		return False
 	if filters.patient and case.patient != filters.patient:
@@ -69,9 +70,11 @@ def shown(case, filters):
 
 
 def members_of(case, filters):
-	"""The case's team as (id, name, role), only the filtered practitioner when there is one"""
-	members = zip(case.team_ids, case.team_names, (member["role"] for member in case.team_roles), strict=True)
-	return [member for member in members if not filters.practitioner or member[0] == filters.practitioner]
+	members = [
+		{"practitioner": practitioner, **name_and_role}
+		for practitioner, name_and_role in zip(case.team_ids, case.team_roles, strict=True)
+	]
+	return [member for member in members if filters.practitioner in (None, "", member["practitioner"])]
 
 
 def case_row(case, theatre_label):
@@ -93,6 +96,5 @@ def case_row(case, theatre_label):
 
 
 def practitioner_row(case, member, theatres):
-	_id, name, role = member
 	row = case_row(case, theatres[case.theatre].label)
-	return {**row, "group": name, "theatre": row["group"], "role": _(role)}
+	return {**row, "group": member["name"], "theatre": row["group"], "role": _(member["role"])}

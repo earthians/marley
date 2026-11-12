@@ -102,7 +102,7 @@ class TestAvailability(HealthcareTestSuite):
 
 		self.assertIn("has a clinic appointment", str(refused.exception))
 		self.assertNotIn(visitor, str(refused.exception))
-		make_booking(self, self.at(9), priority=priority_named("STAT"))  # an emergency is only warned
+		make_booking(self, self.at(9), priority=priority_named("STAT"))
 
 	def test_a_clinic_appointment_cannot_fall_during_the_practitioners_or_patients_case(self):
 		make_booking(self, self.at(9))
@@ -111,7 +111,7 @@ class TestAvailability(HealthcareTestSuite):
 			self.assertRaisesRegex(
 				frappe.ValidationError, "is in theatre", self.appointment, patient, practitioner, 9
 			)
-		self.appointment(patient=1, practitioner=1, hour=10)  # after the case, or for others, is free
+		self.appointment(patient=1, practitioner=1, hour=10)
 
 	def test_an_earlier_case_keeps_its_own_cleaning_time(self):
 		make_booking(self, self.at(9)).db_set("cleaning_minutes", 60)
@@ -132,7 +132,6 @@ class TestAvailability(HealthcareTestSuite):
 		self.assert_refused("is in theatre", self.at(9), theatre=self.third_theatre, patient=2)
 
 	def test_a_practitioner_allowed_to_overlap_may_span_two_cases_that_follow_each_other(self):
-		# 09-10 and 10-11 in two theatres, then 09-11 in a third: never more than two at once
 		self.allow_overlap(self.practitioners[0])
 		make_booking(self, self.at(9))
 		make_booking(self, self.at(10), theatre=self.other_theatre, patient=1)
@@ -151,7 +150,7 @@ class TestAvailability(HealthcareTestSuite):
 
 		booking = make_booking(self, self.at(9))
 		booking.anaesthesia_type = "General"
-		booking.save()  # and a case saved again does not clash with itself
+		booking.save()
 
 	def block(self, scope, scope_type, start="09:00:00", end="10:00:00"):
 		create_unavailable_block(scope, scope_type, self.day, start, end)
@@ -239,7 +238,6 @@ class TestAvailability(HealthcareTestSuite):
 
 def create_unavailable_block(scope, scope_type, day, start="09:00:00", end="10:00:00"):
 	if scope_type == "Healthcare Practitioner":
-		# an Unavailable block for a practitioner must cut into time they are available
 		create_practitioner_availability("08:00:00", "18:00:00", scope, scope_type, day)
 	return create_practitioner_availability(start, end, scope, scope_type, day, type="Unavailable")
 

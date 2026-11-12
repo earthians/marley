@@ -22,7 +22,6 @@ class TestOTBooking(HealthcareTestSuite):
 		self.theatre = create_theatre("_Test OT 1", "_Test General OT")
 		self.other_theatre = create_theatre("_Test OT 2", "_Test General OT")
 		self.template = create_ot_template("_Test Procedure - Hernia Repair", duration=HOUR)
-		# every test books its own day, so the tests never meet each other's cases
 		test_names = sorted(name for name in dir(self) if name.startswith("test_"))
 		self.day = add_days(nowdate(), 30 + test_names.index(self._testMethodName))
 
@@ -180,7 +179,7 @@ class TestOTBooking(HealthcareTestSuite):
 
 	def test_booking_a_request_needs_permission(self):
 		request = create_service_request(self.patients[0], self.practitioners[0])
-		frappe.set_user("test_user@marleyhealth.io")  # a login with no clinical role
+		frappe.set_user("test_user@marleyhealth.io")
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertRaises(frappe.PermissionError, make_ot_booking, request.name)

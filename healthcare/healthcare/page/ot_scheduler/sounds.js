@@ -1,13 +1,8 @@
-// Short tones for a drop on the OT Scheduler, made in the browser so they sound
-// unlike desk's submit and error sounds. Silent when the user has muted desk sounds.
-
 const DROP_TONES = {
-	// two notes rising: the case is placed
 	placed: [
 		{ frequency: 660, start: 0, length: 0.09, wave: "sine" },
 		{ frequency: 990, start: 0.1, length: 0.14, wave: "sine" },
 	],
-	// two low notes falling: the drop was refused
 	refused: [
 		{ frequency: 220, start: 0, length: 0.12, wave: "square" },
 		{ frequency: 165, start: 0.15, length: 0.18, wave: "square" },
