@@ -38,23 +38,34 @@ def procedures_of(booking):
 	return {procedure.ot_booking_row: procedure for procedure in procedures}
 
 
-def keep_booked_place(procedure):
-	"""A procedure made for a case is where the case puts it: its theatre, times and surgeon change
-	on the case, never on the procedure. A new one, such as an amendment, takes them from the case."""
+def validate_against_booking(procedure):
 	if not (procedure.ot_booking and procedure.ot_booking_row):
 		return
 	booking = frappe.get_doc("OT Booking", procedure.ot_booking)
-	planned = booked_place(booking, procedure.ot_booking_row)
-	if not planned or place_of(procedure) == planned:
+	row = next((row for row in booking.procedures if row.name == procedure.ot_booking_row), None)
+	validate_same_work(procedure, booking, row)
+	keep_booked_place(procedure, booking, row)
+
+
+def validate_same_work(procedure, booking, row):
+	if not row:
+		refuse_change(booking, _("Its procedure is no longer on OT Booking {0}"))
+	if procedure.patient != booking.patient or procedure.procedure_template != row.procedure_template:
+		refuse_change(booking, _("Its patient and procedure come from OT Booking {0}, so they cannot change"))
+
+
+def keep_booked_place(procedure, booking, row):
+	"""A new procedure, such as an amendment, takes its place from the case; a saved one keeps it"""
+	planned = booked_place(booking, row.name)
+	if place_of(procedure) == planned:
 		return
 	if procedure.is_new():
 		return take_place(procedure, planned)
-	frappe.throw(
-		_("Its theatre, times and surgeon come from OT Booking {0}, so change them there").format(
-			frappe.bold(booking.name)
-		),
-		title=_("Booked Procedure"),
-	)
+	refuse_change(booking, _("Its theatre, times and surgeon come from OT Booking {0}, so change them there"))
+
+
+def refuse_change(booking, message):
+	frappe.throw(message.format(frappe.bold(booking.name)), title=_("Booked Procedure"))
 
 
 def booked_place(booking, row_name):

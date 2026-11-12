@@ -205,6 +205,15 @@ class TestProcedures(HealthcareTestSuite):
 		procedure.practitioner = self.practitioners[1]
 		self.assertRaisesRegex(frappe.ValidationError, "change them there", procedure.submit)
 
+	def test_a_procedure_keeps_its_cases_patient_and_procedure(self):
+		booking = make_booking(self, self.at(9))
+		other_template = create_ot_template("_Test Procedure - Other", HOUR).name
+		procedure = self.first_procedure(booking)
+		for field, value in (("patient", self.patients[1]), ("procedure_template", other_template)):
+			procedure.reload()
+			procedure.set(field, value)
+			self.assertRaisesRegex(frappe.ValidationError, "cannot change", procedure.save)
+
 	def test_an_amendment_takes_the_place_its_case_moved_to(self):
 		booking = make_booking(self, self.at(9))
 		cancelled = self.submitted(booking)
