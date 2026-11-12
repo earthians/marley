@@ -4,7 +4,7 @@
 // case by request_panel.vue). Only the rows a case has are shown.
 import { Badge } from "frappe-ui";
 
-import { patientFacts } from "../patient.js";
+import { inpatientText, patientFacts } from "../patient.js";
 
 defineProps({
 	booking: { type: Object, required: true },
@@ -50,6 +50,10 @@ const STATUS_THEMES = {
 				<dd class="text-ink-gray-8">{{ theatre }}</dd>
 				<dt class="text-ink-gray-5">Time</dt>
 				<dd class="text-ink-gray-8">{{ time }}</dd>
+			</template>
+			<template v-if="booking.inpatient_status">
+				<dt class="text-ink-gray-5">Inpatient</dt>
+				<dd class="text-ink-gray-8">{{ inpatientText(booking) }}</dd>
 			</template>
 			<dt class="text-ink-gray-5">Surgeon</dt>
 			<dd class="text-ink-gray-8">{{ booking.surgeon }}</dd>

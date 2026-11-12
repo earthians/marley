@@ -4,13 +4,14 @@
 // and a case that may still move can be dragged.
 import { ContextMenu, HoverCard } from "frappe-ui";
 
+import BedIcon from "~icons/lucide/bed";
 import FastingIcon from "~icons/lucide/utensils-crossed";
 import LockIcon from "~icons/lucide/lock";
 
 import BookingPreview from "./booking_preview.vue";
 import { caseBorder, caseFill } from "../case_style.js";
 import OtherCases from "./other_cases.vue";
-import { patientFacts } from "../patient.js";
+import { inpatientText, patientFacts } from "../patient.js";
 import { clock } from "../time.js";
 
 defineProps({
@@ -79,6 +80,11 @@ const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop
 									</span>
 								</p>
 								<OtherCases :cases="booking.other_cases" />
+								<BedIcon
+									v-if="booking.inpatient_status"
+									class="size-3.5 shrink-0 text-ink-blue-5"
+									:title="inpatientText(booking)"
+								/>
 								<LockIcon
 									v-if="passed"
 									class="size-3.5 shrink-0 text-ink-gray-5"

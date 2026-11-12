@@ -2,12 +2,13 @@
 // A card in the To schedule pane: an open request, or a postponed case (dashed). It is dragged
 // onto a theatre's column to book it there; its open button shows the request or the case.
 import { Badge, HoverCard } from "frappe-ui";
+import BedIcon from "~icons/lucide/bed";
 import OpenIcon from "~icons/lucide/external-link";
 import { useHost } from "@framework/ui/island";
 
 import BookingPreview from "./booking_preview.vue";
 import { priorityBorder, priorityTheme } from "../case_style.js";
-import { patientFacts } from "../patient.js";
+import { inpatientText, patientFacts } from "../patient.js";
 import { today } from "../time.js";
 
 defineProps({
@@ -51,6 +52,11 @@ function formatDate(value) {
 							<span class="font-normal text-ink-gray-5">{{
 								patientFacts(row)
 							}}</span>
+							<BedIcon
+								v-if="row.inpatient_status"
+								class="ml-1 inline size-3.5 align-[-2px] text-ink-blue-5"
+								:title="inpatientText(row)"
+							/>
 						</span>
 						<Badge
 							v-if="row.priority_label"

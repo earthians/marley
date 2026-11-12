@@ -150,23 +150,40 @@ def next_statuses(booking, procedures):
 
 
 def add_patient_details(rows, on_date):
-	"""Each row's patient `sex`, and `age` on `on_date` such as 45y, or 8m under a year. A
-	patient the caller cannot read gets neither."""
+	"""Each row's patient `sex`, `age` on `on_date` such as 45y, or 8m under a year, and for an
+	inpatient their `inpatient_status` and current `bed`. A patient the caller cannot read gets
+	none of them."""
 	patients = {}
 	if frappe.has_permission("Patient", "read"):
 		patients = {
 			patient.name: patient
 			for patient in frappe.get_list(
 				"Patient",
-				fields=["name", "sex", "dob"],
+				fields=["name", "sex", "dob", "inpatient_status", "inpatient_record"],
 				filters={"name": ["in", list({row.patient for row in rows})]},
 				limit=0,
 			)
 		}
+	beds = current_beds([patient.inpatient_record for patient in patients.values()])
 	for row in rows:
 		patient = patients.get(row.patient, frappe._dict())
 		row.sex = patient.sex
 		row.age = age_text(patient.dob, on_date)
+		row.inpatient_status = patient.inpatient_status or None
+		row.bed = beds.get(patient.inpatient_record)
+
+
+def current_beds(inpatient_records):
+	"""Each admission's bed now: the occupancy not yet left"""
+	records = [record for record in inpatient_records if record]
+	if not records:
+		return {}
+	occupancies = frappe.get_all(
+		"Inpatient Occupancy",
+		fields=["parent", "service_unit"],
+		filters={"parent": ["in", records], "parenttype": "Inpatient Record", "left": 0},
+	)
+	return {occupancy.parent: occupancy.service_unit for occupancy in occupancies}
 
 
 def age_text(dob, on_date):

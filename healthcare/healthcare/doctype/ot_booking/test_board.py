@@ -2,12 +2,17 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import add_days, get_datetime, getdate, nowdate
+from frappe.utils import add_days, get_datetime, getdate, now_datetime, nowdate
 
 from healthcare.healthcare.doctype.healthcare_practitioner.test_practitioner_leave import (
 	create_approved_leave,
 	link_new_employee,
 	skip_without_hrms,
+)
+from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
+from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
+	create_inpatient,
+	get_healthcare_service_unit,
 )
 from healthcare.healthcare.doctype.ot_booking.board import (
 	add_patient_details,
@@ -178,6 +183,21 @@ class TestBoard(HealthcareTestSuite):
 		self.addCleanup(frappe.set_user, "Administrator")
 
 		self.assertFalse(self.board()["can_edit"])
+
+	def test_an_inpatient_case_shows_its_admission_and_bed(self):
+		# a new patient, as one left admitted by another test cannot be admitted again
+		patient = frappe.get_doc({"doctype": "Patient", "first_name": "_Test OT Inpatient", "sex": "Female"})
+		self.patients = [patient.insert(ignore_permissions=True).name]
+		admission = create_inpatient(self.patients[0])
+		admission.expected_length_of_stay = 0
+		admission.save(ignore_permissions=True)
+		bed = get_healthcare_service_unit()
+		admit_patient(admission, bed, now_datetime())
+		make_booking(self, self.at(9))
+
+		shown = self.board()["bookings"][0]
+
+		self.assertEqual((shown.inpatient_status, shown.bed), ("Admitted", bed))
 
 	def test_an_ot_coordinator_sees_age_and_sex(self):
 		make_booking(self, self.at(9))
