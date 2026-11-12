@@ -15,6 +15,32 @@ class TestObservationTemplate(HealthcareTestSuite):
 			obs_template.rate,
 		)
 
+	def test_observation_item_name_on_update(self):
+		observation = "_Test Observation Item Name Sync"
+		item_code = "_Test Observation Item Name Sync Code"
+		obs_template = frappe.get_doc(
+			{
+				"doctype": "Observation Template",
+				"observation": observation,
+				"observation_category": "Imaging",
+				"item_code": item_code,
+				"item_group": "Services",
+				"is_billable": 1,
+				"rate": 300,
+			}
+		).insert()
+		self.assertFalse(obs_template.get("template"))
+		self.assertEqual(obs_template.item, item_code)
+		self.assertTrue(frappe.db.exists("Item Price", {"item_code": item_code}))
+
+		obs_template.rate = 350
+		obs_template.save()
+
+		self.assertEqual(frappe.db.get_value("Item", item_code, "item_name"), observation)
+		self.assertEqual(
+			frappe.db.get_value("Item Price", {"item_code": item_code}, "item_name"), observation
+		)
+
 	def test_self_reference_not_allowed(self):
 		parent = create_grouped_observation_template("Fasting and PP Sugar")
 
