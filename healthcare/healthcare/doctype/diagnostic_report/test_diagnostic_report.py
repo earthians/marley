@@ -7,6 +7,7 @@ from healthcare.healthcare.doctype.observation.observation import (
 	approve_all_observations,
 	get_approvable_observations,
 	reject_all_observations,
+	set_observation_status,
 )
 from healthcare.healthcare.doctype.observation.test_observation import create_sales_invoice
 from healthcare.tests.utils import HealthcareTestSuite
@@ -121,6 +122,47 @@ class TestDiagnosticReport(HealthcareTestSuite):
 
 		self.assertEqual(summary["rejected"], [observations[0]])
 		self.assertEqual(frappe.db.get_value("Observation", observations[0], "status"), "Rejected")
+
+	def test_approve_all_approves_replacement_in_approved_panel(self):
+		template = self.create_two_component_panel_template()
+		diagnostic_report, observations = self.create_report(template)
+		components = self.get_component_observations(observations)
+		self.set_results(components)
+		approve_all_observations(diagnostic_report)
+		set_observation_status(components[0], "Rejected", "Recheck result")
+
+		replacement = frappe.db.get_value(
+			"Observation",
+			{"parent_observation": observations[0], "docstatus": 0},
+			"name",
+		)
+		self.assertTrue(replacement)
+		self.assertIn(replacement, get_approvable_observations(observations[0]))
+
+		summary = approve_all_observations(diagnostic_report)
+
+		self.assertEqual(summary["approved"], [replacement])
+		self.assertEqual(frappe.db.get_value("Observation", replacement, "status"), "Approved")
+		self.assertEqual(frappe.db.get_value("Observation", observations[0], "status"), "Approved")
+
+	def test_reject_all_skips_draft_replacement_in_approved_panel(self):
+		template = self.create_two_component_panel_template()
+		diagnostic_report, observations = self.create_report(template)
+		components = self.get_component_observations(observations)
+		self.set_results(components)
+		approve_all_observations(diagnostic_report)
+		set_observation_status(components[0], "Rejected", "Recheck result")
+
+		replacement = frappe.db.get_value(
+			"Observation",
+			{"parent_observation": observations[0], "docstatus": 0},
+			"name",
+		)
+		summary = reject_all_observations(diagnostic_report, "Recheck panel")
+
+		self.assertEqual(summary["rejected"], [components[1]])
+		self.assertEqual(frappe.db.get_value("Observation", components[1], "status"), "Rejected")
+		self.assertEqual(frappe.db.get_value("Observation", replacement, "docstatus"), 0)
 
 	def test_approve_all_approved_observations_are_left_untouched(self):
 		diagnostic_report, observations = self.create_report("_Test Observation without Sample")
