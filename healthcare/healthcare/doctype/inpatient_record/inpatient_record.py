@@ -386,7 +386,6 @@ def create_inpatient_record(admission_order):
 		set_ip_child_records(inpatient_record, "procedure_prescription", encounter.procedure_prescription)
 
 	if encounter and encounter.therapies:  # Therapies
-		inpatient_record.therapy_plan = encounter.therapy_plan
 		set_ip_child_records(inpatient_record, "therapies", encounter.therapies)
 
 	inpatient_record.insurance_policy = encounter.insurance_policy
@@ -477,6 +476,9 @@ def close_active_nursing_care_plans(inpatient_record):
 
 	for plan_name in active_plans:
 		plan = frappe.get_doc("Nursing Care Plan", plan_name)
+		if plan.patient != inpatient_record.patient:
+			# Legacy mismatches must not block discharge or retain the wrong admission.
+			plan.inpatient_record = None
 		plan.status = "Closed"
 		plan.save(ignore_permissions=True)
 
@@ -721,7 +723,9 @@ def cancel_amend_treatment_counselling(args, treatment_counselling):
 
 
 @frappe.whitelist()
-def make_discharge_summary(source_name, target_doc=None, ignore_permissions=False):
+def make_discharge_summary(
+	source_name: str, target_doc: Document | None = None, ignore_permissions: bool = False
+) -> Document:
 	doclist = get_mapped_doc(
 		"Inpatient Record",
 		source_name,
@@ -731,7 +735,7 @@ def make_discharge_summary(source_name, target_doc=None, ignore_permissions=Fals
 				"field_map": {
 					"name": "inpatient_record",
 				},
-				"field_no_map": ["status", "chief_complaint", "diagnosis"],
+				"field_no_map": ["naming_series", "status", "chief_complaint", "diagnosis"],
 			},
 		},
 		target_doc,

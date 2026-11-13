@@ -475,9 +475,12 @@ healthcare.ObservationWidget = class {
 			});
 		}
 
+		const note_icon_href = document.getElementById("icon-small-message")
+			? "#icon-small-message"
+			: "#icon-message-square";
 		let note_html = `<div><span class="add-note-observation-btn btn btn-link"
 			id="add-note-observation-btn-${obs_data.name}">
-			<svg class="icon icon-sm"><use xlink:href="#icon-small-message"></use></svg>
+			<svg class="icon icon-sm"><use xlink:href="${note_icon_href}"></use></svg>
 			</span>`;
 		note_html += `</div>`;
 		me[obs_data.name].get_field("note_button").html(note_html);

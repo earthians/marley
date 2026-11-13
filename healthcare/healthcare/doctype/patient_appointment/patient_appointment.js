@@ -545,113 +545,26 @@ frappe.ui.form.on("Patient Appointment", {
 			frappe.throw(__("Please select a patient first"));
 		}
 
-		const d = new frappe.ui.Dialog({
-			title: __("Select a Service Request"),
-			fields: [
-				{
-					fieldname: "service_html",
-					fieldtype: "HTML",
-					options: `
-						<div id="service-request-list"
-							style="max-height: 420px; overflow-y: auto; padding-right: 5px;">
-							No active orders found for selected Patient
-						</div>
-					`,
-				},
-			],
-			primary_action_label: __("Select"),
-			primary_action() {
-				const selected = d.$wrapper.find(
-					'.service-row[data-selected="true"]',
-				)[0];
-				if (!selected) {
-					frappe.msgprint(__("Please select a service request."));
-					return;
-				}
+		new healthcare.ServiceRequestPicker({
+			filters: { patient: frm.doc.patient },
+			empty_message: __("No active orders found for selected Patient"),
+			on_select: request => {
+				frm.set_value({
+					service_request: request.name,
+					template_dt: request.template_dt,
+					template_dn: request.template_dn,
+					referring_practitioner: request.practitioner,
+					notes: request.order_description,
+				});
 
-				const selected_id = selected.dataset.name;
-				if (selected_id) {
-					frappe.db.get_doc("Service Request", selected_id).then(doc => {
-						frm.set_value({
-							service_request: selected_id,
-							template_dt: doc.template_dt,
-							template_dn: doc.template_dn,
-							referring_practitioner: doc.practitioner,
-							notes: doc.order_description,
-						});
-
-						if (doc.template_dt == "Appointment Type" && doc.template_dn) {
-							frm.set_value({
-								appointment_type: doc.template_dn,
-								practitioner: doc.referred_to_practitioner,
-							});
-						}
+				if (request.template_dt == "Appointment Type" && request.template_dn) {
+					frm.set_value({
+						appointment_type: request.template_dn,
+						practitioner: request.referred_to_practitioner,
 					});
 				}
-
-				d.hide();
 			},
 		});
-
-		d.show();
-
-		frappe.db
-			.get_list("Service Request", {
-				fields: [
-					"name",
-					"order_group",
-					"order_date",
-					"practitioner",
-					"practitioner_name",
-					"template_dt",
-					"template_dn",
-					"status",
-					"coverage_status",
-				],
-				filters: {
-					patient: frm.doc.patient,
-					status: "active-Request Status",
-				},
-			})
-			.then(r => {
-				const data = r || [];
-
-				if (data.length) {
-					const html = get_service_request_list_html(data);
-					const wrapper = d.fields_dict.service_html.$wrapper;
-					wrapper.html(html);
-
-					wrapper.find(".service-row").each(function () {
-						const row = this;
-
-						row.addEventListener("mouseenter", function () {
-							if (row.dataset.selected !== "true") {
-								row.style.backgroundColor = "#fafafa";
-							}
-						});
-
-						row.addEventListener("mouseleave", function () {
-							if (row.dataset.selected !== "true") {
-								row.style.backgroundColor = "";
-							}
-						});
-
-						row.addEventListener("click", function () {
-							wrapper.find(".service-row").each(function () {
-								this.dataset.selected = "false";
-								this.style.border = "1px solid #dddaaa";
-								this.style.backgroundColor = "";
-							});
-
-							row.dataset.selected = "true";
-							row.style.border = "2px solid #afafaf";
-							row.style.backgroundColor = "#f3f3f3";
-						});
-					});
-				} else {
-					d.$wrapper.find(".modal-footer .btn-primary").hide();
-				}
-			});
 	},
 
 	make_therapy_session: function (frm) {
@@ -1431,6 +1344,7 @@ let make_payment = function (frm, automate_invoicing) {
 	}
 
 	function show_payment_dialog(frm, fields) {
+		const supports_icon_button = Boolean(frappe.ui?.button?.dress);
 		let d = new frappe.ui.Dialog({
 			title: "Enter Payment Details",
 			fields: fields,
@@ -1469,9 +1383,11 @@ let make_payment = function (frm, automate_invoicing) {
 					},
 				});
 			},
-			secondary_action_label: __(`<svg class="icon  icon-sm" style="">
-				<use class="" href="#icon-printer"></use>
-			</svg>`),
+			secondary_action_label: supports_icon_button
+				? __("Print")
+				: __(`<svg class="icon  icon-sm" style="">
+					<use class="" href="#icon-printer"></use>
+				</svg>`),
 			secondary_action() {
 				window.open(
 					"/app/print/Sales Invoice/" + frm.doc.ref_sales_invoice,
@@ -1480,6 +1396,14 @@ let make_payment = function (frm, automate_invoicing) {
 				d.hide();
 			},
 		});
+		if (supports_icon_button) {
+			const secondary_btn = d.get_secondary_btn();
+			frappe.ui.button.dress(secondary_btn, {
+				icon: "printer",
+				title: __("Print"),
+			});
+			secondary_btn.attr("title", __("Print"));
+		}
 		d.fields_dict["mode_of_payment"].df.onchange = () => {
 			if (d.get_value("mode_of_payment")) {
 				frm.set_value("mode_of_payment", d.get_value("mode_of_payment"));
@@ -1560,58 +1484,4 @@ let show_message = function (d, message, field) {
 	field.df.description = `<div style="color:red;
 		padding:5px 5px 5px 5px">${message}</div>`;
 	field.refresh();
-};
-
-let get_service_request_list_html = function (data) {
-	let html = `
-		<div style="max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 5px;">
-	`;
-
-	data.forEach(row => {
-		// trimming the last part of template_dt (Template, Type etc)
-		const service_type = (row.template_dt || "").trim().split(" ").pop();
-
-		const coverage_status = (row.coverage_status || "").toLowerCase();
-		const status_clr = coverage_status.includes("approved")
-			? "green"
-			: coverage_status.includes("pending") ||
-			    coverage_status.includes("requested")
-			  ? "orange"
-			  : "gray";
-		const status_txt = row.coverage_status || "NA";
-
-		html += `
-			<div class="service-row"
-				data-name="${row.name}"
-				data-selected="false"
-				style="
-				border: 1px solid #dddaaa;
-				border-radius: 6px;
-				padding: 12px;
-				cursor: pointer;
-				transition: all 0.2s ease-in-out;
-			">
-				<div style="display: flex; justify-content: space-between; align-items: center;">
-					<div style="font-size: 1rem;">
-						${service_type}: <b>${row.template_dn || ""}</b>
-					</div>
-					<span class="indicator ${status_clr}">${status_txt}</span>
-				</div>
-
-				<div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.875rem; color: #4b4b4b;">
-					<div style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
-						<div>${row.order_group || ""}</div>
-						<div style="color: gray;">${frappe.datetime.str_to_user(row.order_date) || ""}</div>
-					</div>
-					<div style="display: flex; flex-direction: column; align-items: flex-end; text-align: right;">
-						<div>${row.practitioner || ""}</div>
-						<div style="color: gray;">${row.practitioner_name || ""}</div>
-					</div>
-				</div>
-			</div>
-		`;
-	});
-
-	html += "</div>";
-	return html;
 };

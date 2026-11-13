@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import get_file_json
 
 SEED_FILE = ("healthcare", "healthcare", "doctype", "allergy", "allergy_seed.json")
 

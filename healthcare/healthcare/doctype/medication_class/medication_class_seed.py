@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import get_file_json
 
 SEED_DIRECTORY = ("healthcare", "healthcare", "doctype", "medication_class")
 TAXONOMY_FILE = "medication_class_seed.json"
