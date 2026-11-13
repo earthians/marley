@@ -8,6 +8,7 @@ import frappe
 from frappe import _
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.model.document import Document
+from frappe.utils import get_time
 
 from healthcare.healthcare.doctype.medication_alert_log.medication_alert_log import (
 	ACTIONS,
@@ -35,6 +36,7 @@ class HealthcareSettings(Document):
 			frappe.db.set_default(key, self.get(key, ""))
 
 		self.validate_medication_alert_severities()
+		self.validate_ot_day()
 
 		if self.collect_registration_fee:
 			if self.registration_fee <= 0:
@@ -46,6 +48,13 @@ class HealthcareSettings(Document):
 			validate_service_item(self.op_consulting_charge_item)
 		if self.clinical_procedure_consumable_item:
 			validate_service_item(self.clinical_procedure_consumable_item)
+
+	def validate_ot_day(self):
+		if self.ot_time("ot_day_end_time") <= self.ot_time("ot_day_start_time"):
+			frappe.throw(_("Day End Time must be after Day Start Time"), title=_("Operation Theatre Day"))
+
+	def ot_time(self, fieldname):
+		return get_time(self.get(fieldname) or self.meta.get_field(fieldname).default)
 
 	def on_update(self):
 		self.create_warehouses_for_existing_beds()

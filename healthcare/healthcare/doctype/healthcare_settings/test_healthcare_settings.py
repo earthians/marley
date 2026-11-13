@@ -27,6 +27,15 @@ class TestHealthcareSettings(HealthcareTestSuite):
 		self.assertEqual(get_time(ot_setting("ot_day_start_time")), get_time("08:00:00"))
 		self.assertEqual(get_time(ot_setting("ot_day_end_time")), get_time("18:00:00"))
 
+	def test_the_ot_day_ends_after_it_starts(self):
+		settings = frappe.get_single("Healthcare Settings")
+		for end in ("06:00:00", "05:00:00"):
+			settings.update({"ot_day_start_time": "06:00:00", "ot_day_end_time": end})
+			self.assertRaisesRegex(frappe.ValidationError, "must be after", settings.validate_ot_day)
+
+		settings.ot_day_end_time = "20:00:00"
+		settings.validate_ot_day()
+
 	def test_zero_cleaning_minutes_is_kept(self):
 		frappe.db.set_single_value("Healthcare Settings", "ot_cleaning_minutes", 0)
 

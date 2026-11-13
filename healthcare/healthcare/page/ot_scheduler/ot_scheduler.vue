@@ -95,12 +95,13 @@ onMounted(() => {
 });
 onUnmounted(() => clearInterval(clockTimer));
 useBoardFeed(load);
-watch(board, scrollToWorkingHours, { flush: "post" });
+watch(board, scrollToOpening, { flush: "post" });
 watch([tentativeCount, canEdit, day], sendActions, { immediate: true });
 
-function scrollToWorkingHours() {
+function scrollToOpening() {
 	if (!timeline.value || scrolledDay === day.value) return;
-	timeline.value.scrollTop = ((workStart.value - 15) / 60) * HOUR_SIZE;
+	const opening = nowLine.value === null ? workStart.value - 15 : nowLine.value - 60;
+	timeline.value.scrollTop = (Math.max(opening, 0) / 60) * HOUR_SIZE;
 	scrolledDay = day.value;
 }
 
@@ -289,7 +290,15 @@ function openBooking(name) {
 								@dragleave="dropTheatre = null"
 								@drop.prevent="drag.drop(theatre.name)"
 							>
-								<RowWash :work-start="workStart" :work-end="workEnd" />
+								<RowWash
+									:work-start="workStart"
+									:work-end="workEnd"
+									:all-day="
+										Boolean(
+											board.holiday && !board.holiday.is_half_day,
+										)
+									"
+								/>
 								<span
 									v-for="hour in HOURS"
 									:key="hour"
