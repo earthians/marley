@@ -35,6 +35,9 @@ frappe.ui.form.on("Observation", {
 	after_save: function (frm) {
 		frm._saved_patient_for_template = frm.doc.patient;
 	},
+	before_save: function () {
+		return frappe.after_ajax();
+	},
 	onload_post_render: function (frm) {
 		frm.trigger("set_result_control");
 	},
