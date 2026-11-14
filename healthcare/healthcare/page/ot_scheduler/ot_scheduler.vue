@@ -281,7 +281,7 @@ function openBooking(name) {
 								</p>
 							</div>
 							<div
-								class="relative isolate grid overflow-hidden border-l border-outline-gray-1 px-1"
+								class="relative isolate grid overflow-hidden border-l border-outline-gray-1 px-1 [contain:inline-size]"
 								:class="[
 									dropTheatre === theatre.name && 'bg-surface-gray-1',
 									filters.theatreDimmed(theatre.name) && 'opacity-40',
