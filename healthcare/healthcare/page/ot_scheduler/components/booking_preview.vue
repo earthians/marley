@@ -7,6 +7,7 @@ defineProps({
 	booking: { type: Object, required: true },
 	theatre: { type: String, default: "" },
 	time: { type: String, default: "" },
+	wide: { type: Boolean, default: false },
 });
 
 const STATUS_THEMES = {
@@ -20,7 +21,7 @@ const STATUS_THEMES = {
 </script>
 
 <template>
-	<div class="flex w-72 flex-col gap-2 p-3 text-sm">
+	<div class="flex flex-col gap-2 p-3 text-sm" :class="wide ? 'w-full' : 'w-72'">
 		<div class="flex items-start justify-between gap-2">
 			<div class="min-w-0">
 				<p class="truncate font-medium text-ink-gray-9">
@@ -45,6 +46,8 @@ const STATUS_THEMES = {
 			<template v-if="theatre">
 				<dt class="text-ink-gray-5">Theatre</dt>
 				<dd class="text-ink-gray-8">{{ theatre }}</dd>
+			</template>
+			<template v-if="time">
 				<dt class="text-ink-gray-5">Time</dt>
 				<dd class="text-ink-gray-8">{{ time }}</dd>
 			</template>

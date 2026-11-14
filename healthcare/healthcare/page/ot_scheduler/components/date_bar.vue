@@ -1,11 +1,14 @@
 <script setup>
+import { ref } from "vue";
 import { Badge, Button, DatePicker, FormControl } from "frappe-ui";
 
 import { isoDate, today } from "../time.js";
 
 defineProps({
 	board: { type: Object, default: null },
+	filterCount: { type: Number, default: 0 },
 });
+const filtersOpen = ref(false);
 const day = defineModel("day", { type: String, required: true });
 const company = defineModel("company", { type: String, default: "" });
 const department = defineModel("department", { type: String, default: "" });
@@ -19,7 +22,10 @@ function moveDay(days) {
 
 <template>
 	<div class="flex shrink-0 flex-col gap-2">
-		<div class="flex flex-wrap items-center gap-2">
+		<div
+			class="flex-wrap items-center gap-2 lg:flex"
+			:class="filtersOpen ? 'flex' : 'hidden'"
+		>
 			<div v-if="board" class="w-48">
 				<FormControl
 					v-model="company"
@@ -58,6 +64,10 @@ function moveDay(days) {
 				{{ board.holiday.is_half_day ? "Half-day holiday" : "Holiday" }}:
 				{{ board.holiday.description }}
 			</Badge>
+			<Button class="lg:hidden" @click="filtersOpen = !filtersOpen">
+				Filters{{ filterCount ? ` (${filterCount})` : "" }}
+			</Button>
+			<slot name="actions" />
 		</div>
 	</div>
 </template>

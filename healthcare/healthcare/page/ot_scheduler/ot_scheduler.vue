@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import { Badge, Dialog, FormControl, ToastProvider } from "frappe-ui";
+import { Badge, Button, Dialog, FormControl, ToastProvider } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
 
 import BoardFilters from "./components/board_filters.vue";
 import CaseCard from "./components/case_card.vue";
 import DateBar from "./components/date_bar.vue";
+import DayList from "./components/day_list.vue";
 import DropGhost from "./components/drop_ghost.vue";
 import HourScale from "./components/hour_scale.vue";
 import RequestPanel from "./components/request_panel.vue";
@@ -73,6 +74,16 @@ const slots = useSlots({ day, filters: boardFilters, change: actions.change });
 const { finder, picked } = slots;
 watch([company, department], slots.close);
 const tentativeCount = computed(() => countOf("Tentative"));
+const paneOpen = ref(false);
+const filterCount = computed(
+	() =>
+		[
+			department.value,
+			filters.practitioner.value,
+			filters.patient.value,
+			filters.theatre.value,
+		].filter(Boolean).length,
+);
 
 const timeline = ref(null);
 const boardGrid = computed(() => ({
@@ -180,6 +191,11 @@ function theatreLabel(theatre) {
 function openBooking(name) {
 	host.navigate?.(`ot-booking/${name}`);
 }
+
+function pickFromPane(pick, row, event) {
+	pick(row, event);
+	setTimeout(() => (paneOpen.value = false));
+}
 </script>
 
 <template>
@@ -189,6 +205,7 @@ function openBooking(name) {
 			v-model:company="company"
 			v-model:department="department"
 			:board="board"
+			:filter-count="filterCount"
 		>
 			<BoardFilters
 				v-if="board"
@@ -197,6 +214,15 @@ function openBooking(name) {
 				v-model:theatre="filters.theatre.value"
 				:board="board"
 			/>
+			<template #actions>
+				<Button
+					v-if="board?.can_edit"
+					class="hidden md:inline-flex lg:hidden"
+					@click="paneOpen = !paneOpen"
+				>
+					To schedule ({{ requests.length + postponed.length }})
+				</Button>
+			</template>
 		</DateBar>
 
 		<ToastProvider />
@@ -218,24 +244,43 @@ function openBooking(name) {
 			</Badge>
 		</div>
 
-		<div class="flex min-h-0 flex-1 gap-3">
+		<DayList
+			v-if="board"
+			class="md:hidden"
+			:board="board"
+			:hidden="filters.caseDimmed"
+			@open="openBooking"
+		/>
+
+		<div class="relative hidden min-h-0 flex-1 gap-3 md:flex">
 			<!-- not canEdit, which is false while a day loads and would make the board jump -->
 			<RequestPanel
 				v-if="board?.can_edit"
+				class="absolute inset-y-0 left-0 z-40 bg-surface-base shadow-xl lg:visible lg:static lg:z-auto lg:bg-transparent lg:shadow-none"
+				:class="!paneOpen && 'invisible'"
 				:requests="requests"
 				:postponed="postponed"
 				:dropping="
 					Boolean(dragged?.booking && dragged.booking.status !== 'Postponed')
 				"
-				@pick="drag.pickRequest"
-				@pick-postponed="drag.pickPostponed"
+				@pick="
+					(request, event) => pickFromPane(drag.pickRequest, request, event)
+				"
+				@pick-postponed="
+					(booking, event) => pickFromPane(drag.pickPostponed, booking, event)
+				"
 				@unschedule="drag.unschedule"
 				@over="drag.clearGhost"
 				@done="drag.endDrag"
 				:finder="finder"
 				:picked="picked"
 				@find="slots.find"
-				@pick-slot="slots.pick"
+				@pick-slot="
+					slot => {
+						paneOpen = false;
+						slots.pick(slot);
+					}
+				"
 			/>
 
 			<p
