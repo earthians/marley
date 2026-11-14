@@ -79,6 +79,7 @@ def get_postponed(company: str | None = None, department: str | None = None) -> 
 		return []
 	add_case_details(bookings)
 	add_theatre_types(bookings)
+	add_expected_dates(bookings)
 	add_patient_details(bookings, nowdate())
 	if not department:
 		return bookings
@@ -194,6 +195,32 @@ def add_theatre_types(bookings):
 	)
 	for booking in bookings:
 		booking.theatre_type = ", ".join(sorted({types.get(name) for name in booking.procedures} - {None}))
+
+
+def add_expected_dates(bookings):
+	rows = frappe.get_all(
+		"OT Booking Procedure",
+		fields=["parent", "service_request"],
+		filters={"parent": ["in", [booking.name for booking in bookings]], "service_request": ["is", "set"]},
+	)
+	expected = dict(
+		frappe.get_all(
+			"Service Request",
+			fields=["name", "expected_date"],
+			filters={
+				"name": ["in", [row.service_request for row in rows] or [""]],
+				"expected_date": ["is", "set"],
+			},
+			as_list=True,
+		)
+	)
+	for booking in bookings:
+		dates = [
+			expected[row.service_request]
+			for row in rows
+			if row.parent == booking.name and row.service_request in expected
+		]
+		booking.expected_date = min(dates, default=None)
 
 
 def template_departments(names):

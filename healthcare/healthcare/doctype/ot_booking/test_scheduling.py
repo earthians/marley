@@ -11,6 +11,7 @@ from healthcare.healthcare.doctype.ot_booking.scheduling import (
 	check_drop,
 	create_procedures,
 	get_open_requests,
+	get_postponed,
 	move_booking,
 	set_status,
 )
@@ -98,6 +99,16 @@ class TestScheduling(HealthcareTestSuite):
 		]
 
 		self.assertEqual(order, [sooner.name, later.name, undated.name])
+
+	def test_a_postponed_case_carries_its_requests_expected_date(self):
+		request = create_service_request(self.patients[0], self.practitioners[0])
+		request.db_set("expected_date", add_days(self.day, 2))
+		booking = book_request(request.name, self.theatre, str(self.at(9)))
+		set_status(booking, "Postponed")
+
+		listed = {row.name: row for row in get_postponed(company=COMPANY)}[booking]
+
+		self.assertEqual(str(listed.expected_date), str(add_days(self.day, 2)))
 
 	def test_checking_a_drop_keeps_nothing(self):
 		request = create_service_request(self.patients[0], self.practitioners[0])

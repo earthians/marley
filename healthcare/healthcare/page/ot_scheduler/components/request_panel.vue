@@ -29,22 +29,59 @@ const host = useHost();
 const search = ref("");
 const over = ref(false);
 
-const shownRequests = computed(() =>
-	matching(props.requests, request => [request.procedure, request.practitioner_name]),
-);
-const shownPostponed = computed(() =>
-	matching(props.postponed, booking => [...booking.procedures, booking.surgeon]),
+const cards = computed(() =>
+	[...props.requests.map(requestCard), ...props.postponed.map(postponedCard)]
+		.filter(card => matches(card.searchText))
+		.sort(byExpectedDate),
 );
 
-function matching(rows, details) {
+function requestCard(request) {
+	return {
+		row: request,
+		route: `service-request/${request.name}`,
+		preview: requestPreview(request),
+		procedures: request.procedure,
+		duration: duration(request.duration),
+		details: [request.practitioner_name, ordered(request)],
+		searchText: [
+			request.patient_name,
+			request.name,
+			request.procedure,
+			request.practitioner_name,
+		],
+		pick: event => emit("pick", request, event),
+		find: { request },
+	};
+}
+
+function postponedCard(booking) {
+	return {
+		row: booking,
+		route: `ot-booking/${booking.name}`,
+		preview: booking,
+		postponed: true,
+		procedures: booking.procedures.join(", "),
+		duration: duration(caseMinutes(booking) * 60),
+		details: [booking.surgeon, booking.name],
+		searchText: [
+			booking.patient_name,
+			booking.name,
+			...booking.procedures,
+			booking.surgeon,
+		],
+		pick: event => emit("pickPostponed", booking, event),
+		find: { booking },
+	};
+}
+
+function byExpectedDate(first, second) {
+	const expected = card => String(card.row.expected_date || "9999-12-31");
+	return expected(first).localeCompare(expected(second));
+}
+
+function matches(searchText) {
 	const text = search.value.trim().toLowerCase();
-	if (!text) return rows;
-	return rows.filter(row =>
-		[row.patient_name, row.name, ...details(row)]
-			.join(" ")
-			.toLowerCase()
-			.includes(text),
-	);
+	return !text || searchText.join(" ").toLowerCase().includes(text);
 }
 
 function duration(seconds) {
@@ -103,65 +140,30 @@ function drop() {
 			placeholder="Search patient, procedure, surgeon"
 		/>
 		<div class="flex flex-col gap-2 overflow-y-auto">
-			<p
-				v-if="!shownRequests.length && !shownPostponed.length"
-				class="p-4 text-center text-sm text-ink-gray-5"
-			>
+			<p v-if="!cards.length" class="p-4 text-center text-sm text-ink-gray-5">
 				{{ search ? "Nothing matches" : "Every surgical request is booked" }}
 			</p>
 			<PaneCard
-				v-for="request in shownRequests"
-				:key="request.name"
-				:row="request"
-				:route="`service-request/${request.name}`"
-				:preview="requestPreview(request)"
-				:procedures="request.procedure"
-				:duration="duration(request.duration)"
-				:details="[request.practitioner_name, ordered(request)]"
-				@pick="event => emit('pick', request, event)"
+				v-for="card in cards"
+				:key="card.row.name"
+				:row="card.row"
+				:route="card.route"
+				:preview="card.preview"
+				:postponed="Boolean(card.postponed)"
+				:procedures="card.procedures"
+				:duration="card.duration"
+				:details="card.details"
+				@pick="card.pick"
 				@done="emit('done')"
 			>
 				<template #actions>
 					<FinderButton
-						:open="finder.for === request.name"
-						@click="emit('find', { request })"
+						:open="finder.for === card.row.name"
+						@click="emit('find', card.find)"
 					/>
 				</template>
 				<SlotList
-					v-if="finder.for === request.name"
-					class="mt-2"
-					:finder="finder"
-					:picked="picked"
-					@pick="slot => emit('pickSlot', slot)"
-				/>
-			</PaneCard>
-			<p
-				v-if="shownPostponed.length"
-				class="pt-2 text-sm font-semibold text-ink-gray-7"
-			>
-				To reschedule ({{ shownPostponed.length }})
-			</p>
-			<PaneCard
-				v-for="booking in shownPostponed"
-				:key="booking.name"
-				:row="booking"
-				:route="`ot-booking/${booking.name}`"
-				:preview="booking"
-				postponed
-				:procedures="booking.procedures.join(', ')"
-				:duration="duration(caseMinutes(booking) * 60)"
-				:details="[booking.surgeon, booking.name]"
-				@pick="event => emit('pickPostponed', booking, event)"
-				@done="emit('done')"
-			>
-				<template #actions>
-					<FinderButton
-						:open="finder.for === booking.name"
-						@click="emit('find', { booking })"
-					/>
-				</template>
-				<SlotList
-					v-if="finder.for === booking.name"
+					v-if="finder.for === card.row.name"
 					class="mt-2"
 					:finder="finder"
 					:picked="picked"
