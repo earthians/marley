@@ -9,6 +9,7 @@ from healthcare.healthcare.doctype.healthcare_practitioner.test_practitioner_lea
 	link_new_employee,
 	skip_without_hrms,
 )
+from healthcare.healthcare.doctype.ot_booking.availability import theatre_holiday_list
 from healthcare.healthcare.doctype.ot_booking.priority import priority_named
 from healthcare.healthcare.doctype.ot_booking.test_day_rules import create_user
 from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
@@ -47,17 +48,15 @@ class TestAvailability(HealthcareTestSuite):
 			frappe.db.set_value, "Healthcare Practitioner", practitioner, "allow_overlapping_theatres", 0
 		)
 
-	def test_theatre_overlap_is_refused(self):
-		make_booking(self, self.at(9))
+	def test_a_theatre_holds_one_case_and_the_cases_own_cleaning_time(self):
+		first = make_booking(self, self.at(9))
+		first.db_set("cleaning_minutes", 30)
 
 		self.assert_refused("Theatre .* is booked", self.at(9), patient=1, surgeon=1)
-
-	def test_cleaning_time_is_kept_between_cases(self):
-		make_booking(self, self.at(9))
-		cleaning = cint(frappe.db.get_single_value("Healthcare Settings", "ot_cleaning_minutes"))
-
 		self.assert_refused("minutes of cleaning", self.at(10), patient=1, surgeon=1)
-		make_booking(self, add_to_date(self.at(10), minutes=cleaning), patient=1, surgeon=1)
+		first.db_set("cleaning_minutes", 60)
+		self.assert_refused("minutes of cleaning", add_to_date(self.at(10), minutes=30), patient=1, surgeon=1)
+		make_booking(self, self.at(11), patient=1, surgeon=1)
 
 	def test_a_surgeon_cannot_be_in_two_theatres_at_once_and_is_named(self):
 		first = make_booking(self, self.at(9))
@@ -113,12 +112,6 @@ class TestAvailability(HealthcareTestSuite):
 			)
 		self.appointment(patient=1, practitioner=1, hour=10)
 
-	def test_an_earlier_case_keeps_its_own_cleaning_time(self):
-		make_booking(self, self.at(9)).db_set("cleaning_minutes", 60)
-
-		self.assert_refused("minutes of cleaning", self.at(10), patient=1, surgeon=1)
-		make_booking(self, self.at(11), patient=1, surgeon=1)
-
 	def test_a_surgeon_needs_no_cleaning_gap_between_theatres(self):
 		make_booking(self, self.at(9))
 
@@ -155,15 +148,12 @@ class TestAvailability(HealthcareTestSuite):
 	def block(self, scope, scope_type, start="09:00:00", end="10:00:00"):
 		create_unavailable_block(scope, scope_type, self.day, start, end)
 
-	def test_an_unavailable_surgeon_is_refused(self):
+	def test_an_unavailable_surgeon_or_theatre_is_refused(self):
 		self.block(self.practitioners[0], "Healthcare Practitioner")
+		self.block(self.other_theatre, "Healthcare Service Unit")
 
-		self.assertRaisesRegex(frappe.ValidationError, "is unavailable", make_booking, self, self.at(9))
-
-	def test_an_unavailable_theatre_is_refused(self):
-		self.block(self.theatre, "Healthcare Service Unit")
-
-		self.assertRaisesRegex(frappe.ValidationError, "is unavailable", make_booking, self, self.at(9))
+		self.assert_refused("is unavailable", self.at(9))
+		self.assert_refused("is unavailable", self.at(9), theatre=self.other_theatre, patient=1, surgeon=1)
 
 	def test_a_block_outside_the_case_does_not_matter(self):
 		self.block(self.practitioners[0], "Healthcare Practitioner", "14:00:00", "15:00:00")
@@ -178,28 +168,19 @@ class TestAvailability(HealthcareTestSuite):
 
 		booking.save()
 
-	def test_an_elective_case_on_a_theatre_holiday_is_refused(self):
+	def test_an_elective_case_on_a_theatre_holiday_can_be_booked(self):
 		self.use_theatre_holiday_list(create_holiday_list(self.day))
-
-		self.assertRaisesRegex(frappe.ValidationError, "theatre holiday", make_booking, self, self.at(9))
-
-	def test_an_emergency_case_on_a_theatre_holiday_is_allowed(self):
-		self.use_theatre_holiday_list(create_holiday_list(self.day))
-
-		make_booking(self, self.at(9), priority=priority_named("STAT"))
-
-	def test_a_half_day_holiday_can_be_booked(self):
-		self.use_theatre_holiday_list(create_holiday_list(self.day, is_half_day=1))
 
 		make_booking(self, self.at(9))
 
 	def test_the_company_holiday_list_is_used_when_none_is_set(self):
 		self.use_theatre_holiday_list(None)
+		holiday_list = create_holiday_list(self.day)
 		company_list = frappe.db.get_value("Company", "_Test Company", "default_holiday_list")
-		frappe.db.set_value("Company", "_Test Company", "default_holiday_list", create_holiday_list(self.day))
+		frappe.db.set_value("Company", "_Test Company", "default_holiday_list", holiday_list)
 		self.addCleanup(frappe.db.set_value, "Company", "_Test Company", "default_holiday_list", company_list)
 
-		self.assertRaisesRegex(frappe.ValidationError, "theatre holiday", make_booking, self, self.at(9))
+		self.assertEqual(theatre_holiday_list("_Test Company"), holiday_list)
 
 	def use_theatre_holiday_list(self, holiday_list):
 		saved = frappe.db.get_single_value("Healthcare Settings", "ot_holiday_list")

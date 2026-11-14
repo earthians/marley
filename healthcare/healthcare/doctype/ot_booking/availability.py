@@ -7,8 +7,6 @@ import frappe
 from frappe import _
 from frappe.utils import flt, format_date, format_datetime, format_time, get_datetime, getdate
 
-from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
-
 from healthcare.healthcare.doctype.healthcare_practitioner.practitioner_leave import (
 	find_leaves,
 	leave_message,
@@ -46,7 +44,7 @@ def validate_availability(booking):
 
 def unavailable_messages(booking):
 	leaves = find_leaves(team_of(booking), *slot(booking))
-	refusals = holiday_messages(booking) + blocked_messages(booking) + appointment_messages(booking)
+	refusals = blocked_messages(booking) + appointment_messages(booking)
 	refusals += [leave_message(leave) for leave in leaves if not leave.is_half_day]
 	warnings = [leave_message(leave) for leave in leaves if leave.is_half_day]
 	return refusals, warnings
@@ -131,12 +129,6 @@ def patient_clashes(booking, running):
 def allowed_to_overlap(practitioners):
 	filters = {"name": ["in", practitioners], "allow_overlapping_theatres": 1}
 	return set(frappe.get_all("Healthcare Practitioner", filters=filters, pluck="name"))
-
-
-def holiday_messages(booking):
-	if not is_holiday(theatre_holiday_list(booking.company), booking.scheduled_date):
-		return []
-	return [_("{0} is a theatre holiday").format(frappe.bold(format_date(booking.scheduled_date)))]
 
 
 def theatre_holiday_list(company):

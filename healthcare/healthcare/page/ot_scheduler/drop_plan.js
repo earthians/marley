@@ -35,7 +35,6 @@ export function planDrop({
 	length,
 	cleaning,
 	dayEnd,
-	holiday,
 	emergency,
 	pastUntil,
 }) {
@@ -47,7 +46,6 @@ export function planDrop({
 		start,
 		end,
 		pushes,
-		holiday,
 		emergency,
 		pastUntil,
 	});
@@ -61,18 +59,8 @@ export function planDrop({
 	};
 }
 
-function dropProblem({
-	cases,
-	blocks,
-	start,
-	end,
-	pushes,
-	holiday,
-	emergency,
-	pastUntil,
-}) {
+function dropProblem({ cases, blocks, start, end, pushes, emergency, pastUntil }) {
 	if (start < pastUntil) return "That time has passed";
-	if (holiday && !emergency) return `${holiday} is a theatre holiday`;
 	return findProblem({ cases, blocks, start, end, pushes, emergency });
 }
 

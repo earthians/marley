@@ -86,7 +86,6 @@ export function useDrop({
 			length: drag.length,
 			cleaning,
 			dayEnd: minutesOf(board.value.day_end),
-			holiday: fullHoliday(),
 			pastUntil: pastUntil(String(board.value.date)),
 			emergency: Boolean(
 				drag.request?.is_emergency || drag.booking?.is_emergency,
@@ -110,11 +109,6 @@ export function useDrop({
 			start: minutesOf(block.start_time),
 			end: minutesOf(block.end_time),
 		}));
-	}
-
-	function fullHoliday() {
-		const holiday = board.value.holiday;
-		return holiday && !holiday.is_half_day ? holiday.description : null;
 	}
 
 	function columnCases(theatre, leaving) {

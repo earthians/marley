@@ -124,14 +124,14 @@ class TestScheduling(HealthcareTestSuite):
 
 		self.assertIn("Laminar Flow OT", check_drop("book_request", params))
 
-	def test_checking_a_drop_on_a_holiday_says_so(self):
+	def test_checking_a_drop_on_a_holiday_finds_no_problem(self):
 		saved = frappe.db.get_single_value("Healthcare Settings", "ot_holiday_list")
 		frappe.db.set_single_value("Healthcare Settings", "ot_holiday_list", create_holiday_list(self.day))
 		self.addCleanup(frappe.db.set_single_value, "Healthcare Settings", "ot_holiday_list", saved)
 		request = create_service_request(self.patients[0], self.practitioners[0])
 		params = {"service_request": request.name, "theatre": self.theatre, "start": str(self.at(9))}
 
-		self.assertIn("theatre holiday", check_drop("book_request", params))
+		self.assertIsNone(check_drop("book_request", params))
 
 	def test_a_booked_request_is_not_listed(self):
 		request = create_service_request(self.patients[0], self.practitioners[0])
