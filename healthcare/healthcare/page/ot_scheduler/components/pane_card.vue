@@ -54,7 +54,7 @@ function formatDate(value) {
 									}}</span>
 									<BedIcon
 										v-if="row.inpatient_status"
-										class="ml-1 inline size-3.5 align-[-2px] text-ink-blue-5"
+										class="ms-1 inline size-3.5 align-[-2px] text-ink-blue-5"
 									/>
 								</span>
 								<Badge
@@ -95,7 +95,11 @@ function formatDate(value) {
 										: 'text-ink-gray-6'
 								"
 							>
-								Expected by {{ formatDate(row.expected_date) }}
+								{{
+									__("Expected by {0}", [
+										formatDate(row.expected_date),
+									])
+								}}
 							</p>
 						</div>
 					</template>
@@ -104,8 +108,8 @@ function formatDate(value) {
 			</div>
 			<button
 				class="flex size-7 shrink-0 items-center justify-center rounded-3 bg-surface-gray-2 text-ink-gray-6"
-				aria-label="Open"
-				title="Open"
+				:aria-label="__('Open')"
+				:title="__('Open')"
 				@click.stop="host.navigate?.(route)"
 				@mousedown.stop
 			>

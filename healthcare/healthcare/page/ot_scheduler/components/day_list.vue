@@ -2,7 +2,7 @@
 import { computed } from "vue";
 
 import BookingPreview from "./booking_preview.vue";
-import { clock } from "../time.js";
+import { clock, timeRange } from "../time.js";
 
 const props = defineProps({
 	board: { type: Object, required: true },
@@ -30,14 +30,14 @@ function heading(theatre) {
 }
 
 function time(booking) {
-	return `${clock(booking.scheduled_start)}–${clock(booking.scheduled_end)}`;
+	return timeRange(clock(booking.scheduled_start), clock(booking.scheduled_end));
 }
 </script>
 
 <template>
 	<div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
 		<p v-if="!theatres.length" class="p-8 text-center text-sm text-ink-gray-5">
-			No cases on this day
+			{{ __("No cases on this day") }}
 		</p>
 		<section
 			v-for="row in theatres"
@@ -50,7 +50,7 @@ function time(booking) {
 			<button
 				v-for="booking in row.cases"
 				:key="booking.name"
-				class="rounded-4 border border-outline-gray-2 text-left"
+				class="rounded-4 border border-outline-gray-2 text-start"
 				@click="emit('open', booking.name)"
 			>
 				<BookingPreview :booking="booking" :time="time(booking)" wide />

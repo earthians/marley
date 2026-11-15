@@ -1,4 +1,4 @@
-import { hourMinute } from "./time.js";
+import { hourMinute, timeRange } from "./time.js";
 
 export const SNAP_MINUTES = 15;
 // a first drop this close after the cases before it snaps to the end of their cleaning
@@ -60,15 +60,17 @@ export function planDrop({
 }
 
 function dropProblem({ cases, blocks, start, end, pushes, emergency, pastUntil }) {
-	if (start < pastUntil) return "That time has passed";
+	if (start < pastUntil) return __("That time has passed");
 	return findProblem({ cases, blocks, start, end, pushes, emergency });
 }
 
 function dropLabel({ blocks, start, end, pushes, dayEnd, emergency }) {
 	const lastEnd = Math.max(end, ...pushes.map(push => push.end));
-	const late = lastEnd > dayEnd ? `Runs past ${hourMinute(dayEnd)}` : "";
+	const late = lastEnd > dayEnd ? __("Runs past {0}", [hourMinute(dayEnd)]) : "";
 	const overBlock = emergency && blockedBy(blocks, [{ start, end }]);
-	const warning = overBlock ? `Emergency in blocked ${blockedText(overBlock)}` : "";
+	const warning = overBlock
+		? __("Emergency in blocked {0}", [blockedText(overBlock)])
+		: "";
 	return [result(start, end, pushes), late, warning].filter(Boolean).join(" · ");
 }
 
@@ -96,15 +98,16 @@ function findProblem({ cases, blocks, start, end, pushes, emergency }) {
 	const overlapped = cases.find(
 		item => item.start < start && item.end + item.cleaning > start,
 	);
-	if (overlapped) return `Overlaps ${overlapped.patient_name}`;
+	if (overlapped) return __("Overlaps {0}", [overlapped.patient_name]);
 	const underWay = pushes.find(push => UNDER_WAY.includes(push.status));
-	if (underWay) return `${underWay.patient_name} is under way and cannot be pushed`;
+	if (underWay)
+		return __("{0} is under way and cannot be pushed", [underWay.patient_name]);
 	const spans = [{ start, end, is_emergency: emergency }, ...pushes];
 	const blocked = blockedBy(
 		blocks,
 		spans.filter(span => !span.is_emergency),
 	);
-	return blocked ? `Theatre blocked ${blockedText(blocked)}` : "";
+	return blocked ? __("Theatre blocked {0}", [blockedText(blocked)]) : "";
 }
 
 function blockedBy(blocks, spans) {
@@ -114,10 +117,11 @@ function blockedBy(blocks, spans) {
 }
 
 function blockedText(block) {
-	return `${hourMinute(block.start)}–${hourMinute(block.end)}`;
+	return timeRange(hourMinute(block.start), hourMinute(block.end));
 }
 
 function result(start, end, pushes) {
-	if (!pushes.length) return `Fits ${hourMinute(start)}–${hourMinute(end)}`;
-	return `Pushes ${pushes.length} case(s) back by ${pushes[0].shift} min`;
+	if (!pushes.length)
+		return __("Fits {0}", [timeRange(hourMinute(start), hourMinute(end))]);
+	return __("Pushes {0} case(s) back by {1} min", [pushes.length, pushes[0].shift]);
 }

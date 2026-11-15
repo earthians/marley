@@ -21,7 +21,7 @@ function toastWarnings(messages) {
 	for (const entry of messages) {
 		const message = JSON.parse(entry);
 		if (!["orange", "yellow"].includes(message.indicator)) continue;
-		toast.warning(message.title || "Note", {
+		toast.warning(message.title || __("Note"), {
 			description: String(message.message).replace(/<[^>]+>/g, ""),
 			duration: 10000,
 		});

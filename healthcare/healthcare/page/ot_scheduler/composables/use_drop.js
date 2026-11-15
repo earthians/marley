@@ -155,12 +155,12 @@ export function useDrop({
 		if (drag.request) {
 			const booking = { service_request: drag.request.name, theatre, start };
 			if (landing.needsReason)
-				return askIfPossible("book_request", booking, "Add", true);
+				return askIfPossible("book_request", booking, __("Add"), true);
 			return change("book_request", booking, true);
 		}
 		const move = { name: drag.booking.name, theatre, start };
 		if (drag.booking.needs_reason || landing.needsReason)
-			return askIfPossible("move_booking", move, "Move", true);
+			return askIfPossible("move_booking", move, __("Move"), true);
 		change("move_booking", move, true);
 	}
 

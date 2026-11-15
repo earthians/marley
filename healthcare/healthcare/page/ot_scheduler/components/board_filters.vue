@@ -17,17 +17,17 @@ const practitioners = computed(() =>
 				booking.team_names[index],
 			]),
 		),
-		"All Practitioners",
+		__("All Practitioners"),
 	),
 );
 const patients = computed(() =>
 	choices(
 		props.board.bookings.map(booking => [booking.patient, booking.patient_name]),
-		"All Patients",
+		__("All Patients"),
 	),
 );
 const theatres = computed(() => [
-	{ label: "All Theatres", value: "" },
+	{ label: __("All Theatres"), value: "" },
 	...props.board.complexes.flatMap(group =>
 		group.theatres.map(row => ({ label: row.label, value: row.name })),
 	),
@@ -67,7 +67,7 @@ function clear() {
 			variant="ghost"
 			@click="clear"
 		>
-			Clear
+			{{ __("Clear") }}
 		</Button>
 	</div>
 </template>

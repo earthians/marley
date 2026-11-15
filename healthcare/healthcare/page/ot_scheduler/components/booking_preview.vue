@@ -1,5 +1,8 @@
 <script setup>
 import { Badge } from "frappe-ui";
+import BedIcon from "~icons/lucide/bed";
+import SeveralIcon from "~icons/lucide/copy";
+import FastingIcon from "~icons/lucide/utensils-crossed";
 
 import { inpatientText, patientFacts } from "../patient.js";
 
@@ -35,7 +38,9 @@ const STATUS_THEMES = {
 					}}
 				</p>
 			</div>
-			<Badge :theme="STATUS_THEMES[booking.status]">{{ booking.status }}</Badge>
+			<Badge :theme="STATUS_THEMES[booking.status]">{{
+				__(booking.status)
+			}}</Badge>
 		</div>
 		<ul class="text-ink-gray-8">
 			<li v-for="procedure in booking.procedures" :key="procedure">
@@ -44,37 +49,57 @@ const STATUS_THEMES = {
 		</ul>
 		<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
 			<template v-if="theatre">
-				<dt class="text-ink-gray-5">Theatre</dt>
+				<dt class="text-ink-gray-5">{{ __("Theatre") }}</dt>
 				<dd class="text-ink-gray-8">{{ theatre }}</dd>
 			</template>
 			<template v-if="time">
-				<dt class="text-ink-gray-5">Time</dt>
+				<dt class="text-ink-gray-5">{{ __("Time") }}</dt>
 				<dd class="text-ink-gray-8">{{ time }}</dd>
 			</template>
 			<template v-if="booking.inpatient_status">
-				<dt class="text-ink-gray-5">Inpatient</dt>
+				<dt class="flex items-center gap-1 text-ink-gray-5">
+					<BedIcon class="size-3.5 shrink-0 text-ink-blue-5" />
+					{{ __("Inpatient") }}
+				</dt>
 				<dd class="text-ink-gray-8">{{ inpatientText(booking) }}</dd>
 			</template>
-			<dt class="text-ink-gray-5">Surgeon</dt>
+			<dt class="text-ink-gray-5">{{ __("Surgeon") }}</dt>
 			<dd class="text-ink-gray-8">{{ booking.surgeon }}</dd>
 			<template v-if="booking.team_names?.length">
-				<dt class="text-ink-gray-5">Team</dt>
+				<dt class="text-ink-gray-5">{{ __("Team") }}</dt>
 				<dd class="text-ink-gray-8">{{ booking.team_names.join(", ") }}</dd>
 			</template>
-			<dt class="text-ink-gray-5">Priority</dt>
+			<dt class="text-ink-gray-5">{{ __("Priority") }}</dt>
 			<dd :class="booking.is_emergency ? 'text-ink-red-7' : 'text-ink-gray-8'">
 				{{ booking.priority_label }}
 			</dd>
 			<template v-if="booking.other_cases?.length">
-				<dt class="text-ink-gray-5">Also today</dt>
+				<dt class="flex items-center gap-1 text-ink-gray-5">
+					<SeveralIcon class="size-3.5 shrink-0 text-ink-amber-7" />
+					{{ __("Also today") }}
+				</dt>
 				<dd class="text-ink-amber-7">
 					<p v-for="other in booking.other_cases" :key="other">{{ other }}</p>
 				</dd>
 			</template>
 			<template v-if="'fasting_confirmed' in booking">
-				<dt class="text-ink-gray-5">Fasting</dt>
+				<dt class="flex items-center gap-1 text-ink-gray-5">
+					<FastingIcon
+						class="size-3.5 shrink-0"
+						:class="
+							booking.fasting_confirmed
+								? 'text-ink-green-6'
+								: 'text-ink-gray-4'
+						"
+					/>
+					{{ __("Fasting") }}
+				</dt>
 				<dd class="text-ink-gray-8">
-					{{ booking.fasting_confirmed ? "Confirmed" : "Not confirmed" }}
+					{{
+						booking.fasting_confirmed
+							? __("Confirmed")
+							: __("Not confirmed")
+					}}
 				</dd>
 			</template>
 		</dl>

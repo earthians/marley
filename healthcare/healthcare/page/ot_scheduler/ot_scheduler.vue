@@ -32,6 +32,7 @@ import {
 	pastUntil,
 	placed,
 	span,
+	timeRange,
 	today,
 } from "./time.js";
 
@@ -82,10 +83,11 @@ const auto = useAutoSchedule({
 const { plan: autoPlan } = auto;
 const autoSummary = computed(() => {
 	const { placed, not_placed } = autoPlan.value;
-	const missed = not_placed.length
-		? `, ${not_placed.length} could not be placed`
-		: "";
-	return `Auto Schedule: ${placed.length} planned${missed}`;
+	if (!not_placed.length) return __("Auto Schedule: {0} planned", [placed.length]);
+	return __("Auto Schedule: {0} planned, {1} could not be placed", [
+		placed.length,
+		not_placed.length,
+	]);
 });
 watch([day, company, department], auto.cancel);
 const tentativeCount = computed(() => countOf("Tentative"));
@@ -115,7 +117,7 @@ const nowLine = computed(() => (boardDay() === today() ? now.value : null));
 let clockTimer = null;
 
 onMounted(() => {
-	emit("title", "OT Scheduler");
+	emit("title", __("OT Scheduler"));
 	load();
 	clockTimer = setInterval(() => (now.value = minutesNow()), 60000);
 });
@@ -187,7 +189,7 @@ function isMovable(booking) {
 }
 
 function plannedGhost(row) {
-	const time = `${clock(row.scheduled_start)}–${clock(row.scheduled_end)}`;
+	const time = timeRange(clock(row.scheduled_start), clock(row.scheduled_end));
 	const label = `${row.patient_name} · ${row.procedures} · ${time}`;
 	return { ...caseOnDay(row, boardDay()), label, pushes: [], problem: null };
 }
@@ -263,16 +265,16 @@ function pickFromPane(pick, row, event) {
 			v-if="board?.away.length"
 			class="flex shrink-0 flex-wrap items-center gap-2 text-sm"
 		>
-			<span class="text-ink-gray-5">Away today</span>
+			<span class="text-ink-gray-5">{{ __("Away today") }}</span>
 			<Badge
 				v-for="row in board.away"
 				:key="`${row.practitioner} ${row.reason} ${row.from_time}`"
 				theme="gray"
 			>
 				{{ row.practitioner_name }} &middot; {{ row.reason }}
-				<template v-if="row.from_time"
-					>{{ clock(row.from_time) }}&ndash;{{ clock(row.to_time) }}</template
-				>
+				<template v-if="row.from_time">{{
+					timeRange(clock(row.from_time), clock(row.to_time))
+				}}</template>
 			</Badge>
 		</div>
 
@@ -292,14 +294,14 @@ function pickFromPane(pick, row, event) {
 				<span class="font-medium text-ink-gray-8">
 					{{ autoSummary }}
 				</span>
-				<Button class="ml-auto" @click="auto.cancel">Cancel</Button>
+				<Button class="ms-auto" @click="auto.cancel">{{ __("Cancel") }}</Button>
 				<Button
 					variant="solid"
 					:disabled="!autoPlan.placed.length"
 					:loading="auto.working.value"
 					@click="auto.book"
 				>
-					Book
+					{{ __("Book") }}
 				</Button>
 			</div>
 			<ul v-if="autoPlan.not_placed.length" class="text-xs text-ink-gray-6">
@@ -313,7 +315,7 @@ function pickFromPane(pick, row, event) {
 			<!-- not canEdit, which is false while a day loads and would make the board jump -->
 			<RequestPanel
 				v-if="board?.can_edit"
-				class="absolute inset-y-0 left-0 z-40 bg-surface-base shadow-xl lg:visible lg:static lg:z-auto lg:bg-transparent lg:shadow-none"
+				class="absolute inset-y-0 start-0 z-40 bg-surface-base shadow-xl lg:visible lg:static lg:z-auto lg:bg-transparent lg:shadow-none"
 				:class="!paneOpen && 'invisible'"
 				:requests="requests"
 				:postponed="postponed"
@@ -344,8 +346,11 @@ function pickFromPane(pick, row, event) {
 				v-if="board && !board.complexes.length"
 				class="p-8 text-center text-base text-ink-gray-5"
 			>
-				No operation theatres. Mark a Healthcare Service Unit Type as an OT to
-				see its units here.
+				{{
+					__(
+						"No operation theatres. Mark a Healthcare Service Unit Type as an OT to see its units here.",
+					)
+				}}
 			</p>
 
 			<div
@@ -356,7 +361,7 @@ function pickFromPane(pick, row, event) {
 			>
 				<div class="grid min-h-full w-max min-w-full" :style="boardGrid">
 					<div
-						class="sticky left-0 top-0 z-30 border-b border-outline-gray-2 bg-surface-base"
+						class="sticky start-0 top-0 z-30 border-b border-outline-gray-2 bg-surface-base"
 					/>
 					<HourScale />
 					<template v-for="group in board.complexes" :key="group.name">
@@ -365,7 +370,7 @@ function pickFromPane(pick, row, event) {
 							:key="theatre.name"
 						>
 							<div
-								class="sticky top-0 z-20 border-b border-l border-outline-gray-2 bg-surface-base p-2"
+								class="sticky top-0 z-20 border-b border-s border-outline-gray-2 bg-surface-base p-2"
 								@dragover.prevent="drag.dragOver(theatre.name, null)"
 								@drop.prevent="drag.drop(theatre.name)"
 							>
@@ -373,7 +378,7 @@ function pickFromPane(pick, row, event) {
 									class="truncate text-xs font-semibold text-ink-gray-7"
 									:class="index && 'invisible'"
 								>
-									{{ group.name || "Theatres" }}
+									{{ group.name || __("Theatres") }}
 								</p>
 								<p class="truncate text-base text-ink-gray-8">
 									{{ theatre.label }}
@@ -383,7 +388,7 @@ function pickFromPane(pick, row, event) {
 								</p>
 							</div>
 							<div
-								class="relative isolate grid overflow-hidden border-l border-outline-gray-1 px-1 [contain:inline-size]"
+								class="relative isolate grid overflow-hidden border-s border-outline-gray-1 px-1 [contain:inline-size]"
 								:class="[
 									dropTheatre === theatre.name && 'bg-surface-gray-1',
 									filters.theatreDimmed(theatre.name) && 'opacity-40',
@@ -487,18 +492,22 @@ function pickFromPane(pick, row, event) {
 
 		<Dialog
 			:open="Boolean(reasonFor)"
-			title="Reason for this change"
-			message="The list for this day is committed, so say why the case is changing."
+			:title="__('Reason for this change')"
+			:message="
+				__(
+					'The list for this day is committed, so say why the case is changing.',
+				)
+			"
 			:actions="[
 				{
-					label: reasonFor?.action || 'Save',
+					label: reasonFor?.action || __('Save'),
 					variant: 'solid',
 					onClick: actions.changeWithReason,
 				},
 			]"
 			@update:open="open => !open && (reasonFor = null)"
 		>
-			<FormControl v-model="reason" type="textarea" placeholder="Reason" />
+			<FormControl v-model="reason" type="textarea" :placeholder="__('Reason')" />
 		</Dialog>
 	</div>
 </template>

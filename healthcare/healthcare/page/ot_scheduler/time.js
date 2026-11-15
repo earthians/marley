@@ -51,6 +51,11 @@ export function clock(value) {
 	return hourMinute(minutesOf(value));
 }
 
+// left-to-right isolate marks, so a right-to-left page does not reverse "06:00–09:00"
+export function timeRange(first, last) {
+	return `\u2066${first}–${last}\u2069`;
+}
+
 export function hourMinute(minutes) {
 	return `${twoDigits(Math.floor(minutes / 60))}:${twoDigits(minutes % 60)}`;
 }

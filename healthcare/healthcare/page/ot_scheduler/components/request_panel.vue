@@ -79,9 +79,9 @@ function daysBetween(first, last) {
 }
 
 function dateLabel(date) {
-	if (date === NO_DATE) return date;
+	if (date === NO_DATE) return __("No Expected By date");
 	const formatted = host.format?.(date, { fieldtype: "Date" }) ?? date;
-	return date === today() ? `${formatted} (Today)` : formatted;
+	return date === today() ? __("{0} (Today)", [formatted]) : formatted;
 }
 
 function isOpen(date) {
@@ -147,15 +147,15 @@ function duration(seconds) {
 	const total = Math.round((seconds || 0) / 60);
 	const hours = Math.floor(total / 60);
 	const minutes = total % 60;
-	return [hours && `${hours}h`, (minutes || !hours) && `${minutes}m`]
+	return [hours && __("{0}h", [hours]), (minutes || !hours) && __("{0}m", [minutes])]
 		.filter(Boolean)
 		.join(" ");
 }
 
 function ordered(request) {
-	return `Ordered ${
-		host.format?.(request.order_date, { fieldtype: "Date" }) ?? request.order_date
-	}`;
+	const date =
+		host.format?.(request.order_date, { fieldtype: "Date" }) ?? request.order_date;
+	return __("Ordered {0}", [date]);
 }
 
 function requestPreview(request) {
@@ -189,15 +189,19 @@ function drop() {
 			class="rounded-4 p-3 text-center text-sm text-ink-gray-6"
 			:class="over ? 'bg-surface-gray-3' : 'bg-surface-gray-1'"
 		>
-			Drop here to reschedule the case
+			{{ __("Drop here to reschedule the case") }}
 		</p>
 		<FormControl
 			v-model="search"
-			:placeholder="`Search ${cards.length} to schedule`"
+			:placeholder="__('Search {0} to schedule', [cards.length])"
 		/>
 		<div class="flex flex-col gap-2 overflow-y-auto" @scroll="previewFor = null">
 			<p v-if="!cards.length" class="p-4 text-center text-sm text-ink-gray-5">
-				{{ search ? "Nothing matches" : "Every surgical request is booked" }}
+				{{
+					search
+						? __("Nothing matches")
+						: __("Every surgical request is booked")
+				}}
 			</p>
 			<section
 				v-for="group in groups"
@@ -205,12 +209,14 @@ function drop() {
 				class="flex flex-col gap-2"
 			>
 				<button
-					class="flex items-center gap-1 text-left text-sm font-medium text-ink-gray-6"
+					class="flex items-center gap-1 text-start text-sm font-medium text-ink-gray-6"
 					@click="toggle(group.date)"
 				>
 					<ChevronIcon
 						class="size-4 shrink-0 transition-transform"
-						:class="{ 'rotate-90': isOpen(group.date) }"
+						:class="
+							isOpen(group.date) ? 'rotate-90' : '[&:dir(rtl)]:rotate-180'
+						"
 					/>
 					<span class="flex-1">{{ group.label }}</span>
 					<span class="text-ink-gray-5">({{ group.cards.length }})</span>

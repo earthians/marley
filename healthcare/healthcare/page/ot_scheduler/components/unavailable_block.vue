@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { Button, HoverCard } from "frappe-ui";
 import { useHost } from "@framework/ui/island";
 
-import { clock } from "../time.js";
+import { clock, timeRange } from "../time.js";
 
 const props = defineProps({
 	block: { type: Object, required: true },
@@ -13,15 +13,15 @@ const props = defineProps({
 const emit = defineEmits(["update:open", "view"]);
 const host = useHost();
 
-const why = computed(() => props.block.reason || "Unavailable");
+const why = computed(() => props.block.reason || __("Unavailable"));
 const hasDetails = computed(() => props.block.reason || props.block.note);
-const time = computed(
-	() => `${clock(props.block.start_time)}–${clock(props.block.end_time)}`,
+const time = computed(() =>
+	timeRange(clock(props.block.start_time), clock(props.block.end_time)),
 );
 const days = computed(() => {
 	const { start_date, end_date } = props.block;
 	if (start_date === end_date) return formatDate(start_date);
-	return `${formatDate(start_date)} to ${formatDate(end_date)}`;
+	return __("{0} to {1}", [formatDate(start_date), formatDate(end_date)]);
 });
 
 function formatDate(value) {
@@ -52,12 +52,12 @@ function formatDate(value) {
 		<div class="flex w-72 flex-col gap-2 p-3 text-sm">
 			<p class="font-medium text-ink-gray-9">{{ why }}</p>
 			<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-				<dt class="text-ink-gray-5">Time</dt>
+				<dt class="text-ink-gray-5">{{ __("Time") }}</dt>
 				<dd class="text-ink-gray-8">{{ time }}</dd>
-				<dt class="text-ink-gray-5">Days</dt>
+				<dt class="text-ink-gray-5">{{ __("Days") }}</dt>
 				<dd class="text-ink-gray-8">{{ days }}</dd>
 				<template v-if="block.note">
-					<dt class="text-ink-gray-5">Note</dt>
+					<dt class="text-ink-gray-5">{{ __("Note") }}</dt>
 					<dd class="whitespace-pre-line text-ink-gray-8">
 						{{ block.note }}
 					</dd>
@@ -65,7 +65,9 @@ function formatDate(value) {
 			</dl>
 			<div class="flex items-center justify-between gap-2">
 				<p class="truncate text-xs text-ink-gray-5">{{ block.title }}</p>
-				<Button size="sm" @click="emit('view', block.name)">View</Button>
+				<Button size="sm" @click="emit('view', block.name)">{{
+					__("View")
+				}}</Button>
 			</div>
 		</div>
 	</HoverCard>

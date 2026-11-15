@@ -47,7 +47,7 @@ export function useCaseActions({ canEdit, reload, open }) {
 	function reschedule(booking, dropped = false) {
 		const params = statusParams(booking, "Postponed");
 		if (booking.needs_reason)
-			return askIfPossible("set_status", params, "Reschedule", dropped);
+			return askIfPossible("set_status", params, __("Reschedule"), dropped);
 		change("set_status", params, dropped);
 	}
 
@@ -61,7 +61,7 @@ export function useCaseActions({ canEdit, reload, open }) {
 	async function createProcedures(booking) {
 		const created = await change("create_procedures", { name: booking.name });
 		if (created?.length)
-			toastSuccess(`Created ${created.length} Clinical Procedure(s)`);
+			toastSuccess(__("Created {0} Clinical Procedure(s)", [created.length]));
 	}
 
 	function menuOf(booking) {

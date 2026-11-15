@@ -10,22 +10,22 @@ export function dayActions({
 	autoSchedule,
 	...day
 }) {
-	const viewing = [{ label: "View as Report", onClick: report }];
+	const viewing = [{ label: __("View as Report"), onClick: report }];
 	if (!editable) return viewing;
-	const actions = [{ label: "New OT Booking", onClick: newBooking }, ...viewing];
+	const actions = [{ label: __("New OT Booking"), onClick: newBooking }, ...viewing];
 	if (shownDay > today())
 		actions.push({
-			label: "Auto Schedule",
+			label: __("Auto Schedule"),
 			onClick: () => confirmAutoSchedule({ count, autoSchedule, ...day }),
 		});
 	if (shownDay >= today() && count)
 		actions.push({
-			label: "Start Over",
+			label: __("Start Over"),
 			onClick: () => confirmStartOver({ count, ...day }),
 		});
 	if (count)
 		actions.push({
-			label: `Publish ${count} case(s)`,
+			label: __("Publish {0} case(s)", [count]),
 			onClick: () => confirmPublish({ count, ...day }),
 		});
 	return actions;
@@ -35,9 +35,10 @@ function confirmPublish({ count, day, company, department, filters, host, reload
 	const date = host.format?.(day, { fieldtype: "Date" }) ?? day;
 	const shown = company + (department ? `, ${department}` : "");
 	window.frappe.confirm(
-		`Publish ${count} Tentative case(s) on ${date} for ${shown}? They become Scheduled, their ` +
-			"Clinical Procedures are created and the ward gets their fasting tasks. Moving or " +
-			"cancelling them after this needs a reason.",
+		__(
+			"Publish {0} Tentative case(s) on {1} for {2}? They become Scheduled, their Clinical Procedures are created and the ward gets their fasting tasks. Moving or cancelling them after this needs a reason.",
+			[count, date, shown],
+		),
 		() => publish(day, filters, reload),
 	);
 }
@@ -47,7 +48,7 @@ function publish(day, filters, reload) {
 		"publish_day",
 		{ date: day, ...filters },
 		"published",
-		"Published",
+		done => __("Published {0} case(s)", [done]),
 		reload,
 	);
 }
@@ -56,9 +57,10 @@ function confirmAutoSchedule({ count, autoSchedule, day, host }) {
 	if (!count) return autoSchedule();
 	const date = host.format?.(day, { fieldtype: "Date" }) ?? day;
 	window.frappe.confirm(
-		`The ${count} Tentative case(s) on ${date} will be cleared and planned again with the ` +
-			"waiting cases. Any that do not fit go back to To schedule once you book the plan. " +
-			"Published cases stay where they are. Continue?",
+		__(
+			"The {0} Tentative case(s) on {1} will be cleared and planned again with the waiting cases. Any that do not fit go back to To schedule once you book the plan. Published cases stay where they are. Continue?",
+			[count, date],
+		),
 		autoSchedule,
 	);
 }
@@ -67,24 +69,25 @@ function confirmStartOver({ count, day, company, department, filters, host, relo
 	const date = host.format?.(day, { fieldtype: "Date" }) ?? day;
 	const shown = company + (department ? `, ${department}` : "");
 	window.frappe.confirm(
-		`Send the ${count} Tentative case(s) on ${date} for ${shown} back to To reschedule? ` +
-			"Published cases stay where they are.",
+		__(
+			"Send the {0} Tentative case(s) on {1} for {2} back to To schedule? Published cases stay where they are.",
+			[count, date, shown],
+		),
 		() =>
 			dayChange(
 				"start_over_day",
 				{ date: day, ...filters },
 				"moved",
-				"Moved back",
+				done => __("Moved back {0} case(s)", [done]),
 				reload,
 			),
 	);
 }
 
-async function dayChange(method, params, doneKey, doneLabel, reload) {
+async function dayChange(method, params, doneKey, doneText, reload) {
 	try {
 		const result = await post(`publishing.${method}`, params);
-		if (result[doneKey].length)
-			toastSuccess(`${doneLabel} ${result[doneKey].length} case(s)`);
+		if (result[doneKey].length) toastSuccess(doneText(result[doneKey].length));
 		for (const row of result.failed)
 			toastError(`${row.patient_name || row.name}: ${row.message}`);
 	} catch (error) {

@@ -12,7 +12,7 @@ export function useAutoSchedule({ filters, boardFilters, reload }) {
 			const params = { date: day, ...filters(), board_filters: boardFilters() };
 			plan.value = { day, ...(await post("auto_schedule.plan_day", params)) };
 			if (!plan.value.placed.length && !plan.value.not_placed.length)
-				toastSuccess("Nothing is waiting to be scheduled on this day");
+				toastSuccess(__("Nothing is waiting to be scheduled on this day"));
 		} catch (error) {
 			showError(error);
 		}
@@ -35,7 +35,7 @@ export function useAutoSchedule({ filters, boardFilters, reload }) {
 
 	function report(result) {
 		if (result.placed.length)
-			toastSuccess(`Booked ${result.placed.length} case(s)`);
+			toastSuccess(__("Booked {0} case(s)", [result.placed.length]));
 		for (const row of result.not_placed)
 			toastError(`${row.patient_name || row.name}: ${row.reason}`);
 	}

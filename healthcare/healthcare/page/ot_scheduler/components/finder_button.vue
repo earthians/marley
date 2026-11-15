@@ -9,8 +9,8 @@ const emit = defineEmits(["click"]);
 	<button
 		class="flex size-7 shrink-0 items-center justify-center rounded-3 text-ink-blue-3"
 		:class="open ? 'bg-surface-blue-2' : 'bg-surface-gray-2'"
-		aria-label="Find slots"
-		title="Find slots"
+		:aria-label="__('Find slots')"
+		:title="__('Find slots')"
 		@click.stop="emit('click')"
 		@mousedown.stop
 	>

@@ -9,7 +9,7 @@ import BookingPreview from "./booking_preview.vue";
 import { caseBorder, caseFill } from "../case_style.js";
 import OtherCases from "./other_cases.vue";
 import { inpatientText, patientFacts } from "../patient.js";
-import { clock } from "../time.js";
+import { clock, timeRange } from "../time.js";
 
 defineProps({
 	booking: { type: Object, required: true },
@@ -33,7 +33,7 @@ const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop
 		class="ot-hatch bg-surface-gray-1"
 		:class="[dimmed && 'opacity-30', caseBorder(booking), 'rounded-b-4 border-t-0']"
 		:style="cleaningPlace"
-		title="Cleaning"
+		:title="__('Cleaning')"
 	/>
 	<ContextMenu
 		:options="menuOptions"
@@ -42,7 +42,7 @@ const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop
 	>
 		<template #default="{ setOpen }">
 			<button
-				class="overflow-hidden px-2 py-1 text-left"
+				class="overflow-hidden px-2 py-1 text-start"
 				:class="[
 					dimmed && 'opacity-30',
 					caseBorder(booking),
@@ -75,17 +75,6 @@ const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop
 										{{ patientFacts(booking) }}
 									</span>
 								</p>
-								<OtherCases :cases="booking.other_cases" />
-								<BedIcon
-									v-if="booking.inpatient_status"
-									class="size-3.5 shrink-0 text-ink-blue-5"
-									:title="inpatientText(booking)"
-								/>
-								<LockIcon
-									v-if="passed"
-									class="size-3.5 shrink-0 text-ink-gray-5"
-									title="Its time has passed: reschedule or cancel it"
-								/>
 								<FastingIcon
 									class="size-3.5 shrink-0"
 									:class="
@@ -95,14 +84,32 @@ const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop
 									"
 									:title="
 										booking.fasting_confirmed
-											? 'Fasting confirmed'
-											: 'Fasting not confirmed'
+											? __('Fasting confirmed')
+											: __('Fasting not confirmed')
+									"
+								/>
+								<OtherCases :cases="booking.other_cases" />
+								<BedIcon
+									v-if="booking.inpatient_status"
+									class="size-3.5 shrink-0 text-ink-blue-5"
+									:title="inpatientText(booking)"
+								/>
+								<LockIcon
+									v-if="passed"
+									class="size-3.5 shrink-0 text-ink-gray-5"
+									:title="
+										__(
+											'Its time has passed: reschedule or cancel it',
+										)
 									"
 								/>
 							</div>
 							<p class="truncate text-xs text-ink-gray-6">
-								{{ clock(booking.scheduled_start) }}&ndash;{{
-									clock(booking.scheduled_end)
+								{{
+									timeRange(
+										clock(booking.scheduled_start),
+										clock(booking.scheduled_end),
+									)
 								}}
 							</p>
 							<p class="truncate text-xs text-ink-gray-6">
@@ -113,9 +120,12 @@ const emit = defineEmits(["update:menuOpen", "update:previewOpen", "pick", "drop
 					<BookingPreview
 						:booking="booking"
 						:theatre="theatreLabel"
-						:time="`${clock(booking.scheduled_start)}–${clock(
-							booking.scheduled_end,
-						)}`"
+						:time="
+							timeRange(
+								clock(booking.scheduled_start),
+								clock(booking.scheduled_end),
+							)
+						"
 					/>
 				</HoverCard>
 			</button>

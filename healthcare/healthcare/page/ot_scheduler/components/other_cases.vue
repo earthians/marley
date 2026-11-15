@@ -10,6 +10,6 @@ defineProps({
 	<SeveralIcon
 		v-if="cases?.length"
 		class="size-3.5 shrink-0 text-ink-amber-7"
-		:title="`${cases.length + 1} cases today. Also: ${cases.join(', ')}`"
+		:title="__('{0} cases today. Also: {1}', [cases.length + 1, cases.join(', ')])"
 	/>
 </template>

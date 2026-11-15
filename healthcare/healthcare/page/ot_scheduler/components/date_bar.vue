@@ -38,34 +38,36 @@ function moveDay(days) {
 					v-model="department"
 					type="select"
 					:options="[
-						{ label: 'All Departments', value: '' },
+						{ label: __('All Departments'), value: '' },
 						...board.departments,
 					]"
 				/>
 			</div>
 			<slot />
 			<span
-				class="ml-auto rounded-full bg-surface-yellow-2 px-2.5 py-1 text-sm font-medium text-ink-yellow-8"
-				title="In beta: tell us what works and what does not"
+				class="ms-auto rounded-full bg-surface-yellow-2 px-2.5 py-1 text-sm font-medium text-ink-yellow-8"
+				:title="__('In beta: tell us what works and what does not')"
 			>
-				Experimental
+				{{ __("Experimental") }}
 			</span>
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
-			<Button @click="moveDay(-1)">Previous</Button>
-			<Button @click="day = today()">Today</Button>
-			<Button @click="moveDay(1)">Next</Button>
+			<Button @click="moveDay(-1)">{{ __("Previous") }}</Button>
+			<Button @click="day = today()">{{ __("Today") }}</Button>
+			<Button @click="moveDay(1)">{{ __("Next") }}</Button>
 			<DatePicker v-model="day" format="ddd, D MMM YYYY" class="w-44" />
 			<Badge
 				v-if="board?.holiday"
 				:theme="board.holiday.is_half_day ? 'amber' : 'red'"
 				size="lg"
 			>
-				{{ board.holiday.is_half_day ? "Half-day holiday" : "Holiday" }}:
+				{{
+					board.holiday.is_half_day ? __("Half-day holiday") : __("Holiday")
+				}}:
 				{{ board.holiday.description }}
 			</Badge>
 			<Button class="lg:hidden" @click="filtersOpen = !filtersOpen">
-				Filters{{ filterCount ? ` (${filterCount})` : "" }}
+				{{ __("Filters") }}{{ filterCount ? ` (${filterCount})` : "" }}
 			</Button>
 			<slot name="actions" />
 		</div>
