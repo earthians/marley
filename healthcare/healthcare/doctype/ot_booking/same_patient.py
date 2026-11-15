@@ -12,7 +12,7 @@ from healthcare.healthcare.doctype.ot_booking.day_rules import is_placed
 def other_cases(patient, day, name=None):
 	return frappe.get_list(
 		"OT Booking",
-		fields=["name", "theatre", "scheduled_start", "scheduled_end"],
+		fields=["name", "theatre", "scheduled_start", "scheduled_end", "cleaning_minutes"],
 		filters={
 			"patient": patient,
 			"scheduled_date": day,

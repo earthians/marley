@@ -1,10 +1,23 @@
 import { post, showError, toastError, toastSuccess } from "./api.js";
 import { today } from "./time.js";
 
-export function dayActions({ editable, count, shownDay, newBooking, report, ...day }) {
+export function dayActions({
+	editable,
+	count,
+	shownDay,
+	newBooking,
+	report,
+	autoSchedule,
+	...day
+}) {
 	const viewing = [{ label: "View as Report", onClick: report }];
 	if (!editable) return viewing;
 	const actions = [{ label: "New OT Booking", onClick: newBooking }, ...viewing];
+	if (shownDay > today())
+		actions.push({
+			label: "Auto Schedule",
+			onClick: () => confirmAutoSchedule({ count, autoSchedule, ...day }),
+		});
 	if (shownDay >= today() && count)
 		actions.push({
 			label: "Start Over",
@@ -36,6 +49,17 @@ function publish(day, filters, reload) {
 		"published",
 		"Published",
 		reload,
+	);
+}
+
+function confirmAutoSchedule({ count, autoSchedule, day, host }) {
+	if (!count) return autoSchedule();
+	const date = host.format?.(day, { fieldtype: "Date" }) ?? day;
+	window.frappe.confirm(
+		`The ${count} Tentative case(s) on ${date} will be cleared and planned again with the ` +
+			"waiting cases. Any that do not fit go back to To schedule once you book the plan. " +
+			"Published cases stay where they are. Continue?",
+		autoSchedule,
 	);
 }
 

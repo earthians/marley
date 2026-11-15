@@ -18,6 +18,7 @@ import { useBoardFilters } from "./composables/use_board_filters.js";
 import { useBoardLoad } from "./composables/use_board_load.js";
 import { useCaseActions } from "./composables/use_case_actions.js";
 import { useDrop } from "./composables/use_drop.js";
+import { useAutoSchedule } from "./composables/use_auto_schedule.js";
 import { useSlots } from "./composables/use_slots.js";
 import { dayActions } from "./publish.js";
 import {
@@ -73,6 +74,20 @@ const { dragged, dropTheatre, plan } = drag;
 const slots = useSlots({ day, filters: boardFilters, change: actions.change });
 const { finder, picked } = slots;
 watch([company, department], slots.close);
+const auto = useAutoSchedule({
+	filters: boardFilters,
+	boardFilters: filters.sheetFilters,
+	reload: load,
+});
+const { plan: autoPlan } = auto;
+const autoSummary = computed(() => {
+	const { placed, not_placed } = autoPlan.value;
+	const missed = not_placed.length
+		? `, ${not_placed.length} could not be placed`
+		: "";
+	return `Auto Schedule: ${placed.length} planned${missed}`;
+});
+watch([day, company, department], auto.cancel);
 const tentativeCount = computed(() => countOf("Tentative"));
 const paneOpen = ref(false);
 const filterCount = computed(
@@ -123,11 +138,20 @@ function sendActions([count, editable, shownDay]) {
 		department: department.value,
 	};
 	const context = { ...day, filters: boardFilters(), host, reload: load };
+	const autoSchedule = () => auto.run(shownDay);
 	const newBooking = () => host.navigate?.("ot-booking/new");
 	const report = () => openDaySchedule();
 	emit(
 		"actions",
-		dayActions({ editable, count, shownDay, newBooking, report, ...context }),
+		dayActions({
+			editable,
+			count,
+			shownDay,
+			newBooking,
+			report,
+			autoSchedule,
+			...context,
+		}),
 	);
 }
 
@@ -162,8 +186,16 @@ function isMovable(booking) {
 	);
 }
 
+function plannedGhost(row) {
+	const time = `${clock(row.scheduled_start)}–${clock(row.scheduled_end)}`;
+	const label = `${row.patient_name} · ${row.procedures} · ${time}`;
+	return { ...caseOnDay(row, boardDay()), label, pushes: [], problem: null };
+}
+
 function bookingsIn(theatre) {
-	return board.value.bookings.filter(booking => booking.theatre === theatre);
+	return board.value.bookings.filter(
+		booking => booking.theatre === theatre && !auto.isLifted(booking.name),
+	);
 }
 
 function blocksIn(theatre) {
@@ -251,6 +283,31 @@ function pickFromPane(pick, row, event) {
 			:hidden="filters.caseDimmed"
 			@open="openBooking"
 		/>
+
+		<div
+			v-if="autoPlan"
+			class="flex shrink-0 flex-col gap-2 rounded-4 bg-surface-gray-2 p-3 text-sm"
+		>
+			<div class="flex flex-wrap items-center gap-2">
+				<span class="font-medium text-ink-gray-8">
+					{{ autoSummary }}
+				</span>
+				<Button class="ml-auto" @click="auto.cancel">Cancel</Button>
+				<Button
+					variant="solid"
+					:disabled="!autoPlan.placed.length"
+					:loading="auto.working.value"
+					@click="auto.book"
+				>
+					Book
+				</Button>
+			</div>
+			<ul v-if="autoPlan.not_placed.length" class="text-xs text-ink-gray-6">
+				<li v-for="row in autoPlan.not_placed" :key="row.name">
+					{{ row.patient_name }} ({{ row.procedures }}): {{ row.reason }}
+				</li>
+			</ul>
+		</div>
 
 		<div class="relative hidden min-h-0 flex-1 gap-3 md:flex">
 			<!-- not canEdit, which is false while a day loads and would make the board jump -->
@@ -397,6 +454,11 @@ function pickFromPane(pick, row, event) {
 								<DropGhost
 									v-if="plan && dropTheatre === theatre.name"
 									:plan="plan"
+								/>
+								<DropGhost
+									v-for="row in auto.plannedIn(theatre.name)"
+									:key="row.name"
+									:plan="plannedGhost(row)"
 								/>
 								<SlotHighlight
 									v-if="slots.slotIn(theatre.name)"
