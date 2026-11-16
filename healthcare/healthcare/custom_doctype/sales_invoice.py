@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import flt
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
@@ -13,23 +14,9 @@ class HealthcareSalesInvoice(SalesInvoice):
 			price_list, price_list_currency = frappe.db.get_values(
 				"Price List", {"selling": 1}, ["name", "currency"]
 			)[0]
-<<<<<<< HEAD
-			args = {
-				"doctype": "Sales Invoice",
-				"item_code": checked_item["item"],
-				"company": self.company,
-				"customer": frappe.db.get_value("Patient", self.patient, "customer"),
-				"selling_price_list": self.selling_price_list or price_list,
-				"price_list_currency": self.currency or price_list_currency,
-				"plc_conversion_rate": 1.0,
-				"conversion_rate": 1.0,
-			}
-			item_details = get_item_details(args)
-			item_line.item_code = checked_item["item"]
-=======
 			stock_uom = frappe.db.get_value("Item", checked_item.get("item"), "stock_uom")
 			requested_qty = flt(checked_item.get("qty")) or 1
-			ctx: ItemDetailsCtx = ItemDetailsCtx(
+			ctx = frappe._dict(
 				{
 					"doctype": "Sales Invoice",
 					"item_code": checked_item.get("item"),
@@ -46,7 +33,6 @@ class HealthcareSalesInvoice(SalesInvoice):
 			)
 			item_details = get_item_details(ctx)
 			item_line.item_code = checked_item.get("item")
->>>>>>> 149f17a (fix(healthcare): pass uom and qty to healthcare service price lookup)
 			item_line.qty = 1
 			if checked_item["qty"]:
 				item_line.qty = checked_item["qty"]
