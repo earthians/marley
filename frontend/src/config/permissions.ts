@@ -381,6 +381,21 @@ export function isReceptionRole(roles: string[] | undefined): boolean {
   return hasExactRole(roles, ['Reception']) || roleMatches(roles, (r) => r.includes('reception'))
 }
 
+/**
+ * May set the approval window (Valid From / Valid To / Approval Validity Days) on
+ * an Insurance Patient Register.
+ *
+ * The window drives expiry and visit checks, so it belongs to the Insurance team —
+ * the roles that can open /insurance (plus admins). Reception keeps the register
+ * card and may edit the rest of it, but not these fields. Must match
+ * `healthcare.api.common.user_can_set_insurance_register_validity`.
+ */
+export function canSetInsuranceRegisterValidity(roles: string[] | undefined): boolean {
+  if (!roles?.length) return false
+  if (isAdmin(roles)) return true
+  return roleMatches(roles, (r) => r.includes('insurance'))
+}
+
 /** May allocate patient advance credit against outstanding Sales Invoices. */
 export function canReconcileInvoiceAdvances(roles: string[] | undefined): boolean {
   if (!roles?.length) return false

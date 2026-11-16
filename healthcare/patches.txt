@@ -56,3 +56,5 @@ healthcare.patches.v16_0.backfill_package_detail_from_sales_orders
 healthcare.patches.v16_0.backfill_inpatient_admission_practitioner_names
 healthcare.patches.v16_0.migrate_plan_item_dosage_form_to_pharmaceutical_form
 healthcare.patches.v16_0.fix_quotation_additional_services_position
+
+healthcare.patches.v16_0.mark_legacy_insurance_patient_registers

@@ -587,6 +587,9 @@ def create_patient(data):
 		"patient_name": patient.patient_name,
 		"file_no": patient.file_no or patient.name,
 	}
+	insurance_register = _ensure_insurance_register_for_patient(patient, data)
+	if insurance_register:
+		result["insurance_register"] = insurance_register
 	charge_file_no = data.get("charge_file_no")
 	if charge_file_no is None:
 		charge_file_no = 1
@@ -777,6 +780,73 @@ def _apply_patient_insurance_coverages(patient, data, *, replace=False):
 		)
 
 	_sync_patient_primary_insurance_fields(patient)
+
+
+def _ensure_insurance_register_for_patient(patient, data):
+	"""Create + link an Insurance Patient Register for a newly registered insured patient.
+
+	Registration only records the payer; approvals, the validity window, and the
+	visit allowance live on the register, so an insured patient without one cannot
+	be claimed. Creating the register up front keeps the patient claimable — the
+	portal then shows an "Add validity days" reminder on it until Valid From /
+	Valid To are filled in.
+
+	Returns the register name, or ``None`` when the patient is not insured (or the
+	payer is missing). Failures never block patient creation.
+	"""
+	if not cint(patient.get("is_insurance")):
+		return None
+
+	try:
+		chosen_register = (data.get("insurance_register") or "").strip()
+		if chosen_register and frappe.db.exists("Insurance Patient Register", chosen_register):
+			# A register was picked in the form — make sure the link is two-way.
+			if frappe.db.get_value(
+				"Insurance Patient Register", chosen_register, "patient"
+			) != patient.name:
+				from healthcare.api.common import _sync_patient_with_insurance_register
+
+				_sync_patient_with_insurance_register(chosen_register, patient.name)
+			return chosen_register
+
+		existing_register = frappe.db.get_value(
+			"Insurance Patient Register", {"patient": patient.name}, "name"
+		)
+		if existing_register:
+			return existing_register
+
+		provider = (patient.get("insurance") or "").strip()
+		if not provider or not frappe.db.exists("Health Insurance", provider):
+			return None
+
+		register = frappe.get_doc({
+			"doctype": "Insurance Patient Register",
+			"full_name": patient.patient_name or patient.name,
+			"national_id_cpr_no": patient.get("id_number") or None,
+			"insurance_provider": provider,
+			"status": "Active",
+			"posting_date": frappe.utils.nowdate(),
+			"patient": patient.name,
+		})
+		register.flags.ignore_permissions = True
+		register.insert(ignore_permissions=True)
+
+		frappe.db.set_value(
+			"Patient", patient.name, "insurance_register", register.name, update_modified=False
+		)
+		primary_cover = _resolve_primary_patient_insurance(patient)
+		if primary_cover and primary_cover.get("name"):
+			frappe.db.set_value(
+				"Patient Insurance Cover",
+				primary_cover.name,
+				"insurance_register",
+				register.name,
+				update_modified=False,
+			)
+		return register.name
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), f"Auto insurance register failed for {patient.name}")
+		return None
 
 
 def _apply_patient_relations(patient, data, *, replace=False):
@@ -1135,11 +1205,16 @@ def update_patient(patient, data):
 
 	doc.save(ignore_permissions=True)
 
-	return {
+	insurance_register = _ensure_insurance_register_for_patient(doc, data)
+
+	result = {
 		"name": doc.name,
 		"patient_name": doc.patient_name,
 		"file_no": getattr(doc, "file_no", None) or doc.name,
 	}
+	if insurance_register:
+		result["insurance_register"] = insurance_register
+	return result
 
 
 @frappe.whitelist()

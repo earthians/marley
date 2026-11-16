@@ -6,6 +6,49 @@ from frappe.utils import cint, flt, getdate, nowdate, today
 
 TRICARE = "TRICARE"
 
+# Sales Invoice healthcare references that identify an Inpatient / Outpatient case.
+IP_REFERENCE_VALUES = ("Inpatient Admission", "Discharge", "IP Service")
+OP_REFERENCE_VALUES = ("Patient Visit",)
+
+
+def infer_ip_op_source(invoice_names=None, service_types=None) -> str | None:
+    """Infer the claim-level IP / OP Source (``IP``, ``OP`` or ``PH``).
+
+    Priority order:
+    1. The healthcare reference on the linked Sales Invoice(s) — an
+       ``Inpatient Admission`` / ``Discharge`` reference means ``IP`` and a
+       ``Patient Visit`` reference means ``OP``.
+    2. When every claim line shares one service type, use that type.
+    """
+    for invoice in invoice_names or []:
+        name = (invoice or "").strip()
+        if not name:
+            continue
+        ref_type, base_ref = frappe.db.get_value(
+            "Sales Invoice", name, ["custom_reference_type", "custom_base_reference"]
+        ) or (None, None)
+        if ref_type in IP_REFERENCE_VALUES:
+            return "IP"
+        if ref_type in OP_REFERENCE_VALUES:
+            return "OP"
+        # Some billing flows leave custom_reference_type blank but still set the
+        # base reference to the case document.
+        if base_ref in IP_REFERENCE_VALUES:
+            return "IP"
+        if base_ref in OP_REFERENCE_VALUES:
+            return "OP"
+
+    normalized = {
+        (value or "").strip().upper() for value in service_types or [] if (value or "").strip()
+    }
+    if len(normalized) == 1:
+        only = normalized.pop()
+        if only == "PHARMACY":
+            return "PH"
+        if only in ("IP", "OP", "PH"):
+            return only
+    return None
+
 
 @frappe.whitelist()
 def create_insurance_claim_from_invoice(sales_invoice: str) -> str:
@@ -50,13 +93,9 @@ def create_insurance_claim_from_invoice(sales_invoice: str) -> str:
     total_patient_liability = 0.0
     total_qty = 0.0
 
-    # Try to infer OP/IP from custom reference on the Sales Invoice (if present)
-    ref_doctype = getattr(inv, "custom_reference_type", None)
-    default_service_type = None
-    if ref_doctype == "Inpatient Admission":
-        default_service_type = "IP"
-    elif ref_doctype == "Patient Visit":
-        default_service_type = "OP"
+    # Infer OP/IP from the invoice's healthcare case reference (admission vs visit)
+    default_service_type = infer_ip_op_source([inv.name])
+    claim.ip_op_source = default_service_type
 
     for si_item in inv.get("items", []):
         if not si_item.item_code:
@@ -399,6 +438,9 @@ def _ensure_patient_register(patient: str) -> tuple[str, bool]:
             "patient": patient,
             "status": "Active",
             "posting_date": nowdate(),
+            # Created by the legacy TRICARE import/reconcile — the portal keeps
+            # these out of the "add validity days" reminder.
+            "legacy": 1,
         }
     )
     doc.flags.ignore_mandatory = True

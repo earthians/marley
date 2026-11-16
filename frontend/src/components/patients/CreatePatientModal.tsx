@@ -519,6 +519,12 @@ export const CreatePatientModal = ({ onClose, onSuccess, initialName, initialMob
       setActiveTab('insurance')
       return
     }
+    // An insured patient needs a payer: the Insurance Patient Register is created from it.
+    if (hasInsuranceChoice === 'Yes' && !formData.insurance) {
+      setError('Select an insurance provider, or choose No for Has Insurance')
+      setActiveTab('insurance')
+      return
+    }
 
     try {
       setLoading(true)
@@ -583,12 +589,20 @@ export const CreatePatientModal = ({ onClose, onSuccess, initialName, initialMob
       }
       const patient = await createPatient(payload)
       let successMsg = patient.server_message || 'Patient created'
+      if (patient.insurance_register && patient.insurance_register !== initialInsuranceRegister) {
+        successMsg += ` · Insurance Patient Register ${patient.insurance_register} created`
+      }
       if (patient.sales_order) {
         successMsg += ` · File no charge order ${patient.sales_order} created`
       } else if (patient.file_no_charge_error) {
         successMsg += ` · ${patient.file_no_charge_error}`
       }
       toast.success(successMsg)
+      if (patient.insurance_register && patient.insurance_register !== initialInsuranceRegister) {
+        toast.warning(
+          `Register ${patient.insurance_register} has no validity dates — the Insurance team must add Valid From and Valid To.`,
+        )
+      }
       if (onSuccess) {
         onSuccess(patient.name || patient.patient_name || '')
       }

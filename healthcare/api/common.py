@@ -3909,8 +3909,8 @@ def get_insurance_patient_registers(search=None):
 		fields=[
 			"name", "full_name", "national_id_cpr_no", "posting_date",
 			"status", "insurance_provider", "approval_id",
-			"approval_validitydays", "no_of_visits", "patient",
-			"no_of_patient_visit",
+			"valid_from", "valid_to", "approval_validitydays", "no_of_visits", "patient",
+			"no_of_patient_visit", "legacy",
 		],
 		limit=100,
 		order_by="creation desc",
@@ -4138,7 +4138,7 @@ def get_insurance_claims(
 			"insurance_payor", "claim_date", "status", "docstatus",
 			"total_claimed", "total_approved", "total_rejected",
 			"total_patient_liability", "sales_invoice",
-			"authorization_no", "remark", "vch_status", "legacy",
+			"authorization_no", "remark", "vch_status", "legacy", "ip_op_source",
 		],
 		limit=200,
 		order_by="creation desc",
@@ -4405,7 +4405,7 @@ def _get_invoices_needing_insurance_claim_rows(
 	fields = [
 		"name", "patient", "patient_name", "posting_date",
 		"grand_total", "discount_amount", "outstanding_amount", "status", "docstatus",
-		"custom_base_reference", "custom_base_reference_name",
+		"custom_base_reference", "custom_base_reference_name", "custom_reference_type",
 		"custom_health_insurance",
 	]
 
@@ -4605,6 +4605,7 @@ def get_insurance_claim_detail(claim_name):
 		"reference_name": doc.reference_name,
 		"authorization_no": doc.authorization_no,
 		"remark": doc.remark,
+		"ip_op_source": doc.ip_op_source,
 		"total_claimed": doc.total_claimed,
 		"total_approved": doc.total_approved,
 		"total_rejected": doc.total_rejected,
@@ -4625,6 +4626,21 @@ def _apply_insurance_claim_payload(doc, data):
 	doc.reference_name = data.get("reference_name") or None
 	doc.authorization_no = data.get("authorization_no") or None
 	doc.remark = data.get("remark") or None
+	if "ip_op_source" in data:
+		ip_op_source = (data.get("ip_op_source") or "").strip().upper()
+		doc.ip_op_source = ip_op_source if ip_op_source in ("OP", "IP", "PH") else None
+
+
+def _set_inferred_ip_op_source(doc, sales_invoices, claim_items):
+	"""Fill IP / OP Source from the linked invoices when the payload left it blank."""
+	if getattr(doc, "ip_op_source", None):
+		return
+	from healthcare.healthcare.api.insurance_claim import infer_ip_op_source
+
+	doc.ip_op_source = infer_ip_op_source(
+		sales_invoices,
+		service_types=[(ci.get("service_type") or "") for ci in (claim_items or [])],
+	)
 
 
 def _append_claim_items(doc, claim_items):
@@ -4761,6 +4777,7 @@ def save_insurance_claim(data):
 		doc = frappe.new_doc("Insurance Claim")
 
 	_apply_insurance_claim_payload(doc, data)
+	_set_inferred_ip_op_source(doc, sales_invoices, claim_items)
 	if not submit and doc.status not in ("Draft",):
 		doc.status = "Draft"
 	if submit and doc.status == "Draft":
@@ -4841,6 +4858,111 @@ def _sync_patient_with_insurance_register(register_name, patient, insurance_prov
 	frappe.db.set_value("Patient", patient, patient_updates, update_modified=True)
 
 
+def _resolve_insurance_register_validity(data):
+	"""Normalise the approval window and derive Approval Validity (Days).
+
+	Days are counted inclusively (1 Nov → 30 Nov = 30 days) whenever both Valid
+	From and Valid To are supplied. When they are not both present the day count
+	sent by the caller is kept, so registers without explicit dates still work.
+	"""
+	valid_from = (data.get("valid_from") or "").strip() or None
+	valid_to = (data.get("valid_to") or "").strip() or None
+	validity_days = cint(data.get("approval_validitydays") or 0)
+
+	def parse(value, label):
+		try:
+			return getdate(value)
+		except Exception:
+			frappe.throw(_("{0} must be a valid date").format(label))
+
+	from_date = parse(valid_from, _("Valid From")) if valid_from else None
+	to_date = parse(valid_to, _("Valid To")) if valid_to else None
+
+	if from_date and to_date:
+		if to_date < from_date:
+			frappe.throw(_("Valid To cannot be before Valid From"))
+		validity_days = (to_date - from_date).days + 1
+
+	return from_date, to_date, validity_days
+
+
+# Approval window (Valid From / Valid To / Approval Validity Days) drives expiry
+# and visit checks, so it is owned by the team that can open the Insurance page.
+# Anything matching the insurance role family counts; these exact roles are the
+# administrators that bypass the role-name check.
+INSURANCE_VALIDITY_ADMIN_ROLES = frozenset({"System Manager", "Healthcare Administrator"})
+_INSURANCE_VALIDITY_FIELDS = ("valid_from", "valid_to", "approval_validitydays")
+
+
+def user_can_set_insurance_register_validity(user=None) -> bool:
+	"""Whether the user may set Valid From / Valid To on an Insurance Patient Register.
+
+	Mirrors the portal's `/insurance` route gate (see frontend permissions.ts):
+	administrators plus any role naming the insurance team. Reception keeps full
+	access to the rest of the register — patient link, visits, status, approval
+	id — but not the validity window.
+	"""
+	user = user or frappe.session.user
+	if user == "Administrator":
+		return True
+	if user in ("Guest", ""):
+		return False
+	for role in frappe.get_roles(user):
+		role = (role or "").strip()
+		if role in INSURANCE_VALIDITY_ADMIN_ROLES or "insurance" in role.lower():
+			return True
+	return False
+
+
+def _apply_insurance_register_validity_update(updates, register_name, data):
+	"""Merge the approval window into `updates`, enforcing insurance-team ownership.
+
+	A payload that tries to change Valid From / Valid To / Approval Validity
+	(Days) without insurance access is rejected rather than silently ignored, so
+	callers never believe the window was saved. Payloads that repeat the stored
+	values (older clients send the whole form) are left untouched.
+	"""
+	valid_from, valid_to, validity_days = _resolve_insurance_register_validity(data)
+
+	if not user_can_set_insurance_register_validity():
+		current = (
+			frappe.db.get_value(
+				"Insurance Patient Register",
+				register_name,
+				list(_INSURANCE_VALIDITY_FIELDS),
+				as_dict=True,
+			)
+			or {}
+		)
+		stored = (
+			getdate(current.get("valid_from")).isoformat() if current.get("valid_from") else None,
+			getdate(current.get("valid_to")).isoformat() if current.get("valid_to") else None,
+			cint(current.get("approval_validitydays")),
+		)
+		requested = (
+			valid_from.isoformat() if valid_from else None,
+			valid_to.isoformat() if valid_to else None,
+			cint(validity_days),
+		)
+		if requested != stored:
+			frappe.throw(
+				_(
+					"Only users with access to the Insurance page can change Valid From, "
+					"Valid To or Approval Validity (Days)."
+				),
+				frappe.PermissionError,
+			)
+		return
+
+	updates.update(
+		{
+			"valid_from": valid_from,
+			"valid_to": valid_to,
+			"approval_validitydays": validity_days,
+		}
+	)
+
+
 @frappe.whitelist()
 def create_insurance_patient_register(data):
 	"""Portal: create IPR and optionally link an existing patient in one step."""
@@ -4856,16 +4978,25 @@ def create_insurance_patient_register(data):
 	if patient:
 		status = "Active"
 
+	if user_can_set_insurance_register_validity():
+		valid_from, valid_to, validity_days = _resolve_insurance_register_validity(data)
+	else:
+		# Reception (and other non-insurance roles) may create registers, but the
+		# approval window belongs to the insurance team.
+		valid_from, valid_to, validity_days = None, None, 0
+
 	doc = frappe.get_doc(
 		{
 			"doctype": "Insurance Patient Register",
 			"full_name": data.get("full_name").strip(),
 			"national_id_cpr_no": (data.get("national_id_cpr_no") or "").strip() or None,
-			"posting_date": data.get("posting_date") or None,
+			"posting_date": data.get("posting_date") or frappe.utils.nowdate(),
 			"status": status,
 			"insurance_provider": data.get("insurance_provider"),
 			"approval_id": (data.get("approval_id") or "").strip() or None,
-			"approval_validitydays": frappe.utils.cint(data.get("approval_validitydays") or 0),
+			"valid_from": valid_from,
+			"valid_to": valid_to,
+			"approval_validitydays": validity_days,
 			"no_of_visits": (data.get("no_of_visits") or "").strip() or None,
 			"patient": patient,
 		}
@@ -4923,13 +5054,22 @@ def update_insurance_patient_register(name, data):
 	updates = {
 		"full_name": data.get("full_name").strip(),
 		"national_id_cpr_no": (data.get("national_id_cpr_no") or "").strip() or None,
-		"posting_date": data.get("posting_date") or None,
 		"status": status,
 		"insurance_provider": data.get("insurance_provider"),
 		"approval_id": (data.get("approval_id") or "").strip() or None,
-		"approval_validitydays": frappe.utils.cint(data.get("approval_validitydays") or 0),
 		"no_of_visits": no_of_visits,
 	}
+
+	# Approval window: only touch it when the payload carries it, so partial
+	# updates don't wipe dates the caller never sent. Insurance access is enforced
+	# inside the helper (Reception may edit the rest of the register).
+	if any(key in data for key in _INSURANCE_VALIDITY_FIELDS):
+		_apply_insurance_register_validity_update(updates, register_name, data)
+
+	# Posting date is hidden in the portal forms; keep whatever is stored unless
+	# the caller explicitly sends a value.
+	if "posting_date" in data:
+		updates["posting_date"] = data.get("posting_date") or None
 
 	# Explicit patient key: null/"" unlinks; a name links/replaces. Omit key → leave as-is.
 	previous_patient = frappe.db.get_value("Insurance Patient Register", register_name, "patient")
@@ -5005,10 +5145,13 @@ def update_insurance_patient_register(name, data):
 			"status",
 			"insurance_provider",
 			"approval_id",
+			"valid_from",
+			"valid_to",
 			"approval_validitydays",
 			"no_of_visits",
 			"patient",
 			"no_of_patient_visit",
+			"legacy",
 		],
 		as_dict=True,
 	)
@@ -7189,7 +7332,7 @@ def get_patient_unpaid_invoices(patient):
 
 	Each row includes:
 	  name, posting_date, grand_total, discount_amount, outstanding_amount, status,
-	  custom_base_reference, custom_base_reference_name
+	  custom_reference_type, custom_base_reference, custom_base_reference_name
 	"""
 	if not patient:
 		return []
@@ -7210,6 +7353,7 @@ def get_patient_unpaid_invoices(patient):
 			"status",
 			"custom_base_reference",
 			"custom_base_reference_name",
+			"custom_reference_type",
 		],
 		order_by="posting_date desc, creation desc",
 		limit=100,

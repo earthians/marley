@@ -326,6 +326,8 @@ export type CreatePatientResult = {
   name: string
   patient_name: string
   file_no: string
+  /** Insurance Patient Register created (or linked) for an insured patient. */
+  insurance_register?: string
   server_message?: string
   sales_order?: string
   file_no_charge_rate?: number

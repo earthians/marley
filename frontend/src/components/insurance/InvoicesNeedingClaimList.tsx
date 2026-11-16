@@ -25,6 +25,25 @@ function statusBadgeClass(status: string, isDraft: boolean): string {
   return 'bg-amber-100 text-amber-700'
 }
 
+// Sales Invoice healthcare references that identify an Inpatient / Outpatient case.
+const IP_REFERENCE_VALUES = ['Inpatient Admission', 'Discharge', 'IP Service']
+const OP_REFERENCE_VALUES = ['Patient Visit']
+const SOURCE_COLORS: Record<string, string> = {
+  IP: 'bg-indigo-100 text-indigo-700',
+  OP: 'bg-teal-100 text-teal-700',
+  PH: 'bg-purple-100 text-purple-700',
+}
+
+function invoiceIpOpSource(inv: InvoiceNeedingClaimRow): string {
+  const refType = (inv.custom_reference_type || '').trim()
+  if (IP_REFERENCE_VALUES.includes(refType)) return 'IP'
+  if (OP_REFERENCE_VALUES.includes(refType)) return 'OP'
+  const baseRef = (inv.custom_base_reference || '').trim()
+  if (IP_REFERENCE_VALUES.includes(baseRef)) return 'IP'
+  if (OP_REFERENCE_VALUES.includes(baseRef)) return 'OP'
+  return ''
+}
+
 export function InvoicesNeedingClaimList({
   patient: pagePatient,
   refreshKey = 0,
@@ -236,6 +255,7 @@ export function InvoicesNeedingClaimList({
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Patient</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Register</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Date</th>
+                <th className="px-3 py-2 text-xs font-semibold text-slate-600">IP/OP</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Status</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600 text-right">Total</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600 text-right">Discount</th>
@@ -246,7 +266,7 @@ export function InvoicesNeedingClaimList({
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center text-slate-400 py-8">
+                  <td colSpan={10} className="text-center text-slate-400 py-8">
                     No invoices needing insurance claims
                   </td>
                 </tr>
@@ -277,6 +297,15 @@ export function InvoicesNeedingClaimList({
                       ) : '—'}
                     </td>
                     <td className="px-3 py-2 text-xs text-slate-500">{inv.posting_date || '—'}</td>
+                    <td className="px-3 py-2">
+                      {invoiceIpOpSource(inv) ? (
+                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${SOURCE_COLORS[invoiceIpOpSource(inv)] || 'bg-slate-100 text-slate-600'}`}>
+                          {invoiceIpOpSource(inv)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2">
                       <span className={`text-xs px-1.5 py-0.5 rounded ${statusBadgeClass(inv.status, draft)}`}>
                         {draft ? 'Draft' : inv.status}

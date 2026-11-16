@@ -1636,6 +1636,8 @@ export interface InsuranceClaimRow {
   authorization_no?: string
   remark?: string
   vch_status?: string
+  /** IP / OP Source of the claim (OP, IP or PH) */
+  ip_op_source?: string | null
   /** 1 when imported from the legacy insurance system */
   legacy?: number | boolean
 }
@@ -1722,6 +1724,7 @@ export interface InvoiceNeedingClaimRow {
   docstatus?: number
   custom_base_reference: string | null
   custom_base_reference_name: string | null
+  custom_reference_type?: string | null
   custom_health_insurance: string | null
   insurance_register?: string | null
   insurance_register_status?: string | null
@@ -1785,6 +1788,7 @@ export interface InsuranceClaimDetail {
   reference_name: string | null
   authorization_no: string | null
   remark: string | null
+  ip_op_source?: string | null
   total_claimed: number
   total_approved: number
   total_rejected: number
@@ -1826,6 +1830,8 @@ export interface SaveInsuranceClaimPayload {
   reference_name?: string | null
   authorization_no?: string | null
   remark?: string | null
+  /** Claim-level IP / OP Source (OP, IP or PH); inferred from the invoices when blank. */
+  ip_op_source?: string | null
   submit?: boolean
   claim_items: Array<{
     service_type: string
@@ -1951,21 +1957,27 @@ export interface InsurancePatientRegisterRow {
   insurance_provider: string
   approval_id: string
   approval_validitydays: number
+  /** Approval window — validity days are derived from these when both are set. */
+  valid_from?: string | null
+  valid_to?: string | null
   no_of_visits: string
   patient: string
   patient_name?: string
   patient_file_no?: string
   no_of_patient_visit?: number
+  /** 1 for registers created by the legacy TRICARE import/reconcile. */
+  legacy?: number | boolean
 }
 
 export interface CreateInsurancePatientRegisterPayload {
   full_name: string
   national_id_cpr_no?: string | null
-  posting_date?: string | null
   status?: string
   insurance_provider: string
   approval_id?: string | null
   approval_validitydays?: number | null
+  valid_from?: string | null
+  valid_to?: string | null
   no_of_visits?: string | null
   patient?: string | null
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Pencil, X } from 'lucide-react'
+import { Lock, Pencil, X } from 'lucide-react'
 import {
   CM_BTN_CANCEL,
   CM_BTN_PRIMARY,
@@ -31,6 +31,9 @@ import {
   linkComboboxOptionClassCompact,
 } from '../ui/linkComboboxStyles'
 import { DateFilterInput } from '../ui/DateFilterInput'
+import { isValidityRangeInverted, validityDaysInclusive } from '../../utils/insuranceValidity'
+import { useCareContext } from '../../providers/CareContextProvider'
+import { canSetInsuranceRegisterValidity } from '../../config/permissions'
 
 function patientOptionLabel(name: string, patientName?: string | null): string {
   const label = (patientName || '').trim()
@@ -57,11 +60,17 @@ export const EditInsurancePatientRegisterModal = ({
 }: EditInsurancePatientRegisterModalProps) => {
   const blockIfEditingLocked = useBlockIfEditingLocked()
   useRejectEditModeWhenLocked(true, onClose)
+  // The approval window (Valid From / Valid To) is owned by the Insurance team;
+  // Reception can edit the rest of the register but sees these fields locked.
+  const { userRole } = useCareContext()
+  const canSetValidity = canSetInsuranceRegisterValidity(userRole)
   const [fullName, setFullName] = useState(register.full_name || '')
   const [nationalId, setNationalId] = useState(register.national_id_cpr_no || '')
-  const [postingDate, setPostingDate] = useState(toDateInputValue(register.posting_date))
   const [status, setStatus] = useState(register.status || 'Unused')
   const [approvalId, setApprovalId] = useState(register.approval_id || '')
+  // Approval window: when both dates are set the validity days are derived from them.
+  const [validFrom, setValidFrom] = useState(toDateInputValue(register.valid_from))
+  const [validTo, setValidTo] = useState(toDateInputValue(register.valid_to))
   const [approvalValidityDays, setApprovalValidityDays] = useState(
     register.approval_validitydays != null ? String(register.approval_validitydays) : ''
   )
@@ -93,6 +102,10 @@ export const EditInsurancePatientRegisterModal = ({
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Inclusively counted approval days (null until both dates are present and valid).
+  const validityDays = validityDaysInclusive(validFrom, validTo)
+  const validityRangeInverted = isValidityRangeInverted(validFrom, validTo)
 
   const loadInsurance = useCallback(async (q?: string) => {
     const opts = await fetchHealthcareInsurance(q)
@@ -152,6 +165,10 @@ export const EditInsurancePatientRegisterModal = ({
       setError('Insurance Provider is required')
       return
     }
+    if (canSetValidity && validityRangeInverted) {
+      setError('Valid To cannot be before Valid From')
+      return
+    }
 
     try {
       setSaving(true)
@@ -160,14 +177,22 @@ export const EditInsurancePatientRegisterModal = ({
         name: register.name,
         full_name: fullName.trim(),
         national_id_cpr_no: nationalId.trim() || null,
-        posting_date: postingDate || null,
         status,
         insurance_provider: selectedInsurance.name,
         approval_id: approvalId.trim() || null,
-        approval_validitydays: approvalValidityDays ? parseInt(approvalValidityDays, 10) : 0,
         no_of_visits: noOfVisits.trim() || null,
         // Explicit null clears; a name links / replaces the linked patient.
         patient: selectedPatient?.name || null,
+        // The approval window is omitted entirely for users without Insurance
+        // access: the server keeps the stored dates and rejects any change.
+        ...(canSetValidity
+          ? {
+              approval_validitydays:
+                validityDays ?? (approvalValidityDays ? parseInt(approvalValidityDays, 10) : 0),
+              valid_from: validFrom || null,
+              valid_to: validTo || null,
+            }
+          : {}),
       })
       toast.success(
         selectedPatient?.name
@@ -221,10 +246,10 @@ export const EditInsurancePatientRegisterModal = ({
                 <h3 className={MODAL_SECTION_TITLE_CLASS}>Patient Information</h3>
 
                 <div>
-                  <label className={MODAL_LABEL_CLASS}>Register No</label>
+                  <label className={MODAL_LABEL_CLASS}>Patient File No</label>
                   <input
                     type="text"
-                    value={register.name}
+                    value={register.patient_file_no || 'Not linked'}
                     readOnly
                     className={`${MODAL_FIELD_CLASS} bg-slate-50 text-slate-600`}
                   />
@@ -308,19 +333,20 @@ export const EditInsurancePatientRegisterModal = ({
                     Search to link another patient, or clear and save to unlink.
                   </p>
                 </div>
-
-                <div>
-                  <label className={MODAL_LABEL_CLASS}>Posting Date</label>
-                  <DateFilterInput
-                    value={postingDate}
-                    onChange={(e) => setPostingDate(e.target.value)}
-                    className={MODAL_FIELD_CLASS}
-                  />
-                </div>
               </div>
 
               <div className={`${MODAL_SECTION_CLASS} space-y-3`}>
                 <h3 className={MODAL_SECTION_TITLE_CLASS}>Insurance Details</h3>
+
+                {!canSetValidity && (
+                  <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                    <p className="text-[11px] leading-snug text-slate-600">
+                      Valid From, Valid To and Approval Validity (Days) are managed by the
+                      Insurance team — ask them to set the validity window.
+                    </p>
+                  </div>
+                )}
 
                 <div onClick={(e) => e.stopPropagation()}>
                   <label className={MODAL_LABEL_CLASS}>
@@ -388,15 +414,49 @@ export const EditInsurancePatientRegisterModal = ({
                     />
                   </div>
                   <div>
+                    <label className={MODAL_LABEL_CLASS}>Valid From</label>
+                    <DateFilterInput
+                      value={validFrom}
+                      onChange={(e) => setValidFrom(e.target.value)}
+                      disabled={!canSetValidity}
+                      className={MODAL_FIELD_CLASS}
+                    />
+                  </div>
+                  <div>
+                    <label className={MODAL_LABEL_CLASS}>Valid To</label>
+                    <DateFilterInput
+                      value={validTo}
+                      onChange={(e) => setValidTo(e.target.value)}
+                      min={validFrom || undefined}
+                      disabled={!canSetValidity}
+                      className={MODAL_FIELD_CLASS}
+                    />
+                    {canSetValidity && validityRangeInverted && (
+                      <p className="mt-1 text-[10px] text-red-600">
+                        Valid To cannot be before Valid From
+                      </p>
+                    )}
+                  </div>
+                  <div>
                     <label className={MODAL_LABEL_CLASS}>Approval Validity (Days)</label>
                     <input
                       type="number"
-                      value={approvalValidityDays}
+                      value={validityDays != null ? String(validityDays) : approvalValidityDays}
                       onChange={(e) => setApprovalValidityDays(e.target.value)}
+                      readOnly={validityDays != null || !canSetValidity}
                       placeholder="e.g. 30"
                       min="0"
-                      className={MODAL_FIELD_CLASS}
+                      className={`${MODAL_FIELD_CLASS}${
+                        validityDays != null || !canSetValidity
+                          ? ' bg-slate-50 text-slate-600'
+                          : ''
+                      }`}
                     />
+                    {validityDays != null && (
+                      <p className="mt-1 text-[10px] text-emerald-700/70">
+                        Auto-calculated from Valid From and Valid To
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className={MODAL_LABEL_CLASS}>No. of Visits</label>

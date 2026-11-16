@@ -17,12 +17,17 @@
   "insurance_provider",
   "approval_id",
   "column_break_eyqx",
-  "approval_validitydays",
   "no_of_visits",
+  "section_break_ieug",
+  "valid_from",
+  "valid_to",
+  "column_break_cvje",
+  "approval_validitydays",
   "section_break_rukv",
   "patient",
   "column_break_cecv",
-  "no_of_patient_visit"
+  "no_of_patient_visit",
+  "legacy"
  ],
  "fields": [
   {
@@ -124,13 +129,40 @@
   {
    "fieldname": "column_break_cecv",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ieug",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "valid_from",
+   "fieldtype": "Date",
+   "label": "Valid From"
+  },
+  {
+   "fieldname": "valid_to",
+   "fieldtype": "Date",
+   "label": "Valid To"
+  },
+  {
+   "fieldname": "column_break_cvje",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Set for registers created by the legacy TRICARE import/reconcile. Legacy registers are exempt from the portal's \"add validity days\" reminder.",
+   "fieldname": "legacy",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Legacy Record",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-10 12:59:47.713972",
+ "modified": "2026-11-16 15:30:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Patient Register",

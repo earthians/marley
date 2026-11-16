@@ -38,6 +38,13 @@ function vchStatusLabel(value?: string | null): string | null {
   return VCH_STATUS_LABELS[key] || value
 }
 
+// IP / OP Source badge colours (matches Insurance Claim.ip_op_source options)
+const SOURCE_COLORS: Record<string, string> = {
+  IP: 'bg-indigo-100 text-indigo-700',
+  OP: 'bg-teal-100 text-teal-700',
+  PH: 'bg-purple-100 text-purple-700',
+}
+
 function Field({ label, value }: { label: string; value?: string | number | null }) {
   return (
     <div>
@@ -604,6 +611,7 @@ export const InsuranceClaimList = ({
                   <th className="px-3 py-2 text-xs font-semibold text-slate-600">Patient</th>
                 )}
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Category</th>
+                <th className="px-3 py-2 text-xs font-semibold text-slate-600">IP/OP</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Health Insurance</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Claim Date</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600 text-right">Claimed</th>
@@ -618,7 +626,7 @@ export const InsuranceClaimList = ({
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={patient ? 11 : 12} className="text-center text-slate-400 py-8">No insurance claims found</td>
+                  <td colSpan={patient ? 12 : 13} className="text-center text-slate-400 py-8">No insurance claims found</td>
                 </tr>
               )}
               {rows.map(row => (
@@ -633,7 +641,10 @@ export const InsuranceClaimList = ({
                   {!patient && (
                     <td
                       className="px-3 py-2 cursor-pointer"
-                      onClick={(e) => { e.stopPropagation(); row.patient && onPatientClick?.(row.patient) }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (row.patient) onPatientClick?.(row.patient)
+                      }}
                     >
                       <span className="font-medium text-primary hover:underline">
                         <div className="text-xs">{row.patient_name || row.patient}</div>
@@ -642,6 +653,15 @@ export const InsuranceClaimList = ({
                     </td>
                   )}
                   <td className="px-3 py-2 text-xs text-slate-500">{row.patient_category || '—'}</td>
+                  <td className="px-3 py-2">
+                    {row.ip_op_source ? (
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${SOURCE_COLORS[row.ip_op_source] || 'bg-slate-100 text-slate-600'}`}>
+                        {row.ip_op_source}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-xs text-slate-600">{row.health_insurance || '—'}</td>
                   <td className="px-3 py-2 text-xs text-slate-500">{row.claim_date || '—'}</td>
                   <td className="px-3 py-2 text-xs text-right font-mono text-slate-700">{fmt(row.total_claimed, displayCurrency)}</td>
@@ -743,6 +763,7 @@ export const InsuranceClaimList = ({
                   <Field label="Health Insurance" value={detailRow.health_insurance} />
                   <Field label="Insurer / Payor" value={detailRow.insurance_payor} />
                   <Field label="Claim Date" value={detailRow.claim_date} />
+                  <Field label="IP / OP Source" value={detailRow.ip_op_source} />
                   <Field label="VCH Status" value={vchStatusLabel(detailRow.vch_status)} />
                   <Field label="Sales Invoice" value={detailRow.sales_invoice} />
                   <Field label="Authorization No" value={detailRow.authorization_no} />

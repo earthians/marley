@@ -64,6 +64,7 @@ interface InvoiceOption {
   status: string
   custom_base_reference: string | null
   custom_base_reference_name: string | null
+  custom_reference_type?: string | null
 }
 
 interface PatientCoverageOption extends PatientInsuranceCoverageRow {
@@ -72,7 +73,41 @@ interface PatientCoverageOption extends PatientInsuranceCoverageRow {
 }
 
 const SERVICE_TYPES = ['OP', 'IP', 'Lab', 'Pharmacy', 'Other']
+const IP_OP_SOURCE_OPTIONS = ['OP', 'IP', 'PH']
 const STATUS_OPTIONS = ['Draft', 'Submitted', 'Partially Paid', 'Paid', 'Rejected']
+
+// Sales Invoice healthcare references that identify an Inpatient / Outpatient case.
+const IP_REFERENCE_VALUES = ['Inpatient Admission', 'Discharge', 'IP Service']
+const OP_REFERENCE_VALUES = ['Patient Visit']
+
+type InvoiceReference = {
+  custom_reference_type?: string | null
+  custom_base_reference?: string | null
+}
+
+/** Map a Sales Invoice's healthcare reference to an IP / OP Source value. */
+function invoiceIpOpSource(inv: InvoiceReference): string {
+  const refType = (inv.custom_reference_type || '').trim()
+  if (IP_REFERENCE_VALUES.includes(refType)) return 'IP'
+  if (OP_REFERENCE_VALUES.includes(refType)) return 'OP'
+  const baseRef = (inv.custom_base_reference || '').trim()
+  if (IP_REFERENCE_VALUES.includes(baseRef)) return 'IP'
+  if (OP_REFERENCE_VALUES.includes(baseRef)) return 'OP'
+  return ''
+}
+
+/** Infer the claim-level IP / OP Source from the selected invoices. */
+function inferIpOpSource(invoices: InvoiceReference[]): string {
+  for (const inv of invoices) {
+    const source = invoiceIpOpSource(inv)
+    if (source) return source
+  }
+  return ''
+}
+
+function invoiceServiceType(inv: InvoiceReference): string {
+  return invoiceIpOpSource(inv) || 'OP'
+}
 
 // ─── Generic searchable link field ────────────────────────────────────────────
 
@@ -182,6 +217,7 @@ function InvoiceMultiSelect({
         <div className="rounded border border-slate-300 bg-white max-h-56 overflow-y-auto divide-y divide-slate-100">
           {invoices.map(inv => {
             const checked = selectedNames.has(inv.name)
+            const source = invoiceIpOpSource(inv)
             return (
               <label
                 key={inv.name}
@@ -202,6 +238,9 @@ function InvoiceMultiSelect({
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-xs text-slate-500">
                     <span>{inv.posting_date}</span>
+                    {source && (
+                      <span className="font-semibold text-indigo-600">{source}</span>
+                    )}
                     <span>Total: <strong className="text-slate-700">{fmtCurrency(inv.grand_total)}</strong></span>
                     <span>Claimable: <strong className="text-orange-600">{fmtCurrency(inv.remaining_claimable ?? inv.outstanding_amount)}</strong></span>
                     {inv.custom_base_reference && (
@@ -355,6 +394,8 @@ export const CreateInsuranceClaimModal = ({
   const [invoices, setInvoices] = useState<InvoiceOption[]>([])
   const [invoicesLoading, setInvoicesLoading] = useState(false)
   const [selectedInvoices, setSelectedInvoices] = useState<InvoiceOption[]>([])
+  // Claim-level IP / OP Source, auto-filled from the selected invoices
+  const [ipOpSource, setIpOpSource] = useState('')
 
   // Claim items
   const [items, setItems] = useState<ClaimItemRow[]>([newRow()])
@@ -447,10 +488,11 @@ export const CreateInsuranceClaimModal = ({
       discount_amount: number
     }>,
     claimableAmount: number,
+    defaultServiceType: string,
   ): ClaimItemRow[] => {
     const mapped: ClaimItemRow[] = msgItems.map(item => ({
       id: ++_itemId,
-      service_type: 'OP',
+      service_type: defaultServiceType || 'OP',
       item_name: item.item_name || '',
       description: item.description || '',
       qty: String(item.qty ?? ''),
@@ -492,6 +534,7 @@ export const CreateInsuranceClaimModal = ({
     if (already) {
       const next = selectedInvoices.filter(s => s.name !== inv.name)
       setSelectedInvoices(next)
+      setIpOpSource(inferIpOpSource(next))
       setItems(prev => {
         const remaining = prev.filter(r => r.sales_invoice !== inv.name)
         return remaining.length ? remaining : [newRow()]
@@ -502,6 +545,7 @@ export const CreateInsuranceClaimModal = ({
 
     const next = [...selectedInvoices, inv]
     setSelectedInvoices(next)
+    setIpOpSource(inferIpOpSource(next))
     try {
       const msg = await fetchInvoiceLines(inv.name)
       if (msg?.items?.length) {
@@ -513,7 +557,7 @@ export const CreateInsuranceClaimModal = ({
               sum + (item.net_amount ?? item.amount ?? 0),
             0,
           )
-        const mapped = mapInvoiceLines(inv.name, msg.items, claimable)
+        const mapped = mapInvoiceLines(inv.name, msg.items, claimable, invoiceServiceType(inv))
         setItems(prev => {
           const withoutEmptyManual = prev.filter(
             r => r.sales_invoice || r.item_name.trim() || r.gross_amount,
@@ -538,6 +582,7 @@ export const CreateInsuranceClaimModal = ({
     setSelectedInvoices([])
     setItems([newRow()])
     setClaimAmount('')
+    setIpOpSource('')
   }, [])
 
   // Load invoices when patient changes
@@ -575,12 +620,14 @@ export const CreateInsuranceClaimModal = ({
       status: initialInvoice.status,
       custom_base_reference: initialInvoice.custom_base_reference,
       custom_base_reference_name: initialInvoice.custom_base_reference_name,
+      custom_reference_type: initialInvoice.custom_reference_type,
     }
     if (initialInvoice.patient) {
       setSelectedPatient({ name: initialInvoice.patient, patient_name: initialInvoice.patient_name || initialInvoice.patient } as PatientListItem)
       setPatientQuery(initialInvoice.patient_name || initialInvoice.patient)
     }
     setSelectedInvoices([inv])
+    setIpOpSource(inferIpOpSource([inv]))
     if (initialInvoice.custom_health_insurance) {
       setSelectedIns({ name: initialInvoice.custom_health_insurance, label: initialInvoice.custom_health_insurance })
       setInsQuery(initialInvoice.custom_health_insurance)
@@ -591,7 +638,7 @@ export const CreateInsuranceClaimModal = ({
     fetchInvoiceLines(inv.name)
       .then(msg => {
         if (!msg?.items?.length) return
-        setItems(mapInvoiceLines(inv.name, msg.items, baseAmount || 0))
+        setItems(mapInvoiceLines(inv.name, msg.items, baseAmount || 0, invoiceServiceType(inv)))
       })
       .catch(() => { /* ignore */ })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -608,6 +655,7 @@ export const CreateInsuranceClaimModal = ({
         setEditClaimId(detail.name)
         setClaimDate(detail.claim_date || new Date().toISOString().split('T')[0])
         setStatus(detail.status || 'Draft')
+        setIpOpSource(detail.ip_op_source || '')
         setSelectedPatient({ name: detail.patient, patient_name: detail.patient_name || detail.patient } as PatientListItem)
         setPatientQuery(detail.patient_name || detail.patient)
         if (detail.health_insurance) {
@@ -634,6 +682,7 @@ export const CreateInsuranceClaimModal = ({
             status: '',
             custom_base_reference: idx === 0 ? detail.reference_doctype : null,
             custom_base_reference_name: idx === 0 ? detail.reference_name : null,
+            custom_reference_type: idx === 0 ? detail.reference_doctype : null,
           })))
         }
         if (detail.claim_items?.length) {
@@ -705,6 +754,7 @@ export const CreateInsuranceClaimModal = ({
     sales_invoices: selectedInvoices.map(inv => inv.name),
     reference_doctype: primaryInvoice?.custom_base_reference || null,
     reference_name: primaryInvoice?.custom_base_reference_name || null,
+    ip_op_source: ipOpSource || null,
     submit,
     claim_items: items
       .filter(r => r.item_name.trim() || r.gross_amount)
@@ -909,6 +959,15 @@ export const CreateInsuranceClaimModal = ({
                         className={MODAL_FIELD_CLASS_COMPACT}>
                         {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">IP / OP Source</label>
+                      <select value={ipOpSource} onChange={e => setIpOpSource(e.target.value)}
+                        className={MODAL_FIELD_CLASS_COMPACT}>
+                        <option value="">Select IP / OP…</option>
+                        {IP_OP_SOURCE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Auto-filled from the selected invoice</p>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-700 mb-1">Claim Amount</label>

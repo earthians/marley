@@ -12,6 +12,9 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate
+from healthcare.healthcare.doctype.insurance_patient_register.insurance_patient_register import (
+	approval_expiry_date,
+)
 
 # Fields the SPA already enforces; mirrored here so Desk/API cannot bypass them.
 MANDATORY_ADMISSION_FIELDS = (
@@ -83,7 +86,7 @@ def validate_insurance_eligibility(doc, method=None) -> None:
 		"Insurance Patient Register",
 		{"patient": doc.patient, "docstatus": ["<", 2]},
 		["name", "status", "no_of_visits", "no_of_patient_visit",
-		 "approval_validitydays", "posting_date"],
+		 "approval_validitydays", "posting_date", "valid_to"],
 		as_dict=True,
 		order_by="posting_date desc",
 	)
@@ -105,11 +108,11 @@ def validate_insurance_eligibility(doc, method=None) -> None:
 			_("approved visits exhausted ({0} of {1} used)").format(used, approved)
 		)
 
-	if register.posting_date and register.approval_validitydays:
-		expiry = frappe.utils.add_days(
-			getdate(register.posting_date), frappe.utils.cint(register.approval_validitydays)
+	if register.posting_date or register.valid_to:
+		expiry = approval_expiry_date(
+			register.posting_date, register.valid_to, register.approval_validitydays
 		)
-		if expiry < getdate(nowdate()):
+		if expiry and expiry < getdate(nowdate()):
 			problems.append(_("approval expired on {0}").format(expiry))
 
 	if problems:

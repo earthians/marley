@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { ShieldCheck } from 'lucide-react'
+import { Lock, ShieldCheck } from 'lucide-react'
 import {
   CM_BTN_CANCEL,
   CM_BTN_PRIMARY,
@@ -28,6 +28,9 @@ import {
   linkComboboxOptionClassCompact,
 } from '../ui/linkComboboxStyles'
 import { DateFilterInput } from '../ui/DateFilterInput'
+import { isValidityRangeInverted, validityDaysInclusive } from '../../utils/insuranceValidity'
+import { useCareContext } from '../../providers/CareContextProvider'
+import { canSetInsuranceRegisterValidity } from '../../config/permissions'
 
 const STATUS_OPTIONS = ['Unused', 'Active', 'Exhausted', 'Expired', 'Cancelled']
 
@@ -47,11 +50,18 @@ export const CreateInsurancePatientRegisterModal = ({
 }: CreateInsurancePatientRegisterModalProps) => {
   const [existingPatient, setExistingPatient] = useState(false)
 
+  // The approval window (Valid From / Valid To) is owned by the Insurance team;
+  // Reception can create registers but sees these fields locked.
+  const { userRole } = useCareContext()
+  const canSetValidity = canSetInsuranceRegisterValidity(userRole)
+
   const [fullName, setFullName] = useState('')
   const [nationalId, setNationalId] = useState('')
-  const [postingDate, setPostingDate] = useState(new Date().toISOString().split('T')[0])
   const [status, setStatus] = useState('Unused')
   const [approvalId, setApprovalId] = useState('')
+  // Approval window: when both dates are set the validity days are derived from them.
+  const [validFrom, setValidFrom] = useState('')
+  const [validTo, setValidTo] = useState('')
   const [approvalValidityDays, setApprovalValidityDays] = useState('')
   const [noOfVisits, setNoOfVisits] = useState('')
 
@@ -67,6 +77,10 @@ export const CreateInsurancePatientRegisterModal = ({
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Inclusively counted approval days (null until both dates are present and valid).
+  const validityDays = validityDaysInclusive(validFrom, validTo)
+  const validityRangeInverted = isValidityRangeInverted(validFrom, validTo)
 
   const loadInsurance = useCallback(async (q?: string) => {
     const opts = await fetchHealthcareInsurance(q)
@@ -152,6 +166,10 @@ export const CreateInsurancePatientRegisterModal = ({
       setError('Insurance Provider is required')
       return
     }
+    if (canSetValidity && validityRangeInverted) {
+      setError('Valid To cannot be before Valid From')
+      return
+    }
 
     const resolvedName = fullName.trim() || selectedPatient?.label.split(' (')[0].trim() || ''
     const resolvedStatus = existingPatient && selectedPatient ? 'Active' : status
@@ -162,13 +180,21 @@ export const CreateInsurancePatientRegisterModal = ({
       const created = await createInsurancePatientRegister({
         full_name: resolvedName,
         national_id_cpr_no: nationalId.trim() || null,
-        posting_date: postingDate || null,
         status: resolvedStatus,
         insurance_provider: selectedInsurance.name,
         approval_id: approvalId.trim() || null,
-        approval_validitydays: approvalValidityDays ? parseInt(approvalValidityDays, 10) : 0,
         no_of_visits: noOfVisits.trim() || null,
         patient: existingPatient && selectedPatient ? selectedPatient.name : null,
+        // The approval window is omitted entirely for users without Insurance
+        // access: the server stores the register without dates instead.
+        ...(canSetValidity
+          ? {
+              approval_validitydays:
+                validityDays ?? (approvalValidityDays ? parseInt(approvalValidityDays, 10) : 0),
+              valid_from: validFrom || null,
+              valid_to: validTo || null,
+            }
+          : {}),
       })
 
       if (created.linked_patient && selectedPatient) {
@@ -346,19 +372,20 @@ export const CreateInsurancePatientRegisterModal = ({
                     </div>
                   </div>
                 )}
-
-                <div>
-                  <label className={MODAL_LABEL_CLASS}>Posting Date</label>
-                  <DateFilterInput
-                    value={postingDate}
-                    onChange={(e) => setPostingDate(e.target.value)}
-                    className={MODAL_FIELD_CLASS}
-                  />
-                </div>
               </div>
 
               <div className={`${MODAL_SECTION_CLASS} space-y-3`}>
                 <h3 className={MODAL_SECTION_TITLE_CLASS}>Insurance Details</h3>
+
+                {!canSetValidity && (
+                  <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                    <p className="text-[11px] leading-snug text-slate-600">
+                      Valid From, Valid To and Approval Validity (Days) are managed by the
+                      Insurance team — the register is created without a validity window.
+                    </p>
+                  </div>
+                )}
 
                 <div onClick={(e) => e.stopPropagation()}>
                   <label className={MODAL_LABEL_CLASS}>
@@ -426,15 +453,49 @@ export const CreateInsurancePatientRegisterModal = ({
                     />
                   </div>
                   <div>
+                    <label className={MODAL_LABEL_CLASS}>Valid From</label>
+                    <DateFilterInput
+                      value={validFrom}
+                      onChange={(e) => setValidFrom(e.target.value)}
+                      disabled={!canSetValidity}
+                      className={MODAL_FIELD_CLASS}
+                    />
+                  </div>
+                  <div>
+                    <label className={MODAL_LABEL_CLASS}>Valid To</label>
+                    <DateFilterInput
+                      value={validTo}
+                      onChange={(e) => setValidTo(e.target.value)}
+                      min={validFrom || undefined}
+                      disabled={!canSetValidity}
+                      className={MODAL_FIELD_CLASS}
+                    />
+                    {canSetValidity && validityRangeInverted && (
+                      <p className="mt-1 text-[10px] text-red-600">
+                        Valid To cannot be before Valid From
+                      </p>
+                    )}
+                  </div>
+                  <div>
                     <label className={MODAL_LABEL_CLASS}>Approval Validity (Days)</label>
                     <input
                       type="number"
-                      value={approvalValidityDays}
+                      value={validityDays != null ? String(validityDays) : approvalValidityDays}
                       onChange={(e) => setApprovalValidityDays(e.target.value)}
+                      readOnly={validityDays != null || !canSetValidity}
                       placeholder="e.g. 30"
                       min="0"
-                      className={MODAL_FIELD_CLASS}
+                      className={`${MODAL_FIELD_CLASS}${
+                        validityDays != null || !canSetValidity
+                          ? ' bg-slate-50 text-slate-600'
+                          : ''
+                      }`}
                     />
+                    {validityDays != null && (
+                      <p className="mt-1 text-[10px] text-emerald-700/70">
+                        Auto-calculated from Valid From and Valid To
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className={MODAL_LABEL_CLASS}>No. of Visits</label>

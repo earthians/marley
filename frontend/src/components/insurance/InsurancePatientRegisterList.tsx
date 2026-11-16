@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MoreHorizontal, UserPlus, Eye, X, ExternalLink, ShieldCheck, Pencil } from 'lucide-react'
+import { MoreHorizontal, UserPlus, Eye, X, ExternalLink, ShieldCheck, Pencil, AlertTriangle, Lock } from 'lucide-react'
 import { fetchInsurancePatientRegisters, linkPatientToInsuranceRegister, type InsurancePatientRegisterRow } from '../../services/common'
 import { CreatePatientModal } from '../patients/CreatePatientModal'
 import { EditInsurancePatientRegisterModal } from './EditInsurancePatientRegisterModal'
 import { PortalActionsMenu } from '../ui/PortalActionsMenu'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { toast } from '../../hooks/useToast'
+import { formatDate } from '../../utils/formatDate'
+import { canSetInsuranceRegisterValidity } from '../../config/permissions'
 
 const STATUS_COLORS: Record<string, string> = {
   Active: 'bg-green-100 text-green-700',
@@ -36,6 +38,16 @@ function linkedPatientLabel(row: InsurancePatientRegisterRow): string | null {
   return fileNo || name || row.patient
 }
 
+/**
+ * Registers created in ERPNext need an approval window so Approval Validity
+ * (Days) can be calculated. Legacy (imported) registers are exempt — their
+ * dates were never captured in the source system.
+ */
+function needsValidityDays(row: InsurancePatientRegisterRow): boolean {
+  if (row.legacy) return false
+  return !row.valid_from && !row.valid_to
+}
+
 function Field({ label, value }: { label: string; value?: string | number | null }) {
   return (
     <div>
@@ -54,7 +66,10 @@ export const InsurancePatientRegisterList = ({
   refreshKey = 0,
   showFilters = true,
 }: InsurancePatientRegisterListProps) => {
-  const { guardClinicalEdit } = useCareContext()
+  const { guardClinicalEdit, userRole } = useCareContext()
+  // Valid From / Valid To belong to the Insurance team; Reception sees the
+  // reminder but cannot set the window (the server enforces it too).
+  const canSetValidity = canSetInsuranceRegisterValidity(userRole)
   const [rows, setRows] = useState<InsurancePatientRegisterRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -141,11 +156,12 @@ export const InsurancePatientRegisterList = ({
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-50 text-left">
-                <th className="px-3 py-2 text-xs font-semibold text-slate-600">Register No</th>
+                <th className="px-3 py-2 text-xs font-semibold text-slate-600">Patient File No</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Full Name</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">National ID / CPR</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Insurance Provider</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">No. of Visits</th>
+                <th className="px-3 py-2 text-xs font-semibold text-slate-600">Visits Done</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Visits Remaining</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Status</th>
                 <th className="px-3 py-2 text-xs font-semibold text-slate-600">Patient</th>
@@ -155,7 +171,7 @@ export const InsurancePatientRegisterList = ({
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center text-slate-400 py-8">
+                  <td colSpan={10} className="text-center text-slate-400 py-8">
                     NO INSURANCE PATIENT REGISTERS FOUND
                   </td>
                 </tr>
@@ -165,19 +181,34 @@ export const InsurancePatientRegisterList = ({
                   className="border-t border-slate-100 hover:bg-slate-50 transition-colors"
                 >
                   <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      onClick={() => setDetailRow(row)}
-                      className="text-primary font-medium hover:underline text-xs"
-                    >
-                      {row.name}
-                    </button>
+                    {row.patient_file_no ? (
+                      <button
+                        type="button"
+                        onClick={() => setDetailRow(row)}
+                        title={`Register ${row.name}`}
+                        className="text-primary font-medium hover:underline text-xs"
+                      >
+                        {row.patient_file_no}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDetailRow(row)}
+                        title={`Register ${row.name}`}
+                        className="text-slate-400 italic hover:underline text-xs"
+                      >
+                        Not linked
+                      </button>
+                    )}
                   </td>
                   <td className="px-3 py-2 font-medium text-slate-800">{row.full_name || '—'}</td>
                   <td className="px-3 py-2 text-slate-500 text-xs">{row.national_id_cpr_no || '—'}</td>
                   <td className="px-3 py-2 text-slate-600 text-xs">{row.insurance_provider || '—'}</td>
                   <td className="px-3 py-2 text-slate-700 text-xs font-medium tabular-nums">
                     {row.no_of_visits || '—'}
+                  </td>
+                  <td className="px-3 py-2 text-slate-700 text-xs font-medium tabular-nums">
+                    {row.no_of_patient_visit ?? 0}
                   </td>
                   <td className="px-3 py-2 text-xs font-semibold tabular-nums">
                     <span
@@ -193,19 +224,37 @@ export const InsurancePatientRegisterList = ({
                     </span>
                   </td>
                   <td className="px-3 py-2">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[row.status] || 'bg-slate-100 text-slate-600'}`}>
-                      {row.status || 'Unused'}
-                    </span>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[row.status] || 'bg-slate-100 text-slate-600'}`}>
+                        {row.status || 'Unused'}
+                      </span>
+                      {needsValidityDays(row) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            canSetValidity
+                              ? guardClinicalEdit(() => setEditRegister(row))
+                              : setDetailRow(row)
+                          }
+                          title={
+                            canSetValidity
+                              ? 'Valid From / Valid To are not set — approval validity days cannot be calculated'
+                              : 'Valid From / Valid To are not set — the Insurance team must add the validity window'
+                          }
+                          className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                        >
+                          <AlertTriangle className="w-3 h-3" />
+                          {canSetValidity ? 'Add validity days' : 'Validity not set'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-xs">
-                    {(() => {
-                      const label = linkedPatientLabel(row)
-                      return label ? (
-                        <span className="text-green-700 font-medium">{label}</span>
-                      ) : (
-                        <span className="text-slate-400 italic">Not linked</span>
-                      )
-                    })()}
+                    {row.patient ? (
+                      <span className="text-green-700 font-medium">{row.patient_name || row.patient}</span>
+                    ) : (
+                      <span className="text-slate-400 italic">Not linked</span>
+                    )}
                   </td>
                   <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end">
@@ -329,6 +378,35 @@ export const InsurancePatientRegisterList = ({
                 </span>
               </div>
 
+              {/* Validity reminder — only for registers created in ERPNext */}
+              {needsValidityDays(detailRow) && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-red-700">
+                      {canSetValidity ? 'Add validity days' : 'Validity not set'}
+                    </p>
+                    <p className="text-xs text-red-600 mt-0.5">
+                      Valid From and Valid To are not set, so Approval Validity (Days) cannot be calculated.
+                    </p>
+                    {canSetValidity ? (
+                      <button
+                        type="button"
+                        onClick={() => { guardClinicalEdit(() => setEditRegister(detailRow)); setDetailRow(null) }}
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-red-700 underline hover:text-red-800"
+                      >
+                        Set validity dates
+                      </button>
+                    ) : (
+                      <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-red-700">
+                        <Lock className="w-3 h-3" />
+                        Only the Insurance team can set Valid From and Valid To.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Patient info */}
               <div>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 pb-1 border-b border-slate-100">Patient Information</h3>
@@ -336,10 +414,6 @@ export const InsurancePatientRegisterList = ({
                   <Field label="Full Name" value={detailRow.full_name} />
                   <Field label="National ID / CPR No" value={detailRow.national_id_cpr_no} />
                   <Field label="Linked Patient" value={linkedPatientLabel(detailRow)} />
-                  <Field label="Posting Date" value={detailRow.posting_date
-                    ? new Date(detailRow.posting_date).toLocaleDateString('en-GB')
-                    : undefined}
-                  />
                 </div>
               </div>
 
@@ -349,6 +423,8 @@ export const InsurancePatientRegisterList = ({
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Insurance Provider" value={detailRow.insurance_provider} />
                   <Field label="Approval ID" value={detailRow.approval_id} />
+                  <Field label="Valid From" value={formatDate(detailRow.valid_from) || undefined} />
+                  <Field label="Valid To" value={formatDate(detailRow.valid_to) || undefined} />
                   <Field label="Approval Validity (Days)" value={detailRow.approval_validitydays} />
                   <Field label="No of Approved Visits" value={detailRow.no_of_visits} />
                   <Field label="Visits Used" value={detailRow.no_of_patient_visit ?? 0} />
