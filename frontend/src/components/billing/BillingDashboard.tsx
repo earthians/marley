@@ -35,6 +35,7 @@ import {
 import { fetchModeOfPayments, fetchUsers, fetchBranchOptions, type LinkFieldOption } from '../../services/common'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { useReceptionistShift } from '../../providers/ReceptionistShiftProvider'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { ReceptionistOwnerCell } from '../ui/ReceptionistOwnerCell'
 import { 
   Receipt, 
@@ -64,6 +65,7 @@ import {
 import { toast } from '../../hooks/useToast'
 import { useFormatMoney } from '../../hooks/useFormatMoney'
 import { createInvoiceForVisit } from '../../services/patientVisits'
+import { cancelPaymentEntries } from '../../services/paymentEntry'
 
 import { ServiceOrdersList } from './ServiceOrdersList'
 import { ServiceInvoicesList } from './ServiceInvoicesList'
@@ -97,8 +99,26 @@ type PaymentDisplayRow = PaymentEntryRow & {
   _consolidatedCount: number
 }
 
+/** Payment row waiting for the user to confirm cancellation in the dialog. */
+interface PendingPaymentCancel {
+  memberNames: string[]
+  isDraft: boolean
+  consolidatedCount: number
+}
+
 /** Fallback for advances created before custom_unique_identity existed. */
 const ADVANCE_CONSOLIDATE_WINDOW_MS = 5 * 60 * 1000
+
+/** Reception billing payments may be reversed within this window after creation. */
+const PAYMENT_CANCEL_WINDOW_MS = 24 * 60 * 60 * 1000
+
+function isPaymentEntryCancelable(row: PaymentEntryRow, nowMs: number): boolean {
+  // Prefer the server's check: it applies the site timezone, role and party rules.
+  if (typeof row.can_cancel === 'boolean') return row.can_cancel
+  if (Number(row.docstatus) === 2) return false
+  const createdMs = paymentCreationMs(row)
+  return createdMs > 0 && nowMs - createdMs <= PAYMENT_CANCEL_WINDOW_MS
+}
 
 function paymentCreationMs(p: PaymentEntryRow): number {
   const raw = (p.creation || '').trim()
@@ -444,6 +464,9 @@ export const BillingDashboard = ({ patient, admission, visit }: BillingDashboard
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null)
   /** false = consolidated (default); true = show every Payment Entry row */
   const [paymentsExpanded, setPaymentsExpanded] = useState(false)
+  /** Members of the payment row currently being cancelled. */
+  const [cancellingPaymentKey, setCancellingPaymentKey] = useState<string | null>(null)
+  const [pendingPaymentCancel, setPendingPaymentCancel] = useState<PendingPaymentCancel | null>(null)
   const [showDateFilters, setShowDateFilters] = useState(false)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -604,6 +627,44 @@ const handleMakePayment = async (
       loadDailyAutoVisitBalances()
     } else {
       loadDashboardData()
+    }
+  }
+
+  const requestCancelPayment = (
+    memberNames: string[],
+    isDraft: boolean,
+    consolidatedCount: number
+  ) => {
+    if (!memberNames.length || cancellingPaymentKey) return
+    setPendingPaymentCancel({ memberNames, isDraft, consolidatedCount })
+  }
+
+  const handleCancelPayment = async () => {
+    const pending = pendingPaymentCancel
+    if (!pending || !pending.memberNames.length) return
+    if (cancellingPaymentKey) return
+
+    const { memberNames, isDraft } = pending
+    const key = memberNames.join('|')
+    setCancellingPaymentKey(key)
+    try {
+      const result = await cancelPaymentEntries(memberNames)
+      const changed = (result?.cancelled?.length || 0) + (result?.deleted?.length || 0)
+      toast.success(
+        changed > 1
+          ? `${changed} payment entries cancelled`
+          : isDraft
+            ? 'Draft refund deleted'
+            : 'Payment cancelled'
+      )
+      setPendingPaymentCancel(null)
+      await loadDashboardData()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to cancel payment')
+      setPendingPaymentCancel(null)
+      await loadDashboardData()
+    } finally {
+      setCancellingPaymentKey(null)
     }
   }
 
@@ -1109,8 +1170,49 @@ const handleMakePayment = async (
   }
 
   // FIX: Shared modals rendered regardless of current view
+  const pendingCancelTitle = pendingPaymentCancel
+    ? pendingPaymentCancel.isDraft
+      ? pendingPaymentCancel.consolidatedCount > 1
+        ? `Delete ${pendingPaymentCancel.consolidatedCount} draft refunds?`
+        : `Delete draft refund ${pendingPaymentCancel.memberNames[0]}?`
+      : pendingPaymentCancel.consolidatedCount > 1
+        ? `Cancel ${pendingPaymentCancel.consolidatedCount} payment entries?`
+        : `Cancel payment ${pendingPaymentCancel.memberNames[0]}?`
+    : ''
+  const pendingCancelMessage = pendingPaymentCancel
+    ? pendingPaymentCancel.isDraft
+      ? pendingPaymentCancel.consolidatedCount > 1
+        ? 'This deletes these draft refunds. This cannot be undone.'
+        : 'This deletes the draft refund. This cannot be undone.'
+      : pendingPaymentCancel.consolidatedCount > 1
+        ? 'This reverses these payments and restores any invoice balance. This cannot be undone.'
+        : 'This reverses the payment and restores any invoice balance. This cannot be undone.'
+    : ''
+  const pendingCancelConfirmLabel = pendingPaymentCancel
+    ? pendingPaymentCancel.isDraft
+      ? pendingPaymentCancel.consolidatedCount > 1
+        ? 'Delete refunds'
+        : 'Delete refund'
+      : 'Cancel payment'
+    : 'Cancel payment'
+  const pendingCancelCancelLabel = pendingPaymentCancel?.isDraft ? 'Keep refund' : 'Keep payment'
+
   const SharedModals = () => (
     <>
+      <ConfirmDialog
+        open={Boolean(pendingPaymentCancel)}
+        title={pendingCancelTitle}
+        message={pendingCancelMessage}
+        confirmLabel={pendingCancelConfirmLabel}
+        cancelLabel={pendingCancelCancelLabel}
+        variant="danger"
+        loading={Boolean(cancellingPaymentKey)}
+        onCancel={() => {
+          if (!cancellingPaymentKey) setPendingPaymentCancel(null)
+        }}
+        onConfirm={() => void handleCancelPayment()}
+      />
+
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => {
@@ -1602,6 +1704,7 @@ const handleMakePayment = async (
                   <th className="px-3 py-2 text-left">Receptionist</th>
                   <th className="px-3 py-2 text-left">Invoice</th>
                   <th className="px-3 py-2 text-center w-12">Print</th>
+                  <th className="px-3 py-2 text-center w-12">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1630,6 +1733,14 @@ const handleMakePayment = async (
                       ? [opIpLabel, caseNo].filter(Boolean).join(' · ')
                       : ''
                   const isConsolidated = p._consolidatedCount > 1
+                  const memberNameSet = new Set(p._memberNames)
+                  const memberRows = payments.filter((row) => memberNameSet.has(row.name))
+                  const nowMs = Date.now()
+                  const canCancelPayment =
+                    memberRows.length > 0 &&
+                    memberRows.every((row) => isPaymentEntryCancelable(row, nowMs))
+                  const paymentCancelKey = p._memberNames.join('|')
+                  const isCancellingPayment = cancellingPaymentKey === paymentCancelKey
                   return (
                   <tr key={isConsolidated ? `c:${p.custom_unique_identity || p.invoice_name || p.custom_case_no || 'adv'}:${p.payment_type}:${p.name}` : p.name}>
                     <td className="px-3 py-2 font-mono text-xs">
@@ -1704,11 +1815,35 @@ const handleMakePayment = async (
                         <span className="text-xs text-slate-400">—</span>
                       )}
                     </td>
+                    <td className="px-3 py-2 text-center">
+                      {canCancelPayment ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            requestCancelPayment(
+                              p._memberNames,
+                              isDraft,
+                              p._consolidatedCount
+                            )
+                          }
+                          disabled={isCancellingPayment}
+                          aria-label="Cancel payment"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                          title="Cancel this payment (available for 24 hours after it is received)"
+                        >
+                          {isCancellingPayment ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <X className="w-3 h-3" />
+                          )}
+                        </button>
+                      ) : null}
+                    </td>
                   </tr>
                   )
                 })}
                 {paymentDisplayRows.length === 0 && (
-                  <tr><td colSpan={9} className="px-3 py-6 text-center text-slate-500">NO PAYMENTS FOUND FOR SELECTED FILTERS.</td></tr>
+                  <tr><td colSpan={10} className="px-3 py-6 text-center text-slate-500">NO PAYMENTS FOUND FOR SELECTED FILTERS.</td></tr>
                 )}
               </tbody>
             </table>

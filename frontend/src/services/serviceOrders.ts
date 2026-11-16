@@ -123,8 +123,11 @@ export interface PaymentEntryRow {
   mode_of_payment: string
   paid_amount: number
   party?: string | null
+  party_type?: string | null
   party_name?: string
   reference_no?: string
+  /** Server-computed: patient payment still inside the 24-hour cancel window. */
+  can_cancel?: boolean
   cost_center?: string | null
   remarks?: string | null
   cashier?: string | null

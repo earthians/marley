@@ -67,7 +67,7 @@ async function paymentApiRequest<T>(
   method: string,
   body?: Record<string, unknown>
 ): Promise<T> {
-  const { ensureCSRF } = await import('./apiClient')
+  const { ensureCSRF, parseFrappeErrorPayload } = await import('./apiClient')
   const csrf = (window as any).csrf_token || (await ensureCSRF())
 
   const response = await fetch(`/api/method/${method}`, {
@@ -85,10 +85,10 @@ async function paymentApiRequest<T>(
 
   if (!response.ok || resData?.exc) {
     const msg =
-      typeof resData?.message === 'string'
-        ? resData.message
-        : resData?.exc || `Request failed (${response.status})`
-    throw new Error(String(msg))
+      parseFrappeErrorPayload(resData) ||
+      (typeof resData?.message === 'string' ? resData.message : '') ||
+      `Request failed (${response.status})`
+    throw new Error(msg)
   }
 
   return resData?.message as T
@@ -109,6 +109,25 @@ export async function createPaymentEntry(
     return { name: '', server_message: msg.trim() }
   }
   throw new Error('Failed to create payment entry')
+}
+
+export interface CancelPaymentEntriesResult {
+  cancelled?: string[]
+  deleted?: string[]
+}
+
+/**
+ * Reverse the Payment Entries behind one reception payment row.
+ * Submitted entries are cancelled; draft refunds are deleted. The backend
+ * rejects entries older than 24 hours.
+ */
+export async function cancelPaymentEntries(
+  paymentEntries: string[]
+): Promise<CancelPaymentEntriesResult> {
+  return paymentApiRequest<CancelPaymentEntriesResult>(
+    'healthcare.api.billing.cancel_payment_entries',
+    { payment_entries: paymentEntries }
+  )
 }
 
 // ─── Fetch helpers ────────────────────────────────────────────────────────────

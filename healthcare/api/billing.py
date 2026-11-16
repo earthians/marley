@@ -132,7 +132,17 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import add_months, cint, cstr, flt, formatdate, getdate, nowdate, today
+from frappe.utils import (
+    add_months,
+    cint,
+    cstr,
+    flt,
+    formatdate,
+    getdate,
+    now_datetime,
+    nowdate,
+    today,
+)
 from healthcare.healthcare.editing_lock import assert_editing_allowed
 
 
@@ -906,6 +916,7 @@ def get_payment_entries(
             pe.mode_of_payment,
             pe.paid_amount,
             pe.party,
+            pe.party_type,
             pe.party_name,
             pe.reference_no,
             pe.cost_center,
@@ -933,6 +944,19 @@ def get_payment_entries(
         params,
         as_dict=True,
     )
+
+    # Server-side eligibility so the dashboard's Cancel button follows the same
+    # 24-hour rule (and role check) enforced by cancel_payment_entries.
+    can_cancel_payments = _can_cancel_payments()
+    now = now_datetime()
+    for row in rows:
+        row["can_cancel"] = bool(
+            can_cancel_payments
+            and cint(row.get("docstatus")) in (0, 1)
+            and row.get("party_type") == "Customer"
+            and (row.get("payment_type") or "") in ("Receive", "Pay")
+            and not _payment_cancel_window_expired(row.get("creation"), now)
+        )
     return rows
 
 
@@ -982,6 +1006,149 @@ def get_payment_summary(
         "advance_amount": _compute_patient_advance_amount(patient),
         "modes": modes,
     }
+
+
+# Reception payments may be reversed only shortly after they are taken; the
+# billing dashboard hides the Cancel action once this window has passed.
+PAYMENT_CANCEL_WINDOW_HOURS = 24
+
+PAYMENT_CANCEL_ROLES = frozenset(
+    {
+        "Administrator",
+        "System Manager",
+        "Healthcare Administrator",
+        "Accounts User",
+        "Accounts Manager",
+        "Reception",
+        "Receptionist",
+        "Healthcare Receptionist",
+    }
+)
+PAYMENT_CANCEL_ROLE_KEYWORDS = ("reception", "cashier", "billing")
+
+
+def _can_cancel_payments(user=None) -> bool:
+    """True for reception/billing users allowed to reverse a payment entry.
+
+    Reception portal roles do not carry ERPNext's desk ``Payment Entry`` cancel
+    DocPerm, so access is granted by role as well as by the standard permission.
+    """
+    user = user or frappe.session.user
+    if not user or user == "Guest":
+        return False
+    if frappe.has_permission("Payment Entry", "cancel"):
+        return True
+
+    roles = {role for role in frappe.get_roles(user) if role}
+    if roles & PAYMENT_CANCEL_ROLES:
+        return True
+    return any(
+        keyword in role.lower()
+        for role in roles
+        for keyword in PAYMENT_CANCEL_ROLE_KEYWORDS
+    )
+
+
+def _assert_can_cancel_payments() -> None:
+    if not _can_cancel_payments():
+        frappe.throw(
+            _("You are not permitted to cancel payments."), frappe.PermissionError
+        )
+
+
+def _payment_cancel_window_expired(creation, now=None) -> bool:
+    from datetime import timedelta
+
+    from frappe.utils import get_datetime
+
+    created = get_datetime(creation) if creation else None
+    if not created:
+        return True
+    now = now or now_datetime()
+    return now - created > timedelta(hours=PAYMENT_CANCEL_WINDOW_HOURS)
+
+
+def _coerce_payment_entry_names(payment_entries) -> list[str]:
+    """Accept a single name, a JSON list, or a Python list of Payment Entry names."""
+    if isinstance(payment_entries, str):
+        text = payment_entries.strip()
+        if not text:
+            return []
+        try:
+            payment_entries = json.loads(text)
+        except (TypeError, ValueError):
+            payment_entries = text
+
+    if not isinstance(payment_entries, (list, tuple)):
+        payment_entries = [payment_entries]
+
+    names: list[str] = []
+    for value in payment_entries:
+        name = cstr(value or "").strip()
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+@frappe.whitelist()
+def cancel_payment_entries(payment_entries=None):
+    """Cancel (or delete draft) reception-billing Payment Entries within 24 hours.
+
+    The billing dashboard groups multi-mode payments into one row, so the caller
+    may submit several names created by the same payment action.
+    """
+    _assert_can_cancel_payments()
+
+    names = _coerce_payment_entry_names(payment_entries)
+    if not names:
+        frappe.throw(_("At least one Payment Entry is required."))
+
+    cancelled: list[str] = []
+    deleted: list[str] = []
+
+    for name in names:
+        if not frappe.db.exists("Payment Entry", name):
+            frappe.throw(_("Payment Entry {0} not found.").format(name))
+
+        doc = frappe.get_doc("Payment Entry", name)
+
+        if cint(doc.docstatus) == 2:
+            frappe.throw(_("Payment Entry {0} is already cancelled.").format(name))
+
+        # Only patient payments belong to the reception billing dashboard; never let
+        # this endpoint reverse supplier or internal-transfer entries.
+        if doc.party_type != "Customer" or doc.payment_type not in ("Receive", "Pay"):
+            frappe.throw(
+                _(
+                    "Payment Entry {0} is not a patient payment and cannot be cancelled here."
+                ).format(name),
+                frappe.PermissionError,
+            )
+
+        if _payment_cancel_window_expired(doc.creation):
+            frappe.throw(
+                _(
+                    "Payment Entry {0} can no longer be cancelled. Payments can only "
+                    "be cancelled within {1} hours of creation."
+                ).format(name, PAYMENT_CANCEL_WINDOW_HOURS)
+            )
+
+        # Keep the portal scoped to the same cost centers used by the payments list.
+        _assert_cost_centers_permitted([doc.cost_center])
+
+        if cint(doc.docstatus) == 0:
+            frappe.delete_doc("Payment Entry", doc.name, ignore_permissions=True)
+            deleted.append(name)
+            continue
+
+        # Role/cost-center checks above are the portal gate; skip desk DocPerms so
+        # reception users can reverse their own entries.
+        doc.flags.ignore_permissions = True
+        doc.cancel()
+        cancelled.append(name)
+
+    frappe.db.commit()
+    return {"cancelled": cancelled, "deleted": deleted}
 
 
 _COLLECTION_AMOUNT_KEYS = (
