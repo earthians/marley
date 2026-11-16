@@ -18,7 +18,7 @@ const STATUS_THEMES = {
 	Scheduled: "blue",
 	"In Progress": "amber",
 	Completed: "green",
-	Postponed: "amber",
+	Unscheduled: "amber",
 	Ordered: "violet",
 };
 </script>

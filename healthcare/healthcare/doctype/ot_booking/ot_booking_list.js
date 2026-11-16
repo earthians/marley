@@ -6,7 +6,7 @@ frappe.listview_settings["OT Booking"] = {
 			Scheduled: "blue",
 			"In Progress": "orange",
 			Completed: "green",
-			Postponed: "yellow",
+			Unscheduled: "yellow",
 			Cancelled: "red",
 		};
 		return [__(doc.status), colors[doc.status], "status,=," + doc.status];

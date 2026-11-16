@@ -85,7 +85,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Tentative\nScheduled\nIn Progress\nCompleted\nPostponed\nCancelled",
+   "options": "Unscheduled\nTentative\nScheduled\nIn Progress\nCompleted\nCancelled",
    "reqd": 1
   },
   {
@@ -121,13 +121,13 @@
    "in_standard_filter": 1,
    "label": "Theatre",
    "options": "Healthcare Service Unit",
-   "reqd": 1
+   "mandatory_depends_on": "eval:![\"Unscheduled\", \"Cancelled\"].includes(doc.status)"
   },
   {
    "fieldname": "scheduled_start",
    "fieldtype": "Datetime",
    "label": "Scheduled Start",
-   "reqd": 1
+   "mandatory_depends_on": "eval:![\"Unscheduled\", \"Cancelled\"].includes(doc.status)"
   },
   {
    "fieldname": "column_break_slot",
@@ -221,7 +221,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-10 18:57:41.583846",
+ "modified": "2026-11-16 19:53:49.421057",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "OT Booking",

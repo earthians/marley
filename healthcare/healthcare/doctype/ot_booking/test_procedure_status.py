@@ -54,12 +54,12 @@ class TestProcedureStatus(HealthcareTestSuite):
 
 		self.assertEqual(self.status(booking), "Completed")
 
-	def test_a_postponed_case_is_left_alone(self):
-		booking, (first, _second) = self.booking_with_procedures(status="Postponed")
+	def test_an_unscheduled_case_is_left_alone(self):
+		booking, (first, _second) = self.booking_with_procedures(status="Unscheduled")
 
 		first.start_procedure()
 
-		self.assertEqual(self.status(booking), "Postponed")
+		self.assertEqual(self.status(booking), "Unscheduled")
 
 	def test_the_case_never_moves_backwards(self):
 		booking, (first, _second) = self.booking_with_procedures(status="Completed")

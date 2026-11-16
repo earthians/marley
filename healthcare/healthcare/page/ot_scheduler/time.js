@@ -28,10 +28,6 @@ function toDate(value) {
 	return new Date(String(value).replace(" ", "T"));
 }
 
-export function caseMinutes(booking) {
-	return (toDate(booking.scheduled_end) - toDate(booking.scheduled_start)) / 60000;
-}
-
 export function caseOnDay(booking, day) {
 	const midnight = new Date(`${day}T00:00:00`);
 	const sinceMidnight = value => (toDate(value) - midnight) / 60000;

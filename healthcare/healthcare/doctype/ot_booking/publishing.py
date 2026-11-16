@@ -70,5 +70,5 @@ def publish(booking):
 
 def reschedule(booking):
 	booking.check_permission("write")
-	booking.status = "Postponed"
+	booking.status = "Unscheduled"
 	booking.save()

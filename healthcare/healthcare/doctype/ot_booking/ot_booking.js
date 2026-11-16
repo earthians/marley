@@ -36,7 +36,9 @@ frappe.ui.form.on("OT Booking", {
 			!frm.is_new() &&
 			frappe.datetime.str_to_obj(frm.doc.scheduled_start) < fifteenMinutesAgo;
 		frm.set_df_property("cleaning_minutes", "read_only", passed ? 1 : 0);
-		const open = !["Cancelled", "Postponed", "Completed"].includes(frm.doc.status);
+		const open = !["Cancelled", "Unscheduled", "Completed"].includes(
+			frm.doc.status,
+		);
 		if (frm.is_new() || !open || !frm.doc.__onload?.procedures_to_create) return;
 		frm.add_custom_button(__("Create Procedures"), () => create_procedures(frm));
 		frm.change_custom_button_type(__("Create Procedures"), null, "primary");

@@ -38,7 +38,7 @@ class TestStartOver(HealthcareTestSuite):
 
 		result = start_over_day(str(self.day), COMPANY)
 
-		self.assertEqual((self.status(tentative), self.status(scheduled)), ("Postponed", "Scheduled"))
+		self.assertEqual((self.status(tentative), self.status(scheduled)), ("Unscheduled", "Scheduled"))
 		self.assertEqual(result["moved"], [tentative.name])
 
 	def test_cases_under_way_stay(self):

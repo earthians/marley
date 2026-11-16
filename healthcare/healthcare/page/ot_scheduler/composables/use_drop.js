@@ -3,14 +3,7 @@ import { ref } from "vue";
 import { toastError } from "../api.js";
 import { hideDragImage, planDrop, snapFirstDrop, snapToGrid } from "../drop_plan.js";
 import { playDropSound } from "../sounds.js";
-import {
-	caseMinutes,
-	caseOnDay,
-	DAY_MINUTES,
-	minutesOf,
-	hourMinute,
-	pastUntil,
-} from "../time.js";
+import { caseOnDay, DAY_MINUTES, minutesOf, hourMinute, pastUntil } from "../time.js";
 
 export function useDrop({
 	board,
@@ -33,9 +26,9 @@ export function useDrop({
 		);
 	}
 
-	function pickPostponed(booking, event) {
+	function pickUnscheduled(booking, event) {
 		pick(
-			{ booking, grab: null, length: caseMinutes(booking) },
+			{ booking, grab: null, length: Math.round(booking.duration / 60) },
 			booking.name,
 			event,
 		);
@@ -51,7 +44,7 @@ export function useDrop({
 	function unschedule() {
 		const booking = dragged.value?.booking;
 		endDrag();
-		if (booking && booking.status !== "Postponed") reschedule(booking, true);
+		if (booking && booking.status !== "Unscheduled") reschedule(booking, true);
 	}
 
 	function clearGhost() {
@@ -68,7 +61,11 @@ export function useDrop({
 		const block = event.currentTarget.getBoundingClientRect();
 		const lane = event.currentTarget.parentElement.getBoundingClientRect();
 		const grab = alongLane(event, lane, block);
-		pick({ booking, grab, length: caseMinutes(booking) }, booking.name, event);
+		pick(
+			{ booking, grab, length: Math.round(booking.duration / 60) },
+			booking.name,
+			event,
+		);
 	}
 
 	function dragOver(theatre, event) {
@@ -169,7 +166,7 @@ export function useDrop({
 		dropTheatre,
 		plan,
 		pickRequest,
-		pickPostponed,
+		pickUnscheduled,
 		pickBooking,
 		dragOver,
 		drop,

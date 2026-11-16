@@ -101,7 +101,7 @@ def get_bookings(date, theatres):
 def add_case_details(bookings):
 	names = [booking.name for booking in bookings]
 	team = child_rows("OT Booking Team", names, ["practitioner", "practitioner_name", "role", "is_primary"])
-	rows = child_rows("OT Booking Procedure", names, ["procedure_template"])
+	rows = child_rows("OT Booking Procedure", names, ["procedure_template", "duration"])
 	made = frappe.get_all(
 		"Clinical Procedure",
 		fields=["ot_booking", "docstatus"],
@@ -111,7 +111,9 @@ def add_case_details(bookings):
 	for booking in bookings:
 		members = [member for member in team if member.parent == booking.name]
 		procedures = [procedure for procedure in made if procedure.ot_booking == booking.name]
-		booking.procedures = [row.procedure_template for row in rows if row.parent == booking.name]
+		own_rows = [row for row in rows if row.parent == booking.name]
+		booking.procedures = [row.procedure_template for row in own_rows]
+		booking.duration = sum(cint(row.duration) for row in own_rows)
 		add_team(booking, members)
 		booking.procedures_pending = booking.status != "Completed" and len(procedures) < len(
 			booking.procedures

@@ -137,8 +137,8 @@ class TestAvailability(HealthcareTestSuite):
 
 		self.assert_refused("already has a booking", self.at(9), theatre=self.other_theatre, surgeon=1)
 
-	def test_cancelled_and_postponed_cases_take_no_time(self):
-		for status in ("Cancelled", "Postponed"):
+	def test_cancelled_and_unscheduled_cases_take_no_time(self):
+		for status in ("Cancelled", "Unscheduled"):
 			make_booking(self, self.at(9)).db_set("status", status)
 
 		booking = make_booking(self, self.at(9))

@@ -6,7 +6,7 @@ import { today } from "../time.js";
 export function useBoardLoad({ day, company, department }) {
 	const board = ref(null);
 	const requests = ref([]);
-	const postponed = ref([]);
+	const unscheduled = ref([]);
 	let loads = 0;
 	let companyFromServer = false;
 
@@ -22,10 +22,10 @@ export function useBoardLoad({ day, company, department }) {
 			const replies = await Promise.all([
 				get("board.get_board", { date: day.value, ...selected }),
 				get("scheduling.get_open_requests", selected),
-				get("scheduling.get_postponed", selected),
+				get("scheduling.get_unscheduled", selected),
 			]);
 			if (run !== loads) return;
-			[board.value, requests.value, postponed.value] = replies;
+			[board.value, requests.value, unscheduled.value] = replies;
 			fillCompany();
 		} catch (error) {
 			if (run === loads) showError(error);
@@ -56,5 +56,5 @@ export function useBoardLoad({ day, company, department }) {
 	});
 	watch(department, load);
 
-	return { board, requests, postponed, load, filters, current };
+	return { board, requests, unscheduled, load, filters, current };
 }

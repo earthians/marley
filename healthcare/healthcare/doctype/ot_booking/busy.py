@@ -8,7 +8,7 @@ from frappe.utils import add_days, cint, get_datetime, getdate
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import ot_setting
 
-INACTIVE_STATUSES = ("Cancelled", "Postponed")
+INACTIVE_STATUSES = ("Cancelled", "Unscheduled")
 
 
 def cases_between(start, end, exclude=None):

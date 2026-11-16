@@ -81,7 +81,7 @@ class TestBoard(HealthcareTestSuite):
 		self.assertEqual([row.name for row in shown], [booking.name])
 		self.assertEqual(shown[0].surgeon, booking.team[0].practitioner_name)
 		self.assertEqual(shown[0].procedures, [self.template.name])
-		self.assertEqual(shown[0].next_statuses, ("Scheduled", "Postponed", "Cancelled"))
+		self.assertEqual(shown[0].next_statuses, ("Scheduled", "Unscheduled", "Cancelled"))
 		self.assertTrue(shown[0].procedures_pending)
 
 	def test_a_case_with_its_procedures_created_has_none_pending(self):

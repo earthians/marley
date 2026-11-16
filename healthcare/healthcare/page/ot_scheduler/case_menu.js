@@ -4,7 +4,7 @@ export function caseMenu(
 ) {
 	const actions = [{ label: __("View"), onClick: () => open(booking.name) }];
 	if (!canEdit) return [{ group: "Booking", hideLabel: true, options: actions }];
-	if (booking.next_statuses.includes("Postponed"))
+	if (booking.next_statuses.includes("Unscheduled"))
 		actions.push({
 			label:
 				booking.status === "Scheduled" ? __("Reschedule…") : __("Reschedule"),
@@ -26,7 +26,7 @@ export function caseMenu(
 
 function statusOptions(booking, change, askReason) {
 	const options = booking.next_statuses
-		.filter(status => status !== "Postponed")
+		.filter(status => status !== "Unscheduled")
 		.map(status => statusOption(booking, status, change, askReason));
 	if (!options.length)
 		options.push({

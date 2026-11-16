@@ -185,9 +185,9 @@ class TestSlots(HealthcareTestSuite):
 
 		self.assertEqual(frappe.db.count("OT Booking"), before)
 
-	def test_a_postponed_case_is_offered_slots_too(self):
+	def test_an_unscheduled_case_is_offered_slots_too(self):
 		booking = make_booking(self, self.at(9, day=add_days(self.tomorrow, 3)), patient=2, surgeon=2)
-		booking.db_set("status", "Postponed")
+		booking.db_set("status", "Unscheduled")
 
 		slots = find_slots(booking=booking.name, department=DEPARTMENT, company="_Test Company")
 

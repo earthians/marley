@@ -223,7 +223,7 @@ class TestProcedures(HealthcareTestSuite):
 		procedure = self.first_procedure(booking).name
 		booking.reload()
 
-		booking.status = "Postponed"
+		booking.status = "Unscheduled"
 		booking.save()
 
 		self.assertFalse(frappe.db.exists("Clinical Procedure", procedure))

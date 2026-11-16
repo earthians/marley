@@ -14,7 +14,7 @@ defineProps({
 	procedures: { type: String, required: true },
 	duration: { type: String, required: true },
 	details: { type: Array, required: true },
-	postponed: { type: Boolean, default: false },
+	unscheduled: { type: Boolean, default: false },
 	route: { type: String, required: true },
 	preview: { type: Object, required: true },
 	previewOpen: { type: Boolean, default: false },
@@ -31,7 +31,7 @@ function formatDate(value) {
 	<div
 		draggable="true"
 		class="cursor-grab rounded-4 bg-surface-base p-2"
-		:class="[priorityBorder(row), postponed && 'border-dashed']"
+		:class="[priorityBorder(row), unscheduled && 'border-dashed']"
 		@dragstart="event => emit('pick', event)"
 		@dragend="emit('done')"
 	>

@@ -11,7 +11,7 @@ from healthcare.healthcare.doctype.ot_booking.priority import add_priority
 from healthcare.healthcare.doctype.ot_booking.push import push_following
 from healthcare.healthcare.doctype.ot_booking.refusal import refusal_text
 
-MOVABLE_STATUSES = ("Tentative", "Scheduled", "Postponed")
+MOVABLE_STATUSES = ("Tentative", "Scheduled", "Unscheduled")
 
 
 @frappe.whitelist()
@@ -57,7 +57,7 @@ def get_open_requests(company: str | None = None, department: str | None = None)
 
 
 @frappe.whitelist()
-def get_postponed(company: str | None = None, department: str | None = None) -> list:
+def get_unscheduled(company: str | None = None, department: str | None = None) -> list:
 	frappe.has_permission("OT Booking", "read", throw=True)
 	bookings = frappe.get_list(
 		"OT Booking",
@@ -71,7 +71,7 @@ def get_postponed(company: str | None = None, department: str | None = None) -> 
 			"scheduled_end",
 			"cleaning_minutes",
 		],
-		filters=company_filter(company, {"status": "Postponed"}),
+		filters=company_filter(company, {"status": "Unscheduled"}),
 		order_by="scheduled_start asc",
 		limit=0,
 	)
@@ -106,7 +106,7 @@ def move_booking(name: str, theatre: str, start: str, reason: str | None = None)
 	if booking.status not in MOVABLE_STATUSES:
 		frappe.throw(_("A {0} case cannot be moved").format(_(booking.status)), title=_("Not Movable"))
 	booking.update({"theatre": theatre, "scheduled_start": start, "change_reason": reason})
-	if booking.status == "Postponed":
+	if booking.status == "Unscheduled":
 		booking.status = "Tentative"
 	make_room(booking, reason)
 	return booking.save().name

@@ -45,7 +45,7 @@ export function useCaseActions({ canEdit, reload, open }) {
 	}
 
 	function reschedule(booking, dropped = false) {
-		const params = statusParams(booking, "Postponed");
+		const params = statusParams(booking, "Unscheduled");
 		if (booking.needs_reason)
 			return askIfPossible("set_status", params, __("Reschedule"), dropped);
 		change("set_status", params, dropped);

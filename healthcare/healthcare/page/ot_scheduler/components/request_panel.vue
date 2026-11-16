@@ -7,18 +7,18 @@ import FinderButton from "./finder_button.vue";
 import PaneCard from "./pane_card.vue";
 import SlotList from "./slot_list.vue";
 import ChevronIcon from "~icons/lucide/chevron-right";
-import { caseMinutes, isoDate, today } from "../time.js";
+import { isoDate, today } from "../time.js";
 
 const props = defineProps({
 	requests: { type: Array, default: () => [] },
-	postponed: { type: Array, default: () => [] },
+	unscheduled: { type: Array, default: () => [] },
 	dropping: { type: Boolean, default: false },
 	finder: { type: Object, required: true },
 	picked: { type: Object, default: null },
 });
 const emit = defineEmits([
 	"pick",
-	"pickPostponed",
+	"pickUnscheduled",
 	"unschedule",
 	"over",
 	"done",
@@ -37,7 +37,7 @@ function previewOpened(name, open) {
 }
 
 const cards = computed(() =>
-	[...props.requests.map(requestCard), ...props.postponed.map(postponedCard)]
+	[...props.requests.map(requestCard), ...props.unscheduled.map(unscheduledCard)]
 		.filter(card => matches(card.searchText))
 		.sort(byExpectedDate),
 );
@@ -113,14 +113,14 @@ function requestCard(request) {
 	};
 }
 
-function postponedCard(booking) {
+function unscheduledCard(booking) {
 	return {
 		row: booking,
 		route: `ot-booking/${booking.name}`,
 		preview: booking,
-		postponed: true,
+		unscheduled: true,
 		procedures: booking.procedures.join(", "),
-		duration: duration(caseMinutes(booking) * 60),
+		duration: duration(booking.duration),
 		details: [booking.surgeon, booking.name],
 		searchText: [
 			booking.patient_name,
@@ -128,7 +128,7 @@ function postponedCard(booking) {
 			...booking.procedures,
 			booking.surgeon,
 		],
-		pick: event => emit("pickPostponed", booking, event),
+		pick: event => emit("pickUnscheduled", booking, event),
 		find: { booking },
 	};
 }
@@ -232,7 +232,7 @@ function drop() {
 						@update:preview-open="
 							open => previewOpened(card.row.name, open)
 						"
-						:postponed="Boolean(card.postponed)"
+						:unscheduled="Boolean(card.unscheduled)"
 						:procedures="card.procedures"
 						:duration="card.duration"
 						:details="card.details"

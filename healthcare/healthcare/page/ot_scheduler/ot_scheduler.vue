@@ -49,7 +49,7 @@ const department = ref(props.query.department || "");
 const {
 	board,
 	requests,
-	postponed,
+	unscheduled,
 	load,
 	filters: boardFilters,
 	current,
@@ -254,7 +254,7 @@ function pickFromPane(pick, row, event) {
 					class="hidden md:inline-flex lg:hidden"
 					@click="paneOpen = !paneOpen"
 				>
-					To schedule ({{ requests.length + postponed.length }})
+					To schedule ({{ requests.length + unscheduled.length }})
 				</Button>
 			</template>
 		</DateBar>
@@ -318,15 +318,18 @@ function pickFromPane(pick, row, event) {
 				class="absolute inset-y-0 start-0 z-40 bg-surface-base shadow-xl lg:visible lg:static lg:z-auto lg:bg-transparent lg:shadow-none"
 				:class="!paneOpen && 'invisible'"
 				:requests="requests"
-				:postponed="postponed"
+				:unscheduled="unscheduled"
 				:dropping="
-					Boolean(dragged?.booking && dragged.booking.status !== 'Postponed')
+					Boolean(
+						dragged?.booking && dragged.booking.status !== 'Unscheduled',
+					)
 				"
 				@pick="
 					(request, event) => pickFromPane(drag.pickRequest, request, event)
 				"
-				@pick-postponed="
-					(booking, event) => pickFromPane(drag.pickPostponed, booking, event)
+				@pick-unscheduled="
+					(booking, event) =>
+						pickFromPane(drag.pickUnscheduled, booking, event)
 				"
 				@unschedule="drag.unschedule"
 				@over="drag.clearGhost"

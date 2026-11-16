@@ -90,9 +90,9 @@ class TestDayRules(HealthcareTestSuite):
 		self.assertTrue(has_reason_comment(booking.name, "Laminar flow unit needed"))
 		self.assertFalse(frappe.db.get_value("OT Booking", booking.name, "change_reason"))
 
-	def test_a_postponed_case_cannot_be_restored_onto_today_by_a_coordinator(self):
+	def test_an_unscheduled_case_cannot_be_restored_onto_today_by_a_coordinator(self):
 		booking = make_booking(self, later_today(self, 2), priority=priority_named("STAT"))
-		booking.db_set({"status": "Postponed", "priority": priority_named("Routine")})
+		booking.db_set({"status": "Unscheduled", "priority": priority_named("Routine")})
 		booking.reload()
 		self.as_coordinator()
 		booking.status = "Tentative"
@@ -157,14 +157,14 @@ class TestDayRules(HealthcareTestSuite):
 		booking.save()
 
 	def test_a_case_whose_time_has_passed_can_be_rescheduled_or_cancelled(self):
-		for status in ("Postponed", "Cancelled"):
+		for status in ("Unscheduled", "Cancelled"):
 			booking = self.past_booking("Scheduled")
 			booking.update({"status": status, "change_reason": "Patient did not come"})
 
 			booking.save()
 
 	def test_a_rescheduled_case_cannot_be_placed_in_the_past(self):
-		booking = self.past_booking("Postponed")
+		booking = self.past_booking("Unscheduled")
 		booking.status = "Tentative"
 
 		self.assertRaisesRegex(frappe.ValidationError, "has passed", booking.save)

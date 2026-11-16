@@ -21,13 +21,14 @@ from healthcare.healthcare.doctype.ot_booking.procedures import (
 from healthcare.healthcare.doctype.ot_booking.same_patient import warn_other_cases
 
 STATUS_CHANGES = {
-	"Tentative": ("Scheduled", "Postponed", "Cancelled"),
-	"Scheduled": ("Tentative", "In Progress", "Postponed", "Cancelled"),
+	"Tentative": ("Scheduled", "Unscheduled", "Cancelled"),
+	"Scheduled": ("Tentative", "In Progress", "Unscheduled", "Cancelled"),
 	# cancelling a started case is refused while it has a submitted procedure (procedures.py)
 	"In Progress": ("Completed", "Cancelled"),
-	"Postponed": ("Tentative", "Cancelled"),
+	"Unscheduled": ("Tentative", "Cancelled"),
 }
-NEW_STATUSES = ("Tentative", "Scheduled")
+NEW_STATUSES = ("Unscheduled", "Tentative", "Scheduled")
+WITHOUT_PLACE = ("Unscheduled", "Cancelled")
 ACTIVE_REQUEST_STATUS = "active-Request Status"
 A_DAY = 24 * 60 * 60
 
@@ -43,8 +44,10 @@ class OTBooking(Document):
 	def validate(self):
 		self.patient_name = frappe.db.get_value("Patient", self.patient, "patient_name")
 		set_priority(self)
+		self.set_status_from_place()
 		self.validate_status_change()
 		self.set_procedure_rows()
+		self.validate_place()
 		self.set_schedule()
 		self.validate_theatre()
 		self.validate_procedures()
@@ -82,6 +85,21 @@ class OTBooking(Document):
 				title=_("Not Allowed"),
 			)
 
+	def set_status_from_place(self):
+		before = self.get_doc_before_save()
+		waiting = not before or before.status == "Unscheduled"
+		if waiting and self.status in ("Unscheduled", "Tentative"):
+			self.status = "Tentative" if self.theatre and self.scheduled_start else "Unscheduled"
+
+	def validate_place(self):
+		if self.status == "Unscheduled":
+			self.theatre = self.scheduled_start = None
+		elif self.status not in WITHOUT_PLACE and not (self.theatre and self.scheduled_start):
+			frappe.throw(
+				_("A {0} case needs a Theatre and a Scheduled Start").format(_(self.status)),
+				title=_("Missing Time"),
+			)
+
 	def set_procedure_rows(self):
 		for row in self.procedures:
 			if row.service_request:
@@ -100,12 +118,15 @@ class OTBooking(Document):
 		length = sum(cint(row.duration) for row in self.procedures)
 		if length >= A_DAY:
 			frappe.throw(_("A case must take less than 24 hours"), title=_("Case Too Long"))
-		self.scheduled_date = getdate(self.scheduled_start)
-		self.scheduled_end = add_to_date(self.scheduled_start, seconds=length)
+		placed = bool(self.scheduled_start)
+		self.scheduled_date = getdate(self.scheduled_start) if placed else None
+		self.scheduled_end = add_to_date(self.scheduled_start, seconds=length) if placed else None
 		if self.cleaning_minutes in (None, ""):
 			self.cleaning_minutes = cint(ot_setting("ot_cleaning_minutes"))
 
 	def validate_theatre(self):
+		if not self.theatre:
+			return
 		is_ot, company = frappe.db.get_value("Healthcare Service Unit", self.theatre, ["is_ot", "company"])
 		if not is_ot:
 			frappe.throw(_("{0} is not an operation theatre").format(frappe.bold(self.theatre)))
@@ -117,7 +138,9 @@ class OTBooking(Document):
 			)
 
 	def validate_procedures(self):
-		theatre_type = frappe.db.get_value("Healthcare Service Unit", self.theatre, "service_unit_type")
+		theatre_type = self.theatre and frappe.db.get_value(
+			"Healthcare Service Unit", self.theatre, "service_unit_type"
+		)
 		for row in self.procedures:
 			requires_ot, required_type = frappe.db.get_value(
 				"Clinical Procedure Template",
@@ -127,7 +150,7 @@ class OTBooking(Document):
 			template = frappe.bold(row.procedure_template)
 			if not requires_ot:
 				refuse_row(row, _("{0} does not require an operation theatre").format(template))
-			if required_type and required_type != theatre_type:
+			if theatre_type and required_type and required_type != theatre_type:
 				refuse_row(row, _("{0} needs a {1} theatre").format(template, frappe.bold(required_type)))
 
 	def validate_service_requests(self):

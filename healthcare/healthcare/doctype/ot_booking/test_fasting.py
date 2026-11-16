@@ -162,7 +162,7 @@ class TestFasting(HealthcareTestSuite):
 		booking = self.scheduled()
 		self.use_fasting(None, 6)
 
-		change_status(booking, "Postponed", "Patient unwell")
+		change_status(booking, "Unscheduled", "Patient unwell")
 
 		self.assertEqual([task.status for task in self.tasks(booking)], ["Cancelled"])
 

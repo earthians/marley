@@ -91,6 +91,8 @@ def update_procedures(booking):
 		for procedure in held.values():
 			frappe.delete_doc("Clinical Procedure", procedure.name, ignore_permissions=True)
 		return
+	if not booking.scheduled_start:
+		return
 	for row, start in rows_with_start(booking):
 		procedure = held.get(row.name)
 		if procedure and procedure.docstatus == 0:

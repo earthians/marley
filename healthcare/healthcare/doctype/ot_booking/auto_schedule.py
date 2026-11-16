@@ -13,7 +13,7 @@ from healthcare.healthcare.doctype.ot_booking.scheduling import (
 	book_request,
 	booked_requests,
 	get_open_requests,
-	get_postponed,
+	get_unscheduled,
 	move_booking,
 )
 from healthcare.healthcare.doctype.ot_booking.slots import case_to_place, day_candidates, matching_theatres
@@ -109,8 +109,8 @@ def lift_tentative(names):
 
 def waiting_cases(day, company, department, lifted):
 	requests = [as_waiting(row, "request") for row in get_open_requests(company, department)]
-	postponed = [as_waiting(row, "booking") for row in get_postponed(company, department)]
-	due = [case for case in requests + postponed if case.name in lifted or is_due(case, day)]
+	unscheduled = [as_waiting(row, "booking") for row in get_unscheduled(company, department)]
+	due = [case for case in requests + unscheduled if case.name in lifted or is_due(case, day)]
 	add_early_reasons(due, day)
 	return sorted(due, key=order_of)
 
@@ -224,7 +224,7 @@ def book_placement(placement):
 
 def still_waiting(placement):
 	if placement.kind == "booking":
-		return frappe.db.get_value("OT Booking", placement.name, "status") == "Postponed"
+		return frappe.db.get_value("OT Booking", placement.name, "status") == "Unscheduled"
 	return placement.name not in booked_requests([placement.name])
 
 
