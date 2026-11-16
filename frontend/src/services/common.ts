@@ -1649,6 +1649,8 @@ export interface InsuranceClaimFilters {
   health_insurance?: string
   insurance_payor?: string
   patient_category?: string
+  /** IP / OP Source of the claim (IP, OP or PH); omitted shows all */
+  ip_op_source?: string
 }
 
 export async function fetchInsuranceClaims(filters: InsuranceClaimFilters = {}): Promise<InsuranceClaimRow[]> {
@@ -1659,6 +1661,7 @@ export async function fetchInsuranceClaims(filters: InsuranceClaimFilters = {}):
   if (filters.health_insurance) params.append('health_insurance', filters.health_insurance)
   if (filters.insurance_payor) params.append('insurance_payor', filters.insurance_payor)
   if (filters.patient_category) params.append('patient_category', filters.patient_category)
+  if (filters.ip_op_source) params.append('ip_op_source', filters.ip_op_source)
 
   const url = `/api/method/healthcare.api.common.get_insurance_claims${params.toString() ? `?${params.toString()}` : ''}`
   const response = await fetch(url)

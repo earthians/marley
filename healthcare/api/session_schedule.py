@@ -693,3 +693,129 @@ def update_session_schedule_status(session_schedule_name: str, status: str):
 
 	row = session_schedule.as_dict()
 	return _attach_sales_orders([row])[0]
+
+
+def _draft_zero_amount_schedules():
+	"""Draft Session Schedules with amount ≤ 0 and a Healthcare Service Template."""
+	return frappe.get_all(
+		"Session Schedule",
+		filters={
+			"transaction_status": "Draft",
+			"session_type": ["is", "set"],
+			"amount": ["<=", 0],
+		},
+		fields=[
+			"name",
+			"session_type",
+			"session_name",
+			"amount",
+			"admission_number",
+			"patient_visit",
+			"patient_num",
+		],
+		limit_page_length=0,
+		order_by="modified desc",
+	)
+
+
+def _plan_session_schedule_price_updates(sample_limit: int = 25) -> dict:
+	"""Draft + amount 0 → template IP rate (admission) or OP rate (patient visit)."""
+	from healthcare.healthcare.doctype.healthcare_service_template.healthcare_service_template import (
+		get_healthcare_service_template_rate,
+	)
+
+	rows = _draft_zero_amount_schedules()
+	# get_all or_filters with amount can still return non-zero on some DBs — enforce in Python.
+	rows = [row for row in rows if flt(row.get("amount")) <= 0]
+
+	to_update: list[dict] = []
+	skipped_no_rate = 0
+	skipped_other = 0
+	sample: list[dict] = []
+
+	for row in rows:
+		care_type = _patient_care_type_from_schedule(row)
+		template = (row.get("session_type") or "").strip()
+		if not care_type or not template:
+			skipped_other += 1
+			continue
+		if not frappe.db.exists("Healthcare Service Template", template):
+			skipped_other += 1
+			continue
+
+		rate = flt(
+			get_healthcare_service_template_rate(
+				template_name=template,
+				patient_care_type=care_type,
+			),
+			2,
+		)
+		if rate <= 0:
+			skipped_no_rate += 1
+			continue
+
+		payload = {
+			"name": row.name,
+			"session_type": template,
+			"session_name": row.get("session_name"),
+			"care_type": care_type,
+			"amount": rate,
+		}
+		to_update.append(payload)
+		if len(sample) < sample_limit:
+			sample.append(payload)
+
+	return {
+		"candidates": len(rows),
+		"to_update": len(to_update),
+		"skipped_no_rate": skipped_no_rate,
+		"skipped_other": skipped_other,
+		"sample": sample,
+		"updates": to_update,
+	}
+
+
+@frappe.whitelist()
+def preview_update_session_schedule_prices():
+	"""Preview Draft Session Schedules whose amount is 0 and can be filled from the template."""
+	plan = _plan_session_schedule_price_updates()
+	plan.pop("updates", None)
+	return plan
+
+
+@frappe.whitelist()
+def update_session_schedule_prices():
+	"""Set amount on Draft Session Schedules that are still 0 from Healthcare Service Template IP/OP rate."""
+	assert_editing_allowed()
+	plan = _plan_session_schedule_price_updates()
+	updated = 0
+	for row in plan.get("updates") or []:
+		frappe.db.set_value(
+			"Session Schedule",
+			row["name"],
+			"amount",
+			row["amount"],
+			update_modified=True,
+		)
+		updated += 1
+	frappe.db.commit()
+
+	message = _(
+		"Updated {0} Draft Session Schedule(s).\n"
+		"Candidates with amount 0: {1}\n"
+		"Skipped (no IP/OP rate on template): {2}\n"
+		"Skipped (no care type / template): {3}."
+	).format(
+		updated,
+		plan.get("candidates") or 0,
+		plan.get("skipped_no_rate") or 0,
+		plan.get("skipped_other") or 0,
+	)
+	return {
+		"ok": True,
+		"updated": updated,
+		"candidates": plan.get("candidates") or 0,
+		"skipped_no_rate": plan.get("skipped_no_rate") or 0,
+		"skipped_other": plan.get("skipped_other") or 0,
+		"message": message,
+	}

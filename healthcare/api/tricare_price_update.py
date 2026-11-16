@@ -1030,18 +1030,29 @@ def parse_op_prices(
 	return current, history, missing
 
 
+def _resolve_health_insurance(health_insurance: str | None = None) -> str:
+	"""Use the opened Health Insurance when given; otherwise ensure TRICARE exists."""
+	name = (health_insurance or "").strip()
+	if name:
+		if not frappe.db.exists("Health Insurance", name):
+			frappe.throw(_("Health Insurance {0} was not found.").format(name))
+		return name
+	return _ensure_tricare()
+
+
 @frappe.whitelist()
 def preview_tricare_price_update(
 	lab_file_url: str | None = None,
 	ip_file_url: str | None = None,
 	iop_file_url: str | None = None,
 	op_file_url: str | None = None,
+	health_insurance: str | None = None,
 ):
-	"""Dry-run parse counts for the Healthcare Settings confirm dialog."""
+	"""Dry-run parse counts for the Healthcare Settings / Health Insurance confirm dialog."""
 	if not any([lab_file_url, ip_file_url, iop_file_url, op_file_url]):
 		frappe.throw(_("Upload at least one TRICARE price list Excel file."))
 
-	_ensure_tricare()
+	insurance_name = _resolve_health_insurance(health_insurance)
 	summary = {
 		"lab_current": 0,
 		"ip_current": 0,
@@ -1069,7 +1080,7 @@ def preview_tricare_price_update(
 
 	summary["missing_count"] = len(missing)
 	summary["missing_sample"] = missing[:30]
-	summary["insurance"] = TRICARE
+	summary["insurance"] = insurance_name
 	summary["new_from"] = str(NEW_FROM)
 	summary["new_to"] = str(NEW_TO)
 	return summary
@@ -1081,12 +1092,13 @@ def update_tricare_prices_from_excel(
 	ip_file_url: str | None = None,
 	iop_file_url: str | None = None,
 	op_file_url: str | None = None,
+	health_insurance: str | None = None,
 ):
-	"""Apply June 16 2026 prices to TRICARE inclusive items; archive older Excel prices."""
+	"""Apply June 16 2026 prices to Health Insurance inclusive items; archive older Excel prices."""
 	if not any([lab_file_url, ip_file_url, iop_file_url, op_file_url]):
 		frappe.throw(_("Upload at least one TRICARE price list Excel file."))
 
-	insurance_name = _ensure_tricare()
+	insurance_name = _resolve_health_insurance(health_insurance)
 	doc = frappe.get_doc("Health Insurance", insurance_name)
 
 	all_current: list[dict] = []
@@ -1164,7 +1176,7 @@ def update_tricare_prices_from_excel(
 			history_created += 1
 
 	message = _(
-		"TRICARE prices updated. Inclusive items: {0} added, {1} updated "
+		"Insurance prices updated for {10}. Inclusive items: {0} added, {1} updated "
 		"(lab {2}, IP {3}, IOP {4}, OP {5}). "
 		"History: {6} created, {7} updated. "
 		"Templates created: {8} lab, {9} service."
@@ -1179,6 +1191,7 @@ def update_tricare_prices_from_excel(
 		history_updated,
 		created.get("lab_templates", 0),
 		created.get("service_templates", 0),
+		insurance_name,
 	)
 
 	return {

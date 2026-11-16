@@ -4107,6 +4107,7 @@ def get_insurance_claims(
 	health_insurance=None,
 	insurance_payor=None,
 	patient_category=None,
+	ip_op_source=None,
 ):
 	"""Get list of Insurance Claims with optional filters."""
 	from frappe.utils import flt
@@ -4129,6 +4130,10 @@ def get_insurance_claims(
 		if not patient_names:
 			return []
 		filters["patient"] = ["in", patient_names]
+	# IP / OP Source filter — blank (or "ALL") keeps every claim.
+	source = (ip_op_source or "").strip().upper()
+	if source in ("IP", "OP", "PH"):
+		filters["ip_op_source"] = source
 
 	claims = frappe.get_all(
 		"Insurance Claim",

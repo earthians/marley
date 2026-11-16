@@ -353,6 +353,9 @@ function UpdateClaimModal({ row, currency, onClose, onSuccess }: UpdateClaimModa
 
 const STATUS_OPTIONS = ['Draft', 'Submitted', 'Partially Paid', 'Paid', 'Rejected']
 
+// IP / OP Source options — an empty selection shows every claim.
+const IP_OP_SOURCE_OPTIONS = ['IP', 'OP', 'PH']
+
 interface InsuranceClaimListProps {
   refreshKey?: number
   patient?: string
@@ -381,6 +384,7 @@ export const InsuranceClaimList = ({
   const [statusFilter, setStatusFilter] = useState('')
   const [healthInsuranceFilter, setHealthInsuranceFilter] = useState('')
   const [patientCategoryFilter, setPatientCategoryFilter] = useState('')
+  const [ipOpFilter, setIpOpFilter] = useState('')
   const [insuranceOptions, setInsuranceOptions] = useState<LinkFieldOption[]>([])
   const [categoryOptions, setCategoryOptions] = useState<LinkFieldOption[]>([])
   const [detailRow, setDetailRow] = useState<InsuranceClaimRow | null>(null)
@@ -410,6 +414,7 @@ export const InsuranceClaimList = ({
         status: statusFilter || undefined,
         health_insurance: healthInsuranceFilter || undefined,
         patient_category: patientCategoryFilter || undefined,
+        ip_op_source: ipOpFilter || undefined,
       })
       setRows(data)
     } catch (e) {
@@ -417,7 +422,7 @@ export const InsuranceClaimList = ({
     } finally {
       setLoading(false)
     }
-  }, [search, patient, statusFilter, healthInsuranceFilter, patientCategoryFilter, refreshKey])
+  }, [search, patient, statusFilter, healthInsuranceFilter, patientCategoryFilter, ipOpFilter, refreshKey])
 
   useEffect(() => { load() }, [load])
 
@@ -592,6 +597,19 @@ export const InsuranceClaimList = ({
               <option value="">Select All</option>
               {categoryOptions.map(o => (
                 <option key={o.name} value={o.name}>{o.label || o.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-0.5">IP / OP</label>
+            <select
+              value={ipOpFilter}
+              onChange={e => setIpOpFilter(e.target.value)}
+              className="rounded border border-slate-300 px-2.5 py-1.5 text-sm min-w-[110px] focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">All</option>
+              {IP_OP_SOURCE_OPTIONS.map(source => (
+                <option key={source} value={source}>{source}</option>
               ))}
             </select>
           </div>

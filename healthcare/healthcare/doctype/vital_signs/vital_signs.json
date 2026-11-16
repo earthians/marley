@@ -62,6 +62,7 @@
    "options": "Inpatient Admission"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "patient",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -71,9 +72,11 @@
    "options": "Patient"
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
+   "in_global_search": 1,
    "label": "Patient Name",
    "read_only": 1
   },
@@ -328,7 +331,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-06-03 15:03:20.406586",
+ "modified": "2026-11-16 14:20:55.120910",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Vital Signs",

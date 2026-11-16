@@ -581,6 +581,9 @@ def _find_lab_header(cells: list) -> dict[str, int] | None:
 	test_price_idx = -1
 	ip_disc_idx = -1
 	op_disc_idx = -1
+	# June 16 2026 columns: 1% inpatient / 6% outpatient (prefer over older 6%/35%).
+	preferred_ip_idx = -1
+	preferred_op_idx = -1
 
 	for idx, label in enumerate(normalized):
 		if "test name" in label:
@@ -589,8 +592,17 @@ def _find_lab_header(cells: list) -> dict[str, int] | None:
 			test_price_idx = idx
 		if "inpatient" in label and "%" in label:
 			ip_disc_idx = idx
+			if re.search(r"\b1\s*%", label):
+				preferred_ip_idx = idx
 		if "outpatient" in label and "%" in label:
 			op_disc_idx = idx
+			if re.search(r"\b6\s*%", label) and "35" not in label:
+				preferred_op_idx = idx
+
+	if preferred_ip_idx >= 0:
+		ip_disc_idx = preferred_ip_idx
+	if preferred_op_idx >= 0:
+		op_disc_idx = preferred_op_idx
 
 	return {
 		"test_code": test_code_idx,
@@ -694,6 +706,35 @@ def parse_lab_price_list(file_url: str, created: dict | None = None) -> tuple[li
 	return rows, missing
 
 
+def _newest_amount_and_discount(cells: list, amount_cols: list[int], disc_cols: list[int]) -> tuple[Any, Any]:
+	"""Pick the rightmost Amount column (newest period) and its following discount cell."""
+	if amount_cols:
+		col = amount_cols[-1]
+		rate = cells[col] if len(cells) > col else None
+		disc = None
+		if disc_cols:
+			for dcol in disc_cols:
+				if dcol > col:
+					disc = cells[dcol] if len(cells) > dcol else None
+					break
+		elif len(cells) > col + 1:
+			disc = cells[col + 1]
+		return rate, disc
+
+	# Legacy layout: Code | Name | Amount | Discount
+	rate = cells[2] if len(cells) > 2 else None
+	disc = cells[3] if len(cells) > 3 else None
+	if _parse_price(rate) is not None:
+		return rate, disc
+
+	# Code | Name | IP label | Amount | Discount | …
+	for idx in range(2, len(cells)):
+		if _parse_price(cells[idx]) is not None:
+			rate = cells[idx]
+			disc = cells[idx + 1] if len(cells) > idx + 1 else None
+	return rate, disc
+
+
 def parse_ip_price_list(file_url: str, created: dict | None = None) -> tuple[list[dict], list[str]]:
 	wb = _load_workbook(file_url)
 	service_index = _build_service_index()
@@ -703,12 +744,27 @@ def parse_ip_price_list(file_url: str, created: dict | None = None) -> tuple[lis
 	for sheet_name in wb.sheetnames:
 		ws = wb[sheet_name]
 		header_found = False
+		amount_cols: list[int] = []
+		disc_cols: list[int] = []
 		for raw in ws.iter_rows(values_only=True):
 			if not _is_data_row(raw):
 				continue
 			cells = list(raw)
 			if str(cells[0] or "").strip() == "Services Code":
 				header_found = True
+				amount_cols = []
+				disc_cols = []
+				for idx, cell in enumerate(cells):
+					label = _norm_header_cell(cell)
+					if not label:
+						continue
+					if (
+						label in ("amount (bhd)", "amount")
+						or ("amount" in label and "net" not in label and "discount" not in label)
+					):
+						amount_cols.append(idx)
+					if "discount" in label and "%" in label:
+						disc_cols.append(idx)
 				continue
 			if not header_found:
 				continue
@@ -722,7 +778,10 @@ def parse_ip_price_list(file_url: str, created: dict | None = None) -> tuple[lis
 			if code_key in rows_by_code:
 				continue
 
-			rate = cells[2] if len(cells) > 2 else None
+			rate, discount_col = _newest_amount_and_discount(cells, amount_cols, disc_cols)
+			if _parse_price(rate) is None:
+				continue
+
 			template = _get_or_create_service_template(
 				service_code=service_code,
 				service_name=service_name,
@@ -734,7 +793,6 @@ def parse_ip_price_list(file_url: str, created: dict | None = None) -> tuple[lis
 				missing.append(f"IP service: {service_code} — {service_name or ''}".strip())
 				continue
 
-			discount_col = cells[3] if len(cells) > 3 else None
 			rows_by_code[code_key] = _make_inclusive_row(
 				healthcare_service=template["name"],
 				healthcare_service_name=template.get("service_name") or str(service_name or "").strip() or None,
@@ -766,34 +824,123 @@ def parse_iop_price_list(file_url: str, created: dict | None = None) -> tuple[li
 				continue
 
 			service_name = cells[0] if len(cells) > 0 else None
-			if not _is_iop_service_name(service_name):
+			iop_short = cells[1] if len(cells) > 1 else None
+			# New IOP sheets put the short name in column B (OPENING FILE → IOP-OPENING FILE).
+			lookup_name = service_name
+			if iop_short and not _is_iop_service_name(service_name):
+				short = str(iop_short).strip()
+				lookup_name = short if _norm_name(short).startswith("IOP") else f"IOP-{short}"
+			elif not _is_iop_service_name(service_name):
 				continue
 
-			name_key = _norm_name(service_name)
+			name_key = _norm_name(lookup_name)
 			if name_key in rows_by_name:
 				continue
 
-			rate = cells[2] if len(cells) > 2 else None
+			# Prefer the newest Amount column when both old/new periods are present.
+			rate = cells[4] if len(cells) > 4 else (cells[3] if len(cells) > 3 else (cells[2] if len(cells) > 2 else None))
+			if _parse_price(rate) is None:
+				continue
+
 			template = _get_or_create_service_template(
-				service_name=service_name,
+				service_name=lookup_name,
 				index=service_index,
 				rate=rate,
 				category="Other Service",
 				created=created,
 			)
 			if not template:
-				missing.append(f"IOP service: {service_name}")
+				missing.append(f"IOP service: {lookup_name}")
 				continue
 
 			rows_by_name[name_key] = _make_inclusive_row(
 				healthcare_service=template["name"],
-				healthcare_service_name=template.get("service_name") or str(service_name or "").strip() or None,
+				healthcare_service_name=template.get("service_name") or str(lookup_name or "").strip() or None,
 				item_code=template.get("item_code"),
 				discount_apply=0,
 			)
 
 	wb.close()
 	return list(rows_by_name.values()), missing
+
+
+def _is_op_service_code(code: Any) -> bool:
+	return bool(re.match(r"^OP[\s\-]?", _norm_code(code)))
+
+
+def parse_op_price_list(file_url: str, created: dict | None = None) -> tuple[list[dict], list[str]]:
+	"""Out Patient sheet: SERVICES-SYSTEM | OUT | … | GROSS amounts by period."""
+	wb = _load_workbook(file_url)
+	service_index = _build_service_index()
+	rows_by_code: dict[str, dict] = {}
+	missing: list[str] = []
+
+	for sheet_name in wb.sheetnames:
+		ws = wb[sheet_name]
+		header_found = False
+		gross_cols: list[int] = []
+		for raw in ws.iter_rows(values_only=True):
+			if not _is_data_row(raw):
+				continue
+			cells = list(raw)
+			first = _norm_header_cell(cells[0] if cells else "")
+			if first in ("services-system", "services system"):
+				header_found = True
+				gross_cols = [
+					idx
+					for idx, cell in enumerate(cells)
+					if "gross" in _norm_header_cell(cell) and "amount" in _norm_header_cell(cell)
+				]
+				continue
+			if not header_found:
+				continue
+
+			joined = " ".join(str(c or "") for c in cells[:4]).upper()
+			if "INSURANCE" in joined or joined.strip() in ("MILITARY", "OUT"):
+				continue
+
+			service_code = cells[0] if len(cells) > 0 else None
+			out_name = cells[1] if len(cells) > 1 else None
+			if not _is_op_service_code(service_code) and not out_name:
+				continue
+			if not _is_op_service_code(service_code) and out_name:
+				service_code = f"OP-{str(out_name).strip()}"
+
+			code_key = _norm_code(service_code)
+			if not code_key or code_key in rows_by_code:
+				continue
+
+			rate = None
+			if gross_cols:
+				rate = cells[gross_cols[-1]] if len(cells) > gross_cols[-1] else None
+			elif len(cells) > 4:
+				rate = cells[4]
+			if _parse_price(rate) is None:
+				continue
+
+			template = _get_or_create_service_template(
+				service_code=service_code,
+				service_name=service_code,
+				index=service_index,
+				rate=rate,
+				category="Other Service",
+				created=created,
+			)
+			if not template:
+				missing.append(f"OP service: {service_code} — {out_name or ''}".strip())
+				continue
+
+			rows_by_code[code_key] = _make_inclusive_row(
+				healthcare_service=template["name"],
+				healthcare_service_name=template.get("service_name")
+				or str(out_name or service_code or "").strip()
+				or None,
+				item_code=template.get("item_code"),
+				discount_apply=1,
+			)
+
+	wb.close()
+	return list(rows_by_code.values()), missing
 
 
 def _merge_rows_into_doc(doc, parsed_rows: list[dict]) -> tuple[int, int]:
@@ -858,17 +1005,18 @@ def import_inclusive_items_from_price_lists(
 	lab_file_url: str | None = None,
 	ip_file_url: str | None = None,
 	iop_file_url: str | None = None,
+	op_file_url: str | None = None,
 ):
-	"""Parse the three agreed price list workbooks and populate inclusive_item rows."""
+	"""Parse the four agreed price list workbooks and populate inclusive_item rows."""
 	if not docname:
 		frappe.throw(_("Health Insurance is required"))
-	if not lab_file_url and not ip_file_url and not iop_file_url:
+	if not lab_file_url and not ip_file_url and not iop_file_url and not op_file_url:
 		frappe.throw(_("Upload at least one price list file."))
 
 	doc = frappe.get_doc("Health Insurance", docname)
 	all_rows: list[dict] = []
 	missing: list[str] = []
-	summary = {"lab": 0, "ip": 0, "iop": 0}
+	summary = {"lab": 0, "ip": 0, "iop": 0, "op": 0}
 	created = {"lab_templates": 0, "service_templates": 0}
 
 	if lab_file_url:
@@ -889,6 +1037,12 @@ def import_inclusive_items_from_price_lists(
 		missing.extend(iop_missing)
 		summary["iop"] = len(iop_rows)
 
+	if op_file_url:
+		op_rows, op_missing = parse_op_price_list(op_file_url, created=created)
+		all_rows.extend(op_rows)
+		missing.extend(op_missing)
+		summary["op"] = len(op_rows)
+
 	if not all_rows:
 		frappe.throw(_("No matching lab tests or healthcare services were found in the uploaded files."))
 
@@ -896,13 +1050,14 @@ def import_inclusive_items_from_price_lists(
 	doc.save(ignore_permissions=True)
 
 	message = _(
-		"Imported {0} inclusive item row(s) ({1} lab, {2} IP service, {3} IOP service). "
-		"{4} added, {5} updated. Created {6} lab template(s) and {7} service template(s)."
+		"Imported {0} inclusive item row(s) ({1} lab, {2} IP, {3} IOP, {4} OP). "
+		"{5} added, {6} updated. Created {7} lab template(s) and {8} service template(s)."
 	).format(
 		len(all_rows),
 		summary["lab"],
 		summary["ip"],
 		summary["iop"],
+		summary["op"],
 		added,
 		updated,
 		created.get("lab_templates", 0),

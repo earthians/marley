@@ -47,7 +47,7 @@ function open_price_list_upload_dialog(frm) {
 				fieldtype: "HTML",
 				fieldname: "help",
 				options: `<p class="text-muted small">${__(
-					"Upload the three agreed Excel price lists. Rows are added to the Inclusive Items table with lab test / healthcare service links and Discount Apply checked only where the file indicates a discount."
+					"Upload the four TOP Serene price lists (Lab, In Patient, IOP, Out Patient). New prices (Effective June 16 2026 – Dec 31 2027) update Inclusive Items (price + %). Older Excel period prices are saved as Insurance History Prices."
 				)}</p>`,
 			},
 			{
@@ -55,62 +55,103 @@ function open_price_list_upload_dialog(frm) {
 				fieldname: "lab_file",
 				fieldtype: "Attach",
 				description: __(
-					"TOP - SPH - In House and Out Sourced Lab Tests Price List"
+					"TOP - Serene Psychiatry Hospital - In House and Out Sourced Lab Tests Price List"
 				),
 			},
 			{
 				label: __("In Patient Price List"),
 				fieldname: "ip_file",
 				fieldtype: "Attach",
-				description: __("TOP - SPH - In Patient Price List"),
+				description: __("TOP - Serene Psychiatry Hospital - In Patient Price List"),
 			},
 			{
 				label: __("IOP Price List"),
 				fieldname: "iop_file",
 				fieldtype: "Attach",
-				description: __("TOP - SPH - IOP Price List"),
+				description: __("TOP - Serene Psychiatry Hospital - IOP Price List"),
+			},
+			{
+				label: __("Out Patient Price List"),
+				fieldname: "op_file",
+				fieldtype: "Attach",
+				description: __("TOP - Serene Psychiatry Hospital - Out Patient Price List"),
 			},
 		],
-		primary_action_label: __("Import to Inclusive Items"),
+		primary_action_label: __("Preview & Update Prices"),
 		primary_action(values) {
-			if (!values.lab_file && !values.ip_file && !values.iop_file) {
+			if (!values.lab_file && !values.ip_file && !values.iop_file && !values.op_file) {
 				frappe.msgprint(__("Upload at least one Excel file."));
 				return;
 			}
 
+			const args = {
+				health_insurance: frm.doc.name,
+				lab_file_url: values.lab_file || null,
+				ip_file_url: values.ip_file || null,
+				iop_file_url: values.iop_file || null,
+				op_file_url: values.op_file || null,
+			};
+
 			frappe.call({
-				method:
-					"healthcare.api.health_insurance_price_list_import.import_inclusive_items_from_price_lists",
-				args: {
-					docname: frm.doc.name,
-					lab_file_url: values.lab_file || null,
-					ip_file_url: values.ip_file || null,
-					iop_file_url: values.iop_file || null,
-				},
+				method: "healthcare.api.tricare_price_update.preview_tricare_price_update",
+				args,
 				freeze: true,
-				freeze_message: __("Importing price lists…"),
-				callback(r) {
-					const result = r.message || {};
-					if (!result.ok) {
-						return;
-					}
+				freeze_message: __("Reading price lists…"),
+				callback(preview) {
+					const counts = preview.message || {};
+					frappe.confirm(
+						__(
+							"Update inclusive item prices and archive older Excel prices?\n\n"
+								+ "Insurance: {0}\n"
+								+ "New period: {1} → {2}\n\n"
+								+ "New inclusive rows: lab {3}, IP {4}, IOP {5}, OP {6}\n"
+								+ "History price rows: {7}\n"
+								+ "Unmatched sample count: {8}\n\nContinue?",
+							[
+								counts.insurance || frm.doc.name,
+								counts.new_from || "",
+								counts.new_to || "",
+								counts.lab_current || 0,
+								counts.ip_current || 0,
+								counts.iop_current || 0,
+								counts.op_current || 0,
+								counts.history_rows || 0,
+								counts.missing_count || 0,
+							]
+						),
+						() => {
+							frappe.call({
+								method:
+									"healthcare.api.tricare_price_update.update_tricare_prices_from_excel",
+								args,
+								freeze: true,
+								freeze_message: __("Updating insurance prices…"),
+								callback(r) {
+									const result = r.message || {};
+									if (!result.ok) {
+										return;
+									}
 
-					let details = result.message || __("Import completed.");
-					if (result.missing_count) {
-						const sample = (result.missing_sample || []).join("\n");
-						details += `\n\n${__("Unmatched rows")}: ${result.missing_count}`;
-						if (sample) {
-							details += `\n\n${sample}`;
+									let details = result.message || __("Import completed.");
+									if (result.missing_count) {
+										const sample = (result.missing_sample || []).join("\n");
+										details += `\n\n${__("Unmatched rows")}: ${result.missing_count}`;
+										if (sample) {
+											details += `\n\n${sample}`;
+										}
+									}
+
+									frappe.msgprint({
+										title: __("Insurance Prices Updated"),
+										message: details.replace(/\n/g, "<br>"),
+										indicator: result.missing_count ? "orange" : "green",
+									});
+									dialog.hide();
+									frm.reload_doc();
+								},
+							});
 						}
-					}
-
-					frappe.msgprint({
-						title: __("Inclusive Items Updated"),
-						message: details.replace(/\n/g, "<br>"),
-						indicator: "green",
-					});
-					dialog.hide();
-					frm.reload_doc();
+					);
 				},
 			});
 		},

@@ -614,6 +614,57 @@ frappe.ui.form.on('Healthcare Settings', {
 			});
 		}, __('Data Maintenance'));
 
+		frm.add_custom_button(__('Update Session Schedule Price'), () => {
+			frappe.call({
+				method: 'healthcare.api.session_schedule.preview_update_session_schedule_prices',
+				freeze: true,
+				freeze_message: __('Scanning Session Schedules…'),
+				callback(preview) {
+					const counts = preview.message || {};
+					const sample = (counts.sample || [])
+						.map(
+							(row) =>
+								`${row.name}: ${row.session_type || '—'} (${row.care_type || '?'}) → ${row.amount}`
+						)
+						.join('\n');
+					frappe.confirm(
+						__(
+							'Update Session Schedule amounts that are still 0.\n\n'
+							+ 'Only Draft (not Completed) schedules with a Healthcare Service Template.\n'
+							+ 'IP (admission) → template rate. OP (patient visit) → OP rate (else rate).\n\n'
+							+ 'Draft with amount 0: {0}\n'
+							+ 'Will update: {1}\n'
+							+ 'Skipped (no IP/OP rate on template): {2}\n'
+							+ 'Skipped (no care type / template): {3}\n\n'
+							+ 'Sample:\n{4}\n\nContinue?',
+							[
+								counts.candidates || 0,
+								counts.to_update || 0,
+								counts.skipped_no_rate || 0,
+								counts.skipped_other || 0,
+								sample || __('(none)'),
+							]
+						),
+						() => {
+							frappe.call({
+								method: 'healthcare.api.session_schedule.update_session_schedule_prices',
+								freeze: true,
+								freeze_message: __('Updating Session Schedule prices…'),
+								callback(r) {
+									const m = r.message || {};
+									frappe.msgprint({
+										title: __('Session Schedule Prices'),
+										indicator: m.updated ? 'green' : 'orange',
+										message: (m.message || __('Done.')).replace(/\n/g, '<br>'),
+									});
+								},
+							});
+						}
+					);
+				},
+			});
+		}, __('Update'));
+
 		frm.add_custom_button(__('Expire Long Acting Medicine (past End Date)'), () => {
 			frappe.call({
 				method: 'healthcare.api.long_acting_medicine_expire.preview_long_acting_medicine_expire',
