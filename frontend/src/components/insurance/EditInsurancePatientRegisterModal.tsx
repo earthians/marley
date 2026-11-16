@@ -32,6 +32,7 @@ import {
 } from '../ui/linkComboboxStyles'
 import { DateFilterInput } from '../ui/DateFilterInput'
 import { isValidityRangeInverted, validityDaysInclusive } from '../../utils/insuranceValidity'
+import { formatDate } from '../../utils/formatDate'
 import { useCareContext } from '../../providers/CareContextProvider'
 import { canSetInsuranceRegisterValidity } from '../../config/permissions'
 
@@ -106,6 +107,21 @@ export const EditInsurancePatientRegisterModal = ({
   // Inclusively counted approval days (null until both dates are present and valid).
   const validityDays = validityDaysInclusive(validFrom, validTo)
   const validityRangeInverted = isValidityRangeInverted(validFrom, validTo)
+
+  // Plain-text summary for users who may not edit the approval window: they see
+  // the stored window (or "Not set") without ever getting an editable control.
+  const validityWindowSummary =
+    !validFrom && !validTo
+      ? 'Not set'
+      : [
+          validFrom ? formatDate(validFrom) : '—',
+          validTo ? formatDate(validTo) : '—',
+        ].join(' → ') +
+        (validityDays != null
+          ? ` · ${validityDays} ${validityDays === 1 ? 'day' : 'days'}`
+          : approvalValidityDays
+            ? ` · ${approvalValidityDays} ${approvalValidityDays === '1' ? 'day' : 'days'}`
+            : '')
 
   const loadInsurance = useCallback(async (q?: string) => {
     const opts = await fetchHealthcareInsurance(q)
@@ -338,16 +354,6 @@ export const EditInsurancePatientRegisterModal = ({
               <div className={`${MODAL_SECTION_CLASS} space-y-3`}>
                 <h3 className={MODAL_SECTION_TITLE_CLASS}>Insurance Details</h3>
 
-                {!canSetValidity && (
-                  <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                    <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
-                    <p className="text-[11px] leading-snug text-slate-600">
-                      Valid From, Valid To and Approval Validity (Days) are managed by the
-                      Insurance team — ask them to set the validity window.
-                    </p>
-                  </div>
-                )}
-
                 <div onClick={(e) => e.stopPropagation()}>
                   <label className={MODAL_LABEL_CLASS}>
                     Insurance Provider <span className="text-red-500">*</span>
@@ -413,51 +419,68 @@ export const EditInsurancePatientRegisterModal = ({
                       className={MODAL_FIELD_CLASS}
                     />
                   </div>
-                  <div>
-                    <label className={MODAL_LABEL_CLASS}>Valid From</label>
-                    <DateFilterInput
-                      value={validFrom}
-                      onChange={(e) => setValidFrom(e.target.value)}
-                      disabled={!canSetValidity}
-                      className={MODAL_FIELD_CLASS}
-                    />
-                  </div>
-                  <div>
-                    <label className={MODAL_LABEL_CLASS}>Valid To</label>
-                    <DateFilterInput
-                      value={validTo}
-                      onChange={(e) => setValidTo(e.target.value)}
-                      min={validFrom || undefined}
-                      disabled={!canSetValidity}
-                      className={MODAL_FIELD_CLASS}
-                    />
-                    {canSetValidity && validityRangeInverted && (
-                      <p className="mt-1 text-[10px] text-red-600">
-                        Valid To cannot be before Valid From
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className={MODAL_LABEL_CLASS}>Approval Validity (Days)</label>
-                    <input
-                      type="number"
-                      value={validityDays != null ? String(validityDays) : approvalValidityDays}
-                      onChange={(e) => setApprovalValidityDays(e.target.value)}
-                      readOnly={validityDays != null || !canSetValidity}
-                      placeholder="e.g. 30"
-                      min="0"
-                      className={`${MODAL_FIELD_CLASS}${
-                        validityDays != null || !canSetValidity
-                          ? ' bg-slate-50 text-slate-600'
-                          : ''
-                      }`}
-                    />
-                    {validityDays != null && (
-                      <p className="mt-1 text-[10px] text-emerald-700/70">
-                        Auto-calculated from Valid From and Valid To
-                      </p>
-                    )}
-                  </div>
+                  {/* Approval window: editable only for the Insurance team. Everyone
+                      else gets a plain-text summary (no inputs to reach at all). */}
+                  {canSetValidity ? (
+                    <>
+                      <div>
+                        <label className={MODAL_LABEL_CLASS}>Valid From</label>
+                        <DateFilterInput
+                          value={validFrom}
+                          onChange={(e) => setValidFrom(e.target.value)}
+                          className={MODAL_FIELD_CLASS}
+                        />
+                      </div>
+                      <div>
+                        <label className={MODAL_LABEL_CLASS}>Valid To</label>
+                        <DateFilterInput
+                          value={validTo}
+                          onChange={(e) => setValidTo(e.target.value)}
+                          min={validFrom || undefined}
+                          className={MODAL_FIELD_CLASS}
+                        />
+                        {validityRangeInverted && (
+                          <p className="mt-1 text-[10px] text-red-600">
+                            Valid To cannot be before Valid From
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className={MODAL_LABEL_CLASS}>Approval Validity (Days)</label>
+                        <input
+                          type="number"
+                          value={validityDays != null ? String(validityDays) : approvalValidityDays}
+                          onChange={(e) => setApprovalValidityDays(e.target.value)}
+                          readOnly={validityDays != null}
+                          placeholder="e.g. 30"
+                          min="0"
+                          className={`${MODAL_FIELD_CLASS}${
+                            validityDays != null ? ' bg-slate-50 text-slate-600' : ''
+                          }`}
+                        />
+                        {validityDays != null && (
+                          <p className="mt-1 text-[10px] text-emerald-700/70">
+                            Auto-calculated from Valid From and Valid To
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="col-span-2 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                      <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                          Valid From / Valid To · Approval Validity
+                        </p>
+                        <p className="mt-0.5 text-sm font-medium text-slate-700">
+                          {validityWindowSummary}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          Read-only — managed by the Insurance team.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className={MODAL_LABEL_CLASS}>No. of Visits</label>
                     <input

@@ -85,7 +85,8 @@
   {
    "fieldname": "approval_validitydays",
    "fieldtype": "Int",
-   "label": "Approval Validity(Days)"
+   "label": "Approval Validity(Days)",
+   "read_only_depends_on": "eval: !(frappe.session.user === \"Administrator\" || (frappe.user_roles || []).some(function (role) { return role === \"System Manager\" || role === \"Healthcare Administrator\" || String(role || \"\").toLowerCase().includes(\"insurance\"); }))"
   },
   {
    "fieldname": "no_of_visits",
@@ -137,12 +138,14 @@
   {
    "fieldname": "valid_from",
    "fieldtype": "Date",
-   "label": "Valid From"
+   "label": "Valid From",
+   "read_only_depends_on": "eval: !(frappe.session.user === \"Administrator\" || (frappe.user_roles || []).some(function (role) { return role === \"System Manager\" || role === \"Healthcare Administrator\" || String(role || \"\").toLowerCase().includes(\"insurance\"); }))"
   },
   {
    "fieldname": "valid_to",
    "fieldtype": "Date",
-   "label": "Valid To"
+   "label": "Valid To",
+   "read_only_depends_on": "eval: !(frappe.session.user === \"Administrator\" || (frappe.user_roles || []).some(function (role) { return role === \"System Manager\" || role === \"Healthcare Administrator\" || String(role || \"\").toLowerCase().includes(\"insurance\"); }))"
   },
   {
    "fieldname": "column_break_cvje",

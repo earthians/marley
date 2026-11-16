@@ -452,51 +452,53 @@ export const CreateInsurancePatientRegisterModal = ({
                       className={MODAL_FIELD_CLASS}
                     />
                   </div>
-                  <div>
-                    <label className={MODAL_LABEL_CLASS}>Valid From</label>
-                    <DateFilterInput
-                      value={validFrom}
-                      onChange={(e) => setValidFrom(e.target.value)}
-                      disabled={!canSetValidity}
-                      className={MODAL_FIELD_CLASS}
-                    />
-                  </div>
-                  <div>
-                    <label className={MODAL_LABEL_CLASS}>Valid To</label>
-                    <DateFilterInput
-                      value={validTo}
-                      onChange={(e) => setValidTo(e.target.value)}
-                      min={validFrom || undefined}
-                      disabled={!canSetValidity}
-                      className={MODAL_FIELD_CLASS}
-                    />
-                    {canSetValidity && validityRangeInverted && (
-                      <p className="mt-1 text-[10px] text-red-600">
-                        Valid To cannot be before Valid From
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className={MODAL_LABEL_CLASS}>Approval Validity (Days)</label>
-                    <input
-                      type="number"
-                      value={validityDays != null ? String(validityDays) : approvalValidityDays}
-                      onChange={(e) => setApprovalValidityDays(e.target.value)}
-                      readOnly={validityDays != null || !canSetValidity}
-                      placeholder="e.g. 30"
-                      min="0"
-                      className={`${MODAL_FIELD_CLASS}${
-                        validityDays != null || !canSetValidity
-                          ? ' bg-slate-50 text-slate-600'
-                          : ''
-                      }`}
-                    />
-                    {validityDays != null && (
-                      <p className="mt-1 text-[10px] text-emerald-700/70">
-                        Auto-calculated from Valid From and Valid To
-                      </p>
-                    )}
-                  </div>
+                  {/* Approval window is only rendered for the Insurance team; users
+                      without that access never see an editable window at all. */}
+                  {canSetValidity && (
+                    <>
+                      <div>
+                        <label className={MODAL_LABEL_CLASS}>Valid From</label>
+                        <DateFilterInput
+                          value={validFrom}
+                          onChange={(e) => setValidFrom(e.target.value)}
+                          className={MODAL_FIELD_CLASS}
+                        />
+                      </div>
+                      <div>
+                        <label className={MODAL_LABEL_CLASS}>Valid To</label>
+                        <DateFilterInput
+                          value={validTo}
+                          onChange={(e) => setValidTo(e.target.value)}
+                          min={validFrom || undefined}
+                          className={MODAL_FIELD_CLASS}
+                        />
+                        {validityRangeInverted && (
+                          <p className="mt-1 text-[10px] text-red-600">
+                            Valid To cannot be before Valid From
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className={MODAL_LABEL_CLASS}>Approval Validity (Days)</label>
+                        <input
+                          type="number"
+                          value={validityDays != null ? String(validityDays) : approvalValidityDays}
+                          onChange={(e) => setApprovalValidityDays(e.target.value)}
+                          readOnly={validityDays != null}
+                          placeholder="e.g. 30"
+                          min="0"
+                          className={`${MODAL_FIELD_CLASS}${
+                            validityDays != null ? ' bg-slate-50 text-slate-600' : ''
+                          }`}
+                        />
+                        {validityDays != null && (
+                          <p className="mt-1 text-[10px] text-emerald-700/70">
+                            Auto-calculated from Valid From and Valid To
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
                   <div>
                     <label className={MODAL_LABEL_CLASS}>No. of Visits</label>
                     <input
