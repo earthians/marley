@@ -382,17 +382,34 @@ export function isReceptionRole(roles: string[] | undefined): boolean {
 }
 
 /**
+ * Administrator roles that may set the approval window on an Insurance Patient
+ * Register. Mirrors `INSURANCE_VALIDITY_ADMIN_ROLES` (+ the built-in
+ * Administrator) in `healthcare.api.common.user_can_set_insurance_register_validity`.
+ *
+ * Deliberately NOT the generic `ADMIN_ROLES` list: `Website Manager` can view
+ * every portal page but is not an insurance administrator, so using `isAdmin()`
+ * here made the form editable for website managers while the server rejected the
+ * save ("Only users with access to the Insurance page can change …").
+ */
+const INSURANCE_VALIDITY_ADMIN_ROLES = [
+  'Administrator',
+  'System Manager',
+  'Healthcare Administrator',
+]
+
+/**
  * May set the approval window (Valid From / Valid To / Approval Validity Days) on
  * an Insurance Patient Register.
  *
  * The window drives expiry and visit checks, so it belongs to the Insurance team —
- * the roles that can open /insurance (plus admins). Reception keeps the register
- * card and may edit the rest of it, but not these fields. Must match
- * `healthcare.api.common.user_can_set_insurance_register_validity`.
+ * the roles that can open /insurance (plus insurance administrators). Reception
+ * keeps the register card and may edit the rest of it, but not these fields. Must
+ * stay identical to `healthcare.api.common.user_can_set_insurance_register_validity`
+ * (covered by test_insurance_patient_register.py).
  */
 export function canSetInsuranceRegisterValidity(roles: string[] | undefined): boolean {
   if (!roles?.length) return false
-  if (isAdmin(roles)) return true
+  if (hasExactRole(roles, INSURANCE_VALIDITY_ADMIN_ROLES)) return true
   return roleMatches(roles, (r) => r.includes('insurance'))
 }
 
