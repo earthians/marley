@@ -1,4 +1,4 @@
-import { post, showError, toastError, toastSuccess } from "./api.js";
+import { frozen, post, toastError, toastSuccess } from "./api.js";
 import { today } from "./time.js";
 
 export function dayActions({
@@ -85,13 +85,14 @@ function confirmStartOver({ count, day, company, department, filters, host, relo
 }
 
 async function dayChange(method, params, doneKey, doneText, reload) {
-	try {
-		const result = await post(`publishing.${method}`, params);
-		if (result[doneKey].length) toastSuccess(doneText(result[doneKey].length));
-		for (const row of result.failed)
-			toastError(`${row.patient_name || row.name}: ${row.message}`);
-	} catch (error) {
-		showError(error);
-	}
-	reload();
+	const working = {
+		publish_day: __("Publishing the day…"),
+		start_over_day: __("Clearing the day…"),
+	};
+	const result = await frozen(working[method], () =>
+		post(`publishing.${method}`, params).finally(reload),
+	);
+	if (result?.[doneKey].length) toastSuccess(doneText(result[doneKey].length));
+	for (const row of result?.failed ?? [])
+		toastError(`${row.patient_name || row.name}: ${row.message}`);
 }

@@ -40,6 +40,21 @@ export function toastError(message, description) {
 	toast.error(message, { description: description || undefined, duration: 10000 });
 }
 
+export async function frozen(message, work) {
+	const spinner = '<span class="es-spinner" data-track="true" role="status"></span>';
+	window.frappe?.dom?.freeze(
+		`${spinner} ${window.frappe.utils.escape_html(message)}`,
+	);
+	try {
+		return await work();
+	} catch (error) {
+		showError(error);
+		return null;
+	} finally {
+		window.frappe?.dom?.unfreeze();
+	}
+}
+
 export function toastSuccess(message) {
 	toast.success(message, { duration: 6000 });
 }

@@ -298,7 +298,6 @@ function pickFromPane(pick, row, event) {
 				<Button
 					variant="solid"
 					:disabled="!autoPlan.placed.length"
-					:loading="auto.working.value"
 					@click="auto.book"
 				>
 					{{ __("Book") }}

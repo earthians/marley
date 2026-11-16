@@ -72,9 +72,15 @@ class TestAutoSchedule(HealthcareTestSuite):
 		self.assertEqual(self.planned_start(self.plan(), self.request.name), self.at(8))
 
 	def test_planning_keeps_nothing(self):
-		self.plan()
+		tentative = make_booking(self, self.at(14), patient=1, surgeon=1)
+
+		self.assertIn(tentative.name, self.plan()["lifted"])
 
 		self.assertIsNone(self.booking_of(self.request))
+		tentative.reload()
+		self.assertEqual(
+			(tentative.status, get_datetime(tentative.scheduled_start)), ("Tentative", self.at(14))
+		)
 
 	def test_a_request_due_later_or_undated_waits(self):
 		later = self.due_request(patient=1, expected=add_days(self.tomorrow, 1))

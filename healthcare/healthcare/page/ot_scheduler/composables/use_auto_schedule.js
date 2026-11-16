@@ -1,36 +1,31 @@
 import { ref } from "vue";
 
-import { post, showError, toastError, toastSuccess } from "../api.js";
+import { frozen, post, toastError, toastSuccess } from "../api.js";
 
 export function useAutoSchedule({ filters, boardFilters, reload }) {
 	const plan = ref(null);
-	const working = ref(false);
 
 	async function run(day) {
-		working.value = true;
-		try {
-			const params = { date: day, ...filters(), board_filters: boardFilters() };
-			plan.value = { day, ...(await post("auto_schedule.plan_day", params)) };
-			if (!plan.value.placed.length && !plan.value.not_placed.length)
-				toastSuccess(__("Nothing is waiting to be scheduled on this day"));
-		} catch (error) {
-			showError(error);
-		}
-		working.value = false;
+		const params = { date: day, ...filters(), board_filters: boardFilters() };
+		const result = await frozen(__("Planning the day…"), () =>
+			post("auto_schedule.plan_day", params),
+		);
+		if (!result) return;
+		plan.value = { day, ...result };
+		if (!result.placed.length && !result.not_placed.length)
+			toastSuccess(__("Nothing is waiting to be scheduled on this day"));
 	}
 
 	async function book() {
 		const { day, placed, lifted } = plan.value;
-		working.value = true;
-		try {
-			const params = { date: day, ...filters(), placements: placed, lifted };
-			report(await post("auto_schedule.book_day", params));
-		} catch (error) {
-			showError(error);
-		}
-		working.value = false;
-		cancel();
-		reload();
+		const params = { date: day, ...filters(), placements: placed, lifted };
+		const result = await frozen(__("Booking the plan…"), () =>
+			post("auto_schedule.book_day", params).finally(() => {
+				cancel();
+				return reload();
+			}),
+		);
+		if (result) report(result);
 	}
 
 	function report(result) {
@@ -52,5 +47,5 @@ export function useAutoSchedule({ filters, boardFilters, reload }) {
 		return Boolean(plan.value?.lifted.includes(name));
 	}
 
-	return { plan, working, run, book, cancel, plannedIn, isLifted };
+	return { plan, run, book, cancel, plannedIn, isLifted };
 }
