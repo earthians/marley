@@ -132,7 +132,6 @@ class ServiceRequest(ServiceRequestController):
 
 @frappe.whitelist()
 def set_service_request_status(service_request: str, status: str) -> None:
-<<<<<<< HEAD
 	frappe.has_permission("Service Request", "write", service_request, throw=True)
 	update_service_request_status(service_request, status)
 
@@ -140,17 +139,11 @@ def set_service_request_status(service_request: str, status: str) -> None:
 def update_service_request_status(service_request: str, status: str) -> None:
 	"""For the submit and cancel hooks of the records that fulfil a request. The
 	user may submit a Lab Test without having write access to its request."""
-=======
->>>>>>> c6bb3dd (chore: add type hints)
 	frappe.db.set_value("Service Request", service_request, "status", status)
 
 
 @frappe.whitelist()
-<<<<<<< HEAD
-def make_clinical_procedure(service_request: str, appointment: str | None = None):
-=======
 def make_clinical_procedure(service_request: str, appointment: str | None = None) -> "Document | None":
->>>>>>> c6bb3dd (chore: add type hints)
 	if not service_request:
 		return
 
@@ -247,11 +240,7 @@ def make_lab_test(service_request: str) -> "Document | None":
 
 
 @frappe.whitelist()
-<<<<<<< HEAD
-def make_observation(service_request: str, appointment: str | None = None):
-=======
 def make_observation(service_request: str, appointment: str | None = None) -> tuple | None:
->>>>>>> c6bb3dd (chore: add type hints)
 	if not service_request:
 		return
 
@@ -524,13 +513,9 @@ def check_observation_sample_exist(service_request):
 
 
 @frappe.whitelist()
-<<<<<<< HEAD
-def make_appointment(source_name: str, target_doc: Document | None = None, ignore_permissions: bool = False):
-=======
 def make_appointment(
 	source_name: str, target_doc: "str | Document | None" = None, ignore_permissions: bool = False
 ) -> "Document":
->>>>>>> c6bb3dd (chore: add type hints)
 	def postprocess(source, target):
 		set_missing_values(source, target)
 
@@ -565,8 +550,7 @@ def make_appointment(
 		ignore_permissions=ignore_permissions,
 	)
 
-<<<<<<< HEAD
-	return doclist
+	return doc
 
 
 def has_direct_leaf_component(template_name):
@@ -585,6 +569,3 @@ def has_direct_leaf_component(template_name):
 			return True
 
 	return False
-=======
-	return doc
->>>>>>> c6bb3dd (chore: add type hints)
