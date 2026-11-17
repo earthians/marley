@@ -2,7 +2,15 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Observation", {
+	onload: function (frm) {
+		frm._saved_patient_for_template = frm.doc.patient;
+	},
 	refresh: function (frm) {
+		if (frm._saved_patient_for_template === undefined) {
+			frm._saved_patient_for_template = frm.doc.patient;
+		}
+		frm._selected_result_template = frm.doc.result_template;
+		frm._selected_interpretation_template = frm.doc.interpretation_template;
 		frm.set_query("patient", function () {
 			return {
 				filters: { status: ["!=", "Disabled"] },
@@ -23,6 +31,12 @@ frappe.ui.form.on("Observation", {
 		healthcare.ConsumablesReview.set_batch_query(frm);
 		healthcare.ConsumablesReview.ask_once_before_submit(frm);
 		render_period_control(frm);
+	},
+	after_save: function (frm) {
+		frm._saved_patient_for_template = frm.doc.patient;
+	},
+	before_save: function () {
+		return frappe.after_ajax();
 	},
 	onload_post_render: function (frm) {
 		frm.trigger("set_result_control");
@@ -75,10 +89,88 @@ frappe.ui.form.on("Observation", {
 		get_medical_codes(frm);
 		set_service_unit_query(frm);
 	},
+	result_template: function (frm) {
+		apply_imaging_template(frm, "result_template", "result");
+	},
+	interpretation_template: function (frm) {
+		apply_imaging_template(frm, "interpretation_template", "result_interpretation");
+	},
 	service_request: function (frm) {
 		set_service_unit_query(frm);
 	},
 });
+
+function apply_imaging_template(frm, template_field, result_field) {
+	const selected_key = `_selected_${template_field}`;
+	const selected = frm.doc[template_field];
+	const selected_patient = frm.doc.patient;
+	const previous = frm[selected_key];
+	if (selected === previous) return;
+	const change_key = `_change_${template_field}`;
+	const change_id = (frm[change_key] || 0) + 1;
+	frm[change_key] = change_id;
+	const is_current = () =>
+		frm[change_key] === change_id && frm.doc[template_field] === selected;
+
+	const restore_selection = () => {
+		if (!is_current()) return;
+		frm[selected_key] = previous;
+		frm.set_value(template_field, previous || "");
+	};
+
+	if (!selected || !frm.doc.patient || frm.doc.observation_category !== "Imaging") {
+		frm[selected_key] = selected;
+		return;
+	}
+	if (!frm.is_new() && frm.doc.patient !== frm._saved_patient_for_template) {
+		frappe.msgprint(
+			__("Save the Patient change before selecting a report template."),
+		);
+		restore_selection();
+		return;
+	}
+
+	const render_selected = () => {
+		if (!is_current()) return;
+		if (
+			!frm.is_new() &&
+			(frm.doc.patient !== selected_patient ||
+				frm._saved_patient_for_template !== selected_patient)
+		) {
+			restore_selection();
+			return;
+		}
+		if (frm.is_new()) {
+			// before_insert renders the chosen template when its result is empty.
+			frm[selected_key] = selected;
+			if (frm.doc[result_field]) frm.set_value(result_field, "");
+			return;
+		}
+		frappe.call({
+			method: "healthcare.healthcare.doctype.observation.observation.get_observation_result_template",
+			args: { template_name: selected, observation: frm.doc.name },
+			callback: r => {
+				if (!is_current()) return;
+				if (
+					frm.doc.patient !== selected_patient ||
+					frm._saved_patient_for_template !== selected_patient
+				) {
+					restore_selection();
+					return;
+				}
+				if (r.exc) {
+					restore_selection();
+					return;
+				}
+				frm[selected_key] = selected;
+				frm.set_value(result_field, r.message || "");
+			},
+			error: restore_selection,
+		});
+	};
+
+	render_selected();
+}
 
 // Destroys the current "result" control and replaces it with a freshly
 // constructed one of the right type, in the same spot in the layout.

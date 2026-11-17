@@ -496,20 +496,22 @@
    "label": "Result Interpretation"
   },
   {
+   "depends_on": "eval:doc.observation_category == \"Imaging\"",
    "fetch_from": "observation_template.result_template",
+   "fetch_if_empty": 1,
    "fieldname": "result_template",
    "fieldtype": "Link",
    "label": "Result Template",
-   "options": "Terms and Conditions",
-   "read_only": 1
+   "options": "Terms and Conditions"
   },
   {
+   "depends_on": "eval:doc.observation_category == \"Imaging\"",
    "fetch_from": "observation_template.interpretation_template",
+   "fetch_if_empty": 1,
    "fieldname": "interpretation_template",
    "fieldtype": "Link",
    "label": "Interpretation Template",
-   "options": "Terms and Conditions",
-   "read_only": 1
+   "options": "Terms and Conditions"
   },
   {
    "default": "0",
