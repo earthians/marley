@@ -8,6 +8,8 @@ sudo apt update
 sudo apt remove mysql-server mysql-client
 sudo apt install libcups2-dev redis-server mariadb-client
 
+printf '[client]\nssl=0\n' > ~/.my.cnf
+
 pip install frappe-bench
 
 git clone https://github.com/frappe/frappe --branch "$BRANCH_TO_CLONE" --depth 1
