@@ -1318,6 +1318,9 @@ def _create_long_acting_medicine_for_entries(pmo_doc, only_entry_names=None):
 		dosage_form = cstr(getattr(entry, "dosage_form", None) or "").strip() or None
 		if dosage_form and not frappe.db.exists("Pharmaceutical Form", dosage_form):
 			dosage_form = None
+		uom = cstr(getattr(entry, "uom", None) or "").strip() or None
+		if uom and not frappe.db.exists("UOM", uom):
+			uom = None
 		instructions = cstr(getattr(entry, "instructions", None) or "").strip()
 		# Prescription Instructions belong on Doctors Remark (not reception Remarks).
 		if instructions and lam.meta.has_field("doctors_remark"):
@@ -1327,6 +1330,7 @@ def _create_long_acting_medicine_for_entries(pmo_doc, only_entry_names=None):
 			'drug': entry.drug,
 			'drug_name': entry.drug_name or frappe.db.get_value('Item', entry.drug, 'item_name'),
 			'dosage': flt(entry.dosage, 0) or 0,
+			'uom': uom,
 			'dosage_form': dosage_form,
 			'instructions': instructions,
 			'patient_frequency': entry.patient_frequency,
@@ -2215,6 +2219,9 @@ def create_subscription_medication_plan(
 		except Exception:
 			child.dosage = None
 		child.dosage_form = row.get("dosage_form") or (source.dosage_form if source else None)
+		child.uom = row.get("uom") or (getattr(source, "uom", None) if source else None)
+		if child.uom and not frappe.db.exists("UOM", child.uom):
+			child.uom = None
 		child.instructions = row.get("instructions") or (source.instructions if source else None)
 		child.patient_frequency = row.get("patient_frequency") or (
 			source.patient_frequency if source else None

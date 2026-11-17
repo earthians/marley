@@ -289,6 +289,58 @@ export async function updateLongActingMedicineRemarks(
   return (data?.message as { name: string; remarks: string }) || { name, remarks }
 }
 
+export interface LongActingMedicineDoseUpdate {
+  /** Child row name (Subscription Medication Plan Item). */
+  name: string
+  dosage?: number | string
+  /** Unit of Measure for the dose. Blank falls back to the linked prescription / Item UOM. */
+  uom?: string
+}
+
+export interface LongActingMedicineUpdateValues {
+  frequency?: string
+  start_date?: string
+  end_date?: string
+  next_run_date?: string
+  status?: string
+  injection_given_on?: string
+  remarks?: string
+  doctors_remark?: string
+  /** Plan-item dose and unit overrides. */
+  medications?: LongActingMedicineDoseUpdate[]
+}
+
+/** Update editable header fields (schedule, status, side, notes, dose) from the edit modal. */
+export async function updateLongActingMedicine(
+  name: string,
+  values: LongActingMedicineUpdateValues,
+): Promise<LongActingMedicineRow> {
+  const { ensureCSRF, parseFrappeErrorPayload } = await import('./apiClient')
+  const csrf = await ensureCSRF()
+  const res = await fetch(
+    '/api/method/healthcare.api.common.update_long_acting_medicine',
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(csrf ? { 'X-Frappe-CSRF-Token': csrf } : {}),
+      },
+      body: JSON.stringify({ name, values }),
+    }
+  )
+  const data = await res.json().catch(() => ({} as Record<string, unknown>))
+  if (!res.ok || data?.exc) {
+    throw new Error(
+      parseFrappeErrorPayload(data) ||
+        messageFromExc(data?.exc, data?.exc_type) ||
+        (typeof data?.message === 'string' ? data.message : '') ||
+        'Failed to update long acting medicine',
+    )
+  }
+  return (data?.message || {}) as LongActingMedicineRow
+}
+
 export async function fetchLongActingMedicineList(
   patient: string,
   limit: number = 50,

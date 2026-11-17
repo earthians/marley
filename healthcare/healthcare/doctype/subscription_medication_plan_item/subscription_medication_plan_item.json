@@ -11,6 +11,7 @@
   "drug",
   "drug_name",
   "dosage",
+  "uom",
   "dosage_form",
   "instructions",
   "patient_frequency",
@@ -48,6 +49,13 @@
    "fieldname": "dosage",
    "fieldtype": "Float",
    "label": "Dosage"
+  },
+  {
+   "description": "Unit of Measure for the dose. When blank, the unit is taken from the linked prescription line or the Item stock UOM.",
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
   },
   {
    "fieldname": "dosage_form",
@@ -106,7 +114,7 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-06-28 14:04:29.527409",
+ "modified": "2026-11-17 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Subscription Medication Plan Item",

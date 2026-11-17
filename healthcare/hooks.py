@@ -286,6 +286,7 @@ doctype_js = {"Sales Invoice": "public/js/sales_invoice.js",
               "Sales Order": "public/js/sales_order.js",
               "Quotation": "public/js/quotation.js",
               "Item Group": "public/js/item_group.js",
+              "Customer": "public/js/customer.js",
               "Daily Patient Visit Setup": "public/js/patient_visit_branch_backfill.js",}
 doctype_list_js = {"Daily Patient Visit Setup": "public/js/patient_visit_branch_backfill.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -530,6 +531,16 @@ _append_event("Clinical Note", "on_trash", "healthcare.api.patient_history_extra
 _append_event("Inpatient Admission", "on_update", "healthcare.api.patient_history_extras.record_admission")
 _append_event("Inpatient Admission", "on_trash", "healthcare.api.patient_history_extras.remove_clinical_extra")
 
+# Customer.custom_employee / custom_employee_name (klik_pos employee billing) are
+# only valid when the Customer is the employee's own Customer. Patient Customers
+# pick up the Employee of the receptionist who registered them, so the link is
+# dropped on save whenever the Customer name does not match the Employee name.
+_append_event(
+	"Customer",
+	"validate",
+	"healthcare.api.customer_employee_cleanup.unlink_mismatched_employee_on_validate",
+)
+
 # Copy Cost Center from Patient Visit / Inpatient Admission onto assessments.
 for _dt in (
 	"YMRS Assessment",
@@ -611,6 +622,7 @@ scheduler_events = {
 		"healthcare.api.lab_test.create_daily_repeat_lab_tests",
 		"healthcare.api.lab_request_reminder.send_missing_lab_request_reminders",
 		"healthcare.api.report_request.archive_done_report_requests",
+		"healthcare.api.medication_auto_stop.auto_stop_medication_orders_past_end_date",
 	],
 	"hourly": [
 		"healthcare.api.nurse_task_escalation.escalate_overdue_nurse_tasks",

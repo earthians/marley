@@ -2092,6 +2092,7 @@ def submit_sales_invoice_doc(invoice_name):
 
     doc.flags.ignore_permissions = True
     doc.save(ignore_permissions=True)
+    doc.flags.ignore_permissions = True
     doc.submit()
     frappe.db.commit()
     return {"name": doc.name, "docstatus": doc.docstatus, "status": doc.status}
@@ -2265,7 +2266,10 @@ def create_payment_entry(
             )
 
             stamp_receptionist_shift_on_doc(payment_entry)
-            payment_entry.insert()
+            # Ignore Customer→Employee User Permissions so reception can take payment.
+            payment_entry.flags.ignore_permissions = True
+            payment_entry.insert(ignore_permissions=True)
+            payment_entry.flags.ignore_permissions = True
             payment_entry.submit()
             created.append(payment_entry.name)
 
@@ -2450,15 +2454,20 @@ def _get_or_create_employee_customer(employee_id):
 
     legacy_name = frappe.db.get_value("Customer", {"customer_name": display_name}, "name")
     if legacy_name and legacy_name != employee_id:
-        frappe.rename_doc(
-            "Customer",
-            legacy_name,
-            employee_id,
-            force=True,
-            merge=False,
-            show_alert=False,
-        )
-        return employee_id
+        if frappe.db.exists("Patient", {"customer": legacy_name}):
+            # Never rename a Patient's Customer into an employee Customer: the
+            # patient would silently become "linked" to that employee.
+            legacy_name = None
+        else:
+            frappe.rename_doc(
+                "Customer",
+                legacy_name,
+                employee_id,
+                force=True,
+                merge=False,
+                show_alert=False,
+            )
+            return employee_id
 
     customer_doc = frappe.get_doc(
         {

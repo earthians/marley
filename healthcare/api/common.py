@@ -2301,6 +2301,143 @@ def update_long_acting_medicine_remarks(name: str, remarks: str):
 
 
 @frappe.whitelist()
+def update_long_acting_medicine(name: str, values=None):
+	"""Update editable header fields on a Long Acting Medicine from the portal edit modal.
+
+	Only the fields the edit dialog exposes are accepted (schedule, status, side,
+	notes, and the plan-item dose / unit of measure). Uses ``db_set`` (like
+	``update_long_acting_medicine_remarks``) so submitted records can still be
+	corrected, and so legacy / incomplete rows do not fail full document validation.
+	"""
+	assert_editing_allowed()
+	name = cstr(name or "").strip()
+	if not name:
+		frappe.throw(_("Long Acting Medicine name is required"))
+	if not frappe.db.exists("Long Acting Medicine", name):
+		frappe.throw(_("Long Acting Medicine {0} does not exist").format(frappe.bold(name)))
+	if not frappe.has_permission("Long Acting Medicine", "write", name):
+		frappe.throw(_("Not permitted to update Long Acting Medicine"), frappe.PermissionError)
+
+	if isinstance(values, str):
+		values = frappe.parse_json(values)
+	values = values or {}
+	if not isinstance(values, dict):
+		frappe.throw(_("Invalid update payload"))
+
+	updates = {}
+	medication_updates: list[tuple[str, dict]] = []
+
+	frequency = cstr(values.get("frequency") or "").strip()
+	if frequency:
+		if not frappe.db.exists("Long Acting Frequency", frequency):
+			frappe.throw(_("Unknown Long Acting Frequency: {0}").format(frappe.bold(frequency)))
+		updates["frequency"] = frequency
+		if frappe.get_meta("Long Acting Medicine").has_field("written_frequency"):
+			updates["written_frequency"] = frequency
+
+	for field, label in (
+		("start_date", _("Start Date")),
+		("end_date", _("End Date")),
+		("next_run_date", _("Next Run Date")),
+	):
+		if field not in values:
+			continue
+		raw = cstr(values.get(field) or "").strip()
+		try:
+			updates[field] = getdate(raw) if raw else None
+		except Exception:
+			frappe.throw(_("{0} is not a valid date").format(label))
+
+	status = cstr(values.get("status") or "").strip()
+	if status:
+		if status not in ("Draft", "Active", "Inactive", "Paused", "Completed"):
+			frappe.throw(_("Invalid status: {0}").format(frappe.bold(status)))
+		updates["status"] = status
+
+	if "injection_given_on" in values:
+		side = cstr(values.get("injection_given_on") or "").strip().upper()
+		if side not in ("", "LT", "RT"):
+			frappe.throw(_("Injection side must be Left or Right"))
+		updates["injection_given_on"] = side or None
+
+	for field in ("remarks", "doctors_remark"):
+		if field in values:
+			updates[field] = cstr(values.get(field) or "").strip() or None
+
+	# Dose and unit live on the medication plan rows (snapshot copied from the
+	# prescription). Both are optional per row so a dose-only or unit-only edit works.
+	medications = values.get("medications")
+	if medications is not None:
+		if not isinstance(medications, list):
+			frappe.throw(_("Invalid medications update payload"))
+		plan_items = {
+			row.name: row
+			for row in frappe.get_all(
+				"Subscription Medication Plan Item",
+				filters={
+					"parent": name,
+					"parenttype": "Long Acting Medicine",
+					"parentfield": "medications",
+				},
+				fields=["name", "dosage", "uom"],
+			)
+		}
+		for row in medications:
+			if not isinstance(row, dict):
+				frappe.throw(_("Invalid medication row in update payload"))
+			child_name = cstr(row.get("name") or "").strip()
+			if not child_name or child_name not in plan_items:
+				frappe.throw(
+					_("Medication row {0} does not belong to this Long Acting Medicine").format(
+						frappe.bold(child_name or "?")
+					)
+				)
+			current = plan_items[child_name]
+			changes = {}
+			if "dosage" in row:
+				raw = row.get("dosage")
+				if raw in (None, ""):
+					dosage: float | None = None
+				else:
+					try:
+						dosage = float(raw)
+					except (TypeError, ValueError):
+						frappe.throw(_("Dose must be a number"))
+				if dosage is not None and dosage < 0:
+					frappe.throw(_("Dose cannot be negative"))
+				if flt(current.dosage, 2) != flt(dosage, 2):
+					changes["dosage"] = dosage or 0
+			if "uom" in row:
+				uom = cstr(row.get("uom") or "").strip()
+				if uom and not frappe.db.exists("UOM", uom):
+					frappe.throw(_("Unknown Unit of Measure: {0}").format(frappe.bold(uom)))
+				if uom != cstr(current.uom or "").strip():
+					changes["uom"] = uom or None
+			if changes:
+				medication_updates.append((child_name, changes))
+
+	if not updates and not medication_updates:
+		frappe.throw(_("Nothing to update"))
+
+	if updates:
+		frappe.db.set_value("Long Acting Medicine", name, updates, update_modified=True)
+	for child_name, changes in medication_updates:
+		frappe.db.set_value(
+			"Subscription Medication Plan Item",
+			child_name,
+			changes,
+			update_modified=True,
+		)
+	frappe.db.commit()
+
+	from healthcare.healthcare.doctype.long_acting_medicine.long_acting_medicine import (
+		enrich_long_acting_medicine_row,
+	)
+
+	return enrich_long_acting_medicine_row(frappe.get_doc("Long Acting Medicine", name))
+
+
+@frappe.whitelist()
 def get_long_acting_medicine_whatsapp_preview(name: str, template_name=None):
 	"""Return WhatsApp preview (phone, templates, filled message) for Long Acting Medicine."""
 	if not name:
@@ -5355,7 +5492,8 @@ def get_standard_uoms(search=None, medical_only=None):
 	(used by prescription UOM pickers).
 	"""
 	filters = []
-	if frappe.utils.cint(medical_only):
+	medical_only = frappe.utils.cint(medical_only)
+	if medical_only:
 		# Prefer the custom field when present; fall back gracefully if not migrated yet.
 		if frappe.db.has_column("UOM", "custom_is_medical"):
 			filters.append(["custom_is_medical", "=", 1])
@@ -5366,7 +5504,9 @@ def get_standard_uoms(search=None, medical_only=None):
 		filters=filters,
 		fields=["name"],
 		order_by="name asc",
-		limit=50,
+		# Medical units are a small curated list — return all of them so the
+		# pickers are not cut off after the first 50 alphabetically.
+		limit=500 if medical_only else 50,
 	)
 	return [{"name": u.name, "label": u.name} for u in uoms]
 

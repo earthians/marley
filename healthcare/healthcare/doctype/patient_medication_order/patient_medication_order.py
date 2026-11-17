@@ -221,6 +221,9 @@ class PatientMedicationOrder(Document):
 			child.drug = row.get("drug")
 			child.drug_name = row.get("drug_name")
 			child.dosage = row.get("dosage")
+			child.uom = row.get("uom")
+			if child.uom and not frappe.db.exists("UOM", child.uom):
+				child.uom = None
 			child.dosage_form = row.get("dosage_form")
 			child.instructions = row.get("instructions")
 			child.patient_frequency = row.get("patient_frequency")

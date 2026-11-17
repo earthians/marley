@@ -665,6 +665,79 @@ frappe.ui.form.on('Healthcare Settings', {
 			});
 		}, __('Update'));
 
+		frm.add_custom_button(__('Unlink Mismatched Customer Employees'), () => {
+			frappe.call({
+				method:
+					'healthcare.api.customer_employee_cleanup.preview_cleanup_mismatched_customer_employees',
+				freeze: true,
+				freeze_message: __('Scanning Customers with Employee links…'),
+				callback(preview) {
+					const counts = preview.message || {};
+					const sample = (counts.rows || [])
+						.slice(0, 20)
+						.map((row) => {
+							const patient = row.patient ? ` · Patient ${row.patient}` : '';
+							return `${row.customer}: "${row.customer_name || ''}" ≠ Employee ${
+								row.employee || '—'
+							} ("${row.employee_name || ''}")${patient}`;
+						})
+						.join('\n');
+					frappe.confirm(
+						__(
+							'Customers sometimes get an Employee link (custom_employee) even though they are only patients — e.g. the receptionist’s Employee was stamped by mistake.\n\n'
+							+ 'This removes the Employee link when the Customer name does not match the Employee name (or the Employee no longer exists).\n'
+							+ 'Matching Employee Customers (staff billing) are kept.\n\n'
+							+ 'Customers with Employee set: {0}\n'
+							+ 'Will unlink: {1}\n'
+							+ 'Keep (names match): {2}\n'
+							+ 'Errors: {3}\n\n'
+							+ 'Sample:\n{4}\n\nContinue?',
+							[
+								counts.scanned || 0,
+								counts.unlinked || 0,
+								counts.kept || 0,
+								counts.errors || 0,
+								sample || __('(none)'),
+							]
+						),
+						() => {
+							frappe.call({
+								method:
+									'healthcare.api.customer_employee_cleanup.cleanup_mismatched_customer_employees',
+								args: { dry_run: 0 },
+								freeze: true,
+								freeze_message: __('Unlinking mismatched Employee links…'),
+								callback(r) {
+									const m = r.message || {};
+									const doneSample = (m.rows || [])
+										.slice(0, 15)
+										.map(
+											(row) =>
+												`${row.customer}: cleared Employee ${row.employee || '—'}`
+										)
+										.join('<br>');
+									frappe.msgprint({
+										title: __('Customer Employees'),
+										indicator: m.unlinked ? 'green' : 'orange',
+										message: __(
+											'Scanned {0}. Unlinked {1}. Kept {2}. Errors {3}.{4}',
+											[
+												m.scanned || 0,
+												m.unlinked || 0,
+												m.kept || 0,
+												m.errors || 0,
+												doneSample ? `<br><br>${doneSample}` : '',
+											]
+										),
+									});
+								},
+							});
+						}
+					);
+				},
+			});
+		}, __('Update'));
+
 		frm.add_custom_button(__('Expire Long Acting Medicine (past End Date)'), () => {
 			frappe.call({
 				method: 'healthcare.api.long_acting_medicine_expire.preview_long_acting_medicine_expire',

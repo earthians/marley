@@ -725,14 +725,23 @@ def _sync_invoice_uom_from_previous_docs(invoice) -> None:
 
 
 def _finalize_and_save_invoice(invoice, header_cc=None, ref_type=None, ref_name=None):
-	if header_cc:
-		apply_cost_center_to_sales_invoice(invoice, header_cc)
-	elif ref_type and ref_name:
-		visit_cc = cost_center_from_visit_or_admission(ref_type, ref_name)
-		if visit_cc:
-			apply_cost_center_to_sales_invoice(invoice, visit_cc)
-
 	from healthcare.api.receptionist_shift import stamp_receptionist_shift_on_doc
+	from healthcare.api.sales_order_cost_center import (
+		finalize_sales_invoice_cost_centers,
+		set_missing_values_ignoring_permissions,
+	)
+
+	# Party resolution must not fail on Customer.custom_employee User Permissions.
+	invoice.flags.ignore_permissions = True
+
+	cc = header_cc
+	if not cc and ref_type and ref_name:
+		cc = cost_center_from_visit_or_admission(ref_type, ref_name)
+
+	if cc:
+		finalize_sales_invoice_cost_centers(invoice, cc)
+	else:
+		set_missing_values_ignoring_permissions(invoice)
 
 	stamp_receptionist_shift_on_doc(invoice)
 	_sync_invoice_uom_from_previous_docs(invoice)
@@ -747,7 +756,11 @@ def _finalize_and_save_invoice(invoice, header_cc=None, ref_type=None, ref_name=
 	invoice.validate_with_previous_doc = _validate_with_previous_preserving_uom
 
 	invoice.flags.ignore_permissions = True
-	invoice.save(ignore_permissions=True)
+	# save() → insert() drops the kwarg; call insert explicitly for new docs.
+	if invoice.get("__islocal") or not invoice.get("name"):
+		invoice.insert(ignore_permissions=True)
+	else:
+		invoice.save(ignore_permissions=True)
 	return invoice.name
 
 
@@ -764,10 +777,14 @@ def _create_delivery_note_invoice(
 	"""One Sales Invoice mapped from one or more Delivery Notes (stock / pharmacy)."""
 	from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice as make_si_from_dn
 
-	target = None
+	# make_sales_invoice runs set_missing_values (Customer has_permission) before save —
+	# seed the target with ignore_permissions so EMP-linked Customers still map.
+	target = frappe.new_doc("Sales Invoice")
+	target.flags.ignore_permissions = True
 	for dn_name in delivery_notes:
 		try:
 			target = make_si_from_dn(dn_name, target_doc=target)
+			target.flags.ignore_permissions = True
 		except Exception:
 			frappe.log_error(title=f"DN→SI map failed: {dn_name}")
 			raise

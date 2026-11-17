@@ -10,7 +10,7 @@ import {
 import { CreatePrescriptionModal } from '../prescriptions/CreatePrescriptionModal'
 import { LongActingMedicineDetailPanel } from './LongActingMedicineDetailPanel'
 import { toast } from '../../hooks/useToast'
-import { Mail, MoreHorizontal } from 'lucide-react'
+import { Mail, MoreHorizontal, Pencil } from 'lucide-react'
 import { PrintFormatDropdown } from '../ui/PrintFormatDropdown'
 import { ClearFiltersButton } from '../ui/ClearFiltersButton'
 import { PortalActionsMenu } from '../ui/PortalActionsMenu'
@@ -19,6 +19,7 @@ import { useCareContext } from '../../providers/CareContextProvider'
 import { isDoctorRole, isNurseRole, canSeeLongActingMedDetails } from '../../config/permissions'
 import { DateFilterInput } from '../ui/DateFilterInput'
 import { SendWhatsAppLongActingModal } from './SendWhatsAppLongActingModal'
+import { EditLongActingMedicineModal } from './EditLongActingMedicineModal'
 
 interface ReceptionLongActingMedicineListProps {
   patient?: string
@@ -39,6 +40,8 @@ export const ReceptionLongActingMedicineList = ({
   const canDuplicateAsPrescription = isDoctorRole(userRole)
   // #11: reception / non-clinical roles see only due dates — medicine details are masked (not removed).
   const maskMedDetails = !canSeeLongActingMedDetails(userRole)
+  // Edit is available to the same clinical roles that can see medicine details.
+  const canEditLongActing = canSeeLongActingMedDetails(userRole)
   const mask = (value: React.ReactNode) =>
     maskMedDetails ? <span className="text-slate-400" title="Restricted">••••</span> : value
   const cardFilters = useCardFilters()
@@ -68,6 +71,8 @@ export const ReceptionLongActingMedicineList = ({
   const [remarksModal, setRemarksModal] = useState<{ name: string; current: string } | null>(null)
   const [remarksText, setRemarksText] = useState('')
   const [remarksSaving, setRemarksSaving] = useState(false)
+  // In-app edit modal (schedule / status / side / notes)
+  const [editRow, setEditRow] = useState<LongActingMedicineRow | null>(null)
   const [giveOutModal, setGiveOutModal] = useState<LongActingMedicineRow | null>(null)
   const [giveOutNotes, setGiveOutNotes] = useState('')
   const [giveOutDosage, setGiveOutDosage] = useState('')
@@ -334,6 +339,12 @@ export const ReceptionLongActingMedicineList = ({
     } finally {
       setStoppingId(null)
     }
+  }
+
+  const handleEdit = (e: React.MouseEvent, row: LongActingMedicineRow) => {
+    e.stopPropagation()
+    setOpenMenuRow(null)
+    setEditRow(row)
   }
 
   const handleRowClick = (row: LongActingMedicineRow) => {
@@ -715,6 +726,15 @@ export const ReceptionLongActingMedicineList = ({
                                 <span className="text-purple-500 text-base leading-none">📱</span> Send SMS
                               </button>
                               <div className="border-t border-slate-100 my-1" />
+                              {canEditLongActing && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleEdit(e, row)}
+                                  className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                >
+                                  <Pencil className="w-3.5 h-3.5 text-indigo-500" /> Edit long acting
+                                </button>
+                              )}
                               {canDuplicateAsPrescription && (
                                 <button
                                   type="button"
@@ -968,6 +988,23 @@ export const ReceptionLongActingMedicineList = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Long Acting Medicine Modal */}
+      {editRow && (
+        <EditLongActingMedicineModal
+          name={editRow.name}
+          initialRow={editRow}
+          onClose={() => setEditRow(null)}
+          onSaved={(updated) => {
+            const editedName = editRow.name
+            setRows((prev) =>
+              prev.map((item) => (item.name === editedName ? { ...item, ...updated } : item)),
+            )
+            // Re-query so mapped flags (can_stop / can_give_out) and status filters stay accurate.
+            load()
+          }}
+        />
       )}
 
       {/* Add Remarks Modal */}

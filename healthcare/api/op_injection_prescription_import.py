@@ -604,6 +604,9 @@ def _create_lam_with_give_outs(
 	lam.practitioner = pmo_doc.get("practitioner")
 	lam.company = pmo_doc.company
 	lam.written_frequency = written_freq or None
+	entry_uom = (entry.uom or "").strip() or None
+	if entry_uom and not frappe.db.exists("UOM", entry_uom):
+		entry_uom = None
 	if long_freq:
 		lam.frequency = long_freq
 	if start_dt:
@@ -621,6 +624,7 @@ def _create_lam_with_give_outs(
 			"drug_name": entry.drug_name or entry.medication or entry.old_medicine_name,
 			"old_medication_name": entry.old_medicine_name or entry.medication,
 			"dosage": entry.dosage,
+			"uom": entry_uom,
 			"dosage_form": entry.dosage_form,
 			"instructions": entry.instructions or "",
 			"patient_frequency": entry.patient_frequency,

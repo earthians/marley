@@ -170,7 +170,7 @@ def _first_medication_doses_for_parents(parent_names):
 	med_rows = frappe.get_all(
 		"Subscription Medication Plan Item",
 		filters={"parent": ["in", parent_names]},
-		fields=["parent", "dosage", "dosage_form", "drug", "medication_order_entry", "idx"],
+		fields=["parent", "dosage", "dosage_form", "uom", "drug", "medication_order_entry", "idx"],
 		order_by="parent asc, idx asc",
 	)
 
@@ -208,13 +208,16 @@ def _first_medication_doses_for_parents(parent_names):
 			continue
 		dosage = _format_dosage_value(row.dosage)
 		dosage_form = (row.dosage_form or "").strip() or None
-		uom = None
+		# Prefer the unit stored on the plan row (editable from the LAM edit modal);
+		# fall back to the linked prescription line / Item stock UOM.
+		uom = (row.uom or "").strip() or None
 		entry = (row.medication_order_entry or "").strip()
 		drug = (row.drug or "").strip()
-		if entry and entry in entry_uoms:
-			uom = entry_uoms[entry]
-		elif drug and drug in drug_uoms:
-			uom = drug_uoms[drug]
+		if not uom:
+			if entry and entry in entry_uoms:
+				uom = entry_uoms[entry]
+			elif drug and drug in drug_uoms:
+				uom = drug_uoms[drug]
 		if dosage or uom or dosage_form:
 			defaults[row.parent] = {
 				"default_dosage": dosage,
@@ -236,7 +239,15 @@ def _format_dosage_value(dosage=None):
 
 
 def _resolve_uom_for_plan_item(med) -> str | None:
-	"""Unit of Measure from linked order entry, else Item stock UOM — not Dosage Form."""
+	"""Unit of Measure stored on the plan row, else from linked order entry / Item stock UOM.
+
+	The plan-row ``uom`` is editable from the Long Acting Medicine edit modal. Older
+	rows (and rows created before the field existed) leave it blank, so the unit is
+	still derived from the prescription line and then the Item.
+	"""
+	stored = str(_row_field(med, "uom") or "").strip()
+	if stored:
+		return stored
 	entry = (_row_field(med, "medication_order_entry") or "").strip()
 	if entry and frappe.db.exists("Inpatient Medication Order Entry", entry):
 		uom = frappe.db.get_value("Inpatient Medication Order Entry", entry, "uom")

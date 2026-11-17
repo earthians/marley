@@ -722,8 +722,11 @@ def _save_payment_entry(pe, *, draft: bool = False) -> dict:
 	from healthcare.api.receptionist_shift import stamp_receptionist_shift_on_doc
 
 	stamp_receptionist_shift_on_doc(pe)
+	# Customer.custom_employee User Permissions must not block reception payments.
+	pe.flags.ignore_permissions = True
 	pe.insert(ignore_permissions=True)
 	if not draft:
+		pe.flags.ignore_permissions = True
 		pe.submit()
 	frappe.db.commit()
 
