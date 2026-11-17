@@ -6,7 +6,7 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 class HealthcareSalesInvoice(SalesInvoice):
 	@frappe.whitelist()
-	def set_healthcare_services(self, checked_values):
+	def set_healthcare_services(self, checked_values: list[dict]) -> None:
 		from erpnext.stock.get_item_details import get_item_details
 
 		for checked_item in checked_values:
