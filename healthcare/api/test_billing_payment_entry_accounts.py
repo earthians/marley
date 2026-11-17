@@ -15,6 +15,9 @@ MOP_BANK = "Credit Card Machine - TC"
 MOP_CASH = "Main Cash - TC"
 
 
+BRANCH_RECEIVABLE = "01-02-03-0001 - PATIENT RECEIVABLE - SPH"
+
+
 def _invoice(**kwargs):
 	"""A submitted Sales Invoice stand-in; nothing is written to the database."""
 	values = {
@@ -24,6 +27,7 @@ def _invoice(**kwargs):
 		"company": COMPANY,
 		"customer": "PAT-0001",
 		"customer_name": "Test Patient",
+		"debit_to": BRANCH_RECEIVABLE,
 	}
 	values.update(kwargs)
 	invoice = SimpleNamespace(**values)
@@ -32,13 +36,13 @@ def _invoice(**kwargs):
 
 
 class TestReceptionPaymentEntryAccounts(IntegrationTestCase):
-	"""Reception payments post to the Mode of Payment account, not company defaults.
+	"""Reception payments use invoice debit_to + Mode of Payment cash/bank account.
 
-	The company's Cash/Bank defaults are only a fallback for modes of payment that
-	have no account mapped for the company (handled inside ``_resolve_accounts``).
+	Company default receivable is only a fallback when there is no invoice debit_to.
+	Company Cash/Bank defaults are only a fallback for modes with no mapped account.
 	"""
 
-	def _create(self, payment_modes, accounts):
+	def _create(self, payment_modes, accounts, invoice_kwargs=None):
 		payment_entry = MagicMock()
 		payment_entry.name = "PE-0001"
 		company = SimpleNamespace(
@@ -47,21 +51,26 @@ class TestReceptionPaymentEntryAccounts(IntegrationTestCase):
 			default_cash_account="Company Default Cash - TC",
 			default_bank_account="Company Default Bank - TC",
 		)
+		invoice = _invoice(**(invoice_kwargs or {}))
 		real_get_doc = frappe.get_doc
 
 		def fake_get_doc(doctype, *args, **kwargs):
 			if doctype == "Sales Invoice":
-				return _invoice()
+				return invoice
 			if doctype == "Company":
 				return company
 			return real_get_doc(doctype, *args, **kwargs)
+
+		def resolve(company_name, mode, party_account=None):
+			paid_from, paid_to = accounts[mode]
+			return (party_account or paid_from, paid_to)
 
 		with (
 			patch.object(billing.frappe, "get_doc", side_effect=fake_get_doc),
 			patch.object(billing.frappe, "new_doc", return_value=payment_entry),
 			patch(
 				"healthcare.api.payment_entry._resolve_accounts",
-				side_effect=lambda company_name, mode: accounts[mode],
+				side_effect=resolve,
 			) as resolve_accounts,
 			patch("healthcare.api.receptionist_shift.stamp_receptionist_shift_on_doc"),
 		):
@@ -78,10 +87,26 @@ class TestReceptionPaymentEntryAccounts(IntegrationTestCase):
 		)
 
 		self.assertTrue(result.get("success"))
-		resolve_accounts.assert_called_once_with(COMPANY, "Credit Card")
+		resolve_accounts.assert_called_once_with(
+			COMPANY, "Credit Card", party_account=BRANCH_RECEIVABLE
+		)
 		self.assertEqual(payment_entry.mode_of_payment, "Credit Card")
-		self.assertEqual(payment_entry.paid_from, RECEIVABLE)
+		self.assertEqual(payment_entry.paid_from, BRANCH_RECEIVABLE)
 		self.assertEqual(payment_entry.paid_to, MOP_BANK)
+
+	def test_uses_invoice_debit_to_not_company_default_receivable(self):
+		result, payment_entry, resolve_accounts = self._create(
+			[{"mode_of_payment": "Cash", "amount": 100}],
+			{"Cash": (RECEIVABLE, MOP_CASH)},
+		)
+		self.assertTrue(result.get("success"))
+		self.assertEqual(
+			resolve_accounts.call_args.kwargs.get("party_account")
+			or resolve_accounts.call_args[1].get("party_account"),
+			BRANCH_RECEIVABLE,
+		)
+		self.assertEqual(payment_entry.paid_from, BRANCH_RECEIVABLE)
+		self.assertNotEqual(payment_entry.paid_from, RECEIVABLE)
 
 	def test_each_mode_resolves_its_own_account(self):
 		_, payment_entry, resolve_accounts = self._create(
@@ -97,10 +122,13 @@ class TestReceptionPaymentEntryAccounts(IntegrationTestCase):
 
 		self.assertEqual(
 			[
-				("Test Company", "Credit Card"),
-				("Test Company", "Cash"),
+				(COMPANY, "Credit Card", BRANCH_RECEIVABLE),
+				(COMPANY, "Cash", BRANCH_RECEIVABLE),
 			],
-			[call.args for call in resolve_accounts.call_args_list],
+			[
+				(call.args[0], call.args[1], call.kwargs.get("party_account"))
+				for call in resolve_accounts.call_args_list
+			],
 		)
 		# The last submitted entry is the cash leg; it must not fall back to the
 		# company default bank/cash account.

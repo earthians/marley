@@ -2226,7 +2226,11 @@ def create_payment_entry(
             payment_mode = mode_row["mode_of_payment"]
             ref_no = mode_row.get("reference_no") or reference_number or f"PAY-{invoice_name}"
 
-            paid_from_account, paid_to_account = _resolve_accounts(invoice.company, payment_mode)
+            paid_from_account, paid_to_account = _resolve_accounts(
+                invoice.company,
+                payment_mode,
+                party_account=invoice.debit_to,
+            )
 
             payment_entry = frappe.new_doc("Payment Entry")
             payment_entry.payment_type = "Receive"

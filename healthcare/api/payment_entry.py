@@ -243,46 +243,79 @@ def _mop_account_for_company(mode_of_payment: str, company: str) -> str | None:
     return next((a.default_account for a in mop_doc.accounts if a.company == company), None)
 
 
-def _resolve_accounts(company: str, mode_of_payment: str) -> tuple[str, str]:
-    """
-    Return (paid_from, paid_to) accounts.
-    paid_from = company default receivable account
-    paid_to   = cash/bank account based on Mode of Payment type
-    """
-    company_doc = frappe.get_cached_doc("Company", company)
-    paid_from = company_doc.default_receivable_account
-    if not paid_from:
-        frappe.throw(_("Default Receivable Account is not set for company '{0}'").format(company))
+def _resolve_accounts(
+	company: str,
+	mode_of_payment: str,
+	party_account: str | None = None,
+) -> tuple[str, str]:
+	"""
+	Return (paid_from, paid_to) accounts.
 
-    mop_doc = frappe.get_doc("Mode of Payment", mode_of_payment)
-    mop_type = (mop_doc.type or "").strip()
-    mop_account = _mop_account_for_company(mode_of_payment, company)
+	paid_from (party receivable): prefer the Sales Invoice ``debit_to`` (branch /
+	patient receivable) when paying an invoice. Company default receivable is only
+	the fallback for advances / credit with no invoice.
+	paid_to: cash/bank from Mode of Payment for this company.
+	"""
+	company_doc = frappe.get_cached_doc("Company", company)
+	paid_from = (party_account or "").strip() or company_doc.default_receivable_account
+	if not paid_from:
+		frappe.throw(_("Default Receivable Account is not set for company '{0}'").format(company))
 
-    mop_account_type = frappe.get_cached_value("Account", mop_account, "account_type") if mop_account else None
+	mop_doc = frappe.get_doc("Mode of Payment", mode_of_payment)
+	mop_type = (mop_doc.type or "").strip()
+	mop_account = _mop_account_for_company(mode_of_payment, company)
 
-    if mop_type == "Cash":
-        # Cash payments should not land on a Bank GL (ERPNext then requires cheque ref fields).
-        if mop_account and mop_account_type != "Bank":
-            paid_to = mop_account
-        else:
-            paid_to = company_doc.default_cash_account or mop_account
-    elif mop_type == "Bank":
-        paid_to = mop_account or company_doc.default_bank_account
-    else:
-        paid_to = mop_account or company_doc.default_cash_account or company_doc.default_bank_account
+	mop_account_type = frappe.get_cached_value("Account", mop_account, "account_type") if mop_account else None
 
-    if not paid_to:
-        frappe.throw(
-            _("No Cash or Bank account configured for Mode of Payment '{0}' in company '{1}'").format(
-                mode_of_payment, company
-            )
-        )
+	if mop_type == "Cash":
+		# Cash payments should not land on a Bank GL (ERPNext then requires cheque ref fields).
+		if mop_account and mop_account_type != "Bank":
+			paid_to = mop_account
+		else:
+			paid_to = company_doc.default_cash_account or mop_account
+	elif mop_type == "Bank":
+		paid_to = mop_account or company_doc.default_bank_account
+	else:
+		paid_to = mop_account or company_doc.default_cash_account or company_doc.default_bank_account
 
-    for account, label in [(paid_from, "Receivable Account"), (paid_to, "Payment Account")]:
-        if not frappe.db.exists("Account", account):
-            frappe.throw(_("{0} '{1}' does not exist").format(label, account))
+	if not paid_to:
+		frappe.throw(
+			_("No Cash or Bank account configured for Mode of Payment '{0}' in company '{1}'").format(
+				mode_of_payment, company
+			)
+		)
 
-    return paid_from, paid_to
+	for account, label in [(paid_from, "Receivable Account"), (paid_to, "Payment Account")]:
+		if not frappe.db.exists("Account", account):
+			frappe.throw(_("{0} '{1}' does not exist").format(label, account))
+
+	return paid_from, paid_to
+
+
+def _invoice_receivable_account(invoice) -> str | None:
+	"""Sales Invoice debit_to — the branch/patient receivable the invoice was posted to."""
+	return (getattr(invoice, "debit_to", None) or "").strip() or None
+
+
+def _receivable_account_for_invoices(invoices: list) -> str | None:
+	"""Single shared debit_to across invoices, or throw if branches mix receivables."""
+	accounts = sorted(
+		{
+			acc
+			for inv in invoices
+			if (acc := _invoice_receivable_account(inv))
+		}
+	)
+	if not accounts:
+		return None
+	if len(accounts) > 1:
+		frappe.throw(
+			_(
+				"Selected invoices use different receivable accounts ({0}). "
+				"Pay them separately — each branch posts to its own Patient Receivable."
+			).format(", ".join(accounts))
+		)
+	return accounts[0]
 
 
 def _default_transaction_reference(reference_name: str, data: dict) -> tuple[str, str]:
@@ -387,7 +420,12 @@ def _create_single_payment_entry(data: dict) -> dict:
     ref_doc = _get_reference_doc(reference_doctype, reference_name)
     company, currency = _resolve_company_and_currency(ref_doc)
     party = _resolve_party(ref_doc)
-    paid_from, paid_to = _resolve_accounts(company, mode_of_payment)
+    party_account = (
+        _invoice_receivable_account(ref_doc) if reference_doctype == "Sales Invoice" else None
+    )
+    paid_from, paid_to = _resolve_accounts(
+        company, mode_of_payment, party_account=party_account
+    )
 
     pe = frappe.new_doc("Payment Entry")
     pe.payment_type = "Receive"
@@ -615,8 +653,11 @@ def _new_receive_payment_entry(
 	remarks: str,
 	reference_no: str | None = None,
 	reference_date: str | None = None,
+	party_account: str | None = None,
 ) -> "frappe.model.document.Document":
-	paid_from, paid_to = _resolve_accounts(company, mode_of_payment)
+	paid_from, paid_to = _resolve_accounts(
+		company, mode_of_payment, party_account=party_account
+	)
 	currency = frappe.get_cached_value("Company", company, "default_currency") or frappe.defaults.get_global_default(
 		"currency"
 	)
@@ -849,6 +890,7 @@ def create_multi_invoice_payment(data: dict) -> dict:
 		frappe.throw(_("Total allocated amount cannot exceed the payment amount"))
 
 	# Validate invoices once before creating any Payment Entries.
+	invoice_docs = []
 	for row in allocations:
 		invoice_name = row.get("reference_name") or row.get("invoice")
 		allocated = _money(row.get("allocated_amount"))
@@ -864,6 +906,9 @@ def create_multi_invoice_payment(data: dict) -> dict:
 					invoice_name, allocated, outstanding
 				)
 			)
+		invoice_docs.append(inv)
+
+	party_account = _receivable_account_for_invoices(invoice_docs)
 
 	customer = _patient_customer(patient)
 	company = _resolve_company_for_patient(patient, data.get("company"))
@@ -885,6 +930,7 @@ def create_multi_invoice_payment(data: dict) -> dict:
 			remarks,
 			mp.get("reference_no") or data.get("reference_no"),
 			data.get("reference_date"),
+			party_account=party_account,
 		)
 		for row in mp.get("allocations") or []:
 			invoice_name = row.get("reference_name")
