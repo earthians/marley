@@ -22,7 +22,7 @@ function toastWarnings(messages) {
 		const message = JSON.parse(entry);
 		if (!["orange", "yellow"].includes(message.indicator)) continue;
 		toast.warning(message.title || __("Note"), {
-			description: String(message.message).replace(/<[^>]+>/g, ""),
+			description: String(message.message),
 			duration: 10000,
 		});
 	}
