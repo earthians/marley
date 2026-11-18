@@ -22,6 +22,7 @@ import {
   isMedicalPayload,
   type IsMedicalChoice,
 } from '../ui/IsMedicalSelect'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { DateFilterInput } from '../ui/DateFilterInput'
 
 interface CreateMaterialRequestModalProps {
@@ -69,6 +70,7 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
   
   const [items, setItems] = useState<RequestItem[]>([{ item_code: '', item_name: '', quantity: 1, uom: '', notes: '' }])
   const [submitting, setSubmitting] = useState(false)
+  const [confirmPurposeOpen, setConfirmPurposeOpen] = useState(false)
   const [itemSearch, setItemSearch] = useState<{ [key: number]: string }>({})
   const [itemOptions, setItemOptions] = useState<{ [key: number]: any[] }>({})
   const [itemUomOptions, setItemUomOptions] = useState<{ [key: number]: { name: string; label: string }[] }>({})
@@ -205,9 +207,9 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
 
   const validItems = items.filter(item => item.item_code && item.quantity > 0 && item.uom)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!effectiveCostCenter) {
       toast.error('No branch assigned')
       return
@@ -237,6 +239,12 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
       return
     }
 
+    setConfirmPurposeOpen(true)
+  }
+
+  const submitMaterialRequest = async () => {
+    if (!effectiveCostCenter || !setWarehouse) return
+
     setSubmitting(true)
     try {
       await createMaterialRequest({
@@ -252,6 +260,7 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
         warehouse_context: warehouseContext,
         is_medical: isMedicalPayload(isMedical),
       })
+      setConfirmPurposeOpen(false)
       toast.success('Material request created successfully')
       onSuccess()
       onClose()
@@ -579,6 +588,23 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
           </div>
         </form>
       </div>
+
+      <ConfirmDialog
+        open={confirmPurposeOpen}
+        variant="warning"
+        title="Confirm purpose"
+        message={`You are about to submit this Material Request with purpose “${purpose}”. Please confirm this is the correct purpose before continuing.`}
+        confirmLabel="Yes, submit"
+        cancelLabel="Go back"
+        loading={submitting}
+        onConfirm={() => void submitMaterialRequest()}
+        onCancel={() => {
+          if (!submitting) {
+            setConfirmPurposeOpen(false)
+            setActiveTab('details')
+          }
+        }}
+      />
     </div>
   )
 }
