@@ -141,12 +141,71 @@ def _flag(result: str, lo, hi) -> str:
 	return "Normal"
 
 
+# Status legends stored in Data min/max fields (e.g. Vitamin D) — split for print.
+_RANGE_LEGEND_SPLIT = re.compile(
+	r"(?=\b(?:Deficiency|Insufficiency|Sufficiency|Toxicity|"
+	r"Critically\s+High|Critically\s+Low|Critical|"
+	r"High|Low|Normal|Positive|Negative|Borderline)\b)",
+	re.IGNORECASE,
+)
+
+
+def _normalize_range_cmp(text: str) -> str:
+	"""Compare free-text min/max ignoring whitespace / dash variants."""
+	return re.sub(r"\s+", " ", (text or "").replace("–", "-").replace("—", "-")).strip().lower()
+
+
+def _is_plain_numeric_bound(text: str) -> bool:
+	return _parse_num(text) is not None and re.fullmatch(
+		r"-?\d+(?:[.,]\d+)?", (text or "").strip().replace(",", "")
+	)
+
+
+def _break_range_legend(text: str) -> str:
+	"""Keep existing newlines, or split a one-line status legend into lines."""
+	raw = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+	if not raw:
+		return ""
+	if "\n" in raw:
+		return "\n".join(line.strip() for line in raw.split("\n") if line.strip())
+
+	parts = [p.strip(" \t-–—;") for p in _RANGE_LEGEND_SPLIT.split(raw) if p and p.strip()]
+	# Only treat as a legend when we actually got multiple labelled bands.
+	if len(parts) > 1:
+		return "\n".join(parts)
+	return raw
+
+
 def _range_text(lo, hi) -> str:
+	"""Reference range for print.
+
+	- Plain numeric pair → ``15 - 100``
+	- Same free-text min and max (common for status legends) → show once
+	- Status legends → one band per line (Deficiency / Insufficiency / …)
+	"""
 	lo_s = _format_num(lo)
 	hi_s = _format_num(hi)
+
 	if lo_s and hi_s:
-		return f"{lo_s} - {hi_s}"
-	return lo_s or hi_s or ""
+		if _normalize_range_cmp(lo_s) == _normalize_range_cmp(hi_s):
+			text = lo_s
+		elif _is_plain_numeric_bound(lo_s) and _is_plain_numeric_bound(hi_s):
+			text = f"{lo_s} - {hi_s}"
+		else:
+			# Distinct free-text bounds — keep both, each on its own line.
+			text = f"{lo_s}\n{hi_s}"
+	else:
+		text = lo_s or hi_s or ""
+
+	return _break_range_legend(text)
+
+
+def _range_html(range_text: str) -> str:
+	"""Escape range text and honour line breaks in the print HTML cell."""
+	formatted = _break_range_legend(range_text)
+	if not formatted:
+		return ""
+	return _esc(formatted).replace("\n", "<br>")
 
 
 def _patient_meta(doc):
@@ -228,8 +287,8 @@ def _result_row_html(name, result, uom, flag, range_text) -> str:
 		f'padding:4px 6px;">{_esc(uom)}</td>'
 		f'<td class="lr-c" style="text-align:center;color:{flag_color};font-weight:{flag_weight};'
 		f'border:1px solid #000;padding:4px 6px;">{_esc(flag)}</td>'
-		f'<td class="lr-c" style="text-align:center;color:#000;border:1px solid #000;'
-		f'padding:4px 6px;">{_esc(range_text)}</td>'
+		f'<td class="lr-c" style="text-align:left;color:#000;border:1px solid #000;'
+		f'padding:4px 6px;line-height:1.35;">{_range_html(range_text)}</td>'
 		f"</tr>"
 	)
 
@@ -625,7 +684,8 @@ def _external_result_row_html(name, result, uom, range_text, indent=False, bold=
 		f'<td style="width:45%;text-align:left;border-bottom:1px solid #ccc;padding:5px 4px;{pad}{weight}">{_esc(name)}</td>'
 		f'<td style="text-align:left;border-bottom:1px solid #ccc;padding:5px 4px;{weight}">{_esc(result)}</td>'
 		f'<td style="text-align:center;border-bottom:1px solid #ccc;padding:5px 4px;">{_esc(uom)}</td>'
-		f'<td style="text-align:center;border-bottom:1px solid #ccc;padding:5px 4px;">{_esc(range_text)}</td>'
+		f'<td style="text-align:left;border-bottom:1px solid #ccc;padding:5px 4px;line-height:1.35;">'
+		f"{_range_html(range_text)}</td>"
 		f"</tr>"
 	)
 
