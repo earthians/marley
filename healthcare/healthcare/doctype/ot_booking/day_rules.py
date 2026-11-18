@@ -47,8 +47,8 @@ def is_placed(booking, before):
 
 
 def has_passed(booking):
-	start = get_datetime(booking.scheduled_start)
-	return start < add_to_date(now_datetime(), minutes=-NOW_GRACE_MINUTES)
+	start = moment(booking.scheduled_start)
+	return bool(start) and start < add_to_date(now_datetime(), minutes=-NOW_GRACE_MINUTES)
 
 
 def is_added_to_surgery_day(booking, before):
@@ -76,7 +76,7 @@ def validate_same_day_addition(booking):
 
 def is_moved(booking, before):
 	return booking.theatre != before.theatre or any(
-		get_datetime(booking.get(field)) != get_datetime(before.get(field))
+		moment(booking.get(field)) != moment(before.get(field))
 		for field in ("scheduled_start", "scheduled_end")
 	)
 
@@ -98,4 +98,8 @@ def log_change_reason(booking):
 
 
 def is_surgery_day(booking):
-	return getdate(booking.scheduled_start) == getdate(today())
+	return bool(booking.scheduled_start) and getdate(booking.scheduled_start) == getdate(today())
+
+
+def moment(value):
+	return get_datetime(value) if value else None

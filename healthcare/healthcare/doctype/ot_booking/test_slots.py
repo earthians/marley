@@ -22,6 +22,9 @@ from healthcare.healthcare.doctype.ot_booking.test_ot_booking import (
 	create_theatre,
 	make_booking,
 )
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
+	create_appointment,
+)
 from healthcare.tests.utils import HealthcareTestSuite
 
 DEPARTMENT = "_Test Medical Department"
@@ -104,6 +107,17 @@ class TestSlots(HealthcareTestSuite):
 		self.assertEqual(self.first_start(), self.at(10))
 
 	@skip_without_hrms
+	def test_the_surgeons_clinic_is_waited_for(self):
+		create_appointment(
+			self.patients[2],
+			self.practitioners[0],
+			appointment_date=self.tomorrow,
+			appointment_time="08:00:00",
+			duration=60,
+		)
+
+		self.assertEqual(self.first_start(), self.at(9))
+
 	def test_the_surgeons_day_of_leave_is_skipped(self):
 		create_approved_leave(link_new_employee(self, self.practitioners[0]), self.tomorrow, self.tomorrow)
 

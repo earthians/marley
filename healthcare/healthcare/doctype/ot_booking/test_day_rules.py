@@ -44,6 +44,23 @@ class TestDayRules(HealthcareTestSuite):
 			frappe.ValidationError, "Only an emergency", make_booking, self, later_today(self, 2)
 		)
 
+	def test_a_coordinator_can_keep_a_routine_case_unscheduled(self):
+		later = make_booking(self, self.later_at(9))
+		self.as_coordinator()
+
+		self.assertEqual(make_booking(self, None, patient=1, surgeon=1).status, "Unscheduled")
+		later.reload()
+		later.status = "Unscheduled"
+		later.save()
+
+	def test_ot_staff_can_pick_a_procedure_priority_and_admission(self):
+		self.addCleanup(frappe.set_user, "Administrator")
+		for role in ("OT Coordinator", "OT Manager"):
+			frappe.set_user(create_user(f"_test_{frappe.scrub(role)}@example.com", role))
+			for doctype in ("Clinical Procedure Template", "Code Value", "Inpatient Record"):
+				with self.subTest(role=role, doctype=doctype):
+					self.assertTrue(frappe.has_permission(doctype, "select"))
+
 	def test_an_asap_case_is_not_an_emergency(self):
 		self.as_coordinator()
 

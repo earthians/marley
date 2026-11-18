@@ -308,7 +308,7 @@
    "link_fieldname": "procedure_template"
   }
  ],
- "modified": "2026-11-10 11:23:23.548769",
+ "modified": "2026-11-18 12:42:57.487067",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure Template",
@@ -357,6 +357,16 @@
    "role": "Physician",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Coordinator",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Manager",
+   "select": 1
   }
  ],
  "restrict_to_domain": "Healthcare",

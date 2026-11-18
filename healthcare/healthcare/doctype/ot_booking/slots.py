@@ -9,7 +9,11 @@ from frappe.utils import add_days, get_datetime, get_time, getdate, now_datetime
 from erpnext.setup.doctype.holiday_list.holiday_list import is_holiday
 
 from healthcare.healthcare.doctype.healthcare_practitioner.practitioner_leave import find_leaves
-from healthcare.healthcare.doctype.ot_booking.availability import allowed_to_overlap, theatre_holiday_list
+from healthcare.healthcare.doctype.ot_booking.availability import (
+	allowed_to_overlap,
+	appointments_between,
+	theatre_holiday_list,
+)
 from healthcare.healthcare.doctype.ot_booking.busy import cases_between, cleaning_of, slot
 from healthcare.healthcare.doctype.ot_booking.ot_booking import make_ot_booking
 from healthcare.healthcare.doctype.ot_booking.priority import is_emergency
@@ -114,6 +118,7 @@ def people_times(case, cases, start, end):
 	# a member allowed in two theatres at once is not busy, but the end of their case is a start
 	# worth trying; the dry run still refuses a third theatre
 	busy, ends = block_times(list(team), start, end), []
+	busy += [(visit.start, visit.end) for visit in appointments_between(list(team), case.patient, start, end)]
 	for other in cases:
 		theirs = {member.practitioner for member in other.team} & team
 		if other.patient == case.patient or theirs - may_overlap:

@@ -625,7 +625,7 @@
    "link_fieldname": "inpatient_record"
   }
  ],
- "modified": "2026-08-24 17:03:29.239365",
+ "modified": "2026-11-18 12:42:57.487067",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Inpatient Record",
@@ -710,6 +710,16 @@
    "report": 1,
    "role": "Nursing User",
    "share": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Coordinator",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Manager",
+   "select": 1
   }
  ],
  "restrict_to_domain": "Healthcare",

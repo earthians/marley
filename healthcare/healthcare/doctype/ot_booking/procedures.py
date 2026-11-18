@@ -35,21 +35,22 @@ def validate_procedures_held(booking):
 	held = procedures_of(booking)
 	if not held:
 		return
-	validate_patient_kept(booking, held)
+	validate_case_kept(booking, held)
 	rows = {row.name: row for row in booking.procedures}
 	for row_name, procedure in held.items():
 		validate_row_kept(rows.get(row_name), procedure)
 	validate_submitted_kept(booking, held)
 
 
-def validate_patient_kept(booking, held):
-	if booking.has_value_changed("patient"):
-		frappe.throw(
-			_("Clinical Procedure {0} is made for this case, so its patient cannot change").format(
-				frappe.bold(next(iter(held.values())).name)
-			),
-			title=_("Procedure Made"),
-		)
+def validate_case_kept(booking, held):
+	messages = {
+		"patient": _("Clinical Procedure {0} is made for this case, so its patient cannot change"),
+		"company": _("Clinical Procedure {0} is made for this case, so its company cannot change"),
+	}
+	for field, message in messages.items():
+		if booking.has_value_changed(field):
+			procedure = frappe.bold(next(iter(held.values())).name)
+			frappe.throw(message.format(procedure), title=_("Procedure Made"))
 
 
 def validate_row_kept(row, procedure):

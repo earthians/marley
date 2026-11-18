@@ -145,14 +145,27 @@ class TestProcedures(HealthcareTestSuite):
 
 		self.assertRaisesRegex(frappe.ValidationError, "already submitted", booking.save)
 
-	def test_a_case_with_a_procedure_keeps_its_patient(self):
+	def test_a_case_with_a_procedure_keeps_its_patient_and_company(self):
 		booking = make_booking(self, self.at(9))
 		booking.create_clinical_procedures()
-		booking.reload()
-
-		booking.patient = self.patients[1]
-
-		self.assertRaisesRegex(frappe.ValidationError, "patient cannot change", booking.save)
+		elsewhere = frappe.get_doc(
+			{
+				"doctype": "Healthcare Service Unit",
+				"healthcare_service_unit_name": "_Test OT Elsewhere",
+				"company": "_Test Company 1",
+				"parent_healthcare_service_unit": "All Healthcare Service Units - _TC1",
+				"service_unit_type": frappe.db.get_value(
+					"Healthcare Service Unit", self.theatre, "service_unit_type"
+				),
+			}
+		).insert()
+		changes = {"patient cannot change": {"patient": self.patients[1]}}
+		changes["company cannot change"] = {"company": "_Test Company 1", "theatre": elsewhere.name}
+		for refusal, values in changes.items():
+			with self.subTest(refusal=refusal):
+				booking.reload()
+				booking.update(values)
+				self.assertRaisesRegex(frappe.ValidationError, refusal, booking.save)
 
 	def test_a_row_with_a_procedure_keeps_it_and_stays(self):
 		booking = make_booking(self, self.at(9))

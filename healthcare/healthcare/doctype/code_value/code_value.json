@@ -156,7 +156,7 @@
   }
  ],
  "links": [],
- "modified": "2025-12-25 09:36:30.765220",
+ "modified": "2026-11-18 12:42:57.487067",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Code Value",
@@ -207,6 +207,16 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Coordinator",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "OT Manager",
+   "select": 1
   }
  ],
  "quick_entry": 1,
