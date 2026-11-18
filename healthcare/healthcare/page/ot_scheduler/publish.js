@@ -13,7 +13,7 @@ export function dayActions({
 	const viewing = [{ label: __("View as Report"), onClick: report }];
 	if (!editable) return viewing;
 	const actions = [{ label: __("New OT Booking"), onClick: newBooking }, ...viewing];
-	if (shownDay > today())
+	if (shownDay >= today())
 		actions.push({
 			label: __("Auto Schedule"),
 			onClick: () => confirmAutoSchedule({ count, autoSchedule, ...day }),

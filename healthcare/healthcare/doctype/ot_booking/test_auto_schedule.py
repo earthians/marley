@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 from frappe.utils import add_days, add_months, get_datetime, getdate, nowdate
 
 from healthcare.healthcare.doctype.ot_booking.auto_schedule import book_day, plan_day
@@ -49,6 +50,9 @@ class TestAutoSchedule(HealthcareTestSuite):
 		if priority:
 			request.db_set("priority", priority_named(priority))
 		return request
+
+	def today_at(self, hour, minutes=0):
+		return get_datetime(f"{nowdate()} {hour:02d}:{minutes:02d}:00")
 
 	def at(self, hour, minutes=0):
 		return get_datetime(f"{self.tomorrow} {hour:02d}:{minutes:02d}:00")
@@ -170,5 +174,18 @@ class TestAutoSchedule(HealthcareTestSuite):
 		self.assertEqual(self.planned_start(plan, hungry.name), self.at(9, 30))
 		self.assertEqual(self.planned_start(plan, self.request.name), self.at(11))
 
-	def test_today_cannot_be_auto_scheduled(self):
-		self.assertRaises(frappe.ValidationError, plan_day, nowdate(), "_Test Company", DEPARTMENT)
+	def test_a_past_day_cannot_be_auto_scheduled(self):
+		yesterday = add_days(nowdate(), -1)
+		self.assertRaises(frappe.ValidationError, plan_day, yesterday, "_Test Company", DEPARTMENT)
+
+	def test_today_plans_only_the_rest_of_the_day_and_keeps_started_cases(self):
+		self.request.db_set("expected_date", nowdate())
+		with freeze_time(self.today_at(7)):
+			started = make_booking(
+				self, self.today_at(9), patient=1, surgeon=1, priority=priority_named("STAT")
+			)
+		with freeze_time(self.today_at(9, 20)):
+			plan = plan_day(nowdate(), "_Test Company", DEPARTMENT)
+
+		self.assertNotIn(started.name, plan["lifted"])
+		self.assertEqual(self.planned_start(plan, self.request.name), self.today_at(10, 30))

@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _
-from frappe.utils import add_years, get_datetime, getdate, today
+from frappe.utils import add_years, get_datetime, getdate, now_datetime, today
 
 from healthcare.healthcare.doctype.ot_booking.busy import cleaning_of, slot
 from healthcare.healthcare.doctype.ot_booking.publishing import day_cases, for_each_case, reschedule
@@ -69,8 +69,8 @@ def book_day(
 def checked_day(date, company):
 	frappe.has_permission("OT Booking", "write", throw=True)
 	day = getdate(date)
-	if day <= getdate(today()):
-		frappe.throw(_("Only a day after today can be auto scheduled"), title=_("Day Not Open"))
+	if day < getdate(today()):
+		frappe.throw(_("Only today or a day to come can be auto scheduled"), title=_("Day Has Passed"))
 	return day, company or frappe.defaults.get_user_default("Company")
 
 
@@ -86,7 +86,9 @@ def wanted_tentative(day, company, department, focus):
 	if not names:
 		return []
 	cases = frappe.get_all(
-		"OT Booking", fields=["name", "patient", "theatre"], filters={"name": ["in", names]}
+		"OT Booking",
+		fields=["name", "patient", "theatre"],
+		filters={"name": ["in", names], "scheduled_start": [">", now_datetime()]},
 	)
 	team = frappe.get_all(
 		"OT Booking Team", fields=["parent", "practitioner"], filters={"parent": ["in", names]}
