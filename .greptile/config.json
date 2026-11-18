@@ -1,0 +1,17 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax"],
+  "autoReview": ["open", "push", "rebase"],
+  "disabledLabels": ["conflicts", "skip-greptile"],
+  "excludeAuthors": ["mergify[bot]", "dependabot[bot]", "github-actions[bot]"],
+  "ignoreKeywords": "[skip review]",
+  "ignorePatterns": "yarn.lock\n**/yarn.lock\n**/*.min.js\n**/*.min.css\nui/components.d.ts",
+  "shouldUpdateDescription": false,
+  "summarySection": {
+    "included": true,
+    "collapsible": true,
+    "defaultOpen": false
+  },
+  "issuesTableSection": { "included": true },
+  "sequenceDiagramSection": { "included": false }
+}
