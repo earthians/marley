@@ -233,6 +233,7 @@ export const CreateStockTransferModal = ({
   const [activeTab, setActiveTab] = useState<TabId>('details')
   const [fromWarehouse, setFromWarehouse] = useState('')
   const [toWarehouse, setToWarehouse] = useState('')
+  const [purpose, setPurpose] = useState('Material Transfer')
   const [sourceWarehouses, setSourceWarehouses] = useState<{ name: string; label: string }[]>([])
   const [destinationWarehouses, setDestinationWarehouses] = useState<{ name: string; label: string }[]>([])
   const [loadingWarehouses, setLoadingWarehouses] = useState(false)
@@ -576,6 +577,7 @@ export const CreateStockTransferModal = ({
         cost_center: effectiveCostCenter,
         from_warehouse: fromWarehouse,
         to_warehouse: toWarehouse,
+        purpose,
         transfer_date: new Date().toISOString().split('T')[0],
         items: validItems.map((item) => ({
           item_code: item.item_code,
@@ -658,6 +660,22 @@ export const CreateStockTransferModal = ({
                       )
                     }}
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Purpose <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                  >
+                    <option value="Material Transfer">Material Transfer</option>
+                    <option value="Material Transfer for Manufacture">Material Transfer for Manufacture</option>
+                    <option value="Send to Subcontractor">Send to Subcontractor</option>
+                  </select>
+                  <p className="text-xs text-slate-400 mt-1">Stock Entry purpose for this transfer</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

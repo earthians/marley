@@ -819,21 +819,37 @@ def get_default_warehouse_and_cost_center(cost_center=None):
         }
 
 
+_MR_ALLOWED_TYPES = frozenset(
+	{
+		"Purchase",
+		"Material Transfer",
+		"Material Issue",
+		"Manufacture",
+		"Customer Provided",
+		"Subcontracting",
+	}
+)
+
+
 @frappe.whitelist()
 def create_material_request():
     """
-    Create a Material Request document.
+    Create a Material Request for nursing / lab mini-warehouse inventory.
 
-    The Material Request purpose is always **Purchase** — nurse/lab mini-warehouse
-    requests are procurement indents raised against stores.
+    Accepts a selectable purpose (``material_request_type``), target warehouse
+    (``set_warehouse`` / ``warehouse`` — final warehouse), and for Material
+    Transfer also ``set_from_warehouse`` (source).
 
-    Warehouse is automatically set from Healthcare Settings based on cost_center.
-    Only Administrators and System Managers can override the warehouse.
-    
+    Target warehouse defaults from Healthcare Settings for the cost center;
+    Administrators / System Managers may override it.
+
     Expects POST data with the following structure:
     {
         "cost_center": "Cost Center Name",
-        "warehouse": "Warehouse Name (optional - only for admin/system manager)",
+        "material_request_type": "Purchase" | "Material Transfer" | ...,
+        "warehouse": "Target / Set Warehouse (optional override)",
+        "set_warehouse": "Alias for warehouse",
+        "set_from_warehouse": "Source warehouse (Material Transfer)",
         "request_date": "2024-01-01",
         "items": [
             {
@@ -854,21 +870,32 @@ def create_material_request():
             data = json.loads(frappe.request.data)
         
         cost_center = data.get("cost_center")
-        user_provided_warehouse = data.get("warehouse")
+        user_provided_warehouse = (
+            (data.get("set_warehouse") or data.get("warehouse") or "").strip() or None
+        )
+        set_from_warehouse = (data.get("set_from_warehouse") or "").strip() or None
+
+        mr_type = (data.get("material_request_type") or data.get("purpose") or "Purchase").strip()
+        if mr_type not in _MR_ALLOWED_TYPES:
+            frappe.throw(_("Invalid Material Request purpose: {0}").format(mr_type))
         
         if not cost_center:
             frappe.throw(_("Cost Center is required"))
         
-        # Get warehouse from Healthcare Settings
+        # Target (final) warehouse — Healthcare Settings default, overridable with permission.
         warehouse = _warehouse_for_cost_center(cost_center, data.get("warehouse_context"))
         
-        # If user is trying to override warehouse, validate permission
         if user_provided_warehouse and user_provided_warehouse != warehouse:
             validate_warehouse_change_permission()
+            warehouse = user_provided_warehouse
+        elif user_provided_warehouse:
             warehouse = user_provided_warehouse
         
         if not warehouse:
             frappe.throw(_("No warehouse found for cost center {0} in Healthcare Settings").format(cost_center))
+
+        if mr_type == "Material Transfer" and set_from_warehouse and set_from_warehouse == warehouse:
+            frappe.throw(_("Source and target warehouses must be different"))
 
         company = _company_for_cost_center(cost_center, warehouse)
         if not company:
@@ -881,14 +908,14 @@ def create_material_request():
         schedule_date = data.get("request_date", today())
 
         mr = frappe.new_doc("Material Request")
-        # Nursing / lab mini-warehouse requests are procurement indents:
-        # the purpose is always Purchase (never Material Transfer/Issue).
-        mr.material_request_type = "Purchase"
+        mr.material_request_type = mr_type
         mr.transaction_date = schedule_date
         mr.schedule_date = schedule_date
         mr.company = company
         mr.cost_center = cost_center
         mr.set_warehouse = warehouse
+        if mr_type == "Material Transfer" and mr.meta.has_field("set_from_warehouse"):
+            mr.set_from_warehouse = set_from_warehouse
         _apply_mini_warehouse_metadata(mr, data.get("warehouse_context"), data.get("notes"))
 
         is_medical = data.get("is_medical")
@@ -919,18 +946,20 @@ def create_material_request():
                 )
             _assert_nhra_item_for_nursing_inventory(item_code, data.get("warehouse_context"))
 
-            mr.append(
-                "items",
-                {
-                    "item_code": item_code,
-                    "qty": qty,
-                    "uom": item.get("uom") or item_details.stock_uom,
-                    "warehouse": warehouse,
-                    "schedule_date": schedule_date,
-                    "cost_center": cost_center,
-                    "description": item.get("notes", ""),
-                },
-            )
+            row = {
+                "item_code": item_code,
+                "qty": qty,
+                "uom": item.get("uom") or item_details.stock_uom,
+                "warehouse": warehouse,
+                "schedule_date": schedule_date,
+                "cost_center": cost_center,
+                "description": item.get("notes", ""),
+            }
+            if mr_type == "Material Transfer" and set_from_warehouse:
+                # Source warehouse on the line (ERPNext Material Request Item.from_warehouse).
+                if frappe.get_meta("Material Request Item").has_field("from_warehouse"):
+                    row["from_warehouse"] = set_from_warehouse
+            mr.append("items", row)
 
         if not mr.items:
             frappe.throw(_("At least one item is required"))
@@ -989,10 +1018,13 @@ def get_material_requests(cost_center, status=None, warehouse_context=None):
         "status",
         "custom_notes as notes",
         "material_request_type",
+        "set_warehouse",
         "per_ordered",
         "per_received",
         "docstatus",
     ]
+    if mr_meta.has_field("set_from_warehouse"):
+        fields.append("set_from_warehouse")
     if mr_meta.has_field("custom_is_medical"):
         fields.append("custom_is_medical as is_medical")
     if mr_meta.has_field("workflow_state"):
@@ -1824,9 +1856,20 @@ def create_stock_transfer():
 				)
 			)
 
+		# Purpose / Stock Entry Type — default Material Transfer; allow a few
+		# transfer-related purposes from the nursing/lab Stock Transfer UI.
+		_SE_TRANSFER_PURPOSES = {
+			"Material Transfer",
+			"Material Transfer for Manufacture",
+			"Send to Subcontractor",
+		}
+		purpose = (data.get("purpose") or data.get("stock_entry_type") or "Material Transfer").strip()
+		if purpose not in _SE_TRANSFER_PURPOSES:
+			frappe.throw(_("Invalid stock transfer purpose: {0}").format(purpose))
+
 		se = frappe.new_doc("Stock Entry")
-		se.stock_entry_type = "Material Transfer"
-		se.purpose = "Material Transfer"
+		se.stock_entry_type = purpose
+		se.purpose = purpose
 		se.company = company
 		se.posting_date = data.get("transfer_date", today())
 		if hasattr(se, "from_warehouse"):

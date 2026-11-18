@@ -238,7 +238,11 @@ export const InsurancePage = () => {
             <HealthInsuranceList refreshKey={hiRefreshKey} showFilters={showFilters} />
           )}
           {activeTab === 'registers' && (
-            <InsurancePatientRegisterList refreshKey={registerRefreshKey} showFilters={showFilters} />
+            <InsurancePatientRegisterList
+              refreshKey={registerRefreshKey}
+              showFilters={showFilters}
+              onPatientClick={handlePatientSelect}
+            />
           )}
           {activeTab === 'claims' && (
             <InsuranceClaimList

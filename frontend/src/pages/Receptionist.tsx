@@ -643,7 +643,10 @@ export const ReceptionistPage = () => {
               </button>
             </div>
             <div className="bg-white border border-slate-200 rounded-lg p-4">
-              <InsurancePatientRegisterList refreshKey={insuranceRegisterRefreshKey} />
+              <InsurancePatientRegisterList
+                refreshKey={insuranceRegisterRefreshKey}
+                onPatientClick={handlePatientSelect}
+              />
             </div>
           </div>
         )}
@@ -1099,7 +1102,10 @@ export const ReceptionistPage = () => {
                 addButtonTitle="New Insurance Patient Register"
                 listingScreen="r-insurance"
               >
-                <InsurancePatientRegisterList refreshKey={insuranceRegisterRefreshKey} />
+                <InsurancePatientRegisterList
+                  refreshKey={insuranceRegisterRefreshKey}
+                  onPatientClick={handlePatientSelect}
+                />
               </DashboardCard>
 
               {costCenterCareScope !== 'op_only' && (

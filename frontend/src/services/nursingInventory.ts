@@ -42,10 +42,23 @@ export interface MaterialRequestItem {
   notes?: string
 }
 
+export type MaterialRequestPurpose =
+  | 'Purchase'
+  | 'Material Transfer'
+  | 'Material Issue'
+  | 'Manufacture'
+  | 'Customer Provided'
+  | 'Subcontracting'
+
 export interface MaterialRequest {
   name: string
   cost_center: string
   warehouse?: string
+  /** Target / final warehouse (ERPNext set_warehouse) */
+  set_warehouse?: string
+  /** Source warehouse when purpose is Material Transfer */
+  set_from_warehouse?: string
+  material_request_type?: MaterialRequestPurpose | string
   request_date: string
   /** ERPNext fulfillment status: Pending / Ordered / Transferred / … */
   status: string
@@ -432,6 +445,8 @@ export async function createStockTransfer(data: {
   cost_center: string
   from_warehouse?: string
   to_warehouse: string
+  /** Stock Entry purpose / type (default Material Transfer) */
+  purpose?: string
   transfer_date?: string
   items: StockTransferItem[]
   notes?: string

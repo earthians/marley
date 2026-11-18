@@ -5,7 +5,14 @@ import {
   createModalShellClass,
 } from '../ui/CreateModalChrome'
 import { useCareContext } from '../../providers/CareContextProvider'
-import { createMaterialRequest, fetchInventoryItems, fetchItemUomOptions, getWarehousesForCostCenter } from '../../services/nursingInventory'
+import {
+  createMaterialRequest,
+  fetchInventoryItems,
+  fetchItemUomOptions,
+  getWarehousesForCostCenter,
+  type MaterialRequestPurpose,
+} from '../../services/nursingInventory'
+import { fetchWarehouses } from '../../services/common'
 import { useMiniWarehouseContext } from './MiniWarehouseInventoryContext'
 import { toast } from '../../hooks/useToast'
 import { X, Plus, Trash2, Send, Package } from 'lucide-react'
@@ -34,14 +41,28 @@ interface RequestItem {
 
 type TabId = 'details' | 'items'
 
+const MATERIAL_REQUEST_PURPOSES: MaterialRequestPurpose[] = [
+  'Purchase',
+  'Material Transfer',
+  'Material Issue',
+  'Manufacture',
+  'Customer Provided',
+  'Subcontracting',
+]
+
 export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: CreateMaterialRequestModalProps) => {
   const warehouseContext = useMiniWarehouseContext()
-  const { userCostCenter, user } = useCareContext()
+  const { userCostCenter, user, costCenterCompany } = useCareContext()
   const effectiveCostCenter = costCenter || userCostCenter
   
   const [activeTab, setActiveTab] = useState<TabId>('details')
-  const [warehouse, setWarehouse] = useState('')
+  const [purpose, setPurpose] = useState<MaterialRequestPurpose>('Purchase')
+  /** Target / final warehouse (ERPNext set_warehouse). */
+  const [setWarehouse, setSetWarehouse] = useState('')
+  /** Source warehouse when purpose is Material Transfer. */
+  const [setFromWarehouse, setSetFromWarehouse] = useState('')
   const [warehouses, setWarehouses] = useState<{ name: string; label: string }[]>([])
+  const [sourceWarehouses, setSourceWarehouses] = useState<{ name: string; label: string }[]>([])
   const [loadingWarehouses, setLoadingWarehouses] = useState(false)
   const [notes, setNotes] = useState('')
   const [isMedical, setIsMedical] = useState<IsMedicalChoice>('')
@@ -53,12 +74,36 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
   const [itemUomOptions, setItemUomOptions] = useState<{ [key: number]: { name: string; label: string }[] }>({})
   const [openDropdown, setOpenDropdown] = useState<number | null>(null)
 
-  // Load warehouses
+  const isMaterialTransfer = purpose === 'Material Transfer'
+
+  // Load target warehouses (mini warehouse for this branch)
   useEffect(() => {
     if (effectiveCostCenter) {
-      loadWarehouses()
+      void loadWarehouses()
     }
   }, [effectiveCostCenter, warehouseContext])
+
+  // Broader source list for Material Transfer (stores / other warehouses)
+  useEffect(() => {
+    if (!isMaterialTransfer) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const rows = await fetchWarehouses(costCenterCompany || undefined)
+        if (cancelled) return
+        const mapped = rows.map((r) => ({
+          name: r.name,
+          label: r.label || r.name,
+        }))
+        setSourceWarehouses(mapped.length ? mapped : warehouses)
+      } catch {
+        if (!cancelled) setSourceWarehouses(warehouses)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isMaterialTransfer, costCenterCompany, warehouses])
 
   const loadWarehouses = async () => {
     if (!effectiveCostCenter) return
@@ -67,7 +112,7 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
       const data = await getWarehousesForCostCenter(effectiveCostCenter, warehouseContext)
       setWarehouses(data)
       if (data.length > 0) {
-        setWarehouse(data[0].name)
+        setSetWarehouse((prev) => prev || data[0].name)
       }
     } catch (error) {
       console.error('Failed to load warehouses:', error)
@@ -168,8 +213,14 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
       return
     }
 
-    if (!warehouse) {
-      toast.error('Please select a warehouse')
+    if (!setWarehouse) {
+      toast.error('Please select Set Target Warehouse (final warehouse)')
+      setActiveTab('details')
+      return
+    }
+
+    if (isMaterialTransfer && setFromWarehouse && setFromWarehouse === setWarehouse) {
+      toast.error('Source and target warehouses must be different')
       setActiveTab('details')
       return
     }
@@ -190,7 +241,10 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
     try {
       await createMaterialRequest({
         cost_center: effectiveCostCenter,
-        warehouse: warehouse,
+        material_request_type: purpose,
+        warehouse: setWarehouse,
+        set_warehouse: setWarehouse,
+        set_from_warehouse: isMaterialTransfer && setFromWarehouse ? setFromWarehouse : undefined,
         request_date: new Date().toISOString().split('T')[0],
         items: validItems,
         requested_by: user?.name || '',
@@ -273,7 +327,52 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Warehouse <span className="text-red-500">*</span>
+                    Purpose <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={purpose}
+                    onChange={(e) => {
+                      const next = e.target.value as MaterialRequestPurpose
+                      setPurpose(next)
+                      if (next !== 'Material Transfer') setSetFromWarehouse('')
+                    }}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                  >
+                    {MATERIAL_REQUEST_PURPOSES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Material Request type (Purchase, Material Transfer, …)
+                  </p>
+                </div>
+
+                {isMaterialTransfer ? (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Set Source Warehouse
+                    </label>
+                    <select
+                      value={setFromWarehouse}
+                      onChange={(e) => setSetFromWarehouse(e.target.value)}
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                    >
+                      <option value="">Select source warehouse</option>
+                      {(sourceWarehouses.length ? sourceWarehouses : warehouses).map((w) => (
+                        <option key={w.name} value={w.name}>
+                          {w.label || w.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-slate-400 mt-1">Optional — warehouse stock will be transferred from</p>
+                  </div>
+                ) : null}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Set Target Warehouse <span className="text-red-500">*</span>
                   </label>
                   {loadingWarehouses ? (
                     <div className="flex items-center gap-2 py-2">
@@ -282,17 +381,19 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
                     </div>
                   ) : (
                     <select
-                      value={warehouse}
-                      onChange={(e) => setWarehouse(e.target.value)}
+                      value={setWarehouse}
+                      onChange={(e) => setSetWarehouse(e.target.value)}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                     >
-                      <option value="">Select Warehouse</option>
+                      <option value="">Select target warehouse</option>
                       {warehouses.map(w => (
                         <option key={w.name} value={w.name}>{w.label || w.name}</option>
                       ))}
                     </select>
                   )}
-                  <p className="text-xs text-slate-400 mt-1">Materials will be requested from this warehouse</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Final warehouse where materials should land (ERPNext Set Target Warehouse)
+                  </p>
                 </div>
 
                 <div>
@@ -469,7 +570,7 @@ export const CreateMaterialRequestModal = ({ onClose, onSuccess, costCenter }: C
             </button>
             <button
               type="submit"
-              disabled={submitting || !warehouse || validItems.length === 0 || !isMedicalChoiceRequired(isMedical)}
+              disabled={submitting || !setWarehouse || validItems.length === 0 || !isMedicalChoiceRequired(isMedical)}
               className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 text-sm font-medium transition-colors inline-flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />

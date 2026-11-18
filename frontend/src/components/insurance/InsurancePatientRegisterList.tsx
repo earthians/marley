@@ -60,16 +60,40 @@ function Field({ label, value }: { label: string; value?: string | number | null
 interface InsurancePatientRegisterListProps {
   refreshKey?: number
   showFilters?: boolean
+  /** Wire to the page header patient picker (local + URL + CareContext). */
+  onPatientClick?: (patient: string) => void
 }
 
 export const InsurancePatientRegisterList = ({
   refreshKey = 0,
   showFilters = true,
+  onPatientClick,
 }: InsurancePatientRegisterListProps) => {
-  const { guardClinicalEdit, userRole } = useCareContext()
+  const { guardClinicalEdit, userRole, setSelectedPatient } = useCareContext()
   // Valid From / Valid To belong to the Insurance team; Reception sees the
   // reminder but cannot set the window (the server enforces it too).
   const canSetValidity = canSetInsuranceRegisterValidity(userRole)
+
+  const selectPatientInNavbar = (row: InsurancePatientRegisterRow) => {
+    const patientId = (row.patient || '').trim()
+    if (!patientId) return
+    const display =
+      linkedPatientLabel(row) ||
+      (row.patient_name || row.full_name || patientId).trim() ||
+      patientId
+    try {
+      localStorage.setItem('patientSearch_selectedPatientName', display)
+    } catch {
+      /* ignore */
+    }
+    // Prefer the page handler so PatientCareHeader (local state + ?patient=) updates.
+    if (onPatientClick) {
+      onPatientClick(patientId)
+    } else {
+      setSelectedPatient(patientId)
+    }
+    toast.success(`Patient ${display} selected in header`)
+  }
   const [rows, setRows] = useState<InsurancePatientRegisterRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -251,7 +275,17 @@ export const InsurancePatientRegisterList = ({
                   </td>
                   <td className="px-3 py-2 text-xs">
                     {row.patient ? (
-                      <span className="text-green-700 font-medium">{row.patient_name || row.patient}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          selectPatientInNavbar(row)
+                        }}
+                        title="Select this patient in the header"
+                        className="text-left text-green-700 font-medium hover:underline hover:text-green-800"
+                      >
+                        {row.patient_name || row.patient}
+                      </button>
                     ) : (
                       <span className="text-slate-400 italic">Not linked</span>
                     )}
@@ -413,7 +447,21 @@ export const InsurancePatientRegisterList = ({
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Full Name" value={detailRow.full_name} />
                   <Field label="National ID / CPR No" value={detailRow.national_id_cpr_no} />
-                  <Field label="Linked Patient" value={linkedPatientLabel(detailRow)} />
+                  <div>
+                    <p className="text-xs text-slate-500 mb-0.5">Linked Patient</p>
+                    {detailRow.patient ? (
+                      <button
+                        type="button"
+                        onClick={() => selectPatientInNavbar(detailRow)}
+                        title="Select this patient in the header"
+                        className="text-sm font-medium text-green-700 hover:underline hover:text-green-800 text-left"
+                      >
+                        {linkedPatientLabel(detailRow)}
+                      </button>
+                    ) : (
+                      <p className="text-sm font-medium text-slate-400 italic">—</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
