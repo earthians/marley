@@ -3313,3 +3313,289 @@ def cascade_delete_service_request(name: str) -> dict:
 		"patient_visits_unlinked": visits_updated,
 		"unlinked_amended_service_requests": linked.get("amended_service_requests") or [],
 	}
+
+
+# ---------------------------------------------------------------------------
+# Bulk cleanup: non-legacy lab SRs that duplicate legacy Lab Tests
+# (same patient + same day + almost-same codes). Patient Visit is kept.
+# ---------------------------------------------------------------------------
+
+_LEGACY_DUP_SR_CUTOFF_DATE = "2026-11-01"
+
+
+def _normalize_lab_code(code: str) -> str:
+	return (code or "").strip().upper()
+
+
+def _lab_code_variants(code: str) -> set[str]:
+	c = _normalize_lab_code(code)
+	if not c:
+		return set()
+	out = {c}
+	parts = c.split("-")
+	if len(parts) >= 2:
+		out.add("-".join(parts[:2]))
+	if len(parts) >= 3:
+		out.add("-".join(parts[:3]))
+	return out
+
+
+def _lab_codes_almost_same(a_codes: set[str], b_codes: set[str]) -> tuple[bool, set[str]]:
+	a_vars: set[str] = set()
+	for c in a_codes:
+		a_vars |= _lab_code_variants(c)
+	b_vars: set[str] = set()
+	for c in b_codes:
+		b_vars |= _lab_code_variants(c)
+	if not a_vars or not b_vars:
+		return False, set()
+	overlap = a_vars & b_vars
+	return bool(overlap), overlap
+
+
+def _service_request_lab_codes(sr) -> set[str]:
+	codes: set[str] = set()
+	template_dn = sr.get("template_dn") if isinstance(sr, dict) else getattr(sr, "template_dn", None)
+	if template_dn:
+		codes.add(_normalize_lab_code(template_dn))
+	raw = sr.get("lab_request_items") if isinstance(sr, dict) else getattr(sr, "lab_request_items", None)
+	if not raw:
+		return codes
+	try:
+		items = json.loads(raw) if isinstance(raw, str) else raw
+	except Exception:
+		return codes
+	if not isinstance(items, list):
+		return codes
+	for item in items:
+		if not isinstance(item, dict):
+			continue
+		for key in ("template", "parent", "group_template"):
+			v = _normalize_lab_code(item.get(key))
+			if v:
+				codes.add(v)
+		for child in item.get("children") or item.get("templates") or []:
+			if isinstance(child, dict):
+				v = _normalize_lab_code(child.get("template") or child.get("name"))
+			else:
+				v = _normalize_lab_code(child)
+			if v:
+				codes.add(v)
+	return codes
+
+
+def _find_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) -> list[dict]:
+	"""Non-legacy lab SRs that match a legacy Lab Test on patient + date + similar codes.
+
+	Only returns Service Requests with ``order_date <= cutoff_date`` (default 2026-11-01).
+	"""
+	from collections import defaultdict
+
+	cutoff = (cutoff_date or _LEGACY_DUP_SR_CUTOFF_DATE).strip() or _LEGACY_DUP_SR_CUTOFF_DATE
+
+	srs = frappe.get_all(
+		"Service Request",
+		filters={
+			"template_dt": "Lab Test Template",
+			"docstatus": ["<", 2],
+			"legacy": 0,
+			"order_date": ["<=", cutoff],
+		},
+		fields=[
+			"name",
+			"patient",
+			"patient_name",
+			"order_date",
+			"template_dn",
+			"lab_request_items",
+			"status",
+			"reference_document_type",
+			"reference_document_name",
+		],
+		order_by="order_date desc, name",
+	)
+	if not srs:
+		return []
+
+	legacy = frappe.get_all(
+		"Lab Test",
+		filters={"is_legacy_import": 1, "docstatus": ["<", 2], "date": ["is", "set"]},
+		fields=["name", "patient", "patient_name", "date", "template"],
+	)
+	legacy_by_patient_date = defaultdict(list)
+	legacy_by_name_date = defaultdict(list)
+	for lt in legacy:
+		if lt.patient and lt.date:
+			legacy_by_patient_date[(lt.patient, str(lt.date))].append(lt)
+		pname = (lt.patient_name or "").strip().lower()
+		if pname and lt.date:
+			legacy_by_name_date[(pname, str(lt.date))].append(lt)
+
+	sr_dates = {str(sr.order_date) for sr in srs if sr.order_date}
+	candidate_lt_names = [lt.name for lt in legacy if lt.date and str(lt.date) in sr_dates]
+	lines_by_parent = defaultdict(list)
+	if candidate_lt_names:
+		chunk = 500
+		for i in range(0, len(candidate_lt_names), chunk):
+			batch = candidate_lt_names[i : i + chunk]
+			for line in frappe.get_all(
+				"Lab Test Line",
+				filters={"parent": ["in", batch]},
+				fields=["parent", "lab_group_num", "lab_sub_num"],
+			):
+				lines_by_parent[line.parent].append(line)
+
+	rows: list[dict] = []
+	for sr in srs:
+		candidates = []
+		seen = set()
+		if sr.patient and sr.order_date:
+			for lt in legacy_by_patient_date.get((sr.patient, str(sr.order_date)), []):
+				if lt.name not in seen:
+					candidates.append(lt)
+					seen.add(lt.name)
+		pname = (sr.patient_name or "").strip().lower()
+		if pname and sr.order_date:
+			for lt in legacy_by_name_date.get((pname, str(sr.order_date)), []):
+				if lt.name not in seen:
+					candidates.append(lt)
+					seen.add(lt.name)
+		if not candidates:
+			continue
+
+		sr_c = _service_request_lab_codes(sr)
+		matched_lts = []
+		overlap_all: set[str] = set()
+		for lt in candidates:
+			lt_codes: set[str] = set()
+			if lt.template:
+				lt_codes.add(_normalize_lab_code(lt.template))
+			for line in lines_by_parent.get(lt.name, []):
+				if line.lab_group_num:
+					lt_codes.add(_normalize_lab_code(line.lab_group_num))
+				if line.lab_sub_num:
+					lt_codes.add(_normalize_lab_code(line.lab_sub_num))
+			ok, overlap = _lab_codes_almost_same(sr_c, lt_codes)
+			if ok:
+				matched_lts.append(lt.name)
+				overlap_all |= overlap
+
+		if not matched_lts:
+			continue
+
+		linked_app_labs = frappe.get_all(
+			"Lab Test",
+			filters={"service_request": sr.name, "docstatus": ["<", 2]},
+			pluck="name",
+		)
+		sales_order = None
+		if (sr.reference_document_type or "") == "Sales Order":
+			sales_order = sr.reference_document_name
+
+		rows.append(
+			{
+				"service_request": sr.name,
+				"patient": sr.patient,
+				"patient_name": sr.patient_name,
+				"order_date": str(sr.order_date),
+				"template_dn": sr.template_dn,
+				"status": sr.status,
+				"sr_codes": sorted(sr_c),
+				"overlapping_codes": sorted(overlap_all),
+				"legacy_lab_tests": matched_lts,
+				"app_lab_tests": linked_app_labs,
+				"sales_order": sales_order,
+			}
+		)
+	return rows
+
+
+def _require_bulk_cascade_delete_permission() -> None:
+	user = frappe.session.user
+	if user == "Administrator":
+		return
+	roles = set(frappe.get_roles(user))
+	if roles.intersection(_CASCADE_DELETE_ROLES):
+		return
+	frappe.throw(
+		_("Only System Manager or Healthcare Administrator can run this cleanup."),
+		frappe.PermissionError,
+	)
+
+
+@frappe.whitelist()
+def preview_delete_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) -> dict:
+	"""Preview non-legacy lab SRs that duplicate legacy labs (patient+date+codes).
+
+	Only includes ``order_date <= cutoff_date`` (default 1 Nov 2026). Later dates are left alone.
+	"""
+	_require_bulk_cascade_delete_permission()
+	assert_editing_allowed()
+	cutoff = (cutoff_date or _LEGACY_DUP_SR_CUTOFF_DATE).strip() or _LEGACY_DUP_SR_CUTOFF_DATE
+	rows = _find_legacy_duplicate_lab_service_requests(cutoff)
+	sample = [
+		{
+			"service_request": r["service_request"],
+			"patient_name": r["patient_name"],
+			"order_date": r["order_date"],
+			"overlapping_codes": ", ".join((r.get("overlapping_codes") or [])[:6]),
+			"legacy_lab_tests": ", ".join((r.get("legacy_lab_tests") or [])[:3]),
+			"app_lab_tests": ", ".join((r.get("app_lab_tests") or [])[:5]),
+			"sales_order": r.get("sales_order") or "",
+		}
+		for r in rows[:25]
+	]
+	return {
+		"cutoff_date": cutoff,
+		"count": len(rows),
+		"sample": sample,
+		"service_requests": [r["service_request"] for r in rows],
+	}
+
+
+@frappe.whitelist()
+def delete_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) -> dict:
+	"""Cascade-delete matched duplicate lab Service Requests (order_date <= cutoff).
+
+	For each match: delete linked app Lab Tests, cancel/delete Sales Order, unlink
+	Patient Visit lab child rows, then delete the Service Request. Legacy LAB/…
+	records are not deleted.
+	"""
+	_require_bulk_cascade_delete_permission()
+	assert_editing_allowed()
+	cutoff = (cutoff_date or _LEGACY_DUP_SR_CUTOFF_DATE).strip() or _LEGACY_DUP_SR_CUTOFF_DATE
+	rows = _find_legacy_duplicate_lab_service_requests(cutoff)
+
+	deleted = []
+	errors = []
+	for row in rows:
+		name = row["service_request"]
+		if not frappe.db.exists("Service Request", name):
+			continue
+		try:
+			result = cascade_delete_service_request(name)
+			deleted.append(
+				{
+					"service_request": name,
+					"deleted_lab_tests": result.get("deleted_lab_tests") or [],
+					"retired_sales_orders": result.get("retired_sales_orders") or [],
+					"patient_visits_unlinked": result.get("patient_visits_unlinked") or [],
+					"legacy_lab_tests_kept": row.get("legacy_lab_tests") or [],
+				}
+			)
+		except Exception as e:
+			frappe.db.rollback()
+			errors.append({"service_request": name, "error": strip_html(cstr(e))})
+			frappe.log_error(
+				title=f"Failed cascade delete of duplicate lab SR {name}",
+				message=frappe.get_traceback(),
+			)
+
+	return {
+		"ok": True,
+		"cutoff_date": cutoff,
+		"matched": len(rows),
+		"deleted_count": len(deleted),
+		"deleted": deleted,
+		"errors": errors,
+	}
