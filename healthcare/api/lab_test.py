@@ -2927,6 +2927,29 @@ def save_and_submit_lab_test(
     if lab_technician is not None:
         doc.lab_technician = lab_technician or None
 
+    # Auto-fill only when the signed-in user is Lab Technician / Lab Technologist.
+    # Nurses, doctors, and other roles are never stamped into lab_technician.
+    from healthcare.api.common import (
+        LAB_TECHNICIAN_MEDICAL_ROLES,
+        apply_current_user_lab_technician_if_empty,
+    )
+
+    apply_current_user_lab_technician_if_empty(doc)
+    if (doc.get("lab_technician") or "").strip():
+        role = (
+            frappe.db.get_value(
+                "Healthcare Practitioner", doc.lab_technician, "medical_role"
+            )
+            or ""
+        ).strip()
+        if role not in LAB_TECHNICIAN_MEDICAL_ROLES:
+            frappe.throw(
+                _(
+                    "Lab Technician must have Medical Role Lab Technologist or Lab Technician."
+                ),
+                title=_("Invalid Lab Technician"),
+            )
+
     if custom_result is not None:
         doc.custom_result = custom_result
     if lab_test_comment is not None:
@@ -3953,9 +3976,12 @@ def update_sample_collection_for_lab_sample(
 
 	sample_doc.save(ignore_permissions=True)
 
+	from healthcare.api.common import apply_current_user_lab_technician_if_empty
 	from healthcare.api.lab_request_actions import _sync_lab_test_sample_status
 
 	_sync_lab_test_sample_status(doc)
+	# Stamp lab_technician only when collector is Lab Technician / Lab Technologist.
+	apply_current_user_lab_technician_if_empty(doc)
 	doc.save(ignore_permissions=True)
 
 	return {"sample_collection": sample_doc.name}
@@ -4065,9 +4091,12 @@ def create_sample_collection_for_lab_sample(
 	if sample_details:
 		row.sample_details = sample_details
 
+	from healthcare.api.common import apply_current_user_lab_technician_if_empty
 	from healthcare.api.lab_request_actions import _sync_lab_test_sample_status
 
 	_sync_lab_test_sample_status(doc)
+	# Stamp lab_technician only when collector is Lab Technician / Lab Technologist.
+	apply_current_user_lab_technician_if_empty(doc)
 	doc.save(ignore_permissions=True)
 
 	return {"sample_collection": sample_doc.name}

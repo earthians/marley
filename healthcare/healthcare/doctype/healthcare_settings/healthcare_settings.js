@@ -571,20 +571,20 @@ frappe.ui.form.on('Healthcare Settings', {
 						.map((row) => {
 							const labs = row.app_lab_tests ? ` → LT: ${row.app_lab_tests}` : '';
 							const so = row.sales_order ? ` · SO: ${row.sales_order}` : '';
-							return `${row.service_request} | ${row.order_date} | ${row.patient_name || '—'} | codes: ${row.overlapping_codes || '—'}${labs}${so}`;
+							const tpl = row.template_dn ? ` | ${row.template_dn}` : '';
+							return `${row.service_request} | ${row.order_date} | ${row.patient_name || '—'}${tpl}${labs}${so}`;
 						})
 						.join('\n');
 					frappe.confirm(
 						__(
-							'Delete non-legacy lab Service Requests that match a legacy Lab Test '
-							+ '(same patient + same day + almost-same test codes).\n\n'
-							+ 'For each match this will:\n'
+							'Delete ALL ERPNext-created (non-legacy) lab Service Requests '
+							+ 'with order_date on or before {0}.\n\n'
+							+ 'For each this will:\n'
 							+ '• delete linked app Lab Tests (LT-…)\n'
 							+ '• cancel/delete linked Sales Order\n'
 							+ '• remove lab rows on Patient Visit (visit is kept)\n'
 							+ '• delete the Service Request\n'
 							+ 'Legacy LAB/… tests are NOT deleted.\n\n'
-							+ 'Only order_date on or before {0}. Later dates are left for you.\n\n'
 							+ 'Matched: {1}\n\n'
 							+ 'Sample:\n{2}\n\nContinue?',
 							[data.cutoff_date || '2026-11-01', data.count || 0, sample || __('(none)')]
@@ -598,12 +598,12 @@ frappe.ui.form.on('Healthcare Settings', {
 								method: 'healthcare.api.service_request.delete_legacy_duplicate_lab_service_requests',
 								args: { cutoff_date: data.cutoff_date || '2026-11-01' },
 								freeze: true,
-								freeze_message: __('Deleting duplicate lab Service Requests…'),
+								freeze_message: __('Deleting ERPNext lab Service Requests…'),
 								callback(r) {
 									const result = r.message || {};
 									const err_count = (result.errors || []).length;
 									frappe.msgprint({
-										title: __('Legacy-duplicate lab cleanup'),
+										title: __('ERPNext lab Service Request cleanup'),
 										indicator: err_count ? 'orange' : 'green',
 										message: __(
 											'Matched: {0}<br>Deleted: {1}<br>Errors: {2}',

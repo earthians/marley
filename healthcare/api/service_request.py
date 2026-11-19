@@ -3316,81 +3316,16 @@ def cascade_delete_service_request(name: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Bulk cleanup: non-legacy lab SRs that duplicate legacy Lab Tests
-# (same patient + same day + almost-same codes). Patient Visit is kept.
+# Bulk cleanup: all ERPNext-created (non-legacy) lab Service Requests through
+# cutoff. Cascade-deletes linked app Lab Tests + Sales Orders; keeps visits
+# and legacy LAB/… imports. Same Healthcare Settings button as before.
 # ---------------------------------------------------------------------------
 
 _LEGACY_DUP_SR_CUTOFF_DATE = "2026-11-01"
 
 
-def _normalize_lab_code(code: str) -> str:
-	return (code or "").strip().upper()
-
-
-def _lab_code_variants(code: str) -> set[str]:
-	c = _normalize_lab_code(code)
-	if not c:
-		return set()
-	out = {c}
-	parts = c.split("-")
-	if len(parts) >= 2:
-		out.add("-".join(parts[:2]))
-	if len(parts) >= 3:
-		out.add("-".join(parts[:3]))
-	return out
-
-
-def _lab_codes_almost_same(a_codes: set[str], b_codes: set[str]) -> tuple[bool, set[str]]:
-	a_vars: set[str] = set()
-	for c in a_codes:
-		a_vars |= _lab_code_variants(c)
-	b_vars: set[str] = set()
-	for c in b_codes:
-		b_vars |= _lab_code_variants(c)
-	if not a_vars or not b_vars:
-		return False, set()
-	overlap = a_vars & b_vars
-	return bool(overlap), overlap
-
-
-def _service_request_lab_codes(sr) -> set[str]:
-	codes: set[str] = set()
-	template_dn = sr.get("template_dn") if isinstance(sr, dict) else getattr(sr, "template_dn", None)
-	if template_dn:
-		codes.add(_normalize_lab_code(template_dn))
-	raw = sr.get("lab_request_items") if isinstance(sr, dict) else getattr(sr, "lab_request_items", None)
-	if not raw:
-		return codes
-	try:
-		items = json.loads(raw) if isinstance(raw, str) else raw
-	except Exception:
-		return codes
-	if not isinstance(items, list):
-		return codes
-	for item in items:
-		if not isinstance(item, dict):
-			continue
-		for key in ("template", "parent", "group_template"):
-			v = _normalize_lab_code(item.get(key))
-			if v:
-				codes.add(v)
-		for child in item.get("children") or item.get("templates") or []:
-			if isinstance(child, dict):
-				v = _normalize_lab_code(child.get("template") or child.get("name"))
-			else:
-				v = _normalize_lab_code(child)
-			if v:
-				codes.add(v)
-	return codes
-
-
-def _find_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) -> list[dict]:
-	"""Non-legacy lab SRs that match a legacy Lab Test on patient + date + similar codes.
-
-	Only returns Service Requests with ``order_date <= cutoff_date`` (default 2026-11-01).
-	"""
-	from collections import defaultdict
-
+def _find_erpnext_lab_service_requests_through_cutoff(cutoff_date: str | None = None) -> list[dict]:
+	"""All non-legacy lab Service Requests with ``order_date <= cutoff`` (default 2026-11-01)."""
 	cutoff = (cutoff_date or _LEGACY_DUP_SR_CUTOFF_DATE).strip() or _LEGACY_DUP_SR_CUTOFF_DATE
 
 	srs = frappe.get_all(
@@ -3407,7 +3342,6 @@ def _find_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) 
 			"patient_name",
 			"order_date",
 			"template_dn",
-			"lab_request_items",
 			"status",
 			"reference_document_type",
 			"reference_document_name",
@@ -3417,97 +3351,40 @@ def _find_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) 
 	if not srs:
 		return []
 
-	legacy = frappe.get_all(
-		"Lab Test",
-		filters={"is_legacy_import": 1, "docstatus": ["<", 2], "date": ["is", "set"]},
-		fields=["name", "patient", "patient_name", "date", "template"],
-	)
-	legacy_by_patient_date = defaultdict(list)
-	legacy_by_name_date = defaultdict(list)
-	for lt in legacy:
-		if lt.patient and lt.date:
-			legacy_by_patient_date[(lt.patient, str(lt.date))].append(lt)
-		pname = (lt.patient_name or "").strip().lower()
-		if pname and lt.date:
-			legacy_by_name_date[(pname, str(lt.date))].append(lt)
-
-	sr_dates = {str(sr.order_date) for sr in srs if sr.order_date}
-	candidate_lt_names = [lt.name for lt in legacy if lt.date and str(lt.date) in sr_dates]
-	lines_by_parent = defaultdict(list)
-	if candidate_lt_names:
-		chunk = 500
-		for i in range(0, len(candidate_lt_names), chunk):
-			batch = candidate_lt_names[i : i + chunk]
-			for line in frappe.get_all(
-				"Lab Test Line",
-				filters={"parent": ["in", batch]},
-				fields=["parent", "lab_group_num", "lab_sub_num"],
-			):
-				lines_by_parent[line.parent].append(line)
+	sr_names = [sr.name for sr in srs]
+	labs_by_sr: dict[str, list[str]] = {name: [] for name in sr_names}
+	chunk = 500
+	for i in range(0, len(sr_names), chunk):
+		batch = sr_names[i : i + chunk]
+		for lt in frappe.get_all(
+			"Lab Test",
+			filters={"service_request": ["in", batch], "docstatus": ["<", 2]},
+			fields=["name", "service_request"],
+		):
+			labs_by_sr.setdefault(lt.service_request, []).append(lt.name)
 
 	rows: list[dict] = []
 	for sr in srs:
-		candidates = []
-		seen = set()
-		if sr.patient and sr.order_date:
-			for lt in legacy_by_patient_date.get((sr.patient, str(sr.order_date)), []):
-				if lt.name not in seen:
-					candidates.append(lt)
-					seen.add(lt.name)
-		pname = (sr.patient_name or "").strip().lower()
-		if pname and sr.order_date:
-			for lt in legacy_by_name_date.get((pname, str(sr.order_date)), []):
-				if lt.name not in seen:
-					candidates.append(lt)
-					seen.add(lt.name)
-		if not candidates:
-			continue
-
-		sr_c = _service_request_lab_codes(sr)
-		matched_lts = []
-		overlap_all: set[str] = set()
-		for lt in candidates:
-			lt_codes: set[str] = set()
-			if lt.template:
-				lt_codes.add(_normalize_lab_code(lt.template))
-			for line in lines_by_parent.get(lt.name, []):
-				if line.lab_group_num:
-					lt_codes.add(_normalize_lab_code(line.lab_group_num))
-				if line.lab_sub_num:
-					lt_codes.add(_normalize_lab_code(line.lab_sub_num))
-			ok, overlap = _lab_codes_almost_same(sr_c, lt_codes)
-			if ok:
-				matched_lts.append(lt.name)
-				overlap_all |= overlap
-
-		if not matched_lts:
-			continue
-
-		linked_app_labs = frappe.get_all(
-			"Lab Test",
-			filters={"service_request": sr.name, "docstatus": ["<", 2]},
-			pluck="name",
-		)
 		sales_order = None
 		if (sr.reference_document_type or "") == "Sales Order":
 			sales_order = sr.reference_document_name
-
 		rows.append(
 			{
 				"service_request": sr.name,
 				"patient": sr.patient,
 				"patient_name": sr.patient_name,
-				"order_date": str(sr.order_date),
+				"order_date": str(sr.order_date) if sr.order_date else "",
 				"template_dn": sr.template_dn,
 				"status": sr.status,
-				"sr_codes": sorted(sr_c),
-				"overlapping_codes": sorted(overlap_all),
-				"legacy_lab_tests": matched_lts,
-				"app_lab_tests": linked_app_labs,
+				"app_lab_tests": labs_by_sr.get(sr.name) or [],
 				"sales_order": sales_order,
 			}
 		)
 	return rows
+
+
+# Back-compat alias for the Healthcare Settings button method names
+_find_legacy_duplicate_lab_service_requests = _find_erpnext_lab_service_requests_through_cutoff
 
 
 def _require_bulk_cascade_delete_permission() -> None:
@@ -3525,21 +3402,20 @@ def _require_bulk_cascade_delete_permission() -> None:
 
 @frappe.whitelist()
 def preview_delete_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) -> dict:
-	"""Preview non-legacy lab SRs that duplicate legacy labs (patient+date+codes).
+	"""Preview all ERPNext-created lab Service Requests with order_date <= cutoff.
 
-	Only includes ``order_date <= cutoff_date`` (default 1 Nov 2026). Later dates are left alone.
+	Legacy LAB/… imports are not included. Default cutoff is 1 Nov 2026.
 	"""
 	_require_bulk_cascade_delete_permission()
 	assert_editing_allowed()
 	cutoff = (cutoff_date or _LEGACY_DUP_SR_CUTOFF_DATE).strip() or _LEGACY_DUP_SR_CUTOFF_DATE
-	rows = _find_legacy_duplicate_lab_service_requests(cutoff)
+	rows = _find_erpnext_lab_service_requests_through_cutoff(cutoff)
 	sample = [
 		{
 			"service_request": r["service_request"],
 			"patient_name": r["patient_name"],
 			"order_date": r["order_date"],
-			"overlapping_codes": ", ".join((r.get("overlapping_codes") or [])[:6]),
-			"legacy_lab_tests": ", ".join((r.get("legacy_lab_tests") or [])[:3]),
+			"template_dn": r.get("template_dn") or "",
 			"app_lab_tests": ", ".join((r.get("app_lab_tests") or [])[:5]),
 			"sales_order": r.get("sales_order") or "",
 		}
@@ -3555,16 +3431,16 @@ def preview_delete_legacy_duplicate_lab_service_requests(cutoff_date: str | None
 
 @frappe.whitelist()
 def delete_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None) -> dict:
-	"""Cascade-delete matched duplicate lab Service Requests (order_date <= cutoff).
+	"""Cascade-delete all ERPNext-created lab Service Requests through cutoff.
 
-	For each match: delete linked app Lab Tests, cancel/delete Sales Order, unlink
+	For each: delete linked app Lab Tests, cancel/delete Sales Order, unlink
 	Patient Visit lab child rows, then delete the Service Request. Legacy LAB/…
-	records are not deleted.
+	records are not deleted. Patient Visits are kept.
 	"""
 	_require_bulk_cascade_delete_permission()
 	assert_editing_allowed()
 	cutoff = (cutoff_date or _LEGACY_DUP_SR_CUTOFF_DATE).strip() or _LEGACY_DUP_SR_CUTOFF_DATE
-	rows = _find_legacy_duplicate_lab_service_requests(cutoff)
+	rows = _find_erpnext_lab_service_requests_through_cutoff(cutoff)
 
 	deleted = []
 	errors = []
@@ -3580,14 +3456,14 @@ def delete_legacy_duplicate_lab_service_requests(cutoff_date: str | None = None)
 					"deleted_lab_tests": result.get("deleted_lab_tests") or [],
 					"retired_sales_orders": result.get("retired_sales_orders") or [],
 					"patient_visits_unlinked": result.get("patient_visits_unlinked") or [],
-					"legacy_lab_tests_kept": row.get("legacy_lab_tests") or [],
 				}
 			)
+			frappe.db.commit()
 		except Exception as e:
 			frappe.db.rollback()
 			errors.append({"service_request": name, "error": strip_html(cstr(e))})
 			frappe.log_error(
-				title=f"Failed cascade delete of duplicate lab SR {name}",
+				title=f"Failed cascade delete of ERPNext lab SR {name}",
 				message=frappe.get_traceback(),
 			)
 

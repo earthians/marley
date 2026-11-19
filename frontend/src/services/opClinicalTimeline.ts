@@ -35,6 +35,9 @@ export type OpTimelinePrescription = {
 
 export type OpClinicalEpisode = {
   visit: string | null
+  /** Oracle visit num / history id when this episode comes from Visit History only. */
+  visit_history?: string | null
+  visit_num?: string | null
   encounter_date?: string | null
   status?: string | null
   visit_type?: string | null
@@ -46,6 +49,9 @@ export type OpClinicalEpisode = {
   prescriptions: OpTimelinePrescription[]
   has_clinical: boolean
   orphan?: boolean
+  /** True when episode is from VISIT_00_01_HISTORY on a date with no Patient Visit. */
+  is_legacy?: boolean
+  legacy?: boolean
 }
 
 export type OpClinicalTimeline = {

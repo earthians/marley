@@ -40,7 +40,11 @@ def _inherit_lab_technician_from_group(doc):
 
 
 class LabTest(Document):
-	_lab_technician_allowed_roles = ("Lab Technologist", "Lab Technician")
+	@staticmethod
+	def _lab_technician_allowed_roles():
+		from healthcare.api.common import LAB_TECHNICIAN_MEDICAL_ROLES
+
+		return LAB_TECHNICIAN_MEDICAL_ROLES
 
 	def _validate_links(self):
 		# Must run before Frappe link checks: insert/save validate links first,
@@ -80,6 +84,7 @@ class LabTest(Document):
 				_inherit_lab_technician_from_group(self)
 			return
 
+		allowed = self._lab_technician_allowed_roles()
 		if not self.get("lab_technician"):
 			frappe.throw(
 				_(
@@ -89,13 +94,13 @@ class LabTest(Document):
 				title=_("Missing Lab Technician"),
 			)
 		role = frappe.db.get_value("Healthcare Practitioner", self.lab_technician, "medical_role")
-		if role not in self._lab_technician_allowed_roles:
+		if role not in allowed:
 			frappe.throw(
 				_(
 					"Lab Technician must have Medical Role {0} or {1} (selected practitioner does not qualify)."
 				).format(
-					frappe.bold(self._lab_technician_allowed_roles[0]),
-					frappe.bold(self._lab_technician_allowed_roles[1]),
+					frappe.bold(allowed[0]),
+					frappe.bold(allowed[1]),
 				),
 				title=_("Invalid Lab Technician"),
 			)

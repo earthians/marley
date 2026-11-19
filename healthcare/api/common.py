@@ -752,14 +752,14 @@ def get_lab_technician_practitioners(search=None):
 	]
 
 
-@frappe.whitelist()
-def get_current_user_lab_technician_option():
-	"""Current user's linked Healthcare Practitioner when Medical Role is Lab Technician / Lab Technologist.
+def resolve_current_user_lab_technician() -> dict | None:
+	"""Current user's Healthcare Practitioner only when Medical Role is Lab Technician / Lab Technologist.
 
-	Used to auto-pick Lab technician when entering lab results.
+	Returns ``None`` for nurses, doctors, receptionists, and anyone else — Lab Technician
+	must never be auto-filled from a non-lab medical role.
 	"""
 	user = frappe.session.user
-	if user == "Guest":
+	if not user or user == "Guest":
 		return None
 
 	practitioner = frappe.db.get_value(
@@ -780,6 +780,32 @@ def get_current_user_lab_technician_option():
 		"label": practitioner.practitioner_name or practitioner.name,
 		"medical_role": role,
 	}
+
+
+@frappe.whitelist()
+def get_current_user_lab_technician_option():
+	"""Current user's linked Healthcare Practitioner when Medical Role is Lab Technician / Lab Technologist.
+
+	Used to auto-pick Lab technician when entering lab results or collecting samples.
+	"""
+	return resolve_current_user_lab_technician()
+
+
+def apply_current_user_lab_technician_if_empty(doc) -> bool:
+	"""Set ``doc.lab_technician`` from the signed-in lab tech/technologist when still blank.
+
+	Returns True when a value was applied. Never overwrites an existing technician and
+	never assigns a practitioner whose Medical Role is not Lab Technician / Lab Technologist.
+	"""
+	if not doc or (getattr(doc, "lab_technician", None) or "").strip():
+		return False
+	opt = resolve_current_user_lab_technician()
+	if not opt:
+		return False
+	doc.lab_technician = opt["name"]
+	if hasattr(doc, "lab_technician_name") and doc.meta.has_field("lab_technician_name"):
+		doc.lab_technician_name = opt.get("label") or opt["name"]
+	return True
 
 
 @frappe.whitelist()

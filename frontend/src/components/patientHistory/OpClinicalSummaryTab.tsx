@@ -46,7 +46,15 @@ function formatDate(val?: string | null): string {
 }
 
 function episodeKey(ep: OpClinicalEpisode, index: number): string {
-  return ep.visit || `orphan-${ep.encounter_date || 'unknown'}-${index}`
+  if (ep.visit) return ep.visit
+  if (ep.is_legacy || ep.legacy) {
+    return `legacy-${ep.visit_history || ep.visit_num || ep.encounter_date || 'unknown'}-${index}`
+  }
+  return `orphan-${ep.encounter_date || 'unknown'}-${index}`
+}
+
+function isLegacyEpisode(ep: OpClinicalEpisode): boolean {
+  return Boolean(ep.is_legacy || ep.legacy)
 }
 
 function EpisodePanel({ episode }: { episode: OpClinicalEpisode }) {
@@ -320,13 +328,24 @@ export function OpClinicalSummaryTab({ patient, onPatientSelect }: OpClinicalSum
                       </span>
                       {ep.visit ? (
                         <span className="text-xs font-medium text-sky-800">{ep.visit}</span>
+                      ) : isLegacyEpisode(ep) ? (
+                        <span className="text-xs font-medium text-amber-800">
+                          {ep.visit_num || ep.visit_history || 'Visit History'}
+                        </span>
                       ) : (
                         <span className="text-xs text-amber-700">Unlinked clinical items</span>
                       )}
-                      {ep.visit_type ? (
-                        <span className="text-xs text-slate-500">{ep.visit_type}</span>
+                      {isLegacyEpisode(ep) ? (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
+                          Legacy
+                        </span>
                       ) : null}
-                      {ep.status ? (
+                      {ep.visit_type && !isLegacyEpisode(ep) ? (
+                        <span className="text-xs text-slate-500">{ep.visit_type}</span>
+                      ) : isLegacyEpisode(ep) ? (
+                        <span className="text-xs text-slate-500">Visit History</span>
+                      ) : null}
+                      {ep.status && !isLegacyEpisode(ep) ? (
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-600">
                           {ep.status}
                         </span>

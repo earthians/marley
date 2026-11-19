@@ -470,10 +470,14 @@ export function buildOpClinicalSummaryHtmlFromTimeline(timeline: {
   patient_name?: string
   episodes: Array<{
     visit: string | null
+    visit_history?: string | null
+    visit_num?: string | null
     encounter_date?: string | null
     practitioner_name?: string | null
     visit_type?: string | null
     status?: string | null
+    is_legacy?: boolean
+    legacy?: boolean
     progress_notes?: Array<{
       posting_date?: string
       practitioner_name?: string
@@ -515,11 +519,13 @@ export function buildOpClinicalSummaryHtmlFromTimeline(timeline: {
   ]
 
   for (const ep of clinicalEpisodes) {
+    const legacy = Boolean(ep.is_legacy || ep.legacy)
     const title = [
       fmtDate(ep.encounter_date) || 'Date unknown',
-      ep.visit || 'Unlinked',
+      ep.visit || (legacy ? ep.visit_num || ep.visit_history || 'Visit History' : 'Unlinked'),
+      legacy ? 'Legacy' : null,
       ep.practitioner_name,
-      ep.visit_type,
+      legacy ? 'Visit History' : ep.visit_type,
     ]
       .filter(Boolean)
       .join(' · ')
