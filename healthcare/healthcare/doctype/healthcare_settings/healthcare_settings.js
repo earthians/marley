@@ -724,6 +724,57 @@ frappe.ui.form.on('Healthcare Settings', {
 			});
 		}, __('Update'));
 
+		frm.add_custom_button(__('Fix Legacy Lab Test Cost Center 10'), () => {
+			frappe.call({
+				method: 'healthcare.api.lab_test_cost_center_fix.preview_fix_legacy_lab_test_cost_center_10',
+				freeze: true,
+				freeze_message: __('Scanning legacy Lab Tests…'),
+				callback(preview) {
+					const data = preview.message || {};
+					const sample = (data.sample || [])
+						.map(
+							(row) =>
+								`${row.name} | ${row.date || '—'} | ${row.patient_name || '—'} | ${row.lab_test_name || '—'}`
+						)
+						.join('\n');
+					frappe.confirm(
+						__(
+							'Some legacy Lab Tests still have cost center “{0}” '
+							+ '(Oracle BRANCH_NUM) instead of “{1}”.\n\n'
+							+ 'This will frappe.db.set_value cost_center on those legacy imports only.\n\n'
+							+ 'Will update: {2}\n\n'
+							+ 'Sample:\n{3}\n\nContinue?',
+							[
+								data.from_cost_center || '10',
+								data.to_cost_center || 'British Medical Center W.L.L - SPH',
+								data.count || 0,
+								sample || __('(none)'),
+							]
+						),
+						() => {
+							if (!(data.count > 0)) {
+								frappe.show_alert({ message: __('Nothing to update'), indicator: 'blue' });
+								return;
+							}
+							frappe.call({
+								method: 'healthcare.api.lab_test_cost_center_fix.fix_legacy_lab_test_cost_center_10',
+								freeze: true,
+								freeze_message: __('Updating Lab Test cost centres…'),
+								callback(r) {
+									const m = r.message || {};
+									frappe.msgprint({
+										title: __('Legacy Lab Test Cost Center'),
+										indicator: m.updated_count ? 'green' : 'orange',
+										message: (m.message || __('Done.')).replace(/\n/g, '<br>'),
+									});
+								},
+							});
+						}
+					);
+				},
+			});
+		}, __('Update'));
+
 		frm.add_custom_button(__('Unlink Mismatched Customer Employees'), () => {
 			frappe.call({
 				method:
