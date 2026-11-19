@@ -2882,3 +2882,434 @@ def book_session(service_request_name, appointment=None):
 		"booked": 1,
 		"created": created_doc,
 	}
+
+
+# ---------------------------------------------------------------------------
+# Cascade delete — unlink visit rows, delete labs, cancel/delete Sales Order
+# ---------------------------------------------------------------------------
+
+_CASCADE_DELETE_ROLES = (
+	"System Manager",
+	"Healthcare Administrator",
+	"Administrator",
+)
+
+
+def _require_cascade_delete_permission(sr_name: str) -> None:
+	user = frappe.session.user
+	if user == "Administrator":
+		return
+	roles = set(frappe.get_roles(user))
+	if roles.intersection(_CASCADE_DELETE_ROLES):
+		return
+	if frappe.has_permission("Service Request", "delete", doc=sr_name, user=user):
+		return
+	frappe.throw(
+		_("You do not have permission to cascade-delete Service Request {0}.").format(sr_name),
+		frappe.PermissionError,
+	)
+
+
+def _linked_docs_for_service_request(sr_name: str) -> dict:
+	"""Collect documents that normally block deleting this Service Request."""
+	sr_name = (sr_name or "").strip()
+	lab_tests = frappe.get_all(
+		"Lab Test",
+		filters={"service_request": sr_name},
+		pluck="name",
+		order_by="creation asc",
+	)
+	clinical_procedures = []
+	if frappe.db.exists("DocType", "Clinical Procedure"):
+		clinical_procedures = frappe.get_all(
+			"Clinical Procedure",
+			filters={"service_request": sr_name},
+			pluck="name",
+		)
+	therapy_sessions = []
+	if frappe.db.exists("DocType", "Therapy Session"):
+		therapy_sessions = frappe.get_all(
+			"Therapy Session",
+			filters={"service_request": sr_name},
+			pluck="name",
+		)
+	observations = []
+	if frappe.db.exists("DocType", "Observation"):
+		observations = frappe.get_all(
+			"Observation",
+			filters={"service_request": sr_name},
+			pluck="name",
+		)
+
+	sales_orders: list[str] = []
+	ref_type = frappe.db.get_value("Service Request", sr_name, "reference_document_type")
+	ref_name = frappe.db.get_value("Service Request", sr_name, "reference_document_name")
+	if ref_type == "Sales Order" and ref_name:
+		sales_orders.append(ref_name)
+	so_meta = frappe.get_meta("Sales Order")
+	if so_meta.has_field("custom_base_reference_name"):
+		for so in frappe.get_all(
+			"Sales Order",
+			filters={
+				"custom_base_reference": "Service Request",
+				"custom_base_reference_name": sr_name,
+			},
+			pluck="name",
+		):
+			if so not in sales_orders:
+				sales_orders.append(so)
+
+	amended_by = frappe.get_all(
+		"Service Request",
+		filters={"amended_from": sr_name},
+		pluck="name",
+	)
+	# Other SRs that Dynamic-Link back to this one (order / reason references).
+	for filters in (
+		{"order_reference_doctype": "Service Request", "order_reference_name": sr_name},
+		{"reason_reference_doctype": "Service Request", "reason_reference": sr_name},
+	):
+		try:
+			for other in frappe.get_all("Service Request", filters=filters, pluck="name"):
+				if other and other not in amended_by and other != sr_name:
+					amended_by.append(other)
+		except Exception:
+			pass
+
+	visit_names: list[str] = []
+	patient_visit = frappe.db.get_value("Service Request", sr_name, "patient_visit")
+	order_group = frappe.db.get_value("Service Request", sr_name, "order_group")
+	order_group_dt = frappe.db.get_value("Service Request", sr_name, "order_group_doctype")
+	for candidate in (patient_visit, order_group if order_group_dt in (None, "", "Patient Visit") else None):
+		if candidate and frappe.db.exists("Patient Visit", candidate) and candidate not in visit_names:
+			visit_names.append(candidate)
+	# Visits that still have prescription / charge rows for this SR
+	for row in frappe.get_all(
+		"Lab Prescription",
+		filters={"service_request": sr_name},
+		fields=["parent"],
+		distinct=True,
+	):
+		parent = row.get("parent")
+		if parent and parent not in visit_names and frappe.db.exists("Patient Visit", parent):
+			visit_names.append(parent)
+	if frappe.db.exists("DocType", "Lab Tests Charges"):
+		for row in frappe.get_all(
+			"Lab Tests Charges",
+			filters={"sr_no": sr_name},
+			fields=["parent"],
+			distinct=True,
+		):
+			parent = row.get("parent")
+			if parent and parent not in visit_names and frappe.db.exists("Patient Visit", parent):
+				visit_names.append(parent)
+
+	return {
+		"lab_tests": lab_tests,
+		"clinical_procedures": clinical_procedures,
+		"therapy_sessions": therapy_sessions,
+		"observations": observations,
+		"sales_orders": sales_orders,
+		"amended_service_requests": amended_by,
+		"patient_visits": visit_names,
+	}
+
+
+def _format_cascade_delete_message(sr_name: str, linked: dict) -> str:
+	parts = []
+	if linked.get("lab_tests"):
+		names = linked["lab_tests"]
+		shown = ", ".join(names[:10])
+		more = len(names) - 10
+		label = shown + (f", and {more} more" if more > 0 else "")
+		parts.append(_("Lab Test: {0}").format(label))
+	if linked.get("clinical_procedures"):
+		parts.append(_("Clinical Procedure: {0}").format(", ".join(linked["clinical_procedures"])))
+	if linked.get("therapy_sessions"):
+		parts.append(_("Therapy Session: {0}").format(", ".join(linked["therapy_sessions"])))
+	if linked.get("observations"):
+		parts.append(_("Observation: {0}").format(", ".join(linked["observations"])))
+	if linked.get("amended_service_requests"):
+		parts.append(
+			_("Service Request (will unlink amended_from): {0}").format(
+				", ".join(linked["amended_service_requests"])
+			)
+		)
+	if linked.get("sales_orders"):
+		parts.append(_("Sales Order: {0}").format(", ".join(linked["sales_orders"])))
+	if linked.get("patient_visits"):
+		parts.append(
+			_("Patient Visit (keep visit — remove lab rows only): {0}").format(
+				", ".join(linked["patient_visits"])
+			)
+		)
+
+	if not parts:
+		return _("Delete Service Request {0}? No linked Lab Tests / Sales Orders were found.").format(
+			sr_name
+		)
+
+	return _(
+		"{0} is linked with the following documents:\n\n{1}\n\n"
+		"Do you want to delete {0} along with linked Lab Tests / billing? "
+		"Patient Visit will be kept; only its lab child rows for this request will be removed."
+	).format(sr_name, "\n".join(parts))
+
+
+def _unlink_service_request_from_patient_visits(
+	sr_name: str, lab_test_names: list[str], visit_names: list[str]
+) -> list[str]:
+	"""Remove Lab Prescription / Lab Tests Charges rows for this SR. Never delete the visit."""
+	touched: list[str] = []
+	lab_test_set = set(lab_test_names or [])
+
+	for visit_name in visit_names or []:
+		if not visit_name or not frappe.db.exists("Patient Visit", visit_name):
+			continue
+		visit = frappe.get_doc("Patient Visit", visit_name)
+		changed = False
+
+		if visit.meta.has_field("lab_test_prescription"):
+			keep = [
+				row
+				for row in (visit.get("lab_test_prescription") or [])
+				if (getattr(row, "service_request", None) or "").strip() != sr_name
+			]
+			if len(keep) != len(visit.get("lab_test_prescription") or []):
+				visit.set("lab_test_prescription", keep)
+				changed = True
+
+		if visit.meta.has_field("procedure_prescription"):
+			keep = [
+				row
+				for row in (visit.get("procedure_prescription") or [])
+				if (getattr(row, "service_request", None) or "").strip() != sr_name
+			]
+			if len(keep) != len(visit.get("procedure_prescription") or []):
+				visit.set("procedure_prescription", keep)
+				changed = True
+
+		if visit.meta.has_field("lab_tests_charges"):
+			keep = []
+			for row in visit.get("lab_tests_charges") or []:
+				sr_no = (getattr(row, "sr_no", None) or "").strip()
+				test_code = (getattr(row, "test_code", None) or "").strip()
+				if sr_no == sr_name or (test_code and test_code in lab_test_set):
+					continue
+				keep.append(row)
+			if len(keep) != len(visit.get("lab_tests_charges") or []):
+				visit.set("lab_tests_charges", keep)
+				changed = True
+
+		if not changed:
+			continue
+
+		visit.flags.ignore_permissions = True
+		visit.flags.ignore_validate_update_after_submit = True
+		visit.flags.ignore_mandatory = True
+		try:
+			visit.save(ignore_permissions=True)
+		except Exception:
+			# Fallback: delete child rows directly if save is blocked.
+			frappe.db.delete("Lab Prescription", {"parent": visit_name, "service_request": sr_name})
+			if frappe.db.exists("DocType", "Lab Tests Charges"):
+				frappe.db.delete("Lab Tests Charges", {"parent": visit_name, "sr_no": sr_name})
+				if lab_test_set:
+					frappe.db.sql(
+						"""
+						DELETE FROM `tabLab Tests Charges`
+						WHERE parent = %s AND test_code IN ({})
+						""".format(",".join(["%s"] * len(lab_test_set))),
+						tuple([visit_name, *lab_test_set]),
+					)
+			frappe.db.set_value("Patient Visit", visit_name, "modified", frappe.utils.now(), update_modified=False)
+		touched.append(visit_name)
+
+	return touched
+
+
+def _cancel_and_delete_doc(doctype: str, name: str) -> None:
+	if not name or not frappe.db.exists(doctype, name):
+		return
+	doc = frappe.get_doc(doctype, name)
+	if cint(doc.docstatus) == 1:
+		try:
+			doc.cancel()
+		except Exception:
+			frappe.db.set_value(doctype, name, "docstatus", 2, update_modified=False)
+	if frappe.db.exists(doctype, name):
+		frappe.delete_doc(doctype, name, ignore_permissions=True, force=1)
+
+
+def _retire_sales_orders_for_cascade(sr, sales_order_names: list[str]) -> list[str]:
+	"""Cancel invoices + cancel/delete Sales Orders linked to this Service Request."""
+	retired: list[str] = []
+	# Prefer the in-memory SR reference first.
+	try:
+		result = _retire_lab_request_sales_order(sr)
+		prev = result.get("previous_sales_order")
+		if prev:
+			retired.append(prev)
+	except Exception:
+		frappe.log_error(
+			title=f"Cascade delete: failed to retire Sales Order for {sr.name}",
+			message=frappe.get_traceback(),
+		)
+
+	for so_name in sales_order_names or []:
+		so_name = (so_name or "").strip()
+		if not so_name or so_name in retired:
+			continue
+		if not frappe.db.exists("Sales Order", so_name):
+			continue
+		_unlink_service_requests_from_sales_order(so_name, preferred_sr=sr)
+		for si_name in _sales_invoices_for_sales_order(so_name):
+			_cancel_or_delete_sales_invoice(si_name)
+		_cancel_and_delete_doc("Sales Order", so_name)
+		# Cancelled SOs may remain — force delete after cancel.
+		if frappe.db.exists("Sales Order", so_name):
+			frappe.delete_doc("Sales Order", so_name, ignore_permissions=True, force=1)
+		retired.append(so_name)
+	return retired
+
+
+@frappe.whitelist()
+def preview_cascade_delete_service_request(name: str) -> dict:
+	"""Return linked docs + confirmation message for cascade delete on Service Request."""
+	name = (name or "").strip()
+	if not name:
+		frappe.throw(_("Service Request name is required"))
+	if not frappe.db.exists("Service Request", name):
+		frappe.throw(_("Service Request {0} not found").format(name))
+	_require_cascade_delete_permission(name)
+	linked = _linked_docs_for_service_request(name)
+	return {
+		"service_request": name,
+		"linked": linked,
+		"message": _format_cascade_delete_message(name, linked),
+	}
+
+
+@frappe.whitelist()
+def cascade_delete_service_request(name: str) -> dict:
+	"""Delete a Service Request and linked clinical/billing docs in one step.
+
+	Patient Visit is never deleted — only Lab Prescription / Lab Tests Charges rows
+	for this request are removed.
+	"""
+	name = (name or "").strip()
+	if not name:
+		frappe.throw(_("Service Request name is required"))
+	if not frappe.db.exists("Service Request", name):
+		frappe.throw(_("Service Request {0} not found").format(name))
+	_require_cascade_delete_permission(name)
+
+	assert_editing_allowed()
+
+	sr = frappe.get_doc("Service Request", name)
+	linked = _linked_docs_for_service_request(name)
+	lab_tests = list(linked.get("lab_tests") or [])
+
+	# 1) Unlink Patient Visit child rows first (so visit no longer blocks delete).
+	visits_updated = _unlink_service_request_from_patient_visits(
+		name, lab_tests, linked.get("patient_visits") or []
+	)
+
+	# 2) Unlink other Service Requests that point at this one (do not delete them).
+	for other in linked.get("amended_service_requests") or []:
+		if not frappe.db.exists("Service Request", other):
+			continue
+		updates = {}
+		row = frappe.db.get_value(
+			"Service Request",
+			other,
+			[
+				"amended_from",
+				"order_reference_doctype",
+				"order_reference_name",
+				"reason_reference_doctype",
+				"reason_reference",
+			],
+			as_dict=True,
+		) or {}
+		if (row.get("amended_from") or "") == name:
+			updates["amended_from"] = None
+		if (row.get("order_reference_doctype") or "") == "Service Request" and (
+			row.get("order_reference_name") or ""
+		) == name:
+			updates["order_reference_doctype"] = None
+			updates["order_reference_name"] = None
+		if (row.get("reason_reference_doctype") or "") == "Service Request" and (
+			row.get("reason_reference") or ""
+		) == name:
+			updates["reason_reference_doctype"] = None
+			updates["reason_reference"] = None
+		if updates:
+			frappe.db.set_value("Service Request", other, updates, update_modified=False)
+
+	# 3) Delete linked Lab Tests (force path: cancel submitted + samples).
+	from healthcare.api.lab_request_actions import _force_remove_lab_test
+
+	deleted_lab_tests: list[str] = []
+	for lt_name in lab_tests:
+		if not frappe.db.exists("Lab Test", lt_name):
+			continue
+		_force_remove_lab_test(lt_name)
+		deleted_lab_tests.append(lt_name)
+
+	# 4) Other clinical fulfillments linked by service_request.
+	deleted_other: list[str] = []
+	for doctype, names in (
+		("Clinical Procedure", linked.get("clinical_procedures") or []),
+		("Therapy Session", linked.get("therapy_sessions") or []),
+		("Observation", linked.get("observations") or []),
+	):
+		for docname in names:
+			_cancel_and_delete_doc(doctype, docname)
+			deleted_other.append(f"{doctype}:{docname}")
+
+	# 5) Sales Order (+ invoices): cancel then delete.
+	retired_sales_orders = _retire_sales_orders_for_cascade(sr, linked.get("sales_orders") or [])
+
+	# 6) Clear any remaining SR → Sales Order / medical-record links, then delete SR.
+	_delete_patient_medical = None
+	try:
+		from healthcare.api.lab_request_actions import _delete_patient_medical_records_for_reference
+
+		_delete_patient_medical = _delete_patient_medical_records_for_reference
+	except Exception:
+		pass
+	if _delete_patient_medical:
+		_delete_patient_medical("Service Request", name)
+
+	# Ensure reference fields are cleared before delete.
+	if frappe.db.exists("Service Request", name):
+		frappe.db.set_value(
+			"Service Request",
+			name,
+			{
+				"reference_document_type": None,
+				"reference_document_name": None,
+				"patient_accepted_cost": 0,
+			},
+			update_modified=False,
+		)
+		if cint(frappe.db.get_value("Service Request", name, "docstatus")) == 1:
+			try:
+				frappe.get_doc("Service Request", name).cancel()
+			except Exception:
+				frappe.db.set_value("Service Request", name, "docstatus", 2, update_modified=False)
+		if frappe.db.exists("Service Request", name):
+			frappe.delete_doc("Service Request", name, ignore_permissions=True, force=1)
+
+	frappe.db.commit()
+
+	return {
+		"ok": True,
+		"deleted_service_request": name,
+		"deleted_lab_tests": deleted_lab_tests,
+		"deleted_other": deleted_other,
+		"retired_sales_orders": retired_sales_orders,
+		"patient_visits_unlinked": visits_updated,
+		"unlinked_amended_service_requests": linked.get("amended_service_requests") or [],
+	}

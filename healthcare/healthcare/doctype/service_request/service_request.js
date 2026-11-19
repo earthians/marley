@@ -31,8 +31,55 @@ frappe.ui.form.on('Service Request', {
 		});
 
 		frm.trigger('setup_create_buttons');
+		frm.trigger('setup_cascade_delete_button');
 	},
 
+	setup_cascade_delete_button: function(frm) {
+		if (frm.is_new() || frm.doc.docstatus === 2) {
+			return;
+		}
+		frm.add_custom_button(__('Delete with Linked Docs'), function() {
+			frm.trigger('cascade_delete_service_request');
+		}, __('Actions')).addClass('btn-danger');
+	},
+
+	cascade_delete_service_request: function(frm) {
+		frappe.call({
+			method: 'healthcare.api.service_request.preview_cascade_delete_service_request',
+			args: { name: frm.doc.name },
+			freeze: true,
+			freeze_message: __('Checking linked documents...'),
+			callback: function(r) {
+				const data = r.message || {};
+				const message = (data.message || '').replace(/\n/g, '<br>');
+				frappe.confirm(
+					message,
+					function() {
+						frappe.call({
+							method: 'healthcare.api.service_request.cascade_delete_service_request',
+							args: { name: frm.doc.name },
+							freeze: true,
+							freeze_message: __('Deleting Service Request and linked documents...'),
+							callback: function(res) {
+								const result = res.message || {};
+								frappe.show_alert({
+									message: __('Deleted {0}').format(frm.doc.name),
+									indicator: 'green',
+								});
+								if (result.deleted_lab_tests && result.deleted_lab_tests.length) {
+									frappe.show_alert({
+										message: __('Removed {0} Lab Test(s)').format(result.deleted_lab_tests.length),
+										indicator: 'green',
+									});
+								}
+								frappe.set_route('List', 'Service Request');
+							},
+						});
+					}
+				);
+			},
+		});
+	},
 
 	setup_create_buttons: function(frm) {
 		if (frm.doc.docstatus !== 1 || frm.doc.status === 'Completed') return;

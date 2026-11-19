@@ -200,6 +200,9 @@ export const LabTestDetails = ({ labTestName, onUpdate }: LabTestDetailsProps) =
   const followUps = parseFollowUpActions(labTest.review_follow_up_actions)
   const reviewRecorded = hasDoctorReviewData(labTest)
   const isReviewFinal = labTest.status === 'Reviewed' || labTest.status === 'Rejected'
+  // Legacy Oracle imports get submitted_date stamped when the ERPNext record is
+  // submitted during the import, so it is not legacy data — don't show it.
+  const isLegacyImport = Boolean(Number(labTest.is_legacy_import ?? 0))
   const resultLines = (labTest.lab_test_lines || []).filter(
     (line) => (line.lab_result_value || '').trim() || (line.lab_sub_num || '').trim()
   )
@@ -752,7 +755,9 @@ export const LabTestDetails = ({ labTestName, onUpdate }: LabTestDetailsProps) =
             <SectionTitle title="Dates & Timeline" />
             <div className="space-y-1">
               <Field label="Test Date" value={formatDate(labTest.date)} />
-              <Field label="Submitted" value={formatDatetime(labTest.submitted_date)} />
+              {!isLegacyImport && (
+                <Field label="Submitted" value={formatDatetime(labTest.submitted_date)} />
+              )}
               <Field label="Result Date" value={formatDate(labTest.result_date)} />
               <Field label="Expected Result" value={formatDate(labTest.expected_result_date)} />
               <Field label="Printed On" value={formatDatetime(labTest.printed_on)} />
