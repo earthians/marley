@@ -634,7 +634,7 @@
    "link_fieldname": "service_request"
   }
  ],
- "modified": "2026-06-17 18:11:51.318190",
+ "modified": "2026-11-20 23:21:24.585279",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Service Request",
@@ -684,6 +684,15 @@
    "role": "Healthcare Administrator",
    "share": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Laboratory User",
+   "share": 1
   }
  ],
  "restrict_to_domain": "Healthcare",
