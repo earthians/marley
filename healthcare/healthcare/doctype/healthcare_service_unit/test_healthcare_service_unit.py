@@ -32,6 +32,22 @@ class TestHealthcareServiceUnit(HealthcareTestSuite):
 		root_service_unit = frappe.db.exists("Healthcare Service Unit", filters)
 		self.assertTrue(root_service_unit)
 
+	def test_saving_a_bed_without_status_makes_it_vacant(self):
+		bed = create_beds("_Test Ward D")[0]
+		bed.db_set("occupancy_status", "")
+
+		bed.reload().save()
+
+		self.assertEqual(bed.reload().occupancy_status, "Vacant")
+
+	def test_saving_an_occupied_bed_keeps_it_occupied(self):
+		bed = create_beds("_Test Ward E")[0]
+		bed.db_set("occupancy_status", "Occupied")
+
+		bed.reload().save()
+
+		self.assertEqual(bed.reload().occupancy_status, "Occupied")
+
 	def test_beds_created_in_bulk_get_a_warehouse_each(self):
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
 		beds = create_beds("_Test Ward A", count=2)
