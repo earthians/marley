@@ -26,7 +26,7 @@ frappe.pages["patient_history"].on_page_load = function(wrapper) {
         const stylesheet = document.createElement("link");
         stylesheet.id = "patient-history-vue-css";
         stylesheet.rel = "stylesheet";
-        stylesheet.href = "/assets/healthcare/patient_history/patient_history.css?v=20261028-1";
+        stylesheet.href = "/assets/healthcare/patient_history/patient_history.css?v=20261120-3";
         document.head.appendChild(stylesheet);
     }
 

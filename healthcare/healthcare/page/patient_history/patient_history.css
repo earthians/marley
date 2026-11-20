@@ -1,7 +1,7 @@
             #page-patient_history {
                 --ph-surface: var(--card-bg, #fff);
                 --ph-border: var(--border-color, #e2e8f0);
-                --ph-muted: var(--text-muted, #64748b);
+                --ph-muted: #475569;
                 --ph-primary: var(--primary, #0284c7);
                 --ph-text: var(--text-color, #1e293b);
                 --ph-page-bg: var(--bg-color, #f8fafc);
@@ -21,6 +21,7 @@
             
             html[data-theme="dark"] #page-patient_history,
             body[data-theme="dark"] #page-patient_history {
+                --ph-muted: #cbd5e1;
                 --ph-chart-systolic-from: #a5b4fc;
                 --ph-chart-systolic-to: #7dd3fc;
                 --ph-chart-diastolic: #5eead4;
@@ -31,35 +32,16 @@
                 --ph-chart-abnormal: #fb7185;
             }
             
-            body[data-route="patient_history"] {
-                width: 100%;
-                min-height: 100vh;
-                height: auto;
-                overflow-x: clip;
-                overflow-y: visible;
-            }
-            
             body[data-route="patient_history"] .main-section {
                 flex: 1 1 0%;
                 width: 0;
                 max-width: 100%;
                 min-width: 0;
-                min-height: 100vh;
-                height: auto;
-                overflow: visible;
             }
             
             body[data-route="patient_history"] .main-section>* {
                 min-width: 0;
                 max-width: 100%;
-            }
-            
-            body[data-route="patient_history"] .body-sidebar-container {
-                position: sticky;
-                top: 0;
-                flex: 0 0 auto;
-                height: 100vh;
-                height: 100dvh;
             }
             
             html:has(body[data-route="patient_history"]) {
@@ -156,30 +138,53 @@
                 box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025);
             }
             
+            /* The clickable header runs to the card's edges (negative margins equal to the card's
+               padding) so its hover fills the whole card instead of an inset block. */
+            #page-patient_history .ph-patient-card {
+                --ph-pc-pad: 24px;
+                --ph-pc-pad-top: 24px;
+            }
+            
+            @media (max-width: 639px) {
+                #page-patient_history .ph-patient-card {
+                    --ph-pc-pad: 16px;
+                }
+            }
+            
+            @media (max-width: 640px) {
+                #page-patient_history .ph-patient-card {
+                    --ph-pc-pad-top: 22px;
+                }
+            }
+            
             #page-patient_history .ph-patient-identity {
                 display: flex;
                 align-items: center;
                 gap: 14px;
                 min-height: 74px;
-                padding-bottom: 16px;
+                margin: calc(-1 * var(--ph-pc-pad-top)) calc(-1 * var(--ph-pc-pad)) calc(-1 * var(--ph-pc-pad));
+                padding: var(--ph-pc-pad-top) var(--ph-pc-pad) var(--ph-pc-pad);
                 border-bottom: 0;
-                border-radius: 8px;
+                border-radius: 11px;
                 cursor: pointer;
                 transition: background-color 0.16s ease;
             }
             
             #page-patient_history .ph-patient-identity:hover {
-                background: color-mix(in srgb, var(--ph-primary) 4%, transparent);
+                background: color-mix(in srgb, var(--ph-text) 8%, var(--ph-surface));
             }
             
             #page-patient_history .ph-patient-identity:focus-visible {
                 outline: 2px solid color-mix(in srgb, var(--ph-primary) 45%, transparent);
-                outline-offset: 3px;
+                outline-offset: -2px;
                 box-shadow: none;
             }
             
             #page-patient_history .ph-patient-card.is-expanded .ph-patient-identity {
+                margin-bottom: 0;
+                padding-bottom: 16px;
                 border-bottom: 1px solid var(--ph-border);
+                border-radius: 11px 11px 0 0;
             }
             
             #page-patient_history .ph-patient-avatar {
@@ -1429,22 +1434,29 @@
                 visibility: hidden;
             }
             
+            /* Plain chevron matching the Clinical Activity & Vital Trends toggle: no circle, same
+               size and stroke, and pulled 8px right so it sits 16px from the card edge like that one. */
             #page-patient_history .ph-collapse-patient {
                 display: grid;
-                flex: 0 0 34px;
+                flex: 0 0 18px;
                 place-items: center;
-                width: 34px;
-                height: 34px;
+                width: 18px;
+                height: 18px;
+                margin-right: -8px;
                 padding: 0;
-                border: 1px solid var(--ph-border);
-                border-radius: 50%;
-                background: var(--ph-surface);
-                color: var(--ph-muted);
+                border: 0;
+                background: transparent;
+                color: var(--ph-text);
             }
             
-            #page-patient_history .ph-collapse-patient:hover {
-                border-color: var(--ph-primary);
-                color: var(--ph-primary);
+            #page-patient_history .ph-collapse-patient .ph-chevron path {
+                stroke-width: 1.7;
+            }
+            
+            @media (max-width: 639px) {
+                #page-patient_history .ph-collapse-patient {
+                    margin-right: 0;
+                }
             }
             
             #page-patient_history .ph-chevron {
