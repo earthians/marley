@@ -320,10 +320,8 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 			frappe.db.get_value("Service Request", request, "status"), "completed-Request Status"
 		)
 
-	def test_a_lab_user_cannot_add_an_observation_directly(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(frappe.PermissionError, add_observation, patient=self.patient)
+	def test_adding_an_observation_directly_needs_create_on_observation(self):
+		self.assert_denied(add_observation, patient=self.patient)
 
 	def test_sample_collection_still_creates_observations_for_a_lab_user(self):
 		template = stored(
