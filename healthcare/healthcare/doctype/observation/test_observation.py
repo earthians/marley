@@ -255,6 +255,20 @@ class TestObservation(HealthcareTestSuite):
 
 		self.assertEqual(frappe.db.get_value("Observation", observation, "result"), "12")
 
+	def test_a_draft_cannot_be_saved_as_approved(self):
+		make_user(LAB_USER, "Laboratory User")
+		observation = self.create_lab_observation(
+			self.get_test_patient(), "_Test Observation without Sample", "12"
+		)
+		frappe.set_user(LAB_USER)
+		try:
+			observation.status = "Approved"
+			self.assertRaises(frappe.ValidationError, observation.save)
+		finally:
+			frappe.set_user("Administrator")
+
+		self.assertEqual(frappe.db.get_value("Observation", observation.name, "status"), "Preliminary")
+
 	def test_make_observation_from_encounter_does_not_duplicate_a_sub_panel(self):
 		# A sub-panel like Lipid Profile under Package 1 used to get a
 		# dead-end duplicate Observation alongside its correctly chained one.
