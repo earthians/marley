@@ -56,7 +56,7 @@ class HealthcareServiceUnit(NestedSet):
 			self.allow_appointments = service_unit_type.allow_appointments
 			self.inpatient_occupancy = service_unit_type.inpatient_occupancy
 
-			if self.inpatient_occupancy and self.occupancy_status != "":
+			if self.inpatient_occupancy and not self.occupancy_status:
 				self.occupancy_status = "Vacant"
 
 			if service_unit_type.overlap_appointments:
