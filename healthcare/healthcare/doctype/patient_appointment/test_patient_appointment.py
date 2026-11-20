@@ -532,6 +532,32 @@ class TestPatientAppointment(HealthcareTestSuite):
 		)
 		self.assertRaises(MaximumCapacityError, appointment.save)
 
+	def test_service_unit_without_overlap_blocks_other_practitioners(self):
+		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import OverlapError
+
+		patients = frappe.get_list("Patient", pluck="name")
+		practitioners = frappe.get_list("Healthcare Practitioner", pluck="name")
+		service_unit = create_service_unit(id=0)
+		create_appointment(patients[0], practitioners[0], nowdate(), service_unit=service_unit)
+
+		appointment = create_appointment(
+			patients[1], practitioners[1], nowdate(), service_unit=service_unit, save=0
+		)
+		self.assertRaises(OverlapError, appointment.save)
+
+	def test_service_unit_capacity_is_per_practitioner(self):
+		patients = frappe.get_list("Patient", pluck="name")
+		practitioners = frappe.get_list("Healthcare Practitioner", pluck="name")
+		service_unit = create_service_unit(
+			id=101,
+			service_unit_type="_Test Service Unit Type - Overlapping Appointments",
+			service_unit_capacity=1,
+		)
+		create_appointment(patients[0], practitioners[0], nowdate(), service_unit=service_unit)
+
+		appointment = create_appointment(patients[1], practitioners[1], nowdate(), service_unit=service_unit)
+		self.assertTrue(appointment.name)
+
 	def test_tele_consultation(self):
 		appointment = create_appointment(self.patient, self.practitioner, nowdate())
 		self.assertTrue(appointment.event)
