@@ -33,7 +33,7 @@ const primaryStats = computed(() => {
 	const diastolicPoints = points.filter(point => Number.isFinite(point.diastolic));
 	const averageDiastolic = diastolicPoints.length
 		? diastolicPoints.reduce((sum, point) => sum + point.diastolic, 0) /
-			diastolicPoints.length
+		  diastolicPoints.length
 		: NaN;
 	const bp = props.state.metric === "bp";
 	return [

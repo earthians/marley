@@ -192,7 +192,9 @@ function toggle() {
 									details?.alcohol_past_use &&
 										`${__("Alcohol")}: ${details.alcohol_past_use}`,
 									details?.tobacco_current_use &&
-										`${__("Tobacco")}: ${details.tobacco_current_use}`,
+										`${__("Tobacco")}: ${
+											details.tobacco_current_use
+										}`,
 								]
 									.filter(Boolean)
 									.join(" · ") || "—"

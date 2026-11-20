@@ -18,8 +18,8 @@ function status(series) {
 	return value < series.band[0]
 		? __("Low")
 		: value > series.band[1]
-			? __("High")
-			: __("Normal");
+		  ? __("High")
+		  : __("Normal");
 }
 const delta = computed(() => {
 	const series = props.config.series[0],

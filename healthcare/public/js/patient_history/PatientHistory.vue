@@ -136,7 +136,7 @@ function changeActivityYear(value) {
 											moment(filters.day).format(
 												"dddd, DD MMM YYYY",
 											),
-										])
+									  ])
 									: __("No records for this filter")
 							}}
 						</p>

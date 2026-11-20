@@ -3,9 +3,9 @@
 
 import json
 import re
-from html import unescape
 from collections import defaultdict
 from datetime import datetime, time
+from html import unescape
 
 import frappe
 from frappe.utils import cint, flt, get_datetime, get_time, getdate, strip_html_tags
@@ -69,7 +69,9 @@ def _reference_details(record):
 		practitioner = frappe.db.get_value(
 			"Healthcare Practitioner", practitioner_id, "practitioner_name"
 		) or frappe.db.get_value("Healthcare Practitioner", practitioner_id, "name")
-	department = fields.get("medical_department") or fields.get("department") or fields.get("requesting_department")
+	department = (
+		fields.get("medical_department") or fields.get("department") or fields.get("requesting_department")
+	)
 
 	date_value = record.communication_date
 	date_field = time_field = None
@@ -104,15 +106,29 @@ def _reference_details(record):
 		"communication_date": str(date_value) if date_value else None,
 	}
 	if doctype == "Patient Encounter":
-		symptoms = [row.get("complaint") or row.get("symptom") or row.get("description") for row in fields.get("symptoms", [])]
+		symptoms = [
+			row.get("complaint") or row.get("symptom") or row.get("description")
+			for row in fields.get("symptoms", [])
+		]
 		diagnoses = [row.get("diagnosis") for row in fields.get("diagnosis", [])]
-		result["summary"] = " · ".join(filter(None, [
-			", ".join(filter(None, symptoms)) and f"Symptoms: {', '.join(filter(None, symptoms))}",
-			", ".join(filter(None, diagnoses)) and f"Diagnosis: {', '.join(filter(None, diagnoses))}",
-		]))
+		result["summary"] = " · ".join(
+			filter(
+				None,
+				[
+					", ".join(filter(None, symptoms)) and f"Symptoms: {', '.join(filter(None, symptoms))}",
+					", ".join(filter(None, diagnoses)) and f"Diagnosis: {', '.join(filter(None, diagnoses))}",
+				],
+			)
+		)
 	elif doctype == "Vital Signs":
 		parts = []
-		for label, key, suffix in (("Temp", "temperature", "°C"), ("Pulse", "pulse", "bpm"), ("BP", "bp", "mmHg"), ("SpO2", "spo2", "%"), ("Weight", "weight", "kg")):
+		for label, key, suffix in (
+			("Temp", "temperature", "°C"),
+			("Pulse", "pulse", "bpm"),
+			("BP", "bp", "mmHg"),
+			("SpO2", "spo2", "%"),
+			("Weight", "weight", "kg"),
+		):
 			value = fields.get(key)
 			if value is None and key == "spo2":
 				for candidate in ("spo2", "sp_o2", "oxygen_saturation", "blood_oxygen_saturation"):
@@ -125,25 +141,57 @@ def _reference_details(record):
 				parts.append(f"{label} {value} {suffix}".strip())
 		result["summary"] = " · ".join(parts)
 	elif doctype == "Observation":
-		name_part = fields.get("preferred_display_name") or fields.get("description") or fields.get("observation_template") or doctype
+		name_part = (
+			fields.get("preferred_display_name")
+			or fields.get("description")
+			or fields.get("observation_template")
+			or doctype
+		)
 		if fields.get("observation_template"):
-			name_part = frappe.db.get_value("Observation Template", fields.get("observation_template"), "preferred_display_name") or frappe.db.get_value("Observation Template", fields.get("observation_template"), "observation") or name_part
+			name_part = (
+				frappe.db.get_value(
+					"Observation Template", fields.get("observation_template"), "preferred_display_name"
+				)
+				or frappe.db.get_value(
+					"Observation Template", fields.get("observation_template"), "observation"
+				)
+				or name_part
+			)
 		result_value = fields.get("result")
 		flag = fields.get("result_flag") or fields.get("result_interpretation")
 		result["result_flag"] = flag
-		result["summary"] = " · ".join(filter(None, [str(name_part), str(result_value) if result_value else "", str(flag) if flag else ""]))
+		result["summary"] = " · ".join(
+			filter(
+				None, [str(name_part), str(result_value) if result_value else "", str(flag) if flag else ""]
+			)
+		)
 	elif doctype == "Lab Test":
 		name_part = fields.get("lab_test_name") or fields.get("template") or doctype
 		items = fields.get("normal_test_items") or fields.get("descriptive_test_items") or []
 		key_result = next((row for row in items if row.get("result_value")), None)
 		result_text = ""
 		if key_result:
-			result_text = " ".join(filter(None, [str(key_result.get("lab_test_name") or key_result.get("lab_test_particulars") or ""), str(key_result.get("result_value")), str(key_result.get("lab_test_uom") or "")]))
+			result_text = " ".join(
+				filter(
+					None,
+					[
+						str(key_result.get("lab_test_name") or key_result.get("lab_test_particulars") or ""),
+						str(key_result.get("result_value")),
+						str(key_result.get("lab_test_uom") or ""),
+					],
+				)
+			)
 		result["summary"] = " · ".join(filter(None, [str(name_part), result_text]))
 	elif doctype == "Clinical Procedure":
-		result["summary"] = " · ".join(filter(None, [fields.get("procedure_template"), fields.get("service_unit"), fields.get("body_part")]))
+		result["summary"] = " · ".join(
+			filter(
+				None, [fields.get("procedure_template"), fields.get("service_unit"), fields.get("body_part")]
+			)
+		)
 	else:
-		result["summary"] = fields.get("subject") or fields.get("title") or fields.get("description") or record.subject
+		result["summary"] = (
+			fields.get("subject") or fields.get("title") or fields.get("description") or record.subject
+		)
 	return result
 
 
@@ -230,26 +278,63 @@ def get_activity_summary(patient, from_date, to_date, document_types=None):
 
 	if refs_by_type.get("Vital Signs"):
 		meta = frappe.get_meta("Vital Signs")
-		fields = [field for field in ("signs_date", "bp_systolic", "bp_diastolic", "temperature") if meta.has_field(field)]
+		fields = [
+			field
+			for field in ("signs_date", "bp_systolic", "bp_diastolic", "temperature")
+			if meta.has_field(field)
+		]
 		for optional in ("spo2", "sp_o2", "oxygen_saturation", "blood_oxygen_saturation"):
 			if meta.has_field(optional):
 				fields.append(optional)
 				break
-		for vital in frappe.get_all("Vital Signs", filters={"name": ["in", list(refs_by_type["Vital Signs"])]}, fields=["name", *fields]):
+		for vital in frappe.get_all(
+			"Vital Signs",
+			filters={"name": ["in", list(refs_by_type["Vital Signs"])]},
+			fields=["name", *fields],
+		):
 			day = refs_by_type["Vital Signs"].get(vital.name)
-			spo2 = next((vital.get(key) for key in ("spo2", "sp_o2", "oxygen_saturation", "blood_oxygen_saturation") if vital.get(key) is not None), None)
-			if (flt(vital.get("bp_systolic")) >= 140 or flt(vital.get("bp_diastolic")) >= 90
-				or flt(vital.get("temperature")) > 37.5 or (spo2 is not None and flt(spo2) < 94)):
+			spo2 = next(
+				(
+					vital.get(key)
+					for key in ("spo2", "sp_o2", "oxygen_saturation", "blood_oxygen_saturation")
+					if vital.get(key) is not None
+				),
+				None,
+			)
+			if (
+				flt(vital.get("bp_systolic")) >= 140
+				or flt(vital.get("bp_diastolic")) >= 90
+				or flt(vital.get("temperature")) > 37.5
+				or (spo2 is not None and flt(spo2) < 94)
+			):
 				if day in days:
 					days[day]["abnormal"] = True
 
 	if refs_by_type.get("Observation"):
 		for observation in frappe.get_all(
-			"Observation", filters={"name": ["in", list(refs_by_type["Observation"])]},
+			"Observation",
+			filters={"name": ["in", list(refs_by_type["Observation"])]},
 			fields=["name", "result_flag", "result_flag_color", "result_interpretation"],
 		):
-			flag = " ".join(str(observation.get(field) or "") for field in ("result_flag", "result_flag_color", "result_interpretation")).lower()
-			if any(term in flag for term in ("high", "low", "abnormal", "critical", "out of range", "red", "amber", "borderline", "#e24c4c", "#f2994a")):
+			flag = " ".join(
+				str(observation.get(field) or "")
+				for field in ("result_flag", "result_flag_color", "result_interpretation")
+			).lower()
+			if any(
+				term in flag
+				for term in (
+					"high",
+					"low",
+					"abnormal",
+					"critical",
+					"out of range",
+					"red",
+					"amber",
+					"borderline",
+					"#e24c4c",
+					"#f2994a",
+				)
+			):
 				day = refs_by_type["Observation"].get(observation.name)
 				if day in days:
 					days[day]["abnormal"] = True

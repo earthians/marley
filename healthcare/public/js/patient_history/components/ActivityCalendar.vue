@@ -164,7 +164,12 @@ watch(
 									type="button"
 									class="ph-activity-cell"
 									:class="[
-										`level-${Math.min(4, Math.ceil(Number(dayMap[date]?.total || 0) / 2))}`,
+										`level-${Math.min(
+											4,
+											Math.ceil(
+												Number(dayMap[date]?.total || 0) / 2,
+											),
+										)}`,
 										{
 											'is-abnormal': dayMap[date]?.abnormal,
 											'is-selected': date === selected,
@@ -176,7 +181,9 @@ watch(
 										!dayMap[date]?.total ||
 										date > moment().format('YYYY-MM-DD')
 									"
-									:aria-label="`${moment(date).format('DD MMM YYYY')}: ${dayMap[date]?.total || 0} ${__('records')}`"
+									:aria-label="`${moment(date).format(
+										'DD MMM YYYY',
+									)}: ${dayMap[date]?.total || 0} ${__('records')}`"
 									:title="moment(date).format('dddd, DD MMM YYYY')"
 									:aria-current="
 										date === moment().format('YYYY-MM-DD')

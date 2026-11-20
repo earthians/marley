@@ -1480,8 +1480,7 @@ def render_doc_as_html(doctype: str, docname: str, exclude_fields: str | list | 
 				continue
 
 			table_head = "".join(
-				f"<th>{frappe.utils.escape_html(field.label or field.fieldname)}</th>"
-				for field in columns
+				f"<th>{frappe.utils.escape_html(field.label or field.fieldname)}</th>" for field in columns
 			)
 			table_rows = "".join(
 				"<tr>"
@@ -1509,7 +1508,8 @@ def render_doc_as_html(doctype: str, docname: str, exclude_fields: str | list | 
 			formatted_value = format_value(doc.get(df.fieldname), meta.get_field(df.fieldname), doc)
 			field_type_class = (
 				" is-long"
-				if df.fieldtype in ("Text", "Small Text", "Long Text", "Text Editor", "Markdown Editor", "Code")
+				if df.fieldtype
+				in ("Text", "Small Text", "Long Text", "Text Editor", "Markdown Editor", "Code")
 				else ""
 			)
 			fields.append(

@@ -82,7 +82,7 @@ function morphPaths(previous) {
 							: String(
 									Number(start[i]) +
 										(Number(token) - Number(start[i])) * eased,
-								),
+							  ),
 					)
 					.join(" "),
 			),
@@ -221,7 +221,7 @@ const frame = computed(() => {
 				const priorSlope =
 					index > 1
 						? (before.y - points[index - 2].y) /
-							(before.x - points[index - 2].x || 1)
+						  (before.x - points[index - 2].x || 1)
 						: slope;
 				const next = points[index + 1],
 					nextSlope = next
@@ -235,7 +235,9 @@ const frame = computed(() => {
 					slope * nextSlope <= 0
 						? 0
 						: (2 * slope * nextSlope) / (slope + nextSlope);
-				return `C${before.x + dx / 3},${before.y + (tangentBefore * dx) / 3} ${point.x - dx / 3},${point.y - (tangentAfter * dx) / 3} ${point.x},${point.y}`;
+				return `C${before.x + dx / 3},${before.y + (tangentBefore * dx) / 3} ${
+					point.x - dx / 3
+				},${point.y - (tangentAfter * dx) / 3} ${point.x},${point.y}`;
 			})
 			.join(" ");
 		return { ...item, points, path };
@@ -263,14 +265,14 @@ const frame = computed(() => {
 					bottom: y(normalBand[0]),
 					label: `${__("Normal")} ${normalBand[0]}–${normalBand[1]}`,
 				},
-			]
+		  ]
 		: [];
 	const secondaryTicks =
 		props.metric === "pulse_rate"
 			? [8, 12, 16, 20, 24, 30].map(value => ({
 					value,
 					y: yFor(value, { key: "respiratory_rate" }),
-				}))
+			  }))
 			: [];
 	return {
 		left,
@@ -331,7 +333,10 @@ function positionTooltip() {
 		const below = pointY - tooltipHeight - 12 < 4;
 		let top = below ? pointY + 12 : pointY - tooltipHeight - 12;
 		top = Math.max(4, Math.min(top, card.clientHeight - tooltipHeight - 4));
-		arrowPosition.value = `${Math.max(14, Math.min(tooltipWidth - 14, centerX - left))}px`;
+		arrowPosition.value = `${Math.max(
+			14,
+			Math.min(tooltipWidth - 14, centerX - left),
+		)}px`;
 		tooltipBelow.value = below;
 		tooltipPosition.value = { left: `${left}px`, top: `${top}px` };
 	});
@@ -602,7 +607,16 @@ function seriesColor(index) {
 		</svg>
 		<span class="sr-only" aria-live="polite">{{
 			activeRow
-				? `${moment(time(activeRow)).format("DD MMM YYYY HH:mm")}: ${config.series.map(series => `${series.label} ${activeRow[series.key] ?? __("No reading")}`).join(", ")}`
+				? `${moment(time(activeRow)).format(
+						"DD MMM YYYY HH:mm",
+				  )}: ${config.series
+						.map(
+							series =>
+								`${series.label} ${
+									activeRow[series.key] ?? __("No reading")
+								}`,
+						)
+						.join(", ")}`
 				: ""
 		}}</span>
 		<ChartTooltip

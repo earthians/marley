@@ -7,18 +7,29 @@ import "./styles.css";
 
 let app;
 let context;
-if (import.meta.env.DEV) window.auditPatientHistoryOverflow = auditPatientHistoryOverflow;
+if (import.meta.env.DEV)
+	window.auditPatientHistoryOverflow = auditPatientHistoryOverflow;
 window.mountPatientHistory = function mountPatientHistory(target, initial = {}) {
-  app?.unmount();
-  context = reactive({ patient: initial.patient || "", currentUser: initial.currentUser || "", api });
-  app = createApp(PatientHistory);
-  app.config.globalProperties.__ = (...args) => window.__(...args);
-  app.config.globalProperties.moment = window.moment;
-  app.config.globalProperties.frappe = window.frappe;
-  app.provide("patientHistory", context);
-  app.mount(target);
-  return {
-    setPatient(patient) { if (context) context.patient = patient || ""; },
-    unmount() { app?.unmount(); app = null; context = null; },
-  };
+	app?.unmount();
+	context = reactive({
+		patient: initial.patient || "",
+		currentUser: initial.currentUser || "",
+		api,
+	});
+	app = createApp(PatientHistory);
+	app.config.globalProperties.__ = (...args) => window.__(...args);
+	app.config.globalProperties.moment = window.moment;
+	app.config.globalProperties.frappe = window.frappe;
+	app.provide("patientHistory", context);
+	app.mount(target);
+	return {
+		setPatient(patient) {
+			if (context) context.patient = patient || "";
+		},
+		unmount() {
+			app?.unmount();
+			app = null;
+			context = null;
+		},
+	};
 };

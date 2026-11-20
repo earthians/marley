@@ -6,9 +6,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestPatientHistoryText(HealthcareTestSuite):
 	def test_feed_text_does_not_contain_html_markup_or_entities(self):
-		cleaned = _clean_text(
-			"<div>Consult&nbsp;<b>review</b><br>follow-up &lt;i&gt;note&lt;/i&gt;</div>"
-		)
+		cleaned = _clean_text("<div>Consult&nbsp;<b>review</b><br>follow-up &lt;i&gt;note&lt;/i&gt;</div>")
 
 		self.assertNotIn("<", cleaned)
 		self.assertNotIn("&nbsp;", cleaned)
