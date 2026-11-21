@@ -135,6 +135,7 @@ class TestInpatientRecord(FrappeTestCase):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		ip_record = admit_inpatient()
 		lab_test = create_inpatient_lab_test(ip_record)
+		lab_test.submit()
 
 		self.assertIn(lab_test.name, get_unbilled_names("Lab Test", ip_record))
 
