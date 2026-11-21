@@ -78,7 +78,71 @@
     .result-flag-text {
         white-space: nowrap;
     }
+
+    .imaging-report-title {
+        font-size: 13px;
+    }
+
+    .imaging-section {
+        margin-top: 8px;
+        padding: 6px 8px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .imaging-section-label {
+        font-size: 9px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgb(197, 194, 194);
+        margin-bottom: 3px;
+    }
+
+    .imaging-section-body {
+        font-size: 11px;
+        line-height: 1.5;
+    }
 </style>
+
+{% macro render_imaging_result(observation_name, obs) %}
+<div class="observation-section grouped-obs">
+    <div class="flex" style="padding-bottom: 5px; margin-left:5px; align-items: center;">
+        <b class="imaging-report-title">{{observation_name}}</b>
+        {% if obs.get("time_of_result") %}
+            <span class="text-muted obs-second-line" style="margin-left:8px;">
+                {{frappe.utils.format_datetime(obs.get("time_of_result"))[:-3]}}
+            </span>
+        {% endif %}
+        {% if obs.get("result_flag") %}
+            <span class="result-flag" style="background-color:{{ obs.get("result_flag_bg") or '#f3f3f3' }};">
+                <span class="result-flag-dot" style="background-color:{{ obs.get("result_flag_color") or '#6c757d' }};"></span>
+                <span class="result-flag-text" style="color:{{ obs.get("result_flag_color") or '#6c757d' }};">{{ obs.get("result_flag") }}</span>
+            </span>
+        {% endif %}
+    </div>
+    <div class="observation single-obs" style="padding: 0 5px 5px;">
+        {% if obs.get("result_display") not in [None, "", "Null"] %}
+            <div class="imaging-section">
+                <div class="imaging-section-label">Findings</div>
+                <div class="imaging-section-body">{{obs.get("result_display")}}</div>
+            </div>
+        {% endif %}
+        {% if obs.get("result_interpretation") %}
+            <div class="imaging-section">
+                <div class="imaging-section-label">Interpretation</div>
+                <div class="imaging-section-body">{{obs.get("result_interpretation")}}</div>
+            </div>
+        {% endif %}
+        {% if obs.get("note") %}
+            <div class="note obs-second-line">{{obs.get("note")}}</div>
+        {% endif %}
+        {% if obs.get("description") %}
+            <div class="note obs-second-line">{{obs.get("description")}}</div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
 
 <div class="row section-break diagnostic-report" style="margin-left: 40px;">
     <div class="col-xs-6 column-break">
@@ -98,6 +162,7 @@
         {% endif %}
     </div>
 </div>
+{% if doc.observation_category != "Imaging" %}
 <div class = "observation-details" style="width: 100%; padding-left:40px; margin-bottom: 10px;">
     <div class="obs-field" style="width: 15%;">
         <div class="obs-sh-first-line">
@@ -144,6 +209,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 {% if doc.get("name")  %}
     {% set full_data = get_observations_for_medical_record(doc.name, doc.parent_observation) %}
@@ -158,6 +224,9 @@
 
             {% if data.get("observation") or data.get("observation")  %}
             {% if data.get("observation").get("status")=="Approved" and data.get("observation").get("result_display") not in [None, "", "Null"] %}
+            {% if data.get("observation").get("observation_category") == "Imaging" %}
+                {{ render_imaging_result(observation_name, data.get("observation")) }}
+            {% else %}
             <div class="observation-section grouped-obs">
                 <div class="flex" style="padding-bottom: 5px; margin-left:5px;">
                     <b>
@@ -255,6 +324,7 @@
                 </div>
             {% endif %}
             {% endif %}
+            {% endif %}
         {% else %}
             {% if data["obs_approved"] and data[data.get("observation")] and data["has_result"] %}
                 <div class="observation-section">
@@ -276,6 +346,9 @@
                         {% endif %}
                         {% if comps.get("observation").get("status")=="Approved" and comps.get("observation")  %}
                         {% if comps.get("observation").get("result_display") not in [None, "", "Null"] %}
+                        {% if comps.get("observation").get("observation_category") == "Imaging" %}
+                            {{ render_imaging_result(observation_name, comps.get("observation")) }}
+                        {% else %}
                             <div class="observation-section">
                             <div class="observation single-obs">
                             <div class="observation-details" style="width: 100%;">
@@ -366,6 +439,7 @@
                             {% endif %}
                             </div>
                             </div>
+                        {% endif %}
                         {% endif %}
                         {% endif %}
                     {% endif %}
