@@ -2927,28 +2927,27 @@ def save_and_submit_lab_test(
     if lab_technician is not None:
         doc.lab_technician = lab_technician or None
 
-    # Auto-fill only when the signed-in user is Lab Technician / Lab Technologist.
-    # Nurses, doctors, and other roles are never stamped into lab_technician.
+    # Stamp / repair Lab Technician from the signed-in lab tech.
+    # Ordering doctors (or other non-lab roles) must not block result entry when a
+    # Lab Technician / Lab Technologist is the one saving results.
     from healthcare.api.common import (
         LAB_TECHNICIAN_MEDICAL_ROLES,
         apply_current_user_lab_technician_if_empty,
+        _practitioner_is_lab_technician,
     )
 
-    apply_current_user_lab_technician_if_empty(doc)
-    if (doc.get("lab_technician") or "").strip():
-        role = (
-            frappe.db.get_value(
-                "Healthcare Practitioner", doc.lab_technician, "medical_role"
-            )
-            or ""
-        ).strip()
-        if role not in LAB_TECHNICIAN_MEDICAL_ROLES:
-            frappe.throw(
-                _(
-                    "Lab Technician must have Medical Role Lab Technologist or Lab Technician."
-                ),
-                title=_("Invalid Lab Technician"),
-            )
+    apply_current_user_lab_technician_if_empty(doc, replace_invalid=True)
+    tech = (doc.get("lab_technician") or "").strip()
+    if tech and not _practitioner_is_lab_technician(tech):
+        # Clear invalid stamp so the clearer "required" path can apply on submit;
+        # for draft result save, reject with an actionable message.
+        frappe.throw(
+            _(
+                "Lab Technician must have Medical Role Lab Technologist or Lab Technician. "
+                "The value on this Lab Test ({0}) is not a lab role — clear it or pick a Lab Technician."
+            ).format(tech),
+            title=_("Invalid Lab Technician"),
+        )
 
     if custom_result is not None:
         doc.custom_result = custom_result

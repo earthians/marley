@@ -77,17 +77,17 @@ export function useBatchLabTestResults(
         else next[labTest.name] = value
         return next
       })
-      // When entering a result, auto-pick the signed-in Lab Technician if none is set yet.
+      // When entering a result, stamp the signed-in Lab Technician / Technologist.
+      // Do not keep a non-lab value already on the row (e.g. ordering GP).
       if (trimmed !== original && defaultLabTechId) {
-        const existing = (labTest.lab_technician || '').trim()
         setPendingLabTech((prev) => {
-          if (existing || prev[labTest.name]) return prev
+          if (prev[labTest.name] === defaultLabTechId) return prev
           return { ...prev, [labTest.name]: defaultLabTechId }
         })
-        setPendingLabTechLabels((prev) => {
-          if (existing || prev[labTest.name]) return prev
-          return { ...prev, [labTest.name]: defaultLabTechLabel || defaultLabTechId }
-        })
+        setPendingLabTechLabels((prev) => ({
+          ...prev,
+          [labTest.name]: defaultLabTechLabel || defaultLabTechId,
+        }))
       }
     },
     [defaultLabTechId, defaultLabTechLabel]

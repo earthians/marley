@@ -791,17 +791,37 @@ def get_current_user_lab_technician_option():
 	return resolve_current_user_lab_technician()
 
 
-def apply_current_user_lab_technician_if_empty(doc) -> bool:
-	"""Set ``doc.lab_technician`` from the signed-in lab tech/technologist when still blank.
+def _practitioner_is_lab_technician(practitioner: str | None) -> bool:
+	name = (practitioner or "").strip()
+	if not name:
+		return False
+	role = (frappe.db.get_value("Healthcare Practitioner", name, "medical_role") or "").strip()
+	return role in LAB_TECHNICIAN_MEDICAL_ROLES
 
-	Returns True when a value was applied. Never overwrites an existing technician and
-	never assigns a practitioner whose Medical Role is not Lab Technician / Lab Technologist.
+
+def apply_current_user_lab_technician_if_empty(doc, *, replace_invalid: bool = True) -> bool:
+	"""Stamp ``doc.lab_technician`` from the signed-in Lab Technician / Lab Technologist.
+
+	- Blank → fill from current user when they qualify.
+	- Existing value with a non-lab medical role (e.g. ordering GP) → replace when
+	  ``replace_invalid`` and current user qualifies (so result entry is not blocked).
+	- Existing valid lab tech → leave alone.
+
+	Never assigns a non-lab practitioner.
 	"""
-	if not doc or (getattr(doc, "lab_technician", None) or "").strip():
+	if not doc:
 		return False
 	opt = resolve_current_user_lab_technician()
 	if not opt:
 		return False
+
+	existing = (getattr(doc, "lab_technician", None) or "").strip()
+	if existing:
+		if _practitioner_is_lab_technician(existing):
+			return False
+		if not replace_invalid:
+			return False
+
 	doc.lab_technician = opt["name"]
 	if hasattr(doc, "lab_technician_name") and doc.meta.has_field("lab_technician_name"):
 		doc.lab_technician_name = opt.get("label") or opt["name"]

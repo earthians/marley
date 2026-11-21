@@ -189,13 +189,13 @@ export const ReceptionLongActingMedicineList = ({
     setRemarksSaving(true)
     try {
       await updateLongActingMedicineRemarks(remarksModal.name, remarksText)
-      toast.success('Remarks updated')
+      toast.success('Reception remarks updated')
       setRows((prev) =>
         prev.map((r) => r.name === remarksModal.name ? { ...r, remarks: remarksText } : r)
       )
       setRemarksModal(null)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update remarks')
+      toast.error(err instanceof Error ? err.message : 'Failed to update reception remarks')
     } finally {
       setRemarksSaving(false)
     }
@@ -551,7 +551,7 @@ export const ReceptionLongActingMedicineList = ({
                 <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Dose</th>
                 <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Last Inj.</th>
                 <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Doctor</th>
-                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Remarks</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Reception Remarks</th>
                 <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Doctors Remark</th>
                 <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
                 <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Actions</th>
@@ -614,14 +614,13 @@ export const ReceptionLongActingMedicineList = ({
                         )}
                       </td>
                       <td className="px-3 py-2 text-slate-700 max-w-[10rem]">
-                        {mask(
-                          <span
-                            className="block truncate text-gray-500"
-                            title={row.remarks || undefined}
-                          >
-                            {row.remarks || '—'}
-                          </span>,
-                        )}
+                        {/* Reception remarks are for this screen — never mask them. */}
+                        <span
+                          className="block truncate text-slate-700"
+                          title={row.remarks || undefined}
+                        >
+                          {row.remarks?.trim() ? row.remarks : '—'}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-slate-700 max-w-[12rem]">
                         {mask(
@@ -761,7 +760,7 @@ export const ReceptionLongActingMedicineList = ({
                                 onClick={(e) => openRemarksModal(e, row)}
                                 className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                               >
-                                <span className="text-slate-500 text-base leading-none">✏️</span> Add Remarks
+                                <span className="text-slate-500 text-base leading-none">✏️</span> Add Reception Remarks
                               </button>
                             </PortalActionsMenu>
                           </div>
@@ -803,7 +802,7 @@ export const ReceptionLongActingMedicineList = ({
                   <th className="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Side</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Given by</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Notes</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase whitespace-nowrap">Reception Remarks</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase whitespace-nowrap">Cancelled Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1007,13 +1006,13 @@ export const ReceptionLongActingMedicineList = ({
         />
       )}
 
-      {/* Add Remarks Modal */}
+      {/* Add Reception Remarks Modal */}
       {remarksModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold text-slate-900">Add Remarks</h2>
+                <h2 className="text-base font-semibold text-slate-900">Add Reception Remarks</h2>
                 <p className="text-xs text-slate-500 mt-0.5">{remarksModal.name}</p>
               </div>
               <button
@@ -1027,12 +1026,12 @@ export const ReceptionLongActingMedicineList = ({
             </div>
             <div className="px-5 py-4 space-y-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Remarks</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Reception Remarks</label>
                 <textarea
                   value={remarksText}
                   onChange={(e) => setRemarksText(e.target.value)}
                   rows={5}
-                  placeholder="Enter remarks..."
+                  placeholder="Enter reception remarks…"
                   className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   autoFocus
                 />
@@ -1053,7 +1052,7 @@ export const ReceptionLongActingMedicineList = ({
                 disabled={remarksSaving}
                 className="px-4 py-2 text-sm rounded-md bg-primary text-white hover:bg-primary/90 disabled:opacity-50 font-medium"
               >
-                {remarksSaving ? 'Saving…' : 'Save Remarks'}
+                {remarksSaving ? 'Saving…' : 'Save Reception Remarks'}
               </button>
             </div>
           </div>

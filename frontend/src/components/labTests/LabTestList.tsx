@@ -3401,12 +3401,13 @@ export const LabTestList = ({
         : [{ file_name: '', document_type: '', transaction_no: '', upload_remarks: '' }]
       setResultDocuments(docs)
       const existingTech = (doc.lab_technician || '').trim()
-      if (existingTech) {
-        setLabTechnician(existingTech)
-        setLabTechnicianQuery((doc.lab_technician_name || '').trim() || existingTech)
-      } else if (defaultLabTechnician?.name) {
+      // Prefer signed-in lab tech when entering results (existing is often the ordering doctor).
+      if (defaultLabTechnician?.name) {
         setLabTechnician(defaultLabTechnician.name)
         setLabTechnicianQuery(defaultLabTechnician.label || defaultLabTechnician.name)
+      } else if (existingTech) {
+        setLabTechnician(existingTech)
+        setLabTechnicianQuery((doc.lab_technician_name || '').trim() || existingTech)
       } else {
         setLabTechnician('')
         setLabTechnicianQuery('')

@@ -57,6 +57,21 @@ def _package_days_elapsed(admission, as_of=None) -> int:
 	return (end - start).days + 1
 
 
+def _is_open_daily_package(admission, package) -> bool:
+	"""Daily / standard room packages are open-ended (no_of_days=1 means per-day rate).
+
+	Fixed programs (7-day, 14-day, …) keep a hard package length. The old daily
+	format must keep charging room days for the whole stay.
+	"""
+	if cint(getattr(package, "is_daily_default", 0) or 0):
+		return True
+	if cint(admission.get("standard_package") or 0):
+		return True
+	# Common naming for the default daily room package
+	name = (getattr(package, "name", None) or getattr(package, "package_name", None) or "").strip().lower()
+	return name in {"daily (default)", "daily", "daily package"}
+
+
 def _days_from_unledgered_quotations(admission_name: str, package_name: str | None = None) -> int:
 	"""Days ordered from package quotations that were never written to Package Detail.
 
@@ -223,11 +238,10 @@ def _amount_per_day(admission, package_name: str, service_unit: str | None = Non
 def _last_package_billed_to_date(admission_name: str):
 	"""Latest date already covered by a package/room stay charge.
 
-	Prefers Package Detail.to_date. If the ledger row is missing (this admission
-	has package_days_billed = 0 even though a stay SO exists), fall back to the
-	latest package Sales Order transaction date.
+	Prefers Package Detail.to_date (actual stay coverage). Only if the ledger is
+	missing do we fall back to Sales Order transaction dates — those are billing
+	dates, not coverage end dates, and must not skip an unbilled calendar day.
 	"""
-	last = None
 	if frappe.db.has_column("Package Detail", "to_date"):
 		rows = frappe.get_all(
 			"Package Detail",
@@ -237,7 +251,7 @@ def _last_package_billed_to_date(admission_name: str):
 			limit_page_length=1,
 		)
 		if rows and rows[0].get("to_date"):
-			last = getdate(rows[0].to_date)
+			return getdate(rows[0].to_date)
 
 	so_dates = []
 	seen: set[str] = set()
@@ -281,10 +295,7 @@ def _last_package_billed_to_date(admission_name: str):
 			if td:
 				so_dates.append(getdate(td))
 
-	if so_dates:
-		so_last = max(so_dates)
-		last = max(last, so_last) if last else so_last
-	return last
+	return max(so_dates) if so_dates else None
 
 
 def _charge_window(admission, package, as_of=None, *, through_discharge=False) -> dict:
@@ -294,6 +305,7 @@ def _charge_window(admission, package, as_of=None, *, through_discharge=False) -
 	package_name = package.name
 	service_unit = _resolve_quotation_service_unit(admission.name)
 	program_days = cint(getattr(package, "no_of_days", 0) or 0)
+	is_daily = _is_open_daily_package(admission, package)
 	elapsed = _package_days_elapsed(admission, as_of=as_of)
 	already = _days_already_billed(admission.name, package_name)
 
@@ -306,10 +318,10 @@ def _charge_window(admission, package, as_of=None, *, through_discharge=False) -
 	start = _admission_start_date(admission)
 	from_date = None
 
-	if through_discharge:
-		# Family may already have paid through a mid-stay date (e.g. 9 Aug). Charge the
-		# next calendar day through the discharge date, even if the package length or
-		# original quotation qty has already been fully ordered.
+	# Daily/standard room packages (and discharge catch-up) are open-ended: charge
+	# from the day after the last billed stay day through as_of. Fixed programs
+	# still stop at package length.
+	if through_discharge or is_daily:
 		last_to = _last_package_billed_to_date(admission.name)
 		if last_to:
 			from_date = add_days(last_to, 1)
@@ -335,9 +347,12 @@ def _charge_window(admission, package, as_of=None, *, through_discharge=False) -
 			if from_date > to_date:
 				from_date = to_date
 
-	remaining_before = max(program_days - already, 0) if program_days else None
+	# Fixed programs expose remaining package length; daily room rate stays open.
+	remaining_before = None if is_daily else (max(program_days - already, 0) if program_days else None)
 	remaining_after = (
-		max(program_days - (already + days_to_charge), 0) if program_days else None
+		None
+		if is_daily
+		else (max(program_days - (already + days_to_charge), 0) if program_days else None)
 	)
 
 	per_day = _amount_per_day(admission, package_name, service_unit=service_unit)
@@ -363,7 +378,9 @@ def _charge_window(admission, package, as_of=None, *, through_discharge=False) -
 		),
 		"quotation_days": quot_days or None,
 		"quotation_ordered_days": ordered or None,
-		"program_days": program_days,
+		"quotation_remaining_days": remaining_on_quote,
+		"program_days": None if is_daily else program_days,
+		"is_daily_package": is_daily,
 		"days_elapsed": elapsed,
 		"days_already_billed": already,
 		"days_to_charge": days_to_charge,
@@ -560,7 +577,13 @@ def _charge_package_days(
 		return None
 
 	package = frappe.get_doc("Inpatient Package", package_name)
-	preview = _charge_window(adm, package, as_of=as_of, through_discharge=through_discharge)
+	is_daily = _is_open_daily_package(adm, package)
+	preview = _charge_window(
+		adm,
+		package,
+		as_of=as_of,
+		through_discharge=through_discharge or is_daily,
+	)
 
 	quotation = _find_admission_package_quotation(admission, package_name, allow_draft=True)
 	# A package change only updates the admission; the previous package Quotation
@@ -578,7 +601,7 @@ def _charge_package_days(
 				).format(
 					preview.get("days_elapsed"),
 					preview.get("days_already_billed"),
-					preview.get("program_days") or _("(open)"),
+					preview.get("program_days") or _("daily / open"),
 					quotation.name if quotation else _("(none)"),
 				)
 			)
@@ -589,37 +612,76 @@ def _charge_package_days(
 		)
 
 	days_to_charge = cint(preview["days_to_charge"])
+	per_day = flt(preview["amount_per_day"])
 	default_note = note or _(
 		"Package charge to {0}: {1} day(s) @ {2} = {3}."
 	).format(
 		preview.get("to_date"),
 		days_to_charge,
-		preview.get("amount_per_day"),
+		per_day,
 		preview.get("amount"),
 	)
 
-	if through_discharge or not quotation:
+	def _standalone(days: int, from_date, to_date, so_note: str) -> str:
 		item = _package_charge_item(adm, quotation, service_unit=preview.get("service_unit"))
 		if not item:
 			if not throw_if_nothing:
-				return None
-			frappe.throw(_("No package/room Item found to charge stay days for admission {0}.").format(admission))
+				return ""
+			frappe.throw(
+				_("No package/room Item found to charge stay days for admission {0}.").format(admission)
+			)
 		desc = (
 			f"{item.get('description') or item.get('item_name') or 'Inpatient Package'} "
-			f"— {days_to_charge} day(s) @ {preview.get('amount_per_day')}/day"
-			f" ({preview.get('from_date')} to {preview.get('to_date')})"
+			f"— {days} day(s) @ {per_day}/day"
+			f" ({from_date} to {to_date})"
 		).strip()
-		sales_order = _make_standalone_package_sales_order(
+		return _make_standalone_package_sales_order(
 			adm,
-			days_to_charge=days_to_charge,
-			amount_per_day=flt(preview["amount_per_day"]),
+			days_to_charge=days,
+			amount_per_day=per_day,
 			item_code=item["item_code"],
 			item_name=item.get("item_name"),
 			description=desc,
-			note=default_note,
+			note=so_note,
 			quotation=quotation,
-			as_of=preview.get("to_date"),
+			as_of=to_date,
 		)
+
+	def _ledger(sales_order: str, days: int, from_date, to_date) -> None:
+		try:
+			record_partial_package_charge(
+				quotation=quotation,
+				sales_order=sales_order,
+				days=days,
+				amount=flt(per_day) * cint(days),
+				amount_per_day=per_day,
+				from_date=from_date,
+				to_date=to_date,
+				admission=admission,
+				package=package_name,
+			)
+		except Exception:
+			frappe.log_error(
+				title=f"Package charge ledger (SOA) failed: {quotation.name if quotation else admission}"
+			)
+
+	from frappe.utils import add_days
+
+	quote_remaining = cint(preview.get("quotation_remaining_days") or 0)
+	use_standalone = through_discharge or not quotation or (is_daily and quote_remaining <= 0)
+
+	sales_orders: list[str] = []
+	if use_standalone:
+		sales_order = _standalone(
+			days_to_charge,
+			preview.get("from_date"),
+			preview.get("to_date"),
+			default_note,
+		)
+		if not sales_order:
+			return None
+		sales_orders.append(sales_order)
+		_ledger(sales_order, days_to_charge, preview.get("from_date"), preview.get("to_date"))
 	else:
 		# Submit draft quotation without auto full-SO (we create a partial SO below)
 		if cint(quotation.docstatus) == 0:
@@ -632,54 +694,78 @@ def _charge_package_days(
 				frappe.flags.healthcare_skip_package_auto_so = False
 			quotation.reload()
 
-		sales_order = _make_partial_package_sales_order(
-			quotation,
-			days_to_charge=days_to_charge,
-			amount_per_day=flt(preview["amount_per_day"]),
-			note=note
-			or _(
-				"Package charge to {0}: {1} day(s) @ {2} = {3} (partial from Quotation {4})."
-			).format(
-				preview.get("to_date"),
-				days_to_charge,
-				preview.get("amount_per_day"),
-				preview.get("amount"),
-				quotation.name,
-			),
-		)
+		days_from_quote = days_to_charge
+		days_beyond_quote = 0
+		if is_daily and quote_remaining >= 0 and days_to_charge > quote_remaining:
+			days_from_quote = quote_remaining
+			days_beyond_quote = days_to_charge - quote_remaining
 
-	try:
-		record_partial_package_charge(
-			quotation=quotation,
-			sales_order=sales_order,
-			days=days_to_charge,
-			amount=flt(preview["amount"]),
-			amount_per_day=flt(preview["amount_per_day"]),
-			from_date=preview.get("from_date"),
-			to_date=preview.get("to_date"),
-			admission=admission,
-			package=package_name,
-		)
-	except Exception:
-		frappe.log_error(
-			title=f"Package charge ledger (SOA) failed: {quotation.name if quotation else admission}"
-		)
+		if days_from_quote > 0:
+			from_date = preview.get("from_date")
+			to_date = (
+				str(add_days(getdate(from_date), days_from_quote - 1))
+				if from_date
+				else preview.get("to_date")
+			)
+			sales_order = _make_partial_package_sales_order(
+				quotation,
+				days_to_charge=days_from_quote,
+				amount_per_day=per_day,
+				note=note
+				or _(
+					"Package charge to {0}: {1} day(s) @ {2} = {3} (partial from Quotation {4})."
+				).format(
+					to_date,
+					days_from_quote,
+					per_day,
+					flt(per_day) * days_from_quote,
+					quotation.name,
+				),
+			)
+			sales_orders.append(sales_order)
+			_ledger(sales_order, days_from_quote, from_date, to_date)
+
+		if days_beyond_quote > 0:
+			from_date = (
+				str(add_days(getdate(preview.get("from_date")), days_from_quote))
+				if preview.get("from_date")
+				else preview.get("from_date")
+			)
+			to_date = preview.get("to_date")
+			sales_order = _standalone(
+				days_beyond_quote,
+				from_date,
+				to_date,
+				_(
+					"Daily room charge beyond Quotation {0}: {1} day(s) @ {2} ({3} to {4})."
+				).format(
+					quotation.name if quotation else _("(none)"),
+					days_beyond_quote,
+					per_day,
+					from_date,
+					to_date,
+				),
+			)
+			sales_orders.append(sales_order)
+			_ledger(sales_order, days_beyond_quote, from_date, to_date)
 
 	billed_after = _days_already_billed(admission, package_name)
 	quotation_name = quotation.name if quotation else None
+	primary_so = sales_orders[-1] if sales_orders else None
 
 	return {
 		"ok": True,
 		"quotation": quotation_name,
-		"sales_order": sales_order,
+		"sales_order": primary_so,
+		"sales_orders": sales_orders,
 		"days_charged": days_to_charge,
-		"amount": preview["amount"],
-		"amount_per_day": preview["amount_per_day"],
+		"amount": flt(per_day) * days_to_charge,
+		"amount_per_day": per_day,
 		"days_already_billed": billed_after,
 		"remaining_days": (
-			max(cint(preview.get("program_days") or 0) - billed_after, 0)
-			if preview.get("program_days")
-			else None
+			None
+			if is_daily or not preview.get("program_days")
+			else max(cint(preview.get("program_days") or 0) - billed_after, 0)
 		),
 		"from_date": preview.get("from_date"),
 		"to_date": preview.get("to_date"),
@@ -687,8 +773,8 @@ def _charge_package_days(
 			"Charged {0} package day(s) for {1} via Sales Order {2}."
 		).format(
 			days_to_charge,
-			flt(preview["amount"]),
-			sales_order,
+			flt(per_day) * days_to_charge,
+			", ".join(sales_orders),
 		),
 	}
 

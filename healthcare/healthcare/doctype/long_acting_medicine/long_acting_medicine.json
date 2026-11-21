@@ -162,7 +162,7 @@
    "allow_on_submit": 1,
    "fieldname": "remarks",
    "fieldtype": "Small Text",
-   "label": "Remarks"
+   "label": "Reception Remarks"
   },
   {
    "fieldname": "column_break_mcjj",

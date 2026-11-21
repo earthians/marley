@@ -722,7 +722,9 @@ export function ReceptionReports() {
           )
         } else {
           toast.error(
-            `No unbilled package days. Elapsed ${preview?.days_elapsed ?? 0}, already billed ${preview?.days_already_billed ?? 0}, package ${preview?.program_days ?? '—'} days${preview?.quotation ? ` (Quotation ${preview.quotation}).` : '.'}`,
+            `No unbilled package days. Elapsed ${preview?.days_elapsed ?? 0}, already billed ${preview?.days_already_billed ?? 0}, package ${
+              preview?.is_daily_package ? 'daily / open' : `${preview?.program_days ?? '—'} days`
+            }${preview?.quotation ? ` (Quotation ${preview.quotation}).` : '.'}`,
           )
         }
         return

@@ -219,7 +219,10 @@ export function LongActingMedicineDetailPanel({
             <section className="rounded-xl border border-emerald-200/80 bg-white px-4 py-4 shadow-sm ring-1 ring-emerald-100/80 sm:px-5 sm:py-5">
               <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-emerald-900">Remarks</h3>
               {(doc?.remarks || preview?.remarks) ? (
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{doc?.remarks || preview?.remarks}</p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                  <span className="font-medium">Reception: </span>
+                  {doc?.remarks || preview?.remarks}
+                </p>
               ) : null}
               {(doc?.doctors_remark || preview?.doctors_remark) ? (
                 <p className="mt-2 text-sm text-slate-600 whitespace-pre-wrap">
@@ -243,7 +246,7 @@ export function LongActingMedicineDetailPanel({
                       <th className="py-2 pr-3 text-center">Side</th>
                       <th className="py-2 pr-3">Given By</th>
                       <th className="py-2 pr-3">Notes</th>
-                      <th className="py-2">Reception Remarks</th>
+                      <th className="py-2">Cancelled Notes</th>
                     </tr>
                   </thead>
                   <tbody>

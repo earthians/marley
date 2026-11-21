@@ -12,7 +12,9 @@ export interface PackageChargePreview {
   quotation_status?: string | null
   quotation_days?: number | null
   quotation_ordered_days?: number | null
+  quotation_remaining_days?: number | null
   program_days?: number | null
+  is_daily_package?: boolean
   days_elapsed?: number
   days_already_billed?: number
   days_to_charge?: number
@@ -150,7 +152,12 @@ export function PackageChargeToTodayModal({
                 <CalendarClock className="h-3.5 w-3.5 text-slate-400" aria-hidden />
                 {period}
               </span>
-              {Number(preview.program_days || 0) > 0 ? (
+              {preview.is_daily_package ? (
+                <span>
+                  Package duration:{' '}
+                  <span className="font-medium text-slate-700">Daily / open (room rate)</span>
+                </span>
+              ) : Number(preview.program_days || 0) > 0 ? (
                 <span>
                   Package duration:{' '}
                   <span className="font-medium text-slate-700">{preview.program_days} days</span>
@@ -192,9 +199,13 @@ export function PackageChargeToTodayModal({
           <div className="flex gap-2.5 rounded-lg border border-sky-200 bg-sky-50/80 px-3 py-2.5 text-sm text-sky-900">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" aria-hidden />
             <p className="leading-relaxed">
-              {preview.quotation
-                ? 'Creates a partial Sales Order from the existing Quotation for the unbilled stay days. No new Quotation is created and the package assignment stays the same.'
-                : "No Quotation exists for the current package (for example after a package change). The charge is posted as a standalone Sales Order at the admission's current package rate."}
+              {preview.is_daily_package
+                ? preview.quotation
+                  ? 'Daily room package: charges unbilled stay days at the room rate. Uses remaining Quotation qty first, then a standalone Sales Order for any days beyond the Quotation.'
+                  : 'Daily room package: posts a standalone Sales Order at the admission room rate for unbilled stay days.'
+                : preview.quotation
+                  ? 'Creates a partial Sales Order from the existing Quotation for the unbilled stay days. No new Quotation is created and the package assignment stays the same.'
+                  : "No Quotation exists for the current package (for example after a package change). The charge is posted as a standalone Sales Order at the admission's current package rate."}
             </p>
           </div>
         </>

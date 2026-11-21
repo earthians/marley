@@ -375,12 +375,14 @@ export function LabTestEnterResultsModal({
           : [{ file_name: '', document_type: '', transaction_no: '', upload_remarks: '' }]
         setResultDocuments(docs)
         const existingTech = (doc.lab_technician || '').trim()
-        if (existingTech) {
-          setLabTechnician(existingTech)
-          setLabTechnicianQuery((doc.lab_technician_name || '').trim() || existingTech)
-        } else if (defaultTech?.name) {
+        // Prefer the signed-in Lab Technician / Technologist when entering results.
+        // Existing values are often the ordering doctor (wrong field) and must not stick.
+        if (defaultTech?.name) {
           setLabTechnician(defaultTech.name)
           setLabTechnicianQuery(defaultTech.label || defaultTech.name)
+        } else if (existingTech) {
+          setLabTechnician(existingTech)
+          setLabTechnicianQuery((doc.lab_technician_name || '').trim() || existingTech)
         } else {
           setLabTechnician('')
           setLabTechnicianQuery('')
