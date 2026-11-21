@@ -209,6 +209,45 @@ class TestInpatientRecord(HealthcareTestSuite):
 			"Occupied", frappe.db.get_value("Healthcare Service Unit", service_unit, "occupancy_status")
 		)
 
+	def test_discharge_ignores_service_requests_that_need_no_further_action(self):
+		frappe.db.sql("""delete from `tabInpatient Record`""")
+		previous_pending_services = frappe.db.get_single_value(
+			"Healthcare Settings", "allow_discharge_despite_pending_healthcare_services"
+		)
+		self.addCleanup(
+			setup_inpatient_settings,
+			key="allow_discharge_despite_pending_healthcare_services",
+			value=previous_pending_services,
+		)
+		setup_inpatient_settings(key="allow_discharge_despite_pending_healthcare_services", value=0)
+
+		ip_record = admit_inpatient()
+		service_unit = ip_record.inpatient_occupancies[0].service_unit
+		completed = create_pending_service_request(ip_record)
+		frappe.db.set_value("Service Request", completed.name, "status", "completed-Request Status")
+		entered_in_error = create_pending_service_request(ip_record)
+		frappe.db.set_value(
+			"Service Request", entered_in_error.name, "status", "entered-in-error-Request Status"
+		)
+		active = create_pending_service_request(ip_record)
+
+		schedule_discharge(frappe.as_json({"patient": ip_record.patient}))
+		ip_record = frappe.get_doc("Inpatient Record", ip_record.name)
+		mark_invoiced_inpatient_occupancy(ip_record)
+
+		with self.assertRaises(frappe.ValidationError) as error:
+			ip_record.discharge()
+		self.assertIn(active.name, str(error.exception))
+		self.assertNotIn(completed.name, str(error.exception))
+		self.assertNotIn(entered_in_error.name, str(error.exception))
+
+		frappe.db.set_value("Service Request", active.name, "status", "revoked-Request Status")
+		ip_record.discharge()
+		self.assertEqual("Discharged", ip_record.status)
+		self.assertEqual(
+			"Vacant", frappe.db.get_value("Healthcare Service Unit", service_unit, "occupancy_status")
+		)
+
 	def test_do_not_bill_patient_encounters_for_inpatients(self):
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		previous_do_not_bill = frappe.db.get_single_value(
