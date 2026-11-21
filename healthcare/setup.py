@@ -1331,12 +1331,12 @@ def get_patient_history_config():
 
 
 def setup_code_systems():
-	setup_code_sysem_for_version()
+	setup_code_system_for_version()
 	setup_non_fhir_code_systems()
 	setup_fhir_code_systems()
 
 
-def setup_code_sysem_for_version():
+def setup_code_system_for_version():
 	records = [
 		{
 			"doctype": "Code System",
