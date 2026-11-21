@@ -258,7 +258,8 @@ def _apply_row_fields(
 		doc.patient_name = patient_doc.patient_name
 		doc.patient_sex = patient_doc.sex or doc.patient_sex
 		if patient_doc.dob:
-			doc.patient_age = patient_doc.age
+			# Use display string — Patient.age is a relativedelta object.
+			doc.patient_age = patient_doc.get_age()
 
 	if template_name and frappe.db.exists("Lab Test Template", template_name):
 		template = frappe.get_doc("Lab Test Template", template_name)

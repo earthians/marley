@@ -25,6 +25,41 @@ def _esc(value) -> str:
 	return frappe.utils.escape_html(str(value)) if value not in (None, "") else ""
 
 
+def _format_patient_age(value) -> str:
+	"""Normalize Lab Test.patient_age for print (legacy imports stored relativedelta).
+
+	Normal docs use ``Patient.get_age()`` → ``55 Year(s) 9 Month(s) 30 Day(s)``.
+	Legacy import incorrectly saved ``Patient.age`` (a relativedelta), which prints as
+	``relativedelta(years=+55, months=+9, days=+30)``.
+	"""
+	if value is None or value == "":
+		return ""
+	# Live relativedelta object (should not persist, but handle if present)
+	if hasattr(value, "years") and hasattr(value, "months") and not isinstance(value, (str, bytes)):
+		return (
+			f'{int(value.years)} Year(s) {int(value.months)} Month(s) '
+			f'{int(getattr(value, "days", 0) or 0)} Day(s)'
+		)
+	text = str(value).strip()
+	if not text or "relativedelta" not in text.lower():
+		return text
+	# Flatten whitespace so years/months/days can span lines
+	flat = re.sub(r"\s+", " ", text)
+	years = months = days = 0
+	m = re.search(r"years=\+?(-?\d+)", flat, flags=re.I)
+	if m:
+		years = int(m.group(1))
+	m = re.search(r"months=\+?(-?\d+)", flat, flags=re.I)
+	if m:
+		months = int(m.group(1))
+	m = re.search(r"days=\+?(-?\d+)", flat, flags=re.I)
+	if m:
+		days = int(m.group(1))
+	if not any((years, months, days)) and "relativedelta" in flat.lower():
+		return ""
+	return f"{years} Year(s) {months} Month(s) {days} Day(s)"
+
+
 def _resolve_group_lab_tests(doc):
 	"""All Lab Tests on the Service Request (full request report), else just this doc.
 
@@ -218,7 +253,9 @@ def _patient_meta(doc):
 	user_name = doc.get("lab_technician_name") or ""
 	if not user_name:
 		user_name = frappe.db.get_value("User", doc.get("owner"), "full_name") or doc.get("owner") or ""
-	sex_age = " / ".join([p for p in [doc.get("patient_sex") or "", doc.get("patient_age") or ""] if p])
+	sex_age = " / ".join(
+		[p for p in [doc.get("patient_sex") or "", _format_patient_age(doc.get("patient_age"))] if p]
+	)
 	referred_doctor = doc.get("practitioner_name") or doc.get("practitioner") or ""
 	if not referred_doctor and doc.get("doc_no"):
 		from healthcare.api.lab_test import _resolve_practitioner_from_doc_no

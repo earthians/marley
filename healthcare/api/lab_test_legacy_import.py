@@ -558,7 +558,8 @@ def _apply_header_fields(
 		doc.patient_name = patient.patient_name
 		doc.patient_sex = patient.sex or doc.patient_sex
 		if patient.dob:
-			doc.patient_age = patient.age
+			# Use display string — Patient.age is a relativedelta object.
+			doc.patient_age = patient.get_age()
 	elif doc.patient:
 		doc.patient_name = _("Patient {0}").format(doc.patient)
 
