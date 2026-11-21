@@ -9,6 +9,8 @@
   "naming_series",
   "patient",
   "patient_name",
+  "inpatient_record",
+  "inpatient_status",
   "invoiced",
   "column_break_4",
   "company",
@@ -69,6 +71,21 @@
    "fieldname": "patient_name",
    "fieldtype": "Data",
    "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_record",
+   "fieldname": "inpatient_record",
+   "fieldtype": "Link",
+   "label": "Inpatient Record",
+   "options": "Inpatient Record",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.inpatient_status",
+   "fieldname": "inpatient_status",
+   "fieldtype": "Data",
+   "label": "Inpatient Status",
    "read_only": 1
   },
   {
