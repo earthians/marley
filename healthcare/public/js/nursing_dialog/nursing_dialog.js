@@ -176,7 +176,7 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 			reference_name || (same_patient ? this.source_name : null);
 
 		this.search.set_value("");
-		this.snapshot.set_patient(patient);
+		this.snapshot.set_patient(patient, this.reference_doctype, this.reference_name);
 		this.render_banner();
 		this.select_action(this.get_selected_action());
 		// the rail flags belong to the patient, not the dialog
@@ -311,6 +311,8 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 		this.snapshot = new healthcare.nursing.Snapshot({
 			wrapper: this.dialog.$body.find(".nursing-snapshot"),
 			patient: this.patient,
+			reference_doctype: this.reference_doctype,
+			reference_name: this.reference_name,
 		});
 		this.snapshot.refresh();
 	}
@@ -373,10 +375,16 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 		}
 
 		frappe.show_alert({ message: __("Recorded"), indicator: "green" });
-		this.snapshot.refresh();
+		this.recorded();
 		this.select_action(this.get_selected_action());
 		// the form was rebuilt under the cursor, so hand focus back to the rail
 		this.focus_rail();
+	}
+
+	// after a write has finished, so a form showing this patient can catch up even once the dialog is closed
+	recorded() {
+		this.snapshot.refresh();
+		if (this.on_recorded) this.on_recorded();
 	}
 
 	focus_rail() {
