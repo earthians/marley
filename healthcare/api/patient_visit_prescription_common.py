@@ -9,7 +9,10 @@ from typing import Any
 import frappe
 from frappe.utils import cint, now_datetime
 
-from healthcare.api.data_migration_jobs import LEGACY_PMO_SIGNATURE
+from healthcare.api.data_migration_jobs import (
+	LEGACY_PMO_SIGNATURE,
+	ensure_legacy_pmo_signature_file,
+)
 
 PMO_DOCTYPE = "Patient Medication Order"
 QUEUE_ROOT_DIR = "data_migration_queue"
@@ -50,6 +53,7 @@ def submit_and_complete_legacy_visit_pmo(doc) -> None:
 	doc.total_orders = total
 	doc.completed_orders = total
 	doc.new_system = 0
+	ensure_legacy_pmo_signature_file()
 	doc.doctors_signature = LEGACY_PMO_SIGNATURE
 	doc.flags.ignore_mandatory = True
 	doc.flags.ignore_links = True

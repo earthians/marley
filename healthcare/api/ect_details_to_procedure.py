@@ -53,16 +53,24 @@ def _require_admin():
 	frappe.only_for(("System Manager", "Healthcare Administrator"))
 
 
-def _coerce(value):
+def _coerce(value, fieldtype: str | None = None):
 	"""Make legacy values safe to assign to their target field."""
 	if isinstance(value, datetime.datetime):
+		if fieldtype == "Date":
+			return value.date().isoformat()
+		if fieldtype == "Time":
+			return value.strftime("%H:%M:%S")
 		return str(value)
-	if isinstance(value, datetime.date):
-		return str(value)
+	if isinstance(value, datetime.date) and not isinstance(value, datetime.datetime):
+		return value.isoformat()
 	if isinstance(value, datetime.time):
 		return value.strftime("%H:%M:%S")
 	if isinstance(value, datetime.timedelta):
-		return value.total_seconds()
+		# MySQL TIME columns reject raw second counts like "39780".
+		total = int(value.total_seconds()) % (24 * 3600)
+		hours, rem = divmod(abs(total), 3600)
+		minutes, seconds = divmod(rem, 60)
+		return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 	return value
 
 
@@ -78,7 +86,11 @@ def _build_procedure_fields(src, *, include_empty: bool = False) -> dict:
 		target = _FIELD_RENAME.get(df.fieldname, df.fieldname)
 		if not target_meta.has_field(target):
 			continue
-		value = _coerce(src.get(df.fieldname))
+		target_df = target_meta.get_field(target)
+		value = _coerce(
+			src.get(df.fieldname),
+			(target_df.fieldtype if target_df else None) or df.fieldtype,
+		)
 		if value in (None, "") and not include_empty:
 			continue
 		fields[target] = value
@@ -88,10 +100,16 @@ def _build_procedure_fields(src, *, include_empty: bool = False) -> dict:
 	for child_field, keys in _CHILD_TABLE_FIELDS.items():
 		if not target_meta.has_field(child_field):
 			continue
-		rows = [
-			{key: _coerce(row.get(key)) for key in keys}
-			for row in (src.get(child_field) or [])
-		]
+		child_meta = frappe.get_meta(target_meta.get_field(child_field).options)
+		rows = []
+		for row in src.get(child_field) or []:
+			payload = {}
+			for key in keys:
+				child_df = child_meta.get_field(key) if child_meta else None
+				payload[key] = _coerce(
+					row.get(key), child_df.fieldtype if child_df else None
+				)
+			rows.append(payload)
 		if rows or include_empty:
 			fields[child_field] = rows
 

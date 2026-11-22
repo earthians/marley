@@ -266,6 +266,25 @@ def import_patient_medication_order_for_visit(visit_payload: dict) -> dict:
 	created = False
 	if existing_name:
 		doc = frappe.get_doc(DOCTYPE, existing_name)
+		# HIS reconcile rebuilds the full line set. Submitted PMOs cannot be rewritten
+		# in place (UpdateAfterSubmitError on posting_date / total_orders / children),
+		# so cancel and create a fresh legacy HIS prescription instead.
+		if doc.docstatus == 1:
+			doc.flags.ignore_permissions = True
+			doc.flags.ignore_links = True
+			frappe.flags.in_import = True
+			doc.cancel()
+			doc = frappe.new_doc(DOCTYPE)
+			doc.trans_no = get_next_transaction_number(
+				"Patient Medication Order", fieldname="trans_no"
+			)
+			created = True
+		elif doc.docstatus == 2:
+			doc = frappe.new_doc(DOCTYPE)
+			doc.trans_no = get_next_transaction_number(
+				"Patient Medication Order", fieldname="trans_no"
+			)
+			created = True
 	else:
 		doc = frappe.new_doc(DOCTYPE)
 		doc.trans_no = get_next_transaction_number("Patient Medication Order", fieldname="trans_no")

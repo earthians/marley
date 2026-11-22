@@ -364,6 +364,27 @@ def start_medication_order_complete_migration() -> dict:
 
 LEGACY_PMO_SIGNATURE = "/files/legacy-migration-signature.png"
 
+# 1×1 transparent PNG used as the public placeholder for legacy / migrated PMOs.
+_LEGACY_PMO_SIGNATURE_PNG = (
+	b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+	b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01"
+	b"\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+def ensure_legacy_pmo_signature_file() -> str:
+	"""Create the public placeholder PNG if missing so Attach Image saves do not fail."""
+	import os
+
+	file_url = LEGACY_PMO_SIGNATURE
+	rel = file_url.lstrip("/")
+	abs_path = frappe.get_site_path("public", *rel.split("/"))
+	os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+	if not os.path.exists(abs_path):
+		with open(abs_path, "wb") as handle:
+			handle.write(_LEGACY_PMO_SIGNATURE_PNG)
+	return file_url
+
 
 def _failed_job_names_key(job: str) -> str:
 	return f"healthcare:data_migration:{job}:failed"
@@ -655,6 +676,7 @@ def _pmo_names_for_admission_status(
 def _ensure_pmo_legacy_signature(doc) -> None:
 	if (doc.doctors_signature or "").strip():
 		return
+	ensure_legacy_pmo_signature_file()
 	frappe.db.set_value(
 		doc.doctype,
 		doc.name,
@@ -2310,6 +2332,7 @@ def process_pmo_sign_batch() -> None:
 					doc.reload()
 
 				if not (doc.doctors_signature or "").strip():
+					ensure_legacy_pmo_signature_file()
 					frappe.db.set_value(
 						doc.doctype,
 						doc.name,

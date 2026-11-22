@@ -176,11 +176,11 @@ def _flag(result: str, lo, hi) -> str:
 	return "Normal"
 
 
-# Status legends stored in Data min/max fields (e.g. Vitamin D) — split for print.
+# Status legends stored in Data min/max fields (e.g. Vitamin D / serology) — split for print.
 _RANGE_LEGEND_SPLIT = re.compile(
 	r"(?=\b(?:Deficiency|Insufficiency|Sufficiency|Toxicity|"
 	r"Critically\s+High|Critically\s+Low|Critical|"
-	r"High|Low|Normal|Positive|Negative|Borderline)\b)",
+	r"High|Low|Normal|Positive|Negative|Equivocal|Borderline|Indeterminate)\b)",
 	re.IGNORECASE,
 )
 
@@ -197,18 +197,27 @@ def _is_plain_numeric_bound(text: str) -> bool:
 
 
 def _break_range_legend(text: str) -> str:
-	"""Keep existing newlines, or split a one-line status legend into lines."""
+	"""Split status legends onto separate lines (Vitamin D / Negative–Equivocal–Positive).
+
+	Existing newlines are kept; each line is still scanned for labelled bands so a
+	mixed ``0 - 0.8\\nNegative: … Equivocal: …`` value still breaks cleanly.
+	"""
 	raw = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
 	if not raw:
 		return ""
-	if "\n" in raw:
-		return "\n".join(line.strip() for line in raw.split("\n") if line.strip())
 
-	parts = [p.strip(" \t-–—;") for p in _RANGE_LEGEND_SPLIT.split(raw) if p and p.strip()]
-	# Only treat as a legend when we actually got multiple labelled bands.
-	if len(parts) > 1:
-		return "\n".join(parts)
-	return raw
+	out: list[str] = []
+	for line in raw.split("\n"):
+		line = line.strip()
+		if not line:
+			continue
+		parts = [p.strip(" \t-–—;") for p in _RANGE_LEGEND_SPLIT.split(line) if p and p.strip()]
+		# Only treat as a legend when we actually got multiple labelled bands.
+		if len(parts) > 1:
+			out.extend(parts)
+		else:
+			out.append(line)
+	return "\n".join(out)
 
 
 def _range_text(lo, hi) -> str:
@@ -250,9 +259,13 @@ def _patient_meta(doc):
 		row = frappe.db.get_value("Patient", patient, ["file_no", "id_number"], as_dict=True) or {}
 		file_no = row.get("file_no") or ""
 		id_number = row.get("id_number") or ""
-	user_name = doc.get("lab_technician_name") or ""
-	if not user_name:
-		user_name = frappe.db.get_value("User", doc.get("owner"), "full_name") or doc.get("owner") or ""
+	# Legacy imports always print as Administrator (no migrated tech/owner names).
+	if doc.get("_legacy_print_user"):
+		user_name = doc.get("_legacy_print_user")
+	else:
+		user_name = doc.get("lab_technician_name") or ""
+		if not user_name:
+			user_name = frappe.db.get_value("User", doc.get("owner"), "full_name") or doc.get("owner") or ""
 	sex_age = " / ".join(
 		[p for p in [doc.get("patient_sex") or "", _format_patient_age(doc.get("patient_age"))] if p]
 	)
@@ -480,9 +493,11 @@ def _sections_html(lab_tests, cache) -> str:
 	return "".join(parts)
 
 
-def _laboratory_report_shell(doc, sections: str) -> str:
+def _laboratory_report_shell(doc, sections: str, *, blank_signatures: bool = False) -> str:
 	"""Shared Laboratory Report chrome (header / note / signatures)."""
 	note = (doc.get("lab_test_comment") or "").strip()
+	tech_name = "" if blank_signatures else (doc.get("lab_technician_name") or "")
+	approver_name = "" if blank_signatures else (doc.get("approved_by_name") or "")
 	return f"""
 	<style>
 		/* Force colors in browser print + PDF (class CSS alone is often overridden). */
@@ -529,10 +544,10 @@ def _laboratory_report_shell(doc, sections: str) -> str:
 		<table class="lr-sign" style="width:100%;margin-top:40px;">
 			<tr>
 				<td style="width:50%;text-align:center;font-size:11px;padding-top:24px;color:#000;">
-					<b>{_esc(doc.get('lab_technician_name') or '')}</b><br>LAB TECHNOLOGIST
+					<b>{_esc(tech_name)}</b><br>LAB TECHNOLOGIST
 				</td>
 				<td style="width:50%;text-align:center;font-size:11px;padding-top:24px;color:#000;">
-					<b>{_esc(doc.get('approved_by_name') or '')}</b><br>LAB Technician
+					<b>{_esc(approver_name)}</b><br>LAB Technician
 				</td>
 			</tr>
 		</table>
@@ -632,13 +647,22 @@ def render_lab_test_legacy_result_report(doc):
 	Same look as ``render_lab_test_result_report``, but reads child Lab Test Line rows
 	instead of Service Request sibling docs / custom_result tables. Used only by the
 	``Lab Test Legacy Print`` format — does not change Lab Test Print.
+
+	User is always ``Administrator``; technologist / approver signature names are blank
+	(legacy staff names are not shown on print).
 	"""
 	if isinstance(doc, str):
 		doc = frappe.get_doc("Lab Test", doc)
 
+	# Shallow copy so we do not mutate the live document when overriding print meta.
+	print_doc = frappe._dict(doc.as_dict() if hasattr(doc, "as_dict") else dict(doc))
+	print_doc._legacy_print_user = "Administrator"
+	print_doc.lab_technician_name = ""
+	print_doc.approved_by_name = ""
+
 	cache: dict = {}
-	sections = _sections_html_from_legacy_lines(doc, cache)
-	return _laboratory_report_shell(doc, sections)
+	sections = _sections_html_from_legacy_lines(print_doc, cache)
+	return _laboratory_report_shell(print_doc, sections, blank_signatures=True)
 
 
 def _external_meta(doc):
