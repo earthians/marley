@@ -174,6 +174,7 @@ healthcare.nursing.panes.care_plan = class CarePlanPane extends (
 			status: $button.attr("data-status"),
 		});
 		await this.refresh();
+		this.station.recorded();
 	}
 
 	// The doctor's orders, shown as they stand. Copying them into the plan
