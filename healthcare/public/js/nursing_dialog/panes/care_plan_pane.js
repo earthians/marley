@@ -116,6 +116,7 @@ healthcare.nursing.panes.care_plan = class CarePlanPane extends (
 
 		frappe.show_alert({ message: __("Goal added"), indicator: "green" });
 		await this.refresh();
+		this.station.recorded();
 	}
 
 	render_goals() {
