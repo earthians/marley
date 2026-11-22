@@ -3800,7 +3800,7 @@ frappe.ui.form.on('Healthcare Settings', {
 					);
 				},
 			});
-		}, __('Data Maintenance'));
+		}, __('Update'));
 
 		frm.add_custom_button(__('ECT Conversion'), () => {
 			const dialog = new frappe.ui.Dialog({
