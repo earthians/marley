@@ -13,7 +13,11 @@ healthcare.nursing.STATION_DOCTYPES = [
 ];
 
 // Forms that carry a Nursing tab showing the snapshot without the dialog.
-healthcare.nursing.SNAPSHOT_DOCTYPES = ["Inpatient Record", "Emergency Record"];
+healthcare.nursing.SNAPSHOT_DOCTYPES = [
+	"Inpatient Record",
+	"Emergency Record",
+	"Clinical Procedure",
+];
 
 // Each form names its practitioner differently.
 healthcare.nursing.PRACTITIONER_FIELDS = [
@@ -31,12 +35,16 @@ healthcare.nursing.get_practitioner = function (frm) {
 };
 
 healthcare.nursing.open_from_form = function (frm) {
-	healthcare.nursing.open({
+	const station = healthcare.nursing.open({
 		patient: frm.doc.patient,
 		reference_doctype: frm.doctype,
 		reference_name: frm.docname,
 		practitioner: healthcare.nursing.get_practitioner(frm),
 	});
+	// what the dialog recorded is not on the form's snapshot until it fetches again
+	station.dialog.$wrapper.on("hidden.bs.modal", () =>
+		frm.nursing_snapshot?.refresh(),
+	);
 };
 
 healthcare.nursing.add_button = function (frm) {
