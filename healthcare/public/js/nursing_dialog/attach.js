@@ -35,14 +35,17 @@ healthcare.nursing.get_practitioner = function (frm) {
 };
 
 healthcare.nursing.open_from_form = function (frm) {
-	healthcare.nursing.open({
+	const refresh = () => frm.nursing_snapshot?.refresh();
+	const station = healthcare.nursing.open({
 		patient: frm.doc.patient,
 		reference_doctype: frm.doctype,
 		reference_name: frm.docname,
 		practitioner: healthcare.nursing.get_practitioner(frm),
 		// what the dialog recorded is not on the form's snapshot until it fetches again
-		on_recorded: () => frm.nursing_snapshot?.refresh(),
+		on_recorded: refresh,
 	});
+	// a fallback for a pane that writes without calling recorded()
+	station.dialog.$wrapper.on("hidden.bs.modal", refresh);
 };
 
 healthcare.nursing.add_button = function (frm) {
