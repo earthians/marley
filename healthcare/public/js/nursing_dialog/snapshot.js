@@ -7,17 +7,28 @@ healthcare.nursing.SNAPSHOT_METHOD = "healthcare.healthcare.api.nursing.get_snap
 
 // Vitals share no scale, so one chart shows one template at a time.
 healthcare.nursing.Snapshot = class Snapshot {
-	constructor({ wrapper, patient, layout = "rail" }) {
+	constructor({
+		wrapper,
+		patient,
+		layout = "rail",
+		reference_doctype = null,
+		reference_name = null,
+	}) {
 		this.$wrapper = $(wrapper);
 		this.patient = patient;
 		this.layout = layout;
+		// the record the chart is opened from, which can bring its patient into a ward nurse's scope
+		this.reference_doctype = reference_doctype;
+		this.reference_name = reference_name;
 		this.selected_vital = null;
 	}
 
 	// Switching patient resets what the card is showing: a vital chosen for one
 	// patient means nothing for the next.
-	set_patient(patient) {
+	set_patient(patient, reference_doctype = null, reference_name = null) {
 		this.patient = patient;
+		this.reference_doctype = reference_doctype;
+		this.reference_name = reference_name;
 		this.selected_vital = null;
 		return this.refresh();
 	}
@@ -26,8 +37,8 @@ healthcare.nursing.Snapshot = class Snapshot {
 		const patient = this.patient;
 		const data = await this.fetch();
 
-		// A slower fetch for the previous patient must not overwrite this one.
-		if (patient !== this.patient) return;
+		// A slower fetch for the previous patient, or for a replaced instance, must not overwrite this one.
+		if (this.destroyed || patient !== this.patient) return;
 
 		this.data = data;
 		this.render();
@@ -36,6 +47,8 @@ healthcare.nursing.Snapshot = class Snapshot {
 	fetch() {
 		return frappe.xcall(healthcare.nursing.SNAPSHOT_METHOD, {
 			patient: this.patient,
+			reference_doctype: this.reference_doctype,
+			reference_name: this.reference_name,
 		});
 	}
 
@@ -149,6 +162,12 @@ healthcare.nursing.Snapshot = class Snapshot {
 			this.draw_chart(readings);
 		});
 		this.observer.observe(this.$chart_area.get(0));
+	}
+
+	// The wrapper is shared with the instance that replaces this one.
+	destroy() {
+		this.destroyed = true;
+		this.stop_waiting();
 	}
 
 	stop_waiting() {
