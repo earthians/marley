@@ -14,6 +14,7 @@ from healthcare.api.patient_medication_order_import import (
 from healthcare.api.prescription_sync import (
 	ERROR_LIMIT,
 	HS_TABLE,
+	IP_ADMISSION_TABLE,
 	IP_TABLE,
 	OP_TABLE,
 	SAMPLE_LIMIT,
@@ -45,6 +46,8 @@ class TestPrescriptionSyncRows(IntegrationTestCase):
 	def test_oracle_tables_are_the_legacy_sources(self):
 		self.assertEqual(OP_TABLE, "PATIENT_VISIT_PRESCRIPTION")
 		self.assertEqual(IP_TABLE, "IP_ADMISSION_MEDICINE")
+		# Live CLINIC2 patient filter joins medicine rows through the admission header.
+		self.assertEqual(IP_ADMISSION_TABLE, "IP_ADMISSION_01")
 
 	def test_op_rows_are_mapped_to_the_importer_row(self):
 		rows = _map_op_rows(

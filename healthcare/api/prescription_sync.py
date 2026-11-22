@@ -106,6 +106,8 @@ LOCK_TTL = 60 * 60 * 6
 
 OP_TABLE = "PATIENT_VISIT_PRESCRIPTION"
 IP_TABLE = "IP_ADMISSION_MEDICINE"
+# Live CLINIC2 keeps the patient on the admission header, not on the medicine rows.
+IP_ADMISSION_TABLE = "IP_ADMISSION_01"
 # Every row of this table becomes a Patient Medication Order line on a
 # ``patient_visit_prescription_his`` prescription. Rows whose PRESCRIP_ID also
 # exists on OP_TABLE are kept and flagged ``is_deduplicate`` on the child line.
@@ -614,12 +616,25 @@ def _visit_keys_for_patient(patient_keys: list[str]) -> list[str]:
 def _admission_keys_for_patient(patient_keys: list[str]) -> list[str]:
 	"""Oracle IP admission numbers for this patient (plus ERPNext admissions that still have Oracle rows)."""
 	keys: set[str] = set()
-	# Prefer PATIENT_NUM when present; partial Excel exports of IP_ADMISSION_MEDICINE
-	# often only carry ADMISSION_NUM + MEDICINE_NUM.
-	if _source_has_column(IP_TABLE, "PATIENT_NUM"):
+	source = current_source()
+	# Excel medicine sheets sometimes denormalise PATIENT_NUM onto IP_ADMISSION_MEDICINE.
+	# Live CLINIC2 does not: PATIENT_NUM lives on IP_ADMISSION_01 only.
+	# ``_source_has_column`` returns True for every column when reading live Oracle, so
+	# do not trust it for PATIENT_NUM on IP_ADMISSION_MEDICINE.
+	if source is not None and _source_has_column(IP_TABLE, "PATIENT_NUM"):
 		rows = _query(
 			f"select distinct ADMISSION_NUM from {_oracle_schema()}.{IP_TABLE} "
 			f"where PATIENT_NUM in ({_in_clause(patient_keys)}) and ADMISSION_NUM is not null"
+		)
+		keys.update(_clean_oracle_num(row.get("ADMISSION_NUM")) for row in rows or [])
+	elif source is None:
+		rows = _query(
+			f"select distinct m.ADMISSION_NUM as ADMISSION_NUM "
+			f"from {_oracle_schema()}.{IP_TABLE} m "
+			f"join {_oracle_schema()}.{IP_ADMISSION_TABLE} a "
+			f"on a.ADMISSION_NUM = m.ADMISSION_NUM "
+			f"where a.PATIENT_NUM in ({_in_clause(patient_keys)}) "
+			f"and m.ADMISSION_NUM is not null"
 		)
 		keys.update(_clean_oracle_num(row.get("ADMISSION_NUM")) for row in rows or [])
 

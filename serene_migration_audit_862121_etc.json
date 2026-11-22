@@ -1,0 +1,352 @@
+[
+  {
+    "patient": "862121",
+    "patient_name": "ABDULAZIZ ADNAN A ALQERNAS",
+    "visits": {
+      "oracle": 16,
+      "erp": 18,
+      "missing": [
+        "856508",
+        "856889",
+        "859216"
+      ],
+      "extra_erp": [
+        "1002907",
+        "1003175",
+        "1005173",
+        "1005224",
+        "1005896"
+      ]
+    },
+    "admissions": {
+      "oracle": 0,
+      "erp": 0,
+      "missing": [],
+      "erp_keys": []
+    },
+    "ECT": {
+      "oracle": 8,
+      "erp_matched": 8,
+      "missing": [],
+      "oracle_ids": [
+        "3076",
+        "3078",
+        "3083",
+        "3086",
+        "3087",
+        "3093",
+        "3098",
+        "3100"
+      ]
+    },
+    "Lab_Test": {
+      "oracle_trans": 4,
+      "erp_docs": 4,
+      "matched": 4,
+      "missing": [],
+      "oracle_ids": [
+        "LAB/2026/01053",
+        "LAB/2026/01082",
+        "LAB/2026/01114",
+        "LAB/2026/01365"
+      ]
+    },
+    "Nursing": {
+      "oracle": 0,
+      "matched": 0,
+      "missing_count": 0,
+      "missing_sample": []
+    },
+    "Notes": {
+      "oracle_visit_with_text": 6,
+      "oracle_history": 92,
+      "oracle_ip_diag": 0,
+      "oracle_expected": 98,
+      "erp_clinical_notes": 98,
+      "erp_by_ref": {
+        "Patient Visit": 5,
+        "(blank)": 1,
+        "VISIT_00_01_HISTORY": 92
+      },
+      "hist_staging_rows": 92,
+      "hist_unmatched_to_cn_or_staging": 0,
+      "hist_unmatched_sample": [],
+      "ip_diag_unmatched": 0,
+      "ip_diag_unmatched_sample": [],
+      "visit_text_unmatched": 0,
+      "visit_text_unmatched_sample": []
+    },
+    "Prescription": {
+      "oracle_op_lines": 13,
+      "oracle_his_lines": 0,
+      "oracle_ip_lines": 0,
+      "erp_orders": 4,
+      "erp_lines": 10,
+      "op_prescrip_id_unmatched": 3,
+      "op_prescrip_id_sample": [
+        "171820",
+        "171821",
+        "171822"
+      ],
+      "op_visit_med_unmatched": 3,
+      "op_visit_med_sample": [
+        "857587/1560",
+        "857587/1664",
+        "857587/3929"
+      ],
+      "ip_trans_unmatched": 0,
+      "ip_trans_sample": []
+    }
+  },
+  {
+    "patient": "860701",
+    "patient_name": "MESHAL ASWAD ALJAZRAH",
+    "visits": {
+      "oracle": 10,
+      "erp": 10,
+      "missing": [
+        "858613"
+      ],
+      "extra_erp": [
+        "1004745"
+      ]
+    },
+    "admissions": {
+      "oracle": 0,
+      "erp": 0,
+      "missing": [],
+      "erp_keys": []
+    },
+    "ECT": {
+      "oracle": 0,
+      "erp_matched": 0,
+      "missing": [],
+      "oracle_ids": []
+    },
+    "Lab_Test": {
+      "oracle_trans": 0,
+      "erp_docs": 0,
+      "matched": 0,
+      "missing": [],
+      "oracle_ids": []
+    },
+    "Nursing": {
+      "oracle": 0,
+      "matched": 0,
+      "missing_count": 0,
+      "missing_sample": []
+    },
+    "Notes": {
+      "oracle_visit_with_text": 6,
+      "oracle_history": 39,
+      "oracle_ip_diag": 0,
+      "oracle_expected": 45,
+      "erp_clinical_notes": 47,
+      "erp_by_ref": {
+        "Patient Visit": 7,
+        "(blank)": 1,
+        "VISIT_00_01_HISTORY": 39
+      },
+      "hist_staging_rows": 39,
+      "hist_unmatched_to_cn_or_staging": 0,
+      "hist_unmatched_sample": [],
+      "ip_diag_unmatched": 0,
+      "ip_diag_unmatched_sample": [],
+      "visit_text_unmatched": 0,
+      "visit_text_unmatched_sample": []
+    },
+    "Prescription": {
+      "oracle_op_lines": 6,
+      "oracle_his_lines": 6,
+      "oracle_ip_lines": 0,
+      "erp_orders": 11,
+      "erp_lines": 12,
+      "op_prescrip_id_unmatched": 0,
+      "op_prescrip_id_sample": [],
+      "op_visit_med_unmatched": 0,
+      "op_visit_med_sample": [],
+      "ip_trans_unmatched": 0,
+      "ip_trans_sample": []
+    }
+  },
+  {
+    "patient": "861602",
+    "patient_name": "PARNEET KAUR",
+    "visits": {
+      "oracle": 11,
+      "erp": 12,
+      "missing": [
+        "857504"
+      ],
+      "extra_erp": [
+        "1003473",
+        "1005165"
+      ]
+    },
+    "admissions": {
+      "oracle": 0,
+      "erp": 0,
+      "missing": [],
+      "erp_keys": []
+    },
+    "ECT": {
+      "oracle": 0,
+      "erp_matched": 0,
+      "missing": [],
+      "oracle_ids": []
+    },
+    "Lab_Test": {
+      "oracle_trans": 0,
+      "erp_docs": 0,
+      "matched": 0,
+      "missing": [],
+      "oracle_ids": []
+    },
+    "Nursing": {
+      "oracle": 0,
+      "matched": 0,
+      "missing_count": 0,
+      "missing_sample": []
+    },
+    "Notes": {
+      "oracle_visit_with_text": 6,
+      "oracle_history": 18,
+      "oracle_ip_diag": 0,
+      "oracle_expected": 24,
+      "erp_clinical_notes": 24,
+      "erp_by_ref": {
+        "Patient Visit": 6,
+        "VISIT_00_01_HISTORY": 18
+      },
+      "hist_staging_rows": 18,
+      "hist_unmatched_to_cn_or_staging": 0,
+      "hist_unmatched_sample": [],
+      "ip_diag_unmatched": 0,
+      "ip_diag_unmatched_sample": [],
+      "visit_text_unmatched": 0,
+      "visit_text_unmatched_sample": []
+    },
+    "Prescription": {
+      "oracle_op_lines": 7,
+      "oracle_his_lines": 12,
+      "oracle_ip_lines": 0,
+      "erp_orders": 12,
+      "erp_lines": 19,
+      "op_prescrip_id_unmatched": 0,
+      "op_prescrip_id_sample": [],
+      "op_visit_med_unmatched": 0,
+      "op_visit_med_sample": [],
+      "ip_trans_unmatched": 0,
+      "ip_trans_sample": []
+    }
+  },
+  {
+    "patient": "316184",
+    "patient_name": "NASER ABDULLA NASER AHMED RUBEEAN",
+    "visits": {
+      "oracle": 165,
+      "erp": 167,
+      "missing": [
+        "854086",
+        "856383",
+        "857170",
+        "858510"
+      ],
+      "extra_erp": [
+        "1000037",
+        "1002881",
+        "1003327",
+        "1004663",
+        "1005587",
+        "1006159"
+      ]
+    },
+    "admissions": {
+      "oracle": 3,
+      "erp": 3,
+      "missing": [],
+      "erp_keys": [
+        "1140",
+        "134",
+        "734"
+      ]
+    },
+    "ECT": {
+      "oracle": 10,
+      "erp_matched": 10,
+      "missing": [],
+      "oracle_ids": [
+        "1221",
+        "1222",
+        "1223",
+        "1224",
+        "1225",
+        "1226",
+        "1227",
+        "1229",
+        "1231",
+        "1239"
+      ]
+    },
+    "Lab_Test": {
+      "oracle_trans": 12,
+      "erp_docs": 12,
+      "matched": 12,
+      "missing": [],
+      "oracle_ids": [
+        "LAB/2019/00781",
+        "LAB/2019/00786",
+        "LAB/2019/00790",
+        "LAB/2019/00808",
+        "LAB/2019/00822",
+        "LAB/2019/00850",
+        "LAB/2019/00864",
+        "LAB/2019/00874",
+        "LAB/2019/00878",
+        "LAB/2019/00885",
+        "LAB/2020/00226",
+        "LAB/2021/00574"
+      ]
+    },
+    "Nursing": {
+      "oracle": 475,
+      "matched": 475,
+      "missing_count": 0,
+      "missing_sample": []
+    },
+    "Notes": {
+      "oracle_visit_with_text": 31,
+      "oracle_history": 1,
+      "oracle_ip_diag": 94,
+      "oracle_expected": 126,
+      "erp_clinical_notes": 125,
+      "erp_by_ref": {
+        "Inpatient Admission": 93,
+        "Patient Visit": 31,
+        "VISIT_00_01_HISTORY": 1
+      },
+      "hist_staging_rows": 1,
+      "hist_unmatched_to_cn_or_staging": 0,
+      "hist_unmatched_sample": [],
+      "ip_diag_unmatched": 1,
+      "ip_diag_unmatched_sample": [
+        "11761"
+      ],
+      "visit_text_unmatched": 0,
+      "visit_text_unmatched_sample": []
+    },
+    "Prescription": {
+      "oracle_op_lines": 53,
+      "oracle_his_lines": 0,
+      "oracle_ip_lines": 41,
+      "erp_orders": 35,
+      "erp_lines": 100,
+      "op_prescrip_id_unmatched": 0,
+      "op_prescrip_id_sample": [],
+      "op_visit_med_unmatched": 0,
+      "op_visit_med_sample": [],
+      "ip_trans_unmatched": 0,
+      "ip_trans_sample": []
+    }
+  }
+]
