@@ -41,9 +41,5 @@ healthcare.patches.v16_0.set_medication_order_entry_status
 healthcare.patches.v16_0.unify_observation_result_field
 healthcare.patches.v16_0.setup_observation_reference_types
 healthcare.patches.v16_0.backfill_observation_result_flag
-<<<<<<< HEAD
-healthcare.patches.v16_0.remove_legacy_healthcare_onboarding
-=======
 healthcare.patches.v16_0.remove_legacy_healthcare_onboarding
 healthcare.patches.v16_0.setup_code_systems
->>>>>>> 68f14a7 (fix(setup): create basic code systems on new sites)
