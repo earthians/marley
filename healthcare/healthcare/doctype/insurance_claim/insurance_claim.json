@@ -257,15 +257,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "mode_of_payment_section",
-   "fieldtype": "Section Break",
-   "label": "Mode of Payment"
-  },
-  {
-   "fieldname": "column_break_133",
-   "fieldtype": "Column Break"
-  },
-  {
    "fetch_from": "patient.inpatient_record",
    "fieldname": "inpatient_record",
    "fieldtype": "Link",
