@@ -1,6 +1,8 @@
 import frappe
 from frappe import _
 
+from healthcare.healthcare.web_form.portal_patient import get_portal_patient, is_portal_patient
+
 no_cache = 1
 
 
@@ -10,19 +12,12 @@ def get_context(context):
 
 	context.show_sidebar = True
 
-	if frappe.db.exists("Patient", {"email": frappe.session.user}):
-		patient = frappe.get_doc("Patient", {"email": frappe.session.user})
-		context.doc = patient
+	patient = get_portal_patient()
+	if patient:
+		context.doc = frappe.get_doc("Patient", patient)
 		frappe.form_dict.new = 0
-		frappe.form_dict.name = patient.name
-
-
-def get_patient():
-	return frappe.get_value("Patient", {"email": frappe.session.user}, "name")
+		frappe.form_dict.name = patient
 
 
 def has_website_permission(doc, ptype, user, verbose=False):
-	if doc.name == get_patient():
-		return True
-	else:
-		return False
+	return is_portal_patient(doc.name, user)
