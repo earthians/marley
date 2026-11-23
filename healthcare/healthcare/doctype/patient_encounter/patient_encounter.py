@@ -228,9 +228,6 @@ class PatientEncounter(Document):
 				)
 
 	def make_service_request(self):
-		if self.therapies:
-			create_therapy_plan(self)
-
 		if self.lab_test_prescription:
 			for lab_test in self.lab_test_prescription:
 				if lab_test.observation_template:
@@ -265,6 +262,7 @@ class PatientEncounter(Document):
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
 					therapy.service_request = order.name
+			create_therapy_plan(self)
 
 	def make_medication_request(self):
 		if self.drug_prescription:
@@ -458,18 +456,37 @@ def create_therapy_plan(encounter):
 		doc.practitioner = encounter.practitioner
 		doc.practitioner_name = encounter.practitioner_name
 
-	existing_types = {row.therapy_type for row in doc.therapy_plan_details}
-	for entry in encounter.therapies:
-		if entry.therapy_type not in existing_types:
-			doc.append(
+	# Sum submitted orders, rather than encounter rows, so each order counts once.
+	orders = frappe.get_all(
+		"Service Request",
+		filters={
+			"source_doc": encounter.doctype,
+			"order_group": encounter.name,
+			"template_dt": "Therapy Type",
+			"docstatus": 1,
+		},
+		fields=["template_dn", "quantity", "interval"],
+		order_by="creation asc",
+	)
+	totals = {}
+	for order in orders:
+		totals[order.template_dn] = totals.get(order.template_dn, 0) + order.quantity
+
+	existing_rows = {row.therapy_type: row for row in doc.therapy_plan_details}
+	changed = False
+	for order in orders:
+		row = existing_rows.get(order.template_dn)
+		if not row:
+			row = doc.append(
 				"therapy_plan_details",
-				{
-					"therapy_type": entry.therapy_type,
-					"no_of_sessions": entry.no_of_sessions,
-					"interval": entry.interval,
-				},
+				{"therapy_type": order.template_dn, "interval": order.interval},
 			)
-	if plan and all(entry.therapy_type in existing_types for entry in encounter.therapies):
+			existing_rows[order.template_dn] = row
+			changed = True
+		if row.no_of_sessions != totals[order.template_dn]:
+			row.no_of_sessions = totals[order.template_dn]
+			changed = True
+	if plan and not changed:
 		return
 
 	doc.save(ignore_permissions=True)
