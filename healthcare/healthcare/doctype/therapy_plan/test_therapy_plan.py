@@ -27,6 +27,35 @@ class TestTherapyPlan(HealthcareTestSuite):
 			)
 		)
 
+	def test_creation_on_encounter_order_save(self):
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
+		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
+		self.assertFalse(frappe.db.exists("Therapy Plan", filters))
+
+		encounter.submit_orders_on_save = 1
+		encounter.save()
+		self.assertEqual(encounter.docstatus, 0)
+		plan = frappe.get_doc("Therapy Plan", filters)
+		service_request = encounter.therapies[0].service_request
+		self.assertTrue(service_request)
+		session = make_therapy_session(
+			patient, encounter.therapies[0].therapy_type, encounter.company, service_request=service_request
+		)
+		self.assertEqual(session["therapy_plan"], plan.name)
+
+		# Later saves and final submission must retain the plan and session progress.
+		plan.therapy_plan_details[0].sessions_completed = 1
+		plan.save()
+		encounter.save()
+		encounter.submit()
+		self.assertEqual(frappe.db.count("Therapy Plan", filters), 1)
+		self.assertEqual(encounter.therapies[0].service_request, service_request)
+		plan.reload()
+		self.assertEqual(len(plan.therapy_plan_details), 1)
+		self.assertEqual(plan.therapy_plan_details[0].sessions_completed, 1)
+
 	def test_status(self):
 		plan = create_therapy_plan()
 		self.assertEqual(plan.status, "Not Started")
