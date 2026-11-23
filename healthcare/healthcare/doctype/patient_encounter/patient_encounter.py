@@ -441,9 +441,7 @@ def create_therapy_plan(encounter):
 	if not encounter.therapies:
 		return
 
-	plan = frappe.db.exists(
-		"Therapy Plan", {"source_doc": encounter.doctype, "order_group": encounter.name}
-	)
+	plan = frappe.db.exists("Therapy Plan", {"source_doc": encounter.doctype, "order_group": encounter.name})
 	if plan:
 		doc = frappe.get_doc("Therapy Plan", plan)
 	else:
@@ -491,9 +489,7 @@ def create_therapy_plan(encounter):
 
 	doc.save(ignore_permissions=True)
 	if not plan:
-		frappe.msgprint(
-			_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True
-		)
+		frappe.msgprint(_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True)
 
 
 def delete_ip_medication_order(encounter):
