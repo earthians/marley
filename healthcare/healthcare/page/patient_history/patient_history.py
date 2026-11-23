@@ -89,14 +89,14 @@ def _reference_details(record):
 		date_field, time_field = "posting_date", "time_of_result"
 
 	if date_field and fields.get(date_field):
-		candidate_date = fields.get(date_field)
 		candidate_time = fields.get(time_field) if time_field else None
 		try:
 			current = get_datetime(date_value) if date_value else None
 			if not current or current.time() == time.min:
 				fallback_time = candidate_time or fields.get("creation")
 				ref_time = get_time(fallback_time) if fallback_time else time.min
-				date_value = datetime.combine(getdate(candidate_date), ref_time)
+				day = getdate(current) if current else getdate(fields.get(date_field))
+				date_value = datetime.combine(day, ref_time)
 		except (TypeError, ValueError):
 			pass
 
@@ -231,40 +231,54 @@ def get_feed(
 
 
 @frappe.whitelist()
-def get_feed_count(name, document_types=None, date_range=None):
-	return frappe.db.count("Patient Medical Record", filters=get_filters(name, document_types, date_range))
+def get_feed_count(name: str, document_types: str | None = None, date_range: str | None = None) -> int:
+	frappe.has_permission("Patient", "read", name, throw=True)
+	return len(
+		frappe.get_list(
+			"Patient Medical Record",
+			filters=get_filters(name, document_types, date_range),
+			pluck="name",
+			limit_page_length=0,
+		)
+	)
 
 
 @frappe.whitelist()
-def get_patient_encounter_markers(patient):
-	return frappe.get_all(
+def get_patient_encounter_markers(patient: str) -> list:
+	frappe.has_permission("Patient", "read", patient, throw=True)
+	return frappe.get_list(
 		"Patient Medical Record",
 		fields=["reference_name", "communication_date"],
 		filters={"patient": patient, "reference_doctype": "Patient Encounter"},
 		order_by="communication_date asc",
+		limit_page_length=0,
 	)
 
 
 @frappe.whitelist()
-def get_activity_years(patient):
-	rows = frappe.db.sql(
-		"""select distinct year(communication_date) as year
-		from `tabPatient Medical Record` where patient = %s
-		order by year desc""",
-		patient,
-		as_dict=True,
+def get_activity_years(patient: str) -> list:
+	frappe.has_permission("Patient", "read", patient, throw=True)
+	dates = frappe.get_list(
+		"Patient Medical Record",
+		filters={"patient": patient, "communication_date": ["is", "set"]},
+		pluck="communication_date",
+		limit_page_length=0,
 	)
-	return [cint(row.year) for row in rows if row.year]
+	return sorted({getdate(value).year for value in dates if value}, reverse=True)
 
 
 @frappe.whitelist()
-def get_activity_summary(patient, from_date, to_date, document_types=None):
+def get_activity_summary(
+	patient: str, from_date: str, to_date: str, document_types: str | None = None
+) -> list:
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	filters = get_filters(patient, document_types, [from_date, to_date])
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"Patient Medical Record",
 		fields=["communication_date", "reference_doctype", "reference_name"],
 		filters=filters,
 		order_by="communication_date asc",
+		limit_page_length=0,
 	)
 	days = defaultdict(lambda: {"date": None, "total": 0, "by_type": {}, "abnormal": False})
 	refs_by_type = defaultdict(dict)
