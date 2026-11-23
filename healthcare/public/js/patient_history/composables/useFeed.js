@@ -68,8 +68,13 @@ export function useFeed(patient, filters, dateRange, api) {
 		[patient, () => JSON.stringify(filters), page, pageSize],
 		(values, previous) => {
 			clearTimeout(feedTimer);
-			if (!previous || values[0] !== previous[0]) loadFeed();
-			else {
+			if (!previous || values[0] !== previous[0]) {
+				if (previous) {
+					records.value = [];
+					total.value = 0;
+				}
+				loadFeed();
+			} else {
 				feedRequest++;
 				feedTimer = setTimeout(loadFeed, 140);
 			}

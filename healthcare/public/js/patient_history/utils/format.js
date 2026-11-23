@@ -13,3 +13,8 @@ export function timestamp(value) {
 	const date = window.moment(value);
 	return date.isValid() ? date.valueOf() : NaN;
 }
+export function toNumber(value) {
+	if (value === null || value === undefined || value === "") return null;
+	const number = Number(value);
+	return Number.isFinite(number) ? number : null;
+}

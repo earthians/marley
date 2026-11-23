@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import VitalChart from "./VitalChart.vue";
 import CustomSelect from "./CustomSelect.vue";
+import { toNumber } from "../utils/format";
 
 const props = defineProps({ state: { type: Object, required: true } });
 const hidden = ref([]);
@@ -21,16 +22,16 @@ const primaryStats = computed(() => {
 	const series = props.state.config.series[0];
 	const points = visibleRows.value
 		.map(row => ({
-			value: Number(row[series.key]),
-			diastolic: Number(row.bp_diastolic),
+			value: toNumber(row[series.key]),
+			diastolic: toNumber(row.bp_diastolic),
 			date: row.signs_date,
 		}))
-		.filter(point => Number.isFinite(point.value));
+		.filter(point => point.value !== null);
 	if (!points.length) return [];
 	const low = points.reduce((a, b) => (a.value <= b.value ? a : b));
 	const high = points.reduce((a, b) => (a.value >= b.value ? a : b));
 	const average = points.reduce((sum, point) => sum + point.value, 0) / points.length;
-	const diastolicPoints = points.filter(point => Number.isFinite(point.diastolic));
+	const diastolicPoints = points.filter(point => point.diastolic !== null);
 	const averageDiastolic = diastolicPoints.length
 		? diastolicPoints.reduce((sum, point) => sum + point.diastolic, 0) /
 		  diastolicPoints.length
@@ -40,7 +41,7 @@ const primaryStats = computed(() => {
 		{
 			label: __("Lowest"),
 			value: low.value,
-			paired: low.diastolic,
+			paired: low.diastolic ?? NaN,
 			date: low.date,
 		},
 		{
@@ -53,7 +54,7 @@ const primaryStats = computed(() => {
 		{
 			label: __("Highest"),
 			value: high.value,
-			paired: high.diastolic,
+			paired: high.diastolic ?? NaN,
 			date: high.date,
 		},
 	].map(stat => ({ ...stat, bp }));
@@ -113,8 +114,10 @@ const metricTabs = computed(() => [
 	["temperature", __("Temperature")],
 	["bmi", __("BMI")],
 ]);
+const statDecimals = { temperature: 1, bmi: 1 };
 function statValue(stat) {
-	const value = Math.round(Number(stat.value));
+	const decimals = statDecimals[props.state.metric] || 0;
+	const value = Number(stat.value).toFixed(decimals);
 	const paired = Number(stat.paired);
 	return stat.bp && Number.isFinite(paired)
 		? `${value}/${Math.round(paired)} ${props.state.config.series[0].unit}`

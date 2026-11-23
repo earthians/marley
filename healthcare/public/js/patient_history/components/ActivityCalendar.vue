@@ -126,7 +126,7 @@ watch(
 			</div>
 		</header>
 		<div class="ph-activity-scroll">
-			<div class="ph-month-window-controls" v-if="monthWindow < 12">
+			<div class="ph-month-window-controls is-visible" v-if="monthWindow < 12">
 				<button
 					type="button"
 					:aria-label="__('Previous months')"

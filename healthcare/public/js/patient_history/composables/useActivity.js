@@ -11,10 +11,11 @@ export function useActivity(patient, api) {
 	async function loadYears() {
 		const id = ++requestId;
 		try {
-			years.value = ((await api.getActivityYears(patient.value)) || []).map(
+			const result = ((await api.getActivityYears(patient.value)) || []).map(
 				Number,
 			);
 			if (id !== requestId) return;
+			years.value = result;
 			year.value = years.value[0] || new Date().getFullYear();
 		} catch (e) {
 			if (id === requestId) error.value = e;

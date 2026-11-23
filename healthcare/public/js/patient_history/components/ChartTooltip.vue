@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { toNumber } from "../utils/format";
 const props = defineProps({
 	row: Object,
 	previous: Object,
@@ -12,8 +13,8 @@ const date = computed(() =>
 		.format("DD MMM YYYY · hh:mm A"),
 );
 function status(series) {
-	const value = Number(props.row[series.key]);
-	if (!Number.isFinite(value)) return __("No reading");
+	const value = toNumber(props.row[series.key]);
+	if (value === null) return __("No reading");
 	if (!series.band) return __("Recorded");
 	return value < series.band[0]
 		? __("Low")
@@ -23,11 +24,9 @@ function status(series) {
 }
 const delta = computed(() => {
 	const series = props.config.series[0],
-		current = Number(props.row[series.key]),
-		before = Number(props.previous?.[series.key]);
-	return Number.isFinite(current) && Number.isFinite(before)
-		? current - before
-		: null;
+		current = toNumber(props.row[series.key]),
+		before = toNumber(props.previous?.[series.key]);
+	return current !== null && before !== null ? current - before : null;
 });
 </script>
 <template>

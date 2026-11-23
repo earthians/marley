@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import ChartTooltip from "./ChartTooltip.vue";
-import { timestamp } from "../utils/format";
+import { timestamp, toNumber } from "../utils/format";
 
 const props = defineProps({
 	metric: { type: String, default: "bp" },
@@ -24,12 +24,7 @@ let resizeObserver, drawFrame, morphFrame;
 const reducedMotion = () =>
 	window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 function valid(value) {
-	return (
-		value !== null &&
-		value !== undefined &&
-		value !== "" &&
-		Number.isFinite(Number(value))
-	);
+	return toNumber(value) !== null;
 }
 function time(row) {
 	return timestamp(`${row.signs_date || ""} ${row.signs_time || "00:00:00"}`);
@@ -176,9 +171,9 @@ const frame = computed(() => {
 	);
 	let min, max, step;
 	if (props.metric === "bp") {
-		min = 60;
-		max = 180;
 		step = 20;
+		min = Math.floor(Math.min(60, ...values) / step) * step;
+		max = Math.ceil(Math.max(180, ...values) / step) * step;
 	} else {
 		step = props.metric === "temperature" ? 0.5 : props.metric === "bmi" ? 5 : 20;
 		const range = values.length ? values : config.range;
