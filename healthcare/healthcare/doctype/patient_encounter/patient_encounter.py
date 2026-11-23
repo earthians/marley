@@ -470,8 +470,21 @@ def create_therapy_plan(encounter):
 	for order in orders:
 		totals[order.template_dn] = totals.get(order.template_dn, 0) + order.quantity
 
-	existing_rows = {row.therapy_type: row for row in doc.therapy_plan_details}
-	changed = False
+	existing_rows = {}
+	duplicate_types = set()
+	for row in list(doc.therapy_plan_details):
+		if row.therapy_type in existing_rows and row.therapy_type in totals:
+			duplicate_types.add(row.therapy_type)
+			doc.remove(row)
+		else:
+			existing_rows[row.therapy_type] = row
+	for therapy_type in duplicate_types:
+		# Sessions increment every matching row; summing their counters would count them twice.
+		existing_rows[therapy_type].sessions_completed = frappe.db.count(
+			"Therapy Session",
+			{"therapy_plan": plan, "therapy_type": therapy_type, "docstatus": 1},
+		)
+	changed = bool(duplicate_types)
 	for order in orders:
 		row = existing_rows.get(order.template_dn)
 		if not row:
