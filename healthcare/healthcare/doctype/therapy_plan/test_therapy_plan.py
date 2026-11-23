@@ -45,16 +45,43 @@ class TestTherapyPlan(HealthcareTestSuite):
 		)
 		self.assertEqual(session["therapy_plan"], plan.name)
 
-		# Later saves and final submission must retain the plan and session progress.
-		plan.therapy_plan_details[0].sessions_completed = 1
+		# Adding another therapy must retain the original row and session progress.
+		original_row = plan.therapy_plan_details[0]
+		original_row.sessions_completed = 1
 		plan.save()
-		encounter.save()
-		encounter.submit()
-		self.assertEqual(frappe.db.count("Therapy Plan", filters), 1)
-		self.assertEqual(encounter.therapies[0].service_request, service_request)
-		plan.reload()
-		self.assertEqual(len(plan.therapy_plan_details), 1)
-		self.assertEqual(plan.therapy_plan_details[0].sessions_completed, 1)
+		therapy_name = f"_Test Later Therapy {frappe.generate_hash(length=8)}"
+		later_therapy = frappe.get_doc(
+			{
+				"doctype": "Therapy Type",
+				"therapy_type": therapy_name,
+				"item_code": therapy_name,
+				"item_name": therapy_name,
+				"item_group": "Services",
+				"rate": 0,
+			}
+		).insert()
+		encounter.append("therapies", {"therapy_type": later_therapy.name, "no_of_sessions": 3})
+
+		for submit in (False, True):
+			if submit:
+				encounter.submit()
+			else:
+				encounter.save()
+			self.assertEqual(frappe.db.count("Therapy Plan", filters), 1)
+			self.assertEqual(encounter.therapies[0].service_request, service_request)
+			self.assertTrue(encounter.therapies[1].service_request)
+			plan.reload()
+			rows = {row.therapy_type: row for row in plan.therapy_plan_details}
+			self.assertEqual(len(plan.therapy_plan_details), 2)
+			self.assertEqual(set(rows), {original_row.therapy_type, later_therapy.name})
+			self.assertEqual(rows[original_row.therapy_type].name, original_row.name)
+			self.assertEqual(rows[original_row.therapy_type].no_of_sessions, 2)
+			self.assertEqual(rows[original_row.therapy_type].sessions_completed, 1)
+			self.assertEqual(rows[later_therapy.name].no_of_sessions, 3)
+			self.assertEqual(rows[later_therapy.name].sessions_completed, 0)
+			self.assertEqual(plan.total_sessions, 5)
+			self.assertEqual(plan.total_sessions_completed, 1)
+			self.assertEqual(plan.status, "In Progress")
 
 	def test_additional_order_for_same_therapy_counts_sessions(self):
 		patient = frappe.get_list("Patient", pluck="name")[0]
