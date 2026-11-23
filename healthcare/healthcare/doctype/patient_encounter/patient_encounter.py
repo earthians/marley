@@ -44,8 +44,6 @@ class PatientEncounter(Document):
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
 	def on_submit(self):
-		if self.therapies:
-			create_therapy_plan(self)
 		self.make_service_request()
 		self.make_medication_request()
 		# to save service_request name in prescription
@@ -230,6 +228,9 @@ class PatientEncounter(Document):
 				)
 
 	def make_service_request(self):
+		if self.therapies:
+			create_therapy_plan(self)
+
 		if self.lab_test_prescription:
 			for lab_test in self.lab_test_prescription:
 				if lab_test.observation_template:
@@ -439,7 +440,15 @@ def get_prescription_dates(period, start_date):
 
 
 def create_therapy_plan(encounter):
-	if len(encounter.therapies):
+	if not encounter.therapies:
+		return
+
+	plan = frappe.db.exists(
+		"Therapy Plan", {"source_doc": encounter.doctype, "order_group": encounter.name}
+	)
+	if plan:
+		doc = frappe.get_doc("Therapy Plan", plan)
+	else:
 		doc = frappe.new_doc("Therapy Plan")
 		doc.patient = encounter.patient
 		doc.start_date = encounter.encounter_date
@@ -448,7 +457,10 @@ def create_therapy_plan(encounter):
 		doc.company = encounter.company
 		doc.practitioner = encounter.practitioner
 		doc.practitioner_name = encounter.practitioner_name
-		for entry in encounter.therapies:
+
+	existing_types = {row.therapy_type for row in doc.therapy_plan_details}
+	for entry in encounter.therapies:
+		if entry.therapy_type not in existing_types:
 			doc.append(
 				"therapy_plan_details",
 				{
@@ -457,11 +469,14 @@ def create_therapy_plan(encounter):
 					"interval": entry.interval,
 				},
 			)
-		doc.save(ignore_permissions=True)
-		if doc.get("name"):
-			frappe.msgprint(
-				_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True
-			)
+	if plan and all(entry.therapy_type in existing_types for entry in encounter.therapies):
+		return
+
+	doc.save(ignore_permissions=True)
+	if not plan:
+		frappe.msgprint(
+			_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True
+		)
 
 
 def delete_ip_medication_order(encounter):
