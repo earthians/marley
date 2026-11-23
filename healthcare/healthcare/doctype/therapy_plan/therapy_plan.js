@@ -152,6 +152,10 @@ frappe.ui.form.on("Therapy Plan", {
 
 frappe.ui.form.on("Therapy Plan Detail", {
 	no_of_sessions: function (frm) {
+		if (frm.doctype !== "Therapy Plan") {
+			return;
+		}
+
 		let total = 0;
 		$.each(frm.doc.therapy_plan_details, function (_i, e) {
 			total += e.no_of_sessions;
