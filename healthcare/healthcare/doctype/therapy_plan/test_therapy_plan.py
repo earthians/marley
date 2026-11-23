@@ -56,6 +56,35 @@ class TestTherapyPlan(HealthcareTestSuite):
 		self.assertEqual(len(plan.therapy_plan_details), 1)
 		self.assertEqual(plan.therapy_plan_details[0].sessions_completed, 1)
 
+	def test_additional_order_for_same_therapy_counts_sessions(self):
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
+		encounter.submit_orders_on_save = 1
+		encounter.save()
+		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
+		plan = frappe.get_doc("Therapy Plan", filters)
+		plan.therapy_plan_details[0].sessions_completed = 2
+		plan.save()
+		self.assertEqual(plan.status, "Completed")
+
+		encounter.append(
+			"therapies", {"therapy_type": encounter.therapies[0].therapy_type, "no_of_sessions": 3}
+		)
+		encounter.save()
+		self.assertNotEqual(encounter.therapies[0].service_request, encounter.therapies[1].service_request)
+		for submit in (False, True):
+			if submit:
+				encounter.submit()
+			else:
+				encounter.save()
+			plan.reload()
+			self.assertEqual(frappe.db.count("Therapy Plan", filters), 1)
+			self.assertEqual(len(plan.therapy_plan_details), 1)
+			self.assertEqual(plan.total_sessions, 5)
+			self.assertEqual(plan.total_sessions_completed, 2)
+			self.assertEqual(plan.status, "In Progress")
+
 	def test_status(self):
 		plan = create_therapy_plan()
 		self.assertEqual(plan.status, "Not Started")
