@@ -53,24 +53,53 @@ describe("useFeed", () => {
 	});
 
 	it("clears the previous patient's records while the new feed loads", async () => {
-		const nextResponse = deferred();
+		const nextResponse = deferred(),
+			nextCount = deferred();
 		const api = {
 			getFeed: vi
 				.fn()
 				.mockResolvedValueOnce([{ name: "PAT-1 record" }])
 				.mockReturnValueOnce(nextResponse.promise),
-			getFeedCount: vi.fn().mockResolvedValue(1),
+			getFeedCount: vi
+				.fn()
+				.mockResolvedValueOnce(1)
+				.mockReturnValueOnce(nextCount.promise),
 		};
 		const { scope, state } = setup(api);
 		await vi.runAllTimersAsync();
 		expect(state.records.value).toEqual([{ name: "PAT-1 record" }]);
+		expect(state.total.value).toBe(1);
 		state.patient.value = "PAT-2";
 		await nextTick();
 		expect(state.records.value).toEqual([]);
 		expect(state.total.value).toBe(0);
 		nextResponse.resolve([{ name: "PAT-2 record" }]);
+		nextCount.resolve(2);
 		await vi.runAllTimersAsync();
 		expect(state.records.value).toEqual([{ name: "PAT-2 record" }]);
+		expect(state.total.value).toBe(2);
+		scope.stop();
+	});
+
+	it("retries both the feed and the count", async () => {
+		const api = {
+			getFeed: vi
+				.fn()
+				.mockRejectedValueOnce(new Error("down"))
+				.mockResolvedValue([{ name: "record" }]),
+			getFeedCount: vi
+				.fn()
+				.mockRejectedValueOnce(new Error("down"))
+				.mockResolvedValue(25),
+		};
+		const { scope, state } = setup(api);
+		await vi.runAllTimersAsync();
+		expect(state.error.value).toBeTruthy();
+		state.retry();
+		await vi.runAllTimersAsync();
+		expect(state.error.value).toBe(null);
+		expect(state.records.value).toEqual([{ name: "record" }]);
+		expect(state.totalPages.value).toBe(2);
 		scope.stop();
 	});
 });

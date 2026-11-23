@@ -124,7 +124,7 @@ function changeActivityYear(value) {
 					</div>
 					<div v-else-if="feed.error.value" class="ph-empty-feed">
 						<p>{{ __("Could not load patient records") }}</p>
-						<button type="button" @click="feed.loadFeed">
+						<button type="button" @click="feed.retry">
 							{{ __("Retry") }}
 						</button>
 					</div>

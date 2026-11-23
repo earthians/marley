@@ -99,7 +99,14 @@ function toggle() {
 			</div>
 			<div class="ph-identity-copy">
 				<h2>
-					{{ fullName }} <span class="ph-status">{{ __("Active") }}</span>
+					{{ fullName }}
+					<span
+						class="ph-status"
+						:class="{
+							'is-inactive': (patient.status || 'Active') !== 'Active',
+						}"
+						>{{ __(patient.status || "Active") }}</span
+					>
 				</h2>
 				<p>
 					{{ patient.sex

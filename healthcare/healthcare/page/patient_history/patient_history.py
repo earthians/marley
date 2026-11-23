@@ -51,6 +51,10 @@ def get_filters(name, document_types=None, date_range=None):
 	return filters
 
 
+def _join(parts, separator=" · "):
+	return separator.join(str(part) for part in parts if part)
+
+
 def _reference_details(record):
 	doctype = record.reference_doctype
 	name = record.reference_name
@@ -60,6 +64,8 @@ def _reference_details(record):
 	try:
 		doc = frappe.get_doc(doctype, name)
 	except (frappe.DoesNotExistError, frappe.PermissionError):
+		return {}
+	if not frappe.has_permission(doctype, "read", doc):
 		return {}
 
 	fields = doc.as_dict()
@@ -106,19 +112,16 @@ def _reference_details(record):
 		"communication_date": str(date_value) if date_value else None,
 	}
 	if doctype == "Patient Encounter":
-		symptoms = [
-			row.get("complaint") or row.get("symptom") or row.get("description")
-			for row in fields.get("symptoms", [])
-		]
-		diagnoses = [row.get("diagnosis") for row in fields.get("diagnosis", [])]
-		result["summary"] = " · ".join(
-			filter(
-				None,
-				[
-					", ".join(filter(None, symptoms)) and f"Symptoms: {', '.join(filter(None, symptoms))}",
-					", ".join(filter(None, diagnoses)) and f"Diagnosis: {', '.join(filter(None, diagnoses))}",
-				],
-			)
+		symptoms = _join(
+			[
+				row.get("complaint") or row.get("symptom") or row.get("description")
+				for row in fields.get("symptoms", [])
+			],
+			", ",
+		)
+		diagnoses = _join([row.get("diagnosis") for row in fields.get("diagnosis", [])], ", ")
+		result["summary"] = _join(
+			[symptoms and f"Symptoms: {symptoms}", diagnoses and f"Diagnosis: {diagnoses}"]
 		)
 	elif doctype == "Vital Signs":
 		parts = []
@@ -160,33 +163,25 @@ def _reference_details(record):
 		result_value = fields.get("result")
 		flag = fields.get("result_flag") or fields.get("result_interpretation")
 		result["result_flag"] = flag
-		result["summary"] = " · ".join(
-			filter(
-				None, [str(name_part), str(result_value) if result_value else "", str(flag) if flag else ""]
-			)
-		)
+		result["summary"] = _join([name_part, result_value, flag])
 	elif doctype == "Lab Test":
 		name_part = fields.get("lab_test_name") or fields.get("template") or doctype
 		items = fields.get("normal_test_items") or fields.get("descriptive_test_items") or []
 		key_result = next((row for row in items if row.get("result_value")), None)
 		result_text = ""
 		if key_result:
-			result_text = " ".join(
-				filter(
-					None,
-					[
-						str(key_result.get("lab_test_name") or key_result.get("lab_test_particulars") or ""),
-						str(key_result.get("result_value")),
-						str(key_result.get("lab_test_uom") or ""),
-					],
-				)
+			result_text = _join(
+				[
+					key_result.get("lab_test_name") or key_result.get("lab_test_particulars"),
+					key_result.get("result_value"),
+					key_result.get("lab_test_uom"),
+				],
+				" ",
 			)
-		result["summary"] = " · ".join(filter(None, [str(name_part), result_text]))
+		result["summary"] = _join([name_part, result_text])
 	elif doctype == "Clinical Procedure":
-		result["summary"] = " · ".join(
-			filter(
-				None, [fields.get("procedure_template"), fields.get("service_unit"), fields.get("body_part")]
-			)
+		result["summary"] = _join(
+			[fields.get("procedure_template"), fields.get("service_unit"), fields.get("body_part")]
 		)
 	else:
 		result["summary"] = (
@@ -290,7 +285,7 @@ def get_activity_summary(
 		entry["by_type"][row.reference_doctype] = entry["by_type"].get(row.reference_doctype, 0) + 1
 		refs_by_type[row.reference_doctype][row.reference_name] = day
 
-	if refs_by_type.get("Vital Signs"):
+	if refs_by_type.get("Vital Signs") and frappe.has_permission("Vital Signs", "read"):
 		meta = frappe.get_meta("Vital Signs")
 		fields = [
 			field
@@ -301,7 +296,7 @@ def get_activity_summary(
 			if meta.has_field(optional):
 				fields.append(optional)
 				break
-		for vital in frappe.get_all(
+		for vital in frappe.get_list(
 			"Vital Signs",
 			filters={"name": ["in", list(refs_by_type["Vital Signs"])]},
 			fields=["name", *fields],
@@ -324,8 +319,8 @@ def get_activity_summary(
 				if day in days:
 					days[day]["abnormal"] = True
 
-	if refs_by_type.get("Observation"):
-		for observation in frappe.get_all(
+	if refs_by_type.get("Observation") and frappe.has_permission("Observation", "read"):
+		for observation in frappe.get_list(
 			"Observation",
 			filters={"name": ["in", list(refs_by_type["Observation"])]},
 			fields=["name", "result_flag", "result_flag_color", "result_interpretation"],

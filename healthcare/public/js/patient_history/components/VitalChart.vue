@@ -90,7 +90,8 @@ function morphPaths(previous) {
 function drawIn() {
 	cancelAnimationFrame(drawFrame);
 	nextTick(() => {
-		const paths = container.value?.querySelectorAll(".ph-chart-line") || [];
+		const paths =
+			container.value?.querySelectorAll(".ph-chart-line:not(.is-dashed)") || [];
 		if (reducedMotion()) {
 			paths.forEach(path => (path.style.strokeDashoffset = "0"));
 			return;
@@ -182,9 +183,19 @@ const frame = computed(() => {
 		if (min === max) max = min + step;
 	}
 	const y = value => top + ((max - value) / (max - min || 1)) * plotHeight;
+	const respiratory =
+		props.metric === "pulse_rate"
+			? rows
+					.map(row => toNumber(row.respiratory_rate))
+					.filter(value => value !== null)
+			: [];
+	const respiratoryMin = Math.floor(Math.min(8, ...respiratory)),
+		respiratoryMax = Math.ceil(Math.max(30, ...respiratory));
 	const yFor = (value, series) =>
 		props.metric === "pulse_rate" && series.key === "respiratory_rate"
-			? top + ((30 - value) / 22) * plotHeight
+			? top +
+			  ((respiratoryMax - value) / (respiratoryMax - respiratoryMin)) *
+					plotHeight
 			: y(value);
 	const ticks = [];
 	for (let tick = min; tick <= max; tick += step) ticks.push(Number(tick.toFixed(1)));
@@ -264,10 +275,12 @@ const frame = computed(() => {
 		: [];
 	const secondaryTicks =
 		props.metric === "pulse_rate"
-			? [8, 12, 16, 20, 24, 30].map(value => ({
-					value,
-					y: yFor(value, { key: "respiratory_rate" }),
-			  }))
+			? [...new Set([respiratoryMin, 8, 12, 16, 20, 24, 30, respiratoryMax])].map(
+					value => ({
+						value,
+						y: yFor(value, { key: "respiratory_rate" }),
+					}),
+			  )
 			: [];
 	return {
 		left,
@@ -493,7 +506,7 @@ function seriesColor(index) {
 			<template v-for="(series, seriesIndex) in frame.series" :key="series.key">
 				<path
 					v-if="series.points.length > 1"
-					pathLength="1"
+					:pathLength="series.dashed ? undefined : 1"
 					class="ph-chart-line"
 					:data-series="series.key"
 					:class="[

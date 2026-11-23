@@ -241,6 +241,12 @@ html:has(body[data-route="patient_history"]) {
 	vertical-align: 2px;
 }
 
+#page-patient_history .ph-status.is-inactive {
+	border-color: #e2e8f0;
+	background: #f1f5f9;
+	color: #64748b;
+}
+
 #page-patient_history .ph-profile-actions {
 	display: flex;
 	align-items: center;

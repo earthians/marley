@@ -55,6 +55,10 @@ export function useFeed(patient, filters, dateRange, api) {
 		}
 	}
 
+	function retry() {
+		loadFeed();
+		loadCount();
+	}
 	function invalidate() {
 		feedRequest++;
 		countRequest++;
@@ -105,6 +109,7 @@ export function useFeed(patient, filters, dateRange, api) {
 		loading,
 		error,
 		loadFeed,
+		retry,
 		invalidate,
 	};
 }
