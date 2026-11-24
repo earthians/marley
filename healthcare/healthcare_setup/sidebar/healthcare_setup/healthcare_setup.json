@@ -805,9 +805,9 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-24 22:25:27.319767",
+ "modified": "2026-11-24 08:49:31.294547",
  "modified_by": "Administrator",
- "module": "Healthcare",
+ "module": "Healthcare Setup",
  "name": "Healthcare Setup",
  "owner": "Administrator",
  "standard": 1,
