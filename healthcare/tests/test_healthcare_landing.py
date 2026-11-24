@@ -27,6 +27,14 @@ class TestHealthcareLanding(HealthcareTestSuite):
 		execute()
 		self.assertEqual(frappe.db.get_value("User", PHYSICIAN, "default_workspace"), "Outpatient")
 
+	def test_patch_skips_users_who_block_healthcare(self):
+		user = frappe.get_doc("User", PHYSICIAN)
+		user.append("block_modules", {"module": "Healthcare"})
+		user.save(ignore_permissions=True)
+		self.clear_workspaces()
+		execute()
+		self.assertFalse(frappe.db.get_value("User", PHYSICIAN, "default_workspace"))
+
 	def test_healthcare_user_opens_the_healthcare_shell(self):
 		self.clear_workspaces()
 		execute()
