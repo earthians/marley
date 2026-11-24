@@ -300,6 +300,7 @@ def get_activity_summary(
 			"Vital Signs",
 			filters={"name": ["in", list(refs_by_type["Vital Signs"])]},
 			fields=["name", *fields],
+			limit_page_length=0,
 		):
 			day = refs_by_type["Vital Signs"].get(vital.name)
 			spo2 = next(
@@ -324,6 +325,7 @@ def get_activity_summary(
 			"Observation",
 			filters={"name": ["in", list(refs_by_type["Observation"])]},
 			fields=["name", "result_flag", "result_flag_color", "result_interpretation"],
+			limit_page_length=0,
 		):
 			flag = " ".join(
 				str(observation.get(field) or "")
