@@ -2,11 +2,15 @@
  "app": "healthcare",
  "charts": [
   {
-   "chart_name": "Patient Appointments OP",
-   "label": "Patient Appointments"
+   "chart_name": "Daily Appointments",
+   "label": "Daily Appointments"
+  },
+  {
+   "chart_name": "Appointments by Status",
+   "label": "Appointments by Status"
   }
  ],
- "content": "[{\"id\":\"3edf8e2a12\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Outpatient Onboarding\",\"col\":12}},{\"id\":\"pxdw7O75CN\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Patient Appointments\",\"col\":12}},{\"id\":\"u3Sclf-QiQ\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients\",\"col\":4}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Appointments\",\"col\":4}},{\"id\":\"G41EJQwZox\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Appointments To Bill\",\"col\":4}},{\"id\":\"bEnAyCZSMA\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"4-OtW2OYnu\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"gzToa2CVJ7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vital Signs\",\"col\":4}},{\"id\":\"mz6BTyIeXY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Encounter\",\"col\":4}},{\"id\":\"8FLib33wDK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":4}},{\"id\":\"HnORuYex3I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}}]",
+ "content": "[{\"id\":\"3edf8e2a12\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Outpatient Onboarding\",\"col\":12}},{\"id\":\"chart-daily_appointments\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Appointments\",\"col\":6}},{\"id\":\"chart-appointments_by_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Appointments by Status\",\"col\":6}},{\"id\":\"u3Sclf-QiQ\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients\",\"col\":4}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Appointments\",\"col\":4}},{\"id\":\"G41EJQwZox\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Appointments To Bill\",\"col\":4}},{\"id\":\"bEnAyCZSMA\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"4-OtW2OYnu\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"gzToa2CVJ7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vital Signs\",\"col\":4}},{\"id\":\"mz6BTyIeXY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Encounter\",\"col\":4}},{\"id\":\"8FLib33wDK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":4}},{\"id\":\"HnORuYex3I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}}]",
  "creation": "2025-05-30 17:35:08.867048",
  "custom_blocks": [],
  "docstatus": 0,
@@ -20,7 +24,7 @@
  "label": "Outpatient",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-11-24 08:49:27.672491",
+ "modified": "2026-11-24 10:02:34.772033",
  "modified_by": "Administrator",
  "module": "Outpatient",
  "name": "Outpatient",
