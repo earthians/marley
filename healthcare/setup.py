@@ -346,6 +346,7 @@ def create_custom_records():
 	create_clinical_note_types()
 	setup_patient_history_settings()
 	setup_service_request_masters()
+	setup_code_systems()
 	setup_order_status_codes()
 	setup_observation_reference_types()
 
@@ -1329,7 +1330,13 @@ def get_patient_history_config():
 	}
 
 
-def setup_code_sysem_for_version():
+def setup_code_systems():
+	setup_code_system_for_version()
+	setup_non_fhir_code_systems()
+	setup_fhir_code_systems()
+
+
+def setup_code_system_for_version():
 	records = [
 		{
 			"doctype": "Code System",
@@ -1376,7 +1383,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1388,7 +1394,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1400,7 +1405,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1412,7 +1416,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1424,7 +1427,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1436,7 +1438,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 		{
 			"doctype": "Code System",
@@ -1448,7 +1449,6 @@ def setup_non_fhir_code_systems():
 			"experimental": 0,
 			"immutable": 0,
 			"custom": 0,
-			"version": "5.0.0-FHIRVersion",
 		},
 	]
 	insert_record(code_systems)
