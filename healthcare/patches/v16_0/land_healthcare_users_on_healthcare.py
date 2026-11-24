@@ -26,9 +26,18 @@ def execute():
 
 
 def healthcare_users() -> list[str]:
-	return frappe.get_all(
+	with_role = frappe.get_all(
 		"Has Role",
 		filters={"parenttype": "User", "role": ["in", HEALTHCARE_ROLES]},
 		pluck="parent",
 		distinct=True,
+	)
+	return sorted(set(with_role) - set(users_blocking_healthcare()))
+
+
+def users_blocking_healthcare() -> list[str]:
+	return frappe.get_all(
+		"Block Module",
+		filters={"parenttype": "User", "module": "Healthcare"},
+		pluck="parent",
 	)
