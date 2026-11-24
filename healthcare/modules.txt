@@ -4,3 +4,4 @@ Outpatient
 Emergency
 Inpatient
 Rehabilitation
+Insurance
