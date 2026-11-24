@@ -21,6 +21,7 @@ class BootStrapTestData:
 		self.make_diagnoses()
 		self.make_medical_departments()
 		self.make_users()
+		self.make_module_profiles()
 		self.make_patients()
 		self.make_practitioners()
 		self.make_service_unit_types()
@@ -754,6 +755,16 @@ class BootStrapTestData:
 			roles = {row["role"] for row in record.get("roles", [])}
 			if missing := roles - set(frappe.get_roles(record["email"])):
 				frappe.get_doc("User", record["email"]).add_roles(*missing)
+
+	def make_module_profiles(self):
+		records = [
+			{
+				"doctype": "Module Profile",
+				"module_profile_name": "_Test Healthcare Blocked",
+				"block_modules": [{"module": "Healthcare"}],
+			},
+		]
+		self.make_records(["module_profile_name"], records)
 
 	def make_patients(self):
 		records = [
