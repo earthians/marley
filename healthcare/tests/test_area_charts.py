@@ -47,6 +47,14 @@ class TestAreaCharts(HealthcareTestSuite):
 		)
 		self.assertIn(["Observation", "posting_date", ">=", "frappe.datetime.get_today()"], filters)
 
+	def test_appointments_by_status_stops_at_today(self):
+		filters = json.loads(
+			frappe.db.get_value("Dashboard Chart", "Appointments by Status", "dynamic_filters_json")
+		)
+		self.assertIn(
+			["Patient Appointment", "appointment_date", "<=", "frappe.datetime.get_today()"], filters
+		)
+
 	def test_triage_chart_lists_levels_in_priority_order(self):
 		with self.set_user("Administrator"):
 			data = triage_source.get(chart_name=TRIAGE_CHART, refresh=1)
@@ -66,10 +74,9 @@ class TestAreaCharts(HealthcareTestSuite):
 		self.assertEqual(self.triage_colours()[-1], triage_source.NOT_TRIAGED_COLOUR)
 
 	def test_renaming_a_level_keeps_colours_with_their_level(self):
-		first, second = triage_source.ordered_levels()[:2]
-		frappe.db.set_value("Triage Level", second.name, "priority", self.priority_of(first.name))
-		frappe.rename_doc("Triage Level", first.name, f"zz {first.name}")
-		self.assertEqual(self.triage_colours()[:2], [second.color, first.color])
+		frappe.rename_doc("Triage Level", "_Test Triage Amber", "_Test Triage Zinc")
+		self.assertEqual(self.colour_of("_Test Triage Zinc"), "#f59e0b")
+		self.assertEqual(self.colour_of("_Test Triage Blue"), "#2563eb")
 
 	def test_untriaged_counts_add_up_however_they_are_stored(self):
 		rows = [
@@ -78,8 +85,9 @@ class TestAreaCharts(HealthcareTestSuite):
 		]
 		self.assertEqual(triage_source.merge_counts(rows), {None: 5})
 
-	def priority_of(self, level: str) -> int:
-		return frappe.db.get_value("Triage Level", level, "priority")
+	def colour_of(self, level: str) -> str:
+		names = [row.name for row in triage_source.ordered_levels()]
+		return self.triage_colours()[names.index(level)]
 
 	def charts_in_layout(self, workspace) -> list[str]:
 		blocks = json.loads(workspace.content)
