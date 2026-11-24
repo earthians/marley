@@ -102,7 +102,7 @@ def set_observation_status(docname: str) -> None:
 							"Rejected",
 						]:
 							observation_doc.status = doc.status
-							observation_doc.save().submit()
+							observation_doc.submit()
 						if doc.status == "Rejected" and observation_doc.status == "Approved":
 							new_doc = frappe.copy_doc(observation_doc)
 							new_doc.status = ""
