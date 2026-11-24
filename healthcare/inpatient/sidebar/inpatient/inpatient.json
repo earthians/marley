@@ -403,9 +403,9 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-24 22:25:27.319767",
+ "modified": "2026-11-24 08:49:28.913974",
  "modified_by": "Administrator",
- "module": "Healthcare",
+ "module": "Inpatient",
  "name": "Inpatient",
  "owner": "Administrator",
  "standard": 1,
