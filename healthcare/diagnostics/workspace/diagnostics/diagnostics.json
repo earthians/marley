@@ -20,9 +20,9 @@
  "label": "Diagnostics",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-10-24 22:09:45.077699",
+ "modified": "2026-11-24 08:47:17.675726",
  "modified_by": "Administrator",
- "module": "Healthcare",
+ "module": "Diagnostics",
  "name": "Diagnostics",
  "number_cards": [
   {
