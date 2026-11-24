@@ -269,9 +269,9 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-24 22:09:45.077699",
+ "modified": "2026-11-24 08:49:27.672491",
  "modified_by": "Administrator",
- "module": "Healthcare",
+ "module": "Outpatient",
  "name": "Outpatient",
  "owner": "Administrator",
  "standard": 1,
