@@ -121,17 +121,12 @@ frappe.ui.form.on('Therapy Plan', {
 	},
 });
 
-<<<<<<< HEAD
-frappe.ui.form.on('Therapy Plan Detail', {
-	no_of_sessions: function(frm) {
-=======
+
 frappe.ui.form.on("Therapy Plan Detail", {
 	no_of_sessions: function (frm) {
 		if (frm.doctype !== "Therapy Plan") {
 			return;
 		}
-
->>>>>>> 4564f4f (fix(therapy): prevent missing total_sessions warning in Patient Encounter)
 		let total = 0;
 		$.each(frm.doc.therapy_plan_details, function(_i, e) {
 			total += e.no_of_sessions;
