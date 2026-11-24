@@ -6,7 +6,11 @@ import json
 import frappe
 
 from healthcare.controllers.service_request_controller import set_request_status
-from healthcare.healthcare.api.patient_portal import make_appointment
+from healthcare.healthcare.api.patient_portal import (
+	get_own_appointment_patient,
+	get_payment_link,
+	make_appointment,
+)
 from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import (
 	get_procedure_consumables,
 )
@@ -73,6 +77,7 @@ NOBODY = "test_user@marleyhealth.io"  # a login with no clinical role at all
 PHYSICIAN = "gp@marleyhealth.io"  # a Physician from the healthcare test fixtures
 NURSE = "nurse_permissions@marleyhealth.io"
 LAB_USER = "lab_permissions@marleyhealth.io"  # may submit a Lab Test, but has no access to its request
+PORTAL_USER = "portal_patient@marleyhealth.io"
 
 
 def stored(doctype, **fields):
@@ -263,6 +268,20 @@ class TestPortalAndGatewayEndpoints(WhitelistPermissionTestCase):
 	def test_a_portal_user_cannot_book_for_someone_elses_patient(self):
 		self.assert_denied(make_appointment, "any", self.patient, "2030-01-01", "10:00")
 
+	def test_a_portal_user_cannot_pay_for_someone_elses_appointment(self):
+		appointment = stored("Patient Appointment", patient=self.patient)
+		self.assert_denied(get_payment_link, "Patient Appointment", appointment, "x", 10, 10, "INR", "/")
+
+	def test_portal_payment_is_limited_to_appointments(self):
+		self.assertRaises(frappe.PermissionError, get_own_appointment_patient, "Sales Invoice", "any")
+
+	def test_a_portal_user_pays_for_their_own_appointment(self):
+		make_user(PORTAL_USER, "Patient")
+		patient = stored("Patient", first_name="Portal", status="Active", user_id=PORTAL_USER)
+		appointment = stored("Patient Appointment", patient=patient)
+		frappe.set_user(PORTAL_USER)
+		self.assertEqual(get_own_appointment_patient("Patient Appointment", appointment), patient)
+
 	def test_the_abdm_gateway_needs_patient_write(self):
 		self.assert_denied(abdm_request, {}, "verify_health_id", "Health ID")
 
@@ -301,10 +320,8 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 			frappe.db.get_value("Service Request", request, "status"), "completed-Request Status"
 		)
 
-	def test_a_lab_user_cannot_add_an_observation_directly(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(frappe.PermissionError, add_observation, patient=self.patient)
+	def test_adding_an_observation_directly_needs_create_on_observation(self):
+		self.assert_denied(add_observation, patient=self.patient)
 
 	def test_sample_collection_still_creates_observations_for_a_lab_user(self):
 		template = stored(

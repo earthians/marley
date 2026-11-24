@@ -423,7 +423,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-24 22:54:13.843788",
+ "modified": "2026-11-20 23:21:24.585279",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Observation Template",
@@ -457,6 +457,10 @@
    "select": 1,
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Laboratory User"
   }
  ],
  "row_format": "Dynamic",

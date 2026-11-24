@@ -38,6 +38,7 @@ class Observation(Document):
 		self.set_age()
 		self.set_result_time()
 		self.set_status()
+		self.validate_approval()
 		self.reference = get_observation_reference(self)
 		self.result_flag, self.result_flag_color = get_observation_result_flag(self)
 		self.validate_input()
@@ -81,6 +82,10 @@ class Observation(Document):
 				self.status = "Amended"
 			elif self.status not in ["Final", "Cancelled", "Entered in Error", "Unknown"]:
 				self.status = "Registered"
+
+	def validate_approval(self):
+		if self.docstatus == 0 and self.status == "Approved" and self.has_value_changed("status"):
+			frappe.throw(_("An Observation is approved by submitting it."), title=_("Not Approved"))
 
 	def set_result_time(self):
 		if not self.time_of_result:
