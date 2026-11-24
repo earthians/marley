@@ -51,6 +51,16 @@ def get_filters(name, document_types=None, date_range=None):
 	return filters
 
 
+def _temperature_celsius(value):
+	if value in (None, ""):
+		return None
+	try:
+		number = float(value)
+	except (TypeError, ValueError):
+		return None
+	return (number - 32) * 5 / 9 if number > 50 else number
+
+
 def _join(parts, separator=" · "):
 	return separator.join(str(part) for part in parts if part)
 
@@ -140,6 +150,10 @@ def _reference_details(record):
 						break
 			if key == "bp" and not value and fields.get("bp_systolic") and fields.get("bp_diastolic"):
 				value = f"{fields['bp_systolic']}/{fields['bp_diastolic']}"
+			if key == "weight" and not flt(value):
+				continue
+			if key == "temperature" and flt(value) > 50:
+				suffix = "°F"
 			if value not in (None, ""):
 				parts.append(f"{label} {value} {suffix}".strip())
 		result["summary"] = " · ".join(parts)
@@ -314,7 +328,7 @@ def get_activity_summary(
 			if (
 				flt(vital.get("bp_systolic")) >= 140
 				or flt(vital.get("bp_diastolic")) >= 90
-				or flt(vital.get("temperature")) > 37.5
+				or (_temperature_celsius(vital.get("temperature")) or 0) > 37.5
 				or (spo2 is not None and flt(spo2) < 94)
 			):
 				if day in days:

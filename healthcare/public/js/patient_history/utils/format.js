@@ -18,3 +18,11 @@ export function toNumber(value) {
 	const number = Number(value);
 	return Number.isFinite(number) ? number : null;
 }
+export function vitalTime(row) {
+	return timestamp(`${row.signs_date || ""} ${row.signs_time || "00:00:00"}`);
+}
+export function temperatureInCelsius(value) {
+	const number = toNumber(value);
+	if (number === null) return null;
+	return number > 50 ? Math.round(((number - 32) * 50) / 9) / 10 : number;
+}

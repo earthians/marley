@@ -1,4 +1,5 @@
 import { computed, ref, watch } from "vue";
+import { temperatureInCelsius, vitalTime } from "../utils/format";
 export function useVitals(patient, api) {
 	const data = ref([]),
 		metric = ref("bp"),
@@ -20,12 +21,12 @@ export function useVitals(patient, api) {
 			const vitals = await api.getVitals(value);
 			if (id !== requestId) return;
 			data.value = (vitals || [])
-				.map(row => (Number(row.bmi) > 0 ? row : { ...row, bmi: null }))
-				.sort(
-					(a, b) =>
-						new Date(`${a.signs_date} ${a.signs_time || "00:00"}`) -
-						new Date(`${b.signs_date} ${b.signs_time || "00:00"}`),
-				);
+				.map(row => ({
+					...row,
+					bmi: Number(row.bmi) > 0 ? row.bmi : null,
+					temperature: temperatureInCelsius(row.temperature),
+				}))
+				.sort((a, b) => vitalTime(a) - vitalTime(b));
 		} catch (e) {
 			if (id === requestId) error.value = e;
 		} finally {

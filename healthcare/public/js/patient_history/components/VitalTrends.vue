@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import VitalChart from "./VitalChart.vue";
 import CustomSelect from "./CustomSelect.vue";
-import { toNumber } from "../utils/format";
+import { toNumber, vitalTime } from "../utils/format";
 
 const props = defineProps({ state: { type: Object, required: true } });
 const hidden = ref([]);
@@ -16,7 +16,7 @@ const visibleRows = computed(() => {
 		props.state.range === "all"
 			? -Infinity
 			: Date.now() - Number(props.state.range) * 30.4375 * 86400000;
-	return props.state.data.filter(row => new Date(row.signs_date).getTime() >= since);
+	return props.state.data.filter(row => vitalTime(row) >= since);
 });
 const primaryStats = computed(() => {
 	const series = props.state.config.series[0];
