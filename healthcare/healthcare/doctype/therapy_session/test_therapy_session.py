@@ -18,6 +18,12 @@ class TestTherapySession(HealthcareTestSuite):
 		plan = create_therapy_plan()
 		session = create_therapy_session(plan.patient, "Basic Rehab", plan.name)
 		self.assertNotEqual(session.naming_series, default_series)
+		session.submit()
+
+		invoice = invoice_therapy_session(session.name)
+
+		self.assertEqual(invoice.naming_series, default_series)
+
 	def test_invoice_copies_practitioner(self):
 		plan = create_therapy_plan()
 		session = create_therapy_session(plan.patient, "Basic Rehab", plan.name)
@@ -27,7 +33,6 @@ class TestTherapySession(HealthcareTestSuite):
 
 		invoice = invoice_therapy_session(session.name)
 
-		self.assertEqual(invoice.naming_series, default_series)
 		self.assertTrue(session.practitioner)
 		self.assertEqual(invoice.ref_practitioner, session.practitioner)
 		self.assertEqual(invoice.docstatus, 0)
