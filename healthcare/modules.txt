@@ -3,3 +3,4 @@ Diagnostics
 Outpatient
 Emergency
 Inpatient
+Rehabilitation
