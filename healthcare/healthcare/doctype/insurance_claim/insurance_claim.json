@@ -257,15 +257,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "mode_of_payment_section",
-   "fieldtype": "Section Break",
-   "label": "Mode of Payment"
-  },
-  {
-   "fieldname": "column_break_133",
-   "fieldtype": "Column Break"
-  },
-  {
    "fetch_from": "patient.inpatient_record",
    "fieldname": "inpatient_record",
    "fieldtype": "Link",
@@ -293,7 +284,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-25 09:39:02.134891",
+ "modified": "2026-11-25 00:30:00.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Insurance Claim",

@@ -27,6 +27,11 @@ class TestInsuranceClaim(HealthcareTestSuite):
 		self.patient = frappe.get_list("Patient", pluck="name")[0]
 		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
 
+	def test_fieldnames_are_unique(self):
+		# a duplicated fieldname makes adding a Custom Field to Insurance Claim fail
+		fieldnames = [df.fieldname for df in frappe.get_meta("Insurance Claim").fields]
+		self.assertEqual(len(fieldnames), len(set(fieldnames)))
+
 	def test_insurance_claim_and_payment(self):
 		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
 		frappe.db.sql("""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'""")
