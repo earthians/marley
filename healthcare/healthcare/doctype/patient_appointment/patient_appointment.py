@@ -167,40 +167,12 @@ class PatientAppointment(Document):
 		if not self.practitioner:
 			return
 
-		end_time = datetime.datetime.combine(
-			getdate(self.appointment_date), get_time(self.appointment_time or "00:00")
-		) + datetime.timedelta(minutes=flt(self.duration))
-
-		# all appointments for both patient and practitioner overlapping the duration of this appointment
-		overlapping_appointments = frappe.db.sql(
-			"""
-			SELECT
-				name, practitioner, patient, appointment_time, duration, service_unit
-			FROM
-				`tabPatient Appointment`
-			WHERE
-				appointment_date=%(appointment_date)s AND name!=%(name)s AND status NOT IN ("Closed", "Cancelled") AND
-				(practitioner=%(practitioner)s OR patient=%(patient)s) AND
-				((appointment_time<%(appointment_time)s AND appointment_time + INTERVAL duration MINUTE>%(appointment_time)s) OR
-				(appointment_time>%(appointment_time)s AND appointment_time<%(end_time)s) OR
-				(appointment_time=%(appointment_time)s))
-			""",
-			{
-				"appointment_date": self.appointment_date,
-				"name": self.name,
-				"practitioner": self.practitioner,
-				"patient": self.patient,
-				"appointment_time": self.appointment_time,
-				"end_time": end_time.time(),
-			},
-			as_dict=True,
-		)
-
+		overlapping_appointments = self.get_overlapping_appointments()
 		if not overlapping_appointments:
 			return  # No overlaps, nothing to validate!
 
 		if self.service_unit:  # validate service unit capacity if overlap enabled
-			allow_overlap, service_unit_capacity = frappe.get_value(
+			allow_overlap, service_unit_capacity = frappe.get_cached_value(
 				"Healthcare Service Unit",
 				self.service_unit,
 				["overlap_appointments", "service_unit_capacity"],
@@ -236,6 +208,53 @@ class PatientAppointment(Document):
 				),
 				OverlapError,
 			)
+
+	def get_overlapping_appointments(self):
+		"""Open appointments of this practitioner, patient or non-overlap service unit that overlap this one."""
+		if self.appointment_time is None:
+			return []
+		start = self.get_appointment_start(self.appointment_time)
+		end = start + datetime.timedelta(minutes=flt(self.duration))
+		return [
+			appointment
+			for appointment in self.get_same_day_appointments()
+			if self.is_overlapping(appointment, start, end)
+		]
+
+	def get_same_day_appointments(self):
+		appointment = frappe.qb.DocType("Patient Appointment")
+		booked_by = (appointment.practitioner == self.practitioner) | (appointment.patient == self.patient)
+		if self.service_unit and not frappe.get_cached_value(
+			"Healthcare Service Unit", self.service_unit, "overlap_appointments"
+		):
+			# matches get_available_slots: a non-overlap unit is booked by any practitioner
+			booked_by |= appointment.service_unit == self.service_unit
+		return (
+			frappe.qb.from_(appointment)
+			.select(
+				appointment.name,
+				appointment.practitioner,
+				appointment.patient,
+				appointment.appointment_time,
+				appointment.duration,
+				appointment.service_unit,
+			)
+			.where(
+				(appointment.appointment_date == self.appointment_date)
+				& (appointment.name != (self.name or ""))
+				& appointment.status.notin(["Closed", "Cancelled"])
+				& appointment.appointment_time.isnotnull()
+				& booked_by
+			)
+		).run(as_dict=True)
+
+	def is_overlapping(self, appointment, start, end):
+		other_start = self.get_appointment_start(appointment.appointment_time)
+		other_end = other_start + datetime.timedelta(minutes=flt(appointment.duration))
+		return other_start == start or (other_start < end and other_end > start)
+
+	def get_appointment_start(self, appointment_time):
+		return datetime.datetime.combine(getdate(self.appointment_date), get_time(appointment_time))
 
 	def validate_based_on_appointments_for(self):
 		if self.appointment_for:

@@ -194,7 +194,7 @@ def create_therapy_session(source_name, target_doc=None):
 
 
 @frappe.whitelist()
-def invoice_therapy_session(source_name, target_doc=None):
+def invoice_therapy_session(source_name: str, target_doc: Document | str | None = None) -> Document:
 	def set_missing_values(source, target):
 		target.customer = frappe.db.get_value("Patient", source.patient, "customer")
 		target.due_date = getdate()
@@ -211,7 +211,7 @@ def invoice_therapy_session(source_name, target_doc=None):
 				"doctype": "Sales Invoice",
 				"field_map": [
 					["patient", "patient"],
-					["referring_practitioner", "practitioner"],
+					["practitioner", "ref_practitioner"],
 					["company", "company"],
 					["due_date", "start_date"],
 				],
