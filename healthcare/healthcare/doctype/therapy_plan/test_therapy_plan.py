@@ -27,6 +27,91 @@ class TestTherapyPlan(HealthcareTestSuite):
 			)
 		)
 
+	def test_creation_on_encounter_order_save(self):
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
+		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
+		self.assertFalse(frappe.db.exists("Therapy Plan", filters))
+
+		encounter.submit_orders_on_save = 1
+		encounter.save()
+		self.assertEqual(encounter.docstatus, 0)
+		plan = frappe.get_doc("Therapy Plan", filters)
+		service_request = encounter.therapies[0].service_request
+		self.assertTrue(service_request)
+		session = make_therapy_session(
+			patient, encounter.therapies[0].therapy_type, encounter.company, service_request=service_request
+		)
+		self.assertEqual(session["therapy_plan"], plan.name)
+
+		# Adding another therapy must retain the original row and session progress.
+		original_row = plan.therapy_plan_details[0]
+		original_row.sessions_completed = 1
+		plan.save()
+		therapy_name = f"_Test Later Therapy {frappe.generate_hash(length=8)}"
+		later_therapy = frappe.get_doc(
+			{
+				"doctype": "Therapy Type",
+				"therapy_type": therapy_name,
+				"item_code": therapy_name,
+				"item_name": therapy_name,
+				"item_group": "Services",
+				"rate": 0,
+			}
+		).insert()
+		encounter.append("therapies", {"therapy_type": later_therapy.name, "no_of_sessions": 3})
+
+		for submit in (False, True):
+			if submit:
+				encounter.submit()
+			else:
+				encounter.save()
+			self.assertEqual(frappe.db.count("Therapy Plan", filters), 1)
+			self.assertEqual(encounter.therapies[0].service_request, service_request)
+			self.assertTrue(encounter.therapies[1].service_request)
+			plan.reload()
+			rows = {row.therapy_type: row for row in plan.therapy_plan_details}
+			self.assertEqual(len(plan.therapy_plan_details), 2)
+			self.assertEqual(set(rows), {original_row.therapy_type, later_therapy.name})
+			self.assertEqual(rows[original_row.therapy_type].name, original_row.name)
+			self.assertEqual(rows[original_row.therapy_type].no_of_sessions, 2)
+			self.assertEqual(rows[original_row.therapy_type].sessions_completed, 1)
+			self.assertEqual(rows[later_therapy.name].no_of_sessions, 3)
+			self.assertEqual(rows[later_therapy.name].sessions_completed, 0)
+			self.assertEqual(plan.total_sessions, 5)
+			self.assertEqual(plan.total_sessions_completed, 1)
+			self.assertEqual(plan.status, "In Progress")
+
+	def test_additional_order_for_same_therapy_counts_sessions(self):
+		patient = frappe.get_list("Patient", pluck="name")[0]
+		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
+		encounter.submit_orders_on_save = 1
+		encounter.save()
+		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
+		plan = frappe.get_doc("Therapy Plan", filters)
+		plan.therapy_plan_details[0].sessions_completed = 2
+		plan.save()
+		self.assertEqual(plan.status, "Completed")
+
+		encounter.append(
+			"therapies", {"therapy_type": encounter.therapies[0].therapy_type, "no_of_sessions": 3}
+		)
+		encounter.save()
+		self.assertNotEqual(encounter.therapies[0].service_request, encounter.therapies[1].service_request)
+		for submit in (False, True):
+			if submit:
+				encounter.submit()
+			else:
+				encounter.save()
+			plan.reload()
+			self.assertEqual(frappe.db.count("Therapy Plan", filters), 1)
+			self.assertEqual(len(plan.therapy_plan_details), 1)
+			self.assertEqual(plan.total_sessions, 5)
+			self.assertEqual(plan.total_sessions_completed, 2)
+			self.assertEqual(plan.status, "In Progress")
+
 	def test_status(self):
 		plan = create_therapy_plan()
 		self.assertEqual(plan.status, "Not Started")
