@@ -2,11 +2,15 @@
  "app": "healthcare",
  "charts": [
   {
-   "chart_name": "Observations",
-   "label": "Observations"
+   "chart_name": "Daily Observations",
+   "label": "Daily Observations"
+  },
+  {
+   "chart_name": "Observations by Status",
+   "label": "Observations by Status"
   }
  ],
- "content": "[{\"id\":\"1490502802\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Diagnostics Onboarding\",\"col\":12}},{\"id\":\"HSlLOJpmAY\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Observations\",\"col\":12}},{\"id\":\"svg8yn8WQc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Diagnostic Reports\",\"col\":3}},{\"id\":\"3qxtkG85zc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Draft Observations\",\"col\":3}},{\"id\":\"IP9QdvUaX3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Service Requests\",\"col\":3}},{\"id\":\"DDv2Arm_nd\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Sample Collection\",\"col\":3}},{\"id\":\"RUdamDpLck\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"Y4JXpBH8b0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Diagnostic Report\",\"col\":3}},{\"id\":\"LfY6HIGIwx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"NSI3pNuG0c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sample Collection\",\"col\":3}},{\"id\":\"tlxVe5EZak\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}}]",
+ "content": "[{\"id\":\"1490502802\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Diagnostics Onboarding\",\"col\":12}},{\"id\":\"chart-daily_observations\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Observations\",\"col\":6}},{\"id\":\"chart-observations_by_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Observations by Status\",\"col\":6}},{\"id\":\"svg8yn8WQc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Diagnostic Reports\",\"col\":3}},{\"id\":\"3qxtkG85zc\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Draft Observations\",\"col\":3}},{\"id\":\"IP9QdvUaX3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Service Requests\",\"col\":3}},{\"id\":\"DDv2Arm_nd\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Sample Collection\",\"col\":3}},{\"id\":\"RUdamDpLck\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"Y4JXpBH8b0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Diagnostic Report\",\"col\":3}},{\"id\":\"LfY6HIGIwx\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"NSI3pNuG0c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sample Collection\",\"col\":3}},{\"id\":\"tlxVe5EZak\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}}]",
  "creation": "2025-05-30 17:38:48.052912",
  "custom_blocks": [],
  "docstatus": 0,
@@ -20,7 +24,7 @@
  "label": "Diagnostics",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-11-24 08:47:17.675726",
+ "modified": "2026-11-24 10:24:57.070693",
  "modified_by": "Administrator",
  "module": "Diagnostics",
  "name": "Diagnostics",
