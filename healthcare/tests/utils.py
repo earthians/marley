@@ -15,6 +15,7 @@ class BootStrapTestData:
 		self.make_medical_departments()
 		self.make_users()
 		self.make_module_profiles()
+		self.make_triage_levels()
 		self.make_patients()
 		self.make_practitioners()
 		self.make_service_unit_types()
@@ -611,6 +612,23 @@ class BootStrapTestData:
 			},
 		]
 		self.make_records(["module_profile_name"], records)
+
+	def make_triage_levels(self):
+		records = [
+			{
+				"doctype": "Triage Level",
+				"triage_level": "_Test Triage Amber",
+				"color": "#f59e0b",
+				"priority": 90,
+			},
+			{
+				"doctype": "Triage Level",
+				"triage_level": "_Test Triage Blue",
+				"color": "#2563eb",
+				"priority": 90,
+			},
+		]
+		self.make_records(["triage_level"], records)
 
 	def make_patients(self):
 		records = [
