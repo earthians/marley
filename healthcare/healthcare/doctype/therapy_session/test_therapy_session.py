@@ -6,10 +6,26 @@ import frappe
 from frappe.utils import nowdate
 
 from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
+from healthcare.healthcare.doctype.therapy_session.therapy_session import invoice_therapy_session
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestTherapySession(HealthcareTestSuite):
+	def test_invoice_preserves_default_naming_series(self):
+		default_series = frappe.new_doc("Sales Invoice").naming_series
+		self.assertTrue(default_series)
+
+		plan = create_therapy_plan()
+		session = create_therapy_session(plan.patient, "Basic Rehab", plan.name)
+		self.assertNotEqual(session.naming_series, default_series)
+		session.submit()
+
+		invoice = invoice_therapy_session(session.name)
+
+		self.assertEqual(invoice.naming_series, default_series)
+		self.assertEqual(invoice.docstatus, 0)
+		self.assertTrue(invoice.is_new())
+
 	def test_exercise_set_from_therapy_type(self):
 		plan = create_therapy_plan()
 		session = create_therapy_session(plan.patient, "Basic Rehab", plan.name)
