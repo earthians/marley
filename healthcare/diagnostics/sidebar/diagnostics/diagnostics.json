@@ -147,9 +147,9 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-24 22:25:27.319767",
+ "modified": "2026-11-24 08:47:17.675726",
  "modified_by": "Administrator",
- "module": "Healthcare",
+ "module": "Diagnostics",
  "name": "Diagnostics",
  "owner": "Administrator",
  "standard": 1,
