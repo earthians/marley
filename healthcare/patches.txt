@@ -46,3 +46,4 @@ healthcare.patches.v16_0.setup_code_systems
 healthcare.patches.v16_0.rebuild_imaging_patient_history_entries
 healthcare.patches.v16_0.block_area_modules_with_healthcare
 healthcare.patches.v16_0.colour_ed_arrivals_by_triage_level
+healthcare.patches.v16_0.land_healthcare_users_on_healthcare
