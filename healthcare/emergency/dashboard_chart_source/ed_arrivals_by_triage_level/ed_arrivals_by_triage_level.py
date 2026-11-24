@@ -53,7 +53,15 @@ def arrivals_by_level(filters: dict) -> dict:
 		filters=conditions,
 		group_by="triage_level",
 	)
-	return {row.triage_level or None: row.arrivals for row in rows}
+	return merge_counts(rows)
+
+
+def merge_counts(rows: list) -> dict:
+	counts = {}
+	for row in rows:
+		level = row.triage_level or None
+		counts[level] = counts.get(level, 0) + row.arrivals
+	return counts
 
 
 def ordered_levels() -> list:
