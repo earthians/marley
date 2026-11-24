@@ -206,7 +206,7 @@ def invoice_therapy_session(source_name, target_doc=None):
 				"doctype": "Sales Invoice",
 				"field_map": [
 					["patient", "patient"],
-					["referring_practitioner", "practitioner"],
+					["practitioner", "ref_practitioner"],
 					["company", "company"],
 					["due_date", "start_date"],
 				],
