@@ -1,7 +1,16 @@
 {
  "app": "healthcare",
- "charts": [],
- "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}}]",
+ "charts": [
+  {
+   "chart_name": "Daily ED Arrivals",
+   "label": "Daily ED Arrivals"
+  },
+  {
+   "chart_name": "ED Arrivals by Triage Level",
+   "label": "ED Arrivals by Triage Level"
+  }
+ ],
+ "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"chart-daily_ed_arrivals\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily ED Arrivals\",\"col\":6}},{\"id\":\"chart-ed_arrivals_by_triage_level\",\"type\":\"chart\",\"data\":{\"chart_name\":\"ED Arrivals by Triage Level\",\"col\":6}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}}]",
  "creation": "2026-06-16 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -14,7 +23,7 @@
  "is_hidden": 0,
  "label": "Emergency",
  "links": [],
- "modified": "2026-11-24 08:49:28.231531",
+ "modified": "2026-11-24 10:25:49.750720",
  "modified_by": "Administrator",
  "module": "Emergency",
  "name": "Emergency",
