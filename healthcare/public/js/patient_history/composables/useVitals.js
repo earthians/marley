@@ -2,7 +2,7 @@ import { computed, ref, watch } from "vue";
 export function useVitals(patient, api) {
 	const data = ref([]),
 		metric = ref("bp"),
-		range = ref("all");
+		range = ref("6");
 	const loading = ref(false),
 		error = ref(null);
 	let requestId = 0;
@@ -13,7 +13,7 @@ export function useVitals(patient, api) {
 		error.value = null;
 		loading.value = false;
 		metric.value = "bp";
-		range.value = "all";
+		range.value = "6";
 		if (!value) return;
 		loading.value = true;
 		try {
@@ -26,12 +26,6 @@ export function useVitals(patient, api) {
 						new Date(`${a.signs_date} ${a.signs_time || "00:00"}`) -
 						new Date(`${b.signs_date} ${b.signs_time || "00:00"}`),
 				);
-			const latest = data.value.at(-1);
-			if (
-				latest &&
-				Date.now() - new Date(latest.signs_date).getTime() > 183 * 86400000
-			)
-				range.value = "all";
 		} catch (e) {
 			if (id === requestId) error.value = e;
 		} finally {

@@ -281,7 +281,7 @@ onBeforeUnmount(() => bind(false));
 	background: transparent;
 	color: var(--d-muted);
 	font: inherit;
-	font-size: 12px;
+	font-size: var(--text-sm);
 	text-align: left;
 	cursor: pointer;
 	outline: none;
@@ -315,7 +315,7 @@ onBeforeUnmount(() => bind(false));
 	border-radius: 50%;
 	background: transparent;
 	color: var(--d-muted);
-	font-size: 16px;
+	font-size: var(--text-lg);
 	line-height: 1;
 	cursor: pointer;
 }
@@ -334,7 +334,7 @@ onBeforeUnmount(() => bind(false));
 	border-radius: 12px;
 	background: var(--d-surface);
 	color: var(--d-text);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	box-shadow:
 		0 12px 32px rgba(15, 23, 42, 0.16),
 		0 2px 6px rgba(15, 23, 42, 0.06);
@@ -400,7 +400,7 @@ onBeforeUnmount(() => bind(false));
 }
 .phdr-date > span {
 	color: var(--d-muted);
-	font-size: 10px;
+	font-size: var(--text-xs);
 	font-weight: 650;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -416,7 +416,7 @@ onBeforeUnmount(() => bind(false));
 	color: var(--d-text);
 	color-scheme: light dark;
 	font: inherit;
-	font-size: 12px;
+	font-size: var(--text-sm);
 }
 .phdr-date input:focus {
 	border-color: var(--d-primary);
@@ -426,7 +426,7 @@ onBeforeUnmount(() => bind(false));
 .phdr-note {
 	margin: 8px 0 0;
 	color: var(--d-muted);
-	font-size: 11px;
+	font-size: var(--text-xs);
 }
 .phdr-note.is-error {
 	color: #dc2626;

@@ -387,12 +387,25 @@ function seriesColor(index) {
 
 <template>
 	<div ref="container" class="patient_vital_charts" @pointerdown="hidePoint()">
-		<div v-if="!rows.length" class="ph-empty">
-			{{ __("No vital signs recorded for this patient") }}
+		<div v-if="!rows.length" class="ph-chart-empty">
+			<span class="ph-chart-empty-icon" aria-hidden="true"></span>
+			<p class="ph-chart-empty-title">
+				{{ __("No vital signs recorded for this patient") }}
+			</p>
 		</div>
-		<div v-else-if="!visibleRows.length" class="ph-empty">
-			<p>{{ __("No readings in the selected range") }}</p>
-			<button type="button" @click="emit('update:range', 'all')">
+		<div v-else-if="!visibleRows.length" class="ph-chart-empty">
+			<span class="ph-chart-empty-icon" aria-hidden="true"></span>
+			<p class="ph-chart-empty-title">
+				{{ __("No readings in the selected range") }}
+			</p>
+			<p class="ph-chart-empty-text">
+				{{ __("This patient has no vital signs recorded in this period.") }}
+			</p>
+			<button
+				type="button"
+				class="btn btn-default btn-sm ph-chart-empty-action"
+				@click="emit('update:range', 'all')"
+			>
 				{{ __("Show all time") }}
 			</button>
 		</div>

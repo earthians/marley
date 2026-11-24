@@ -70,7 +70,7 @@
 	grid-template-columns: repeat(7, minmax(0, 1fr));
 	margin: 0 0 3px;
 	color: var(--ph-muted);
-	font-size: 8px;
+	font-size: var(--text-tiny);
 	text-align: center;
 }
 #page-patient_history .ph-activity-cell:focus-visible,
@@ -230,13 +230,13 @@
 #page-patient_history .ph-chart-unit,
 #page-patient_history .ph-chart-axis-right {
 	fill: var(--ph-muted);
-	font-size: 10px;
+	font-size: var(--text-xs);
 }
 #page-patient_history .ph-chart-unit {
-	font-size: 9px;
+	font-size: var(--text-tiny);
 }
 #page-patient_history .ph-chart-xlabel {
-	font-size: 9px;
+	font-size: var(--text-tiny);
 }
 #page-patient_history .ph-chart-normal-band {
 	animation: ph-band-in 0.4s ease-out both;
@@ -249,7 +249,7 @@
 }
 #page-patient_history .ph-chart-normal-band text {
 	fill: var(--ph-muted);
-	font-size: 8px;
+	font-size: var(--text-tiny);
 }
 #page-patient_history .ph-chart-footer {
 	align-items: flex-start;
@@ -420,7 +420,7 @@
 #page-patient_history .ph-chart-unit,
 #page-patient_history .ph-chart-axis-right {
 	fill: var(--ph-muted);
-	font-size: 10px;
+	font-size: var(--text-xs);
 	transition: opacity 0.16s ease;
 }
 #page-patient_history .ph-trends-svg.is-axis-fading .ph-chart-axis text,
@@ -429,7 +429,7 @@
 }
 #page-patient_history .ph-chart-unit,
 #page-patient_history .ph-chart-xlabel {
-	font-size: 9px;
+	font-size: var(--text-tiny);
 }
 #page-patient_history .ph-chart-normal-band {
 	animation: ph-band-in 0.4s ease-out both;
@@ -442,7 +442,7 @@
 }
 #page-patient_history .ph-chart-normal-band text {
 	fill: var(--ph-muted);
-	font-size: 8px;
+	font-size: var(--text-tiny);
 }
 #page-patient_history .ph-chart-line {
 	fill: none;
@@ -535,7 +535,7 @@
 	background: var(--ph-surface, var(--card-bg, #fff));
 	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
 	color: var(--ph-text);
-	font-size: 13px;
+	font-size: var(--text-base);
 	pointer-events: none;
 	animation: ph-tooltip-in 0.12s ease-out both;
 }
@@ -560,7 +560,7 @@
 #page-patient_history .ph-chart-tooltip header {
 	margin-bottom: 8px;
 	color: var(--ph-text);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	font-weight: 650;
 }
 #page-patient_history .ph-tooltip-row {
@@ -578,12 +578,12 @@
 }
 #page-patient_history .ph-tooltip-row span {
 	color: var(--ph-muted);
-	font-size: 11px;
+	font-size: var(--text-xs);
 	white-space: nowrap;
 }
 #page-patient_history .ph-tooltip-row strong {
 	color: var(--ph-text);
-	font-size: 11px;
+	font-size: var(--text-xs);
 	white-space: nowrap;
 }
 #page-patient_history .ph-tooltip-row em {
@@ -592,7 +592,7 @@
 	border-radius: 10px;
 	background: #dcfce7;
 	color: #047857;
-	font-size: 9px;
+	font-size: var(--text-tiny);
 	font-style: normal;
 }
 #page-patient_history .ph-tooltip-row em.is-high {
@@ -608,7 +608,7 @@
 	padding-top: 7px;
 	border-top: 1px solid var(--ph-border);
 	color: #047857;
-	font-size: 11px;
+	font-size: var(--text-xs);
 }
 #page-patient_history .ph-chart-tooltip footer.is-bad {
 	color: #b91c1c;
@@ -672,16 +672,16 @@
 }
 #page-patient_history .ph-stat-chip span {
 	color: var(--ph-muted);
-	font-size: 10px;
+	font-size: var(--text-xs);
 }
 #page-patient_history .ph-stat-chip strong {
 	color: var(--ph-text);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	white-space: nowrap;
 }
 #page-patient_history .ph-stat-chip time {
 	color: var(--ph-muted);
-	font-size: 9px;
+	font-size: var(--text-tiny);
 	white-space: nowrap;
 }
 #page-patient_history .ph-chart-skeleton {
@@ -787,7 +787,7 @@
 		padding: 7px 8px;
 	}
 	#page-patient_history .ph-stat-chip strong {
-		font-size: 10px;
+		font-size: var(--text-xs);
 	}
 }
 @media (prefers-reduced-motion: reduce) {
@@ -846,14 +846,14 @@
 }
 #page-patient_history .ph-stat-chip span {
 	flex: 0 0 auto;
-	font-size: 11px;
+	font-size: var(--text-xs);
 	font-weight: 600;
 }
 #page-patient_history .ph-stat-chip strong {
-	font-size: 13px;
+	font-size: var(--text-base);
 }
 #page-patient_history .ph-stat-chip time {
-	font-size: 10px;
+	font-size: var(--text-xs);
 }
 
 #page-patient_history .ph-filter-toolbar {
@@ -874,7 +874,7 @@
 	display: block;
 	margin-bottom: 7px;
 	color: var(--ph-muted);
-	font-size: 10px;
+	font-size: var(--text-xs);
 	font-weight: 650;
 	letter-spacing: 0.07em;
 }
@@ -932,7 +932,7 @@
 	background: transparent;
 	color: var(--ph-muted);
 	font: inherit;
-	font-size: 13px;
+	font-size: var(--text-base);
 	text-align: left;
 	cursor: pointer;
 }
@@ -959,14 +959,14 @@
 #page-patient_history .ph-multiselect-placeholder {
 	overflow: hidden;
 	color: var(--ph-muted);
-	font-size: 13px;
+	font-size: var(--text-base);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 #page-patient_history .ph-multiselect-chevron {
 	flex: none;
 	color: var(--ph-muted);
-	font-size: 18px;
+	font-size: var(--text-2xl);
 	line-height: 1;
 	transition: transform 0.18s ease;
 }
@@ -983,7 +983,7 @@
 	border-radius: 7px;
 	background: color-mix(in srgb, var(--ph-page-bg) 70%, var(--ph-surface));
 	color: var(--ph-text);
-	font-size: 11px;
+	font-size: var(--text-xs);
 }
 #page-patient_history .ph-type-chip > span {
 	color: var(--ph-muted);
@@ -992,7 +992,7 @@
 #page-patient_history .ph-type-more {
 	flex: none;
 	color: var(--ph-muted);
-	font-size: 11px;
+	font-size: var(--text-xs);
 }
 #page-patient_history .ph-multiselect-menu {
 	position: absolute;
@@ -1036,7 +1036,7 @@
 	color: var(--ph-muted);
 }
 #page-patient_history .ph-multiselect-search > span {
-	font-size: 17px;
+	font-size: var(--text-xl);
 	line-height: 1;
 }
 #page-patient_history .ph-multiselect-search > input {
@@ -1067,7 +1067,7 @@
 	padding: 0 9px;
 	border-radius: 7px;
 	color: var(--ph-text);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	cursor: pointer;
 	transition: background-color 0.13s ease;
 }
@@ -1087,7 +1087,7 @@
 }
 #page-patient_history .ph-multiselect-option > i {
 	color: var(--ph-text);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	font-style: normal;
 	opacity: 0;
 	transform: scale(0.7);
@@ -1103,7 +1103,7 @@
 #page-patient_history .ph-multiselect-error {
 	margin: 3px 6px;
 	color: var(--ph-muted);
-	font-size: 12px;
+	font-size: var(--text-sm);
 }
 #page-patient_history .ph-multiselect-error button {
 	margin-left: 6px;
@@ -1216,7 +1216,7 @@
 	min-width: 140px;
 	padding: 0 30px 0 11px;
 	color: var(--ph-text);
-	font-size: 12px;
+	font-size: var(--text-sm);
 }
 #page-patient_history .ph-year-control {
 	display: inline-flex;
@@ -1306,7 +1306,7 @@
 }
 #page-patient_history .ph-date-control > span {
 	color: var(--ph-muted);
-	font-size: 9px;
+	font-size: var(--text-tiny);
 	font-weight: 650;
 	letter-spacing: 0.06em;
 	line-height: 1.2;
@@ -1318,7 +1318,7 @@
 	min-height: 26px;
 	height: 26px;
 	padding: 0;
-	font-size: 12px;
+	font-size: var(--text-sm);
 }
 #page-patient_history .ph-date-input-shell input[type="date"]:focus {
 	outline: none;
@@ -1329,7 +1329,7 @@
 	place-items: center;
 	align-self: center;
 	color: var(--ph-muted);
-	font-size: 14px;
+	font-size: var(--text-base);
 }
 
 /* Collapsible activity and chart panel. */
@@ -1351,7 +1351,7 @@
 	background: var(--ph-surface);
 	color: var(--ph-text);
 	font: inherit;
-	font-size: 14px;
+	font-size: var(--text-base);
 	line-height: 1;
 	font-weight: 600;
 	text-align: left;
@@ -1433,7 +1433,7 @@
 	background: var(--ph-surface);
 	color: var(--ph-text);
 	font: inherit;
-	font-size: 13px;
+	font-size: var(--text-base);
 	line-height: 1;
 	text-align: left;
 	cursor: pointer;
@@ -1484,7 +1484,7 @@
 	background: transparent;
 	color: var(--ph-text);
 	font: inherit;
-	font-size: 13px;
+	font-size: var(--text-base);
 	line-height: 1;
 	text-align: left;
 	cursor: pointer;
@@ -1521,7 +1521,7 @@
 	padding: 0 3px;
 	border: 0;
 	background: transparent;
-	font-size: 13px;
+	font-size: var(--text-base);
 	font-weight: 650;
 }
 #page-patient_history .ph-year-select .ph-custom-select-trigger:hover {
@@ -1564,4 +1564,41 @@
 		min-height: 54px;
 		flex-wrap: nowrap;
 	}
+}
+#page-patient_history .ph-chart-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	min-height: 240px;
+	padding: 32px 16px;
+	border: 1px dashed var(--ph-border);
+	border-radius: var(--border-radius-md, 8px);
+	background: color-mix(in srgb, var(--ph-page-bg) 60%, transparent);
+	text-align: center;
+}
+#page-patient_history .ph-chart-empty-icon {
+	width: 44px;
+	height: 44px;
+	margin-bottom: 8px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--ph-primary) 10%, transparent)
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l2-5 4 10 2-5h6'/%3E%3C/svg%3E")
+		no-repeat center / 22px 22px;
+}
+#page-patient_history .ph-chart-empty-title {
+	margin: 0;
+	color: var(--ph-text);
+	font-size: var(--text-base);
+	font-weight: var(--weight-medium, 500);
+}
+#page-patient_history .ph-chart-empty-text {
+	max-width: 320px;
+	margin: 0;
+	color: var(--ph-muted);
+	font-size: var(--text-sm);
+}
+#page-patient_history .ph-chart-empty-action {
+	margin-top: 12px;
 }
