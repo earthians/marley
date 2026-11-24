@@ -1048,7 +1048,7 @@ html:has(body[data-route="patient_history"]) {
 #page-patient_history .ph-record.slate .ph-type-tag {
 	border-color: #94a3b8;
 	background: #f1f5f9;
-	color: var(--text-muted, #475569);
+	color: #475569;
 }
 
 #page-patient_history .ph-record.sky .ph-record-node,
