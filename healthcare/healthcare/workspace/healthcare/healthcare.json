@@ -2,11 +2,15 @@
  "app": "healthcare",
  "charts": [
   {
-   "chart_name": "Department wise Patient Appointments",
-   "label": "Department wise Patient Appointments"
+   "chart_name": "Daily New Patients",
+   "label": "Daily New Patients"
+  },
+  {
+   "chart_name": "Encounters by Department",
+   "label": "Encounters by Department"
   }
  ],
- "content": "[{\"id\":\"22de3095e6\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Healthcare Setup Onboarding\",\"col\":12}},{\"id\":\"K_7_NMF8in\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Department wise Patient Appointments\",\"col\":12}},{\"id\":\"B0ieP_wv7A\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients\",\"col\":3}},{\"id\":\"Mr6_fkNNSj\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients Admitted\",\"col\":3}},{\"id\":\"A3Zmu5gbXC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Appointments\",\"col\":3}},{\"id\":\"voXYkDJQ9i\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Appointments to Bill\",\"col\":3}},{\"id\":\"8uG-9LNI7O\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ExWEBG_jka\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"En_j_WzPsv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"s2NQX3pIbg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"Zz-9W-sYbO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Service Unit\",\"col\":4}},{\"id\":\"AwZgbqYj8Z\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Practitioner\",\"col\":4}},{\"id\":\"9K0olJ6xx0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}},{\"id\":\"QjWQWuBZS2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":4}}]",
+ "content": "[{\"id\":\"22de3095e6\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Healthcare Setup Onboarding\",\"col\":12}},{\"id\":\"chart-daily_new_patients\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily New Patients\",\"col\":6}},{\"id\":\"chart-encounters_by_department\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Encounters by Department\",\"col\":6}},{\"id\":\"B0ieP_wv7A\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients\",\"col\":3}},{\"id\":\"Mr6_fkNNSj\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients Admitted\",\"col\":3}},{\"id\":\"A3Zmu5gbXC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Appointments\",\"col\":3}},{\"id\":\"voXYkDJQ9i\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Appointments to Bill\",\"col\":3}},{\"id\":\"8uG-9LNI7O\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"ExWEBG_jka\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"En_j_WzPsv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"s2NQX3pIbg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"Zz-9W-sYbO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Service Unit\",\"col\":4}},{\"id\":\"AwZgbqYj8Z\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Practitioner\",\"col\":4}},{\"id\":\"9K0olJ6xx0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}},{\"id\":\"QjWQWuBZS2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":4}}]",
  "creation": "2020-03-02 17:23:17.919682",
  "custom_blocks": [],
  "docstatus": 0,
@@ -18,7 +22,7 @@
  "is_hidden": 0,
  "label": "Healthcare",
  "links": [],
- "modified": "2026-10-24 22:09:45.077699",
+ "modified": "2026-11-24 09:57:59.599924",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare",
