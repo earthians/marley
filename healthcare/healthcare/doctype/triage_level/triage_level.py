@@ -16,3 +16,6 @@ class TriageLevel(Document):
 
 	def after_delete(self):
 		sync_colours()
+
+	def after_rename(self, old, new, merge=False):
+		sync_colours()
