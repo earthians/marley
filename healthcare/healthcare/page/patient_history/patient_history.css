@@ -1,7 +1,7 @@
 #page-patient_history {
 	--ph-surface: var(--card-bg, #fff);
 	--ph-border: var(--border-color, #e2e8f0);
-	--ph-muted: #475569;
+	--ph-muted: var(--text-muted, #64748b);
 	--ph-primary: var(--primary, #0284c7);
 	--ph-text: var(--text-color, #1e293b);
 	--ph-page-bg: var(--bg-color, #f8fafc);
@@ -25,7 +25,6 @@
 
 html[data-theme="dark"] #page-patient_history,
 body[data-theme="dark"] #page-patient_history {
-	--ph-muted: #cbd5e1;
 	--ph-chart-systolic-from: #a5b4fc;
 	--ph-chart-systolic-to: #7dd3fc;
 	--ph-chart-diastolic: #5eead4;
@@ -104,14 +103,14 @@ html:has(body[data-route="patient_history"]) {
 
 #page-patient_history h1 {
 	margin: 0;
-	color: var(--text-color, #0f172a);
+	color: var(--heading-color, var(--text-color));
 	font-size: var(--text-4xl);
 	font-weight: 700;
 }
 
 #page-patient_history h2 {
 	margin: 0;
-	color: var(--text-color, #0f172a);
+	color: var(--heading-color, var(--text-color));
 	font-size: var(--text-base);
 	font-weight: 650;
 }
@@ -242,9 +241,9 @@ html:has(body[data-route="patient_history"]) {
 }
 
 #page-patient_history .ph-status.is-inactive {
-	border-color: #e2e8f0;
-	background: #f1f5f9;
-	color: #64748b;
+	border-color: var(--border-color, #e2e8f0);
+	background: var(--subtle-fg, #f1f5f9);
+	color: var(--text-muted, #64748b);
 }
 
 #page-patient_history .ph-profile-actions {
@@ -1049,7 +1048,7 @@ html:has(body[data-route="patient_history"]) {
 #page-patient_history .ph-record.slate .ph-type-tag {
 	border-color: #94a3b8;
 	background: #f1f5f9;
-	color: #475569;
+	color: var(--text-muted, #475569);
 }
 
 #page-patient_history .ph-record.sky .ph-record-node,
@@ -1434,22 +1433,6 @@ html:has(body[data-route="patient_history"]) {
 	}
 	#page-patient_history .ph-chart-footer strong {
 		text-align: left;
-	}
-}
-
-@media print {
-	#page-patient_history .page-head,
-	#page-patient_history .ph-filter-row,
-	#page-patient_history .ph-pagination {
-		display: none !important;
-	}
-	#page-patient_history .document-html[hidden] {
-		display: block !important;
-	}
-	#page-patient_history .ph-card,
-	#page-patient_history .ph-record-card {
-		break-inside: avoid;
-		box-shadow: none;
 	}
 }
 
@@ -2052,116 +2035,5 @@ html:has(body[data-route="patient_history"]) {
 	#page-patient_history .page-form .frappe-control[data-fieldname="patient"] {
 		flex-basis: 100%;
 		max-width: none;
-	}
-}
-
-@media print {
-	#page-patient_history .layout-main-section > .page-form {
-		display: none !important;
-	}
-	#page-patient_history .ph-patient-card {
-		position: relative;
-		overflow: hidden;
-		padding-top: 22px;
-		background: linear-gradient(
-				180deg,
-				color-mix(in srgb, var(--ph-primary) 6%, transparent),
-				transparent 90px
-			),
-			var(--ph-surface);
-	}
-	#page-patient_history .ph-patient-card::before {
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 3px;
-		background: linear-gradient(
-			90deg,
-			var(--ph-primary),
-			color-mix(in srgb, var(--ph-primary) 35%, #38bdf8)
-		);
-		content: "";
-	}
-	#page-patient_history .ph-patient-card .ph-patient-avatar:not(.has-image) {
-		border-color: color-mix(in srgb, var(--ph-primary) 25%, transparent);
-		background: color-mix(in srgb, var(--ph-primary) 12%, var(--ph-surface));
-		color: var(--ph-primary);
-		font-size: var(--text-2xl);
-	}
-	#page-patient_history .ph-identity-copy h2 {
-		font-size: var(--text-2xl);
-		font-weight: 700;
-		letter-spacing: -0.01em;
-	}
-	#page-patient_history .ph-identity-copy p {
-		font-size: var(--text-base);
-		#page-patient_history .ph-date-marker strong {
-			padding: 3px 10px;
-			border: 1px solid var(--ph-border);
-			border-radius: 999px;
-			background: var(--ph-surface);
-			font-size: var(--text-xs);
-			font-weight: 650;
-		}
-		#page-patient_history .ph-record {
-			--ph-type-accent: #94a3b8;
-		}
-		#page-patient_history .ph-record.sky {
-			--ph-type-accent: #0ea5e9;
-		}
-		#page-patient_history .ph-record.emerald {
-			--ph-type-accent: #10b981;
-		}
-		#page-patient_history .ph-record.amber {
-			--ph-type-accent: #f59e0b;
-		}
-		#page-patient_history .ph-record.indigo {
-			--ph-type-accent: #6366f1;
-		}
-		#page-patient_history .ph-record.teal {
-			--ph-type-accent: #14b8a6;
-		}
-		#page-patient_history .ph-record.violet {
-			--ph-type-accent: #8b5cf6;
-		}
-		#page-patient_history .ph-record.rose {
-			--ph-type-accent: #f43f5e;
-		}
-		#page-patient_history .ph-record.slate {
-			--ph-type-accent: #64748b;
-		}
-		#page-patient_history .ph-record-card {
-			padding: 16px 18px;
-			border-left: 3px solid var(--ph-type-accent);
-			border-radius: 10px;
-			transition:
-				box-shadow 0.15s ease,
-				transform 0.15s ease;
-		}
-		#page-patient_history .ph-record-card:hover {
-			box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
-			transform: translateY(-1px);
-		}
-		#page-patient_history .ph-type-tag {
-			padding: 4px 9px;
-			border-radius: 999px;
-			font-size: var(--text-xs);
-		}
-		#page-patient_history .ph-record-header time {
-			font-size: var(--text-xs);
-		}
-		#page-patient_history .ph-record-summary {
-			color: var(--ph-text);
-			font-size: var(--text-base);
-			line-height: 1.55;
-		}
-		@media (prefers-reduced-motion: reduce) {
-			#page-patient_history .ph-record-card,
-			#page-patient_history .ph-record-card:hover {
-				transition: none;
-				transform: none;
-			}
-		}
 	}
 }

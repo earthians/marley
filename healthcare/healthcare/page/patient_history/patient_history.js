@@ -68,7 +68,6 @@ frappe.pages["patient_history"].on_page_load = function (wrapper) {
 	page.set_primary_action(__("Open Patient"), () => {
 		if (state.patient) frappe.set_route("Form", "Patient", state.patient);
 	});
-	page.add_menu_item(__("Print"), () => window.print());
 };
 
 frappe.pages["patient_history"].on_page_show = function (wrapper) {
