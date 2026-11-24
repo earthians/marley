@@ -321,15 +321,15 @@ def get_activity_summary(
 					days[day]["abnormal"] = True
 
 	if refs_by_type.get("Observation") and frappe.has_permission("Observation", "read"):
+		references = list(refs_by_type["Observation"])
 		for observation in frappe.get_list(
 			"Observation",
-			filters={"name": ["in", list(refs_by_type["Observation"])]},
-			fields=["name", "result_flag", "result_flag_color", "result_interpretation"],
+			or_filters={"name": ["in", references], "parent_observation": ["in", references]},
+			fields=["name", "parent_observation", "result_flag", "result_flag_color"],
 			limit_page_length=0,
 		):
 			flag = " ".join(
-				str(observation.get(field) or "")
-				for field in ("result_flag", "result_flag_color", "result_interpretation")
+				str(observation.get(field) or "") for field in ("result_flag", "result_flag_color")
 			).lower()
 			if any(
 				term in flag
@@ -346,7 +346,9 @@ def get_activity_summary(
 					"#f2994a",
 				)
 			):
-				day = refs_by_type["Observation"].get(observation.name)
+				day = refs_by_type["Observation"].get(observation.name) or refs_by_type["Observation"].get(
+					observation.parent_observation
+				)
 				if day in days:
 					days[day]["abnormal"] = True
 	return [days[key] for key in sorted(days)]

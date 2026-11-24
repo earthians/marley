@@ -20,7 +20,7 @@ export function useVitals(patient, api) {
 			const vitals = await api.getVitals(value);
 			if (id !== requestId) return;
 			data.value = (vitals || [])
-				.slice()
+				.map(row => (Number(row.bmi) > 0 ? row : { ...row, bmi: null }))
 				.sort(
 					(a, b) =>
 						new Date(`${a.signs_date} ${a.signs_time || "00:00"}`) -
