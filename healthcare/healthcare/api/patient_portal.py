@@ -615,17 +615,26 @@ def validate_currency(payment_gateway, currency):
 	controller().validate_transaction_currency(currency)
 
 
-@frappe.whitelist()
+def get_own_appointment_patient(doctype: str, docname: str) -> str:
+	if doctype != "Patient Appointment":
+		frappe.throw(_("Online payment is only available for appointments."), frappe.PermissionError)
+	patient = frappe.db.get_value("Patient Appointment", docname, "patient")
+	if not patient or patient not in get_patients_with_relations():
+		frappe.throw(_("You cannot pay for this appointment."), frappe.PermissionError)
+	return patient
+
+
+@frappe.whitelist(methods=["POST"])
 def get_payment_link(
-	doctype,
-	docname,
-	title,
-	amount,
-	total_amount,
-	currency,
-	patient,
-	redirect_to,
+	doctype: str,
+	docname: str,
+	title: str,
+	amount: float,
+	total_amount: float,
+	currency: str,
+	redirect_to: str,
 ):
+	patient = get_own_appointment_patient(doctype, docname)
 	payment_gateway = get_payment_gateway()
 	amount_with_gst = total_amount if total_amount != amount else 0
 
