@@ -11,15 +11,10 @@ from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_med
 	create_ipme,
 	create_ipmo,
 )
-from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
-	admit_patient,
-	discharge_patient,
-	schedule_discharge,
-)
+from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
 	get_healthcare_service_unit,
-	mark_invoiced_inpatient_occupancy,
 )
 from healthcare.healthcare.report.inpatient_medication_orders.inpatient_medication_orders import (
 	execute,
@@ -138,26 +133,6 @@ class TestInpatientMedicationOrders(HealthcareTestSuite):
 
 		self.assertEqual(len(stopped_rows), 1)
 		self.assertEqual(stopped_rows[0].stop_reason, "Treatment changed")
-
-	def tearDown(self):
-		if frappe.db.get_value("Patient", self.patient, "inpatient_record"):
-			# cleanup - Discharge
-			schedule_discharge(frappe.as_json({"patient": self.patient}))
-			self.ip_record.reload()
-			mark_invoiced_inpatient_occupancy(self.ip_record)
-
-			self.ip_record.reload()
-			discharge_patient(self.ip_record)
-
-		for entry in frappe.get_all("Inpatient Medication Entry"):
-			doc = frappe.get_doc("Inpatient Medication Entry", entry.name)
-			doc.cancel()
-			doc.delete()
-
-		for entry in frappe.get_all("Inpatient Medication Order"):
-			doc = frappe.get_doc("Inpatient Medication Order", entry.name)
-			doc.cancel()
-			doc.delete()
 
 
 def create_records(patient):

@@ -26,13 +26,6 @@ class TestChartAccess(HealthcareTestSuite):
 		admission.save()
 		self.admission = admission.name
 
-	def tearDown(self):
-		frappe.set_user("Administrator")
-		frappe.db.delete("Inpatient Record", {"name": self.admission})
-		frappe.db.set_value(
-			"Patient", self.other_patient, {"inpatient_record": None, "inpatient_status": None}
-		)
-
 	def make_nurse(self):
 		if frappe.db.exists("User", NURSE):
 			return
@@ -59,35 +52,30 @@ class TestChartAccess(HealthcareTestSuite):
 		return patch("frappe.has_permission", has_permission)
 
 	def test_a_login_without_a_clinical_role_cannot_write_the_chart(self):
-		frappe.set_user(NOBODY)
-
-		self.assertRaises(frappe.PermissionError, ChartAccess(self.patient).to_write, "Observation")
+		with self.set_user(NOBODY):
+			self.assertRaises(frappe.PermissionError, ChartAccess(self.patient).to_write, "Observation")
 
 	def test_a_login_without_a_clinical_role_cannot_read_the_chart(self):
-		frappe.set_user(NOBODY)
-
-		self.assertRaises(frappe.PermissionError, ChartAccess(self.patient).to_read)
+		with self.set_user(NOBODY):
+			self.assertRaises(frappe.PermissionError, ChartAccess(self.patient).to_read)
 
 	def test_a_nurse_may_write_the_chart(self):
-		frappe.set_user(NURSE)
-
-		ChartAccess(self.patient).to_write("Observation")
+		with self.set_user(NURSE):
+			ChartAccess(self.patient).to_write("Observation")
 
 	def test_a_nurse_cannot_file_an_entry_under_another_patients_record(self):
-		frappe.set_user(NURSE)
-		access = ChartAccess(self.patient, "Inpatient Record", self.admission)
+		with self.set_user(NURSE):
+			access = ChartAccess(self.patient, "Inpatient Record", self.admission)
 
-		self.assertRaises(frappe.PermissionError, access.to_write, "Observation")
+			self.assertRaises(frappe.PermissionError, access.to_write, "Observation")
 
 	def test_an_entry_may_be_filed_under_the_patients_own_record(self):
-		frappe.set_user(NURSE)
-
-		ChartAccess(self.other_patient, "Inpatient Record", self.admission).to_write("Observation")
+		with self.set_user(NURSE):
+			ChartAccess(self.other_patient, "Inpatient Record", self.admission).to_write("Observation")
 
 	def test_an_entry_may_be_filed_under_the_patient_themselves(self):
-		frappe.set_user(NURSE)
-
-		ChartAccess(self.patient, "Patient", self.patient).to_write("Observation")
+		with self.set_user(NURSE):
+			ChartAccess(self.patient, "Patient", self.patient).to_write("Observation")
 
 	def test_a_reference_needs_both_its_parts(self):
 		self.assertRaises(
@@ -102,11 +90,10 @@ class TestChartAccess(HealthcareTestSuite):
 	def test_the_banner_will_not_read_another_patients_record(self):
 		from healthcare.healthcare.api.nursing import get_banner
 
-		frappe.set_user(NURSE)
-
-		self.assertRaises(
-			frappe.PermissionError, get_banner, self.patient, "Inpatient Record", self.admission
-		)
+		with self.set_user(NURSE):
+			self.assertRaises(
+				frappe.PermissionError, get_banner, self.patient, "Inpatient Record", self.admission
+			)
 
 	def test_the_scheduler_run_over_every_patient_is_not_callable_remotely(self):
 		from healthcare.healthcare.api import medication
@@ -125,38 +112,39 @@ class TestChartAccess(HealthcareTestSuite):
 			"requested_start_time",
 			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(TASK_LAPSE_HOURS + 1)),
 		)
-		frappe.set_user(NURSE)
+		with self.set_user(NURSE):
+			with self.denied("Nursing Task", "write"):
+				get_nursing_tasks(self.patient)
 
-		with self.denied("Nursing Task", "write"):
-			get_nursing_tasks(self.patient)
-
-		self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
+			self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
 
 	def test_patient_search_is_refused_without_patient_access(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
-		frappe.set_user(NOBODY)
-
-		self.assertRaises(frappe.PermissionError, find_patients, self.other_patient)
+		with self.set_user(NOBODY):
+			self.assertRaises(frappe.PermissionError, find_patients, self.other_patient)
 
 	def test_a_record_number_the_caller_cannot_read_resolves_to_nobody(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
-		frappe.set_user(NURSE)
+		with self.set_user(NURSE):
+			with self.denied("Inpatient Record", "read"):
+				found = find_patients(self.admission)
 
-		with self.denied("Inpatient Record", "read"):
-			found = find_patients(self.admission)
-
-		self.assertEqual([match["matched_via"] for match in found if match.get("matched_via")], [])
+			self.assertEqual([match["matched_via"] for match in found if match.get("matched_via")], [])
 
 	def test_recording_vitals_as_nobody_is_refused(self):
 		from healthcare.healthcare.api.vitals import record_vitals
 
-		frappe.set_user(NOBODY)
-
-		self.assertRaises(
-			frappe.PermissionError, record_vitals, self.patient, {"_Test Pulse": 80}, "Patient", self.patient
-		)
+		with self.set_user(NOBODY):
+			self.assertRaises(
+				frappe.PermissionError,
+				record_vitals,
+				self.patient,
+				{"_Test Pulse": 80},
+				"Patient",
+				self.patient,
+			)
 
 	def make_task(self):
 		return frappe.get_doc(
@@ -174,6 +162,5 @@ class TestChartAccess(HealthcareTestSuite):
 		from healthcare.healthcare.api.nursing_tasks import update_nursing_task
 
 		task = self.make_task()
-		frappe.set_user(NOBODY)
-
-		self.assertRaises(frappe.PermissionError, update_nursing_task, task.name, "In Progress")
+		with self.set_user(NOBODY):
+			self.assertRaises(frappe.PermissionError, update_nursing_task, task.name, "In Progress")

@@ -377,7 +377,6 @@ class TestClinicalNotes(HealthcareTestSuite):
 		from healthcare.healthcare.api.clinical_notes import get_note_types
 
 		frappe.db.set_value("Clinical Note Type", "Incident Note", "disabled", 1)
-		self.addCleanup(frappe.db.set_value, "Clinical Note Type", "Incident Note", "disabled", 0)
 
 		self.assertNotIn("Incident Note", [row.name for row in get_note_types()])
 
