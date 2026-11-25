@@ -4,7 +4,6 @@
 
 import frappe
 from frappe.utils import add_to_date, flt, now_datetime, nowtime, today
-from frappe.utils.make_random import get_random
 
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 	admit_patient,
@@ -12,8 +11,9 @@ from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 	get_unbilled_inpatient_docs,
 	schedule_discharge,
 )
-from healthcare.healthcare.doctype.lab_test.test_lab_test import create_patient_encounter
 from healthcare.healthcare.utils import get_encounters_to_invoice
+from healthcare.tests.factories.encounters import create_encounter_with_lab_tests
+from healthcare.tests.factories.inpatient import mark_invoiced_inpatient_occupancy
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -279,7 +279,7 @@ class TestInpatientRecord(HealthcareTestSuite):
 		admit_patient(ip_record, service_unit, now_datetime())
 
 		# Patient Encounter
-		patient_encounter = create_patient_encounter()
+		patient_encounter = create_encounter_with_lab_tests()
 		encounters = get_encounters_to_invoice(patient, "_Test Company")
 		encounter_ids = [entry.reference_name for entry in encounters]
 		self.assertFalse(patient_encounter.name in encounter_ids)
@@ -426,13 +426,6 @@ class TestInpatientRecord(HealthcareTestSuite):
 		self.assertEqual("Day", ip_record.items[0].get("uom"))
 		self.assertEqual(0.5, flt(ip_record.items[0].get("quantity"), 2))
 		self.assertEqual(500, flt(ip_record.items[0].get("amount"), 2))
-
-
-def mark_invoiced_inpatient_occupancy(ip_record):
-	if ip_record.inpatient_occupancies:
-		for inpatient_occupancy in ip_record.inpatient_occupancies:
-			inpatient_occupancy.invoiced = 1
-		ip_record.save(ignore_permissions=True)
 
 
 def setup_inpatient_settings(key, value):

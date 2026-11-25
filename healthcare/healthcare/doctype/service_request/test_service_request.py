@@ -4,13 +4,6 @@
 import frappe
 from frappe.utils import getdate, nowdate, nowtime
 
-import erpnext
-
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
-	get_income_account,
-	get_receivable_account,
-)
-from healthcare.healthcare.doctype.lab_test.test_lab_test import create_lab_test
 from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
 	create_patient_referral,
 )
@@ -19,7 +12,12 @@ from healthcare.healthcare.doctype.service_request.service_request import (
 	make_clinical_procedure,
 	make_observation,
 )
-from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
+from healthcare.tests.factories.billing import invoice_service_request
+from healthcare.tests.factories.encounters import (
+	create_encounter_with_order,
+	create_lab_test,
+	create_therapy_plan,
+)
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -32,7 +30,7 @@ class TestServiceRequest(HealthcareTestSuite):
 		procedure_template = frappe.get_doc("Clinical Procedure Template", cpt)
 		procedure_template.allow_stock_consumption = 1
 		therapy_type = frappe.get_doc("Therapy Type", "Basic Rehab")
-		encounter = create_encounter(
+		encounter = create_encounter_with_order(
 			patient,
 			practitioner,
 			"lab_test_prescription",
@@ -74,7 +72,7 @@ class TestServiceRequest(HealthcareTestSuite):
 						type = "therapies"
 
 					# create sales invoice with service request and check service request and lab test is marked as invoiced
-					create_sales_invoice(patient, service_request_doc, template, type)
+					invoice_service_request(patient, service_request_doc, template, type)
 					self.assertEqual(
 						frappe.db.get_value("Service Request", sr.get("name"), "billing_status"), "Invoiced"
 					)
@@ -88,7 +86,9 @@ class TestServiceRequest(HealthcareTestSuite):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		lab_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - with Sample")
-		encounter = create_encounter(patient, practitioner, "lab_test_prescription", lab_test_template)
+		encounter = create_encounter_with_order(
+			patient, practitioner, "lab_test_prescription", lab_test_template
+		)
 		encounter.submit_orders_on_save = True
 		encounter.save()
 		self.assertTrue(frappe.db.exists("Service Request", {"order_group": encounter.name}))
@@ -107,21 +107,21 @@ class TestServiceRequest(HealthcareTestSuite):
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
-		encounter = create_encounter(
+		encounter = create_encounter_with_order(
 			patient, practitioner, "lab_test_prescription", obs_template, submit=True, obs=True
 		)
 		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name}, "name")
 		if service_request:
 			service_request_doc = frappe.get_doc("Service Request", service_request)
 			observation = create_observation(patient, service_request, obs_template.name)
-			create_sales_invoice(patient, service_request_doc, obs_template, "observation")
+			invoice_service_request(patient, service_request_doc, obs_template, "observation")
 			self.assertEqual(frappe.db.get_value("Observation", observation.name, "invoiced"), 1)
 
 	def test_make_observation_maps_practitioner(self):
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
-		encounter = create_encounter(
+		encounter = create_encounter_with_order(
 			patient, practitioner, "lab_test_prescription", obs_template, submit=True, obs=True
 		)
 		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name}, "name")
@@ -137,7 +137,7 @@ class TestServiceRequest(HealthcareTestSuite):
 		practitioner_1 = "_Test Healthcare Practitioner 2"
 		practitioner_2 = "_Test Healthcare Practitioner 1"
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
-		encounter = create_encounter(
+		encounter = create_encounter_with_order(
 			patient, practitioner_1, "lab_test_prescription", obs_template, submit=True, obs=True
 		)
 		appointment_type = frappe.get_doc("Appointment Type", "_Test Appointment Type with Items")
@@ -221,149 +221,6 @@ class TestServiceRequest(HealthcareTestSuite):
 
 		self.assertEqual(appointment.service_request, service_request.name)
 		self.assertFalse(appointment.source)
-
-
-def create_encounter(
-	patient,
-	practitioner,
-	type,
-	template,
-	appointment_type=None,
-	procedure_template=None,
-	therapy_type=None,
-	obs=False,
-	submit=False,
-):
-	patient_encounter = frappe.new_doc("Patient Encounter")
-	patient_encounter.patient = patient
-	patient_encounter.appointment_type = appointment_type or "_Test Appointment Type"
-	patient_encounter.practitioner = practitioner
-	patient_encounter.encounter_date = getdate()
-	patient_encounter.encounter_time = nowtime()
-	patient_encounter.company = "_Test Company"
-	if not obs:
-		if type == "lab_test_prescription":
-			patient_encounter.append(
-				type, {"lab_test_code": template.item, "lab_test_name": template.lab_test_name}
-			)
-		elif type == "drug_prescription":
-			patient_encounter.append(
-				type,
-				{
-					"medication": template.name,
-					"drug_code": template.linked_items[0].get("item"),
-					"dosage": "0-0-1",
-					"period": "1 Day",
-				},
-			)
-	else:
-		patient_encounter.append(type, {"observation_template": template.name})
-
-	if procedure_template:
-		patient_encounter.append(
-			"procedure_prescription",
-			{
-				"procedure": procedure_template.name,
-				"procedure_name": procedure_template.item_code,
-				"no_of_sessions": 1,
-			},
-		)
-	if therapy_type:
-		patient_encounter.append(
-			"therapies",
-			{"therapy_type": therapy_type.name, "no_of_sessions": 1},
-		)
-
-	if submit:
-		patient_encounter.submit()
-	else:
-		patient_encounter.save()
-
-	return patient_encounter
-
-
-def create_sales_invoice(patient, service_request, template, type):
-	sales_invoice = frappe.new_doc("Sales Invoice")
-	sales_invoice.patient = patient
-	sales_invoice.customer = frappe.db.get_value("Patient", patient, "customer")
-	sales_invoice.due_date = getdate()
-	sales_invoice.currency = "INR"
-	sales_invoice.company = "_Test Company"
-	sales_invoice.debit_to = get_receivable_account("_Test Company")
-	if type == "lab_test_prescription":
-		sales_invoice.append(
-			"items",
-			{
-				"qty": 1,
-				"uom": "Nos",
-				"conversion_factor": 1,
-				"income_account": get_income_account(None, "_Test Company"),
-				"rate": template.lab_test_rate,
-				"amount": template.lab_test_rate,
-				"reference_dt": service_request.doctype,
-				"reference_dn": service_request.name,
-				"cost_center": erpnext.get_default_cost_center("_Test Company"),
-				"item_code": template.item,
-				"item_name": template.lab_test_name,
-				"description": template.lab_test_description,
-			},
-		)
-	elif type == "drug_prescription":
-		sales_invoice.append(
-			"items",
-			{
-				"qty": 1,
-				"uom": "Nos",
-				"conversion_factor": 1,
-				"income_account": get_income_account(None, "_Test Company"),
-				"reference_dt": service_request.doctype,
-				"reference_dn": service_request.name,
-				"cost_center": erpnext.get_default_cost_center("_Test Company"),
-				"item_name": template.name,
-				"description": template.name,
-			},
-		)
-	elif type in ["observation", "procedure_prescription"]:
-		sales_invoice.append(
-			"items",
-			{
-				"qty": 1,
-				"uom": "Nos",
-				"conversion_factor": 1,
-				"income_account": get_income_account(None, "_Test Company"),
-				"rate": template.rate,
-				"amount": template.rate,
-				"reference_dt": service_request.doctype,
-				"reference_dn": service_request.name,
-				"cost_center": erpnext.get_default_cost_center("_Test Company"),
-				"item_code": template.item,
-				"item_name": template.item_code,
-				"description": template.description,
-			},
-		)
-	elif type == "therapies":
-		sales_invoice.append(
-			"items",
-			{
-				"qty": 1,
-				"uom": "Nos",
-				"conversion_factor": 1,
-				"income_account": get_income_account(None, "_Test Company"),
-				"rate": template.rate,
-				"amount": template.rate,
-				"reference_dt": service_request.doctype,
-				"reference_dn": service_request.name,
-				"cost_center": erpnext.get_default_cost_center("_Test Company"),
-				"item_code": template.item_code,
-				"item_name": template.item_code,
-				"description": template.description,
-			},
-		)
-
-	sales_invoice.set_missing_values()
-
-	sales_invoice.submit()
-	return sales_invoice
 
 
 def create_observation(patient, service_request, obs_template):

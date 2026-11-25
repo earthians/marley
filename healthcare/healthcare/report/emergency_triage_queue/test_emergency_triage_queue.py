@@ -3,8 +3,8 @@
 
 from frappe.utils import add_to_date, now_datetime
 
-from healthcare.healthcare.doctype.emergency_record.test_emergency_record import create_emergency_record
 from healthcare.healthcare.report.emergency_triage_queue.emergency_triage_queue import execute
+from healthcare.tests.factories.encounters import create_emergency_record
 from healthcare.tests.utils import HealthcareTestSuite
 
 
