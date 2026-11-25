@@ -5,6 +5,7 @@
 import os
 
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 from frappe.utils import add_days, getdate, nowdate
 
 from healthcare.tests.factories.encounters import create_patient
@@ -148,3 +149,25 @@ class TestPatient(HealthcareTestSuite):
 		patient.dob = nowdate()
 		patient.insert()
 		self.assertEqual(getdate(patient.dob), getdate())
+
+
+class TestPatientAge(HealthcareTestSuite):
+	"""Age drives dosing, so each edge of the calendar is pinned to a date."""
+
+	def age_on(self, today, dob):
+		with freeze_time(today):
+			age = frappe.new_doc("Patient", dob=dob).age
+		return (age.years, age.months, age.days)
+
+	def test_a_birthday_adds_a_whole_year(self):
+		self.assertEqual(self.age_on("2027-06-16", "1990-06-16"), (37, 0, 0))
+
+	def test_the_day_before_a_birthday_is_still_the_younger_age(self):
+		self.assertEqual(self.age_on("2027-06-15", "1990-06-16"), (36, 11, 30))
+
+	def test_a_newborn_counts_in_days(self):
+		self.assertEqual(self.age_on("2027-06-16", "2027-06-06"), (0, 0, 10))
+
+	def test_a_leap_day_birthday_falls_on_28_february_in_other_years(self):
+		self.assertEqual(self.age_on("2027-02-27", "2024-02-29"), (2, 11, 29))
+		self.assertEqual(self.age_on("2027-02-28", "2024-02-29"), (3, 0, 0))
