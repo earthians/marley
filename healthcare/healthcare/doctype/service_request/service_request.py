@@ -104,7 +104,7 @@ def set_service_request_status(service_request, status):
 
 
 @frappe.whitelist()
-def make_clinical_procedure(service_request):
+def make_clinical_procedure(service_request: "str | dict"):
 	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
@@ -117,6 +117,8 @@ def make_clinical_procedure(service_request):
 			_("Service Request need to be invoiced before proceeding"),
 			title=_("Payment Required"),
 		)
+
+	procedure_template = frappe.get_doc("Clinical Procedure Template", service_request.template_dn)
 
 	doc = frappe.new_doc("Clinical Procedure")
 	doc.procedure_template = service_request.template_dn
@@ -132,6 +134,22 @@ def make_clinical_procedure(service_request):
 	doc.start_time = service_request.occurrence_time
 	doc.medical_department = service_request.medical_department
 	doc.invoiced = 1 if service_request.billing_status == "Invoiced" else 0
+	doc.consume_stock = procedure_template.consume_stock
+	doc.warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+
+	if not doc.codification_table and procedure_template.codification_table:
+		for code in procedure_template.codification_table:
+			doc.append(
+				"codification_table",
+				(frappe.copy_doc(code)).as_dict(),
+			)
+
+	if not doc.items and procedure_template.items:
+		for item in procedure_template.items:
+			doc.append(
+				"items",
+				(frappe.copy_doc(item)).as_dict(),
+			)
 
 	return doc
 
@@ -166,38 +184,6 @@ def make_lab_test(service_request):
 	doc.requesting_department = service_request.medical_department
 	doc.date = service_request.occurrence_date
 	doc.time = service_request.occurrence_time
-	doc.invoiced = 1 if service_request.billing_status == "Invoiced" else 0
-
-	return doc
-
-
-@frappe.whitelist()
-def make_therapy_session(service_request):
-	if isinstance(service_request, string_types):
-		service_request = json.loads(service_request)
-		service_request = frappe._dict(service_request)
-
-	if (
-		frappe.db.get_single_value("Healthcare Settings", "process_service_request_only_if_paid")
-		and service_request.billing_status != "Invoiced"
-	):
-		frappe.throw(
-			_("Service Request need to be invoiced before proceeding"),
-			title=_("Payment Required"),
-		)
-
-	doc = frappe.new_doc("Therapy Session")
-	doc.therapy_type = service_request.template_dn
-	doc.service_request = service_request.name
-	doc.company = service_request.company
-	doc.patient = service_request.patient
-	doc.patient_name = service_request.patient_name
-	doc.gender = service_request.patient_gender
-	doc.patient_age = service_request.patient_age_data
-	doc.practitioner = service_request.practitioner
-	doc.department = service_request.medical_department
-	doc.start_date = service_request.occurrence_date
-	doc.start_time = service_request.occurrence_time
 	doc.invoiced = 1 if service_request.billing_status == "Invoiced" else 0
 
 	return doc

@@ -21,7 +21,13 @@
   "section_break_9",
   "total_sessions",
   "column_break_11",
-  "total_sessions_completed"
+  "total_sessions_completed",
+  "more_information_section",
+  "source_doc",
+  "order_group",
+  "column_break_vlgf",
+  "practitioner",
+  "practitioner_name"
  ],
  "fields": [
   {
@@ -126,6 +132,50 @@
    "no_copy": 1,
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "source_doc",
+   "fieldtype": "Link",
+   "label": "Source Doc",
+   "no_copy": 1,
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "order_group",
+   "fieldtype": "Dynamic Link",
+   "label": "Order Group",
+   "no_copy": 1,
+   "options": "source_doc",
+   "read_only": 1
+  },
+  {
+   "fieldname": "practitioner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ordered By Practitioner",
+   "options": "Healthcare Practitioner",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_vlgf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "practitioner.practitioner_name",
+   "fieldname": "practitioner_name",
+   "fieldtype": "Data",
+   "label": "Ordered By Practitioner Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -136,10 +186,11 @@
    "link_fieldname": "therapy_plan"
   }
  ],
- "modified": "2025-09-25 13:44:57.440831",
+ "modified": "2026-04-25 14:28:01.138405",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Therapy Plan",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -178,9 +229,11 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "search_fields": "patient",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "title_field": "patient",
  "track_changes": 1
 }

@@ -117,7 +117,7 @@ frappe.ui.form.on('Therapy Plan', {
 			bars[0].width = '0.5%';
 		}
 		message = title;
-		frm.dashboard.add_progress(__('Status'), bars, message);
+		frm.dashboard.show_progress(__('Status'), bars, message);
 	},
 });
 

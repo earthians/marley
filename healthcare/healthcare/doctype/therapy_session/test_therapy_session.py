@@ -8,6 +8,7 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import nowdate
 
 from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
+from healthcare.healthcare.doctype.therapy_session.therapy_session import invoice_therapy_session
 
 
 class TestTherapySession(FrappeTestCase):

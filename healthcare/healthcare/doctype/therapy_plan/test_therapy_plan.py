@@ -25,17 +25,21 @@ class TestTherapyPlan(FrappeTestCase):
 		patient, practitioner = create_healthcare_docs()
 		medical_department = create_medical_department()
 		encounter = create_encounter(patient, medical_department, practitioner)
-		self.assertTrue(frappe.db.exists("Therapy Plan", encounter.therapy_plan))
+		self.assertTrue(
+			frappe.db.exists(
+				"Therapy Plan", {"source_doc": "Patient Encounter", "order_group": encounter.name}
+			)
+		)
 
 	def test_status(self):
 		plan = create_therapy_plan()
 		self.assertEqual(plan.status, "Not Started")
 
-		session = make_therapy_session(plan.name, plan.patient, "Basic Rehab", "_Test Company")
+		session = make_therapy_session(plan.patient, "Basic Rehab", "_Test Company", plan.name)
 		frappe.get_doc(session).submit()
 		self.assertEqual(frappe.db.get_value("Therapy Plan", plan.name, "status"), "In Progress")
 
-		session = make_therapy_session(plan.name, plan.patient, "Basic Rehab", "_Test Company")
+		session = make_therapy_session(plan.patient, "Basic Rehab", "_Test Company", plan.name)
 		frappe.get_doc(session).submit()
 		self.assertEqual(frappe.db.get_value("Therapy Plan", plan.name, "status"), "Completed")
 
@@ -43,7 +47,7 @@ class TestTherapyPlan(FrappeTestCase):
 		appointment = create_appointment(patient, practitioner, nowdate())
 
 		session = make_therapy_session(
-			plan.name, plan.patient, "Basic Rehab", "_Test Company", appointment.name
+			plan.patient, "Basic Rehab", "_Test Company", plan.name, appointment.name
 		)
 		session = frappe.get_doc(session)
 		session.submit()
@@ -74,9 +78,14 @@ def create_therapy_plan(template=None, patient=None):
 	if not patient:
 		patient = create_patient()
 	therapy_type = create_therapy_type()
+	practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
 	plan = frappe.new_doc("Therapy Plan")
 	plan.patient = patient
 	plan.start_date = getdate()
+	plan.practitioner = practitioner
+	plan.practitioner_name = frappe.db.get_value(
+		"Healthcare Practitioner", practitioner, "practitioner_name"
+	)
 
 	if template:
 		plan.therapy_plan_template = template
