@@ -25,7 +25,6 @@ from healthcare.healthcare.doctype.observation_template.test_observation_templat
 	create_pure_non_sample_sub_panel_template,
 )
 from healthcare.healthcare.doctype.service_request.service_request import make_observation
-from healthcare.tests.test_whitelist_permissions import LAB_USER, make_user
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -241,10 +240,9 @@ class TestObservation(HealthcareTestSuite):
 		)
 
 	def test_laboratory_user_records_a_result_but_cannot_approve_it(self):
-		make_user(LAB_USER, "Laboratory User")
 		encounter = create_patient_encounter(self.get_test_patient(), "_Test Observation without Sample")
 		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name})
-		with self.set_user(LAB_USER):
+		with self.set_user("lab_permissions@marleyhealth.io"):
 			make_observation(service_request)
 			observation = frappe.db.get_value("Observation", {"service_request": service_request})
 			record_observation_result(json.dumps([{"observation": observation, "result": "12"}]))
@@ -253,11 +251,10 @@ class TestObservation(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("Observation", observation, "result"), "12")
 
 	def test_a_draft_cannot_be_saved_as_approved(self):
-		make_user(LAB_USER, "Laboratory User")
 		observation = self.create_lab_observation(
 			self.get_test_patient(), "_Test Observation without Sample", "12"
 		)
-		with self.set_user(LAB_USER):
+		with self.set_user("lab_permissions@marleyhealth.io"):
 			observation.status = "Approved"
 			self.assertRaises(frappe.ValidationError, observation.save)
 
