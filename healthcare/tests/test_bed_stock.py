@@ -86,9 +86,8 @@ class TestBedStock(HealthcareTestSuite):
 		self.leave_stock_at_the_bed(qty=2, item_code="_Test_Stock_Item")
 
 	def leave_batched_medication_at_the_bed(self, batch_id="_TEST-BATCH-BEDSIDE", qty=2):
-		from healthcare.tests.test_medication_stock_entry import make_batched_drug, receive_batch
+		from healthcare.tests.test_medication_stock_entry import receive_batch
 
-		make_batched_drug()
 		return receive_batch(batch_id, add_days(nowdate(), 60), qty=qty, warehouse=self.bed.warehouse)
 
 	def test_an_untouched_bed_holds_nothing(self):

@@ -19,7 +19,6 @@ class TestBatchedMedicationTransfer(HealthcareTestSuite):
 
 	def setUp(self):
 		super().setUp()
-		make_batched_drug()
 		empty_drug_stock()
 
 	def transfer_for(self, dosage, service_unit=None):
@@ -105,26 +104,6 @@ class TestBatchedMedicationTransfer(HealthcareTestSuite):
 		for row in stock_entry.items:
 			self.assertEqual(row.s_warehouse, PHARMACY)
 			self.assertEqual(row.t_warehouse, bed.warehouse)
-
-
-def make_batched_drug():
-	if frappe.db.exists("Item", DRUG):
-		return
-
-	frappe.get_doc(
-		{
-			"doctype": "Item",
-			"item_code": DRUG,
-			"item_name": DRUG,
-			"item_group": "Products",
-			"stock_uom": "Nos",
-			"is_stock_item": 1,
-			"has_batch_no": 1,
-			"create_new_batch": 1,
-			"batch_number_series": "_TEST-BATCH-.####",
-			"valuation_rate": 10,
-		}
-	).insert(ignore_permissions=True)
 
 
 def available_batches():

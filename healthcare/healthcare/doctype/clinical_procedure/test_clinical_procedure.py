@@ -224,7 +224,7 @@ def create_template(name, **fields):
 
 
 def add_consumable(procedure_template, invoice_separately=0):
-	consumable = create_consumable()
+	consumable = frappe.get_doc("Item", "Syringe")
 	procedure_template.append(
 		"items",
 		{
@@ -236,18 +236,6 @@ def add_consumable(procedure_template, invoice_separately=0):
 		},
 	)
 	procedure_template.save()
-	return consumable
-
-
-def create_consumable():
-	if frappe.db.exists("Item", "Syringe"):
-		return frappe.get_doc("Item", "Syringe")
-	consumable = frappe.new_doc("Item")
-	consumable.item_code = "Syringe"
-	consumable.item_group = "_Test Item Group"
-	consumable.stock_uom = "Nos"
-	consumable.valuation_rate = 5.00
-	consumable.save()
 	return consumable
 
 
