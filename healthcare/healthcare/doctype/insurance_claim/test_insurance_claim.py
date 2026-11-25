@@ -24,11 +24,9 @@ class TestInsuranceClaim(HealthcareTestSuite):
 		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_insurance_claim_and_payment(self):
-		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
-		frappe.db.sql("""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'""")
-		frappe.db.sql(
-			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
-		)
+		frappe.db.delete("Appointment Type", {"name": "_Test Appointment"})
+		frappe.db.delete("Patient Appointment", {"appointment_type": "_Test Appointment"})
+		frappe.db.delete("Insurance Payor Contract", {"insurance_payor": "_Test Insurance Payor"})
 
 		eligibility_plan = create_payor_insurance_eligibility_plan()
 		contract = get_new_payor_contract_doc(today(), add_years(today(), 1))

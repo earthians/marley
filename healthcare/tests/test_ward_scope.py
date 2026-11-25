@@ -25,7 +25,7 @@ class TestWardScope(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("delete from `tabInpatient Record`")
+		frappe.db.delete("Inpatient Record")
 		self.patient, self.outpatient = "_Test Patient", "_Test Patient 0"
 
 		record = create_inpatient(self.patient)

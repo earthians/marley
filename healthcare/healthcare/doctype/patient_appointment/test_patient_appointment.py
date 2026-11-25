@@ -26,11 +26,11 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestPatientAppointment(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		frappe.db.sql("""delete from `tabPatient Appointment`""")
-		frappe.db.sql("""delete from `tabFee Validity`""")
-		frappe.db.sql("""delete from `tabPatient Encounter`""")
+		frappe.db.delete("Patient Appointment")
+		frappe.db.delete("Fee Validity")
+		frappe.db.delete("Patient Encounter")
 		make_pos_profile()
-		frappe.db.sql("DELETE FROM `tabPractitioner Availability`")
+		frappe.db.delete("Practitioner Availability")
 
 		self.patient = "_Test Patient"
 		self.practitioner = "_Test Healthcare Practitioner 2"
@@ -380,7 +380,7 @@ class TestPatientAppointment(HealthcareTestSuite):
 		from healthcare.tests.factories.inpatient import mark_invoiced_inpatient_occupancy
 
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 1)
-		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.delete("Inpatient Record")
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		# Schedule Admission
@@ -415,7 +415,7 @@ class TestPatientAppointment(HealthcareTestSuite):
 		)
 		from healthcare.tests.factories.inpatient import mark_invoiced_inpatient_occupancy
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.delete("Inpatient Record")
 		# Schedule Admission
 		ip_record = create_inpatient(self.patient)
 		ip_record.expected_length_of_stay = 0

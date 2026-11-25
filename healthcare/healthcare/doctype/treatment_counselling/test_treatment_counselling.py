@@ -10,7 +10,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestTreatmentCounselling(HealthcareTestSuite):
 	def test_insert_treatment_counselling(self):
-		frappe.db.sql("""delete from `tabTreatment Counselling`""")
+		frappe.db.delete("Treatment Counselling")
 
 		treatment_plan_template = frappe.get_doc("Treatment Plan Template", "COVID19")
 		patient = "_Test Patient"
