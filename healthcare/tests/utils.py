@@ -1,4 +1,5 @@
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 
 from erpnext.tests.utils import ERPNextTestSuite
 
@@ -807,10 +808,17 @@ class BootStrapTestData:
 		frappe.db.commit()
 
 
-BootStrapTestData()
+# Master data is always older than the test clock, so rates and prices dated "today" apply.
+BOOTSTRAP_TIME = "2026-01-01 09:00:00"
+TEST_TIME = "2027-06-16 10:00:00"
+
+with freeze_time(BOOTSTRAP_TIME):
+	BootStrapTestData()
 
 
 class HealthcareTestSuite(ERPNextTestSuite):
-	"""Class for creating Healthcare test records"""
+	"""Runs every test on a fixed weekday morning, so dates and times never depend on the real clock."""
 
-	pass
+	def run(self, result=None):
+		with freeze_time(TEST_TIME, tick=True):
+			return super().run(result)
