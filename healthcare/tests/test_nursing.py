@@ -42,6 +42,7 @@ class TestNursing(HealthcareTestSuite):
 		self.assertEqual(observation.patient, self.patient)
 		self.assertEqual(observation.result, "88")
 		self.assertEqual(observation.observation_category, VITAL_SIGNS_CATEGORY)
+		self.assertEqual(observation.docstatus, 1)
 
 	def test_record_vitals_links_the_source_document(self):
 		names = self.record(92, reference_doctype="Patient", reference_name=self.patient)
