@@ -35,6 +35,36 @@ class TestPatientAppointment(HealthcareTestSuite):
 		self.patient = "_Test Patient"
 		self.practitioner = "_Test Healthcare Practitioner 2"
 
+	def test_weekday_availability_has_no_slots_on_a_day_it_skips(self):
+		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
+			get_availability_slots,
+		)
+
+		weekdays = {day: 1 for day in ("monday", "tuesday", "wednesday", "thursday", "friday")}
+		availability = frappe.get_doc(
+			{
+				"doctype": "Practitioner Availability",
+				"type": "Available",
+				"scope_type": "Healthcare Practitioner",
+				"scope": self.practitioner,
+				"status": "Active",
+				"repeat": "Weekly",
+				"start_date": "2027-06-14",
+				"end_date": "2027-06-27",
+				"start_time": "09:00:00",
+				"end_time": "10:00:00",
+				**weekdays,
+			}
+		).insert()
+		availability.submit()
+		practitioner = frappe.get_doc("Healthcare Practitioner", self.practitioner)
+
+		friday = get_availability_slots(practitioner, getdate("2027-06-18"), "_Test Appointment Type")
+		saturday = get_availability_slots(practitioner, getdate("2027-06-19"), "_Test Appointment Type")
+
+		self.assertTrue(friday)
+		self.assertEqual(saturday, [])
+
 	def test_status(self):
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
 		appointment = create_appointment(self.patient, self.practitioner, nowdate())
