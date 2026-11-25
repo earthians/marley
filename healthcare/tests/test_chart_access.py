@@ -15,6 +15,7 @@ class TestChartAccess(HealthcareTestSuite):
 
 	def setUp(self):
 		super().setUp()
+		self.start_without_user_permissions(NURSE)
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 
 		self.patient, self.other_patient = "_Test Patient", "_Test Patient 0"
@@ -23,9 +24,9 @@ class TestChartAccess(HealthcareTestSuite):
 		admission.save()
 		self.admission = admission.name
 
-	def share_for_reading(self, patient):
-		"""A login with no clinical role that may only read this one patient."""
-		frappe.share.add_docshare("Patient", patient, NOBODY, read=1, flags={"ignore_share_permission": True})
+	def share_for_reading(self, doctype, name):
+		"""A login with no clinical role that may only read this one document."""
+		frappe.share.add_docshare(doctype, name, NOBODY, read=1, flags={"ignore_share_permission": True})
 
 	def test_a_login_without_a_clinical_role_cannot_write_the_chart(self):
 		with self.set_user(NOBODY):
@@ -88,8 +89,11 @@ class TestChartAccess(HealthcareTestSuite):
 			"requested_start_time",
 			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(TASK_LAPSE_HOURS + 1)),
 		)
-		self.share_for_reading(self.patient)
+		self.share_for_reading("Patient", self.patient)
+		self.share_for_reading("Nursing Task", task.name)
 		with self.set_user(NOBODY):
+			self.assertTrue(frappe.has_permission("Nursing Task", "read", task.name))
+			self.assertFalse(frappe.has_permission("Nursing Task", "write", task.name))
 			get_nursing_tasks(self.patient)
 
 			self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
@@ -103,7 +107,7 @@ class TestChartAccess(HealthcareTestSuite):
 	def test_a_record_number_the_caller_cannot_read_resolves_to_nobody(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
-		self.share_for_reading(self.other_patient)
+		self.share_for_reading("Patient", self.other_patient)
 		with self.set_user(NOBODY):
 			found = find_patients(self.admission)
 
