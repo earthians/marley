@@ -45,10 +45,10 @@ class TestPatient(HealthcareTestSuite):
 		settings.save()
 
 	def test_patient_contact(self):
-		frappe.db.sql("""delete from `tabPatient` where name like '_Test Contact Patient%'""")
-		frappe.db.sql("""delete from `tabCustomer` where name like '_Test Contact Patient%'""")
-		frappe.db.sql("""delete from `tabContact` where name like'_Test Contact Patient%'""")
-		frappe.db.sql("""delete from `tabDynamic Link` where parent like '_Test Contact Patient%'""")
+		frappe.db.delete("Patient", {"name": ["like", "_Test Contact Patient%"]})
+		frappe.db.delete("Customer", {"name": ["like", "_Test Contact Patient%"]})
+		frappe.db.delete("Contact", {"name": ["like", "_Test Contact Patient%"]})
+		frappe.db.delete("Dynamic Link", {"parent": ["like", "_Test Contact Patient%"]})
 
 		patient = create_patient(
 			patient_name="_Test Contact Patient", email="test-patient@example.com", mobile="+91 0000000001"
@@ -82,9 +82,9 @@ class TestPatient(HealthcareTestSuite):
 		)
 
 	def test_patient_user(self):
-		frappe.db.sql("""delete from `tabUser` where email='test-patient-user@example.com'""")
-		frappe.db.sql("""delete from `tabDynamic Link` where parent like '_Test User Patient%'""")
-		frappe.db.sql("""delete from `tabPatient` where name like '_Test User Patient%'""")
+		frappe.db.delete("User", {"email": "test-patient-user@example.com"})
+		frappe.db.delete("Dynamic Link", {"parent": ["like", "_Test User Patient%"]})
+		frappe.db.delete("Patient", {"name": ["like", "_Test User Patient%"]})
 
 		patient = create_patient(
 			patient_name="_Test User Patient",
@@ -123,7 +123,7 @@ class TestPatient(HealthcareTestSuite):
 		self.assertEqual(customer.image, patient.image)
 
 	def test_multiple_patients_linked_with_same_customer(self):
-		frappe.db.sql("""delete from `tabPatient`""")
+		frappe.db.delete("Patient")
 		frappe.db.set_single_value("Healthcare Settings", "link_customer_to_patient", 1)
 
 		patient_name_1 = create_patient(patient_name="John Doe")

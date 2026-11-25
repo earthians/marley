@@ -22,9 +22,9 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestInpatientMedicationEntry(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		frappe.db.sql("""delete from `tabInpatient Record`""")
-		frappe.db.sql("""delete from `tabInpatient Medication Order`""")
-		frappe.db.sql("""delete from `tabInpatient Medication Entry`""")
+		frappe.db.delete("Inpatient Record")
+		frappe.db.delete("Inpatient Medication Order")
+		frappe.db.delete("Inpatient Medication Entry")
 
 		self.patient = "_Test IPD Patient"
 		# Admit
