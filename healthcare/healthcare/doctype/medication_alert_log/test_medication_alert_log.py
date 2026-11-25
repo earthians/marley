@@ -3,9 +3,6 @@
 
 import frappe
 
-from healthcare.healthcare.doctype.medication.test_medication import (
-	create_classed_medication as create_medication,
-)
 from healthcare.healthcare.doctype.medication_alert_log.medication_alert_log import (
 	check,
 	get_alerts,
@@ -25,9 +22,9 @@ class MedicationSafetyCase(HealthcareTestSuite):
 		frappe.db.delete("Patient Allergy", {"patient": PATIENT})
 		frappe.db.delete("Medication Alert Log", {"patient": PATIENT})
 		set_actions()
-		self.amoxicillin = create_medication("_Test Amoxicillin", "Amoxicillin")
-		self.warfarin = create_medication("_Test Warfarin", "Warfarin")
-		self.ibuprofen = create_medication("_Test Ibuprofen", "Ibuprofen")
+		self.amoxicillin = "Tablet _Test Amoxicillin 100Milligram"
+		self.warfarin = "Tablet _Test Warfarin 100Milligram"
+		self.ibuprofen = "Tablet _Test Ibuprofen 100Milligram"
 
 
 class TestAllergyAlerts(MedicationSafetyCase):
@@ -275,10 +272,10 @@ def create_interaction(first, second, severity):
 def build_encounter(medications):
 	encounter = frappe.new_doc("Patient Encounter")
 	encounter.patient = PATIENT
-	encounter.practitioner = frappe.db.get_value("Healthcare Practitioner", {}, "name")
+	encounter.practitioner = "_Test Healthcare Practitioner 2"
 	encounter.encounter_date = frappe.utils.nowdate()
 	encounter.company = "_Test Company"
-	encounter.appointment_type = frappe.db.get_value("Appointment Type", {}, "name")
+	encounter.appointment_type = "_Test Appointment Type with Items for Service Unit"
 
 	for medication in medications:
 		encounter.append("drug_prescription", drug_row(medication))
@@ -290,8 +287,8 @@ def drug_row(medication):
 	return {
 		"medication": medication,
 		"drug_code": frappe.db.get_value("Item", {"item_name": "Paracetamol"}) or "Paracetamol",
-		"dosage": frappe.db.get_value("Prescription Dosage", {}, "name"),
-		"period": frappe.db.get_value("Prescription Duration", {}, "name"),
+		"dosage": "Once Daily",
+		"period": "1 Day",
 	}
 
 
@@ -441,13 +438,13 @@ def build_request(medication):
 	request = frappe.new_doc("Medication Request")
 	request.patient = PATIENT
 	request.medication = medication
-	request.practitioner = frappe.db.get_value("Healthcare Practitioner", {}, "name")
+	request.practitioner = "_Test Healthcare Practitioner 2"
 	request.company = "_Test Company"
 	request.order_date = frappe.utils.nowdate()
 	request.order_time = frappe.utils.nowtime()
 	request.medication_item = frappe.db.get_value("Item", {"item_name": "Paracetamol"})
-	request.dosage = frappe.db.get_value("Prescription Dosage", {}, "name")
-	request.dosage_form = frappe.db.get_value("Dosage Form", {}, "name")
+	request.dosage = "Once Daily"
+	request.dosage_form = "Cream"
 	request.quantity = 1
 
 	return request

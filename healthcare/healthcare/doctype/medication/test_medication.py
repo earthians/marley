@@ -2,7 +2,6 @@
 # See license.txt
 
 import frappe
-from frappe.utils.make_random import get_random
 
 from healthcare.healthcare.doctype.medication.medication import (
 	expand,
@@ -59,7 +58,6 @@ def create_ingredient_medication(generic_name, is_orderable=0):
 
 def create_medication(medication, is_billable=False, price_list=None):
 	"""Testing if Item is auto created if is_billable is True"""
-	medication_class = get_random("Medication Class")
 	if frappe.db.exists("Medication", medication):
 		medication_doc = frappe.get_doc("Medication", medication)
 		item = None
@@ -70,7 +68,7 @@ def create_medication(medication, is_billable=False, price_list=None):
 
 	medication_doc = frappe.new_doc("Medication")
 	medication_doc.generic_name = medication
-	medication_doc.medication_class = medication_class
+	medication_doc.medication_class = "Analgesics"
 	medication_doc.strength = 500
 	medication_doc.strength_uom = "Milligram"
 	medication_doc.price_list = price_list
@@ -91,7 +89,7 @@ class TestInteractantExpansion(HealthcareTestSuite):
 
 	def setUp(self):
 		super().setUp()
-		self.amoxicillin = create_classed_medication("_Test Amoxicillin", "Amoxicillin")
+		self.amoxicillin = "Tablet _Test Amoxicillin 100Milligram"
 
 	def test_expansion_reaches_every_ancestor_class(self):
 		interactants = expand(self.amoxicillin)
@@ -102,7 +100,7 @@ class TestInteractantExpansion(HealthcareTestSuite):
 		self.assertIn(("Medication Class", "Anti-infectives"), interactants)
 
 	def test_expansion_reaches_combination_ingredients(self):
-		clavulanate = create_classed_medication("_Test Clavulanate", "Clavulanic Acid", is_orderable=0)
+		clavulanate = "Tablet _Test Clavulanate 100Milligram"
 		combination = create_combination("_Test Co-Amoxiclav", [self.amoxicillin, clavulanate])
 
 		interactants = expand(combination)
@@ -119,21 +117,6 @@ class TestInteractantExpansion(HealthcareTestSuite):
 		medication.save()
 
 		self.assertIn(("Medication Class", "Amoxicillin"), expand(combination))
-
-
-def create_classed_medication(generic_name, medication_class, is_orderable=1):
-	existing = frappe.db.exists("Medication", {"generic_name": generic_name})
-	if existing:
-		return existing
-
-	medication = frappe.new_doc("Medication")
-	medication.generic_name = generic_name
-	medication.medication_class = medication_class
-	medication.strength = 100
-	medication.strength_uom = "Milligram"
-	medication.dosage_form = "Tablet"
-	medication.is_orderable = is_orderable
-	return medication.insert().name
 
 
 def create_combination(generic_name, ingredients):
