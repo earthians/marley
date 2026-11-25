@@ -917,10 +917,6 @@ def create_practitioner_availability(
 
 
 def create_patient(id=0, patient_name=None, email=None, mobile=None, customer=None, create_user=False):
-	if frappe.db.exists("Patient", {"firstname": f"_Test Patient {id!s}"}):
-		patient = frappe.db.get_value("Patient", {"first_name": f"_Test Patient {id!s}"}, ["name"])
-		return patient
-
 	patient = frappe.new_doc("Patient")
 	patient.first_name = patient_name if patient_name else f"_Test Patient {id!s}"
 	patient.sex = "Female"
@@ -935,12 +931,6 @@ def create_patient(id=0, patient_name=None, email=None, mobile=None, customer=No
 
 
 def create_practitioner(id=0, medical_department=None):
-	if frappe.db.exists("Healthcare Practitioner", {"firstname": f"_Test Healthcare Practitioner {id!s}"}):
-		practitioner = frappe.db.get_value(
-			"Healthcare Practitioner", {"firstname": f"_Test Healthcare Practitioner {id!s}"}, ["name"]
-		)
-		return practitioner
-
 	practitioner = frappe.new_doc("Healthcare Practitioner")
 	practitioner.first_name = f"_Test Healthcare Practitioner {id!s}"
 	practitioner.gender = "Female"
@@ -1038,7 +1028,7 @@ def create_appointment(
 
 def create_service_unit(id=0, service_unit_type=None, service_unit_capacity=0):
 	if frappe.db.exists("Healthcare Service Unit", f"_Test Service Unit {id!s}"):
-		return f"_Test Service_unit {id!s}"
+		return f"_Test Service Unit {id!s}"
 
 	service_unit = frappe.new_doc("Healthcare Service Unit")
 	service_unit.is_group = 0
