@@ -58,9 +58,23 @@ frappe.ui.form.on('Therapy Session', {
 		});
 
 		if (!frm.doc.__islocal) {
+<<<<<<< HEAD
 			frm.dashboard.add_indicator(__('Counts Targeted: {0}', [frm.doc.total_counts_targeted]), 'blue');
 			frm.dashboard.add_indicator(__('Counts Completed: {0}', [frm.doc.total_counts_completed]),
 				(frm.doc.total_counts_completed < frm.doc.total_counts_targeted) ? 'orange' : 'green');
+=======
+			frm.dashboard.stats_area_row.empty();
+			frm.dashboard.add_indicator(
+				__("Counts Targeted: {0}", [frm.doc.total_counts_targeted]),
+				"blue",
+			);
+			frm.dashboard.add_indicator(
+				__("Counts Completed: {0}", [frm.doc.total_counts_completed]),
+				frm.doc.total_counts_completed < frm.doc.total_counts_targeted
+					? "orange"
+					: "green",
+			);
+>>>>>>> 3500fac (fix(therapy-session): prevent duplicate stats indicators in therapy session)
 		}
 
 		if (frm.doc.docstatus === 1) {
