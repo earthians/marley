@@ -181,9 +181,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 	def test_manual_plan_does_not_link_another_patients_service_request(self):
 		plan = create_therapy_plan()
 		therapy_type = plan.therapy_plan_details[0].therapy_type
-		other_patient = frappe.get_list(
-			"Patient", filters={"name": ["!=", plan.patient]}, pluck="name"
-		)[0]
+		other_patient = frappe.get_list("Patient", filters={"name": ["!=", plan.patient]}, pluck="name")[0]
 		service_request = frappe.get_doc(
 			{
 				"doctype": "Service Request",
