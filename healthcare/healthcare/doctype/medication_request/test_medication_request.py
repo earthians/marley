@@ -4,12 +4,8 @@
 import frappe
 from frappe.utils import get_time, now
 
-from erpnext.stock.doctype.item.test_item import create_item
-
-from healthcare.healthcare.doctype.service_request.test_service_request import (
-	create_encounter,
-	create_sales_invoice,
-)
+from healthcare.tests.factories.billing import invoice_service_request
+from healthcare.tests.factories.encounters import create_encounter_with_order
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -18,7 +14,9 @@ class TestMedicationRequest(HealthcareTestSuite):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		medication = frappe.get_doc("Medication", "Tablet Paracetamol 300Milligram")
-		encounter = create_encounter(patient, practitioner, "drug_prescription", medication, submit=True)
+		encounter = create_encounter_with_order(
+			patient, practitioner, "drug_prescription", medication, submit=True
+		)
 		self.assertTrue(frappe.db.exists("Medication Request", {"order_group": encounter.name}))
 		medication_request = frappe.db.get_value(
 			"Medication Request", {"order_group": encounter.name}, "name"
@@ -26,7 +24,7 @@ class TestMedicationRequest(HealthcareTestSuite):
 		if medication_request:
 			medication_request_doc = frappe.get_doc("Medication Request", medication_request)
 			medication_request_doc.submit()
-			create_sales_invoice(patient, medication_request_doc, medication, "drug_prescription")
+			invoice_service_request(patient, medication_request_doc, medication, "drug_prescription")
 			self.assertEqual(
 				frappe.db.get_value("Medication Request", medication_request_doc.name, "qty_invoiced"),
 				1,

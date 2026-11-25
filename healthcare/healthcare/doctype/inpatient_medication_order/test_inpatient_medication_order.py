@@ -13,8 +13,8 @@ from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
 	get_healthcare_service_unit,
-	mark_invoiced_inpatient_occupancy,
 )
+from healthcare.tests.factories.inpatient import create_ipme, create_ipmo, mark_invoiced_inpatient_occupancy
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -196,67 +196,6 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 		self.assertTrue(second_ipmo.name)
 		self.assertEqual(second_ipmo.docstatus, 0)
 		self.assertFalse(second_ipmo.patient_encounter)
-
-
-def create_dosage_form():
-	if not frappe.db.exists("Dosage Form", "Tablet"):
-		frappe.get_doc({"doctype": "Dosage Form", "dosage_form": "Tablet"}).insert()
-
-
-def create_drug(item=None):
-	if not item:
-		item = "Dextromethorphan"
-	drug = frappe.db.exists("Item", {"item_code": "Dextromethorphan"})
-	if not drug:
-		drug = frappe.get_doc(
-			{
-				"doctype": "Item",
-				"item_code": "Dextromethorphan",
-				"item_name": "Dextromethorphan",
-				"item_group": "Products",
-				"stock_uom": "Nos",
-				"is_stock_item": 1,
-				"valuation_rate": 50,
-				"opening_stock": 20,
-			}
-		).insert()
-
-
-def get_orders():
-	create_dosage_form()
-	create_drug()
-	return {
-		"drug_code": "Dextromethorphan",
-		"drug_name": "Dextromethorphan",
-		"dosage": "1-1-1",
-		"dosage_form": "Tablet",
-		"period": "2 Day",
-	}
-
-
-def create_ipmo(patient):
-	orders = get_orders()
-	ipmo = frappe.new_doc("Inpatient Medication Order")
-	ipmo.patient = patient
-	ipmo.company = "_Test Company"
-	ipmo.start_date = add_days(getdate(), -1)
-	ipmo.add_order_entries(orders)
-
-	return ipmo
-
-
-def create_ipme(filters, update_stock=0):
-	ipme = frappe.new_doc("Inpatient Medication Entry")
-	ipme.company = "_Test Company"
-	ipme.posting_date = getdate()
-	ipme.update_stock = update_stock
-	if update_stock:
-		ipme.warehouse = "Stores - _TC"
-	for key, value in filters.items():
-		ipme.set(key, value)
-	ipme = ipme.get_medication_orders()
-
-	return ipme
 
 
 class TestInpatientMedicationOrderFromRequests(HealthcareTestSuite):

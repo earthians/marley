@@ -2,30 +2,33 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import nowdate, nowtime
 
 from healthcare.healthcare.doctype.observation.observation import set_observation_status
 from healthcare.healthcare.doctype.observation.observation_consumables import (
 	get_service_unit_type,
 	issued,
 )
-from healthcare.healthcare.doctype.sample_collection.test_sample_collection import create_lab_sample_leaf
-from healthcare.tests.test_observation_consumables import (
+from healthcare.tests.factories.lab import (
+	ANALYSER,
 	BLOOD,
 	LABEL,
 	NEEDLE,
+	REAGENT,
+	TUBE,
 	WAREHOUSE,
 	add_uom_conversion,
 	collection_for,
 	consuming_template,
+	create_lab_sample_leaf,
+	new_observation,
+	reagent_template,
 	receive,
+	service_request_for,
 	stock_qty,
 )
 from healthcare.tests.utils import HealthcareTestSuite
 
-REAGENT, TUBE = "_Test Consumable Reagent", "_Test Consumable Tube"
 BOTTLED, MEASURED = "_Test Consumable Bottled Reagent", "_Test Consumable Measured Reagent"
-ANALYSER = "_Test Consumables Analyser"
 LAB_STORE, PICKED_STORE = "_Test Warehouse 1 - _TC", "Finished Goods - _TC"
 
 
@@ -350,58 +353,9 @@ def measured_template(name, qty, uom, item_code=MEASURED):
 	return template
 
 
-def reagent_template(name, unit_type=None):
-	template = create_lab_sample_leaf(name, None)
-	template.consume_stock = 1
-	template.service_unit = unit_type
-	template.set(
-		"consumables",
-		[
-			{"item_code": TUBE, "consumed_at": "Specimen", "qty": 1},
-			{"item_code": REAGENT, "consumed_at": "Observation", "qty": 2},
-		],
-	)
-	template.save()
-	return template
-
-
-def new_observation(template, **fields):
-	observation = frappe.get_doc(
-		{
-			"doctype": "Observation",
-			"observation_template": template.name,
-			"patient": "_Test Patient",
-			"company": "_Test Company",
-			"result": "5",
-			**fields,
-		}
-	)
-	observation.insert(ignore_permissions=True)
-	return observation
-
-
 def replacement_of(template):
 	"""The editable copy a rejection leaves behind."""
 	return frappe.get_doc("Observation", {"observation_template": template.name, "docstatus": 0})
-
-
-def service_request_for(template, unit_type):
-	request = frappe.get_doc(
-		{
-			"doctype": "Service Request",
-			"patient": "_Test Patient",
-			"company": "_Test Company",
-			"practitioner": "_Test Healthcare Practitioner 2",
-			"order_date": nowdate(),
-			"order_time": nowtime(),
-			"status": "active-Request Status",
-			"template_dt": "Observation Template",
-			"template_dn": template.name,
-			"healthcare_service_unit_type": unit_type,
-		}
-	)
-	request.insert(ignore_permissions=True)
-	return request.name
 
 
 def make_unit(name, unit_type, warehouse=WAREHOUSE):

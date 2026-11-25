@@ -1,8 +1,8 @@
 import frappe
 from frappe.utils import add_days, add_months, getdate
 
-from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_encounter
 from healthcare.healthcare.report.diagnosis_trends.diagnosis_trends import execute
+from healthcare.tests.factories.encounters import create_encounter_with_therapy
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -31,7 +31,7 @@ class TestDiagnosisTrends(HealthcareTestSuite):
 		)
 
 	def create_encounter_with_diagnosis(self, patient, practitioner, medical_department, diagnosis):
-		encounter = create_encounter(
+		encounter = create_encounter_with_therapy(
 			patient=patient,
 			medical_department=medical_department,
 			practitioner=practitioner,

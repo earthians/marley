@@ -6,6 +6,7 @@ import frappe
 from frappe.utils import add_to_date, get_datetime, nowdate, nowtime
 
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
+from healthcare.tests.factories.encounters import create_procedure
 from healthcare.tests.utils import HealthcareTestSuite
 
 KNEE_TEMPLATE = "_Test Procedure - Knee Surgery and Rehab"
@@ -237,24 +238,6 @@ def add_consumable(procedure_template, invoice_separately=0):
 	)
 	procedure_template.save()
 	return consumable
-
-
-def create_procedure(procedure_template, patient, practitioner, submit=True):
-	procedure = frappe.new_doc("Clinical Procedure")
-	procedure.procedure_template = procedure_template.name
-	procedure.patient = patient
-	procedure.practitioner = practitioner
-	procedure.consume_stock = procedure_template.consume_stock
-	procedure.items = procedure_template.items
-	procedure.company = "_Test Company"
-	procedure.warehouse = "_Test Warehouse - _TC"
-	procedure.start_date = frappe.utils.getdate()
-	procedure.start_time = frappe.utils.nowtime()
-	if submit:
-		procedure.submit()
-	else:
-		procedure.insert()
-	return procedure
 
 
 def create_clinical_procedure_template():

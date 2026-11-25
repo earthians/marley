@@ -7,10 +7,6 @@ import datetime
 import frappe
 from frappe.utils import getdate, now_datetime
 
-from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-	create_ipme,
-	create_ipmo,
-)
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
@@ -19,6 +15,7 @@ from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import
 from healthcare.healthcare.report.inpatient_medication_orders.inpatient_medication_orders import (
 	execute,
 )
+from healthcare.tests.factories.inpatient import create_ipme, create_ipmo
 from healthcare.tests.utils import HealthcareTestSuite
 
 
