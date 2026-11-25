@@ -11,6 +11,19 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestTherapySession(HealthcareTestSuite):
+	def test_invoice_preserves_default_naming_series(self):
+		default_series = frappe.new_doc("Sales Invoice").naming_series
+		self.assertTrue(default_series)
+
+		plan = create_therapy_plan()
+		session = create_therapy_session(plan.patient, "Basic Rehab", plan.name)
+		self.assertNotEqual(session.naming_series, default_series)
+		session.submit()
+
+		invoice = invoice_therapy_session(session.name)
+
+		self.assertEqual(invoice.naming_series, default_series)
+
 	def test_invoice_copies_practitioner(self):
 		plan = create_therapy_plan()
 		session = create_therapy_session(plan.patient, "Basic Rehab", plan.name)
