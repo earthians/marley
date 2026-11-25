@@ -740,10 +740,10 @@ class TestFeeValidity(HealthcareTestSuite):
 		patient, practitioner = self.enable_free_follow_ups()
 		appointment = create_appointment(patient, practitioner, nowdate())
 
-		self.act_as("test3@example.com")
-		self.assertRaises(
-			frappe.PermissionError, get_fee_validity, appointment.name, appointment.appointment_date
-		)
+		with self.set_user("test3@example.com"):
+			self.assertRaises(
+				frappe.PermissionError, get_fee_validity, appointment.name, appointment.appointment_date
+			)
 
 	def test_check_fee_validity_requires_read_access_to_the_patient(self):
 		"""A crafted unsaved visit naming any patient must not reveal that patient's validity"""
@@ -753,9 +753,5 @@ class TestFeeValidity(HealthcareTestSuite):
 			{"doctype": "Patient Encounter", "patient": patient, "practitioner": practitioner, "__islocal": 1}
 		)
 
-		self.act_as("test3@example.com")
-		self.assertRaises(frappe.PermissionError, check_fee_validity, crafted)
-
-	def act_as(self, user):
-		self.addCleanup(frappe.set_user, "Administrator")
-		frappe.set_user(user)
+		with self.set_user("test3@example.com"):
+			self.assertRaises(frappe.PermissionError, check_fee_validity, crafted)

@@ -101,57 +101,47 @@ class TestApprovalAccess(HealthcareTestSuite):
 		frappe.db.delete("User Permission", {"user": APPROVER})
 		add_user_permission("Patient", self.allowed, APPROVER)
 
-	def tearDown(self):
-		frappe.set_user("Administrator")
-		frappe.db.delete("User Permission", {"user": APPROVER})
-
 	def test_another_patients_observation_is_refused(self):
 		observation = new_observation(reagent_template("Access Refused"))
-		frappe.set_user(APPROVER)
-
-		with self.assertRaises(frappe.PermissionError):
-			get_approval_consumables(observation=observation.name)
+		with self.set_user(APPROVER):
+			with self.assertRaises(frappe.PermissionError):
+				get_approval_consumables(observation=observation.name)
 
 	def test_a_component_the_approver_cannot_read_is_left_out(self):
 		panel = new_observation(reagent_template("Access Panel"), patient=self.allowed)
 		new_observation(reagent_template("Access Component"), parent_observation=panel.name)
-		frappe.set_user(APPROVER)
+		with self.set_user(APPROVER):
+			rows = get_approval_consumables(observation=panel.name)
 
-		rows = get_approval_consumables(observation=panel.name)
-
-		self.assertEqual({row.parent for row in rows}, {panel.name})
+			self.assertEqual({row.parent for row in rows}, {panel.name})
 
 	def test_a_report_shows_only_the_patients_the_approver_may_read(self):
 		report = make_report(self.allowed)
 		allowed = invoiced_observation(reagent_template("Access Report Allowed"), report, self.allowed)
 		invoiced_observation(reagent_template("Access Report Refused"), report, "_Test Patient")
-		frappe.set_user(APPROVER)
+		with self.set_user(APPROVER):
+			rows = get_approval_consumables(diagnostic_report=report.name)
 
-		rows = get_approval_consumables(diagnostic_report=report.name)
-
-		self.assertEqual({row.parent for row in rows}, {allowed.name})
+			self.assertEqual({row.parent for row in rows}, {allowed.name})
 
 	def test_another_patients_report_is_refused(self):
 		report = make_report("_Test Patient")
-		frappe.set_user(APPROVER)
-
-		with self.assertRaises(frappe.PermissionError):
-			get_approval_consumables(diagnostic_report=report.name)
+		with self.set_user(APPROVER):
+			with self.assertRaises(frappe.PermissionError):
+				get_approval_consumables(diagnostic_report=report.name)
 
 	def test_an_unreadable_service_request_is_ignored(self):
 		template = reagent_template("Access Doppler", unit_type=ANALYSER)
 		request = service_request_for(template, "_Test Consumables Ultrasound")
-		frappe.set_user(APPROVER)
-
-		self.assertEqual(get_service_unit_type(template.name, request), ANALYSER)
+		with self.set_user(APPROVER):
+			self.assertEqual(get_service_unit_type(template.name, request), ANALYSER)
 
 	def test_a_request_behind_a_readable_observation_is_used(self):
 		template = reagent_template("Access Scan", unit_type=ANALYSER)
 		request = service_request_for(template, "_Test Consumables Ultrasound")
 		new_observation(template, patient=self.allowed, service_request=request)
-		frappe.set_user(APPROVER)
-
-		self.assertEqual(get_service_unit_type(template.name, request), "_Test Consumables Ultrasound")
+		with self.set_user(APPROVER):
+			self.assertEqual(get_service_unit_type(template.name, request), "_Test Consumables Ultrasound")
 
 
 def make_report(patient):

@@ -36,54 +36,48 @@ class TestWardScope(HealthcareTestSuite):
 		admit_patient(record, get_healthcare_service_unit(), frappe.utils.now_datetime())  # WARD, made vacant
 		self.admission = record.name
 
-	def tearDown(self):
-		frappe.set_user("Administrator")
-		frappe.db.delete("User Permission", {"user": NURSE})
-		frappe.db.delete("Inpatient Record", {"name": self.admission})
-		frappe.db.set_value("Patient", self.patient, {"inpatient_record": None, "inpatient_status": None})
-		frappe.clear_cache(user=NURSE)
-
 	def assign_nurse_to(self, unit):
 		add_user_permission("Healthcare Service Unit", unit, NURSE, ignore_permissions=True)
 		frappe.clear_cache(user=NURSE)
-		frappe.set_user(NURSE)
 
 	def test_an_unassigned_nurse_is_not_ward_scoped(self):
-		frappe.set_user(NURSE)
-
-		self.assertFalse(WardScope().restricted())
-		ChartAccess(self.patient).to_read()
-		ChartAccess(self.outpatient).to_read()
+		with self.set_user(NURSE):
+			self.assertFalse(WardScope().restricted())
+			ChartAccess(self.patient).to_read()
+			ChartAccess(self.outpatient).to_read()
 
 	def test_a_ward_nurse_charts_a_patient_on_their_ward(self):
 		self.assign_nurse_to(WARD)
 
-		ChartAccess(self.patient).to_write("Observation")
+		with self.set_user(NURSE):
+			ChartAccess(self.patient).to_write("Observation")
 
 	def test_a_ward_nurse_is_refused_a_patient_on_another_ward(self):
 		self.assign_nurse_to(OTHER_WARD)
 
-		self.assertRaises(frappe.PermissionError, ChartAccess(self.patient).to_read)
+		with self.set_user(NURSE):
+			self.assertRaises(frappe.PermissionError, ChartAccess(self.patient).to_read)
 
 	def test_a_ward_nurse_is_refused_a_patient_who_is_not_in_any_unit(self):
 		self.assign_nurse_to(WARD)
 
-		self.assertRaises(frappe.PermissionError, ChartAccess(self.outpatient).to_read)
+		with self.set_user(NURSE):
+			self.assertRaises(frappe.PermissionError, ChartAccess(self.outpatient).to_read)
 
 	def test_a_procedure_in_the_ward_brings_its_patient_into_scope(self):
 		self.assign_nurse_to(WARD)
-		frappe.set_user("Administrator")
 		procedure = self.make_procedure(self.outpatient, WARD)
-		frappe.set_user(NURSE)
 
-		ChartAccess(self.outpatient, "Clinical Procedure", procedure).to_read()
+		with self.set_user(NURSE):
+			ChartAccess(self.outpatient, "Clinical Procedure", procedure).to_read()
 
 	def test_the_patient_search_only_finds_the_ward(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
 		self.assign_nurse_to(WARD)
 
-		found = [match["name"] for match in find_patients("_Test")]
+		with self.set_user(NURSE):
+			found = [match["name"] for match in find_patients("_Test")]
 
 		self.assertIn(self.patient, found)
 		self.assertNotIn(self.outpatient, found)
@@ -101,5 +95,4 @@ class TestWardScope(HealthcareTestSuite):
 			}
 		)
 		procedure.insert(ignore_permissions=True)
-		self.addCleanup(frappe.delete_doc, "Clinical Procedure", procedure.name, force=True)
 		return procedure.name
