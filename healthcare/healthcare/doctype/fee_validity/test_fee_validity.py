@@ -3,6 +3,7 @@
 
 
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
@@ -603,6 +604,30 @@ class TestFeeValidity(HealthcareTestSuite):
 				"Fee Validity", {"reference_dt": "Patient Encounter", "reference_dn": outside.name}
 			)
 		)
+
+	def test_a_visit_on_the_last_valid_day_is_free_and_the_next_day_is_billed(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=7)
+		create_encounter(patient, practitioner, submit=True, encounter_date=nowdate())
+
+		last_day = create_encounter(patient, practitioner, submit=True, encounter_date=add_days(nowdate(), 7))
+		day_after = create_encounter(
+			patient, practitioner, submit=True, encounter_date=add_days(nowdate(), 8)
+		)
+
+		self.assertNotIn(last_day.name, self.encounters_to_invoice(patient))
+		self.assertIn(day_after.name, self.encounters_to_invoice(patient))
+
+	def test_a_validity_stays_active_through_its_last_day(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=7)
+		create_encounter(patient, practitioner, submit=True)
+		fee_validity = frappe.get_doc("Fee Validity", self.get_fee_validity(patient, practitioner))
+
+		with freeze_time(f"{fee_validity.valid_till} 23:59:00"):
+			fee_validity.update_status()
+			self.assertEqual(fee_validity.status, "Active")
+		with freeze_time(f"{add_days(fee_validity.valid_till, 1)} 00:01:00"):
+			fee_validity.update_status()
+			self.assertEqual(fee_validity.status, "Expired")
 
 	def test_encounter_uses_practitioner_validity_period(self):
 		patient, practitioner = self.enable_free_follow_ups(max_visits=1, valid_days=7)
