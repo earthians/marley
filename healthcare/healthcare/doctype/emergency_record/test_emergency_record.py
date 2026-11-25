@@ -8,6 +8,7 @@ from healthcare.healthcare.doctype.emergency_record.emergency_record import (
 	get_active_triage,
 	occupancy_qty,
 )
+from healthcare.tests.factories.encounters import create_emergency_record
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -335,21 +336,6 @@ class TestEmergencyRecord(HealthcareTestSuite):
 		record.record_triage("Urgent")
 		record.set_disposition("Discharged")
 		self.assertIsNone(get_active_triage("_Test Patient"))
-
-
-def create_emergency_record(patient, **extra):
-	values = {
-		"doctype": "Emergency Record",
-		"patient": patient,
-		"company": "_Test Company",
-		"arrival_datetime": now_datetime(),
-		"arrival_mode": "Walk-in",
-		"chief_complaint": "Chest pain",
-	}
-	values.update(extra)
-	record = frappe.get_doc(values)
-	record.insert(ignore_permissions=True)
-	return record
 
 
 def create_unidentified_record(patient_description, gender="Other"):

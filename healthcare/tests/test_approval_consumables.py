@@ -10,15 +10,17 @@ from healthcare.healthcare.doctype.observation.approval_consumables import (
 )
 from healthcare.healthcare.doctype.observation.observation import set_observation_status
 from healthcare.healthcare.doctype.observation.observation_consumables import get_service_unit_type
-from healthcare.tests.test_observation_consumables import WAREHOUSE, receive, stock_qty
-from healthcare.tests.test_observation_stock import (
+from healthcare.tests.factories.lab import (
 	ANALYSER,
 	REAGENT,
-	TUBE,
+	WAREHOUSE,
 	new_observation,
 	reagent_template,
+	receive,
 	service_request_for,
+	stock_qty,
 )
+from healthcare.tests.test_observation_stock import TUBE
 from healthcare.tests.utils import HealthcareTestSuite
 
 APPROVER = "lab_approver@marleyhealth.io"

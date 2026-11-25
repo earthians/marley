@@ -319,9 +319,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 
 	def stock_the_bed(self):
 		"""Stands in for the Inpatient Medication Entry transfer."""
-		from healthcare.healthcare.doctype.inpatient_medication_entry.test_inpatient_medication_entry import (
-			make_stock_entry,
-		)
+		from healthcare.tests.factories.inpatient import make_stock_entry
 
 		make_stock_entry()
 		transfer = frappe.new_doc("Stock Entry")
@@ -375,9 +373,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 
 	def test_a_transferred_dose_is_issued_from_the_bed_even_after_the_setting_is_turned_off(self):
 		"""The drug is already at the bed: leaving it there would strand it."""
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		order = create_ipmo(self.patient)
 		order.submit()
@@ -396,9 +392,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		)
 
 	def transferred_order(self):
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		order = create_ipmo(self.patient)
 		order.submit()
@@ -408,11 +402,9 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 
 	def someone_elses_admission(self):
 		"""A second patient admitted to the other bed, with an order of their own."""
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
 		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		other = "_Test Patient 0"
 		record = create_inpatient(other)

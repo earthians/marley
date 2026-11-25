@@ -4,9 +4,6 @@
 import frappe
 from frappe.utils import now_datetime
 
-from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import (
-	create_procedure,
-)
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 	admit_patient,
 	discharge_patient,
@@ -15,12 +12,11 @@ from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import
 	create_inpatient,
 	get_healthcare_service_unit,
 )
-from healthcare.healthcare.doctype.lab_test.test_lab_test import (
-	create_lab_test,
-)
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
-from healthcare.healthcare.doctype.therapy_plan.test_therapy_plan import create_therapy_plan
-from healthcare.healthcare.doctype.therapy_session.test_therapy_session import (
+from healthcare.tests.factories.encounters import (
+	create_lab_test,
+	create_procedure,
+	create_therapy_plan,
 	create_therapy_session,
 )
 from healthcare.tests.utils import HealthcareTestSuite

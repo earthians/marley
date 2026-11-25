@@ -7,10 +7,8 @@ from frappe.utils import add_days, getdate, nowdate
 from healthcare.healthcare.doctype.inpatient_medication_entry.medication_stock_entry import (
 	ServiceUnitTransfer,
 )
+from healthcare.tests.factories.inpatient import DRUG, PHARMACY, receive_batch
 from healthcare.tests.utils import HealthcareTestSuite
-
-DRUG = "_Test Batched Drug"
-PHARMACY = "Stores - _TC"
 
 
 class TestBatchedMedicationTransfer(HealthcareTestSuite):
@@ -131,43 +129,6 @@ def empty_drug_stock():
 		row.use_serial_batch_fields = 1
 		row.batch_no = batch.batch_no
 	entry.submit()
-
-
-def receive_batch(batch_id, expiry, qty, warehouse=PHARMACY):
-	"""Take the batch into the warehouse, and return the name it is linked by.
-
-	A Batch is named by hash, so the batch number a pharmacist reads off the
-	strip is only its batch_id, and stock rows link to the name."""
-	batch_no = batch_with_expiry(batch_id, expiry)
-	entry = frappe.new_doc("Stock Entry")
-	entry.stock_entry_type = "Material Receipt"
-	entry.company = "_Test Company"
-	entry.to_warehouse = warehouse
-	row = entry.append("items")
-	row.item_code = DRUG
-	row.qty = qty
-	row.t_warehouse = warehouse
-	row.basic_rate = 10
-	row.conversion_factor = 1
-	row.use_serial_batch_fields = 1
-	row.batch_no = batch_no
-	entry.submit()
-	return batch_no
-
-
-def batch_with_expiry(batch_id, expiry):
-	"""A batch that outlived an earlier run still carries that run's expiry, and
-	expiry is what these tests order stock by, so say it again."""
-	batch_no = frappe.db.get_value("Batch", {"item": DRUG, "batch_id": batch_id}, "name")
-	if not batch_no:
-		return (
-			frappe.get_doc({"doctype": "Batch", "batch_id": batch_id, "item": DRUG, "expiry_date": expiry})
-			.insert(ignore_permissions=True)
-			.name
-		)
-
-	frappe.db.set_value("Batch", batch_no, "expiry_date", expiry)
-	return batch_no
 
 
 def bed_with_warehouse():

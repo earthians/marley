@@ -19,6 +19,7 @@ from healthcare.healthcare.doctype.patient_appointment.patient_appointment impor
 	update_status,
 )
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
+from healthcare.tests.factories.encounters import create_encounter_from_appointment
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -40,7 +41,7 @@ class TestPatientAppointment(HealthcareTestSuite):
 		self.assertEqual(appointment.status, "Open")
 		appointment = create_appointment(self.patient, self.practitioner, add_days(nowdate(), 2))
 		self.assertEqual(appointment.status, "Scheduled")
-		encounter = create_encounter(appointment)
+		encounter = create_encounter_from_appointment(appointment)
 		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Closed")
 		encounter.cancel()
 		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Open")
@@ -345,8 +346,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 			create_inpatient,
 			get_healthcare_service_unit,
-			mark_invoiced_inpatient_occupancy,
 		)
+		from healthcare.tests.factories.inpatient import mark_invoiced_inpatient_occupancy
 
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 1)
 		frappe.db.sql("""delete from `tabInpatient Record`""")
@@ -381,8 +382,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 			create_inpatient,
 			get_healthcare_service_unit,
-			mark_invoiced_inpatient_occupancy,
 		)
+		from healthcare.tests.factories.inpatient import mark_invoiced_inpatient_occupancy
 
 		frappe.db.sql("""delete from `tabInpatient Record`""")
 		# Schedule Admission
@@ -675,7 +676,7 @@ class TestPatientAppointment(HealthcareTestSuite):
 		procedure_template = frappe.get_doc(
 			"Clinical Procedure Template", "_Test Procedure - Knee Surgery and Rehab"
 		)
-		encounter = create_encounter(appointment, procedure_template=procedure_template)
+		encounter = create_encounter_from_appointment(appointment, procedure_template=procedure_template)
 
 		service_request = frappe.db.exists(
 			"Service Request",
@@ -916,20 +917,6 @@ def create_practitioner_availability(
 	).insert(ignore_permissions=True, ignore_links=True, ignore_if_duplicate=True)
 
 
-def create_patient(id=0, patient_name=None, email=None, mobile=None, customer=None, create_user=False):
-	patient = frappe.new_doc("Patient")
-	patient.first_name = patient_name if patient_name else f"_Test Patient {id!s}"
-	patient.sex = "Female"
-	patient.mobile = mobile
-	patient.email = email
-	patient.customer = customer
-	patient.customer_group = "Individual"
-	patient.invite_user = create_user
-	patient.save(ignore_permissions=True)
-
-	return patient.name
-
-
 def create_practitioner(id=0, medical_department=None):
 	practitioner = frappe.new_doc("Healthcare Practitioner")
 	practitioner.first_name = f"_Test Healthcare Practitioner {id!s}"
@@ -940,35 +927,6 @@ def create_practitioner(id=0, medical_department=None):
 	practitioner.save(ignore_permissions=True)
 
 	return practitioner.name
-
-
-def create_encounter(
-	appointment,
-	procedure_template=None,
-):
-	if appointment:
-		encounter = frappe.new_doc("Patient Encounter")
-		encounter.appointment = appointment.name
-		encounter.appointment_type = appointment.appointment_type
-		encounter.patient = appointment.patient
-		encounter.practitioner = appointment.practitioner
-		encounter.encounter_date = appointment.appointment_date
-		encounter.encounter_time = appointment.appointment_time
-		encounter.company = appointment.company
-
-		if procedure_template:
-			encounter.append(
-				"procedure_prescription",
-				{
-					"procedure": procedure_template.name,
-					"procedure_name": procedure_template.item_code,
-					"no_of_sessions": 1,
-				},
-			)
-		encounter.save()
-		encounter.submit()
-
-		return encounter
 
 
 def create_appointment(
