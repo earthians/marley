@@ -17,6 +17,7 @@ class BootStrapTestData:
 		self.make_company()
 		self.make_service_items()
 		self.make_stock_items()
+		self.make_consumables()
 		self.make_diagnoses()
 		self.make_medical_departments()
 		self.make_users()
@@ -835,6 +836,72 @@ class BootStrapTestData:
 			},
 		]
 		self.make_records(["item_code"], records)
+
+	def make_consumables(self):
+		"""Stock the lab and ward tests draw on, in units that allow fractions where a lab measures."""
+		uoms = ["_Test Millilitre", "_Test Litre", "_Test Bottle", "_Test Pair", "_Test Gram"]
+		self.make_records(
+			["uom_name"], [{"doctype": "UOM", "uom_name": uom, "must_be_whole_number": 0} for uom in uoms]
+		)
+		colors = ["_Test Lavender", "_Test Gold"]
+		self.make_records(
+			["name"], [{"doctype": "Color", "name": color, "color": "#7F00FF"} for color in colors]
+		)
+		items = [
+			("_Test Consumable Reagent", "Nos"),
+			("_Test Consumable Tube", "Nos"),
+			("_Test Consumable Needle", "Nos"),
+			("_Test Consumable Label", "Nos"),
+			("_Test Consumable Bottled Reagent", "_Test Bottle"),
+			("_Test Consumable Measured Reagent", "_Test Millilitre"),
+			("_Test Permission Item", "Nos"),
+			("_Test Linked Item", "Nos"),
+		]
+		records = [
+			{
+				"doctype": "Item",
+				"item_code": code,
+				"item_group": "Products",
+				"stock_uom": uom,
+				"is_stock_item": 1,
+				"valuation_rate": 10,
+			}
+			for code, uom in items
+		]
+		records += [
+			{
+				"doctype": "Item",
+				"item_code": "_Test Batched Drug",
+				"item_name": "_Test Batched Drug",
+				"item_group": "Products",
+				"stock_uom": "Nos",
+				"is_stock_item": 1,
+				"has_batch_no": 1,
+				"create_new_batch": 1,
+				"batch_number_series": "_TEST-BATCH-.####",
+				"valuation_rate": 10,
+			},
+			{
+				"doctype": "Item",
+				"item_code": "Syringe",
+				"item_group": "_Test Item Group",
+				"stock_uom": "Nos",
+				"valuation_rate": 5,
+			},
+		]
+		self.make_records(["item_code"], records)
+		unit_types = ["Analyser", "Coagulometer", "Scanner", "Ultrasound", "Spectrometer"]
+		self.make_records(
+			["service_unit_type"],
+			[
+				{
+					"doctype": "Healthcare Service Unit Type",
+					"service_unit_type": f"_Test Consumables {kind}",
+					"allow_appointments": 1,
+				}
+				for kind in unit_types
+			],
+		)
 
 	def make_service_items(self):
 		records = [
