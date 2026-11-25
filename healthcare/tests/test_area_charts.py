@@ -55,6 +55,11 @@ class TestAreaCharts(HealthcareTestSuite):
 			["Patient Appointment", "appointment_date", "<=", "frappe.datetime.get_today()"], filters
 		)
 
+	def test_outpatient_charts_skip_inpatient_appointments(self):
+		for chart in WORKSPACE_CHARTS["Outpatient"]:
+			filters = json.loads(frappe.db.get_value("Dashboard Chart", chart, "filters_json"))
+			self.assertIn(["Patient Appointment", "inpatient_record", "is", "not set"], filters, chart)
+
 	def test_triage_chart_lists_levels_in_priority_order(self):
 		with self.set_user("Administrator"):
 			data = triage_source.get(chart_name=TRIAGE_CHART, refresh=1)
