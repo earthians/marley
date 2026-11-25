@@ -104,7 +104,7 @@ def set_service_request_status(service_request, status):
 
 
 @frappe.whitelist()
-def make_clinical_procedure(service_request: str | dict):
+def make_clinical_procedure(service_request: "str | dict"):
 	if isinstance(service_request, string_types):
 		service_request = json.loads(service_request)
 		service_request = frappe._dict(service_request)
