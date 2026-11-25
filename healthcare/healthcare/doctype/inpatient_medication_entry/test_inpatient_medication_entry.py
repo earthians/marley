@@ -25,6 +25,7 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		frappe.db.delete("Inpatient Record")
 		frappe.db.delete("Inpatient Medication Order")
 		frappe.db.delete("Inpatient Medication Entry")
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
 
 		self.patient = "_Test IPD Patient"
 		# Admit
