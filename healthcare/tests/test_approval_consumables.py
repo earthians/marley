@@ -90,8 +90,8 @@ class TestApprovalAccess(HealthcareTestSuite):
 
 	def setUp(self):
 		self.allowed = "_Test Patient 3"
+		self.start_without_user_permissions(APPROVER)
 		add_user_permission("Patient", self.allowed, APPROVER)
-		self.addCleanup(frappe.clear_cache, user=APPROVER)  # runs after the rollback; the cache outlives it
 
 	def test_another_patients_observation_is_refused(self):
 		observation = new_observation(reagent_template("Access Refused"))
