@@ -398,7 +398,6 @@ class TestObservation(HealthcareTestSuite):
 
 	def test_formula_can_use_patient_custom_field(self):
 		self.enable_observation_on_invoice_submit()
-		self.ensure_patient_custom_field()
 
 		patient = self.get_test_patient()
 		custom_field_value = 10
@@ -832,18 +831,6 @@ class TestObservation(HealthcareTestSuite):
 
 	def enable_observation_on_invoice_submit(self):
 		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
-
-	def ensure_patient_custom_field(self):
-		custom_fields = {
-			"Patient": [
-				{
-					"fieldname": "test_custom_field",
-					"label": "Test Calculation",
-					"fieldtype": "Int",
-				}
-			]
-		}
-		create_custom_fields(custom_fields, update=True)
 
 
 def create_patient_encounter(patient, observation_template):
