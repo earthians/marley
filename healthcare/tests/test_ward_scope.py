@@ -5,8 +5,9 @@ import frappe
 from frappe.permissions import add_user_permission
 
 from healthcare.healthcare.api.nursing_common import ChartAccess, WardScope
-from healthcare.tests.test_chart_access import NURSE
 from healthcare.tests.utils import HealthcareTestSuite
+
+NURSE = "nurse@marleyhealth.io"
 
 WARD = "_Test HSU - Occupancy - _TC"
 OTHER_WARD = "_Test HSU - OT - _TC"
@@ -22,10 +23,7 @@ class TestWardScope(HealthcareTestSuite):
 			create_inpatient,
 			get_healthcare_service_unit,
 		)
-		from healthcare.tests.test_chart_access import TestChartAccess
 
-		TestChartAccess.make_nurse(self)
-		frappe.db.delete("User Permission", {"user": NURSE})
 		frappe.db.sql("delete from `tabInpatient Record`")
 		self.patient, self.outpatient = "_Test Patient", "_Test Patient 0"
 
@@ -39,6 +37,7 @@ class TestWardScope(HealthcareTestSuite):
 	def assign_nurse_to(self, unit):
 		add_user_permission("Healthcare Service Unit", unit, NURSE, ignore_permissions=True)
 		frappe.clear_cache(user=NURSE)
+		self.addCleanup(frappe.clear_cache, user=NURSE)  # runs after the rollback; the cache outlives it
 
 	def test_an_unassigned_nurse_is_not_ward_scoped(self):
 		with self.set_user(NURSE):

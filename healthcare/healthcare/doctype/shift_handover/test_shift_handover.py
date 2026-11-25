@@ -16,21 +16,8 @@ class TestShiftHandover(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
 		self.patient = "_Test Patient"
-		self.other_nurse = self.make_nurse()
+		self.other_nurse = "incoming.nurse@example.com"
 		frappe.db.delete("Shift Handover", {"patient": self.patient})
-
-	def make_nurse(self, email="incoming.nurse@example.com"):
-		"""Accepting is a write to the chart, so the incoming nurse needs the role."""
-		if not frappe.db.exists("User", email):
-			frappe.get_doc(
-				{"doctype": "User", "email": email, "first_name": "Incoming Nurse", "send_welcome_email": 0}
-			).insert(ignore_permissions=True)
-
-		user = frappe.get_doc("User", email)
-		if "Nursing User" not in [row.role for row in user.roles]:
-			user.append("roles", {"role": "Nursing User"})
-			user.save(ignore_permissions=True)
-		return email
 
 	def hand_over(self, **values):
 		values.setdefault("handed_over_to", self.other_nurse)
