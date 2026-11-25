@@ -33,7 +33,7 @@ class TestPatientHistorySettings(HealthcareTestSuite):
 
 	def test_custom_doctype_medical_record(self):
 		# tests for medical record creation of standard doctypes in test_patient_medical_record.py
-		patient = frappe.get_list("Patient", pluck="name")[0]
+		patient = "_Test Patient"
 		doc = create_doc(patient)
 		# check for medical record
 		medical_rec = frappe.db.exists(

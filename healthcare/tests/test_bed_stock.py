@@ -25,7 +25,7 @@ class TestBedStock(HealthcareTestSuite):
 		frappe.db.set_single_value("Stock Settings", "use_serial_batch_fields", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
 		self.bed.save()  # the setting is on, so the bed gets a warehouse
 

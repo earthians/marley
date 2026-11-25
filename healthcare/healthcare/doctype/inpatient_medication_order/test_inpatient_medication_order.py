@@ -22,7 +22,7 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
 		frappe.db.sql("""delete from `tabInpatient Record`""")
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 
 		# Admit
 		ip_record = create_inpatient(self.patient)
@@ -261,8 +261,8 @@ def create_ipme(filters, update_stock=0):
 
 class TestInpatientMedicationOrderFromRequests(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 		self.encounter = self.make_encounter()
 
 	def make_encounter(self):
