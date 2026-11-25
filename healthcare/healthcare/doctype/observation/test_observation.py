@@ -4,7 +4,6 @@
 import json
 
 import frappe
-from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import flt, getdate, nowtime
 
 from healthcare.healthcare.doctype.observation.observation import (
