@@ -166,6 +166,7 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		)
 
 		# check drug shortage
+		empty_warehouse("Finished Goods - _TC", "Dextromethorphan")
 		ipme = create_ipme(filters, update_stock=1)
 		ipme.warehouse = "Finished Goods - _TC"
 		ipme.save()
@@ -182,6 +183,27 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 
 		ipme.reload()
 		ipme.submit()
+
+
+def empty_warehouse(warehouse, item_code):
+	"""The shortage test needs an empty warehouse. Stock already there is not the test's, so the rollback cannot clear it."""
+	from erpnext.stock.utils import get_stock_balance
+
+	balance = get_stock_balance(item_code, warehouse)
+	if balance <= 0:
+		return
+
+	stock_entry = frappe.new_doc("Stock Entry")
+	stock_entry.stock_entry_type = "Material Issue"
+	stock_entry.company = "_Test Company"
+	stock_entry.from_warehouse = warehouse
+	row = stock_entry.append("items")
+	row.item_code = item_code
+	row.qty = balance
+	row.s_warehouse = warehouse
+	row.conversion_factor = 1
+	row.expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
+	stock_entry.submit()
 
 
 def make_stock_entry(warehouse=None):

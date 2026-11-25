@@ -1027,8 +1027,9 @@ def create_appointment(
 
 
 def create_service_unit(id=0, service_unit_type=None, service_unit_capacity=0):
-	if frappe.db.exists("Healthcare Service Unit", f"_Test Service Unit {id!s}"):
-		return f"_Test Service Unit {id!s}"
+	name = f"_Test Service Unit {id!s} - _TC"
+	if frappe.db.exists("Healthcare Service Unit", name):
+		return name
 
 	service_unit = frappe.new_doc("Healthcare Service Unit")
 	service_unit.is_group = 0
