@@ -1003,6 +1003,8 @@ class BootStrapTestData:
 			},
 		]
 		self.make_records(["company_name"], records)
+		# ERPNext sets it on a new company; stock and the drug search fall back to it
+		frappe.db.set_value("Company", "_Test Company", "default_warehouse", "Stores - _TC")
 
 	def make_records(self, key, records):
 		doctype = records[0].get("doctype")
@@ -1037,3 +1039,9 @@ class HealthcareTestSuite(ERPNextTestSuite):
 	def run(self, result=None):
 		with freeze_time(TEST_TIME, tick=True):
 			return super().run(result)
+
+	def start_without_user_permissions(self, user):
+		"""Drop the grants a reused site may hold for this user. The rollback brings them back, so the cache is cleared again after it."""
+		frappe.db.delete("User Permission", {"user": user})
+		frappe.clear_cache(user=user)
+		self.addCleanup(frappe.clear_cache, user=user)
