@@ -644,10 +644,10 @@ class BootStrapTestData:
 		self.make_records(["first_name"], records)
 
 	def make_practitioners(self):
-		# TODO: fix practitioner naming
 		records = [
 			{
 				"doctype": "Healthcare Practitioner",
+				"name": "_Test Healthcare Practitioner 0",
 				"first_name": "_Test",
 				"last_name": "Healthcare Practitioner 0",
 				"gender": "Female",
@@ -659,6 +659,7 @@ class BootStrapTestData:
 			},
 			{
 				"doctype": "Healthcare Practitioner",
+				"name": "_Test Healthcare Practitioner 1",
 				"first_name": "_Test",
 				"last_name": "Healthcare Practitioner 1",
 				"gender": "Male",
@@ -670,6 +671,7 @@ class BootStrapTestData:
 			},
 			{
 				"doctype": "Healthcare Practitioner",
+				"name": "_Test Healthcare Practitioner 2",
 				"first_name": "_Test",
 				"last_name": "Healthcare Practitioner 2",
 				"gender": "Male",
@@ -680,7 +682,7 @@ class BootStrapTestData:
 				"inpatient_visit_charge": 300,
 			},
 		]
-		self.make_records(["last_name", "department"], records)
+		self.make_records(["name"], records)
 
 	def make_medical_departments(self):
 		records = [
@@ -803,12 +805,14 @@ class BootStrapTestData:
 		for x in records:
 			filters = get_filters(x)
 			if not frappe.db.exists(doctype, filters):
-				frappe.get_doc(x).insert()
+				frappe.get_doc(x).insert(set_name=x.get("name"))
 
 		frappe.db.commit()
 
 
 # Master data is always older than the test clock, so rates and prices dated "today" apply.
+# Only Python's clock is frozen: MariaDB NOW() / CURDATE() and Redis expiry still run on real time,
+# so compute dates in Python, never in SQL.
 BOOTSTRAP_TIME = "2026-01-01 09:00:00"
 TEST_TIME = "2027-06-16 10:00:00"
 

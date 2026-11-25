@@ -41,8 +41,8 @@ class TestMedicationScheduling(HealthcareTestSuite):
 		)
 
 		frappe.db.sql("""delete from `tabInpatient Record`""")
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 		record = create_inpatient(self.patient)
 		record.expected_length_of_stay = 0
@@ -260,7 +260,7 @@ def MedicationSchedulerForPast(patient):
 class TestMissedDosesAreVisible(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		frappe.db.delete("Medication Administration", {"patient": self.patient})
 
 	def make_missed_dose(self, hours_ago):
@@ -268,7 +268,7 @@ class TestMissedDosesAreVisible(HealthcareTestSuite):
 			{
 				"doctype": "Medication Administration",
 				"patient": self.patient,
-				"drug_code": frappe.get_list("Item", filters={"is_stock_item": 1}, pluck="name")[0],
+				"drug_code": "Paracetamol",
 				"dosage": 1,
 				"status": "Missed",
 				"scheduled_time": frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-hours_ago),
@@ -305,7 +305,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
 		self.bed.save()  # the setting is on, so the bed gets a warehouse
 
@@ -414,7 +414,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 
-		other = frappe.get_list("Patient", filters={"name": ["!=", self.patient]}, pluck="name")[0]
+		other = "_Test Patient 0"
 		record = create_inpatient(other)
 		record.expected_length_of_stay = 0
 		record.save()

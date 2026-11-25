@@ -13,7 +13,7 @@ class TestTreatmentCounselling(HealthcareTestSuite):
 		frappe.db.sql("""delete from `tabTreatment Counselling`""")
 
 		treatment_plan_template = frappe.get_doc("Treatment Plan Template", "COVID19")
-		patient = frappe.get_list("Patient", pluck="name")[0]
+		patient = "_Test Patient"
 		encounter = create_patient_encounter(patient)
 		admission_order = {
 			"patient": patient,
@@ -57,7 +57,7 @@ def create_patient_encounter(patient):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.appointment_type = "_Test Appointment Type"
 	patient_encounter.patient = patient
-	patient_encounter.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+	patient_encounter.practitioner = "_Test Healthcare Practitioner 2"
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
 	patient_encounter.submit()

@@ -10,7 +10,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestNursing(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.template = self.ensure_vital_sign_template()
 
 	def ensure_vital_sign_template(self):
@@ -117,7 +117,7 @@ class TestNursingIntakeOutput(HealthcareTestSuite):
 	def setUp(self):
 		from healthcare.setup import create_intake_output_types
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		create_intake_output_types()
 		frappe.db.delete("Intake Output Entry", {"patient": self.patient})
 
@@ -165,7 +165,7 @@ class TestNursingIntakeOutput(HealthcareTestSuite):
 
 class TestNursingPatientSearch(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 
 	def find(self, term, admitted_only=0):
 		from healthcare.healthcare.api.nursing import find_patients
@@ -209,8 +209,8 @@ class TestNursingPatientSearch(HealthcareTestSuite):
 class TestNursingTasks(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.activity = frappe.get_list("Healthcare Activity", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.activity = "BP Check"
 		frappe.db.delete("Nursing Task", {"patient": self.patient})
 
 	def make_task(self, status="Draft"):
@@ -220,7 +220,7 @@ class TestNursingTasks(HealthcareTestSuite):
 				"patient": self.patient,
 				"activity": self.activity,
 				"status": status,
-				"company": frappe.get_list("Company", pluck="name")[0],
+				"company": "_Test Company",
 				"requested_start_time": frappe.utils.now_datetime(),
 			}
 		).insert(ignore_permissions=True)
@@ -327,7 +327,7 @@ class TestClinicalNotes(HealthcareTestSuite):
 		from healthcare.setup import create_clinical_note_types
 
 		create_clinical_note_types()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 
 	def record(self, note_type="F-DAR", **values):
 		from healthcare.healthcare.api.clinical_notes import record_note

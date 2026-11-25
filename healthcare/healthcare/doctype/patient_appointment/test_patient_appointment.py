@@ -31,8 +31,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 		make_pos_profile()
 		frappe.db.sql("DELETE FROM `tabPractitioner Availability`")
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_status(self):
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
@@ -168,9 +168,7 @@ class TestPatientAppointment(HealthcareTestSuite):
 		)
 
 	def test_auto_invoicing_based_on_practitioner_department(self):
-		practitioner = frappe.get_list(
-			"Healthcare Practitioner", filters={"last_name": "Healthcare Practitioner 0"}, pluck="name"
-		)[0]
+		practitioner = "_Test Healthcare Practitioner 0"
 		frappe.db.set_value(
 			"Healthcare Practitioner",
 			practitioner,
@@ -242,8 +240,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 			service_unit_type=service_unit_type,
 		)
 		appointment = frappe.new_doc("Patient Appointment")
-		appointment.patient = frappe.get_list("Patient")[0].name
-		appointment.practitioner = frappe.get_list("Healthcare Practitioner")[0].name
+		appointment.patient = "_Test Patient"
+		appointment.practitioner = "_Test Healthcare Practitioner 2"
 		appointment.appointment_type = "_Test Appointment Type with Items for Service Unit"
 		appointment.service_unit = service_unit
 		appointment.appointment_date = add_days(nowdate(), 3)
@@ -352,8 +350,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 1)
 		frappe.db.sql("""delete from `tabInpatient Record`""")
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		# Schedule Admission
 		ip_record = create_inpatient(patient)
 		ip_record.expected_length_of_stay = 0
@@ -436,8 +434,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 	def test_patient_appointment_should_consider_permissions_while_fetching_appointments(self):
 		create_appointment(self.patient, self.practitioner, nowdate())
 
-		new_patient = frappe.get_list("Patient", pluck="name")[1]
-		new_practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[1]
+		new_patient = "_Test Patient 0"
+		new_practitioner = "_Test Healthcare Practitioner 1"
 		create_appointment(new_patient, new_practitioner, nowdate())
 
 		user = frappe.get_doc("User", "gp@marleyhealth.io")
@@ -455,8 +453,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 	def test_overlap_appointment(self):
 		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import OverlapError
 
-		patient_1 = frappe.get_list("Patient", pluck="name")[1]
-		practitioner_1 = frappe.get_list("Healthcare Practitioner", pluck="name")[1]
+		patient_1 = "_Test Patient 0"
+		practitioner_1 = "_Test Healthcare Practitioner 1"
 
 		service_unit = create_service_unit(id=0)
 		service_unit_1 = create_service_unit(id=1)
@@ -508,8 +506,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 			OverlapError,
 		)
 
-		patient = frappe.get_list("Patient", pluck="name")[1]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[1]
+		patient = "_Test Patient 0"
+		practitioner = "_Test Healthcare Practitioner 1"
 
 		capacity = 3
 		overlap_service_unit_type = "_Test Service Unit Type - Overlapping Appointments"
@@ -517,15 +515,14 @@ class TestPatientAppointment(HealthcareTestSuite):
 			id=100, service_unit_type=overlap_service_unit_type, service_unit_capacity=capacity
 		)
 
-		for i in range(0, capacity):
-			patient = frappe.get_list("Patient", pluck="name")[i]
+		for patient in ["_Test Patient", "_Test Patient 0", "_Test Patient 1"]:
 			create_appointment(patient, practitioner, nowdate(), service_unit=overlap_service_unit)  # valid
 			appointment = create_appointment(
 				patient, practitioner, nowdate(), service_unit=overlap_service_unit, save=0
 			)  # overlap
 			self.assertRaises(OverlapError, appointment.save)
 
-		patient = frappe.get_list("Patient", pluck="name")[5]
+		patient = "_Test Patient 3"
 		appointment = create_appointment(
 			patient, practitioner, nowdate(), service_unit=overlap_service_unit, save=0
 		)
@@ -534,8 +531,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 	def test_service_unit_without_overlap_blocks_other_practitioners(self):
 		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import OverlapError
 
-		patients = frappe.get_list("Patient", pluck="name")
-		practitioners = frappe.get_list("Healthcare Practitioner", pluck="name")
+		patients = ["_Test Patient", "_Test Patient 0"]
+		practitioners = ["_Test Healthcare Practitioner 2", "_Test Healthcare Practitioner 1"]
 		service_unit = create_service_unit(id=0)
 		create_appointment(patients[0], practitioners[0], nowdate(), service_unit=service_unit)
 
@@ -545,8 +542,8 @@ class TestPatientAppointment(HealthcareTestSuite):
 		self.assertRaises(OverlapError, appointment.save)
 
 	def test_service_unit_capacity_is_per_practitioner(self):
-		patients = frappe.get_list("Patient", pluck="name")
-		practitioners = frappe.get_list("Healthcare Practitioner", pluck="name")
+		patients = ["_Test Patient", "_Test Patient 0"]
+		practitioners = ["_Test Healthcare Practitioner 2", "_Test Healthcare Practitioner 1"]
 		service_unit = create_service_unit(
 			id=101,
 			service_unit_type="_Test Service Unit Type - Overlapping Appointments",
@@ -566,11 +563,11 @@ class TestPatientAppointment(HealthcareTestSuite):
 	def test_appointment_based_on_check_in(self):
 		from healthcare.healthcare.doctype.patient_appointment.patient_appointment import OverlapError
 
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 
-		patient_1 = frappe.get_list("Patient", pluck="name")[1]
-		practitioner_1 = frappe.get_list("Healthcare Practitioner", pluck="name")[1]
+		patient_1 = "_Test Patient 0"
+		practitioner_1 = "_Test Healthcare Practitioner 1"
 
 		create_appointment(
 			patient,
@@ -1075,8 +1072,8 @@ def test_appointment_cancel(self, appointment):
 class TestAvailabilityAccess(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_availability_data_requires_read_access_to_the_patient(self):
 		"""A crafted appointment naming any patient must not reveal that patient's validity"""

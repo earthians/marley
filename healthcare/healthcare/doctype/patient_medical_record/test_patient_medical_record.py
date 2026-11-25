@@ -22,8 +22,8 @@ class TestPatientMedicalRecord(HealthcareTestSuite):
 		make_pos_profile()
 
 	def test_medical_record(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		appointment = create_appointment(patient, practitioner, nowdate(), invoice=1)
 		encounter = create_encounter(appointment)
 

@@ -108,7 +108,7 @@ class WhitelistPermissionTestCase(HealthcareTestSuite):
 
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_all("Patient", pluck="name", limit=1)[0]
+		self.patient = "_Test Patient"
 
 	def assert_denied(self, endpoint, *args, **kwargs):
 		with self.set_user(NOBODY):
@@ -321,7 +321,7 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 			permitted_data_type="Quantity",
 			observation_category="Laboratory",
 		)
-		company = frappe.get_all("Company", pluck="name", limit=1)[0]
+		company = "_Test Company"
 		with self.set_user(LAB_USER):
 			observation = new_observation(patient=self.patient, template=template, company=company)
 
@@ -435,8 +435,8 @@ class TestBillableServices(WhitelistPermissionTestCase):
 
 	def setUp(self):
 		super().setUp()
-		self.company = frappe.get_all("Company", pluck="name", limit=1)[0]
-		self.customer = frappe.get_all("Customer", pluck="name", limit=1)[0]
+		self.company = "_Test Company"
+		self.customer = "_Test Insurance Payor"
 
 	def test_billable_services_need_sales_invoice_create(self):
 		with self.set_user(PHYSICIAN):  # may read the patient, but cannot invoice
@@ -452,7 +452,7 @@ class TestBillableServices(WhitelistPermissionTestCase):
 class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
 	def setUp(self):
 		super().setUp()
-		practitioner = frappe.get_all("Healthcare Practitioner", pluck="name", limit=1)[0]
+		practitioner = "_Test Healthcare Practitioner 2"
 		self.template = create_clinical_procedure_template()
 		self.procedure = create_procedure(self.template, self.patient, practitioner)
 
