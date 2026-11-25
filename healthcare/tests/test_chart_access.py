@@ -1,8 +1,6 @@
 # Copyright (c) 2026, earthians Health Informatics Pvt. Ltd. and contributors
 # See license.txt
 
-from unittest.mock import patch
-
 import frappe
 
 from healthcare.healthcare.api.nursing_common import ChartAccess
@@ -39,17 +37,9 @@ class TestChartAccess(HealthcareTestSuite):
 			}
 		).insert(ignore_permissions=True)
 
-	def denied(self, doctype, permission_type):
-		"""The nurse, minus one permission. No role on the site grants read
-		without write, and the site's permissions are not ours to edit."""
-		real = frappe.has_permission
-
-		def has_permission(dt=None, ptype="read", *args, **kwargs):
-			if (dt, ptype) == (doctype, permission_type):
-				return False
-			return real(dt, ptype, *args, **kwargs)
-
-		return patch("frappe.has_permission", has_permission)
+	def share_for_reading(self, patient):
+		"""A login with no clinical role that may only read this one patient."""
+		frappe.share.add_docshare("Patient", patient, NOBODY, read=1, flags={"ignore_share_permission": True})
 
 	def test_a_login_without_a_clinical_role_cannot_write_the_chart(self):
 		with self.set_user(NOBODY):
@@ -112,9 +102,9 @@ class TestChartAccess(HealthcareTestSuite):
 			"requested_start_time",
 			frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-(TASK_LAPSE_HOURS + 1)),
 		)
-		with self.set_user(NURSE):
-			with self.denied("Nursing Task", "write"):
-				get_nursing_tasks(self.patient)
+		self.share_for_reading(self.patient)
+		with self.set_user(NOBODY):
+			get_nursing_tasks(self.patient)
 
 			self.assertEqual(frappe.db.get_value("Nursing Task", task.name, "status"), "Requested")
 
@@ -127,9 +117,9 @@ class TestChartAccess(HealthcareTestSuite):
 	def test_a_record_number_the_caller_cannot_read_resolves_to_nobody(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
-		with self.set_user(NURSE):
-			with self.denied("Inpatient Record", "read"):
-				found = find_patients(self.admission)
+		self.share_for_reading(self.other_patient)
+		with self.set_user(NOBODY):
+			found = find_patients(self.admission)
 
 			self.assertEqual([match["matched_via"] for match in found if match.get("matched_via")], [])
 
