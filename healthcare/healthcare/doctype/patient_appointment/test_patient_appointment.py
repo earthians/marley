@@ -445,11 +445,10 @@ class TestPatientAppointment(HealthcareTestSuite):
 		new_practitioner.user_id = user.email
 		new_practitioner.save()
 
-		frappe.set_user(user.name)
-		appointments = frappe.get_list("Patient Appointment")
+		with self.set_user(user.name):
+			appointments = frappe.get_list("Patient Appointment")
 		assert len(appointments) == 1
 
-		frappe.set_user("Administrator")
 		appointments = frappe.get_list("Patient Appointment")
 		assert len(appointments) == 2
 
@@ -1078,28 +1077,27 @@ class TestAvailabilityAccess(HealthcareTestSuite):
 		super().setUp()
 		self.patient = frappe.get_list("Patient", pluck="name")[0]
 		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
-		self.addCleanup(frappe.set_user, "Administrator")
 
 	def test_availability_data_requires_read_access_to_the_patient(self):
 		"""A crafted appointment naming any patient must not reveal that patient's validity"""
 		crafted = frappe.as_json({"doctype": "Patient Appointment", "patient": self.patient, "__islocal": 1})
 
-		frappe.set_user("test3@example.com")
-		self.assertRaises(
-			frappe.PermissionError, get_availability_data, nowdate(), self.practitioner, crafted
-		)
+		with self.set_user("test3@example.com"):
+			self.assertRaises(
+				frappe.PermissionError, get_availability_data, nowdate(), self.practitioner, crafted
+			)
 
 	def test_availability_data_requires_read_access_to_the_appointment(self):
 		appointment = create_appointment(self.patient, self.practitioner, nowdate())
 
-		frappe.set_user("test3@example.com")
-		self.assertRaises(
-			frappe.PermissionError,
-			get_availability_data,
-			nowdate(),
-			self.practitioner,
-			frappe.as_json(appointment.as_dict()),
-		)
+		with self.set_user("test3@example.com"):
+			self.assertRaises(
+				frappe.PermissionError,
+				get_availability_data,
+				nowdate(),
+				self.practitioner,
+				frappe.as_json(appointment.as_dict()),
+			)
 
 	def test_availability_data_rejects_a_document_that_is_not_an_appointment(self):
 		crafted = frappe.as_json({"doctype": "Patient Encounter", "patient": self.patient, "__islocal": 1})

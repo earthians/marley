@@ -130,11 +130,8 @@ class TestAllergyAnnotationPermission(HealthcareTestSuite):
 		self.assertEqual(get_permitted_patient({"patient": "_Test Patient"}), "_Test Patient")
 
 	def test_a_patient_the_caller_cannot_read_is_not_annotated(self):
-		frappe.set_user("Guest")
-		try:
+		with self.set_user("Guest"):
 			self.assertIsNone(get_permitted_patient({"patient": "_Test Patient"}))
-		finally:
-			frappe.set_user("Administrator")
 
 	def test_no_patient_filter_annotates_nothing(self):
 		self.assertIsNone(get_permitted_patient({}))

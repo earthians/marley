@@ -244,14 +244,11 @@ class TestObservation(HealthcareTestSuite):
 		make_user(LAB_USER, "Laboratory User")
 		encounter = create_patient_encounter(self.get_test_patient(), "_Test Observation without Sample")
 		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name})
-		frappe.set_user(LAB_USER)
-		try:
+		with self.set_user(LAB_USER):
 			make_observation(service_request)
 			observation = frappe.db.get_value("Observation", {"service_request": service_request})
 			record_observation_result(json.dumps([{"observation": observation, "result": "12"}]))
 			self.assertRaises(frappe.PermissionError, set_observation_status, observation, "Approved")
-		finally:
-			frappe.set_user("Administrator")
 
 		self.assertEqual(frappe.db.get_value("Observation", observation, "result"), "12")
 
@@ -260,12 +257,9 @@ class TestObservation(HealthcareTestSuite):
 		observation = self.create_lab_observation(
 			self.get_test_patient(), "_Test Observation without Sample", "12"
 		)
-		frappe.set_user(LAB_USER)
-		try:
+		with self.set_user(LAB_USER):
 			observation.status = "Approved"
 			self.assertRaises(frappe.ValidationError, observation.save)
-		finally:
-			frappe.set_user("Administrator")
 
 		self.assertEqual(frappe.db.get_value("Observation", observation.name, "status"), "Preliminary")
 

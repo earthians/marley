@@ -71,10 +71,8 @@ class TestShiftHandover(HealthcareTestSuite):
 
 	def test_accepting_stamps_who_and_when(self):
 		name = self.hand_over()
-		frappe.set_user(self.other_nurse)
-		self.addCleanup(frappe.set_user, "Administrator")
-
-		accept_handover(name)
+		with self.set_user(self.other_nurse):
+			accept_handover(name)
 
 		document = frappe.get_doc("Shift Handover", name)
 		self.assertEqual(document.status, "Accepted")
