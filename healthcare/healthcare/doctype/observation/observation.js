@@ -31,6 +31,7 @@ frappe.ui.form.on("Observation", {
 		healthcare.ConsumablesReview.set_batch_query(frm);
 		healthcare.ConsumablesReview.ask_once_before_submit(frm);
 		render_period_control(frm);
+		set_imaging_editor_layout(frm);
 	},
 	after_save: function (frm) {
 		frm._saved_patient_for_template = frm.doc.patient;
@@ -62,6 +63,7 @@ frappe.ui.form.on("Observation", {
 	// metadata but never swaps the rendered input, so the control has to be
 	// torn down and rebuilt whenever the type actually changes.
 	set_result_control: function (frm) {
+		set_imaging_editor_layout(frm);
 		const data_type = frm.doc.permitted_data_type;
 
 		if (data_type == "Period") {
@@ -99,6 +101,62 @@ frappe.ui.form.on("Observation", {
 		set_service_unit_query(frm);
 	},
 });
+
+// Scope the larger writing area to this form's Imaging result section.
+// Keep the original columns and input types for all other observations.
+function set_imaging_editor_layout(frm) {
+	const section = frm.fields_dict.result_section;
+	if (!section) return;
+
+	const is_imaging = frm.doc.observation_category === "Imaging";
+	section.wrapper.toggleClass("observation-imaging-editors", is_imaging);
+
+	// Move the existing controls, preserving their values and event handlers.
+	// Mark their original positions so other categories retain their layout.
+	frm._imaging_timestamp_positions ||= {};
+	let $after = frm.fields_dict.result_interpretation.$wrapper;
+	for (const fieldname of ["time_of_result", "time_of_approval"]) {
+		const field = frm.fields_dict[fieldname];
+		if (!field) continue;
+		let marker = frm._imaging_timestamp_positions[fieldname];
+		if (is_imaging) {
+			if (!marker) {
+				marker = document.createComment(fieldname + " original position");
+				field.$wrapper.before(marker);
+				frm._imaging_timestamp_positions[fieldname] = marker;
+			}
+			field.$wrapper.insertAfter($after);
+			$after = field.$wrapper;
+		} else if (marker) {
+			field.$wrapper.insertAfter(marker);
+		}
+	}
+	if (frm.$imaging_editor_style) return;
+
+	frm.$imaging_editor_style = $(`<style>
+		.observation-imaging-editors > .section-body {
+			display: flex;
+			flex-wrap: wrap;
+		}
+		.observation-imaging-editors > .section-body > .form-column {
+			flex: 0 0 100%;
+			width: 100%;
+			max-width: 100%;
+		}
+		.observation-imaging-editors [data-fieldname="result"] .ql-editor:not(.read-mode) {
+			height: 480px;
+			min-height: 200px;
+			max-height: none;
+			resize: vertical;
+		}
+		.observation-imaging-editors [data-fieldname="result_interpretation"] .ql-editor:not(.read-mode) {
+			height: 480px;
+			min-height: 200px;
+			max-height: none;
+			resize: vertical;
+		}
+	</style>`).appendTo(frm.wrapper);
+}
 
 function apply_imaging_template(frm, template_field, result_field) {
 	const selected_key = `_selected_${template_field}`;
