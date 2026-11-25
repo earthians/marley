@@ -18,7 +18,7 @@ class TestBedStock(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.delete("Inpatient Record")
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
