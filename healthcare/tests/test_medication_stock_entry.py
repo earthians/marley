@@ -124,31 +124,6 @@ def empty_drug_stock():
 	entry.submit()
 
 
-<<<<<<< HEAD
-def receive_batch(batch_id, expiry, qty):
-	if not frappe.db.exists("Batch", batch_id):
-		frappe.get_doc(
-			{"doctype": "Batch", "batch_id": batch_id, "item": DRUG, "expiry_date": expiry}
-		).insert(ignore_permissions=True)
-
-	entry = frappe.new_doc("Stock Entry")
-	entry.stock_entry_type = "Material Receipt"
-	entry.company = "_Test Company"
-	entry.to_warehouse = PHARMACY
-	row = entry.append("items")
-	row.item_code = DRUG
-	row.qty = qty
-	row.t_warehouse = PHARMACY
-	row.basic_rate = 10
-	row.conversion_factor = 1
-	row.use_serial_batch_fields = 1
-	row.batch_no = batch_id
-	entry.submit()
-	return entry
-
-
-=======
->>>>>>> 7186cc6 (test: move shared test helpers into healthcare/tests/factories, name each variant)
 def bed_with_warehouse():
 	from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 		get_healthcare_service_unit,
