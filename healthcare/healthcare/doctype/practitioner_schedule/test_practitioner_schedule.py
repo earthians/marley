@@ -26,7 +26,7 @@ def new_schedule_with_slot(maximum_appointments=None):
 	return frappe.get_doc(
 		{
 			"doctype": "Practitioner Schedule",
-			"schedule_name": frappe.generate_hash(length=10),
+			"schedule_name": "_Test Slot Capacity Schedule",
 			"time_slots": [
 				{
 					"day": "Monday",

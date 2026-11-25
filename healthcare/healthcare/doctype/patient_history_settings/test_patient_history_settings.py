@@ -13,12 +13,11 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestPatientHistorySettings(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		dt = create_custom_doctype()
 		settings = frappe.get_single("Patient History Settings")
 		settings.append(
 			"custom_doctypes",
 			{
-				"document_type": dt.name,
+				"document_type": "Test Patient Feedback",
 				"date_fieldname": "date",
 				"selected_fields": json.dumps(
 					[
@@ -48,30 +47,6 @@ class TestPatientHistorySettings(HealthcareTestSuite):
 		self.assertEqual(strip_html(medical_rec.subject), expected_subject)
 		self.assertEqual(medical_rec.patient, patient)
 		self.assertEqual(medical_rec.communication_date, getdate())
-
-
-def create_custom_doctype():
-	if not frappe.db.exists("DocType", "Test Patient Feedback"):
-		doc = frappe.get_doc(
-			{
-				"doctype": "DocType",
-				"module": "Healthcare",
-				"custom": 1,
-				"is_submittable": 1,
-				"fields": [
-					{"label": "Date", "fieldname": "date", "fieldtype": "Date"},
-					{"label": "Patient", "fieldname": "patient", "fieldtype": "Link", "options": "Patient"},
-					{"label": "Rating", "fieldname": "rating", "fieldtype": "Rating"},
-					{"label": "Feedback", "fieldname": "feedback", "fieldtype": "Small Text"},
-				],
-				"permissions": [{"role": "System Manager", "read": 1}],
-				"name": "Test Patient Feedback",
-			}
-		)
-		doc.insert()
-		return doc
-	else:
-		return frappe.get_doc("DocType", "Test Patient Feedback")
 
 
 def create_doc(patient):
