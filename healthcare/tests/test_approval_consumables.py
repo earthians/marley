@@ -152,7 +152,7 @@ def make_report(patient):
 			"patient": patient,
 			"company": "_Test Company",
 			"ref_doctype": "Sales Invoice",
-			"docname": frappe.generate_hash(length=10),
+			"docname": "_Test Invoice Reference",
 		}
 	)
 	report.flags.ignore_links = True

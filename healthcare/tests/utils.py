@@ -33,6 +33,27 @@ class BootStrapTestData:
 		self.make_medications()
 		self.make_treatment_plan_templates()
 		self.make_insurance_payors()
+		self.make_custom_doctypes()
+
+	def make_custom_doctypes(self):
+		"""A DocType is a schema change, which MariaDB commits at once, so no test may create one."""
+		records = [
+			{
+				"doctype": "DocType",
+				"name": "Test Patient Feedback",
+				"module": "Healthcare",
+				"custom": 1,
+				"is_submittable": 1,
+				"fields": [
+					{"label": "Date", "fieldname": "date", "fieldtype": "Date"},
+					{"label": "Patient", "fieldname": "patient", "fieldtype": "Link", "options": "Patient"},
+					{"label": "Rating", "fieldname": "rating", "fieldtype": "Rating"},
+					{"label": "Feedback", "fieldname": "feedback", "fieldtype": "Small Text"},
+				],
+				"permissions": [{"role": "System Manager", "read": 1}],
+			}
+		]
+		self.make_records(["name"], records)
 
 	def make_insurance_payors(self):
 		records = [

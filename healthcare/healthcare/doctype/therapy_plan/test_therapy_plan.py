@@ -49,7 +49,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 		original_row = plan.therapy_plan_details[0]
 		original_row.sessions_completed = 1
 		plan.save()
-		therapy_name = f"_Test Later Therapy {frappe.generate_hash(length=8)}"
+		therapy_name = "_Test Later Therapy"
 		later_therapy = frappe.get_doc(
 			{
 				"doctype": "Therapy Type",
