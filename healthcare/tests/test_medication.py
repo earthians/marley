@@ -40,9 +40,9 @@ class TestMedicationScheduling(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		frappe.db.delete("Inpatient Record")
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 		record = create_inpatient(self.patient)
 		record.expected_length_of_stay = 0
@@ -260,7 +260,7 @@ def MedicationSchedulerForPast(patient):
 class TestMissedDosesAreVisible(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		frappe.db.delete("Medication Administration", {"patient": self.patient})
 
 	def make_missed_dose(self, hours_ago):
@@ -268,7 +268,7 @@ class TestMissedDosesAreVisible(HealthcareTestSuite):
 			{
 				"doctype": "Medication Administration",
 				"patient": self.patient,
-				"drug_code": frappe.get_list("Item", filters={"is_stock_item": 1}, pluck="name")[0],
+				"drug_code": "Paracetamol",
 				"dosage": 1,
 				"status": "Missed",
 				"scheduled_time": frappe.utils.add_to_date(frappe.utils.now_datetime(), hours=-hours_ago),
@@ -301,11 +301,11 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.delete("Inpatient Record")
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
 		self.bed.save()  # the setting is on, so the bed gets a warehouse
 
@@ -317,26 +317,9 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		self.admission = record.name
 		self.stock_the_bed()
 
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-		frappe.clear_cache(doctype="Healthcare Settings")
-		self.close_the_admission()
-
-	def close_the_admission(self):
-		"""Leave no admission behind, and no patient pointing at one that is gone."""
-		frappe.db.set_value(
-			"Patient",
-			self.patient,
-			{"inpatient_record": None, "inpatient_status": None},
-			update_modified=False,
-		)
-		frappe.db.delete("Inpatient Record", {"name": self.admission})
-
 	def stock_the_bed(self):
 		"""Stands in for the Inpatient Medication Entry transfer."""
-		from healthcare.healthcare.doctype.inpatient_medication_entry.test_inpatient_medication_entry import (
-			make_stock_entry,
-		)
+		from healthcare.tests.factories.inpatient import make_stock_entry
 
 		make_stock_entry()
 		transfer = frappe.new_doc("Stock Entry")
@@ -390,9 +373,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 
 	def test_a_transferred_dose_is_issued_from_the_bed_even_after_the_setting_is_turned_off(self):
 		"""The drug is already at the bed: leaving it there would strand it."""
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		order = create_ipmo(self.patient)
 		order.submit()
@@ -411,9 +392,7 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		)
 
 	def transferred_order(self):
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		order = create_ipmo(self.patient)
 		order.submit()
@@ -423,13 +402,11 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 
 	def someone_elses_admission(self):
 		"""A second patient admitted to the other bed, with an order of their own."""
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
 		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
+		from healthcare.tests.factories.inpatient import create_ipmo
 
-		other = frappe.get_list("Patient", filters={"name": ["!=", self.patient]}, pluck="name")[0]
+		other = "_Test Patient 0"
 		record = create_inpatient(other)
 		record.expected_length_of_stay = 0
 		record.save()

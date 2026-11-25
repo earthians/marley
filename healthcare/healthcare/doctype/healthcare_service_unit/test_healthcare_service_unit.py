@@ -12,9 +12,6 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestHealthcareServiceUnit(HealthcareTestSuite):
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-
 	def test_create_company_should_create_root_service_unit(self):
 		company = frappe.get_doc(
 			{
