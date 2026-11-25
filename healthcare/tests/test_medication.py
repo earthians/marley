@@ -317,21 +317,6 @@ class TestAdministeredMedicationLeavesTheWard(HealthcareTestSuite):
 		self.admission = record.name
 		self.stock_the_bed()
 
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-		frappe.clear_cache(doctype="Healthcare Settings")
-		self.close_the_admission()
-
-	def close_the_admission(self):
-		"""Leave no admission behind, and no patient pointing at one that is gone."""
-		frappe.db.set_value(
-			"Patient",
-			self.patient,
-			{"inpatient_record": None, "inpatient_status": None},
-			update_modified=False,
-		)
-		frappe.db.delete("Inpatient Record", {"name": self.admission})
-
 	def stock_the_bed(self):
 		"""Stands in for the Inpatient Medication Entry transfer."""
 		from healthcare.healthcare.doctype.inpatient_medication_entry.test_inpatient_medication_entry import (
