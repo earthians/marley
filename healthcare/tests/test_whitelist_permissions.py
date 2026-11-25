@@ -110,13 +110,9 @@ class WhitelistPermissionTestCase(HealthcareTestSuite):
 		super().setUp()
 		self.patient = frappe.get_all("Patient", pluck="name", limit=1)[0]
 
-	def tearDown(self):
-		frappe.set_user("Administrator")
-
 	def assert_denied(self, endpoint, *args, **kwargs):
-		frappe.set_user(NOBODY)
-		self.assertRaises(frappe.PermissionError, endpoint, *args, **kwargs)
-		frappe.set_user("Administrator")
+		with self.set_user(NOBODY):
+			self.assertRaises(frappe.PermissionError, endpoint, *args, **kwargs)
 
 
 class TestStatusEndpoints(WhitelistPermissionTestCase):
@@ -178,10 +174,8 @@ class TestWriteEndpoints(WhitelistPermissionTestCase):
 
 	def test_admitting_from_counselling_needs_write_on_the_counselling(self):
 		counselling = stored("Treatment Counselling", patient=self.patient, status="Active")
-		frappe.set_user(PHYSICIAN)  # may create an admission, but not edit counselling
-
-		self.assertRaises(frappe.PermissionError, create_ip_from_treatment_counselling, "{}", counselling)
-		frappe.set_user("Administrator")
+		with self.set_user(PHYSICIAN):  # may create an admission, but not edit counselling
+			self.assertRaises(frappe.PermissionError, create_ip_from_treatment_counselling, "{}", counselling)
 		self.assertEqual(frappe.db.get_value("Treatment Counselling", counselling, "status"), "Active")
 
 	def test_scheduling_a_discharge_needs_write(self):
@@ -279,8 +273,8 @@ class TestPortalAndGatewayEndpoints(WhitelistPermissionTestCase):
 		make_user(PORTAL_USER, "Patient")
 		patient = stored("Patient", first_name="Portal", status="Active", user_id=PORTAL_USER)
 		appointment = stored("Patient Appointment", patient=patient)
-		frappe.set_user(PORTAL_USER)
-		self.assertEqual(get_own_appointment_patient("Patient Appointment", appointment), patient)
+		with self.set_user(PORTAL_USER):
+			self.assertEqual(get_own_appointment_patient("Patient Appointment", appointment), patient)
 
 	def test_the_abdm_gateway_needs_patient_write(self):
 		self.assert_denied(abdm_request, {}, "verify_health_id", "Health ID")
@@ -303,19 +297,16 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 
 	def test_a_lab_user_cannot_set_a_request_status_directly(self):
 		request = stored("Service Request", patient=self.patient)
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(
-			frappe.PermissionError, set_service_request_status, request, "completed-Request Status"
-		)
+		with self.set_user(LAB_USER):
+			self.assertRaises(
+				frappe.PermissionError, set_service_request_status, request, "completed-Request Status"
+			)
 
 	def test_a_lab_test_hook_still_completes_its_request(self):
 		request = stored("Service Request", patient=self.patient, status="active-Request Status")
-		frappe.set_user(LAB_USER)
+		with self.set_user(LAB_USER):
+			update_service_request_status(request, "completed-Request Status")
 
-		update_service_request_status(request, "completed-Request Status")
-
-		frappe.set_user("Administrator")
 		self.assertEqual(
 			frappe.db.get_value("Service Request", request, "status"), "completed-Request Status"
 		)
@@ -331,11 +322,9 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 			observation_category="Laboratory",
 		)
 		company = frappe.get_all("Company", pluck="name", limit=1)[0]
-		frappe.set_user(LAB_USER)
+		with self.set_user(LAB_USER):
+			observation = new_observation(patient=self.patient, template=template, company=company)
 
-		observation = new_observation(patient=self.patient, template=template, company=company)
-
-		frappe.set_user("Administrator")
 		self.assertTrue(frappe.db.exists("Observation", observation))
 
 	def test_marking_a_sample_collected_needs_write_on_the_collection(self):
@@ -355,9 +344,8 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 		self.assert_denied(get_patient_detail, self.patient)
 
 	def test_a_lab_user_still_gets_patient_detail_for_the_lab_test_form(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertEqual(get_patient_detail(self.patient)["name"], self.patient)
+		with self.set_user(LAB_USER):
+			self.assertEqual(get_patient_detail(self.patient)["name"], self.patient)
 
 	def test_vitals_need_patient_read(self):
 		self.assert_denied(get_patient_vitals, self.patient)
@@ -366,15 +354,13 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 		self.assert_denied(get_feed, self.patient)
 
 	def test_a_lab_user_cannot_read_the_history_feed(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(frappe.PermissionError, get_feed, self.patient)
+		with self.set_user(LAB_USER):
+			self.assertRaises(frappe.PermissionError, get_feed, self.patient)
 
 	def test_a_nurse_can_read_the_history_feed(self):
 		make_user(NURSE, "Nursing User")
-		frappe.set_user(NURSE)
-
-		self.assertIsInstance(get_feed(self.patient), list)
+		with self.set_user(NURSE):
+			self.assertIsInstance(get_feed(self.patient), list)
 
 	def test_feed_for_a_document_needs_read_on_it(self):
 		self.assert_denied(get_feed_for_dt, "Patient", self.patient)
@@ -386,11 +372,10 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 		self.assert_denied(get_encounter_details, json.dumps({"patient": self.patient}))
 
 	def test_a_lab_user_cannot_read_the_encounter_notes(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(
-			frappe.PermissionError, get_encounter_details, json.dumps({"patient": self.patient})
-		)
+		with self.set_user(LAB_USER):
+			self.assertRaises(
+				frappe.PermissionError, get_encounter_details, json.dumps({"patient": self.patient})
+			)
 
 	def test_active_triage_needs_patient_read(self):
 		self.assert_denied(get_active_triage, self.patient)
@@ -441,9 +426,8 @@ class TestMedicationRequestCreation(WhitelistPermissionTestCase):
 
 	def test_a_nurse_cannot_create_medication_requests(self):
 		make_user(NURSE, "Nursing User")
-		frappe.set_user(NURSE)
-
-		self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
+		with self.set_user(NURSE):
+			self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
 
 
 class TestBillableServices(WhitelistPermissionTestCase):
@@ -455,15 +439,14 @@ class TestBillableServices(WhitelistPermissionTestCase):
 		self.customer = frappe.get_all("Customer", pluck="name", limit=1)[0]
 
 	def test_billable_services_need_sales_invoice_create(self):
-		frappe.set_user(PHYSICIAN)  # may read the patient, but cannot invoice
-
-		self.assertRaises(
-			frappe.PermissionError,
-			get_healthcare_services_to_invoice,
-			self.patient,
-			self.customer,
-			self.company,
-		)
+		with self.set_user(PHYSICIAN):  # may read the patient, but cannot invoice
+			self.assertRaises(
+				frappe.PermissionError,
+				get_healthcare_services_to_invoice,
+				self.patient,
+				self.customer,
+				self.company,
+			)
 
 
 class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
@@ -487,8 +470,8 @@ class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
 
 	def test_a_nurse_may_start_and_complete(self):
 		make_user(NURSE, "Nursing User")
-		frappe.set_user(NURSE)
-		self.procedure.start_procedure()
-		self.procedure.complete_procedure()
+		with self.set_user(NURSE):
+			self.procedure.start_procedure()
+			self.procedure.complete_procedure()
 
 		self.assertEqual(self.procedure.status, "Completed")

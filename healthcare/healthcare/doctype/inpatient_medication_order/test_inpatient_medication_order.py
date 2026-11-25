@@ -197,19 +197,6 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 		self.assertEqual(second_ipmo.docstatus, 0)
 		self.assertFalse(second_ipmo.patient_encounter)
 
-	def tearDown(self):
-		if frappe.db.get_value("Patient", self.patient, "inpatient_record"):
-			# cleanup - Discharge
-			schedule_discharge(frappe.as_json({"patient": self.patient}))
-			self.ip_record.reload()
-			mark_invoiced_inpatient_occupancy(self.ip_record)
-
-			self.ip_record.reload()
-			discharge_patient(self.ip_record)
-
-		for doctype in ["Inpatient Medication Entry", "Inpatient Medication Order"]:
-			frappe.db.sql(f"delete from `tab{doctype}`")
-
 
 def create_dosage_form():
 	if not frappe.db.exists("Dosage Form", "Tablet"):
