@@ -9,7 +9,7 @@ from healthcare.healthcare.doctype.observation.observation import (
 	reject_all_observations,
 	set_observation_status,
 )
-from healthcare.healthcare.doctype.observation.test_observation import create_sales_invoice
+from healthcare.tests.factories.billing import invoice_item
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -282,7 +282,7 @@ class TestDiagnosticReport(HealthcareTestSuite):
 	def create_report(self, observation_template):
 		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
 		patient = "_Test Patient"
-		sales_invoice = create_sales_invoice(patient, observation_template)
+		sales_invoice = invoice_item(patient, observation_template)
 
 		diagnostic_report = frappe.db.get_value(
 			"Diagnostic Report", {"ref_doctype": "Sales Invoice", "docname": sales_invoice.name}
