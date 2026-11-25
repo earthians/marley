@@ -19,7 +19,7 @@ class TestChartAccess(HealthcareTestSuite):
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 
 		self.patient, self.other_patient = "_Test Patient", "_Test Patient 0"
-		frappe.db.sql("delete from `tabInpatient Record`")
+		frappe.db.delete("Inpatient Record")
 		admission = create_inpatient(self.other_patient)
 		admission.save()
 		self.admission = admission.name

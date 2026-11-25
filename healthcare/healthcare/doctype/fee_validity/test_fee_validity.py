@@ -36,9 +36,9 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestFeeValidity(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		frappe.db.sql("""delete from `tabPatient Appointment`""")
-		frappe.db.sql("""delete from `tabPatient Encounter`""")
-		frappe.db.sql("""delete from `tabFee Validity`""")
+		frappe.db.delete("Patient Appointment")
+		frappe.db.delete("Patient Encounter")
+		frappe.db.delete("Fee Validity")
 		make_pos_profile()
 
 	def test_fee_validity(self):
@@ -744,7 +744,7 @@ class TestFeeValidity(HealthcareTestSuite):
 		self.assertTrue(appointment.department)
 		self.assertEqual(self.validity_department(patient, practitioner), appointment.department)
 
-		frappe.db.sql("delete from `tabFee Validity`")
+		frappe.db.delete("Fee Validity")
 		encounter = create_encounter(patient, practitioner, submit=True)
 		self.assertTrue(encounter.medical_department)
 		self.assertEqual(self.validity_department(patient, practitioner), encounter.medical_department)
