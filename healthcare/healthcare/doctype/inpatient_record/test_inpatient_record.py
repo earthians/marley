@@ -428,9 +428,7 @@ class TestInpatientRecord(HealthcareTestSuite):
 
 
 def setup_inpatient_settings(key, value):
-	settings = frappe.get_single("Healthcare Settings")
-	settings.set(key, value)
-	settings.save()
+	frappe.db.set_single_value("Healthcare Settings", key, value)
 
 
 def create_inpatient(patient):
