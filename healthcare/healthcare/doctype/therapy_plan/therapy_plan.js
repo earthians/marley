@@ -117,7 +117,11 @@ frappe.ui.form.on('Therapy Plan', {
 			bars[0].width = '0.5%';
 		}
 		message = title;
+<<<<<<< HEAD
 		frm.dashboard.add_progress(__('Status'), bars, message);
+=======
+		frm.dashboard.show_progress(__("Status"), bars, message);
+>>>>>>> cea55e4 (fix(therapy-plan): prevent duplicate therapy plan progress bars)
 	},
 });
 
