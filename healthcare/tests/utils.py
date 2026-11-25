@@ -112,7 +112,17 @@ class BootStrapTestData:
 		self.make_records(["name"], records)
 
 	def make_custom_doctypes(self):
-		"""A DocType is a schema change, which MariaDB commits at once, so no test may create one."""
+		"""A DocType or a custom field is a schema change, which MariaDB commits at once, so no test may create one."""
+		from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+		create_custom_fields(
+			{
+				"Patient": [
+					{"fieldname": "test_custom_field", "label": "Test Calculation", "fieldtype": "Int"}
+				]
+			},
+			update=True,
+		)
 		records = [
 			{
 				"doctype": "DocType",
@@ -740,6 +750,10 @@ class BootStrapTestData:
 			},
 		]
 		self.make_records(["email"], records)
+		for record in records:  # a reused site may hold the account without its role
+			roles = {row["role"] for row in record.get("roles", [])}
+			if missing := roles - set(frappe.get_roles(record["email"])):
+				frappe.get_doc("User", record["email"]).add_roles(*missing)
 
 	def make_patients(self):
 		records = [
