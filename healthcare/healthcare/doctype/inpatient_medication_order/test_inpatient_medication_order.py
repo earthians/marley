@@ -13,16 +13,16 @@ from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
 	get_healthcare_service_unit,
-	mark_invoiced_inpatient_occupancy,
 )
+from healthcare.tests.factories.inpatient import create_ipme, create_ipmo, mark_invoiced_inpatient_occupancy
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestInpatientMedicationOrder(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		frappe.db.sql("""delete from `tabInpatient Record`""")
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		frappe.db.delete("Inpatient Record")
+		self.patient = "_Test Patient"
 
 		# Admit
 		ip_record = create_inpatient(self.patient)
@@ -197,85 +197,11 @@ class TestInpatientMedicationOrder(HealthcareTestSuite):
 		self.assertEqual(second_ipmo.docstatus, 0)
 		self.assertFalse(second_ipmo.patient_encounter)
 
-	def tearDown(self):
-		if frappe.db.get_value("Patient", self.patient, "inpatient_record"):
-			# cleanup - Discharge
-			schedule_discharge(frappe.as_json({"patient": self.patient}))
-			self.ip_record.reload()
-			mark_invoiced_inpatient_occupancy(self.ip_record)
-
-			self.ip_record.reload()
-			discharge_patient(self.ip_record)
-
-		for doctype in ["Inpatient Medication Entry", "Inpatient Medication Order"]:
-			frappe.db.sql(f"delete from `tab{doctype}`")
-
-
-def create_dosage_form():
-	if not frappe.db.exists("Dosage Form", "Tablet"):
-		frappe.get_doc({"doctype": "Dosage Form", "dosage_form": "Tablet"}).insert()
-
-
-def create_drug(item=None):
-	if not item:
-		item = "Dextromethorphan"
-	drug = frappe.db.exists("Item", {"item_code": "Dextromethorphan"})
-	if not drug:
-		drug = frappe.get_doc(
-			{
-				"doctype": "Item",
-				"item_code": "Dextromethorphan",
-				"item_name": "Dextromethorphan",
-				"item_group": "Products",
-				"stock_uom": "Nos",
-				"is_stock_item": 1,
-				"valuation_rate": 50,
-				"opening_stock": 20,
-			}
-		).insert()
-
-
-def get_orders():
-	create_dosage_form()
-	create_drug()
-	return {
-		"drug_code": "Dextromethorphan",
-		"drug_name": "Dextromethorphan",
-		"dosage": "1-1-1",
-		"dosage_form": "Tablet",
-		"period": "2 Day",
-	}
-
-
-def create_ipmo(patient):
-	orders = get_orders()
-	ipmo = frappe.new_doc("Inpatient Medication Order")
-	ipmo.patient = patient
-	ipmo.company = "_Test Company"
-	ipmo.start_date = add_days(getdate(), -1)
-	ipmo.add_order_entries(orders)
-
-	return ipmo
-
-
-def create_ipme(filters, update_stock=0):
-	ipme = frappe.new_doc("Inpatient Medication Entry")
-	ipme.company = "_Test Company"
-	ipme.posting_date = getdate()
-	ipme.update_stock = update_stock
-	if update_stock:
-		ipme.warehouse = "Stores - _TC"
-	for key, value in filters.items():
-		ipme.set(key, value)
-	ipme = ipme.get_medication_orders()
-
-	return ipme
-
 
 class TestInpatientMedicationOrderFromRequests(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 		self.encounter = self.make_encounter()
 
 	def make_encounter(self):

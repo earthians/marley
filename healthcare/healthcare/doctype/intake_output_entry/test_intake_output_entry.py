@@ -3,14 +3,12 @@
 
 import frappe
 
-from healthcare.setup import create_intake_output_types
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestIntakeOutputEntry(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		create_intake_output_types()
+		self.patient = "_Test Patient"
 
 	def make_entry(self, **kwargs):
 		values = {

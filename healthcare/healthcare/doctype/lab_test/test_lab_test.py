@@ -3,13 +3,14 @@
 
 
 import frappe
-from frappe.utils import getdate, nowtime
+from frappe.utils import getdate
 
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.lab_test.lab_test import create_multiple
+from healthcare.tests.factories.encounters import create_encounter_with_lab_tests, create_lab_test
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -73,7 +74,7 @@ class TestLabTest(HealthcareTestSuite):
 		self.assertIsNotNone(sales_invoice.items[1].reference_dn)
 
 	def test_create_lab_tests_from_patient_encounter(self):
-		patient_encounter = create_patient_encounter()
+		patient_encounter = create_encounter_with_lab_tests()
 		create_multiple("Patient Encounter", patient_encounter.name)
 		patient_encounter.reload()
 		service_requests = frappe.db.get_list(
@@ -92,48 +93,6 @@ class TestLabTest(HealthcareTestSuite):
 				)
 
 
-def create_lab_test_template(test_sensitivity=0, sample_collection=1):
-	medical_department = "_Test Medical Department"
-	if frappe.db.exists("Lab Test Template", "Insulin Resistance"):
-		return frappe.get_doc("Lab Test Template", "Insulin Resistance")
-	template = frappe.new_doc("Lab Test Template")
-	template.lab_test_name = "Insulin Resistance"
-	template.lab_test_template_type = "Descriptive"
-	template.lab_test_code = "Insulin Resistance"
-	template.lab_test_group = "Services"
-	template.department = medical_department
-	template.is_billable = 1
-	template.lab_test_description = "Insulin Resistance"
-	template.lab_test_rate = 2000
-
-	for entry in ["FBS", "Insulin", "IR"]:
-		template.append(
-			"descriptive_test_templates", {"particulars": entry, "allow_blank": 1 if entry == "IR" else 0}
-		)
-
-	if test_sensitivity:
-		template.sensitivity = 1
-
-	if sample_collection:
-		template.sample = create_lab_test_sample()
-		template.sample_qty = 5.0
-
-	template.save()
-	return template
-
-
-def create_lab_test(lab_template):
-	patient = frappe.get_list("Patient", pluck="name")[0]
-	lab_test = frappe.new_doc("Lab Test")
-	lab_test.template = lab_template.name
-	lab_test.patient = patient
-	lab_test.patient_sex = "Female"
-	lab_test.company = "_Test Company"
-	lab_test.save()
-
-	return lab_test
-
-
 def create_lab_test_sample():
 	blood_sample = frappe.db.exists("Lab Test Sample", "Blood Sample")
 	if blood_sample:
@@ -148,7 +107,7 @@ def create_lab_test_sample():
 
 
 def create_sales_invoice():
-	patient = frappe.get_list("Patient", pluck="name")[0]
+	patient = "_Test Patient"
 	insulin_resistance_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - Sensitivity")
 	blood_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - with Sample")
 
@@ -180,25 +139,3 @@ def create_sales_invoice():
 
 	sales_invoice.submit()
 	return sales_invoice
-
-
-def create_patient_encounter():
-	patient = frappe.get_list("Patient", pluck="name")[0]
-	insulin_resistance_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - Sensitivity")
-	blood_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - with Sample")
-
-	patient_encounter = frappe.new_doc("Patient Encounter")
-	patient_encounter.appointment_type = "_Test Appointment Type"
-	patient_encounter.patient = patient
-	patient_encounter.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
-	patient_encounter.encounter_date = getdate()
-	patient_encounter.encounter_time = nowtime()
-
-	tests = [insulin_resistance_template, blood_test_template]
-	for entry in tests:
-		patient_encounter.append(
-			"lab_test_prescription", {"lab_test_code": entry.item, "lab_test_name": entry.lab_test_name}
-		)
-
-	patient_encounter.submit()
-	return patient_encounter

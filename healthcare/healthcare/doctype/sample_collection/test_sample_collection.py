@@ -5,9 +5,6 @@ import json
 
 import frappe
 
-from healthcare.healthcare.doctype.observation_template.test_observation_template import (
-	create_multi_level_template,
-)
 from healthcare.healthcare.doctype.sample_collection.sample_collection import (
 	SampleCollection,
 	create_component_observations,
@@ -17,6 +14,7 @@ from healthcare.healthcare.doctype.sample_collection.sample_collection import (
 	mark_component_collected,
 	set_component_observation_data,
 )
+from healthcare.tests.factories.lab import create_lab_sample_leaf, create_multi_level_template
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -122,7 +120,7 @@ class TestSampleCollection(HealthcareTestSuite):
 
 	def test_collecting_a_deeply_nested_leaf_uses_child_row_practitioner(self):
 		package, _sub_panel, leaf = create_multi_level_template()
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		practitioner = "_Test Healthcare Practitioner 2"
 		doc = new_sample_collection_with_package(package)
 		row = doc.observation_sample_collection[0]
 		row.practitioner = practitioner
@@ -237,25 +235,6 @@ def create_sibling_and_nested_leaf_template():
 		package.insert()
 
 	return package, sub_panel, urine_leaf, serum_leaf
-
-
-def create_lab_sample_leaf(name, sample):
-	if frappe.db.exists("Observation Template", name):
-		return frappe.get_doc("Observation Template", name)
-	template = frappe.new_doc("Observation Template")
-	template.observation = name
-	template.item_code = name
-	template.observation_category = "Laboratory"
-	template.permitted_data_type = "Quantity"
-	template.permitted_unit = "mg / dl"
-	template.item_group = "Services"
-	template.sample_collection_required = 1
-	template.sample = sample
-	template.rate = 300
-	template.abbr = "".join(w[0] for w in name.split())
-	template.is_billable = 1
-	template.save()
-	return template
 
 
 def new_sample_collection():

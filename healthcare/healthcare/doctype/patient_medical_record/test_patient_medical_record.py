@@ -7,10 +7,8 @@ from frappe.utils import add_days, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 
-from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
-	create_appointment,
-	create_encounter,
-)
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_appointment
+from healthcare.tests.factories.encounters import create_encounter_from_appointment
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -22,10 +20,10 @@ class TestPatientMedicalRecord(HealthcareTestSuite):
 		make_pos_profile()
 
 	def test_medical_record(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		appointment = create_appointment(patient, practitioner, nowdate(), invoice=1)
-		encounter = create_encounter(appointment)
+		encounter = create_encounter_from_appointment(appointment)
 
 		# check for encounter
 		medical_rec = frappe.db.exists(
@@ -86,21 +84,6 @@ def create_vital_signs(appointment):
 	vital_signs.save()
 	vital_signs.submit()
 	return vital_signs
-
-
-def create_lab_test_template(medical_department):
-	if frappe.db.exists("Lab Test Template", "Blood Test"):
-		return frappe.get_doc("Lab Test Template", "Blood Test")
-
-	template = frappe.new_doc("Lab Test Template")
-	template.lab_test_name = "Blood Test"
-	template.lab_test_code = "Blood Test"
-	template.lab_test_group = "Services"
-	template.department = medical_department
-	template.is_billable = 1
-	template.lab_test_rate = 2000
-	template.save()
-	return template
 
 
 def create_lab_test(template, patient):

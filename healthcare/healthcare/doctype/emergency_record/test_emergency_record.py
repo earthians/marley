@@ -8,6 +8,7 @@ from healthcare.healthcare.doctype.emergency_record.emergency_record import (
 	get_active_triage,
 	occupancy_qty,
 )
+from healthcare.tests.factories.encounters import create_emergency_record
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -55,13 +56,13 @@ class TestEmergencyRecord(HealthcareTestSuite):
 		self.assertIsNone(frappe.db.get_value("Patient", "_Test Patient", "emergency_record"))
 
 	def test_consultation_defaults_from_practitioner(self):
-		practitioner = get_test_practitioner()
+		practitioner = "_Test Healthcare Practitioner 0"
 		record = create_emergency_record("_Test Patient", attending_practitioner=practitioner)
 		self.assertEqual(record.consultation_item, "HLC-SI-001")
 		self.assertEqual(record.consultation_charge, 500)
 
 	def test_consultation_fee_manual_override_preserved(self):
-		practitioner = get_test_practitioner()
+		practitioner = "_Test Healthcare Practitioner 0"
 		record = create_emergency_record(
 			"_Test Patient", attending_practitioner=practitioner, consultation_charge=999
 		)
@@ -173,7 +174,7 @@ class TestEmergencyRecord(HealthcareTestSuite):
 		self.assertEqual({v["observation_template"] for v in vitals}, {"Pulse", "Respiratory Rate"})
 
 	def test_vitals_use_triage_practitioner(self):
-		practitioner = get_test_practitioner()
+		practitioner = "_Test Healthcare Practitioner 0"
 		record = create_emergency_record("_Test Patient", triage_practitioner=practitioner)
 		record.add_vital_signs([{"template": "Pulse", "result": "80"}])
 		recorded_by = frappe.db.get_value(
@@ -220,7 +221,7 @@ class TestEmergencyRecord(HealthcareTestSuite):
 		self.assertEqual(occupancy_status(bed), "Vacant")
 
 	def test_admit_copies_details_to_inpatient_record(self):
-		practitioner = get_test_practitioner()
+		practitioner = "_Test Healthcare Practitioner 0"
 		record = create_emergency_record(
 			"_Test Patient",
 			attending_practitioner=practitioner,
@@ -237,7 +238,9 @@ class TestEmergencyRecord(HealthcareTestSuite):
 
 	def test_create_sales_invoice(self):
 		frappe.db.set_value("Patient", "_Test Patient", "customer", "_Test Customer")
-		record = create_emergency_record("_Test Patient", attending_practitioner=get_test_practitioner())
+		record = create_emergency_record(
+			"_Test Patient", attending_practitioner="_Test Healthcare Practitioner 0"
+		)
 		record.assign_bed("_Test HSU - Occupancy - _TC", check_in=add_to_date(now_datetime(), hours=-2))
 		invoice_name = record.create_sales_invoice()
 		record.reload()
@@ -254,20 +257,26 @@ class TestEmergencyRecord(HealthcareTestSuite):
 
 	def test_create_sales_invoice_blocks_double(self):
 		frappe.db.set_value("Patient", "_Test Patient", "customer", "_Test Customer")
-		record = create_emergency_record("_Test Patient", attending_practitioner=get_test_practitioner())
+		record = create_emergency_record(
+			"_Test Patient", attending_practitioner="_Test Healthcare Practitioner 0"
+		)
 		record.create_sales_invoice()
 		self.assertRaises(frappe.ValidationError, record.create_sales_invoice)
 
 	def test_create_sales_invoice_requires_customer(self):
 		frappe.db.set_value("Patient", "_Test Patient", "customer", None)
-		record = create_emergency_record("_Test Patient", attending_practitioner=get_test_practitioner())
+		record = create_emergency_record(
+			"_Test Patient", attending_practitioner="_Test Healthcare Practitioner 0"
+		)
 		self.assertRaises(frappe.ValidationError, record.create_sales_invoice)
 
 	def test_emergency_services_surface_in_patient_billing(self):
 		from healthcare.healthcare.utils import get_healthcare_services_to_invoice
 
 		frappe.db.set_value("Patient", "_Test Patient", "customer", "_Test Customer")
-		record = create_emergency_record("_Test Patient", attending_practitioner=get_test_practitioner())
+		record = create_emergency_record(
+			"_Test Patient", attending_practitioner="_Test Healthcare Practitioner 0"
+		)
 		record.assign_bed("_Test HSU - Occupancy - _TC", check_in=add_to_date(now_datetime(), hours=-2))
 
 		services = get_healthcare_services_to_invoice("_Test Patient", "_Test Customer", "_Test Company")
@@ -279,7 +288,9 @@ class TestEmergencyRecord(HealthcareTestSuite):
 		from healthcare.healthcare.utils import get_emergency_services_to_invoice
 
 		patient = frappe.get_doc("Patient", "_Test Patient")
-		record = create_emergency_record("_Test Patient", attending_practitioner=get_test_practitioner())
+		record = create_emergency_record(
+			"_Test Patient", attending_practitioner="_Test Healthcare Practitioner 0"
+		)
 		record.assign_bed("_Test HSU - Occupancy - _TC", check_in=add_to_date(now_datetime(), hours=-2))
 		frappe.db.set_value("Emergency Occupancy", record.occupancies[0].name, "invoiced", 1)
 
@@ -327,21 +338,6 @@ class TestEmergencyRecord(HealthcareTestSuite):
 		self.assertIsNone(get_active_triage("_Test Patient"))
 
 
-def create_emergency_record(patient, **extra):
-	values = {
-		"doctype": "Emergency Record",
-		"patient": patient,
-		"company": "_Test Company",
-		"arrival_datetime": now_datetime(),
-		"arrival_mode": "Walk-in",
-		"chief_complaint": "Chest pain",
-	}
-	values.update(extra)
-	record = frappe.get_doc(values)
-	record.insert(ignore_permissions=True)
-	return record
-
-
 def create_unidentified_record(patient_description, gender="Other"):
 	record = frappe.get_doc(
 		{
@@ -355,10 +351,6 @@ def create_unidentified_record(patient_description, gender="Other"):
 	)
 	record.insert(ignore_permissions=True)
 	return record
-
-
-def get_test_practitioner():
-	return frappe.db.get_value("Healthcare Practitioner", {"last_name": "Healthcare Practitioner 0"}, "name")
 
 
 def occupancy_status(service_unit):
