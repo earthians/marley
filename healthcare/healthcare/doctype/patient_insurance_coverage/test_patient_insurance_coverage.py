@@ -24,11 +24,8 @@ class TestPatientInsuranceCoverage(HealthcareTestSuite):
 		self.payor = "_Test Insurance Payor"
 
 	def test_insurance_coverage(self):
-		# frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
-		frappe.db.sql("""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'""")
-		frappe.db.sql(
-			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
-		)
+		frappe.db.delete("Patient Appointment", {"appointment_type": "_Test Appointment"})
+		frappe.db.delete("Insurance Payor Contract", {"insurance_payor": "_Test Insurance Payor"})
 		frappe.db.set_single_value("Healthcare Settings", "enable_free_follow_ups", 0)
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
 
