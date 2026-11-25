@@ -258,9 +258,7 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 	}
 
 	render_rail() {
-		healthcare.nursing.RAIL.forEach((group, index) =>
-			this.render_rail_group(group, index > 0),
-		);
+		healthcare.nursing.RAIL.forEach(group => this.render_rail_group(group));
 		this.$rail.on("click", "[data-action]", event => {
 			this.select_action($(event.currentTarget).attr("data-action"));
 		});
@@ -269,16 +267,8 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 		);
 	}
 
-	render_rail_group(group, has_divider = false) {
-		const divider = has_divider
-			? `<hr style="margin: 8px 0; border: 0; border-top: 1px solid var(--border-color);">`
-			: "";
-		this.$rail.append(`
-			${divider}
-			<div class="nursing-rail-label">
-				${group.label}
-			</div>
-			`);
+	render_rail_group(group) {
+		this.$rail.append(`<div class="nursing-rail-label">${group.label}</div>`);
 		group.actions.forEach(action => this.$rail.append(this.get_rail_item(action)));
 	}
 
@@ -290,7 +280,6 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 		return `
 			<button type="button" class="nursing-rail-item" role="tab" tabindex="-1"
 				aria-selected="false" data-action="${action.name}"
-				style="padding-left: 20px;"
 				${available ? "" : "disabled"}>${action.label}${suffix}</button>
 		`;
 	}
