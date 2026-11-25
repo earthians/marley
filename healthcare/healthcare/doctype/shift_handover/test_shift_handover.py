@@ -15,7 +15,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestShiftHandover(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.other_nurse = self.make_nurse()
 		frappe.db.delete("Shift Handover", {"patient": self.patient})
 

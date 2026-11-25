@@ -27,7 +27,7 @@ class TestWardScope(HealthcareTestSuite):
 		TestChartAccess.make_nurse(self)
 		frappe.db.delete("User Permission", {"user": NURSE})
 		frappe.db.sql("delete from `tabInpatient Record`")
-		self.patient, self.outpatient = frappe.get_list("Patient", pluck="name", limit=2)
+		self.patient, self.outpatient = "_Test Patient", "_Test Patient 0"
 
 		record = create_inpatient(self.patient)
 		record.expected_length_of_stay = 0
@@ -83,7 +83,7 @@ class TestWardScope(HealthcareTestSuite):
 		self.assertNotIn(self.outpatient, found)
 
 	def make_procedure(self, patient, service_unit):
-		template = frappe.get_list("Clinical Procedure Template", pluck="name")[0]
+		template = "_Test Procedure - Wound Inspection and Cleaning"
 		procedure = frappe.get_doc(
 			{
 				"doctype": "Clinical Procedure",

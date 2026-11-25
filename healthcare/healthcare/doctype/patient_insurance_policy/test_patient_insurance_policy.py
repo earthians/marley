@@ -12,7 +12,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestPatientInsurancePolicy(HealthcareTestSuite):
 	def test_insurance_policy_overlap(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
+		patient = "_Test Patient"
 		insurance_policy = get_new_insurance_policy(patient)
 		insurance_policy.submit()
 
