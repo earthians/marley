@@ -32,14 +32,17 @@ class VitalsRecorder:
 		if not template_names:
 			return
 
-		non_vitals = frappe.get_all(
-			"Observation Template",
-			filters={
-				"name": ["in", template_names],
-				"observation_category": ["!=", VITAL_SIGNS_CATEGORY],
-			},
-			pluck="name",
+		vital_templates = set(
+			frappe.get_all(
+				"Observation Template",
+				filters={
+					"name": ["in", template_names],
+					"observation_category": VITAL_SIGNS_CATEGORY,
+				},
+				pluck="name",
+			)
 		)
+		non_vitals = [name for name in template_names if name not in vital_templates]
 		if non_vitals:
 			frappe.throw(
 				_("Only {0} templates can be recorded here: {1}").format(
