@@ -14,15 +14,10 @@ from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_med
 	create_ipme,
 	create_ipmo,
 )
-from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
-	admit_patient,
-	discharge_patient,
-	schedule_discharge,
-)
+from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
 	get_healthcare_service_unit,
-	mark_invoiced_inpatient_occupancy,
 )
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -149,13 +144,13 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 			item_code="Dextromethorphan",
 			patient=self.patient,
 		)
+		make_stock_entry()
 		ipme = create_ipme(filters, update_stock=1)
 		ipme.save()
 		ipme.submit()
 		return ipme
 
 	def test_drug_shortage_stock_entry(self):
-		empty_warehouse("Finished Goods - _TC", "Dextromethorphan")
 		ipmo = create_ipmo(self.patient)
 		ipmo.submit()
 		ipmo.reload()
@@ -187,47 +182,6 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 
 		ipme.reload()
 		ipme.submit()
-
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-
-		# cleanup - Discharge
-		schedule_discharge(frappe.as_json({"patient": self.patient}))
-		self.ip_record.reload()
-		mark_invoiced_inpatient_occupancy(self.ip_record)
-
-		self.ip_record.reload()
-		discharge_patient(self.ip_record)
-
-		for entry in frappe.get_all("Inpatient Medication Entry"):
-			doc = frappe.get_doc("Inpatient Medication Entry", entry.name)
-			doc.cancel()
-
-		for entry in frappe.get_all("Inpatient Medication Order"):
-			doc = frappe.get_doc("Inpatient Medication Order", entry.name)
-			doc.cancel()
-
-
-def empty_warehouse(warehouse, item_code):
-	"""The shortage test needs an empty warehouse; a failed earlier run strands
-	stock there, which would otherwise fail every run after it."""
-	from erpnext.stock.utils import get_stock_balance
-
-	balance = get_stock_balance(item_code, warehouse)
-	if balance <= 0:
-		return
-
-	stock_entry = frappe.new_doc("Stock Entry")
-	stock_entry.stock_entry_type = "Material Issue"
-	stock_entry.company = "_Test Company"
-	stock_entry.from_warehouse = warehouse
-	row = stock_entry.append("items")
-	row.item_code = item_code
-	row.qty = balance
-	row.s_warehouse = warehouse
-	row.conversion_factor = 1
-	row.expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
-	stock_entry.submit()
 
 
 def make_stock_entry(warehouse=None):

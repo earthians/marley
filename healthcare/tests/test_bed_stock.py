@@ -52,21 +52,6 @@ class TestBedStock(HealthcareTestSuite):
 			row.s_warehouse = self.bed.warehouse
 		entry.submit()
 
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-		frappe.clear_cache(doctype="Healthcare Settings")
-		self.close_the_admission()
-
-	def close_the_admission(self):
-		"""Leave no admission behind, and no patient pointing at one that is gone."""
-		frappe.db.set_value(
-			"Patient",
-			self.patient,
-			{"inpatient_record": None, "inpatient_status": None},
-			update_modified=False,
-		)
-		frappe.db.delete("Inpatient Record", {"name": self.admission})
-
 	def leave_stock_at_the_bed(self, qty=4, item_code="Dextromethorphan"):
 		from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 
