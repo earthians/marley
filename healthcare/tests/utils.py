@@ -4,6 +4,11 @@ from frappe.tests.classes.context_managers import freeze_time
 from erpnext.tests.utils import ERPNextTestSuite
 
 
+def healthcare_owns_abdm_settings():
+	"""The marley_abdm app replaces this legacy doctype with a Single of the same name."""
+	return frappe.get_meta("ABDM Settings").module == "Healthcare"
+
+
 class BootStrapTestData:
 	def __init__(self):
 		self.make_master_data()
@@ -34,6 +39,23 @@ class BootStrapTestData:
 		self.make_treatment_plan_templates()
 		self.make_insurance_payors()
 		self.make_custom_doctypes()
+		self.make_abdm_settings()
+
+	def make_abdm_settings(self):
+		"""ABDM Settings are read for the user's default company, which a test site does not have."""
+		if not healthcare_owns_abdm_settings():
+			return
+		frappe.defaults.set_user_default("company", "_Test Company", "abdm_user@marleyhealth.io")
+		records = [
+			{
+				"doctype": "ABDM Settings",
+				"company": "_Test Company",
+				"default": 1,
+				"auth_base_url": "https://dev.abdm.gov.in/gateway/",
+				"health_id_base_url": "https://healthidsbx.abdm.gov.in/api/",
+			}
+		]
+		self.make_records(["company"], records)
 
 	def make_custom_doctypes(self):
 		"""A DocType is a schema change, which MariaDB commits at once, so no test may create one."""
@@ -617,6 +639,13 @@ class BootStrapTestData:
 				"doctype": "User",
 				"email": "gp@marleyhealth.io",
 				"first_name": "gp",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Physician"}],
+			},
+			{
+				"doctype": "User",
+				"email": "abdm_user@marleyhealth.io",
+				"first_name": "abdm_user",
 				"password": "password",
 				"roles": [{"doctype": "Has Role", "role": "Physician"}],
 			},
