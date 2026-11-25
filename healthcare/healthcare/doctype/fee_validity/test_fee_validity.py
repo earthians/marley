@@ -46,13 +46,16 @@ class TestFeeValidity(HealthcareTestSuite):
 		practitioner = "_Test Healthcare Practitioner 2"
 		item = "HLC-SI-001"
 
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		healthcare_settings.enable_free_follow_ups = 1
-		healthcare_settings.max_visits = 1
-		healthcare_settings.valid_days = 7
-		healthcare_settings.show_payment_popup = 1
-		healthcare_settings.op_consulting_charge_item = item
-		healthcare_settings.save(ignore_permissions=True)
+		frappe.db.set_single_value(
+			"Healthcare Settings",
+			{
+				"enable_free_follow_ups": 1,
+				"max_visits": 1,
+				"valid_days": 7,
+				"show_payment_popup": 1,
+				"op_consulting_charge_item": item,
+			},
+		)
 
 		# For first appointment, invoice is generated. First appointment not considered in fee validity
 		appointment = create_appointment(patient, practitioner, nowdate())
@@ -121,13 +124,16 @@ class TestFeeValidity(HealthcareTestSuite):
 		practitioner = "_Test Healthcare Practitioner 2"
 		item = "HLC-SI-001"
 
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		healthcare_settings.enable_free_follow_ups = 1
-		healthcare_settings.max_visits = 1
-		healthcare_settings.valid_days = 7
-		healthcare_settings.show_payment_popup = 1
-		healthcare_settings.op_consulting_charge_item = item
-		healthcare_settings.save(ignore_permissions=True)
+		frappe.db.set_single_value(
+			"Healthcare Settings",
+			{
+				"enable_free_follow_ups": 1,
+				"max_visits": 1,
+				"valid_days": 7,
+				"show_payment_popup": 1,
+				"op_consulting_charge_item": item,
+			},
+		)
 
 		frappe.db.set_value(
 			"Healthcare Practitioner",
@@ -254,14 +260,18 @@ class TestFeeValidity(HealthcareTestSuite):
 		# another suite may have left this shared patient flagged as admitted
 		frappe.db.set_value("Patient", patient, {"inpatient_record": None, "inpatient_status": None})
 
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		healthcare_settings.enable_free_follow_ups = 1
-		healthcare_settings.apply_free_follow_ups_on_encounters = apply_on_encounters
-		healthcare_settings.max_visits = max_visits
-		healthcare_settings.valid_days = valid_days
-		healthcare_settings.show_payment_popup = 1
-		healthcare_settings.op_consulting_charge_item = "HLC-SI-001"
-		healthcare_settings.save(ignore_permissions=True)
+		# set directly: saving the document reruns validate, whose set_default calls clear every cache
+		frappe.db.set_single_value(
+			"Healthcare Settings",
+			{
+				"enable_free_follow_ups": 1,
+				"apply_free_follow_ups_on_encounters": apply_on_encounters,
+				"max_visits": max_visits,
+				"valid_days": valid_days,
+				"show_payment_popup": 1,
+				"op_consulting_charge_item": "HLC-SI-001",
+			},
+		)
 
 		return patient, practitioner
 
