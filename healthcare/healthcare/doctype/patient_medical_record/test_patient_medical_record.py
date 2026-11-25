@@ -88,21 +88,6 @@ def create_vital_signs(appointment):
 	return vital_signs
 
 
-def create_lab_test_template(medical_department):
-	if frappe.db.exists("Lab Test Template", "Blood Test"):
-		return frappe.get_doc("Lab Test Template", "Blood Test")
-
-	template = frappe.new_doc("Lab Test Template")
-	template.lab_test_name = "Blood Test"
-	template.lab_test_code = "Blood Test"
-	template.lab_test_group = "Services"
-	template.department = medical_department
-	template.is_billable = 1
-	template.lab_test_rate = 2000
-	template.save()
-	return template
-
-
 def create_lab_test(template, patient):
 	lab_test = frappe.new_doc("Lab Test")
 	lab_test.patient = patient
