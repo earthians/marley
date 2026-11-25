@@ -24,25 +24,26 @@ class VitalsRecorder:
 	def record(self, readings):
 		"""Takes {observation_template: value} and returns the observations created."""
 		valid_readings = {template: value for template, value in readings.items() if has_value(value)}
-		self.validate_templates(valid_readings.keys())
+		self.validate_templates(valid_readings)
 		return [self.record_reading(template, value) for template, value in valid_readings.items()]
 
 	def validate_templates(self, templates):
-		if not templates:
+		template_names = list(templates)
+		if not template_names:
 			return
 
-		template_list = list(templates)
-		rows = frappe.get_all(
+		non_vitals = frappe.get_all(
 			"Observation Template",
-			filters={"name": ["in", template_list]},
-			fields=["name", "observation_category"],
+			filters={
+				"name": ["in", template_names],
+				"observation_category": ["!=", VITAL_SIGNS_CATEGORY],
+			},
+			pluck="name",
 		)
-		categories = {row.name: row.observation_category for row in rows}
-		invalid = [template for template in template_list if categories.get(template) != VITAL_SIGNS_CATEGORY]
-		if invalid:
+		if non_vitals:
 			frappe.throw(
 				_("Only {0} templates can be recorded here: {1}").format(
-					VITAL_SIGNS_CATEGORY, ", ".join(invalid)
+					VITAL_SIGNS_CATEGORY, ", ".join(non_vitals)
 				)
 			)
 
