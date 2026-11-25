@@ -3,7 +3,7 @@
 
 
 import frappe
-from frappe.utils import flt, nowdate
+from frappe.utils import flt, nowdate, nowtime
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
@@ -177,6 +177,42 @@ class TestTherapyPlan(HealthcareTestSuite):
 
 		session = make_therapy_session(plan.patient, therapy_type, "_Test Company", plan.name)
 		self.assertEqual(session["practitioner"], plan.practitioner)
+
+	def test_manual_plan_does_not_link_another_patients_service_request(self):
+		plan = create_therapy_plan()
+		therapy_type = plan.therapy_plan_details[0].therapy_type
+		other_patient = frappe.get_list(
+			"Patient", filters={"name": ["!=", plan.patient]}, pluck="name"
+		)[0]
+		service_request = frappe.get_doc(
+			{
+				"doctype": "Service Request",
+				"patient": other_patient,
+				"company": plan.company,
+				"practitioner": plan.practitioner,
+				"order_date": nowdate(),
+				"order_time": nowtime(),
+				"template_dt": "Therapy Type",
+				"template_dn": therapy_type,
+				"quantity": 1,
+				"billing_status": "Invoiced",
+			}
+		).insert()
+		service_request.submit()
+		self.assertFalse(plan.order_group)
+		self.assertFalse(service_request.order_group)
+		self.assertNotEqual(service_request.patient, plan.patient)
+		self.assertTrue(
+			frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": plan.order_group}
+			)
+		)
+
+		session = make_therapy_session(plan.patient, therapy_type, plan.company, plan.name)
+
+		self.assertFalse(session["service_request"])
+		self.assertEqual(session["patient"], plan.patient)
+		self.assertEqual(session["therapy_plan"], plan.name)
 
 	def test_explicit_practitioner_takes_priority(self):
 		patient = "_Test Patient"
