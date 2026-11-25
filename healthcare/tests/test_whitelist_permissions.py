@@ -196,7 +196,7 @@ class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 	def setUp(self):
 		super().setUp()
 		self.item = self.stored_item("_Test Permission Item")
-		self.new_code = frappe.generate_hash(length=10)
+		self.new_code = "_Test Renamed Item"
 
 	def stored_item(self, item_code):
 		if not frappe.db.exists("Item", item_code):
@@ -248,7 +248,7 @@ class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 		self.assert_item_kept()
 
 	def test_rename_uses_the_linked_item_not_the_one_sent(self):
-		linked = self.stored_item(frappe.generate_hash(length=10))
+		linked = self.stored_item("_Test Linked Item")
 		unit_type = stored("Healthcare Service Unit Type", service_unit_type=self.new_code, item=linked)
 
 		change_item_code(self.item, self.new_code, unit_type)
@@ -317,7 +317,7 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 	def test_sample_collection_still_creates_observations_for_a_lab_user(self):
 		template = stored(
 			"Observation Template",
-			observation=frappe.generate_hash(length=10),
+			observation="_Test Lab User Observation",
 			permitted_data_type="Quantity",
 			observation_category="Laboratory",
 		)
