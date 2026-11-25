@@ -20,7 +20,7 @@ class TestConsumables(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.delete("Inpatient Record")
 		self.patient = "_Test Patient"
 		self.item = "Paracetamol"
 

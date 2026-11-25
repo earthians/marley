@@ -13,8 +13,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestItemInsuranceEligibility(HealthcareTestSuite):
 	def test_validate_eligibility_overlap(self):
-		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
-		frappe.db.sql("""delete from `tabItem Insurance Eligibility`""")
+		frappe.db.delete("Appointment Type", {"name": "_Test Appointment"})
+		frappe.db.delete("Item Insurance Eligibility")
 
 		medical_department = "_Test Medical Department"
 		args = {
@@ -56,7 +56,7 @@ class TestItemInsuranceEligibility(HealthcareTestSuite):
 			create_insurance_eligibility(**args).insert()
 
 	def test_item_insurance_eligibility(self):
-		frappe.db.sql("""delete from `tabItem Insurance Eligibility`""")
+		frappe.db.delete("Item Insurance Eligibility")
 
 		medical_department = "_Test Medical Department"
 		args = {
