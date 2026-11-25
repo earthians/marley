@@ -50,12 +50,9 @@ function moveMonth(amount) {
 		Math.min(12 - monthWindow.value, windowStart.value + amount),
 	);
 }
-watch(
-	() => props.year,
-	() => {
-		windowStart.value = 0;
-	},
-);
+watch([() => props.year, monthWindow], () => {
+	windowStart.value = 0;
+});
 </script>
 <template>
 	<section class="ph-card ph-activity-card" aria-label="Clinical activity">

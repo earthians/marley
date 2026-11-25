@@ -1417,6 +1417,7 @@ def get_patient_vitals(
 		filters={"docstatus": 1, "patient": patient},
 		order_by="signs_date, signs_time",
 		fields=["*"],
+		limit_page_length=0,
 	)
 
 	if len(vitals):
