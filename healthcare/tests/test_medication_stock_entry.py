@@ -7,10 +7,8 @@ from frappe.utils import add_days, nowdate
 from healthcare.healthcare.doctype.inpatient_medication_entry.medication_stock_entry import (
 	ServiceUnitTransfer,
 )
+from healthcare.tests.factories.inpatient import DRUG, PHARMACY, receive_batch
 from healthcare.tests.utils import HealthcareTestSuite
-
-DRUG = "_Test Batched Drug"
-PHARMACY = "Stores - _TC"
 
 
 class TestBatchedMedicationTransfer(HealthcareTestSuite):
@@ -126,6 +124,7 @@ def empty_drug_stock():
 	entry.submit()
 
 
+<<<<<<< HEAD
 def receive_batch(batch_id, expiry, qty):
 	if not frappe.db.exists("Batch", batch_id):
 		frappe.get_doc(
@@ -148,6 +147,8 @@ def receive_batch(batch_id, expiry, qty):
 	return entry
 
 
+=======
+>>>>>>> 7186cc6 (test: move shared test helpers into healthcare/tests/factories, name each variant)
 def bed_with_warehouse():
 	from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 		get_healthcare_service_unit,

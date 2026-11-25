@@ -3,7 +3,7 @@
 
 
 import frappe
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, nowdate
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
@@ -12,6 +12,7 @@ from healthcare.healthcare.doctype.therapy_plan.therapy_plan import (
 	make_sales_invoice,
 	make_therapy_session,
 )
+from healthcare.tests.factories.encounters import create_encounter_with_therapy, create_therapy_plan
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -20,7 +21,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		medical_department = "_Test Medical Department"
-		encounter = create_encounter(patient, medical_department, practitioner)
+		encounter = create_encounter_with_therapy(patient, medical_department, practitioner)
 		self.assertTrue(
 			frappe.db.exists(
 				"Therapy Plan", {"source_doc": "Patient Encounter", "order_group": encounter.name}
@@ -30,7 +31,9 @@ class TestTherapyPlan(HealthcareTestSuite):
 	def test_creation_on_encounter_order_save(self):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
-		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
+		encounter = create_encounter_with_therapy(
+			patient, "_Test Medical Department", practitioner, submit=False
+		)
 		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
 		self.assertFalse(frappe.db.exists("Therapy Plan", filters))
 
@@ -86,7 +89,9 @@ class TestTherapyPlan(HealthcareTestSuite):
 	def test_additional_order_for_same_therapy_counts_sessions(self):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
-		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
+		encounter = create_encounter_with_therapy(
+			patient, "_Test Medical Department", practitioner, submit=False
+		)
 		encounter.submit_orders_on_save = 1
 		encounter.save()
 		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
@@ -141,7 +146,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		medical_department = "_Test Medical Department"
-		encounter = create_encounter(patient, medical_department, practitioner)
+		encounter = create_encounter_with_therapy(patient, medical_department, practitioner)
 
 		therapy_type = "Basic Rehab"
 		service_request = frappe.db.get_value(
@@ -177,7 +182,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		medical_department = "_Test Medical Department"
-		encounter = create_encounter(patient, medical_department, practitioner)
+		encounter = create_encounter_with_therapy(patient, medical_department, practitioner)
 
 		therapy_type = "Basic Rehab"
 		service_request = frappe.db.get_value(
@@ -207,45 +212,6 @@ class TestTherapyPlan(HealthcareTestSuite):
 
 		therapy_plan_template_amt = frappe.db.get_value("Therapy Plan Template", template, "total_amount")
 		self.assertEqual(si.items[0].amount, therapy_plan_template_amt)
-
-
-def create_therapy_plan(template=None, patient=None):
-	if not patient:
-		patient = "_Test Patient"
-
-	therapy_type = "Basic Rehab"
-	practitioner = "_Test Healthcare Practitioner 2"
-	plan = frappe.new_doc("Therapy Plan")
-	plan.patient = patient
-	plan.start_date = getdate()
-	plan.company = "_Test Company"
-	plan.practitioner = practitioner
-	plan.practitioner_name = frappe.db.get_value("Healthcare Practitioner", practitioner, "practitioner_name")
-
-	if template:
-		plan.therapy_plan_template = template
-		plan = plan.set_therapy_details_from_template()
-	else:
-		plan.append("therapy_plan_details", {"therapy_type": therapy_type, "no_of_sessions": 2})
-
-	plan.save()
-	return plan
-
-
-def create_encounter(patient, medical_department, practitioner, submit=True):
-	encounter = frappe.new_doc("Patient Encounter")
-	encounter.patient = patient
-	encounter.practitioner = practitioner
-	encounter.medical_department = medical_department
-	encounter.appointment_type = "_Test Appointment Type with Items for Service Unit"
-	encounter.source = "Direct"
-	therapy_type = "Basic Rehab"
-	encounter.append("therapies", {"therapy_type": therapy_type, "no_of_sessions": 2})
-	encounter.company = "_Test Company"
-	encounter.save()
-	if submit:
-		encounter.submit()
-	return encounter
 
 
 def create_therapy_plan_template():
