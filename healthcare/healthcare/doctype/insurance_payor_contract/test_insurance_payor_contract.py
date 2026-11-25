@@ -12,7 +12,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestInsurancePayorContract(HealthcareTestSuite):
 	def test_insurance_payor_contract_overlap(self):
-		self.payor = frappe.get_list("Insurance Payor", pluck="name")[0]
+		self.payor = "_Test Insurance Payor"
 		frappe.db.sql(
 			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
 		)

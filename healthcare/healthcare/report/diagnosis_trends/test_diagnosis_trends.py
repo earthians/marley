@@ -12,27 +12,9 @@ class TestDiagnosisTrends(HealthcareTestSuite):
 		self.create_test_transactions()
 
 	def create_test_transactions(self):
-		patient_name = frappe.db.get_list("Patient")[0].name
-		cardiology_practitioner = frappe.db.get_value(
-			"Healthcare Practitioner",
-			{
-				"last_name": "Healthcare Practitioner 2",
-				"department": "Cardiology",
-			},
-			"name",
-		)
-		general_practitioner = frappe.db.get_value(
-			"Healthcare Practitioner",
-			{
-				"last_name": "Healthcare Practitioner 0",
-				"department": "_Test Medical Department",
-			},
-			"name",
-		)
-
-		self.assertTrue(patient_name)
-		self.assertTrue(cardiology_practitioner)
-		self.assertTrue(general_practitioner)
+		patient_name = "_Test Patient"
+		cardiology_practitioner = "_Test Healthcare Practitioner 2"
+		general_practitioner = "_Test Healthcare Practitioner 0"
 
 		self.heart_attack_encounter = self.create_encounter_with_diagnosis(
 			patient=patient_name,

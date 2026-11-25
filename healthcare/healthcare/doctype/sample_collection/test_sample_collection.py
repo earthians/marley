@@ -122,7 +122,7 @@ class TestSampleCollection(HealthcareTestSuite):
 
 	def test_collecting_a_deeply_nested_leaf_uses_child_row_practitioner(self):
 		package, _sub_panel, leaf = create_multi_level_template()
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		practitioner = "_Test Healthcare Practitioner 2"
 		doc = new_sample_collection_with_package(package)
 		row = doc.observation_sample_collection[0]
 		row.practitioner = practitioner

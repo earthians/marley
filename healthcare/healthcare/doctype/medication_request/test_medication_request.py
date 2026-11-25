@@ -15,8 +15,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestMedicationRequest(HealthcareTestSuite):
 	def test_medication_request(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		medication = frappe.get_doc("Medication", "Tablet Paracetamol 300Milligram")
 		encounter = create_encounter(patient, practitioner, "drug_prescription", medication, submit=True)
 		self.assertTrue(frappe.db.exists("Medication Request", {"order_group": encounter.name}))
@@ -37,8 +37,8 @@ class TestMedicationRequest(HealthcareTestSuite):
 			)
 
 	def test_medication_qty_calculation(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		medication = frappe.get_doc("Medication", "Tablet Paracetamol 300Milligram")
 
 		# Create Medication Request

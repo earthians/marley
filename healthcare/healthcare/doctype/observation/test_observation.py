@@ -834,7 +834,7 @@ class TestObservation(HealthcareTestSuite):
 		return rows[0].result
 
 	def get_test_patient(self):
-		return frappe.get_list("Patient", pluck="name")[0]
+		return "_Test Patient"
 
 	def enable_observation_on_invoice_submit(self):
 		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
@@ -883,7 +883,7 @@ def create_patient_encounter(patient, observation_template):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
 	patient_encounter.company = "_Test Company"
-	patient_encounter.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+	patient_encounter.practitioner = "_Test Healthcare Practitioner 2"
 	patient_encounter.appointment_type = "_Test Appointment Type"
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()

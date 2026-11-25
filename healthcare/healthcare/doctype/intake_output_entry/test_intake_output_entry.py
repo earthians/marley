@@ -9,7 +9,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestIntakeOutputEntry(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		create_intake_output_types()
 
 	def make_entry(self, **kwargs):
