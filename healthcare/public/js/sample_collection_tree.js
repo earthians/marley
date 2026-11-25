@@ -51,7 +51,7 @@ healthcare.SampleCollectionTree = class SampleCollectionTree {
 					<button class="btn btn-xs expand-all-btn">${__("Expand All")}</button>
 				</span>
 				<span class="sample-tree-selection text-muted"></span>
-				<button class="btn btn-xs btn-primary mark-selected-btn">${__(
+				<button class="btn btn-xs btn-default mark-selected-btn">${__(
 					"Mark Collected",
 				)}</button>
 			</div>
