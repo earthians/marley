@@ -146,12 +146,16 @@ frappe.ui.form.on("Therapy Plan", {
 			bars[0].width = "0.5%";
 		}
 		message = title;
-		frm.dashboard.add_progress(__("Status"), bars, message);
+		frm.dashboard.show_progress(__("Status"), bars, message);
 	},
 });
 
 frappe.ui.form.on("Therapy Plan Detail", {
 	no_of_sessions: function (frm) {
+		if (frm.doctype !== "Therapy Plan") {
+			return;
+		}
+
 		let total = 0;
 		$.each(frm.doc.therapy_plan_details, function (_i, e) {
 			total += e.no_of_sessions;

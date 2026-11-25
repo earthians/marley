@@ -7,10 +7,6 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import flt, getdate, nowtime
 
-from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
-	get_income_account,
-	get_receivable_account,
-)
 from healthcare.healthcare.doctype.observation.observation import (
 	add_note,
 	is_numbers_with_exceptions,
@@ -18,7 +14,9 @@ from healthcare.healthcare.doctype.observation.observation import (
 	record_observation_result,
 	set_observation_status,
 )
-from healthcare.healthcare.doctype.observation_template.test_observation_template import (
+from healthcare.healthcare.doctype.service_request.service_request import make_observation
+from healthcare.tests.factories.billing import invoice_item
+from healthcare.tests.factories.lab import (
 	create_mixed_sub_panel_template,
 	create_multi_level_template,
 	create_observation_template,
@@ -34,7 +32,7 @@ class TestObservation(HealthcareTestSuite):
 		obs_name = "_Test Observation without Sample"
 		patient = self.get_test_patient()
 		obs_template = frappe.get_doc("Observation Template", obs_name)
-		sales_invoice = create_sales_invoice(patient, obs_name)
+		sales_invoice = invoice_item(patient, obs_name)
 
 		self.assertTrue(
 			frappe.db.exists(
@@ -63,7 +61,7 @@ class TestObservation(HealthcareTestSuite):
 		patient = self.get_test_patient()
 		obs_name = "_Test Observation with Sample"
 		obs_template = frappe.get_doc("Observation Template", obs_name)
-		sales_invoice = create_sales_invoice(patient, obs_name)
+		sales_invoice = invoice_item(patient, obs_name)
 
 		sample_docname = frappe.db.exists(
 			"Sample Collection",
@@ -99,7 +97,7 @@ class TestObservation(HealthcareTestSuite):
 		patient = self.get_test_patient()
 		obs_name = "_Test Observation Grouped without Sample"
 		obs_template = frappe.get_doc("Observation Template", obs_name)
-		sales_invoice = create_sales_invoice(patient, obs_name)
+		sales_invoice = invoice_item(patient, obs_name)
 
 		self.assertTrue(
 			frappe.db.exists(
@@ -139,7 +137,7 @@ class TestObservation(HealthcareTestSuite):
 		patient = self.get_test_patient()
 		obs_name = "_Test Observation Grouped with Sample"
 		obs_template = frappe.get_doc("Observation Template", obs_name)
-		sales_invoice = create_sales_invoice(patient, obs_name)
+		sales_invoice = invoice_item(patient, obs_name)
 
 		self.assertTrue(
 			frappe.db.exists(
@@ -190,7 +188,7 @@ class TestObservation(HealthcareTestSuite):
 
 		package, sub_panel, _leaf = create_multi_level_template()
 		patient = self.get_test_patient()
-		sales_invoice = create_sales_invoice(patient, package.name)
+		sales_invoice = invoice_item(patient, package.name)
 
 		sample_docname = frappe.db.exists("Sample Collection", {"patient": patient})
 		self.assertTrue(sample_docname)
@@ -238,6 +236,27 @@ class TestObservation(HealthcareTestSuite):
 			)
 		)
 
+	def test_laboratory_user_records_a_result_but_cannot_approve_it(self):
+		encounter = create_patient_encounter(self.get_test_patient(), "_Test Observation without Sample")
+		service_request = frappe.db.get_value("Service Request", {"order_group": encounter.name})
+		with self.set_user("lab_permissions@marleyhealth.io"):
+			make_observation(service_request)
+			observation = frappe.db.get_value("Observation", {"service_request": service_request})
+			record_observation_result(json.dumps([{"observation": observation, "result": "12"}]))
+			self.assertRaises(frappe.PermissionError, set_observation_status, observation, "Approved")
+
+		self.assertEqual(frappe.db.get_value("Observation", observation, "result"), "12")
+
+	def test_a_draft_cannot_be_saved_as_approved(self):
+		observation = self.create_lab_observation(
+			self.get_test_patient(), "_Test Observation without Sample", "12"
+		)
+		with self.set_user("lab_permissions@marleyhealth.io"):
+			observation.status = "Approved"
+			self.assertRaises(frappe.ValidationError, observation.save)
+
+		self.assertEqual(frappe.db.get_value("Observation", observation.name, "status"), "Preliminary")
+
 	def test_make_observation_from_encounter_does_not_duplicate_a_sub_panel(self):
 		# A sub-panel like Lipid Profile under Package 1 used to get a
 		# dead-end duplicate Observation alongside its correctly chained one.
@@ -272,7 +291,7 @@ class TestObservation(HealthcareTestSuite):
 
 		package, sub_panel, _sample_leaf, non_sample_leaf = create_mixed_sub_panel_template()
 		patient = self.get_test_patient()
-		sales_invoice = create_sales_invoice(patient, package.name)
+		sales_invoice = invoice_item(patient, package.name)
 
 		sub_panel_observations = frappe.get_all(
 			"Observation", filters={"observation_template": sub_panel.name, "patient": patient}
@@ -379,7 +398,6 @@ class TestObservation(HealthcareTestSuite):
 
 	def test_formula_can_use_patient_custom_field(self):
 		self.enable_observation_on_invoice_submit()
-		self.ensure_patient_custom_field()
 
 		patient = self.get_test_patient()
 		custom_field_value = 10
@@ -755,7 +773,7 @@ class TestObservation(HealthcareTestSuite):
 
 		obs_template.save()
 
-		create_sales_invoice(patient, obs_template.name)
+		invoice_item(patient, obs_template.name)
 
 		child_obs_1 = self.get_latest_observation_name(patient, first_obs_template)
 		child_obs_2 = self.get_latest_observation_name(patient, operand_2_template.name)
@@ -809,56 +827,17 @@ class TestObservation(HealthcareTestSuite):
 		return rows[0].result
 
 	def get_test_patient(self):
-		return frappe.get_list("Patient", pluck="name")[0]
+		return "_Test Patient"
 
 	def enable_observation_on_invoice_submit(self):
 		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
-
-	def ensure_patient_custom_field(self):
-		custom_fields = {
-			"Patient": [
-				{
-					"fieldname": "test_custom_field",
-					"label": "Test Calculation",
-					"fieldtype": "Int",
-				}
-			]
-		}
-		create_custom_fields(custom_fields, update=True)
-
-
-def create_sales_invoice(patient, item):
-	sales_invoice = frappe.new_doc("Sales Invoice")
-	sales_invoice.patient = patient
-	sales_invoice.customer = frappe.db.get_value("Patient", patient, "customer")
-	sales_invoice.due_date = getdate()
-	sales_invoice.company = "_Test Company"
-	sales_invoice.debit_to = get_receivable_account("_Test Company")
-	sales_invoice.append(
-		"items",
-		{
-			"item_code": item,
-			"item_name": item,
-			"description": item,
-			"qty": 1,
-			"uom": "Nos",
-			"conversion_factor": 1,
-			"income_account": get_income_account(None, "_Test Company"),
-			"rate": 300,
-			"amount": 300,
-		},
-	)
-
-	sales_invoice.set_missing_values()
-	sales_invoice.submit()
-	return sales_invoice
 
 
 def create_patient_encounter(patient, observation_template):
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.patient = patient
 	patient_encounter.company = "_Test Company"
-	patient_encounter.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+	patient_encounter.practitioner = "_Test Healthcare Practitioner 2"
 	patient_encounter.appointment_type = "_Test Appointment Type"
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()

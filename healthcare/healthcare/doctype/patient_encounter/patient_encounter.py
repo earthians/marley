@@ -44,8 +44,6 @@ class PatientEncounter(Document):
 			frappe.db.set_value("Patient Appointment", self.appointment, "status", "Closed")
 
 	def on_submit(self):
-		if self.therapies:
-			create_therapy_plan(self)
 		self.make_service_request()
 		self.make_medication_request()
 		# to save service_request name in prescription
@@ -264,6 +262,7 @@ class PatientEncounter(Document):
 					order.insert(ignore_permissions=True, ignore_mandatory=True)
 					order.submit()
 					therapy.service_request = order.name
+			create_therapy_plan(self)
 
 	def make_medication_request(self):
 		if self.drug_prescription:
@@ -439,7 +438,13 @@ def get_prescription_dates(period, start_date):
 
 
 def create_therapy_plan(encounter):
-	if len(encounter.therapies):
+	if not encounter.therapies:
+		return
+
+	plan = frappe.db.exists("Therapy Plan", {"source_doc": encounter.doctype, "order_group": encounter.name})
+	if plan:
+		doc = frappe.get_doc("Therapy Plan", plan)
+	else:
 		doc = frappe.new_doc("Therapy Plan")
 		doc.patient = encounter.patient
 		doc.start_date = encounter.encounter_date
@@ -448,20 +453,56 @@ def create_therapy_plan(encounter):
 		doc.company = encounter.company
 		doc.practitioner = encounter.practitioner
 		doc.practitioner_name = encounter.practitioner_name
-		for entry in encounter.therapies:
-			doc.append(
+
+	# Sum submitted orders, rather than encounter rows, so each order counts once.
+	orders = frappe.get_all(
+		"Service Request",
+		filters={
+			"source_doc": encounter.doctype,
+			"order_group": encounter.name,
+			"template_dt": "Therapy Type",
+			"docstatus": 1,
+		},
+		fields=["template_dn", "quantity", "interval"],
+		order_by="creation asc",
+	)
+	totals = {}
+	for order in orders:
+		totals[order.template_dn] = totals.get(order.template_dn, 0) + order.quantity
+
+	existing_rows = {}
+	duplicate_types = set()
+	for row in list(doc.therapy_plan_details):
+		if row.therapy_type in existing_rows and row.therapy_type in totals:
+			duplicate_types.add(row.therapy_type)
+			doc.remove(row)
+		else:
+			existing_rows[row.therapy_type] = row
+	for therapy_type in duplicate_types:
+		# Sessions increment every matching row; summing their counters would count them twice.
+		existing_rows[therapy_type].sessions_completed = frappe.db.count(
+			"Therapy Session",
+			{"therapy_plan": plan, "therapy_type": therapy_type, "docstatus": 1},
+		)
+	changed = bool(duplicate_types)
+	for order in orders:
+		row = existing_rows.get(order.template_dn)
+		if not row:
+			row = doc.append(
 				"therapy_plan_details",
-				{
-					"therapy_type": entry.therapy_type,
-					"no_of_sessions": entry.no_of_sessions,
-					"interval": entry.interval,
-				},
+				{"therapy_type": order.template_dn, "interval": order.interval},
 			)
-		doc.save(ignore_permissions=True)
-		if doc.get("name"):
-			frappe.msgprint(
-				_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True
-			)
+			existing_rows[order.template_dn] = row
+			changed = True
+		if row.no_of_sessions != totals[order.template_dn]:
+			row.no_of_sessions = totals[order.template_dn]
+			changed = True
+	if plan and not changed:
+		return
+
+	doc.save(ignore_permissions=True)
+	if not plan:
+		frappe.msgprint(_("Therapy Plan {0} created successfully.").format(frappe.bold(doc.name)), alert=True)
 
 
 def delete_ip_medication_order(encounter):

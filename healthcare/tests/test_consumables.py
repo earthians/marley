@@ -20,9 +20,9 @@ class TestConsumables(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.item = frappe.get_list("Item", filters={"is_stock_item": 1}, pluck="name")[0]
+		frappe.db.delete("Inpatient Record")
+		self.patient = "_Test Patient"
+		self.item = "Paracetamol"
 
 		record = create_inpatient(self.patient)
 		record.expected_length_of_stay = 0

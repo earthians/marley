@@ -6,7 +6,11 @@ import json
 import frappe
 
 from healthcare.controllers.service_request_controller import set_request_status
-from healthcare.healthcare.api.patient_portal import make_appointment
+from healthcare.healthcare.api.patient_portal import (
+	get_own_appointment_patient,
+	get_payment_link,
+	make_appointment,
+)
 from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import (
 	get_procedure_consumables,
 )
@@ -15,7 +19,6 @@ from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import 
 )
 from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import (
 	create_clinical_procedure_template,
-	create_procedure,
 )
 from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template import (
 	change_item_code_from_template,
@@ -67,12 +70,14 @@ from healthcare.healthcare.utils import (
 	render_doc_as_html,
 )
 from healthcare.regional.india.abdm.utils import abdm_request, get_health_data
+from healthcare.tests.factories.encounters import create_procedure
 from healthcare.tests.utils import HealthcareTestSuite
 
 NOBODY = "test_user@marleyhealth.io"  # a login with no clinical role at all
 PHYSICIAN = "gp@marleyhealth.io"  # a Physician from the healthcare test fixtures
-NURSE = "nurse_permissions@marleyhealth.io"
+NURSE = "nurse@marleyhealth.io"
 LAB_USER = "lab_permissions@marleyhealth.io"  # may submit a Lab Test, but has no access to its request
+PORTAL_USER = "portal_patient@marleyhealth.io"
 
 
 def stored(doctype, **fields):
@@ -84,34 +89,16 @@ def stored(doctype, **fields):
 	return doc.name
 
 
-def make_user(email, role):
-	if frappe.db.exists("User", email):
-		return
-	frappe.get_doc(
-		{
-			"doctype": "User",
-			"email": email,
-			"first_name": role,
-			"send_welcome_email": 0,
-			"roles": [{"role": role}],
-		}
-	).insert(ignore_permissions=True)
-
-
 class WhitelistPermissionTestCase(HealthcareTestSuite):
 	"""Calls whitelisted endpoints as a login with no clinical role."""
 
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_all("Patient", pluck="name", limit=1)[0]
-
-	def tearDown(self):
-		frappe.set_user("Administrator")
+		self.patient = "_Test Patient"
 
 	def assert_denied(self, endpoint, *args, **kwargs):
-		frappe.set_user(NOBODY)
-		self.assertRaises(frappe.PermissionError, endpoint, *args, **kwargs)
-		frappe.set_user("Administrator")
+		with self.set_user(NOBODY):
+			self.assertRaises(frappe.PermissionError, endpoint, *args, **kwargs)
 
 
 class TestStatusEndpoints(WhitelistPermissionTestCase):
@@ -173,10 +160,8 @@ class TestWriteEndpoints(WhitelistPermissionTestCase):
 
 	def test_admitting_from_counselling_needs_write_on_the_counselling(self):
 		counselling = stored("Treatment Counselling", patient=self.patient, status="Active")
-		frappe.set_user(PHYSICIAN)  # may create an admission, but not edit counselling
-
-		self.assertRaises(frappe.PermissionError, create_ip_from_treatment_counselling, "{}", counselling)
-		frappe.set_user("Administrator")
+		with self.set_user(PHYSICIAN):  # may create an admission, but not edit counselling
+			self.assertRaises(frappe.PermissionError, create_ip_from_treatment_counselling, "{}", counselling)
 		self.assertEqual(frappe.db.get_value("Treatment Counselling", counselling, "status"), "Active")
 
 	def test_scheduling_a_discharge_needs_write(self):
@@ -196,19 +181,8 @@ class TestWriteEndpoints(WhitelistPermissionTestCase):
 class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 	def setUp(self):
 		super().setUp()
-		self.item = self.stored_item("_Test Permission Item")
-		self.new_code = frappe.generate_hash(length=10)
-
-	def stored_item(self, item_code):
-		if not frappe.db.exists("Item", item_code):
-			stored(
-				"Item",
-				item_code=item_code,
-				item_name=item_code,
-				item_group="All Item Groups",
-				stock_uom="Nos",
-			)
-		return item_code
+		self.item = "_Test Permission Item"
+		self.new_code = "_Test Renamed Item"
 
 	def as_json(self, doctype, **fields):
 		return json.dumps({"name": stored(doctype, **fields), **fields})
@@ -249,7 +223,7 @@ class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 		self.assert_item_kept()
 
 	def test_rename_uses_the_linked_item_not_the_one_sent(self):
-		linked = self.stored_item(frappe.generate_hash(length=10))
+		linked = "_Test Linked Item"
 		unit_type = stored("Healthcare Service Unit Type", service_unit_type=self.new_code, item=linked)
 
 		change_item_code(self.item, self.new_code, unit_type)
@@ -262,6 +236,19 @@ class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 class TestPortalAndGatewayEndpoints(WhitelistPermissionTestCase):
 	def test_a_portal_user_cannot_book_for_someone_elses_patient(self):
 		self.assert_denied(make_appointment, "any", self.patient, "2030-01-01", "10:00")
+
+	def test_a_portal_user_cannot_pay_for_someone_elses_appointment(self):
+		appointment = stored("Patient Appointment", patient=self.patient)
+		self.assert_denied(get_payment_link, "Patient Appointment", appointment, "x", 10, 10, "INR", "/")
+
+	def test_portal_payment_is_limited_to_appointments(self):
+		self.assertRaises(frappe.PermissionError, get_own_appointment_patient, "Sales Invoice", "any")
+
+	def test_a_portal_user_pays_for_their_own_appointment(self):
+		patient = stored("Patient", first_name="Portal", status="Active", user_id=PORTAL_USER)
+		appointment = stored("Patient Appointment", patient=patient)
+		with self.set_user(PORTAL_USER):
+			self.assertEqual(get_own_appointment_patient("Patient Appointment", appointment), patient)
 
 	def test_the_abdm_gateway_needs_patient_write(self):
 		self.assert_denied(abdm_request, {}, "verify_health_id", "Health ID")
@@ -280,45 +267,37 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 
 	def setUp(self):
 		super().setUp()
-		make_user(LAB_USER, "Laboratory User")
 
 	def test_a_lab_user_cannot_set_a_request_status_directly(self):
 		request = stored("Service Request", patient=self.patient)
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(
-			frappe.PermissionError, set_service_request_status, request, "completed-Request Status"
-		)
+		with self.set_user(LAB_USER):
+			self.assertRaises(
+				frappe.PermissionError, set_service_request_status, request, "completed-Request Status"
+			)
 
 	def test_a_lab_test_hook_still_completes_its_request(self):
 		request = stored("Service Request", patient=self.patient, status="active-Request Status")
-		frappe.set_user(LAB_USER)
+		with self.set_user(LAB_USER):
+			update_service_request_status(request, "completed-Request Status")
 
-		update_service_request_status(request, "completed-Request Status")
-
-		frappe.set_user("Administrator")
 		self.assertEqual(
 			frappe.db.get_value("Service Request", request, "status"), "completed-Request Status"
 		)
 
-	def test_a_lab_user_cannot_add_an_observation_directly(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(frappe.PermissionError, add_observation, patient=self.patient)
+	def test_adding_an_observation_directly_needs_create_on_observation(self):
+		self.assert_denied(add_observation, patient=self.patient)
 
 	def test_sample_collection_still_creates_observations_for_a_lab_user(self):
 		template = stored(
 			"Observation Template",
-			observation=frappe.generate_hash(length=10),
+			observation="_Test Lab User Observation",
 			permitted_data_type="Quantity",
 			observation_category="Laboratory",
 		)
-		company = frappe.get_all("Company", pluck="name", limit=1)[0]
-		frappe.set_user(LAB_USER)
+		company = "_Test Company"
+		with self.set_user(LAB_USER):
+			observation = new_observation(patient=self.patient, template=template, company=company)
 
-		observation = new_observation(patient=self.patient, template=template, company=company)
-
-		frappe.set_user("Administrator")
 		self.assertTrue(frappe.db.exists("Observation", observation))
 
 	def test_marking_a_sample_collected_needs_write_on_the_collection(self):
@@ -332,15 +311,13 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 
 	def setUp(self):
 		super().setUp()
-		make_user(LAB_USER, "Laboratory User")
 
 	def test_patient_detail_needs_patient_read(self):
 		self.assert_denied(get_patient_detail, self.patient)
 
 	def test_a_lab_user_still_gets_patient_detail_for_the_lab_test_form(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertEqual(get_patient_detail(self.patient)["name"], self.patient)
+		with self.set_user(LAB_USER):
+			self.assertEqual(get_patient_detail(self.patient)["name"], self.patient)
 
 	def test_vitals_need_patient_read(self):
 		self.assert_denied(get_patient_vitals, self.patient)
@@ -349,15 +326,12 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 		self.assert_denied(get_feed, self.patient)
 
 	def test_a_lab_user_cannot_read_the_history_feed(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(frappe.PermissionError, get_feed, self.patient)
+		with self.set_user(LAB_USER):
+			self.assertRaises(frappe.PermissionError, get_feed, self.patient)
 
 	def test_a_nurse_can_read_the_history_feed(self):
-		make_user(NURSE, "Nursing User")
-		frappe.set_user(NURSE)
-
-		self.assertIsInstance(get_feed(self.patient), list)
+		with self.set_user(NURSE):
+			self.assertIsInstance(get_feed(self.patient), list)
 
 	def test_feed_for_a_document_needs_read_on_it(self):
 		self.assert_denied(get_feed_for_dt, "Patient", self.patient)
@@ -369,11 +343,10 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 		self.assert_denied(get_encounter_details, json.dumps({"patient": self.patient}))
 
 	def test_a_lab_user_cannot_read_the_encounter_notes(self):
-		frappe.set_user(LAB_USER)
-
-		self.assertRaises(
-			frappe.PermissionError, get_encounter_details, json.dumps({"patient": self.patient})
-		)
+		with self.set_user(LAB_USER):
+			self.assertRaises(
+				frappe.PermissionError, get_encounter_details, json.dumps({"patient": self.patient})
+			)
 
 	def test_active_triage_needs_patient_read(self):
 		self.assert_denied(get_active_triage, self.patient)
@@ -423,10 +396,8 @@ class TestMedicationRequestCreation(WhitelistPermissionTestCase):
 		self.assertEqual(self.requests(), 0)
 
 	def test_a_nurse_cannot_create_medication_requests(self):
-		make_user(NURSE, "Nursing User")
-		frappe.set_user(NURSE)
-
-		self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
+		with self.set_user(NURSE):
+			self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
 
 
 class TestBillableServices(WhitelistPermissionTestCase):
@@ -434,25 +405,24 @@ class TestBillableServices(WhitelistPermissionTestCase):
 
 	def setUp(self):
 		super().setUp()
-		self.company = frappe.get_all("Company", pluck="name", limit=1)[0]
-		self.customer = frappe.get_all("Customer", pluck="name", limit=1)[0]
+		self.company = "_Test Company"
+		self.customer = "_Test Insurance Payor"
 
 	def test_billable_services_need_sales_invoice_create(self):
-		frappe.set_user(PHYSICIAN)  # may read the patient, but cannot invoice
-
-		self.assertRaises(
-			frappe.PermissionError,
-			get_healthcare_services_to_invoice,
-			self.patient,
-			self.customer,
-			self.company,
-		)
+		with self.set_user(PHYSICIAN):  # may read the patient, but cannot invoice
+			self.assertRaises(
+				frappe.PermissionError,
+				get_healthcare_services_to_invoice,
+				self.patient,
+				self.customer,
+				self.company,
+			)
 
 
 class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
 	def setUp(self):
 		super().setUp()
-		practitioner = frappe.get_all("Healthcare Practitioner", pluck="name", limit=1)[0]
+		practitioner = "_Test Healthcare Practitioner 2"
 		self.template = create_clinical_procedure_template()
 		self.procedure = create_procedure(self.template, self.patient, practitioner)
 
@@ -469,9 +439,8 @@ class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
 		self.assert_denied(get_procedure_consumables, self.template.name)
 
 	def test_a_nurse_may_start_and_complete(self):
-		make_user(NURSE, "Nursing User")
-		frappe.set_user(NURSE)
-		self.procedure.start_procedure()
-		self.procedure.complete_procedure()
+		with self.set_user(NURSE):
+			self.procedure.start_procedure()
+			self.procedure.complete_procedure()
 
 		self.assertEqual(self.procedure.status, "Completed")

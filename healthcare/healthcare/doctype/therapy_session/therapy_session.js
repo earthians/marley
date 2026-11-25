@@ -59,6 +59,7 @@ frappe.ui.form.on("Therapy Session", {
 		});
 
 		if (!frm.doc.__islocal) {
+			frm.dashboard.stats_area_row.empty();
 			frm.dashboard.add_indicator(
 				__("Counts Targeted: {0}", [frm.doc.total_counts_targeted]),
 				"blue",

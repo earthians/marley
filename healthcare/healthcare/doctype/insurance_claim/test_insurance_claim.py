@@ -5,34 +5,28 @@ import frappe
 from frappe.utils import add_years, nowdate, today
 
 from healthcare.healthcare.doctype.insurance_claim.insurance_claim import create_payment_entry
-from healthcare.healthcare.doctype.insurance_payor_contract.test_insurance_payor_contract import (
-	get_new_payor_contract_doc,
-)
-from healthcare.healthcare.doctype.patient_insurance_coverage.test_patient_insurance_coverage import (
-	create_appointment,
+from healthcare.healthcare.utils import get_appointments_to_invoice
+from healthcare.tests.factories.billing import (
+	create_insured_appointment,
 	create_item_insurance_eligibility,
 	create_payor_insurance_eligibility_plan,
-	create_sales_invoice,
-)
-from healthcare.healthcare.doctype.patient_insurance_policy.test_patient_insurance_policy import (
 	get_new_insurance_policy,
+	get_new_payor_contract_doc,
+	invoice_insured_appointments,
 )
-from healthcare.healthcare.utils import get_appointments_to_invoice
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestInsuranceClaim(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_insurance_claim_and_payment(self):
-		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
-		frappe.db.sql("""delete from `tabPatient Appointment` where appointment_type = '_Test Appointment'""")
-		frappe.db.sql(
-			"""delete from `tabInsurance Payor Contract` where insurance_payor = '_Test Insurance Payor'"""
-		)
+		frappe.db.delete("Appointment Type", {"name": "_Test Appointment"})
+		frappe.db.delete("Patient Appointment", {"appointment_type": "_Test Appointment"})
+		frappe.db.delete("Insurance Payor Contract", {"insurance_payor": "_Test Insurance Payor"})
 
 		eligibility_plan = create_payor_insurance_eligibility_plan()
 		contract = get_new_payor_contract_doc(today(), add_years(today(), 1))
@@ -46,13 +40,13 @@ class TestInsuranceClaim(HealthcareTestSuite):
 
 		# Book Appointment and Invoice
 		# invoice total 400 (after 20% discount) coverage 80%
-		appointment = create_appointment(
+		appointment = create_insured_appointment(
 			self.patient, self.practitioner, nowdate(), appointment_type, insurance_policy.name
 		)
 		appointments_to_invoice = get_appointments_to_invoice(
 			frappe.get_doc("Patient", self.patient), "_Test Company"
 		)
-		create_sales_invoice(appointment, appointments_to_invoice)
+		invoice_insured_appointments(appointment, appointments_to_invoice)
 
 		# Create Insurance Claim
 		claim_name, claim_doc = create_insurance_claim(self.patient, insurance_policy.name)

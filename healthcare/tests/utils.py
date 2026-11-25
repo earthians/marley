@@ -1,6 +1,12 @@
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 
 from erpnext.tests.utils import ERPNextTestSuite
+
+
+def healthcare_owns_abdm_settings():
+	"""The marley_abdm app replaces this legacy doctype with a Single of the same name."""
+	return frappe.get_meta("ABDM Settings").module == "Healthcare"
 
 
 class BootStrapTestData:
@@ -11,6 +17,7 @@ class BootStrapTestData:
 		self.make_company()
 		self.make_service_items()
 		self.make_stock_items()
+		self.make_consumables()
 		self.make_diagnoses()
 		self.make_medical_departments()
 		self.make_users()
@@ -34,6 +41,107 @@ class BootStrapTestData:
 		self.make_medications()
 		self.make_treatment_plan_templates()
 		self.make_insurance_payors()
+		self.make_custom_doctypes()
+		self.make_clinical_masters()
+		self.make_abdm_settings()
+
+	def make_abdm_settings(self):
+		"""ABDM Settings are read for the user's default company, which a test site does not have."""
+		if not healthcare_owns_abdm_settings():
+			return
+		frappe.defaults.set_user_default("company", "_Test Company", "abdm_user@marleyhealth.io")
+		records = [
+			{
+				"doctype": "ABDM Settings",
+				"name": "_Test Gateway-_Test Company",
+				"gateway_name": "_Test Gateway",
+				"company": "_Test Company",
+				"default": 1,
+				"auth_base_url": "https://dev.abdm.gov.in/gateway/",
+				"health_id_base_url": "https://healthidsbx.abdm.gov.in/api/",
+			}
+		]
+		self.make_records(["name"], records)
+
+	def make_clinical_masters(self):
+		from healthcare.setup import create_clinical_note_types, create_intake_output_types
+
+		create_clinical_note_types()
+		create_intake_output_types()
+		vital = {
+			"doctype": "Observation Template",
+			"observation": "_Test Pulse",
+			"abbr": "TPR",
+			"observation_category": "Vital Signs",
+			"permitted_data_type": "Quantity",
+		}
+		self.make_records(["observation"], [vital])
+		classes = ["_Test Warfarins", "_Test Salicylates"]
+		self.make_records(
+			["medication_class"],
+			[{"doctype": "Medication Class", "medication_class": name} for name in classes],
+		)
+		allergies = [
+			{"allergy_name": "_Test Analgesic Allergy", "category": "Medication", "substance": "Analgesics"},
+			{"allergy_name": "_Test Peanut Allergy", "category": "Food"},
+		]
+		self.make_records(
+			["allergy_name"],
+			[
+				{"doctype": "Allergy", "substance_type": "Medication Class", **allergy}
+				for allergy in allergies
+			],
+		)
+		medications = [
+			("_Test Amoxicillin", "Amoxicillin", 1),
+			("_Test Warfarin", "Warfarin", 1),
+			("_Test Ibuprofen", "Ibuprofen", 1),
+			("_Test Clavulanate", "Clavulanic Acid", 0),
+		]
+		records = [
+			{
+				"doctype": "Medication",
+				"name": f"Tablet {generic_name} 100Milligram",
+				"generic_name": generic_name,
+				"medication_class": medication_class,
+				"strength": 100,
+				"strength_uom": "Milligram",
+				"dosage_form": "Tablet",
+				"is_orderable": is_orderable,
+			}
+			for generic_name, medication_class, is_orderable in medications
+		]
+		self.make_records(["name"], records)
+
+	def make_custom_doctypes(self):
+		"""A DocType or a custom field is a schema change, which MariaDB commits at once, so no test may create one."""
+		from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+		create_custom_fields(
+			{
+				"Patient": [
+					{"fieldname": "test_custom_field", "label": "Test Calculation", "fieldtype": "Int"}
+				]
+			},
+			update=True,
+		)
+		records = [
+			{
+				"doctype": "DocType",
+				"name": "Test Patient Feedback",
+				"module": "Healthcare",
+				"custom": 1,
+				"is_submittable": 1,
+				"fields": [
+					{"label": "Date", "fieldname": "date", "fieldtype": "Date"},
+					{"label": "Patient", "fieldname": "patient", "fieldtype": "Link", "options": "Patient"},
+					{"label": "Rating", "fieldname": "rating", "fieldtype": "Rating"},
+					{"label": "Feedback", "fieldname": "feedback", "fieldtype": "Small Text"},
+				],
+				"permissions": [{"role": "System Manager", "read": 1}],
+			}
+		]
+		self.make_records(["name"], records)
 
 	def make_insurance_payors(self):
 		records = [
@@ -600,8 +708,54 @@ class BootStrapTestData:
 				"password": "password",
 				"roles": [{"doctype": "Has Role", "role": "Physician"}],
 			},
+			{
+				"doctype": "User",
+				"email": "abdm_user@marleyhealth.io",
+				"first_name": "abdm_user",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Physician"}],
+			},
+			{
+				"doctype": "User",
+				"email": "nurse@marleyhealth.io",
+				"first_name": "nurse",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Nursing User"}],
+			},
+			{
+				"doctype": "User",
+				"email": "incoming.nurse@example.com",
+				"first_name": "Incoming Nurse",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Nursing User"}],
+			},
+			{
+				"doctype": "User",
+				"email": "lab_permissions@marleyhealth.io",
+				"first_name": "Laboratory User",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Laboratory User"}],
+			},
+			{
+				"doctype": "User",
+				"email": "lab_approver@marleyhealth.io",
+				"first_name": "approver",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "LabTest Approver"}],
+			},
+			{
+				"doctype": "User",
+				"email": "portal_patient@marleyhealth.io",
+				"first_name": "Patient",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Patient"}],
+			},
 		]
 		self.make_records(["email"], records)
+		for record in records:  # a reused site may hold the account without its role
+			roles = {row["role"] for row in record.get("roles", [])}
+			if missing := roles - set(frappe.get_roles(record["email"])):
+				frappe.get_doc("User", record["email"]).add_roles(*missing)
 
 	def make_module_profiles(self):
 		records = [
@@ -634,48 +788,54 @@ class BootStrapTestData:
 		records = [
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient",
 				"first_name": "_Test Patient",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 0",
 				"first_name": "_Test Patient 0",
 				"sex": "Male",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 1",
 				"first_name": "_Test Patient 1",
 				"sex": "Male",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test IPD Patient",
 				"first_name": "_Test IPD Patient",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 2",
 				"first_name": "_Test Patient 2",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 3",
 				"first_name": "_Test Patient 3",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 		]
-		self.make_records(["first_name"], records)
+		self.make_records(["name"], records)
 
 	def make_practitioners(self):
-		# TODO: fix practitioner naming
 		records = [
 			{
 				"doctype": "Healthcare Practitioner",
+				"name": "_Test Healthcare Practitioner 0",
 				"first_name": "_Test",
 				"last_name": "Healthcare Practitioner 0",
 				"gender": "Female",
@@ -687,6 +847,7 @@ class BootStrapTestData:
 			},
 			{
 				"doctype": "Healthcare Practitioner",
+				"name": "_Test Healthcare Practitioner 1",
 				"first_name": "_Test",
 				"last_name": "Healthcare Practitioner 1",
 				"gender": "Male",
@@ -698,6 +859,7 @@ class BootStrapTestData:
 			},
 			{
 				"doctype": "Healthcare Practitioner",
+				"name": "_Test Healthcare Practitioner 2",
 				"first_name": "_Test",
 				"last_name": "Healthcare Practitioner 2",
 				"gender": "Male",
@@ -708,7 +870,7 @@ class BootStrapTestData:
 				"inpatient_visit_charge": 300,
 			},
 		]
-		self.make_records(["last_name", "department"], records)
+		self.make_records(["name"], records)
 
 	def make_medical_departments(self):
 		records = [
@@ -769,6 +931,72 @@ class BootStrapTestData:
 		]
 		self.make_records(["item_code"], records)
 
+	def make_consumables(self):
+		"""Stock the lab and ward tests draw on, in units that allow fractions where a lab measures."""
+		uoms = ["_Test Millilitre", "_Test Litre", "_Test Bottle", "_Test Pair", "_Test Gram"]
+		self.make_records(
+			["uom_name"], [{"doctype": "UOM", "uom_name": uom, "must_be_whole_number": 0} for uom in uoms]
+		)
+		colors = ["_Test Lavender", "_Test Gold"]
+		self.make_records(
+			["name"], [{"doctype": "Color", "name": color, "color": "#7F00FF"} for color in colors]
+		)
+		items = [
+			("_Test Consumable Reagent", "Nos"),
+			("_Test Consumable Tube", "Nos"),
+			("_Test Consumable Needle", "Nos"),
+			("_Test Consumable Label", "Nos"),
+			("_Test Consumable Bottled Reagent", "_Test Bottle"),
+			("_Test Consumable Measured Reagent", "_Test Millilitre"),
+			("_Test Permission Item", "Nos"),
+			("_Test Linked Item", "Nos"),
+		]
+		records = [
+			{
+				"doctype": "Item",
+				"item_code": code,
+				"item_group": "Products",
+				"stock_uom": uom,
+				"is_stock_item": 1,
+				"valuation_rate": 10,
+			}
+			for code, uom in items
+		]
+		records += [
+			{
+				"doctype": "Item",
+				"item_code": "_Test Batched Drug",
+				"item_name": "_Test Batched Drug",
+				"item_group": "Products",
+				"stock_uom": "Nos",
+				"is_stock_item": 1,
+				"has_batch_no": 1,
+				"create_new_batch": 1,
+				"batch_number_series": "_TEST-BATCH-.####",
+				"valuation_rate": 10,
+			},
+			{
+				"doctype": "Item",
+				"item_code": "Syringe",
+				"item_group": "_Test Item Group",
+				"stock_uom": "Nos",
+				"valuation_rate": 5,
+			},
+		]
+		self.make_records(["item_code"], records)
+		unit_types = ["Analyser", "Coagulometer", "Scanner", "Ultrasound", "Spectrometer"]
+		self.make_records(
+			["service_unit_type"],
+			[
+				{
+					"doctype": "Healthcare Service Unit Type",
+					"service_unit_type": f"_Test Consumables {kind}",
+					"allow_appointments": 1,
+				}
+				for kind in unit_types
+			],
+		)
+
 	def make_service_items(self):
 		records = [
 			{
@@ -818,6 +1046,8 @@ class BootStrapTestData:
 			},
 		]
 		self.make_records(["company_name"], records)
+		# ERPNext sets it on a new company; stock and the drug search fall back to it
+		frappe.db.set_value("Company", "_Test Company", "default_warehouse", "Stores - _TC")
 
 	def make_records(self, key, records):
 		doctype = records[0].get("doctype")
@@ -831,15 +1061,30 @@ class BootStrapTestData:
 		for x in records:
 			filters = get_filters(x)
 			if not frappe.db.exists(doctype, filters):
-				frappe.get_doc(x).insert()
+				frappe.get_doc(x).insert(set_name=x.get("name"))
 
 		frappe.db.commit()
 
 
-BootStrapTestData()
+# Master data is always older than the test clock, so rates and prices dated "today" apply.
+# Only Python's clock is frozen: MariaDB NOW() / CURDATE() and Redis expiry still run on real time,
+# so compute dates in Python, never in SQL.
+BOOTSTRAP_TIME = "2026-01-01 09:00:00"
+TEST_TIME = "2027-06-16 10:00:00"
+
+with freeze_time(BOOTSTRAP_TIME):
+	BootStrapTestData()
 
 
 class HealthcareTestSuite(ERPNextTestSuite):
-	"""Class for creating Healthcare test records"""
+	"""Runs every test on a fixed weekday morning, so dates and times never depend on the real clock."""
 
-	pass
+	def run(self, result=None):
+		with freeze_time(TEST_TIME, tick=True):
+			return super().run(result)
+
+	def start_without_user_permissions(self, user):
+		"""Drop the grants a reused site may hold for this user. The rollback brings them back, so the cache is cleared again after it."""
+		frappe.db.delete("User Permission", {"user": user})
+		frappe.clear_cache(user=user)
+		self.addCleanup(frappe.clear_cache, user=user)

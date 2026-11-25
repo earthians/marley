@@ -1,24 +1,14 @@
 import responses
 
-import frappe
-
 from healthcare.regional.india.abdm.utils import abdm_request
-from healthcare.tests.utils import HealthcareTestSuite
+from healthcare.tests.utils import HealthcareTestSuite, healthcare_owns_abdm_settings
 
 
 class TestPatient(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		doc = frappe.get_doc(
-			{
-				"doctype": "ABDM Settings",
-				"default": 1,
-				"auth_base_url": "https://dev.abdm.gov.in/gateway/",
-				"health_id_base_url": "https://healthidsbx.abdm.gov.in/api/",
-				"company": frappe.defaults.get_user_default("Company"),
-			}
-		)
-		doc.insert()
+		if not healthcare_owns_abdm_settings():
+			self.skipTest("another app replaces ABDM Settings on this site")
 
 	@responses.activate
 	def test_aadhar_otp_flow(self):
@@ -36,5 +26,6 @@ class TestPatient(HealthcareTestSuite):
 		)
 
 		payload = {"aadhaar": "123400001234"}
-		response = abdm_request(payload, "generate_aadhaar_otp", "Health ID")
+		with self.set_user("abdm_user@marleyhealth.io"):
+			response = abdm_request(payload, "generate_aadhaar_otp", "Health ID")
 		assert "txnId" in response
