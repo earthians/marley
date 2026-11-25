@@ -181,19 +181,8 @@ class TestWriteEndpoints(WhitelistPermissionTestCase):
 class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 	def setUp(self):
 		super().setUp()
-		self.item = self.stored_item("_Test Permission Item")
+		self.item = "_Test Permission Item"
 		self.new_code = "_Test Renamed Item"
-
-	def stored_item(self, item_code):
-		if not frappe.db.exists("Item", item_code):
-			stored(
-				"Item",
-				item_code=item_code,
-				item_name=item_code,
-				item_group="All Item Groups",
-				stock_uom="Nos",
-			)
-		return item_code
 
 	def as_json(self, doctype, **fields):
 		return json.dumps({"name": stored(doctype, **fields), **fields})
@@ -234,7 +223,7 @@ class TestItemRenameEndpoints(WhitelistPermissionTestCase):
 		self.assert_item_kept()
 
 	def test_rename_uses_the_linked_item_not_the_one_sent(self):
-		linked = self.stored_item("_Test Linked Item")
+		linked = "_Test Linked Item"
 		unit_type = stored("Healthcare Service Unit Type", service_unit_type=self.new_code, item=linked)
 
 		change_item_code(self.item, self.new_code, unit_type)

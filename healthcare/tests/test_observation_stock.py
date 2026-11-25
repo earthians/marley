@@ -18,8 +18,6 @@ from healthcare.tests.test_observation_consumables import (
 	add_uom_conversion,
 	collection_for,
 	consuming_template,
-	make_stock_item,
-	make_uom,
 	receive,
 	stock_qty,
 )
@@ -34,9 +32,7 @@ LAB_STORE, PICKED_STORE = "_Test Warehouse 1 - _TC", "Finished Goods - _TC"
 class TestObservationStock(HealthcareTestSuite):
 	def setUp(self):
 		for item in (REAGENT, TUBE, LABEL, NEEDLE):
-			make_stock_item(item)
 			receive(item, 5)
-		make_unit_type(ANALYSER)
 
 	def test_observation_takes_only_the_observation_stage_items(self):
 		observation = new_observation(reagent_template("Stock Haemoglobin"))
@@ -55,7 +51,6 @@ class TestObservationStock(HealthcareTestSuite):
 
 	def test_the_only_unit_of_the_type_is_picked_with_its_warehouse(self):
 		# Its own type, so units other tests make cannot make the choice ambiguous.
-		make_unit_type("_Test Consumables Coagulometer")
 		unit = make_unit("_Test Consumables Coagulometer A", "_Test Consumables Coagulometer")
 
 		observation = new_observation(
@@ -66,7 +61,6 @@ class TestObservationStock(HealthcareTestSuite):
 		self.assertEqual(observation.warehouse, WAREHOUSE)
 
 	def test_a_unit_of_another_type_cannot_perform_it(self):
-		make_unit_type("_Test Consumables Scanner")
 		scanner = make_unit("_Test Consumables Scanner A", "_Test Consumables Scanner")
 		template = reagent_template("Stock Reticulocytes", unit_type=ANALYSER)
 
@@ -74,7 +68,6 @@ class TestObservationStock(HealthcareTestSuite):
 			new_observation(template, service_unit=scanner)
 
 	def test_the_service_request_type_overrides_the_template_type(self):
-		make_unit_type("_Test Consumables Ultrasound")
 		ultrasound = make_unit("_Test Consumables Ultrasound A", "_Test Consumables Ultrasound")
 		analyser = make_unit("_Test Consumables Analyser C", ANALYSER)
 		template = reagent_template("Stock Doppler", unit_type=ANALYSER)
@@ -183,7 +176,6 @@ class TestObservationStock(HealthcareTestSuite):
 
 	def test_a_reagent_is_issued_in_the_uom_its_template_names(self):
 		# Stocked in its smallest unit, as reagents should be; the template counts in litres.
-		make_stock_item(MEASURED, stock_uom=make_uom("_Test Millilitre"))
 		add_uom_conversion(MEASURED, "_Test Litre", 1000)
 		receive(MEASURED, 1000)
 		template = measured_template("Stock Litre Reagent", 0.25, "_Test Litre")
@@ -197,7 +189,6 @@ class TestObservationStock(HealthcareTestSuite):
 
 	def test_a_quantity_finer_than_stock_is_kept_is_refused(self):
 		# 2.5 ml of a 500 ml bottle is 0.005 bottles: it would round, so it is refused.
-		make_stock_item(BOTTLED, stock_uom=make_uom("_Test Bottle"))
 		add_uom_conversion(BOTTLED, "_Test Millilitre", 0.002)
 
 		with self.assertRaises(frappe.ValidationError):
@@ -228,7 +219,6 @@ class TestObservationStock(HealthcareTestSuite):
 		self.assertEqual((row.item_code, row.uom, row.conversion_factor), (TUBE, "Nos", 1))
 
 	def test_a_row_added_by_hand_counts_in_the_stock_uom(self):
-		make_uom("_Test Pair")
 		observation = new_observation(reagent_template("Stock Hand Added"))
 		observation.append(
 			"consumables",
@@ -248,7 +238,6 @@ class TestObservationStock(HealthcareTestSuite):
 
 	def test_a_result_issuing_nothing_is_approved_whatever_its_quantities(self):
 		# 5 ml of a 500 ml bottle is kept as 0.01 bottles; 2.5 ml (0.005) cannot be.
-		make_stock_item(BOTTLED, stock_uom=make_uom("_Test Bottle"))
 		add_uom_conversion(BOTTLED, "_Test Millilitre", 0.002)
 		template = measured_template("Stock Stock Off", 5, "_Test Millilitre", item_code=BOTTLED)
 		observation = new_observation(template, warehouse=WAREHOUSE)
@@ -266,7 +255,7 @@ class TestObservationStock(HealthcareTestSuite):
 		template.consume_stock = 1
 		template.set(
 			"consumables",
-			[{"item_code": REAGENT, "consumed_at": "Observation", "qty": 1, "uom": make_uom("_Test Gram")}],
+			[{"item_code": REAGENT, "consumed_at": "Observation", "qty": 1, "uom": "_Test Gram"}],
 		)
 
 		with self.assertRaises(frappe.ValidationError):
@@ -309,7 +298,6 @@ class TestObservationStock(HealthcareTestSuite):
 		self.assertEqual(component.service_unit, unit)
 
 	def test_a_component_needing_other_equipment_takes_its_own_unit(self):
-		make_unit_type("_Test Consumables Spectrometer")
 		analyser = make_unit("_Test Consumables Analyser E", ANALYSER)
 		spectrometer = make_unit("_Test Consumables Spectrometer A", "_Test Consumables Spectrometer")
 		parent = new_observation(reagent_template("Stock Mixed Panel"), service_unit=analyser)
@@ -414,13 +402,6 @@ def service_request_for(template, unit_type):
 	)
 	request.insert(ignore_permissions=True)
 	return request.name
-
-
-def make_unit_type(name):
-	if not frappe.db.exists("Healthcare Service Unit Type", name):
-		frappe.get_doc(
-			{"doctype": "Healthcare Service Unit Type", "service_unit_type": name, "allow_appointments": 1}
-		).insert()
 
 
 def make_unit(name, unit_type, warehouse=WAREHOUSE):
