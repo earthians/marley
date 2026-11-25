@@ -40,6 +40,7 @@ class BootStrapTestData:
 		self.make_treatment_plan_templates()
 		self.make_insurance_payors()
 		self.make_custom_doctypes()
+		self.make_clinical_masters()
 		self.make_abdm_settings()
 
 	def make_abdm_settings(self):
@@ -57,6 +58,56 @@ class BootStrapTestData:
 				"auth_base_url": "https://dev.abdm.gov.in/gateway/",
 				"health_id_base_url": "https://healthidsbx.abdm.gov.in/api/",
 			}
+		]
+		self.make_records(["name"], records)
+
+	def make_clinical_masters(self):
+		from healthcare.setup import create_clinical_note_types, create_intake_output_types
+
+		create_clinical_note_types()
+		create_intake_output_types()
+		vital = {
+			"doctype": "Observation Template",
+			"observation": "_Test Pulse",
+			"abbr": "TPR",
+			"observation_category": "Vital Signs",
+			"permitted_data_type": "Quantity",
+		}
+		self.make_records(["observation"], [vital])
+		classes = ["_Test Warfarins", "_Test Salicylates"]
+		self.make_records(
+			["medication_class"],
+			[{"doctype": "Medication Class", "medication_class": name} for name in classes],
+		)
+		allergies = [
+			{"allergy_name": "_Test Analgesic Allergy", "category": "Medication", "substance": "Analgesics"},
+			{"allergy_name": "_Test Peanut Allergy", "category": "Food"},
+		]
+		self.make_records(
+			["allergy_name"],
+			[
+				{"doctype": "Allergy", "substance_type": "Medication Class", **allergy}
+				for allergy in allergies
+			],
+		)
+		medications = [
+			("_Test Amoxicillin", "Amoxicillin", 1),
+			("_Test Warfarin", "Warfarin", 1),
+			("_Test Ibuprofen", "Ibuprofen", 1),
+			("_Test Clavulanate", "Clavulanic Acid", 0),
+		]
+		records = [
+			{
+				"doctype": "Medication",
+				"name": f"Tablet {generic_name} 100Milligram",
+				"generic_name": generic_name,
+				"medication_class": medication_class,
+				"strength": 100,
+				"strength_uom": "Milligram",
+				"dosage_form": "Tablet",
+				"is_orderable": is_orderable,
+			}
+			for generic_name, medication_class, is_orderable in medications
 		]
 		self.make_records(["name"], records)
 

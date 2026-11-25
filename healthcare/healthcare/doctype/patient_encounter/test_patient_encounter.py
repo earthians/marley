@@ -111,13 +111,8 @@ class TestPatientEncounter(HealthcareTestSuite):
 
 	def test_get_medications_query_shows_stock_in_company_warehouse(self):
 		medication = frappe.db.get_value("Medication", {"generic_name": "Paracetamol"})
-		company = frappe.db.get_value("Company", {}, "name")
-		warehouse = frappe.get_cached_value("Company", company, "default_warehouse")
-		if not warehouse:
-			self.skipTest("No default warehouse set on company")
-
 		results = get_medications_query(
-			"Item", None, "name", 0, 20, {"medication": medication, "company": company}
+			"Item", None, "name", 0, 20, {"medication": medication, "company": "_Test Company"}
 		)
 		self.assertTrue(any("Actual Qty" in str(column) for column in results[0]))
 
