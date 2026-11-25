@@ -10,12 +10,11 @@ from healthcare.healthcare.doctype.observation.approval_consumables import (
 )
 from healthcare.healthcare.doctype.observation.observation import set_observation_status
 from healthcare.healthcare.doctype.observation.observation_consumables import get_service_unit_type
-from healthcare.tests.test_observation_consumables import WAREHOUSE, make_stock_item, receive, stock_qty
+from healthcare.tests.test_observation_consumables import WAREHOUSE, receive, stock_qty
 from healthcare.tests.test_observation_stock import (
 	ANALYSER,
 	REAGENT,
 	TUBE,
-	make_unit_type,
 	new_observation,
 	reagent_template,
 	service_request_for,
@@ -28,7 +27,6 @@ APPROVER = "lab_approver@marleyhealth.io"
 class TestApprovalConsumables(HealthcareTestSuite):
 	def setUp(self):
 		for item in (REAGENT, TUBE):
-			make_stock_item(item)
 			receive(item, 5)
 
 	def test_approving_a_panel_shows_its_components_reagents_too(self):
@@ -91,11 +89,6 @@ class TestApprovalAccess(HealthcareTestSuite):
 	"""A lab approver limited to one patient sees only what they may open."""
 
 	def setUp(self):
-		# The templates also list a tube; a fresh site has none until a test makes it.
-		for item in (REAGENT, TUBE):
-			make_stock_item(item)
-		make_unit_type(ANALYSER)
-		make_unit_type("_Test Consumables Ultrasound")
 		self.allowed = "_Test Patient 3"
 		add_user_permission("Patient", self.allowed, APPROVER)
 		self.addCleanup(frappe.clear_cache, user=APPROVER)  # runs after the rollback; the cache outlives it

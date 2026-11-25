@@ -27,7 +27,6 @@ TUBE, NEEDLE, LABEL = "_Test Consumable Tube", "_Test Consumable Needle", "_Test
 class TestCollectionConsumables(HealthcareTestSuite):
 	def setUp(self):
 		for item in (TUBE, NEEDLE, LABEL):
-			make_stock_item(item)
 			receive(item, 5)
 
 	def test_tests_sharing_a_tube_and_a_draw_record_each_item_once(self):
@@ -181,8 +180,8 @@ class TestCollectionConsumables(HealthcareTestSuite):
 	def test_one_template_in_two_containers_records_both(self):
 		# Collected as a standalone test and as a panel's component, in different colors.
 		template = consuming_template("Consumables Twice Collected", BLOOD)
-		as_test = {**component_entry(template), "container_closure_color": make_color("_Test Lavender")}
-		as_component = {**component_entry(template), "container_closure_color": make_color("_Test Gold")}
+		as_test = {**component_entry(template), "container_closure_color": "_Test Lavender"}
+		as_component = {**component_entry(template), "container_closure_color": "_Test Gold"}
 		doc = collection_for()
 
 		record_consumables(doc.name, [as_test, as_component])
@@ -426,7 +425,7 @@ def consuming_template(name, sample, labels=1, department=None, color=None):
 	template = create_lab_sample_leaf(name, sample)
 	template.consume_stock = 1
 	template.medical_department = department
-	template.container_closure_color = color and make_color(color)
+	template.container_closure_color = color
 	template.set(
 		"consumables",
 		[
@@ -535,39 +534,10 @@ def recorded_totals(doc):
 	return totals
 
 
-def make_color(name):
-	if not frappe.db.exists("Color", name):
-		color = frappe.get_doc({"doctype": "Color", "color": "#7F00FF"})
-		color.insert(set_name=name)
-	return name
-
-
-def make_stock_item(item_code, stock_uom="Nos"):
-	if frappe.db.exists("Item", item_code):
-		return
-	frappe.get_doc(
-		{
-			"doctype": "Item",
-			"item_code": item_code,
-			"item_group": "Products",
-			"stock_uom": stock_uom,
-			"is_stock_item": 1,
-			"valuation_rate": 10,
-		}
-	).insert(ignore_permissions=True)
-
-
-def make_uom(name):
-	"""A unit that allows fractions, as ml or grams do."""
-	if not frappe.db.exists("UOM", name):
-		frappe.get_doc({"doctype": "UOM", "uom_name": name, "must_be_whole_number": 0}).insert()
-	return name
-
-
 def add_uom_conversion(item_code, uom, factor):
 	item = frappe.get_doc("Item", item_code)
 	if not any(row.uom == uom for row in item.uoms):
-		item.append("uoms", {"uom": make_uom(uom), "conversion_factor": factor})
+		item.append("uoms", {"uom": uom, "conversion_factor": factor})
 		item.save()
 
 
