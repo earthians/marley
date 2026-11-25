@@ -74,9 +74,7 @@ class TestBedStock(HealthcareTestSuite):
 		receipt.submit()
 
 	def prescribe_dextromethorphan(self):
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		create_ipmo(self.patient).submit()
 
@@ -86,7 +84,7 @@ class TestBedStock(HealthcareTestSuite):
 		self.leave_stock_at_the_bed(qty=2, item_code="_Test_Stock_Item")
 
 	def leave_batched_medication_at_the_bed(self, batch_id="_TEST-BATCH-BEDSIDE", qty=2):
-		from healthcare.tests.test_medication_stock_entry import receive_batch
+		from healthcare.tests.factories.inpatient import receive_batch
 
 		return receive_batch(batch_id, add_days(nowdate(), 60), qty=qty, warehouse=self.bed.warehouse)
 

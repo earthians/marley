@@ -19,7 +19,6 @@ from healthcare.healthcare.doctype.clinical_procedure.clinical_procedure import 
 )
 from healthcare.healthcare.doctype.clinical_procedure.test_clinical_procedure import (
 	create_clinical_procedure_template,
-	create_procedure,
 )
 from healthcare.healthcare.doctype.clinical_procedure_template.clinical_procedure_template import (
 	change_item_code_from_template,
@@ -71,6 +70,7 @@ from healthcare.healthcare.utils import (
 	render_doc_as_html,
 )
 from healthcare.regional.india.abdm.utils import abdm_request, get_health_data
+from healthcare.tests.factories.encounters import create_procedure
 from healthcare.tests.utils import HealthcareTestSuite
 
 NOBODY = "test_user@marleyhealth.io"  # a login with no clinical role at all

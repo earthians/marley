@@ -3,7 +3,6 @@
 
 import frappe
 
-from healthcare.healthcare.doctype.allergy.test_allergy import create_allergy
 from healthcare.tests.utils import HealthcareTestSuite
 
 

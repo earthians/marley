@@ -7,10 +7,8 @@ from frappe.utils import add_days, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
 
-from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
-	create_appointment,
-	create_encounter,
-)
+from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import create_appointment
+from healthcare.tests.factories.encounters import create_encounter_from_appointment
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -25,7 +23,7 @@ class TestPatientMedicalRecord(HealthcareTestSuite):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
 		appointment = create_appointment(patient, practitioner, nowdate(), invoice=1)
-		encounter = create_encounter(appointment)
+		encounter = create_encounter_from_appointment(appointment)
 
 		# check for encounter
 		medical_rec = frappe.db.exists(

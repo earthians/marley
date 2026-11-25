@@ -10,15 +10,12 @@ from healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medicati
 	get_drug_shortage_map,
 	make_difference_stock_entry,
 )
-from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-	create_ipme,
-	create_ipmo,
-)
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
 	get_healthcare_service_unit,
 )
+from healthcare.tests.factories.inpatient import create_ipme, create_ipmo, make_stock_entry
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -203,31 +200,4 @@ def empty_warehouse(warehouse, item_code):
 	row.s_warehouse = warehouse
 	row.conversion_factor = 1
 	row.expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
-	stock_entry.submit()
-
-
-def make_stock_entry(warehouse=None):
-	frappe.db.set_value(
-		"Company",
-		"_Test Company",
-		{
-			"stock_adjustment_account": "Stock Adjustment - _TC",
-			"default_inventory_account": "Stock In Hand - _TC",
-		},
-	)
-	stock_entry = frappe.new_doc("Stock Entry")
-	stock_entry.stock_entry_type = "Material Receipt"
-	stock_entry.company = "_Test Company"
-	stock_entry.to_warehouse = warehouse or "Stores - _TC"
-	expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
-	se_child = stock_entry.append("items")
-	se_child.item_code = "Dextromethorphan"
-	se_child.item_name = "Dextromethorphan"
-	se_child.uom = "Nos"
-	se_child.stock_uom = "Nos"
-	se_child.qty = 6
-	se_child.t_warehouse = "Stores - _TC"
-	# in stock uom
-	se_child.conversion_factor = 1.0
-	se_child.expense_account = expense_account
 	stock_entry.submit()

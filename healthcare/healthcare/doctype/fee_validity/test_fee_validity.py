@@ -12,7 +12,6 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	create_fee_validity,
 	get_fee_validity,
 	manage_fee_validity,
-	query_fee_validity,
 	update_validity_status,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -29,7 +28,7 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 	update_status,
 )
 from healthcare.healthcare.utils import get_encounters_to_invoice
-from healthcare.tests.test_utils import create_encounter
+from healthcare.tests.factories.encounters import create_encounter
 from healthcare.tests.utils import HealthcareTestSuite
 
 

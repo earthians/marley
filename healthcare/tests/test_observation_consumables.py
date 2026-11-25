@@ -15,13 +15,20 @@ from healthcare.healthcare.doctype.sample_collection.sample_collection import (
 	insert_observation,
 	preview_collect,
 )
-from healthcare.healthcare.doctype.sample_collection.test_sample_collection import create_lab_sample_leaf
+from healthcare.tests.factories.lab import (
+	BLOOD,
+	LABEL,
+	NEEDLE,
+	TUBE,
+	URINE,
+	WAREHOUSE,
+	add_uom_conversion,
+	collection_for,
+	consuming_template,
+	receive,
+	stock_qty,
+)
 from healthcare.tests.utils import HealthcareTestSuite
-
-BLOOD = "_Test Sample - Blood Sample"
-URINE = "_Test Sample - Urine"
-WAREHOUSE = "Stores - _TC"
-TUBE, NEEDLE, LABEL = "_Test Consumable Tube", "_Test Consumable Needle", "_Test Consumable Label"
 
 
 class TestCollectionConsumables(HealthcareTestSuite):
@@ -421,42 +428,6 @@ class TestCollectionConsumables(HealthcareTestSuite):
 		self.assertEqual(doc.warehouse, WAREHOUSE)
 
 
-def consuming_template(name, sample, labels=1, department=None, color=None):
-	template = create_lab_sample_leaf(name, sample)
-	template.consume_stock = 1
-	template.medical_department = department
-	template.container_closure_color = color
-	template.set(
-		"consumables",
-		[
-			{"item_code": TUBE, "consumed_at": "Specimen", "qty": 1},
-			{"item_code": LABEL, "consumed_at": "Specimen", "qty": labels},
-			{"item_code": NEEDLE, "consumed_at": "Sample Collection", "qty": 1},
-		],
-	)
-	template.save()
-	return template
-
-
-def collection_for(*templates, warehouse=WAREHOUSE):
-	doc = frappe.get_doc(
-		{"doctype": "Sample Collection", "patient": "_Test Patient", "company": "_Test Company"}
-	)
-	doc.warehouse = warehouse
-	for template in templates:
-		doc.append(
-			"observation_sample_collection",
-			{
-				"observation_template": template.name,
-				"sample": template.sample,
-				"medical_department": template.medical_department,
-				"status": "Open",
-			},
-		)
-	doc.insert(ignore_permissions=True)
-	return doc
-
-
 def collect(doc, rows, collect_action=None):
 	selected = [row.as_dict() for row in rows]
 	insert_observation(
@@ -532,24 +503,3 @@ def recorded_totals(doc):
 	):
 		totals[row.item_code] = totals.get(row.item_code, 0) + flt(row.qty)
 	return totals
-
-
-def add_uom_conversion(item_code, uom, factor):
-	item = frappe.get_doc("Item", item_code)
-	if not any(row.uom == uom for row in item.uoms):
-		item.append("uoms", {"uom": uom, "conversion_factor": factor})
-		item.save()
-
-
-def receive(item_code, qty):
-	stock_entry = frappe.new_doc("Stock Entry")
-	stock_entry.stock_entry_type = "Material Receipt"
-	stock_entry.company = "_Test Company"
-	stock_entry.append(
-		"items", {"item_code": item_code, "qty": qty, "t_warehouse": WAREHOUSE, "basic_rate": 10}
-	)
-	stock_entry.submit()
-
-
-def stock_qty(item_code):
-	return flt(frappe.db.get_value("Bin", {"item_code": item_code, "warehouse": WAREHOUSE}, "actual_qty"))

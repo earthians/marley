@@ -7,6 +7,7 @@ from healthcare.healthcare.doctype.allergy.allergy_seed import read_seed
 from healthcare.healthcare.doctype.medication_class.medication_class_seed import (
 	get_seeded_class_names,
 )
+from healthcare.tests.factories.encounters import create_allergy
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -35,15 +36,3 @@ class TestAllergy(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("Allergy", "Penicillin", "substance"), "Penicillins")
 		self.assertEqual(frappe.db.get_value("Allergy", "Peanut", "category"), "Food")
 		self.assertIsNone(frappe.db.get_value("Allergy", "Peanut", "substance"))
-
-
-def create_allergy(allergy_name, category="Medication", substance_type="Medication Class", substance=None):
-	return frappe.get_doc(
-		{
-			"doctype": "Allergy",
-			"allergy_name": allergy_name,
-			"category": category,
-			"substance_type": substance_type,
-			"substance": substance,
-		}
-	).insert()
