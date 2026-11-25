@@ -17,25 +17,11 @@ class TestChartAccess(HealthcareTestSuite):
 		super().setUp()
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 
-		self.make_nurse()
 		self.patient, self.other_patient = "_Test Patient", "_Test Patient 0"
 		frappe.db.sql("delete from `tabInpatient Record`")
 		admission = create_inpatient(self.other_patient)
 		admission.save()
 		self.admission = admission.name
-
-	def make_nurse(self):
-		if frappe.db.exists("User", NURSE):
-			return
-		frappe.get_doc(
-			{
-				"doctype": "User",
-				"email": NURSE,
-				"first_name": "nurse",
-				"send_welcome_email": 0,
-				"roles": [{"role": "Nursing User"}],
-			}
-		).insert(ignore_permissions=True)
 
 	def share_for_reading(self, patient):
 		"""A login with no clinical role that may only read this one patient."""

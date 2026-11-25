@@ -649,6 +649,41 @@ class BootStrapTestData:
 				"password": "password",
 				"roles": [{"doctype": "Has Role", "role": "Physician"}],
 			},
+			{
+				"doctype": "User",
+				"email": "nurse@marleyhealth.io",
+				"first_name": "nurse",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Nursing User"}],
+			},
+			{
+				"doctype": "User",
+				"email": "incoming.nurse@example.com",
+				"first_name": "Incoming Nurse",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Nursing User"}],
+			},
+			{
+				"doctype": "User",
+				"email": "lab_permissions@marleyhealth.io",
+				"first_name": "Laboratory User",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Laboratory User"}],
+			},
+			{
+				"doctype": "User",
+				"email": "lab_approver@marleyhealth.io",
+				"first_name": "approver",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "LabTest Approver"}],
+			},
+			{
+				"doctype": "User",
+				"email": "portal_patient@marleyhealth.io",
+				"first_name": "Patient",
+				"password": "password",
+				"roles": [{"doctype": "Has Role", "role": "Patient"}],
+			},
 		]
 		self.make_records(["email"], records)
 
