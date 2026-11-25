@@ -5,11 +5,10 @@
 import os
 
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 from frappe.utils import add_days, getdate, nowdate
 
-from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
-	create_patient,
-)
+from healthcare.tests.factories.encounters import create_patient
 from healthcare.tests.utils import HealthcareTestSuite
 
 
@@ -46,10 +45,10 @@ class TestPatient(HealthcareTestSuite):
 		settings.save()
 
 	def test_patient_contact(self):
-		frappe.db.sql("""delete from `tabPatient` where name like '_Test Contact Patient%'""")
-		frappe.db.sql("""delete from `tabCustomer` where name like '_Test Contact Patient%'""")
-		frappe.db.sql("""delete from `tabContact` where name like'_Test Contact Patient%'""")
-		frappe.db.sql("""delete from `tabDynamic Link` where parent like '_Test Contact Patient%'""")
+		frappe.db.delete("Patient", {"name": ["like", "_Test Contact Patient%"]})
+		frappe.db.delete("Customer", {"name": ["like", "_Test Contact Patient%"]})
+		frappe.db.delete("Contact", {"name": ["like", "_Test Contact Patient%"]})
+		frappe.db.delete("Dynamic Link", {"parent": ["like", "_Test Contact Patient%"]})
 
 		patient = create_patient(
 			patient_name="_Test Contact Patient", email="test-patient@example.com", mobile="+91 0000000001"
@@ -83,9 +82,9 @@ class TestPatient(HealthcareTestSuite):
 		)
 
 	def test_patient_user(self):
-		frappe.db.sql("""delete from `tabUser` where email='test-patient-user@example.com'""")
-		frappe.db.sql("""delete from `tabDynamic Link` where parent like '_Test User Patient%'""")
-		frappe.db.sql("""delete from `tabPatient` where name like '_Test User Patient%'""")
+		frappe.db.delete("User", {"email": "test-patient-user@example.com"})
+		frappe.db.delete("Dynamic Link", {"parent": ["like", "_Test User Patient%"]})
+		frappe.db.delete("Patient", {"name": ["like", "_Test User Patient%"]})
 
 		patient = create_patient(
 			patient_name="_Test User Patient",
@@ -124,7 +123,7 @@ class TestPatient(HealthcareTestSuite):
 		self.assertEqual(customer.image, patient.image)
 
 	def test_multiple_patients_linked_with_same_customer(self):
-		frappe.db.sql("""delete from `tabPatient`""")
+		frappe.db.delete("Patient")
 		frappe.db.set_single_value("Healthcare Settings", "link_customer_to_patient", 1)
 
 		patient_name_1 = create_patient(patient_name="John Doe")
@@ -150,3 +149,25 @@ class TestPatient(HealthcareTestSuite):
 		patient.dob = nowdate()
 		patient.insert()
 		self.assertEqual(getdate(patient.dob), getdate())
+
+
+class TestPatientAge(HealthcareTestSuite):
+	"""Age drives dosing, so each edge of the calendar is pinned to a date."""
+
+	def age_on(self, today, dob):
+		with freeze_time(today):
+			age = frappe.new_doc("Patient", dob=dob).age
+		return (age.years, age.months, age.days)
+
+	def test_a_birthday_adds_a_whole_year(self):
+		self.assertEqual(self.age_on("2027-06-16", "1990-06-16"), (37, 0, 0))
+
+	def test_the_day_before_a_birthday_is_still_the_younger_age(self):
+		self.assertEqual(self.age_on("2027-06-15", "1990-06-16"), (36, 11, 30))
+
+	def test_a_newborn_counts_in_days(self):
+		self.assertEqual(self.age_on("2027-06-16", "2027-06-06"), (0, 0, 10))
+
+	def test_a_leap_day_birthday_falls_on_28_february_in_other_years(self):
+		self.assertEqual(self.age_on("2027-02-27", "2024-02-29"), (2, 11, 29))
+		self.assertEqual(self.age_on("2027-02-28", "2024-02-29"), (3, 0, 0))

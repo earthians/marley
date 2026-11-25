@@ -3,6 +3,7 @@
 
 
 import frappe
+from frappe.tests.classes.context_managers import freeze_time
 from frappe.utils import add_days, date_diff, getdate, now_datetime, nowdate
 
 from erpnext.accounts.doctype.pos_profile.test_pos_profile import make_pos_profile
@@ -12,7 +13,6 @@ from healthcare.healthcare.doctype.fee_validity.fee_validity import (
 	create_fee_validity,
 	get_fee_validity,
 	manage_fee_validity,
-	query_fee_validity,
 	update_validity_status,
 )
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
@@ -29,30 +29,33 @@ from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment 
 	update_status,
 )
 from healthcare.healthcare.utils import get_encounters_to_invoice
-from healthcare.tests.test_utils import create_encounter
+from healthcare.tests.factories.encounters import create_encounter
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestFeeValidity(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		frappe.db.sql("""delete from `tabPatient Appointment`""")
-		frappe.db.sql("""delete from `tabPatient Encounter`""")
-		frappe.db.sql("""delete from `tabFee Validity`""")
+		frappe.db.delete("Patient Appointment")
+		frappe.db.delete("Patient Encounter")
+		frappe.db.delete("Fee Validity")
 		make_pos_profile()
 
 	def test_fee_validity(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		item = "HLC-SI-001"
 
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		healthcare_settings.enable_free_follow_ups = 1
-		healthcare_settings.max_visits = 1
-		healthcare_settings.valid_days = 7
-		healthcare_settings.show_payment_popup = 1
-		healthcare_settings.op_consulting_charge_item = item
-		healthcare_settings.save(ignore_permissions=True)
+		frappe.db.set_single_value(
+			"Healthcare Settings",
+			{
+				"enable_free_follow_ups": 1,
+				"max_visits": 1,
+				"valid_days": 7,
+				"show_payment_popup": 1,
+				"op_consulting_charge_item": item,
+			},
+		)
 
 		# For first appointment, invoice is generated. First appointment not considered in fee validity
 		appointment = create_appointment(patient, practitioner, nowdate())
@@ -117,17 +120,20 @@ class TestFeeValidity(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
 
 	def test_practitioner_fee_validity(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		item = "HLC-SI-001"
 
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		healthcare_settings.enable_free_follow_ups = 1
-		healthcare_settings.max_visits = 1
-		healthcare_settings.valid_days = 7
-		healthcare_settings.show_payment_popup = 1
-		healthcare_settings.op_consulting_charge_item = item
-		healthcare_settings.save(ignore_permissions=True)
+		frappe.db.set_single_value(
+			"Healthcare Settings",
+			{
+				"enable_free_follow_ups": 1,
+				"max_visits": 1,
+				"valid_days": 7,
+				"show_payment_popup": 1,
+				"op_consulting_charge_item": item,
+			},
+		)
 
 		frappe.db.set_value(
 			"Healthcare Practitioner",
@@ -248,20 +254,24 @@ class TestFeeValidity(HealthcareTestSuite):
 		)
 
 	def enable_free_follow_ups(self, apply_on_encounters=1, max_visits=1, valid_days=7):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 
 		# another suite may have left this shared patient flagged as admitted
 		frappe.db.set_value("Patient", patient, {"inpatient_record": None, "inpatient_status": None})
 
-		healthcare_settings = frappe.get_single("Healthcare Settings")
-		healthcare_settings.enable_free_follow_ups = 1
-		healthcare_settings.apply_free_follow_ups_on_encounters = apply_on_encounters
-		healthcare_settings.max_visits = max_visits
-		healthcare_settings.valid_days = valid_days
-		healthcare_settings.show_payment_popup = 1
-		healthcare_settings.op_consulting_charge_item = "HLC-SI-001"
-		healthcare_settings.save(ignore_permissions=True)
+		# set directly: saving the document reruns validate, whose set_default calls clear every cache
+		frappe.db.set_single_value(
+			"Healthcare Settings",
+			{
+				"enable_free_follow_ups": 1,
+				"apply_free_follow_ups_on_encounters": apply_on_encounters,
+				"max_visits": max_visits,
+				"valid_days": valid_days,
+				"show_payment_popup": 1,
+				"op_consulting_charge_item": "HLC-SI-001",
+			},
+		)
 
 		return patient, practitioner
 
@@ -605,6 +615,30 @@ class TestFeeValidity(HealthcareTestSuite):
 			)
 		)
 
+	def test_a_visit_on_the_last_valid_day_is_free_and_the_next_day_is_billed(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=7)
+		create_encounter(patient, practitioner, submit=True, encounter_date=nowdate())
+
+		last_day = create_encounter(patient, practitioner, submit=True, encounter_date=add_days(nowdate(), 7))
+		day_after = create_encounter(
+			patient, practitioner, submit=True, encounter_date=add_days(nowdate(), 8)
+		)
+
+		self.assertNotIn(last_day.name, self.encounters_to_invoice(patient))
+		self.assertIn(day_after.name, self.encounters_to_invoice(patient))
+
+	def test_a_validity_stays_active_through_its_last_day(self):
+		patient, practitioner = self.enable_free_follow_ups(max_visits=4, valid_days=7)
+		create_encounter(patient, practitioner, submit=True)
+		fee_validity = frappe.get_doc("Fee Validity", self.get_fee_validity(patient, practitioner))
+
+		with freeze_time(f"{fee_validity.valid_till} 23:59:00"):
+			fee_validity.update_status()
+			self.assertEqual(fee_validity.status, "Active")
+		with freeze_time(f"{add_days(fee_validity.valid_till, 1)} 00:01:00"):
+			fee_validity.update_status()
+			self.assertEqual(fee_validity.status, "Expired")
+
 	def test_encounter_uses_practitioner_validity_period(self):
 		patient, practitioner = self.enable_free_follow_ups(max_visits=1, valid_days=7)
 		frappe.db.set_value(
@@ -720,7 +754,7 @@ class TestFeeValidity(HealthcareTestSuite):
 		self.assertTrue(appointment.department)
 		self.assertEqual(self.validity_department(patient, practitioner), appointment.department)
 
-		frappe.db.sql("delete from `tabFee Validity`")
+		frappe.db.delete("Fee Validity")
 		encounter = create_encounter(patient, practitioner, submit=True)
 		self.assertTrue(encounter.medical_department)
 		self.assertEqual(self.validity_department(patient, practitioner), encounter.medical_department)
@@ -740,10 +774,10 @@ class TestFeeValidity(HealthcareTestSuite):
 		patient, practitioner = self.enable_free_follow_ups()
 		appointment = create_appointment(patient, practitioner, nowdate())
 
-		self.act_as("test3@example.com")
-		self.assertRaises(
-			frappe.PermissionError, get_fee_validity, appointment.name, appointment.appointment_date
-		)
+		with self.set_user("test3@example.com"):
+			self.assertRaises(
+				frappe.PermissionError, get_fee_validity, appointment.name, appointment.appointment_date
+			)
 
 	def test_check_fee_validity_requires_read_access_to_the_patient(self):
 		"""A crafted unsaved visit naming any patient must not reveal that patient's validity"""
@@ -753,9 +787,5 @@ class TestFeeValidity(HealthcareTestSuite):
 			{"doctype": "Patient Encounter", "patient": patient, "practitioner": practitioner, "__islocal": 1}
 		)
 
-		self.act_as("test3@example.com")
-		self.assertRaises(frappe.PermissionError, check_fee_validity, crafted)
-
-	def act_as(self, user):
-		self.addCleanup(frappe.set_user, "Administrator")
-		frappe.set_user(user)
+		with self.set_user("test3@example.com"):
+			self.assertRaises(frappe.PermissionError, check_fee_validity, crafted)

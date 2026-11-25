@@ -8,6 +8,7 @@ from healthcare.healthcare.doctype.patient_encounter.patient_encounter import (
 	PatientEncounter,
 	get_medications_query,
 	get_permitted_patient,
+	get_prescription_dates,
 )
 from healthcare.tests.utils import HealthcareTestSuite
 
@@ -111,13 +112,8 @@ class TestPatientEncounter(HealthcareTestSuite):
 
 	def test_get_medications_query_shows_stock_in_company_warehouse(self):
 		medication = frappe.db.get_value("Medication", {"generic_name": "Paracetamol"})
-		company = frappe.db.get_value("Company", {}, "name")
-		warehouse = frappe.get_cached_value("Company", company, "default_warehouse")
-		if not warehouse:
-			self.skipTest("No default warehouse set on company")
-
 		results = get_medications_query(
-			"Item", None, "name", 0, 20, {"medication": medication, "company": company}
+			"Item", None, "name", 0, 20, {"medication": medication, "company": "_Test Company"}
 		)
 		self.assertTrue(any("Actual Qty" in str(column) for column in results[0]))
 
@@ -130,11 +126,33 @@ class TestAllergyAnnotationPermission(HealthcareTestSuite):
 		self.assertEqual(get_permitted_patient({"patient": "_Test Patient"}), "_Test Patient")
 
 	def test_a_patient_the_caller_cannot_read_is_not_annotated(self):
-		frappe.set_user("Guest")
-		try:
+		with self.set_user("Guest"):
 			self.assertIsNone(get_permitted_patient({"patient": "_Test Patient"}))
-		finally:
-			frappe.set_user("Administrator")
 
 	def test_no_patient_filter_annotates_nothing(self):
 		self.assertIsNone(get_permitted_patient({}))
+
+
+class TestPrescriptionDates(HealthcareTestSuite):
+	"""The calendar a course of medication is spread over."""
+
+	def test_a_week_runs_across_a_leap_day_and_a_month_end(self):
+		dates = [str(date) for date in get_prescription_dates("1 Week", "2028-02-27")]
+
+		self.assertEqual(
+			dates,
+			[
+				"2028-02-27",
+				"2028-02-28",
+				"2028-02-29",
+				"2028-03-01",
+				"2028-03-02",
+				"2028-03-03",
+				"2028-03-04",
+			],
+		)
+
+	def test_a_month_is_thirty_days_not_a_calendar_month(self):
+		dates = get_prescription_dates("1 Month", "2028-02-27")
+
+		self.assertEqual((len(dates), str(dates[-1])), (30, "2028-03-27"))

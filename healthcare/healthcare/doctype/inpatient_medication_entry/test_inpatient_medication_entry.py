@@ -10,29 +10,22 @@ from healthcare.healthcare.doctype.inpatient_medication_entry.inpatient_medicati
 	get_drug_shortage_map,
 	make_difference_stock_entry,
 )
-from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-	create_ipme,
-	create_ipmo,
-)
-from healthcare.healthcare.doctype.inpatient_record.inpatient_record import (
-	admit_patient,
-	discharge_patient,
-	schedule_discharge,
-)
+from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 	create_inpatient,
 	get_healthcare_service_unit,
-	mark_invoiced_inpatient_occupancy,
 )
+from healthcare.tests.factories.inpatient import create_ipme, create_ipmo, make_stock_entry
 from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestInpatientMedicationEntry(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		frappe.db.sql("""delete from `tabInpatient Record`""")
-		frappe.db.sql("""delete from `tabInpatient Medication Order`""")
-		frappe.db.sql("""delete from `tabInpatient Medication Entry`""")
+		frappe.db.delete("Inpatient Record")
+		frappe.db.delete("Inpatient Medication Order")
+		frappe.db.delete("Inpatient Medication Entry")
+		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
 
 		self.patient = "_Test IPD Patient"
 		# Admit
@@ -149,13 +142,13 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 			item_code="Dextromethorphan",
 			patient=self.patient,
 		)
+		make_stock_entry()
 		ipme = create_ipme(filters, update_stock=1)
 		ipme.save()
 		ipme.submit()
 		return ipme
 
 	def test_drug_shortage_stock_entry(self):
-		empty_warehouse("Finished Goods - _TC", "Dextromethorphan")
 		ipmo = create_ipmo(self.patient)
 		ipmo.submit()
 		ipmo.reload()
@@ -171,6 +164,7 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		)
 
 		# check drug shortage
+		empty_warehouse("Finished Goods - _TC", "Dextromethorphan")
 		ipme = create_ipme(filters, update_stock=1)
 		ipme.warehouse = "Finished Goods - _TC"
 		ipme.save()
@@ -188,29 +182,9 @@ class TestInpatientMedicationEntry(HealthcareTestSuite):
 		ipme.reload()
 		ipme.submit()
 
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-
-		# cleanup - Discharge
-		schedule_discharge(frappe.as_json({"patient": self.patient}))
-		self.ip_record.reload()
-		mark_invoiced_inpatient_occupancy(self.ip_record)
-
-		self.ip_record.reload()
-		discharge_patient(self.ip_record)
-
-		for entry in frappe.get_all("Inpatient Medication Entry"):
-			doc = frappe.get_doc("Inpatient Medication Entry", entry.name)
-			doc.cancel()
-
-		for entry in frappe.get_all("Inpatient Medication Order"):
-			doc = frappe.get_doc("Inpatient Medication Order", entry.name)
-			doc.cancel()
-
 
 def empty_warehouse(warehouse, item_code):
-	"""The shortage test needs an empty warehouse; a failed earlier run strands
-	stock there, which would otherwise fail every run after it."""
+	"""The shortage test needs an empty warehouse. Stock already there is not the test's, so the rollback cannot clear it."""
 	from erpnext.stock.utils import get_stock_balance
 
 	balance = get_stock_balance(item_code, warehouse)
@@ -227,31 +201,4 @@ def empty_warehouse(warehouse, item_code):
 	row.s_warehouse = warehouse
 	row.conversion_factor = 1
 	row.expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
-	stock_entry.submit()
-
-
-def make_stock_entry(warehouse=None):
-	frappe.db.set_value(
-		"Company",
-		"_Test Company",
-		{
-			"stock_adjustment_account": "Stock Adjustment - _TC",
-			"default_inventory_account": "Stock In Hand - _TC",
-		},
-	)
-	stock_entry = frappe.new_doc("Stock Entry")
-	stock_entry.stock_entry_type = "Material Receipt"
-	stock_entry.company = "_Test Company"
-	stock_entry.to_warehouse = warehouse or "Stores - _TC"
-	expense_account = get_account(None, "expense_account", "Healthcare Settings", "_Test Company")
-	se_child = stock_entry.append("items")
-	se_child.item_code = "Dextromethorphan"
-	se_child.item_name = "Dextromethorphan"
-	se_child.uom = "Nos"
-	se_child.stock_uom = "Nos"
-	se_child.qty = 6
-	se_child.t_warehouse = "Stores - _TC"
-	# in stock uom
-	se_child.conversion_factor = 1.0
-	se_child.expense_account = expense_account
 	stock_entry.submit()

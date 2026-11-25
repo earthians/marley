@@ -9,8 +9,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestMedicationAdministration(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.drug = frappe.get_list("Item", filters={"is_stock_item": 1}, pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.drug = "Paracetamol"
 		frappe.db.delete("Medication Administration", {"patient": self.patient})
 
 	def make(self, **kwargs):

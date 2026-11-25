@@ -20,12 +20,12 @@ class TestBedStock(HealthcareTestSuite):
 			get_healthcare_service_unit,
 		)
 
-		frappe.db.sql("""delete from `tabInpatient Record`""")
+		frappe.db.delete("Inpatient Record")
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
 		frappe.db.set_single_value("Stock Settings", "use_serial_batch_fields", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
 		self.bed.save()  # the setting is on, so the bed gets a warehouse
 
@@ -57,21 +57,6 @@ class TestBedStock(HealthcareTestSuite):
 				set_batch(row, item["batch_no"])
 		entry.submit()
 
-	def tearDown(self):
-		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 0)
-		frappe.clear_cache(doctype="Healthcare Settings")
-		self.close_the_admission()
-
-	def close_the_admission(self):
-		"""Leave no admission behind, and no patient pointing at one that is gone."""
-		frappe.db.set_value(
-			"Patient",
-			self.patient,
-			{"inpatient_record": None, "inpatient_status": None},
-			update_modified=False,
-		)
-		frappe.db.delete("Inpatient Record", {"name": self.admission})
-
 	def leave_stock_at_the_bed(self, qty=4, item_code="Dextromethorphan"):
 		from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 
@@ -89,9 +74,7 @@ class TestBedStock(HealthcareTestSuite):
 		receipt.submit()
 
 	def prescribe_dextromethorphan(self):
-		from healthcare.healthcare.doctype.inpatient_medication_order.test_inpatient_medication_order import (
-			create_ipmo,
-		)
+		from healthcare.tests.factories.inpatient import create_ipmo
 
 		create_ipmo(self.patient).submit()
 
@@ -101,9 +84,8 @@ class TestBedStock(HealthcareTestSuite):
 		self.leave_stock_at_the_bed(qty=2, item_code="_Test_Stock_Item")
 
 	def leave_batched_medication_at_the_bed(self, batch_id="_TEST-BATCH-BEDSIDE", qty=2):
-		from healthcare.tests.test_medication_stock_entry import make_batched_drug, receive_batch
+		from healthcare.tests.factories.inpatient import receive_batch
 
-		make_batched_drug()
 		return receive_batch(batch_id, add_days(nowdate(), 60), qty=qty, warehouse=self.bed.warehouse)
 
 	def test_an_untouched_bed_holds_nothing(self):

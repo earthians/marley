@@ -17,7 +17,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestNursingCarePlan(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		frappe.db.delete("Nursing Care Plan", {"patient": self.patient})
 
 	def start(self, goal="Reports pain 3/10 or less at rest"):

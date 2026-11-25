@@ -10,22 +10,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestNursing(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.template = self.ensure_vital_sign_template()
-
-	def ensure_vital_sign_template(self):
-		name = "_Test Pulse"
-		if not frappe.db.exists("Observation Template", name):
-			frappe.get_doc(
-				{
-					"doctype": "Observation Template",
-					"observation": name,
-					"abbr": "TPR",
-					"observation_category": VITAL_SIGNS_CATEGORY,
-					"permitted_data_type": "Quantity",
-				}
-			).insert(ignore_permissions=True)
-		return name
+		self.patient = "_Test Patient"
+		self.template = "_Test Pulse"
 
 	def record(self, value, **kwargs):
 		return record_vitals(patient=self.patient, readings={self.template: value}, **kwargs)
@@ -115,10 +101,7 @@ class TestNursing(HealthcareTestSuite):
 
 class TestNursingIntakeOutput(HealthcareTestSuite):
 	def setUp(self):
-		from healthcare.setup import create_intake_output_types
-
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		create_intake_output_types()
+		self.patient = "_Test Patient"
 		frappe.db.delete("Intake Output Entry", {"patient": self.patient})
 
 	def record(self, *entries):
@@ -165,7 +148,7 @@ class TestNursingIntakeOutput(HealthcareTestSuite):
 
 class TestNursingPatientSearch(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 
 	def find(self, term, admitted_only=0):
 		from healthcare.healthcare.api.nursing import find_patients
@@ -195,22 +178,22 @@ class TestNursingPatientSearch(HealthcareTestSuite):
 		self.assertNotIn(self.patient, names)
 
 	def test_finds_a_patient_by_inpatient_record_number(self):
-		record = frappe.get_all("Inpatient Record", filters={"patient": self.patient}, pluck="name", limit=1)
-		if not record:
-			self.skipTest("no inpatient record for the test patient")
+		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import create_inpatient
 
-		matches = self.find(record[0])
+		record = create_inpatient(self.patient).insert().name
+
+		matches = self.find(record)
 
 		self.assertEqual(matches[0]["name"], self.patient)
 		self.assertEqual(matches[0]["reference_doctype"], "Inpatient Record")
-		self.assertEqual(matches[0]["reference_name"], record[0])
+		self.assertEqual(matches[0]["reference_name"], record)
 
 
 class TestNursingTasks(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.activity = frappe.get_list("Healthcare Activity", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.activity = "BP Check"
 		frappe.db.delete("Nursing Task", {"patient": self.patient})
 
 	def make_task(self, status="Draft"):
@@ -220,7 +203,7 @@ class TestNursingTasks(HealthcareTestSuite):
 				"patient": self.patient,
 				"activity": self.activity,
 				"status": status,
-				"company": frappe.get_list("Company", pluck="name")[0],
+				"company": "_Test Company",
 				"requested_start_time": frappe.utils.now_datetime(),
 			}
 		).insert(ignore_permissions=True)
@@ -324,10 +307,7 @@ class TestNursingTasks(HealthcareTestSuite):
 class TestClinicalNotes(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		from healthcare.setup import create_clinical_note_types
-
-		create_clinical_note_types()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 
 	def record(self, note_type="F-DAR", **values):
 		from healthcare.healthcare.api.clinical_notes import record_note
@@ -377,7 +357,6 @@ class TestClinicalNotes(HealthcareTestSuite):
 		from healthcare.healthcare.api.clinical_notes import get_note_types
 
 		frappe.db.set_value("Clinical Note Type", "Incident Note", "disabled", 1)
-		self.addCleanup(frappe.db.set_value, "Clinical Note Type", "Incident Note", "disabled", 0)
 
 		self.assertNotIn("Incident Note", [row.name for row in get_note_types()])
 

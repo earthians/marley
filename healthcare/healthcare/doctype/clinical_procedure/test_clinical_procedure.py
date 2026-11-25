@@ -6,6 +6,7 @@ import frappe
 from frappe.utils import add_to_date, get_datetime, nowdate, nowtime
 
 from healthcare.healthcare.doctype.service_request.service_request import make_clinical_procedure
+from healthcare.tests.factories.encounters import create_procedure
 from healthcare.tests.utils import HealthcareTestSuite
 
 KNEE_TEMPLATE = "_Test Procedure - Knee Surgery and Rehab"
@@ -13,8 +14,8 @@ KNEE_TEMPLATE = "_Test Procedure - Knee Surgery and Rehab"
 
 class TestClinicalProcedure(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_disable_procedure_template_item(self):
 		procedure_template = create_clinical_procedure_template()
@@ -224,7 +225,7 @@ def create_template(name, **fields):
 
 
 def add_consumable(procedure_template, invoice_separately=0):
-	consumable = create_consumable()
+	consumable = frappe.get_doc("Item", "Syringe")
 	procedure_template.append(
 		"items",
 		{
@@ -237,36 +238,6 @@ def add_consumable(procedure_template, invoice_separately=0):
 	)
 	procedure_template.save()
 	return consumable
-
-
-def create_consumable():
-	if frappe.db.exists("Item", "Syringe"):
-		return frappe.get_doc("Item", "Syringe")
-	consumable = frappe.new_doc("Item")
-	consumable.item_code = "Syringe"
-	consumable.item_group = "_Test Item Group"
-	consumable.stock_uom = "Nos"
-	consumable.valuation_rate = 5.00
-	consumable.save()
-	return consumable
-
-
-def create_procedure(procedure_template, patient, practitioner, submit=True):
-	procedure = frappe.new_doc("Clinical Procedure")
-	procedure.procedure_template = procedure_template.name
-	procedure.patient = patient
-	procedure.practitioner = practitioner
-	procedure.consume_stock = procedure_template.consume_stock
-	procedure.items = procedure_template.items
-	procedure.company = "_Test Company"
-	procedure.warehouse = "_Test Warehouse - _TC"
-	procedure.start_date = frappe.utils.getdate()
-	procedure.start_time = frappe.utils.nowtime()
-	if submit:
-		procedure.submit()
-	else:
-		procedure.insert()
-	return procedure
 
 
 def create_clinical_procedure_template():
