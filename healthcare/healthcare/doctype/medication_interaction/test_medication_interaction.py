@@ -9,8 +9,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestMedicationInteraction(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.warfarin = create_class("_Test Warfarins")
-		self.salicylate = create_class("_Test Salicylates")
+		self.warfarin = "_Test Warfarins"
+		self.salicylate = "_Test Salicylates"
 
 	def test_interactants_must_differ(self):
 		self.assertRaises(frappe.ValidationError, create_interaction, self.warfarin, self.warfarin)
@@ -25,10 +25,6 @@ class TestMedicationInteraction(HealthcareTestSuite):
 
 		self.assertIn(self.warfarin, interaction.title)
 		self.assertIn(self.salicylate, interaction.title)
-
-
-def create_class(medication_class):
-	return frappe.get_doc({"doctype": "Medication Class", "medication_class": medication_class}).insert().name
 
 
 def create_interaction(interactant_a, interactant_b, severity="Major"):
