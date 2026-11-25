@@ -49,13 +49,15 @@ class BootStrapTestData:
 		records = [
 			{
 				"doctype": "ABDM Settings",
+				"name": "_Test Gateway-_Test Company",
+				"gateway_name": "_Test Gateway",
 				"company": "_Test Company",
 				"default": 1,
 				"auth_base_url": "https://dev.abdm.gov.in/gateway/",
 				"health_id_base_url": "https://healthidsbx.abdm.gov.in/api/",
 			}
 		]
-		self.make_records(["company"], records)
+		self.make_records(["name"], records)
 
 	def make_custom_doctypes(self):
 		"""A DocType is a schema change, which MariaDB commits at once, so no test may create one."""
@@ -691,42 +693,48 @@ class BootStrapTestData:
 		records = [
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient",
 				"first_name": "_Test Patient",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 0",
 				"first_name": "_Test Patient 0",
 				"sex": "Male",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 1",
 				"first_name": "_Test Patient 1",
 				"sex": "Male",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test IPD Patient",
 				"first_name": "_Test IPD Patient",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 2",
 				"first_name": "_Test Patient 2",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 			{
 				"doctype": "Patient",
+				"name": "_Test Patient 3",
 				"first_name": "_Test Patient 3",
 				"sex": "Female",
 				"customer_group": "Individual",
 			},
 		]
-		self.make_records(["first_name"], records)
+		self.make_records(["name"], records)
 
 	def make_practitioners(self):
 		records = [
