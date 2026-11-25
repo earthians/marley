@@ -31,16 +31,12 @@ class TestNursingTask(HealthcareTestSuite):
 		self.settings = frappe.get_single("Healthcare Settings")
 		self.settings.validate_nursing_checklists = 1
 		self.settings.save()
-		self.nc_template = frappe.get_doc(
-			"Nursing Checklist Template", frappe.get_list("Nursing Checklist Template", pluck="name")[0]
-		)
+		self.nc_template = frappe.get_doc("Nursing Checklist Template", "Discharge checklist")
 		self.patient = "_Test Patient"
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_lab_test_submission_should_validate_pending_nursing_tasks(self):
-		self.lt_template = frappe.get_doc(
-			"Lab Test Template", frappe.get_list("Lab Test Template", pluck="name")[0]
-		)
+		self.lt_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - Sensitivity")
 		self.lt_template.nursing_checklist_template = self.nc_template.name
 		self.lt_template.save()
 
@@ -59,7 +55,7 @@ class TestNursingTask(HealthcareTestSuite):
 
 	def test_start_clinical_procedure_should_validate_pending_nursing_tasks(self):
 		procedure_template = frappe.get_doc(
-			"Clinical Procedure Template", frappe.get_list("Clinical Procedure Template", pluck="name")[0]
+			"Clinical Procedure Template", "_Test Procedure - Wound Inspection and Cleaning"
 		)
 		procedure_template.allow_stock_consumption = 1
 		procedure_template.pre_op_nursing_checklist_template = self.nc_template.name
@@ -111,7 +107,7 @@ class TestNursingTask(HealthcareTestSuite):
 		discharge_patient(ip_record)
 
 	def test_submit_therapy_session_should_validate_pending_nursing_tasks(self):
-		therapy_type = frappe.get_doc("Therapy Type", frappe.get_list("Therapy Type", pluck="name")[0])
+		therapy_type = frappe.get_doc("Therapy Type", "Basic Rehab")
 		therapy_type.nursing_checklist_template = self.nc_template.name
 		therapy_type.save()
 

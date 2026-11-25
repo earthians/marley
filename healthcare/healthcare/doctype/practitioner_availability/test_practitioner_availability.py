@@ -22,9 +22,9 @@ class IntegrationTestPractitionerAvailability(HealthcareTestSuite):
 		frappe.db.sql("DELETE FROM `tabPatient Appointment`")
 
 		frappe.db.set_single_value("Healthcare Settings", "show_payment_popup", 0)
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
-		self.practitioner_1 = frappe.get_list("Healthcare Practitioner", pluck="name")[1]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
+		self.practitioner_1 = "_Test Healthcare Practitioner 1"
 
 	def create_practitioner_availability(
 		self,

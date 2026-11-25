@@ -25,10 +25,10 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestServiceRequest(HealthcareTestSuite):
 	def test_service_request_creation_on_encounter_submission(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		lab_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - Sensitivity")
-		cpt = frappe.get_list("Clinical Procedure Template", pluck="name")[0]
+		cpt = "_Test Procedure - Wound Inspection and Cleaning"
 		procedure_template = frappe.get_doc("Clinical Procedure Template", cpt)
 		procedure_template.allow_stock_consumption = 1
 		therapy_type = frappe.get_doc("Therapy Type", "Basic Rehab")
@@ -85,8 +85,8 @@ class TestServiceRequest(HealthcareTestSuite):
 					self.assertTrue(frappe.db.get_value(doc, test.name, "invoiced"))
 
 	def test_creation_on_encounter_with_create_order_on_save_checked(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		lab_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - with Sample")
 		encounter = create_encounter(patient, practitioner, "lab_test_prescription", lab_test_template)
 		encounter.submit_orders_on_save = True
@@ -105,8 +105,8 @@ class TestServiceRequest(HealthcareTestSuite):
 
 	def test_mark_observation_as_invoiced(self):
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		encounter = create_encounter(
 			patient, practitioner, "lab_test_prescription", obs_template, submit=True, obs=True
 		)
@@ -119,8 +119,8 @@ class TestServiceRequest(HealthcareTestSuite):
 
 	def test_make_observation_maps_practitioner(self):
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		encounter = create_encounter(
 			patient, practitioner, "lab_test_prescription", obs_template, submit=True, obs=True
 		)
@@ -133,9 +133,9 @@ class TestServiceRequest(HealthcareTestSuite):
 		)
 
 	def test_patient_referral(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner_1 = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
-		practitioner_2 = frappe.get_list("Healthcare Practitioner", pluck="name")[1]
+		patient = "_Test Patient"
+		practitioner_1 = "_Test Healthcare Practitioner 2"
+		practitioner_2 = "_Test Healthcare Practitioner 1"
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
 		encounter = create_encounter(
 			patient, practitioner_1, "lab_test_prescription", obs_template, submit=True, obs=True
@@ -168,9 +168,9 @@ class TestServiceRequest(HealthcareTestSuite):
 		)
 
 	def test_make_appointment_from_service_request_does_not_copy_order_source(self):
-		patient = frappe.get_list("Patient", pluck="name", order_by="name asc")[0]
-		practitioners = frappe.get_list("Healthcare Practitioner", pluck="name", order_by="name asc", limit=2)
-		referring_practitioner, referred_practitioner = practitioners
+		patient = "_Test IPD Patient"
+		referring_practitioner = "_Test Healthcare Practitioner 0"
+		referred_practitioner = "_Test Healthcare Practitioner 1"
 		appointment_type = frappe.get_doc("Appointment Type", "_Test Appointment Type with Items")
 		referred_practitioner_name = frappe.db.get_value(
 			"Healthcare Practitioner", referred_practitioner, "practitioner_name"
@@ -199,8 +199,8 @@ class TestServiceRequest(HealthcareTestSuite):
 		self.assertFalse(appointment.source)
 
 	def test_make_appointment_without_referred_practitioner_returns_draft(self):
-		patient = frappe.get_list("Patient", pluck="name", order_by="name asc")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name", order_by="name asc")[0]
+		patient = "_Test IPD Patient"
+		practitioner = "_Test Healthcare Practitioner 0"
 		appointment_type = frappe.get_doc("Appointment Type", "_Test Appointment Type with Items")
 		service_request = frappe.get_doc(
 			{

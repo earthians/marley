@@ -24,8 +24,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 class TestInsuranceClaim(HealthcareTestSuite):
 	def setUp(self):
 		super().setUp()
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_insurance_claim_and_payment(self):
 		frappe.db.sql("""delete from `tabAppointment Type` where name = '_Test Appointment'""")
