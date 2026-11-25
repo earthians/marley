@@ -32,6 +32,7 @@ class VitalsRecorder:
 		observation.update(self.observation_defaults(template))
 		self.set_result(observation, value)
 		observation.insert()
+		observation.submit()
 		return observation.name
 
 	def observation_defaults(self, template):
