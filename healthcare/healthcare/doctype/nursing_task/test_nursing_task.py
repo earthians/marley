@@ -24,9 +24,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestNursingTask(HealthcareTestSuite):
 	def setUp(self) -> None:
-		self.settings = frappe.get_single("Healthcare Settings")
-		self.settings.validate_nursing_checklists = 1
-		self.settings.save()
+		frappe.db.set_single_value("Healthcare Settings", "validate_nursing_checklists", 1)
 		self.nc_template = frappe.get_doc("Nursing Checklist Template", "Discharge checklist")
 		self.patient = "_Test Patient"
 		self.practitioner = "_Test Healthcare Practitioner 2"
@@ -67,8 +65,7 @@ class TestNursingTask(HealthcareTestSuite):
 
 	def test_admit_discharge_inpatient_should_validate_pending_nursing_tasks(self):
 		"""nursing tasks on admit and discharge of same ip_record"""
-		self.settings.allow_discharge_despite_unbilled_services = 1
-		self.settings.save()
+		frappe.db.set_single_value("Healthcare Settings", "allow_discharge_despite_unbilled_services", 1)
 
 		ip_record = create_inpatient(self.patient)
 		ip_record.admission_nursing_checklist_template = self.nc_template.name
