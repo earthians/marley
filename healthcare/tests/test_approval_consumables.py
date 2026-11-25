@@ -96,10 +96,9 @@ class TestApprovalAccess(HealthcareTestSuite):
 			make_stock_item(item)
 		make_unit_type(ANALYSER)
 		make_unit_type("_Test Consumables Ultrasound")
-		self.allowed = frappe.db.get_value("Patient", {"name": ["!=", "_Test Patient"]})
-		make_approver()
-		frappe.db.delete("User Permission", {"user": APPROVER})
+		self.allowed = "_Test Patient 3"
 		add_user_permission("Patient", self.allowed, APPROVER)
+		self.addCleanup(frappe.clear_cache, user=APPROVER)  # runs after the rollback; the cache outlives it
 
 	def test_another_patients_observation_is_refused(self):
 		observation = new_observation(reagent_template("Access Refused"))
@@ -164,17 +163,3 @@ def invoiced_observation(template, report, patient):
 	observation = new_observation(template, patient=patient)
 	observation.db_set("sales_invoice", report.docname)
 	return observation
-
-
-def make_approver():
-	if frappe.db.exists("User", APPROVER):
-		return
-	frappe.get_doc(
-		{
-			"doctype": "User",
-			"email": APPROVER,
-			"first_name": "approver",
-			"send_welcome_email": 0,
-			"roles": [{"role": "LabTest Approver"}],
-		}
-	).insert(ignore_permissions=True)
