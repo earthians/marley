@@ -92,36 +92,6 @@ class TestLabTest(HealthcareTestSuite):
 				)
 
 
-def create_lab_test_template(test_sensitivity=0, sample_collection=1):
-	medical_department = "_Test Medical Department"
-	if frappe.db.exists("Lab Test Template", "Insulin Resistance"):
-		return frappe.get_doc("Lab Test Template", "Insulin Resistance")
-	template = frappe.new_doc("Lab Test Template")
-	template.lab_test_name = "Insulin Resistance"
-	template.lab_test_template_type = "Descriptive"
-	template.lab_test_code = "Insulin Resistance"
-	template.lab_test_group = "Services"
-	template.department = medical_department
-	template.is_billable = 1
-	template.lab_test_description = "Insulin Resistance"
-	template.lab_test_rate = 2000
-
-	for entry in ["FBS", "Insulin", "IR"]:
-		template.append(
-			"descriptive_test_templates", {"particulars": entry, "allow_blank": 1 if entry == "IR" else 0}
-		)
-
-	if test_sensitivity:
-		template.sensitivity = 1
-
-	if sample_collection:
-		template.sample = create_lab_test_sample()
-		template.sample_qty = 5.0
-
-	template.save()
-	return template
-
-
 def create_lab_test(lab_template):
 	patient = "_Test Patient"
 	lab_test = frappe.new_doc("Lab Test")
