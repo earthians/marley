@@ -22,7 +22,7 @@ class TestBedStock(HealthcareTestSuite):
 		frappe.db.set_single_value("Healthcare Settings", "manage_inpatient_medication_stock", 1)
 		frappe.clear_cache(doctype="Healthcare Settings")
 
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
+		self.patient = "_Test Patient"
 		self.bed = frappe.get_doc("Healthcare Service Unit", get_healthcare_service_unit())
 		self.bed.save()  # the setting is on, so the bed gets a warehouse
 

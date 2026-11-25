@@ -42,8 +42,8 @@ class TestFeeValidity(HealthcareTestSuite):
 		make_pos_profile()
 
 	def test_fee_validity(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		item = "HLC-SI-001"
 
 		healthcare_settings = frappe.get_single("Healthcare Settings")
@@ -117,8 +117,8 @@ class TestFeeValidity(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("Fee Validity", fee_validity, "status"), "Cancelled")
 
 	def test_practitioner_fee_validity(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		item = "HLC-SI-001"
 
 		healthcare_settings = frappe.get_single("Healthcare Settings")
@@ -248,8 +248,8 @@ class TestFeeValidity(HealthcareTestSuite):
 		)
 
 	def enable_free_follow_ups(self, apply_on_encounters=1, max_visits=1, valid_days=7):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 
 		# another suite may have left this shared patient flagged as admitted
 		frappe.db.set_value("Patient", patient, {"inpatient_record": None, "inpatient_status": None})

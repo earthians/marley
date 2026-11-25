@@ -281,7 +281,7 @@ class TestDiagnosticReport(HealthcareTestSuite):
 
 	def create_report(self, observation_template):
 		frappe.db.set_single_value("Healthcare Settings", "create_observation_on_si_submit", 1)
-		patient = frappe.get_list("Patient", pluck="name")[0]
+		patient = "_Test Patient"
 		sales_invoice = create_sales_invoice(patient, observation_template)
 
 		diagnostic_report = frappe.db.get_value(

@@ -17,8 +17,8 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 class TestTherapyPlan(HealthcareTestSuite):
 	def test_creation_on_encounter_submission(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		medical_department = "_Test Medical Department"
 		encounter = create_encounter(patient, medical_department, practitioner)
 		self.assertTrue(
@@ -28,8 +28,8 @@ class TestTherapyPlan(HealthcareTestSuite):
 		)
 
 	def test_creation_on_encounter_order_save(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
 		filters = {"source_doc": encounter.doctype, "order_group": encounter.name}
 		self.assertFalse(frappe.db.exists("Therapy Plan", filters))
@@ -84,8 +84,8 @@ class TestTherapyPlan(HealthcareTestSuite):
 			self.assertEqual(plan.status, "In Progress")
 
 	def test_additional_order_for_same_therapy_counts_sessions(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		encounter = create_encounter(patient, "_Test Medical Department", practitioner, submit=False)
 		encounter.submit_orders_on_save = 1
 		encounter.save()
@@ -124,8 +124,8 @@ class TestTherapyPlan(HealthcareTestSuite):
 		frappe.get_doc(session).submit()
 		self.assertEqual(frappe.db.get_value("Therapy Plan", plan.name, "status"), "Completed")
 
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		appointment = create_appointment(patient, practitioner, nowdate())
 
 		session = make_therapy_session(
@@ -138,21 +138,19 @@ class TestTherapyPlan(HealthcareTestSuite):
 		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Open")
 
 	def test_practitioner_from_service_request(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		medical_department = "_Test Medical Department"
 		encounter = create_encounter(patient, medical_department, practitioner)
 
-		therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
+		therapy_type = "Basic Rehab"
 		service_request = frappe.db.get_value(
 			"Service Request", {"template_dn": therapy_type, "order_group": encounter.name}
 		)
 
 		# distinct from the Therapy Plan's practitioner, so the assertion can only pass
 		# if the session actually resolved it from the Service Request
-		sr_practitioner = frappe.get_list(
-			"Healthcare Practitioner", filters={"name": ["!=", practitioner]}, pluck="name"
-		)[0]
+		sr_practitioner = "_Test Healthcare Practitioner 1"
 		frappe.db.set_value("Service Request", service_request, "practitioner", sr_practitioner)
 
 		session = make_therapy_session(
@@ -176,18 +174,16 @@ class TestTherapyPlan(HealthcareTestSuite):
 		self.assertEqual(session["practitioner"], plan.practitioner)
 
 	def test_explicit_practitioner_takes_priority(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
-		practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
 		medical_department = "_Test Medical Department"
 		encounter = create_encounter(patient, medical_department, practitioner)
 
-		therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
+		therapy_type = "Basic Rehab"
 		service_request = frappe.db.get_value(
 			"Service Request", {"template_dn": therapy_type, "order_group": encounter.name}
 		)
-		explicit_practitioner = frappe.get_list(
-			"Healthcare Practitioner", filters={"name": ["!=", practitioner]}, pluck="name"
-		)[0]
+		explicit_practitioner = "_Test Healthcare Practitioner 1"
 
 		session = make_therapy_session(
 			patient,
@@ -199,7 +195,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 		self.assertEqual(session["practitioner"], explicit_practitioner)
 
 	def test_therapy_plan_from_template(self):
-		patient = frappe.get_list("Patient", pluck="name")[0]
+		patient = "_Test Patient"
 		template = create_therapy_plan_template()
 		# check linked item
 		self.assertTrue(frappe.db.exists("Therapy Plan Template", {"linked_item": "Complete Rehab"}))
@@ -215,10 +211,10 @@ class TestTherapyPlan(HealthcareTestSuite):
 
 def create_therapy_plan(template=None, patient=None):
 	if not patient:
-		patient = frappe.get_list("Patient", pluck="name")[0]
+		patient = "_Test Patient"
 
-	therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
-	practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+	therapy_type = "Basic Rehab"
+	practitioner = "_Test Healthcare Practitioner 2"
 	plan = frappe.new_doc("Therapy Plan")
 	plan.patient = patient
 	plan.start_date = getdate()
@@ -241,9 +237,9 @@ def create_encounter(patient, medical_department, practitioner, submit=True):
 	encounter.patient = patient
 	encounter.practitioner = practitioner
 	encounter.medical_department = medical_department
-	encounter.appointment_type = frappe.get_list("Appointment Type", pluck="name")[0]
+	encounter.appointment_type = "_Test Appointment Type with Items for Service Unit"
 	encounter.source = "Direct"
-	therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
+	therapy_type = "Basic Rehab"
 	encounter.append("therapies", {"therapy_type": therapy_type, "no_of_sessions": 2})
 	encounter.company = "_Test Company"
 	encounter.save()
@@ -255,7 +251,7 @@ def create_encounter(patient, medical_department, practitioner, submit=True):
 def create_therapy_plan_template():
 	template_name = frappe.db.exists("Therapy Plan Template", "Complete Rehab")
 	if not template_name:
-		therapy_type = frappe.get_list("Therapy Type", pluck="name")[0]
+		therapy_type = "Basic Rehab"
 		template = frappe.new_doc("Therapy Plan Template")
 		template.plan_name = template.item_code = template.item_name = "Complete Rehab"
 		template.item_group = "Services"

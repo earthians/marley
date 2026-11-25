@@ -123,7 +123,7 @@ def create_lab_test_template(test_sensitivity=0, sample_collection=1):
 
 
 def create_lab_test(lab_template):
-	patient = frappe.get_list("Patient", pluck="name")[0]
+	patient = "_Test Patient"
 	lab_test = frappe.new_doc("Lab Test")
 	lab_test.template = lab_template.name
 	lab_test.patient = patient
@@ -148,7 +148,7 @@ def create_lab_test_sample():
 
 
 def create_sales_invoice():
-	patient = frappe.get_list("Patient", pluck="name")[0]
+	patient = "_Test Patient"
 	insulin_resistance_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - Sensitivity")
 	blood_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - with Sample")
 
@@ -183,14 +183,14 @@ def create_sales_invoice():
 
 
 def create_patient_encounter():
-	patient = frappe.get_list("Patient", pluck="name")[0]
+	patient = "_Test Patient"
 	insulin_resistance_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - Sensitivity")
 	blood_test_template = frappe.get_doc("Lab Test Template", "_Test Lab Test - with Sample")
 
 	patient_encounter = frappe.new_doc("Patient Encounter")
 	patient_encounter.appointment_type = "_Test Appointment Type"
 	patient_encounter.patient = patient
-	patient_encounter.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+	patient_encounter.practitioner = "_Test Healthcare Practitioner 2"
 	patient_encounter.encounter_date = getdate()
 	patient_encounter.encounter_time = nowtime()
 

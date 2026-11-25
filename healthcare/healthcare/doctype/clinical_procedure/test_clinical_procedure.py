@@ -13,8 +13,8 @@ KNEE_TEMPLATE = "_Test Procedure - Knee Surgery and Rehab"
 
 class TestClinicalProcedure(HealthcareTestSuite):
 	def setUp(self):
-		self.patient = frappe.get_list("Patient", pluck="name")[0]
-		self.practitioner = frappe.get_list("Healthcare Practitioner", pluck="name")[0]
+		self.patient = "_Test Patient"
+		self.practitioner = "_Test Healthcare Practitioner 2"
 
 	def test_disable_procedure_template_item(self):
 		procedure_template = create_clinical_procedure_template()
