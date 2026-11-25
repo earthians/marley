@@ -18,6 +18,7 @@ class TestWardScope(HealthcareTestSuite):
 
 	def setUp(self):
 		super().setUp()
+		self.start_without_user_permissions(NURSE)
 		from healthcare.healthcare.doctype.inpatient_record.inpatient_record import admit_patient
 		from healthcare.healthcare.doctype.inpatient_record.test_inpatient_record import (
 			create_inpatient,
@@ -37,7 +38,6 @@ class TestWardScope(HealthcareTestSuite):
 	def assign_nurse_to(self, unit):
 		add_user_permission("Healthcare Service Unit", unit, NURSE, ignore_permissions=True)
 		frappe.clear_cache(user=NURSE)
-		self.addCleanup(frappe.clear_cache, user=NURSE)  # runs after the rollback; the cache outlives it
 
 	def test_an_unassigned_nurse_is_not_ward_scoped(self):
 		with self.set_user(NURSE):
