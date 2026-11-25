@@ -75,7 +75,7 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 NOBODY = "test_user@marleyhealth.io"  # a login with no clinical role at all
 PHYSICIAN = "gp@marleyhealth.io"  # a Physician from the healthcare test fixtures
-NURSE = "nurse_permissions@marleyhealth.io"
+NURSE = "nurse@marleyhealth.io"
 LAB_USER = "lab_permissions@marleyhealth.io"  # may submit a Lab Test, but has no access to its request
 PORTAL_USER = "portal_patient@marleyhealth.io"
 
@@ -87,20 +87,6 @@ def stored(doctype, **fields):
 	doc.set_new_name()
 	doc.db_insert()
 	return doc.name
-
-
-def make_user(email, role):
-	if frappe.db.exists("User", email):
-		return
-	frappe.get_doc(
-		{
-			"doctype": "User",
-			"email": email,
-			"first_name": role,
-			"send_welcome_email": 0,
-			"roles": [{"role": role}],
-		}
-	).insert(ignore_permissions=True)
 
 
 class WhitelistPermissionTestCase(HealthcareTestSuite):
@@ -270,7 +256,6 @@ class TestPortalAndGatewayEndpoints(WhitelistPermissionTestCase):
 		self.assertRaises(frappe.PermissionError, get_own_appointment_patient, "Sales Invoice", "any")
 
 	def test_a_portal_user_pays_for_their_own_appointment(self):
-		make_user(PORTAL_USER, "Patient")
 		patient = stored("Patient", first_name="Portal", status="Active", user_id=PORTAL_USER)
 		appointment = stored("Patient Appointment", patient=patient)
 		with self.set_user(PORTAL_USER):
@@ -293,7 +278,6 @@ class TestTrustedInternalPaths(WhitelistPermissionTestCase):
 
 	def setUp(self):
 		super().setUp()
-		make_user(LAB_USER, "Laboratory User")
 
 	def test_a_lab_user_cannot_set_a_request_status_directly(self):
 		request = stored("Service Request", patient=self.patient)
@@ -338,7 +322,6 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 
 	def setUp(self):
 		super().setUp()
-		make_user(LAB_USER, "Laboratory User")
 
 	def test_patient_detail_needs_patient_read(self):
 		self.assert_denied(get_patient_detail, self.patient)
@@ -358,7 +341,6 @@ class TestPatientDataReads(WhitelistPermissionTestCase):
 			self.assertRaises(frappe.PermissionError, get_feed, self.patient)
 
 	def test_a_nurse_can_read_the_history_feed(self):
-		make_user(NURSE, "Nursing User")
 		with self.set_user(NURSE):
 			self.assertIsInstance(get_feed(self.patient), list)
 
@@ -425,7 +407,6 @@ class TestMedicationRequestCreation(WhitelistPermissionTestCase):
 		self.assertEqual(self.requests(), 0)
 
 	def test_a_nurse_cannot_create_medication_requests(self):
-		make_user(NURSE, "Nursing User")
 		with self.set_user(NURSE):
 			self.assertRaises(frappe.PermissionError, create_medication_request, self.encounter)
 
@@ -469,7 +450,6 @@ class TestClinicalProcedureEndpoints(WhitelistPermissionTestCase):
 		self.assert_denied(get_procedure_consumables, self.template.name)
 
 	def test_a_nurse_may_start_and_complete(self):
-		make_user(NURSE, "Nursing User")
 		with self.set_user(NURSE):
 			self.procedure.start_procedure()
 			self.procedure.complete_procedure()

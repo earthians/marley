@@ -403,7 +403,7 @@ def service_request_for(template, unit_type):
 			"doctype": "Service Request",
 			"patient": "_Test Patient",
 			"company": "_Test Company",
-			"practitioner": frappe.db.get_value("Healthcare Practitioner", {"first_name": "_Test"}),
+			"practitioner": "_Test Healthcare Practitioner 2",
 			"order_date": nowdate(),
 			"order_time": nowtime(),
 			"status": "active-Request Status",
