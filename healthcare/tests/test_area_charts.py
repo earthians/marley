@@ -5,6 +5,8 @@ import json
 
 import frappe
 from frappe.desk.doctype.dashboard_chart.dashboard_chart import get as get_chart
+from frappe.tests.classes.context_managers import freeze_time
+from frappe.utils import get_datetime
 
 from healthcare.emergency.dashboard_chart_source.ed_arrivals_by_triage_level import (
 	ed_arrivals_by_triage_level as triage_source,
@@ -54,6 +56,17 @@ class TestAreaCharts(HealthcareTestSuite):
 		self.assertIn(
 			["Patient Appointment", "appointment_date", "<=", "frappe.datetime.get_today()"], filters
 		)
+
+	def test_therapy_sessions_by_type_stops_at_today(self):
+		filters = json.loads(
+			frappe.db.get_value("Dashboard Chart", "Therapy Sessions by Type", "dynamic_filters_json")
+		)
+		self.assertIn(["Therapy Session", "start_date", "<=", "frappe.datetime.get_today()"], filters)
+
+	@freeze_time("2026-11-26 09:30:00")
+	def test_triage_chart_stops_at_now(self):
+		conditions = triage_source.arrival_conditions({})
+		self.assertIn(["arrival_datetime", "<=", get_datetime("2026-11-26 09:30:00")], conditions)
 
 	def test_outpatient_charts_skip_inpatient_appointments(self):
 		for chart in WORKSPACE_CHARTS["Outpatient"]:
