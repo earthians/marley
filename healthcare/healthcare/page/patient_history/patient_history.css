@@ -162,3 +162,30 @@
 	width: 80%;
 	max-width: 80%;
 }
+
+/* Override the styles embedded in previously saved Observation reports. */
+#page-patient_history .imaging-section {
+	background-color: var(--control-bg, #f8f9fa);
+}
+
+#page-patient_history .imaging-section-label {
+	color: var(--text-muted, #6c757d);
+}
+
+#page-patient_history .imaging-section-body {
+	color: var(--text-color, #212529);
+}
+
+@media print {
+	#page-patient_history .imaging-section {
+		background-color: #f8f9fa;
+	}
+
+	#page-patient_history .imaging-section-label {
+		color: #6c757d;
+	}
+
+	#page-patient_history .imaging-section-body {
+		color: #212529;
+	}
+}
