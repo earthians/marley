@@ -21,7 +21,9 @@ function make_form() {
 		ControlData,
 		ControlTextEditor,
 		ControlLongText,
-		on: (_doctype, events) => { handlers = events; },
+		on: (_doctype, events) => {
+			handlers = events;
+		},
 	};
 	const context = vm.createContext({
 		frappe: { ui: { form }, provide() {} },
@@ -34,7 +36,10 @@ function make_form() {
 		"../public/js/observation_widget.js",
 		"../healthcare/doctype/observation/observation.js",
 	]) {
-		vm.runInContext(fs.readFileSync(path.resolve(__dirname, file), "utf8"), context);
+		vm.runInContext(
+			fs.readFileSync(path.resolve(__dirname, file), "utf8"),
+			context,
+		);
 	}
 	context.set_service_unit_query = () => {};
 	const metadata = new Map();
@@ -42,11 +47,15 @@ function make_form() {
 		fields_dict: { result: new ControlLongText({ fieldtype: "Long Text" }) },
 		set_query() {},
 		get_docfield: () => metadata.get(frm.docname),
-		set_df_property: (_name, key, value) => { frm.fields_dict.result.df[key] = value; },
+		set_df_property: (_name, key, value) => {
+			frm.fields_dict.result.df[key] = value;
+		},
 		trigger: event => handlers[event](frm),
 		layout: {
 			replace_field: (_name, df) => {
-				frm.fields_dict.result = new form["Control" + df.fieldtype.replace(/ /g, "")](df);
+				frm.fields_dict.result = new form[
+					"Control" + df.fieldtype.replace(/ /g, "")
+				](df);
 			},
 		},
 	};
@@ -71,10 +80,15 @@ function make_form() {
 test("Imaging → Laboratory → cached Imaging replaces a stale widget despite matching metadata", () => {
 	const { frm, form, navigate } = make_form();
 	const imaging = {
-		name: "imaging", observation_category: "Imaging", result: "<p><strong>Report</strong></p>",
+		name: "imaging",
+		observation_category: "Imaging",
+		result: "<p><strong>Report</strong></p>",
 	};
 	const lab = {
-		name: "lab", observation_category: "Laboratory", permitted_data_type: "Numeric", result: "1.00",
+		name: "lab",
+		observation_category: "Laboratory",
+		permitted_data_type: "Numeric",
+		result: "1.00",
 	};
 	navigate(imaging);
 	frm.trigger("refresh");
@@ -99,7 +113,12 @@ test("refresh reuses a matching result widget", () => {
 	const { frm, navigate } = make_form();
 	for (const doc of [
 		{ name: "imaging", observation_category: "Imaging", result: "<p>Report</p>" },
-		{ name: "lab", observation_category: "Laboratory", permitted_data_type: "Numeric", result: "1.00" },
+		{
+			name: "lab",
+			observation_category: "Laboratory",
+			permitted_data_type: "Numeric",
+			result: "1.00",
+		},
 	]) {
 		navigate(doc);
 		frm.trigger("refresh");
