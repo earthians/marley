@@ -6,12 +6,17 @@ import json
 import frappe
 from frappe.desk.doctype.dashboard_chart.dashboard_chart import get as get_chart
 from frappe.tests.classes.context_managers import freeze_time
-from frappe.utils import get_datetime
+from frappe.utils import add_days, add_to_date, now_datetime, today
 
 from healthcare.emergency.dashboard_chart_source.ed_arrivals_by_triage_level import (
 	ed_arrivals_by_triage_level as triage_source,
 )
-from healthcare.tests.utils import HealthcareTestSuite
+from healthcare.tests.factories.encounters import (
+	create_emergency_record,
+	create_therapy_plan,
+	create_therapy_session,
+)
+from healthcare.tests.utils import TEST_TIME, HealthcareTestSuite
 
 WORKSPACE_CHARTS = {
 	"Healthcare": ["Daily New Patients", "Encounters by Department"],
@@ -23,6 +28,10 @@ WORKSPACE_CHARTS = {
 	"Insurance": ["Daily Insurance Claims", "Insurance Claims by Status"],
 }
 TRIAGE_CHART = "ED Arrivals by Triage Level"
+THERAPY_CHART = "Therapy Sessions by Type"
+THERAPY_TYPE = "Basic Rehab"
+TRIAGE_LEVEL = "_Test Triage Blue"
+COMPANY = "_Test Company"
 
 
 class TestAreaCharts(HealthcareTestSuite):
@@ -57,16 +66,21 @@ class TestAreaCharts(HealthcareTestSuite):
 			["Patient Appointment", "appointment_date", "<=", "frappe.datetime.get_today()"], filters
 		)
 
+	@freeze_time(TEST_TIME)
 	def test_therapy_sessions_by_type_stops_at_today(self):
-		filters = json.loads(
-			frappe.db.get_value("Dashboard Chart", "Therapy Sessions by Type", "dynamic_filters_json")
-		)
-		self.assertIn(["Therapy Session", "start_date", "<=", "frappe.datetime.get_today()"], filters)
+		before = self.therapy_sessions_counted()
+		plan = create_therapy_plan()
+		create_therapy_session("_Test Patient", THERAPY_TYPE, plan.name, start_date=add_days(today(), -1))
+		create_therapy_session("_Test Patient", THERAPY_TYPE, plan.name, start_date=add_days(today(), 1))
+		self.assertEqual(self.therapy_sessions_counted(), before + 1)
 
-	@freeze_time("2026-11-26 09:30:00")
+	@freeze_time(TEST_TIME)
 	def test_triage_chart_stops_at_now(self):
-		conditions = triage_source.arrival_conditions({})
-		self.assertIn(["arrival_datetime", "<=", get_datetime("2026-11-26 09:30:00")], conditions)
+		before = self.triage_arrivals_counted()
+		for hours in (-1, 1):
+			arrival = add_to_date(now_datetime(), hours=hours)
+			create_emergency_record("_Test Patient", arrival_datetime=arrival, triage_level=TRIAGE_LEVEL)
+		self.assertEqual(self.triage_arrivals_counted(), before + 1)
 
 	def test_outpatient_charts_skip_inpatient_appointments(self):
 		for chart in WORKSPACE_CHARTS["Outpatient"]:
@@ -102,6 +116,28 @@ class TestAreaCharts(HealthcareTestSuite):
 			frappe._dict(triage_level="", arrivals=3),
 		]
 		self.assertEqual(triage_source.merge_counts(rows), {None: 5})
+
+	def therapy_sessions_counted(self) -> int:
+		with self.set_user("Administrator"):
+			data = get_chart(chart_name=THERAPY_CHART, filters=self.desk_filters(THERAPY_CHART), refresh=1)
+		counts = dict(zip(data["labels"], data["datasets"][0]["values"], strict=True)) if data else {}
+		return counts.get(THERAPY_TYPE, 0)
+
+	def triage_arrivals_counted(self) -> int:
+		counts = triage_source.arrivals_by_level({"company": COMPANY})
+		return counts.get(TRIAGE_LEVEL, 0)
+
+	def desk_filters(self, chart: str) -> list:
+		static, dynamic = frappe.db.get_value(
+			"Dashboard Chart", chart, ["filters_json", "dynamic_filters_json"]
+		)
+		desk_values = {
+			"frappe.datetime.get_today()": today(),
+			"frappe.datetime.add_days(frappe.datetime.get_today(), -30)": add_days(today(), -30),
+			'frappe.defaults.get_user_default("Company")': COMPANY,
+		}
+		resolved = [[*row[:3], desk_values[row[3]]] for row in json.loads(dynamic)]
+		return json.loads(static) + resolved
 
 	def colour_of(self, level: str) -> str:
 		names = [row.name for row in triage_source.ordered_levels()]
