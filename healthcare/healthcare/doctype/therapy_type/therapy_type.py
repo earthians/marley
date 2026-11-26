@@ -81,7 +81,9 @@ class TherapyType(Document):
 			ch.idx = last_idx + i + 1
 
 	def get_exercises_for_body_parts(self):
-		body_parts = [entry.body_part for entry in self.therapy_for]
+		body_parts = [entry.body_part for entry in (self.get("therapy_for") or []) if entry.body_part]
+		if not body_parts:
+			frappe.throw(_("Please select at least one body part in Therapy For before adding exercises."))
 
 		exercises = frappe.db.sql(
 			"""
