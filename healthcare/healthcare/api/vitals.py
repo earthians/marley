@@ -58,6 +58,7 @@ class VitalsRecorder:
 		observation.insert()
 		if (
 			not observation.get("consumables")
+			and not observation.has_component
 			and observation.is_ready_for_approval()
 			and observation.has_permission("submit")
 		):
