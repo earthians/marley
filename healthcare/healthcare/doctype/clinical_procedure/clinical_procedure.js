@@ -66,6 +66,8 @@ frappe.ui.form.on("Clinical Procedure", {
 	},
 
 	refresh: function (frm) {
+		healthcare.ProcedureSafetyCheck.render(frm);
+
 		if (frm.doc.consume_stock) {
 			frm.set_indicator_formatter("item_code", function (doc) {
 				return doc.qty <= doc.actual_qty ? "green" : "orange";
@@ -378,20 +380,27 @@ let complete_procedure = function (frm) {
 
 let add_start_button = function (frm) {
 	frm.add_custom_button(__("Start"), function () {
-		frappe.call({
-			doc: frm.doc,
-			method: "start_procedure",
-			callback: function (r) {
-				if (r.exc) return;
-				if (r.message == "insufficient stock") {
-					offer_material_receipt(frm);
-				} else {
-					frm.reload_doc();
-				}
-			},
-		});
+		healthcare.ProcedureSafetyCheck.for(frm, answers =>
+			start_procedure(frm, answers),
+		).open();
 	});
 	frm.change_custom_button_type(__("Start"), null, "primary");
+};
+
+let start_procedure = function (frm, answers) {
+	frappe.call({
+		doc: frm.doc,
+		method: "start_procedure",
+		args: { answers: answers },
+		callback: function (r) {
+			if (r.exc) return;
+			if (r.message == "insufficient stock") {
+				offer_material_receipt(frm);
+			} else {
+				frm.reload_doc();
+			}
+		},
+	});
 };
 
 let offer_material_receipt = function (frm) {

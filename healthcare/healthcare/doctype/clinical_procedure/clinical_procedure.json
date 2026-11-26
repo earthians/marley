@@ -32,6 +32,9 @@
   "column_break_mugc",
   "planned_end_datetime",
   "actual_end_datetime",
+  "safety_check_section",
+  "safety_check_html",
+  "safety_check",
   "consumables_section",
   "consume_stock",
   "warehouse",
@@ -365,6 +368,26 @@
    "link_filters": "[[\"Price List\",\"selling\",\"=\",1]]",
    "mandatory_depends_on": "eval: doc.consume_stock == 1",
    "options": "Price List"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:doc.safety_check",
+   "fieldname": "safety_check_section",
+   "fieldtype": "Section Break",
+   "label": "Safety Check"
+  },
+  {
+   "fieldname": "safety_check_html",
+   "fieldtype": "HTML",
+   "label": "Safety Check"
+  },
+  {
+   "fieldname": "safety_check",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Safety Check Response",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
@@ -374,7 +397,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2026-02-16 18:35:08.776702",
+ "modified": "2026-11-26 10:37:34.292215",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

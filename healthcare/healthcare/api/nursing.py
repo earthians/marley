@@ -129,8 +129,9 @@ class PatientBanner:
 			"gender": self.patient.sex,
 			"age": self.age(),
 			"blood_group": self.patient.blood_group,
-			"allergies": self.patient.allergies,
+			"allergies": self.allergies(),
 			"identifier": self.patient.uid,
+			"image": self.patient.image,
 			"practitioner": self.practitioner(),
 			"location": self.location(),
 		}
@@ -148,6 +149,22 @@ class PatientBanner:
 
 		months = days // 30
 		return f"{months} M" if months else f"{days} D"
+
+	def allergies(self):
+		"""Active Patient Allergy records, then the free text in the patient's medical history."""
+		recorded = frappe.get_all(
+			"Patient Allergy",
+			filters={"patient": self.patient.name, "status": "Active"},
+			fields=["allergy", "severity"],
+			order_by="recorded_on desc",
+		)
+		allergies = [
+			f"{allergy.allergy} ({_(allergy.severity)})" if allergy.severity else allergy.allergy
+			for allergy in recorded
+		]
+		if (self.patient.allergies or "").strip():
+			allergies.append(self.patient.allergies.strip())
+		return allergies
 
 	def practitioner(self):
 		"""The doctor named on the source document."""

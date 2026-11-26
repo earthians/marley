@@ -43,6 +43,9 @@
   "auto_schedule_medication_doses",
   "medication_dose_lead_time",
   "manage_inpatient_medication_stock",
+  "procedure_safety_section",
+  "enable_procedure_safety_check",
+  "procedure_safety_questions",
   "laboratory_tab",
   "sb_lab_settings",
   "create_lab_test_on_si_submit",
@@ -620,11 +623,31 @@
    "fieldname": "manage_inpatient_medication_stock",
    "fieldtype": "Check",
    "label": "Manage Inpatient Medication Stock at the Bed"
+  },
+  {
+   "fieldname": "procedure_safety_section",
+   "fieldtype": "Section Break",
+   "label": "Procedure Safety Check"
+  },
+  {
+   "default": "0",
+   "description": "Ask the safety questions before a Clinical Procedure can start",
+   "fieldname": "enable_procedure_safety_check",
+   "fieldtype": "Check",
+   "label": "Enable Procedure Safety Check"
+  },
+  {
+   "depends_on": "eval:doc.enable_procedure_safety_check",
+   "description": "Asked before every procedure. Add procedure-specific questions in the Clinical Procedure Template",
+   "fieldname": "procedure_safety_questions",
+   "fieldtype": "Table",
+   "label": "Safety Questions",
+   "options": "Procedure Safety Question"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-17 15:11:28.071790",
+ "modified": "2026-11-26 23:46:54.000000",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Healthcare Settings",

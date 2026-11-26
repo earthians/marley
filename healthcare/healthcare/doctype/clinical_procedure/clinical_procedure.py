@@ -18,6 +18,7 @@ from frappe.utils import (
 from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 from erpnext.stock.stock_ledger import get_previous_sle
 
+from healthcare.healthcare.doctype.clinical_procedure.procedure_safety_check import build_response
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import get_account
 from healthcare.healthcare.doctype.lab_test.lab_test import create_sample_doc
 from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
@@ -30,6 +31,7 @@ from healthcare.healthcare.utils import validate_nursing_tasks
 class ClinicalProcedure(Document):
 	def validate(self):
 		self.set_status()
+		self.clear_unstarted_safety_check()
 		self.set_title()
 		self.set_planned_start_date_and_time()
 		self.set_planned_endtime()
@@ -136,11 +138,14 @@ class ClinicalProcedure(Document):
 	def set_status(self):
 		if self.docstatus == 0:
 			self.status = "Draft"
-		elif self.docstatus == 1:
-			if self.status not in ["In Progress", "Completed"]:
-				self.status = "Pending"
+		elif self.docstatus == 1:  # only on submit; starting and completing go through their own methods
+			self.status = "Pending"
 		elif self.docstatus == 2:
 			self.status = "Cancelled"
+
+	def clear_unstarted_safety_check(self):
+		if self.status in ("Draft", "Pending"):
+			self.safety_check = None
 
 	def set_title(self):
 		self.title = _("{0} - {1}").format(self.patient_name or self.patient, self.procedure_template)[:100]
@@ -224,16 +229,24 @@ class ClinicalProcedure(Document):
 		)
 		return get_item_details(ctx)
 
-	@frappe.whitelist()
-	def start_procedure(self):
+	@frappe.whitelist(methods=["POST"])
+	def start_procedure(self, answers: dict | None = None):
 		self.check_permission("write")
 		self.lock_with_status("Pending", _("Only a Pending procedure can be started"))
+		self.reload()  # the client sends the whole form; ask the saved template's questions of the saved patient
 
 		if self.consume_stock and not self.has_required_qty():
 			return "insufficient stock"
 
 		validate_nursing_tasks(self)
-		self.db_set({"status": "In Progress", "actual_start_datetime": now_datetime()})
+		safety_check = build_response(self, answers)
+		self.db_set(
+			{
+				"status": "In Progress",
+				"actual_start_datetime": now_datetime(),
+				"safety_check": frappe.as_json(safety_check) if safety_check else None,
+			}
+		)
 		self.notify_update()
 		return "success"
 

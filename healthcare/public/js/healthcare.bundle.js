@@ -9,6 +9,8 @@ import "./send_to_emergency.js";
 import "./sample_collection_tree.js";
 import "./consumables_review.js";
 import "./service_request_picker.js";
+import "./patient_banner.js";
+import "./procedure_safety_check.js";
 import "./bed_stock_settlement.js";
 import "./medication_safety/medication_safety.js";
 import "./nursing_dialog/nursing_dialog.js";

@@ -44,3 +44,4 @@ healthcare.patches.v16_0.backfill_observation_result_flag
 healthcare.patches.v16_0.remove_legacy_healthcare_onboarding
 healthcare.patches.v16_0.setup_code_systems
 healthcare.patches.v16_0.rebuild_imaging_patient_history_entries
+healthcare.patches.v16_0.create_procedure_safety_questions

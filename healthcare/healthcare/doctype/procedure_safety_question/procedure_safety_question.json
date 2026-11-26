@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-11-26 10:37:04.552462",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section",
+  "question",
+  "answer_type",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "default": "Procedure",
+   "fieldname": "section",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Section",
+   "options": "Identity and Consent\nPatient\nProcedure",
+   "reqd": 1
+  },
+  {
+   "columns": 5,
+   "fieldname": "question",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Question",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "default": "Yes / No",
+   "fieldname": "answer_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Answer Type",
+   "options": "Yes / No\nText",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "link_display_mode": "Search",
+ "links": [],
+ "modified": "2026-11-26 10:37:04.552462",
+ "modified_by": "Administrator",
+ "module": "Healthcare",
+ "name": "Procedure Safety Question",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
