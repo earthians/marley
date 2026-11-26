@@ -41,6 +41,7 @@ class BootStrapTestData:
 		self.make_insurance_payors()
 		self.make_custom_doctypes()
 		self.make_clinical_masters()
+		self.make_patient_allergies()
 		self.make_abdm_settings()
 
 	def make_abdm_settings(self):
@@ -526,6 +527,18 @@ class BootStrapTestData:
 				"is_billable": 1,
 				"rate": 1000,
 			},
+			{
+				"doctype": "Clinical Procedure Template",
+				"template": "_Test Procedure - Safety Check",
+				"item_code": "_Test Procedure - Safety Check",
+				"item_group": "Services",
+				"description": "Safety Check",
+				"is_billable": 1,
+				"rate": 1000,
+				"safety_questions": [
+					{"section": "Procedure", "question": "Fasting since", "answer_type": "Text"},
+				],
+			},
 		]
 		self.make_records(["template", "item_code"], records)
 
@@ -755,6 +768,25 @@ class BootStrapTestData:
 			if missing := roles - set(frappe.get_roles(record["email"])):
 				frappe.get_doc("User", record["email"]).add_roles(*missing)
 
+	def make_patient_allergies(self):
+		records = [
+			{
+				"doctype": "Patient Allergy",
+				"patient": "_Test Allergic Patient",
+				"allergy": "_Test Peanut Allergy",
+				"severity": "Severe",
+				"status": "Active",
+			},
+			{
+				"doctype": "Patient Allergy",
+				"patient": "_Test Allergic Patient",
+				"allergy": "_Test Analgesic Allergy",
+				"severity": "Minor",
+				"status": "Inactive",
+			},
+		]
+		self.make_records(["patient", "allergy"], records)
+
 	def make_patients(self):
 		records = [
 			{
@@ -798,6 +830,14 @@ class BootStrapTestData:
 				"first_name": "_Test Patient 3",
 				"sex": "Female",
 				"customer_group": "Individual",
+			},
+			{
+				"doctype": "Patient",
+				"name": "_Test Allergic Patient",
+				"first_name": "_Test Allergic Patient",
+				"sex": "Female",
+				"customer_group": "Individual",
+				"allergies": "Latex",
 			},
 		]
 		self.make_records(["name"], records)

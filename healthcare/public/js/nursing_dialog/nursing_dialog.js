@@ -192,69 +192,12 @@ healthcare.nursing.NursingDialog = class NursingDialog {
 		});
 		if (this.patient_changed_since(patient)) return;
 
-		this.$banner.html(this.get_banner_html(banner));
+		this.$banner.html(healthcare.PatientBanner.html(banner));
 	}
 
 	// A slower response for the previous patient must not overwrite this one.
 	patient_changed_since(patient) {
 		return patient !== this.patient;
-	}
-
-	get_banner_html(banner) {
-		return `
-			<div class="nursing-banner-primary">
-				<span class="nursing-banner-name">
-					${frappe.utils.escape_html(banner.patient_name || banner.patient)}
-				</span>
-				${this.get_practitioner_html(banner)}
-			</div>
-			<div class="nursing-banner-facts">${this.get_banner_facts(banner)}</div>
-		`;
-	}
-
-	get_practitioner_html(banner) {
-		if (!banner.practitioner) return "";
-
-		return `<span class="nursing-banner-doctor">
-			<i>${__("Doctor")}</i> ${frappe.utils.escape_html(banner.practitioner)}
-		</span>`;
-	}
-
-	// Age and gender read as chips; this line carries the identifier, and only
-	// when it is not simply the patient's name repeated back.
-	get_banner_meta(banner) {
-		const identifier = banner.identifier || banner.patient;
-
-		return identifier === banner.patient_name
-			? ""
-			: frappe.utils.escape_html(identifier);
-	}
-
-	get_banner_facts(banner) {
-		const facts = [];
-		const location = banner.location || {};
-
-		const identifier = this.get_banner_meta(banner);
-
-		if (identifier) facts.push(this.get_fact(__("ID"), identifier));
-		if (banner.age) facts.push(this.get_fact(__("Age"), banner.age));
-		if (banner.gender) facts.push(this.get_fact(__("Gender"), banner.gender));
-		if (location.service_unit)
-			facts.push(this.get_fact(__("Bed"), location.service_unit));
-		if (location.status) facts.push(this.get_fact(__("Status"), location.status));
-		if (banner.blood_group)
-			facts.push(this.get_fact(__("Blood"), banner.blood_group));
-		if (banner.allergies)
-			facts.push(this.get_fact(__("Allergy"), banner.allergies, true));
-
-		return facts.join("");
-	}
-
-	get_fact(label, value, is_alert = false) {
-		const alert = is_alert ? " nursing-fact-alert" : "";
-		return `<span class="nursing-fact${alert}">
-			<i>${label}</i> ${frappe.utils.escape_html(String(value))}
-		</span>`;
 	}
 
 	render_rail() {

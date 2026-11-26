@@ -74,6 +74,26 @@ $nursing-pane-top: 0.85rem;
 	min-width: 0;
 }
 
+.nursing-banner-patient {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	min-width: 0;
+}
+
+// A fixed circle: the flex row must not squeeze the avatar into an oval.
+.nursing-banner-patient > .avatar {
+	flex: none;
+	align-self: flex-start;
+}
+
+.nursing-banner-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
 .nursing-banner-facts {
 	display: flex;
 	flex-wrap: wrap;
@@ -93,18 +113,35 @@ $nursing-pane-top: 0.85rem;
 		color: var(--text-muted);
 		font-size: var(--text-xs);
 	}
+}
 
-	&.nursing-fact-alert {
-		background-color: var(--bg-red);
-		border-color: transparent;
-		color: var(--text-on-red);
-		font-weight: 500;
+// Allergies get their own line under the patient: noticeable, not alarming.
+.nursing-banner-allergies {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+	margin-top: 0.5rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--border-color);
+	font-size: var(--text-sm);
+}
 
-		i {
-			color: inherit;
-			opacity: 0.75;
-		}
-	}
+.nursing-banner-label {
+	font-size: var(--text-xs);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted);
+	margin-right: 0.25rem;
+}
+
+.nursing-allergy {
+	color: var(--red-700);
+	background-color: var(--red-50);
+	border: 1px solid var(--red-200);
+	border-radius: var(--radius-full);
+	padding: 0.15rem 0.5rem;
 }
 
 // The panels run edge to edge, so this dialog drops the modal body padding
@@ -449,6 +486,134 @@ $nursing-pane-top: 0.85rem;
 		border-color: var(--red-400);
 		color: var(--text-on-red);
 	}
+}
+
+// Procedure safety check: a compact checklist, one row per question.
+// Allergies and medications stay in view on the left while the checklist is answered.
+.safety-check {
+	display: grid;
+	grid-template-columns: 14rem minmax(0, 1fr);
+	gap: 1rem;
+
+	@media (max-width: 767px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.safety-rail {
+	align-self: start;
+	background: var(--surface-sidebar);
+	border-radius: var(--border-radius-md);
+	padding: 0.75rem;
+}
+
+.safety-rail-section + .safety-rail-section {
+	margin-top: 1rem;
+}
+
+.safety-rail-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: var(--text-sm);
+	color: var(--text-color);
+
+	li {
+		padding: 0.3rem 0;
+		border-top: 1px solid var(--border-color);
+	}
+}
+
+.safety-rail-allergy {
+	color: var(--red-700);
+}
+
+.safety-check .nursing-banner {
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md);
+	margin-bottom: 0.75rem;
+}
+
+.safety-section + .safety-section {
+	margin-top: 0.75rem;
+}
+
+.safety-section-title {
+	font-size: var(--text-xs);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted);
+	padding-bottom: 0.25rem;
+}
+
+.safety-question {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.5rem 0;
+	border-top: 1px solid var(--border-color);
+}
+
+.safety-question-text {
+	color: var(--text-color);
+	min-width: 0;
+}
+
+.safety-text {
+	flex: 0 0 12rem;
+}
+
+// Yes / No / N/A joined into one control, like a radio group.
+.safety-choices {
+	display: inline-flex;
+	flex: 0 0 auto;
+	border: 1px solid var(--dark-border-color);
+	border-radius: var(--border-radius-md);
+	overflow: hidden;
+}
+
+.safety-choice {
+	min-width: 3.5rem;
+	padding: 0.25rem 0.75rem;
+	font-size: var(--text-sm);
+	color: var(--text-color);
+	background-color: var(--fg-color);
+	border: none;
+
+	& + & {
+		border-left: 1px solid var(--dark-border-color);
+	}
+
+	&:hover {
+		background-color: var(--subtle-fg);
+	}
+
+	&.selected {
+		font-weight: 600;
+	}
+
+	&.safety-choice-green.selected {
+		background-color: var(--bg-green);
+		color: var(--text-on-green);
+	}
+
+	&.safety-choice-red.selected {
+		background-color: var(--bg-red);
+		color: var(--text-on-red);
+	}
+
+	&.safety-choice-gray.selected {
+		background-color: var(--gray-300);
+		color: var(--text-color);
+	}
+}
+
+.safety-status {
+	margin-top: 0.75rem;
+	font-size: var(--text-sm);
+	color: var(--text-muted);
 }
 
 .nursing-scale-band {

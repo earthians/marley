@@ -349,6 +349,28 @@ def create_custom_records():
 	setup_code_systems()
 	setup_order_status_codes()
 	setup_observation_reference_types()
+	create_procedure_safety_questions()
+
+
+def create_procedure_safety_questions():
+	settings = frappe.get_single("Healthcare Settings")
+	if settings.procedure_safety_questions:
+		return
+	for section, question in get_procedure_safety_questions():
+		settings.append("procedure_safety_questions", {"section": section, "question": question})
+	settings.flags.ignore_mandatory = True
+	settings.save(ignore_permissions=True)
+
+
+def get_procedure_safety_questions():
+	return [
+		("Identity and Consent", _("Patient identity confirmed with two identifiers")),
+		("Identity and Consent", _("Procedure and site confirmed with the patient")),
+		("Identity and Consent", _("Consent form signed")),
+		("Patient", _("Known allergies checked")),
+		("Patient", _("Blood thinners checked")),
+		("Patient", _("Patient feels well today")),
+	]
 
 
 def create_medical_departments():

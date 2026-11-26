@@ -70,6 +70,15 @@ class TestWardScope(HealthcareTestSuite):
 		with self.set_user(NURSE):
 			ChartAccess(self.outpatient, "Clinical Procedure", procedure).to_read()
 
+	def test_a_ward_nurse_is_refused_the_medications_of_a_patient_on_another_ward(self):
+		from healthcare.healthcare.doctype.clinical_procedure.procedure_safety_check import get_medications
+
+		self.assign_nurse_to(OTHER_WARD)
+		procedure = self.make_procedure(self.patient, None)
+
+		with self.set_user(NURSE):
+			self.assertRaises(frappe.PermissionError, get_medications, procedure)
+
 	def test_the_patient_search_only_finds_the_ward(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
