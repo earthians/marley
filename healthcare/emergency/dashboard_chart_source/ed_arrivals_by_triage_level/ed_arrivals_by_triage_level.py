@@ -5,7 +5,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, today
+from frappe.utils import add_days, now_datetime, today
 from frappe.utils.dashboard import cache_source
 
 CHART = "ED Arrivals by Triage Level"
@@ -41,19 +41,24 @@ def get(
 
 
 def arrivals_by_level(filters: dict) -> dict:
-	conditions = {
-		"status": ["!=", "Cancelled"],
-		"arrival_datetime": [">=", add_days(today(), -WINDOW_DAYS)],
-	}
-	if filters.get("company"):
-		conditions["company"] = filters.get("company")
 	rows = frappe.get_list(
 		"Emergency Record",
 		fields=["triage_level", {"COUNT": "*", "as": "arrivals"}],
-		filters=conditions,
+		filters=arrival_conditions(filters),
 		group_by="triage_level",
 	)
 	return merge_counts(rows)
+
+
+def arrival_conditions(filters: dict) -> list:
+	conditions = [
+		["status", "!=", "Cancelled"],
+		["arrival_datetime", ">=", add_days(today(), -WINDOW_DAYS)],
+		["arrival_datetime", "<=", now_datetime()],
+	]
+	if filters.get("company"):
+		conditions.append(["company", "=", filters.get("company")])
+	return conditions
 
 
 def merge_counts(rows: list) -> dict:
