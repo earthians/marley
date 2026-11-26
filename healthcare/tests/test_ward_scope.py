@@ -74,15 +74,14 @@ class TestWardScope(HealthcareTestSuite):
 		from healthcare.healthcare.api.nursing import get_snapshot
 
 		self.assign_nurse_to(WARD)
-		frappe.set_user("Administrator")
 		procedure = self.make_procedure(self.outpatient, WARD)
-		frappe.set_user(NURSE)
 
-		self.assertIn(
-			"vitals",
-			get_snapshot(self.outpatient, reference_doctype="Clinical Procedure", reference_name=procedure),
-		)
-		self.assertRaises(frappe.PermissionError, get_snapshot, self.outpatient)
+		with self.set_user(NURSE):
+			snapshot = get_snapshot(
+				self.outpatient, reference_doctype="Clinical Procedure", reference_name=procedure
+			)
+			self.assertIn("vitals", snapshot)
+			self.assertRaises(frappe.PermissionError, get_snapshot, self.outpatient)
 
 	def test_the_patient_search_only_finds_the_ward(self):
 		from healthcare.healthcare.api.nursing import find_patients
