@@ -49,7 +49,12 @@ healthcare.ProcedureSafetyCheck = class ProcedureSafetyCheck {
 	}
 
 	static get_key(question) {
-		return [question.name, question.question, question.answer_type].join("\n");
+		return [
+			question.name,
+			question.question,
+			question.answer_type,
+			question.allow_not_applicable,
+		].join("\n");
 	}
 
 	show() {
@@ -249,21 +254,26 @@ healthcare.ProcedureSafetyCheck = class ProcedureSafetyCheck {
 		const answered = this.questions.filter(
 			question => this.answers[question.name],
 		).length;
-		const has_no = this.questions.some(
-			question =>
-				question.answer_type !== "Text" && this.answers[question.name] === "N",
-		);
+		const blocked = this.questions.some(question => this.is_blocking(question));
 		this.dialog
 			.get_primary_btn()
-			.prop("disabled", answered < this.questions.length || has_no);
+			.prop("disabled", answered < this.questions.length || blocked);
 		this.$checklist
 			.find(".safety-status")
-			.toggleClass("text-danger", has_no)
+			.toggleClass("text-danger", blocked)
 			.text(
-				has_no
-					? __("The procedure cannot start while any answer is No.")
+				blocked
+					? __(
+							"The procedure cannot start while an answer is No, or N/A where N/A is not allowed.",
+					  )
 					: __("{0} of {1} answered", [answered, this.questions.length]),
 			);
+	}
+
+	is_blocking(question) {
+		if (question.answer_type === "Text") return false;
+		const answer = this.answers[question.name];
+		return answer === "N" || (answer === "NA" && !question.allow_not_applicable);
 	}
 
 	static render(frm) {

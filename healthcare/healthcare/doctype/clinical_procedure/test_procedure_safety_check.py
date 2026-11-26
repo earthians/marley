@@ -104,6 +104,24 @@ class TestProcedureSafetyCheck(HealthcareTestSuite):
 		procedure.submit()
 		self.assertIsNone(procedure.safety_check)
 
+	def test_not_applicable_blocks_the_start_unless_the_question_allows_it(self):
+		with self.enabled():
+			procedure = make_procedure()
+			answers = answer_all(procedure)
+			answers[first_coded_question(procedure)] = "NA"
+			self.assertRaises(frappe.ValidationError, procedure.start_procedure, answers)
+		self.assertEqual(saved_status(procedure), "Pending")
+
+	def test_not_applicable_is_accepted_where_the_question_allows_it(self):
+		with self.enabled():
+			procedure = make_procedure()
+			question = first_coded_question(procedure)
+			frappe.db.set_value("Procedure Safety Question", question, "allow_not_applicable", 1)
+			answers = answer_all(procedure)
+			answers[question] = "NA"
+			procedure.start_procedure(answers)
+		self.assertEqual(saved_status(procedure), "In Progress")
+
 	def test_medications_need_read_access_to_the_procedure(self):
 		procedure = make_procedure()
 		with self.set_user("portal-other-user"):

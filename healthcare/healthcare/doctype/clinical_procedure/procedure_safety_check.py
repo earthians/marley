@@ -40,7 +40,7 @@ def read_questions(parenttype: str, parent: str) -> list[dict]:
 	return frappe.get_all(
 		"Procedure Safety Question",
 		filters={"parenttype": parenttype, "parent": parent, "enabled": 1},
-		fields=["name", "section", "question", "answer_type"],
+		fields=["name", "section", "question", "answer_type", "allow_not_applicable"],
 		order_by="idx",
 	)
 
@@ -93,16 +93,16 @@ def make_question_item(question: dict, answer: str | None) -> dict:
 
 
 def make_coding(question: dict, code: str) -> dict:
-	if code == "N":
+	displays = {"Y": "Yes", "N": "No", "NA": "not applicable"}
+	if code not in displays:
+		frappe.throw(_("Invalid answer for the safety question: {0}").format(escape_html(question.question)))
+	if code == "N" or (code == "NA" and not question.allow_not_applicable):
 		frappe.throw(
-			_("The procedure cannot start while the answer is No: {0}").format(
-				escape_html(question.question)
+			_("The procedure cannot start while the answer is {0}: {1}").format(
+				_(displays[code]), escape_html(question.question)
 			),
 			title=_("Safety Check"),
 		)
-	displays = {"Y": "Yes", "NA": "not applicable"}
-	if code not in displays:
-		frappe.throw(_("Invalid answer for the safety question: {0}").format(escape_html(question.question)))
 	system = "http://terminology.hl7.org/CodeSystem/v2-0532"
 	return {"valueCoding": {"system": system, "code": code, "display": displays[code]}}
 
