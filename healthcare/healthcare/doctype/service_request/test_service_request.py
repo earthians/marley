@@ -103,6 +103,26 @@ class TestServiceRequest(HealthcareTestSuite):
 			1,
 		)
 
+	def test_lab_prescription_expected_date_is_copied_to_service_request(self):
+		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
+		encounter = create_encounter_with_order(
+			"_Test Patient",
+			"_Test Healthcare Practitioner 2",
+			"lab_test_prescription",
+			obs_template,
+			obs=True,
+		)
+		encounter.lab_test_prescription[0].expected_date = "2026-12-15"
+		encounter.save()
+		encounter.reload()
+		self.assertEqual(str(encounter.lab_test_prescription[0].expected_date), "2026-12-15")
+		encounter.submit()
+
+		service_request = encounter.lab_test_prescription[0].service_request
+		self.assertEqual(
+			str(frappe.db.get_value("Service Request", service_request, "expected_date")), "2026-12-15"
+		)
+
 	def test_mark_observation_as_invoiced(self):
 		obs_template = frappe.get_doc("Observation Template", "_Test Observation without Sample")
 		patient = "_Test Patient"
