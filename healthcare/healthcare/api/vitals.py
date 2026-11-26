@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 
 from healthcare.healthcare.api.nursing_common import ChartAccess, default_company, has_value
+from healthcare.healthcare.doctype.observation.observation import set_observation_status
 
 VITAL_SIGNS_CATEGORY = "Vital Signs"
 
@@ -55,8 +56,12 @@ class VitalsRecorder:
 		observation.update(self.observation_defaults(template))
 		self.set_result(observation, value)
 		observation.insert()
-		if not observation.get("consumables"):
-			observation.submit()
+		if (
+			not observation.get("consumables")
+			and observation.is_ready_for_approval()
+			and observation.has_permission("submit")
+		):
+			set_observation_status(observation.name, "Approved")
 		return observation.name
 
 	def observation_defaults(self, template):
