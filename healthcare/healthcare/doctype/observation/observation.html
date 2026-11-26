@@ -86,7 +86,7 @@
     .imaging-section {
         margin-top: 8px;
         padding: 6px 8px;
-        background-color: #f8f9fa;
+        background-color: var(--control-bg, #f8f9fa);
         border-radius: 4px;
     }
 
@@ -95,13 +95,28 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: rgb(197, 194, 194);
+        color: var(--text-muted, #6c757d);
         margin-bottom: 3px;
     }
 
     .imaging-section-body {
+        color: var(--text-color, #212529);
         font-size: 11px;
         line-height: 1.5;
+    }
+
+    @media print {
+        .imaging-section {
+            background-color: #f8f9fa;
+        }
+
+        .imaging-section-label {
+            color: #6c757d;
+        }
+
+        .imaging-section-body {
+            color: #212529;
+        }
     }
 </style>
 
