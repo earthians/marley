@@ -158,7 +158,7 @@
    "options": "Healthcare Service Unit"
   },
   {
-   "depends_on": "eval: doc.therapy_for",
+   "depends_on": "eval: doc.therapy_for && doc.therapy_for.length > 0",
    "fieldname": "add_exercises",
    "fieldtype": "Button",
    "label": "Add Exercises",
