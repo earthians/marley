@@ -63,8 +63,12 @@ def get_active_orders(patient: str) -> list[dict]:
 
 @frappe.whitelist()
 def get_care_plan(patient: str) -> dict | None:
-	"""The live plan for this patient's admission, if a nurse has started one."""
 	ChartAccess(patient).to_read()
+	return active_care_plan(patient)
+
+
+def active_care_plan(patient):
+	"""The live plan for this patient's admission, if a nurse has started one."""
 	plans = frappe.get_all(
 		"Nursing Care Plan",
 		filters={"patient": patient, "status": "Active", "docstatus": ["<", 2]},

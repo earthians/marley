@@ -116,6 +116,7 @@ healthcare.nursing.panes.care_plan = class CarePlanPane extends (
 
 		frappe.show_alert({ message: __("Goal added"), indicator: "green" });
 		await this.refresh();
+		this.station.recorded();
 	}
 
 	render_goals() {
@@ -174,6 +175,7 @@ healthcare.nursing.panes.care_plan = class CarePlanPane extends (
 			status: $button.attr("data-status"),
 		});
 		await this.refresh();
+		this.station.recorded();
 	}
 
 	// The doctor's orders, shown as they stand. Copying them into the plan

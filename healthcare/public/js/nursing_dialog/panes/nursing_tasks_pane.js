@@ -107,6 +107,6 @@ healthcare.nursing.panes.nursing_tasks = class NursingTasksPane extends (
 		});
 		frappe.show_alert({ message: __("Task updated"), indicator: "green" });
 		await this.refresh_tasks();
-		this.station.snapshot.refresh();
+		this.station.recorded();
 	}
 };
