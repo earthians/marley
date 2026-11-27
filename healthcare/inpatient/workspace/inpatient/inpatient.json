@@ -10,7 +10,7 @@
    "label": "Inpatients by Status"
   }
  ],
- "content": "[{\"id\":\"0cab3cdc7a\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Inpatient Onboarding\",\"col\":12}},{\"id\":\"chart-daily_admissions\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Admissions\",\"col\":6}},{\"id\":\"chart-inpatients_by_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Inpatients by Status\",\"col\":6}},{\"id\":\"C53FVzk5H7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"-8cLwG57tE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total IP Records\",\"col\":3}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Admitted Patients\",\"col\":3}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending IP Medications\",\"col\":3}},{\"id\":\"nAL4q8j3LC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In-Process IP Orders\",\"col\":3}},{\"id\":\"vjMnjTr0FO\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"BtngFAzJ0X\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Inpatient Record\",\"col\":3}},{\"id\":\"7vvONujQ2W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Order\",\"col\":3}},{\"id\":\"-qLrAm9jo8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Entry\",\"col\":3}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}}]",
+ "content": "[{\"id\":\"0cab3cdc7a\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Inpatient Onboarding\",\"col\":12}},{\"id\":\"chart-daily_admissions\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Admissions\",\"col\":6}},{\"id\":\"chart-inpatients_by_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Inpatients by Status\",\"col\":6}},{\"id\":\"C53FVzk5H7\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"-8cLwG57tE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total IP Records\",\"col\":3}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Admitted Patients\",\"col\":3}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending IP Medications\",\"col\":3}},{\"id\":\"nAL4q8j3LC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In-Process IP Orders\",\"col\":3}},{\"id\":\"vjMnjTr0FO\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"BtngFAzJ0X\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Inpatient Record\",\"col\":3}},{\"id\":\"7vvONujQ2W\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Order\",\"col\":3}},{\"id\":\"-qLrAm9jo8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Entry\",\"col\":3}},{\"id\":\"ip_sc_encounter\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Encounter\",\"col\":3}},{\"id\":\"ip_sc_observation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"ip_sc_service_request\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Service Request\",\"col\":3}},{\"id\":\"ip_sc_medication_request\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Request\",\"col\":3}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}}]",
  "creation": "2025-05-30 17:56:22.153991",
  "custom_blocks": [],
  "docstatus": 0,
@@ -24,7 +24,7 @@
  "label": "Inpatient",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-11-24 10:29:50.974330",
+ "modified": "2026-11-27 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Inpatient",
  "name": "Inpatient",
@@ -84,6 +84,38 @@
    "label": "Patient History",
    "link_to": "patient_history",
    "type": "Page"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Encounter",
+   "link_to": "Patient Encounter",
+   "stats_filter": "[[\"Patient Encounter\",\"inpatient_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Observation",
+   "link_to": "Observation",
+   "stats_filter": "[[\"Observation\",\"inpatient_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Service Request",
+   "link_to": "Service Request",
+   "stats_filter": "[[\"Service Request\",\"inpatient_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Medication Request",
+   "link_to": "Medication Request",
+   "stats_filter": "[[\"Medication Request\",\"inpatient_record\",\"is\",\"set\"]]",
+   "type": "DocType"
   }
  ],
  "title": "Inpatient",
