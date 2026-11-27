@@ -756,6 +756,34 @@ class BootStrapTestData:
 			roles = {row["role"] for row in record.get("roles", [])}
 			if missing := roles - set(frappe.get_roles(record["email"])):
 				frappe.get_doc("User", record["email"]).add_roles(*missing)
+		self.make_portal_users()
+
+	def make_portal_users(self):
+		records = [
+			{
+				"doctype": "User",
+				"name": "portal-patient-user",
+				"email": "portal_id_patient@marleyhealth.io",
+				"first_name": "portal_patient",
+				"user_type": "Website User",
+				"send_welcome_email": 0,
+			},
+			{
+				"doctype": "User",
+				"name": "portal-other-user",
+				"email": "portal_id_other@marleyhealth.io",
+				"first_name": "portal_other",
+				"user_type": "Website User",
+				"send_welcome_email": 0,
+			},
+		]
+		for record in records:
+			if frappe.db.exists("User", record["name"]):
+				continue
+			user = frappe.get_doc(record)
+			user.flags.skip_email_from_name = True
+			user.flags.random_id = True
+			user.insert(set_name=record["name"], ignore_permissions=True)
 
 	def make_module_profiles(self):
 		records = [
@@ -827,6 +855,15 @@ class BootStrapTestData:
 				"first_name": "_Test Patient 3",
 				"sex": "Female",
 				"customer_group": "Individual",
+			},
+			{
+				"doctype": "Patient",
+				"name": "_Test Portal Patient",
+				"first_name": "_Test Portal Patient",
+				"sex": "Female",
+				"customer_group": "Individual",
+				"email": "portal_id_patient@marleyhealth.io",
+				"user_id": "portal-patient-user",
 			},
 		]
 		self.make_records(["name"], records)

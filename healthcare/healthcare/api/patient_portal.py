@@ -603,6 +603,10 @@ def get_payment_gateway():
 	return frappe.db.get_single_value("Healthcare Settings", "payment_gateway")
 
 
+def get_payer_email() -> str | None:
+	return frappe.db.get_value("User", frappe.session.user, "email")
+
+
 def get_controller(payment_gateway):
 	if "payments" in frappe.get_installed_apps():
 		from payments.utils import get_payment_gateway_controller
@@ -647,7 +651,7 @@ def get_payment_link(
 		"description": f"{patient}'s Consultation Charge payment for {title}",
 		"reference_doctype": doctype,
 		"reference_docname": docname,
-		"payer_email": frappe.session.user,
+		"payer_email": get_payer_email(),
 		"payer_name": patient,
 		"currency": currency,
 		"payment_gateway": payment_gateway,
