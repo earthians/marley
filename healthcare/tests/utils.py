@@ -21,6 +21,8 @@ class BootStrapTestData:
 		self.make_diagnoses()
 		self.make_medical_departments()
 		self.make_users()
+		self.make_module_profiles()
+		self.make_triage_levels()
 		self.make_patients()
 		self.make_practitioners()
 		self.make_service_unit_types()
@@ -754,6 +756,34 @@ class BootStrapTestData:
 			roles = {row["role"] for row in record.get("roles", [])}
 			if missing := roles - set(frappe.get_roles(record["email"])):
 				frappe.get_doc("User", record["email"]).add_roles(*missing)
+		frappe.defaults.set_user_default("company", "_Test Company", "nurse@marleyhealth.io")
+
+	def make_module_profiles(self):
+		records = [
+			{
+				"doctype": "Module Profile",
+				"module_profile_name": "_Test Healthcare Blocked",
+				"block_modules": [{"module": "Healthcare"}],
+			},
+		]
+		self.make_records(["module_profile_name"], records)
+
+	def make_triage_levels(self):
+		records = [
+			{
+				"doctype": "Triage Level",
+				"triage_level": "_Test Triage Amber",
+				"color": "#f59e0b",
+				"priority": 90,
+			},
+			{
+				"doctype": "Triage Level",
+				"triage_level": "_Test Triage Blue",
+				"color": "#2563eb",
+				"priority": 90,
+			},
+		]
+		self.make_records(["triage_level"], records)
 
 	def make_patients(self):
 		records = [
@@ -1012,6 +1042,14 @@ class BootStrapTestData:
 				"company_name": "_Test Company",
 				"country": "India",
 				"default_currency": "INR",
+				"doctype": "Company",
+				"chart_of_accounts": "Standard",
+			},
+			{
+				"abbr": "_TC2",
+				"company_name": "_Test Company 2",
+				"country": "Germany",
+				"default_currency": "EUR",
 				"doctype": "Company",
 				"chart_of_accounts": "Standard",
 			},

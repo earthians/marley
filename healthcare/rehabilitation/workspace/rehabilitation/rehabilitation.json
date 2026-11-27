@@ -1,0 +1,122 @@
+{
+ "app": "healthcare",
+ "charts": [
+  {
+   "chart_name": "Daily Therapy Sessions",
+   "label": "Daily Therapy Sessions"
+  },
+  {
+   "chart_name": "Therapy Sessions by Type",
+   "label": "Therapy Sessions by Type"
+  }
+ ],
+ "content": "[{\"id\":\"22f426f041\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Rehabilitation Onboarding\",\"col\":12}},{\"id\":\"chart-daily_therapy_sessions\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Therapy Sessions\",\"col\":6}},{\"id\":\"chart-therapy_sessions_by_type\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Therapy Sessions by Type\",\"col\":6}},{\"id\":\"7mcT8wrpDg\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"3KFdO2Fwp0\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Therapy Plans\",\"col\":3}},{\"id\":\"bc-Hqr8YSW\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Planned Sessions\",\"col\":3}},{\"id\":\"AV5F0PlKNK\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Sessions\",\"col\":3}},{\"id\":\"owXdMv-dlZ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Sessions to Bill\",\"col\":3}},{\"id\":\"ZtNMHNX_E8\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"EZ6eAZVBPM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Therapy Plan\",\"col\":3}},{\"id\":\"4g-2RZu19w\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Therapy Session\",\"col\":3}},{\"id\":\"rh_sc_patient_assessment\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Assessment\",\"col\":3}},{\"id\":\"rh_sc_patient_progress\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Progress\",\"col\":3}},{\"id\":\"rh_sc_therapy_type\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Therapy Type\",\"col\":3}},{\"id\":\"rh_sc_exercise_type\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Exercise Type\",\"col\":3}},{\"id\":\"rh_sc_therapy_plan_template\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Therapy Plan Template\",\"col\":3}},{\"id\":\"QJcnnt2c6L\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":3}}]",
+ "creation": "2025-05-30 17:37:04.694230",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "hand-heart",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Rehabilitation",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-11-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Rehabilitation",
+ "name": "Rehabilitation",
+ "number_cards": [
+  {
+   "label": "Pending Sessions",
+   "number_card_name": "Pending Sessions"
+  },
+  {
+   "label": "Pending Therapy Plans",
+   "number_card_name": "Total Therapy Plans"
+  },
+  {
+   "label": "Planned Sessions",
+   "number_card_name": "Planned Sessions"
+  },
+  {
+   "label": "Total Sessions to Bill",
+   "number_card_name": "Total Sessions to Bill"
+  }
+ ],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 16.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "format": "{} Pending",
+   "label": "Therapy Plan",
+   "link_to": "Therapy Plan",
+   "stats_filter": "[[\"Therapy Plan\",\"status\",\"in\",[\"Not Started\",\"In Progress\",null]]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{} Draft",
+   "label": "Therapy Session",
+   "link_to": "Therapy Session",
+   "stats_filter": "[[\"Therapy Session\",\"docstatus\",\"=\",\"0\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Patient History",
+   "link_to": "patient_history",
+   "type": "Page"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Patient Assessment",
+   "link_to": "Patient Assessment",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "label": "Patient Progress",
+   "link_to": "patient-progress",
+   "type": "Page"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Therapy Type",
+   "link_to": "Therapy Type",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Exercise Type",
+   "link_to": "Exercise Type",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Therapy Plan Template",
+   "link_to": "Therapy Plan Template",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Rehabilitation",
+ "type": "Workspace"
+}

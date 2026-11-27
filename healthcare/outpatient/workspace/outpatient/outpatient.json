@@ -1,0 +1,103 @@
+{
+ "app": "healthcare",
+ "charts": [
+  {
+   "chart_name": "Daily Appointments",
+   "label": "Daily Appointments"
+  },
+  {
+   "chart_name": "Appointments by Status",
+   "label": "Appointments by Status"
+  }
+ ],
+ "content": "[{\"id\":\"3edf8e2a12\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Outpatient Onboarding\",\"col\":12}},{\"id\":\"chart-daily_appointments\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Appointments\",\"col\":6}},{\"id\":\"chart-appointments_by_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Appointments by Status\",\"col\":6}},{\"id\":\"u3Sclf-QiQ\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"gFM5r4K3y2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Patients\",\"col\":4}},{\"id\":\"RMlQTL0meV\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Appointments\",\"col\":4}},{\"id\":\"G41EJQwZox\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Appointments To Bill\",\"col\":4}},{\"id\":\"bEnAyCZSMA\",\"type\":\"paragraph\",\"data\":{\"text\":\"Your Shortcuts\",\"col\":12}},{\"id\":\"4-OtW2OYnu\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"gzToa2CVJ7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vital Signs\",\"col\":4}},{\"id\":\"mz6BTyIeXY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Encounter\",\"col\":4}},{\"id\":\"8FLib33wDK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":4}},{\"id\":\"HnORuYex3I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"6qdaeMOZpI\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}}]",
+ "creation": "2025-05-30 17:35:08.867048",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "users",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Outpatient",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-11-24 10:02:34.772033",
+ "modified_by": "Administrator",
+ "module": "Outpatient",
+ "name": "Outpatient",
+ "number_cards": [
+  {
+   "label": "Open Appointments",
+   "number_card_name": "Open Appointments OP"
+  },
+  {
+   "label": "Total Patients",
+   "number_card_name": "Total Out Patients"
+  },
+  {
+   "label": "Appointments To Bill",
+   "number_card_name": "Appointments To Bill OP"
+  }
+ ],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 14.0,
+ "shortcuts": [
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{} Open",
+   "label": "Patient Appointment",
+   "link_to": "Patient Appointment",
+   "stats_filter": "[[\"Patient Appointment\",\"status\",\"=\",\"Open\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Encounter",
+   "link_to": "Patient Encounter",
+   "stats_filter": "[[\"Patient Encounter\",\"inpatient_record\",\"is\",\"not set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "format": "{} Active",
+   "label": "Patient",
+   "link_to": "Patient",
+   "stats_filter": "[[\"Patient\",\"status\",\"=\",\"Active\"],[\"Patient\",\"inpatient_record\",\"is\",\"not set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Sales Invoice",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Vital Signs",
+   "link_to": "Vital Signs",
+   "stats_filter": "[[\"Vital Signs\",\"inpatient_record\",\"is\",\"not set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Patient History",
+   "link_to": "patient_history",
+   "type": "Page"
+  }
+ ],
+ "title": "Outpatient",
+ "type": "Workspace"
+}
