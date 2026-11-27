@@ -73,10 +73,6 @@ class TestInsuranceClaim(HealthcareTestSuite):
 		self.assertEqual(claim_dict.paid_amount, 192)
 
 	def test_payment_entry_validates_and_links_claim_fields(self):
-		frappe.db.delete("Appointment Type", {"name": "_Test Appointment"})
-		frappe.db.delete("Patient Appointment", {"appointment_type": "_Test Appointment"})
-		frappe.db.delete("Insurance Payor Contract", {"insurance_payor": "_Test Insurance Payor"})
-
 		eligibility_plan = create_payor_insurance_eligibility_plan()
 		contract = get_new_payor_contract_doc(today(), add_years(today(), 1))
 		contract.submit()
