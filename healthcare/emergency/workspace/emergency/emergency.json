@@ -10,7 +10,7 @@
    "label": "ED Arrivals by Triage Level"
   }
  ],
- "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"chart-daily_ed_arrivals\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily ED Arrivals\",\"col\":6}},{\"id\":\"chart-ed_arrivals_by_triage_level\",\"type\":\"chart\",\"data\":{\"chart_name\":\"ED Arrivals by Triage Level\",\"col\":6}},{\"id\":\"spacer-ed_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card-total_ed_arrivals\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total ED Arrivals\",\"col\":3}},{\"id\":\"card-awaiting_triage\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Awaiting Triage\",\"col\":3}},{\"id\":\"card-in_treatment\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In Treatment\",\"col\":3}},{\"id\":\"card-awaiting_disposition\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Awaiting Disposition\",\"col\":3}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}}]",
+ "content": "[{\"id\":\"50ea8503ce\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Emergency Onboarding\",\"col\":12}},{\"id\":\"chart-daily_ed_arrivals\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily ED Arrivals\",\"col\":6}},{\"id\":\"chart-ed_arrivals_by_triage_level\",\"type\":\"chart\",\"data\":{\"chart_name\":\"ED Arrivals by Triage Level\",\"col\":6}},{\"id\":\"spacer-ed_cards\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card-total_ed_arrivals\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total ED Arrivals\",\"col\":3}},{\"id\":\"card-awaiting_triage\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Awaiting Triage\",\"col\":3}},{\"id\":\"card-in_treatment\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"In Treatment\",\"col\":3}},{\"id\":\"card-awaiting_disposition\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Awaiting Disposition\",\"col\":3}},{\"id\":\"ed_header\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Emergency Department</span>\",\"col\":12}},{\"id\":\"ed_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active Emergencies\",\"col\":3}},{\"id\":\"ed_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Triage Queue\",\"col\":3}},{\"id\":\"ed_sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Emergency Beds\",\"col\":3}},{\"id\":\"ed_sc_encounter\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Encounter\",\"col\":3}},{\"id\":\"ed_sc_observation\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Observation\",\"col\":3}},{\"id\":\"ed_sc_vitals\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vitals\",\"col\":3}},{\"id\":\"ed_sc_service_request\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Service Request\",\"col\":3}},{\"id\":\"ed_sc_medication_request\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Medication Request\",\"col\":3}}]",
  "creation": "2026-06-16 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -23,7 +23,7 @@
  "is_hidden": 0,
  "label": "Emergency",
  "links": [],
- "modified": "2026-11-27 10:00:00.000000",
+ "modified": "2026-11-27 11:00:00.000000",
  "modified_by": "Administrator",
  "module": "Emergency",
  "name": "Emergency",
@@ -74,6 +74,46 @@
    "label": "Emergency Beds",
    "link_to": "Healthcare Service Unit",
    "stats_filter": "[[\"Healthcare Service Unit\",\"occupancy_status\",\"=\",\"Vacant\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Encounter",
+   "link_to": "Patient Encounter",
+   "stats_filter": "[[\"Patient Encounter\",\"emergency_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Observation",
+   "link_to": "Observation",
+   "stats_filter": "[[\"Observation\",\"emergency_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Service Request",
+   "link_to": "Service Request",
+   "stats_filter": "[[\"Service Request\",\"emergency_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Medication Request",
+   "link_to": "Medication Request",
+   "stats_filter": "[[\"Medication Request\",\"emergency_record\",\"is\",\"set\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Vitals",
+   "link_to": "Observation",
+   "stats_filter": "[[\"Observation\",\"emergency_record\",\"is\",\"set\"],[\"Observation\",\"observation_category\",\"=\",\"Vital Signs\"]]",
    "type": "DocType"
   }
  ],
