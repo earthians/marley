@@ -1,1 +1,8 @@
 Healthcare
+Diagnostics
+Outpatient
+Emergency
+Inpatient
+Rehabilitation
+Insurance
+Healthcare Setup
