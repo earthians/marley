@@ -756,6 +756,7 @@ class BootStrapTestData:
 			roles = {row["role"] for row in record.get("roles", [])}
 			if missing := roles - set(frappe.get_roles(record["email"])):
 				frappe.get_doc("User", record["email"]).add_roles(*missing)
+		frappe.defaults.set_user_default("company", "_Test Company", "nurse@marleyhealth.io")
 
 	def make_module_profiles(self):
 		records = [
@@ -1041,6 +1042,14 @@ class BootStrapTestData:
 				"company_name": "_Test Company",
 				"country": "India",
 				"default_currency": "INR",
+				"doctype": "Company",
+				"chart_of_accounts": "Standard",
+			},
+			{
+				"abbr": "_TC2",
+				"company_name": "_Test Company 2",
+				"country": "Germany",
+				"default_currency": "EUR",
 				"doctype": "Company",
 				"chart_of_accounts": "Standard",
 			},
