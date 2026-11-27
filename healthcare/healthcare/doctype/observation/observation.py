@@ -94,8 +94,9 @@ class Observation(Document):
 			else:
 				self.time_of_result = ""
 
-		if self.status == "Final" and not self.time_of_approval:
-			self.time_of_approval = now_datetime()
+		if self.status in ("Approved", "Final"):
+			if not self.time_of_approval:
+				self.time_of_approval = now_datetime()
 		else:
 			self.time_of_approval = ""
 

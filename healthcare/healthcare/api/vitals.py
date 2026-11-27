@@ -60,10 +60,27 @@ class VitalsRecorder:
 			not observation.get("consumables")
 			and not observation.has_component
 			and observation.is_ready_for_approval()
+			and self._has_valid_select_choice(observation)
 			and observation.has_permission("submit")
 		):
 			set_observation_status(observation.name, "Approved")
 		return observation.name
+
+	def _has_valid_select_choice(self, observation):
+		if observation.get("permitted_data_type") != "Select":
+			return True
+
+		raw_options = observation.get("options")
+		if raw_options is None and observation.observation_template:
+			raw_options = frappe.get_cached_value(
+				"Observation Template", observation.observation_template, "options"
+			)
+
+		if not raw_options:
+			return True
+
+		allowed = {opt.strip() for opt in str(raw_options).splitlines() if opt.strip()}
+		return not allowed or str(observation.result).strip() in allowed
 
 	def observation_defaults(self, template):
 		return {
