@@ -74,9 +74,9 @@ class PatientSnapshot:
 		return doses_on_the_round(self.patient, statuses=["Scheduled"], limit=5)
 
 	def care_plan(self):
-		from healthcare.healthcare.api.nursing_care_plan import get_care_plan
+		from healthcare.healthcare.api.nursing_care_plan import active_care_plan
 
-		return get_care_plan(self.patient)
+		return active_care_plan(self.patient)
 
 	def missed_medications(self):
 		from healthcare.healthcare.api.medication import missed_doses
@@ -273,6 +273,11 @@ def get_banner(patient: str, reference_doctype: str | None = None, reference_nam
 
 
 @frappe.whitelist()
-def get_snapshot(patient: str, limit: int = 10) -> dict:
-	ChartAccess(patient).to_read()
+def get_snapshot(
+	patient: str,
+	limit: int = 10,
+	reference_doctype: str | None = None,
+	reference_name: str | None = None,
+) -> dict:
+	ChartAccess(patient, reference_doctype, reference_name).to_read()
 	return PatientSnapshot(patient, int(limit)).as_dict()
