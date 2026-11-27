@@ -17,6 +17,42 @@ from healthcare.tests.utils import HealthcareTestSuite
 
 
 class TestTherapyPlan(HealthcareTestSuite):
+	def test_save_rejects_invalid_session_counts(self):
+		for sessions in ({}, {"no_of_sessions": 0}, {"no_of_sessions": -1}):
+			with self.subTest(sessions=sessions):
+				plan = frappe.get_doc(
+					{
+						"doctype": "Therapy Plan",
+						"patient": "_Test Patient",
+						"company": "_Test Company",
+						"start_date": nowdate(),
+						"therapy_plan_details": [{"therapy_type": "Basic Rehab", **sessions}],
+					}
+				)
+				with self.assertRaisesRegex(
+					frappe.ValidationError, "Row #1: Number of Sessions should be at least 1"
+				):
+					plan.save()
+
+	def test_save_accepts_one_session(self):
+		plan = create_therapy_plan()
+		plan.therapy_plan_details[0].no_of_sessions = 1
+		plan.save()
+		plan.reload()
+
+		self.assertEqual(plan.therapy_plan_details[0].no_of_sessions, 1)
+		self.assertEqual(plan.total_sessions, 1)
+		self.assertEqual(plan.status, "Not Started")
+
+	def test_save_reports_invalid_session_row(self):
+		plan = create_therapy_plan()
+		plan.append("therapy_plan_details", {"therapy_type": "Basic Rehab", "no_of_sessions": 0})
+
+		with self.assertRaisesRegex(
+			frappe.ValidationError, "Row #2: Number of Sessions should be at least 1"
+		):
+			plan.save()
+
 	def test_creation_on_encounter_submission(self):
 		patient = "_Test Patient"
 		practitioner = "_Test Healthcare Practitioner 2"
