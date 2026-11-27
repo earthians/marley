@@ -1180,6 +1180,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 
 		journal_entry.company = sales_invoice.company
 		journal_entry.posting_date = sales_invoice.posting_date
+		journal_entry.insurance_coverage = item.insurance_coverage
 
 		for account in jv_accounts:
 			journal_entry.append("accounts", account)
