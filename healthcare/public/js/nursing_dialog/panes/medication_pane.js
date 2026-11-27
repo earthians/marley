@@ -155,6 +155,6 @@ healthcare.nursing.panes.medication = class MedicationPane extends (
 			indicator: "green",
 		});
 		await this.refresh_doses();
-		this.station.snapshot.refresh();
+		this.station.recorded();
 	}
 };

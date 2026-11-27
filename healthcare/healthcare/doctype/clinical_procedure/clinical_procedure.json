@@ -52,7 +52,10 @@
   "service_request",
   "invoiced",
   "prescription",
-  "amended_from"
+  "amended_from",
+  "nursing_tab",
+  "nursing_section",
+  "nursing_snapshot"
  ],
  "fields": [
   {
@@ -365,6 +368,20 @@
    "link_filters": "[[\"Price List\",\"selling\",\"=\",1]]",
    "mandatory_depends_on": "eval: doc.consume_stock == 1",
    "options": "Price List"
+  },
+  {
+   "fieldname": "nursing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Nursing"
+  },
+  {
+   "fieldname": "nursing_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "nursing_snapshot",
+   "fieldtype": "HTML",
+   "label": "Nursing Snapshot"
   }
  ],
  "is_submittable": 1,
@@ -374,7 +391,7 @@
    "link_fieldname": "reference_name"
   }
  ],
- "modified": "2026-02-16 18:35:08.776702",
+ "modified": "2026-11-22 16:54:58.630330",
  "modified_by": "Administrator",
  "module": "Healthcare",
  "name": "Clinical Procedure",

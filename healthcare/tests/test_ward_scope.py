@@ -70,6 +70,19 @@ class TestWardScope(HealthcareTestSuite):
 		with self.set_user(NURSE):
 			ChartAccess(self.outpatient, "Clinical Procedure", procedure).to_read()
 
+	def test_a_ward_nurse_sees_the_snapshot_of_a_procedure_in_the_ward(self):
+		from healthcare.healthcare.api.nursing import get_snapshot
+
+		self.assign_nurse_to(WARD)
+		procedure = self.make_procedure(self.outpatient, WARD)
+
+		with self.set_user(NURSE):
+			snapshot = get_snapshot(
+				self.outpatient, reference_doctype="Clinical Procedure", reference_name=procedure
+			)
+			self.assertIn("vitals", snapshot)
+			self.assertRaises(frappe.PermissionError, get_snapshot, self.outpatient)
+
 	def test_the_patient_search_only_finds_the_ward(self):
 		from healthcare.healthcare.api.nursing import find_patients
 
