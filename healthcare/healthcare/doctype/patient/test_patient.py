@@ -109,6 +109,20 @@ class TestPatient(HealthcareTestSuite):
 
 		self.assertRaises(frappe.exceptions.DuplicateEntryError, new_patient.insert)
 
+	def test_invite_finds_an_existing_user_by_email_not_by_id(self):
+		patient = frappe.get_doc(
+			{
+				"doctype": "Patient",
+				"first_name": "_Test Invite Existing Email",
+				"sex": "Female",
+				"email": "portal_id_other@marleyhealth.io",
+				"invite_user": 1,
+				"customer_group": "Individual",
+			}
+		)
+
+		self.assertRaises(frappe.exceptions.DuplicateEntryError, patient.insert)
+
 	def test_patient_image_update_should_update_customer_image(self):
 		settings = frappe.get_single("Healthcare Settings")
 		settings.link_customer_to_patient = 1
