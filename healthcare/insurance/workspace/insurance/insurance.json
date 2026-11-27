@@ -1,0 +1,94 @@
+{
+ "app": "healthcare",
+ "charts": [
+  {
+   "chart_name": "Daily Insurance Claims",
+   "label": "Daily Insurance Claims"
+  },
+  {
+   "chart_name": "Insurance Claims by Status",
+   "label": "Insurance Claims by Status"
+  }
+ ],
+ "content": "[{\"id\":\"6987cdde46\",\"type\":\"onboarding\",\"data\":{\"onboarding_name\":\"Insurance Onboarding\",\"col\":12}},{\"id\":\"chart-daily_insurance_claims\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Daily Insurance Claims\",\"col\":6}},{\"id\":\"chart-insurance_claims_by_status\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Insurance Claims by Status\",\"col\":6}},{\"id\":\"QPKJARhNlP\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"7R5geM0eiC\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims\",\"col\":3}},{\"id\":\"7tV1Skv4y5\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Outstanding Claims Value\",\"col\":3}},{\"id\":\"wJURP86-v3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims\",\"col\":3}},{\"id\":\"-b4MdATviZ\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Paid Claims Value\",\"col\":3}},{\"id\":\"4cQDF7WK7s\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"X5YMfgIhuK\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Insurance Claim\",\"col\":3}},{\"id\":\"U6WaTxAcSl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Coverage\",\"col\":3}},{\"id\":\"rTiJyM7gp6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Eligibility Plan\",\"col\":3}},{\"id\":\"ZlXP-idVZh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}}]",
+ "creation": "2025-05-30 17:40:59.886349",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "heart-handshake",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Insurance",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-11-24 10:47:52.339927",
+ "modified_by": "Administrator",
+ "module": "Insurance",
+ "name": "Insurance",
+ "number_cards": [
+  {
+   "label": "Outstanding Claims Value",
+   "number_card_name": "Outstanding Claims Value"
+  },
+  {
+   "label": "Paid Claims Value",
+   "number_card_name": "Paid Claims Value"
+  },
+  {
+   "label": "Paid Claims",
+   "number_card_name": "Paid Claims"
+  },
+  {
+   "label": "Outstanding Claims",
+   "number_card_name": "Outstanding Claims"
+  }
+ ],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 18.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Eligibility Plan",
+   "link_to": "Insurance Payor Eligibility Plan",
+   "stats_filter": "[[\"Insurance Payor Eligibility Plan\",\"is_active\",\"=\",1]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Insurance Claim",
+   "link_to": "Insurance Claim",
+   "stats_filter": "[[\"Insurance Claim\",\"status\",\"in\",[\"Draft\",\"Submitted\",null]],[\"Insurance Claim\",\"docstatus\",\"=\",\"1\"]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Coverage",
+   "link_to": "Patient Insurance Coverage",
+   "stats_filter": "[[\"Patient Insurance Coverage\",\"docstatus\",\"=\",\"1\"],[\"Patient Insurance Coverage\",\"status\",\"in\",[\"Draft\",\"Approved\",\"Partly Invoiced\",null]]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "Sales Invoice",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[[\"Sales Invoice\",\"docstatus\",\"=\",\"1\"],[\"Sales Invoice\",\"total_insurance_coverage_amount\",\"is\",\"set\"]]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Insurance",
+ "type": "Workspace"
+}
