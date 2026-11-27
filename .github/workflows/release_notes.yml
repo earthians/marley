@@ -19,7 +19,7 @@ on:
     types: [released]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   regen-notes:
@@ -34,5 +34,5 @@ jobs:
         gh api --method PATCH -H "Accept: application/vnd.github+json" /repos/earthians/marley/releases/$RELEASE_ID -f body="$NEW_NOTES"
 
       env:
-        GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        GH_TOKEN: ${{ github.token }}
         RELEASE_TAG: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
