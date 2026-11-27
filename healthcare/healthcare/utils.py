@@ -599,6 +599,97 @@ def manage_invoice_submit_cancel(doc, method):
 							"ref_sales_invoice": None,
 						},
 					)
+<<<<<<< HEAD
+=======
+		# handle insurance
+		update_insurance_coverage(doc)
+
+
+def update_insurance_coverage(sales_invoice):
+	"""
+	Updates Insurance coverage invoice details
+	NOTE: Journal entries should be cancelled by now via Cancel All
+	"""
+	for item in sales_invoice.items:
+		if item.insurance_coverage:
+			coverage = frappe.get_doc("Patient Insurance Coverage", item.insurance_coverage)
+			coverage.update_invoice_details(item.qty * -1, item.insurance_coverage_amount * -1)
+
+
+def post_transfer_journal_entry_and_update_coverage(sales_invoice):
+	"""
+	1 - Post Journal Entry to Transfer Patient balance for each coverage
+	2 - Update Insurance Coverage
+	TODO: Posting Journal Entries based on Insurance Payor will reduce number of journal entries,
+	but won't be able allow coverage cancel after invoicing. Fix based on feedback
+	"""
+	for item in sales_invoice.items:
+		if not item.insurance_coverage:
+			continue
+
+		from healthcare.healthcare.doctype.insurance_payor.insurance_payor import (
+			get_insurance_payor_details,
+		)
+
+		insurance_payor_details = get_insurance_payor_details(item.insurance_payor, sales_invoice.company)
+
+		if (
+			not insurance_payor_details
+			or not insurance_payor_details.get("receivable_account")
+			or not insurance_payor_details.get("party")
+		):
+			frappe.throw(
+				_("Receivable Account not configured for Insurance Payor").format(item.insurance_payor)
+			)
+
+		jv_accounts = []
+
+		jv_accounts.append(
+			{
+				"account": insurance_payor_details.get("receivable_account"),
+				"debit_in_account_currency": item.insurance_coverage_amount,
+				"party_type": "Customer",
+				"party": insurance_payor_details.get("party"),
+				"cost_center": item.cost_center,
+			}
+		)
+
+		# Post Journal Entry
+		jv_accounts.append(
+			{
+				"account": sales_invoice.debit_to,
+				"credit_in_account_currency": item.insurance_coverage_amount,
+				"party_type": "Customer",
+				"party": sales_invoice.customer,
+				"reference_type": "Sales Invoice",
+				"reference_name": sales_invoice.name,
+				"reference_detail_no": item.name,
+				"cost_center": item.cost_center,
+			}
+		)
+
+		journal_entry = frappe.new_doc("Journal Entry")
+
+		jv_naming_series = frappe.db.get_single_value(
+			"Healthcare Settings", "naming_series_for_journal_entry"
+		)
+		if jv_naming_series:
+			journal_entry.naming_series = jv_naming_series
+
+		journal_entry.company = sales_invoice.company
+		journal_entry.posting_date = sales_invoice.posting_date
+		journal_entry.insurance_coverage = item.insurance_coverage
+
+		for account in jv_accounts:
+			journal_entry.append("accounts", account)
+
+		journal_entry.flags.ignore_permissions = True
+		journal_entry.submit()
+
+		# Update Insurance Coverage
+		coverage = frappe.get_doc("Patient Insurance Coverage", item.insurance_coverage)
+		coverage.update_invoice_details(item.qty, item.insurance_coverage_amount)
+>>>>>>> 40bcdfd (fix(insurance-claim): link transfer journal entry coverage and fix payment validation)
 
 
 def set_invoiced(item, method, ref_invoice=None):
