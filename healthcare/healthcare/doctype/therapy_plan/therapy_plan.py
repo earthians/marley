@@ -113,6 +113,7 @@ def make_therapy_session(
 	therapy_session.therapy_plan = therapy_plan
 	therapy_session.company = company
 	therapy_session.patient = patient
+	frappe.has_permission("Patient", "read", patient, throw=True)
 	therapy_session.inpatient_record, therapy_session.inpatient_status = frappe.db.get_value(
 		"Patient", patient, ["inpatient_record", "inpatient_status"]
 	)
