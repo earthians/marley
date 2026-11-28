@@ -317,7 +317,8 @@ def validate_payment_entry_and_set_claim_fields(doc, method):
 					"insurance_coverage": insurance_coverage,
 					"status": "Approved",
 				},
-				fields=["name as insurance_claim_coverage", "parent as insurance_claim"],
+				fieldname=["name", "parent"],
+				as_dict=True,
 			)
 
 			if not claim_details:
@@ -329,8 +330,8 @@ def validate_payment_entry_and_set_claim_fields(doc, method):
 					title=_("Not Allowed"),
 				)
 
-			pe_ref.insurance_claim = claim_details.insurance_claim
-			pe_ref.insurance_claim_coverage = claim_details.insurance_claim_coverage
+			pe_ref.insurance_claim = claim_details.parent
+			pe_ref.insurance_claim_coverage = claim_details.name
 
 
 def update_claim_paid_amount(pe, method):
