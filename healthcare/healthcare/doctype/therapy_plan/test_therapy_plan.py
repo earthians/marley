@@ -4,8 +4,12 @@
 
 
 import frappe
+<<<<<<< HEAD
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt, getdate, nowdate
+=======
+from frappe.utils import flt, nowdate, nowtime
+>>>>>>> 55bdb19 (fix(therapy-plan): skip service request lookup for therapy plans without order group)
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_appointment,
@@ -57,6 +61,99 @@ class TestTherapyPlan(FrappeTestCase):
 		session.cancel()
 		self.assertEqual(frappe.db.get_value("Patient Appointment", appointment.name, "status"), "Open")
 
+<<<<<<< HEAD
+=======
+	def test_practitioner_from_service_request(self):
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
+		medical_department = "_Test Medical Department"
+		encounter = create_encounter_with_therapy(patient, medical_department, practitioner)
+
+		therapy_type = "Basic Rehab"
+		service_request = frappe.db.get_value(
+			"Service Request", {"template_dn": therapy_type, "order_group": encounter.name}
+		)
+
+		# distinct from the Therapy Plan's practitioner, so the assertion can only pass
+		# if the session actually resolved it from the Service Request
+		sr_practitioner = "_Test Healthcare Practitioner 1"
+		frappe.db.set_value("Service Request", service_request, "practitioner", sr_practitioner)
+
+		session = make_therapy_session(
+			patient, therapy_type, "_Test Company", service_request=service_request
+		)
+		self.assertEqual(session["practitioner"], sr_practitioner)
+
+	def test_practitioner_from_therapy_plan(self):
+		plan = create_therapy_plan()
+		therapy_type = "Basic Rehab"
+
+		# confirm there really is no Service Request to fall back to first, so the
+		# assertion below actually exercises the Therapy Plan branch
+		self.assertFalse(
+			frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": plan.order_group}
+			)
+		)
+
+		session = make_therapy_session(plan.patient, therapy_type, "_Test Company", plan.name)
+		self.assertEqual(session["practitioner"], plan.practitioner)
+
+	def test_manual_plan_does_not_link_another_patients_service_request(self):
+		plan = create_therapy_plan()
+		therapy_type = plan.therapy_plan_details[0].therapy_type
+		service_request = frappe.get_doc(
+			{
+				"doctype": "Service Request",
+				"patient": "_Test Patient 1",
+				"company": plan.company,
+				"practitioner": plan.practitioner,
+				"order_date": nowdate(),
+				"order_time": nowtime(),
+				"template_dt": "Therapy Type",
+				"template_dn": therapy_type,
+				"quantity": 1,
+				"billing_status": "Invoiced",
+			}
+		).insert()
+		service_request.submit()
+		self.assertFalse(plan.order_group)
+		self.assertFalse(service_request.order_group)
+		self.assertNotEqual(service_request.patient, plan.patient)
+		self.assertTrue(
+			frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": plan.order_group}
+			)
+		)
+
+		session = make_therapy_session(plan.patient, therapy_type, plan.company, plan.name)
+
+		self.assertFalse(session["service_request"])
+		self.assertEqual(session["patient"], plan.patient)
+		self.assertEqual(session["therapy_plan"], plan.name)
+
+	def test_explicit_practitioner_takes_priority(self):
+		patient = "_Test Patient"
+		practitioner = "_Test Healthcare Practitioner 2"
+		medical_department = "_Test Medical Department"
+		encounter = create_encounter_with_therapy(patient, medical_department, practitioner)
+
+		therapy_type = "Basic Rehab"
+		service_request = frappe.db.get_value(
+			"Service Request", {"template_dn": therapy_type, "order_group": encounter.name}
+		)
+		explicit_practitioner = "_Test Healthcare Practitioner 1"
+
+		session = make_therapy_session(
+			patient,
+			therapy_type,
+			"_Test Company",
+			service_request=service_request,
+			practitioner=explicit_practitioner,
+		)
+		self.assertEqual(session["practitioner"], explicit_practitioner)
+
+>>>>>>> 55bdb19 (fix(therapy-plan): skip service request lookup for therapy plans without order group)
 	def test_therapy_plan_from_template(self):
 		patient = create_patient()
 		template = create_therapy_plan_template()

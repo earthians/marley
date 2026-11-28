@@ -56,6 +56,7 @@ class TherapyPlan(Document):
 
 @frappe.whitelist()
 def make_therapy_session(
+<<<<<<< HEAD
 	patient: "str",
 	therapy_type: "str",
 	company: "str",
@@ -63,6 +64,24 @@ def make_therapy_session(
 	appointment: "str | None" = None,
 	service_request: "str | None" = None,
 ):
+=======
+	patient: str,
+	therapy_type: str,
+	company: str,
+	therapy_plan: str | None = None,
+	appointment: str | None = None,
+	service_request: str | None = None,
+	practitioner: str | None = None,
+) -> dict:
+	tp_doc = None
+	if not service_request and therapy_plan:
+		tp_doc = frappe.get_cached_doc("Therapy Plan", therapy_plan)
+		if tp_doc.order_group:
+			service_request = frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": tp_doc.order_group}
+			)
+
+>>>>>>> 55bdb19 (fix(therapy-plan): skip service request lookup for therapy plans without order group)
 	sr_doc = None
 	if service_request:
 		if (
