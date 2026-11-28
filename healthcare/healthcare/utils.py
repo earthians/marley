@@ -1180,6 +1180,7 @@ def post_transfer_journal_entry_and_update_coverage(sales_invoice):
 
 		journal_entry.company = sales_invoice.company
 		journal_entry.posting_date = sales_invoice.posting_date
+		journal_entry.insurance_coverage = item.insurance_coverage
 
 		for account in jv_accounts:
 			journal_entry.append("accounts", account)
@@ -1594,6 +1595,17 @@ def create_healthcare_service_unit_tree_root(doc, method=None):
 		}
 	]
 	insert_record(record)
+
+
+def validate_sessions(doc, table, label=None):
+	"""Validate that each row in a child table has at least one session."""
+	for row in doc.get(table) or []:
+		if cint(row.no_of_sessions) < 1:
+			if label:
+				message = _("Row #{0} ({1}): Number of Sessions should be at least 1").format(row.idx, label)
+			else:
+				message = _("Row #{0}: Number of Sessions should be at least 1").format(row.idx)
+			frappe.throw(message)
 
 
 def validate_nursing_tasks(document):
