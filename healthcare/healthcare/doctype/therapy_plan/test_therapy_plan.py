@@ -281,6 +281,7 @@ class TestTherapyPlan(HealthcareTestSuite):
 
 		therapy_plan_template_amt = frappe.db.get_value("Therapy Plan Template", template, "total_amount")
 		self.assertEqual(si.items[0].amount, therapy_plan_template_amt)
+		self.assertEqual(si.ref_practitioner, plan.practitioner)
 
 
 def create_therapy_plan_template():
