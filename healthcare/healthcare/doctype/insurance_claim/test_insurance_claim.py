@@ -1,6 +1,8 @@
 # Copyright (c) 2020, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
+import copy
+
 import frappe
 from frappe.utils import add_years, nowdate, today
 
@@ -59,6 +61,63 @@ class TestInsuranceClaim(HealthcareTestSuite):
 		# Create Payment Entry of the Insurance Claim
 		payment_entry_dict = create_payment_entry(claim_doc)
 		payment_entry_doc = frappe.get_doc(payment_entry_dict).insert()
+		payment_entry_doc.submit()
+		claim_dict = frappe.db.get_value(
+			"Insurance Claim",
+			claim_name,
+			["approved_amount", "outstanding_amount", "paid_amount"],
+			as_dict=1,
+		)
+		self.assertEqual(claim_dict.approved_amount, 192)
+		self.assertEqual(claim_dict.outstanding_amount, 0)
+		self.assertEqual(claim_dict.paid_amount, 192)
+
+	def test_payment_entry_validates_and_links_claim_fields(self):
+		eligibility_plan = create_payor_insurance_eligibility_plan()
+		contract = get_new_payor_contract_doc(today(), add_years(today(), 1))
+		contract.submit()
+
+		insurance_policy = get_new_insurance_policy(self.patient, eligibility_plan)
+		insurance_policy.submit()
+
+		appointment_type = "_Test Appointment Type"
+		create_item_insurance_eligibility("Service", "Appointment Type", appointment_type, eligibility_plan)
+
+		appointment = create_insured_appointment(
+			self.patient, self.practitioner, nowdate(), appointment_type, insurance_policy.name
+		)
+		appointments_to_invoice = get_appointments_to_invoice(
+			frappe.get_doc("Patient", self.patient), "_Test Company"
+		)
+		invoice_insured_appointments(appointment, appointments_to_invoice)
+
+		claim_name, claim_doc = create_insurance_claim(self.patient, insurance_policy.name)
+		journal_entry = claim_doc.coverages[0].journal_entry
+		self.assertEqual(
+			frappe.db.get_value("Journal Entry", journal_entry, "insurance_coverage"),
+			appointment.insurance_coverage,
+		)
+
+		payment_entry_dict = create_payment_entry(claim_doc)
+		payment_entry_dict["references"][0]["insurance_claim"] = None
+		payment_entry_dict["references"][0]["insurance_claim_coverage"] = None
+
+		# Reject Payment Entry when the claim coverage is not Approved
+		claim_doc.coverages[0].status = "Submitted"
+		claim_doc.save()
+		with self.assertRaises(frappe.ValidationError):
+			frappe.get_doc(copy.deepcopy(payment_entry_dict)).insert()
+
+		# Populate claim links on validate once Approved and update paid_amount on submit
+		claim_doc.coverages[0].status = "Approved"
+		claim_doc.save()
+		payment_entry_doc = frappe.get_doc(payment_entry_dict).insert()
+		self.assertEqual(payment_entry_doc.references[0].insurance_claim, claim_name)
+		self.assertEqual(
+			payment_entry_doc.references[0].insurance_claim_coverage,
+			claim_doc.coverages[0].name,
+		)
+
 		payment_entry_doc.submit()
 		claim_dict = frappe.db.get_value(
 			"Insurance Claim",
