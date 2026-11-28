@@ -9,11 +9,12 @@ from frappe.utils import flt, today
 
 from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 
-from healthcare.healthcare.utils import validate_nursing_tasks
+from healthcare.healthcare.utils import validate_nursing_tasks, validate_sessions
 
 
 class TherapyPlan(Document):
 	def validate(self):
+		validate_sessions(self, "therapy_plan_details")
 		self.set_totals()
 		self.set_status()
 
