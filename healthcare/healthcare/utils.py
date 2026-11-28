@@ -1418,6 +1418,7 @@ def get_patient_vitals(
 		filters={"docstatus": 1, "patient": patient},
 		order_by="signs_date, signs_time",
 		fields=["*"],
+		limit_page_length=0,
 	)
 
 	if len(vitals):
@@ -1443,123 +1444,63 @@ def render_doc_as_html(doctype: str, docname: str, exclude_fields: str | list | 
 	exclude_fields = exclude_fields or []
 	doc = frappe.get_doc(doctype, docname)
 	meta = frappe.get_meta(doctype)
-	doc_html = section_html = section_label = html = ""
-	sec_on = has_data = False
-	col_on = 0
+	sections = []
+	fields = []
+	section_label = ""
+
+	def flush_section():
+		if not fields:
+			return
+
+		title = (
+			f"<h3 class='ph-document-section-title'>{frappe.utils.escape_html(section_label)}</h3>"
+			if section_label
+			else ""
+		)
+		sections.append(
+			f"<section class='ph-document-section'>{title}"
+			f"<div class='ph-document-fields'>{''.join(fields)}</div></section>"
+		)
+		fields.clear()
 
 	for df in meta.fields:
-		# on section break append previous section and html to doc html
 		if df.fieldtype == "Section Break":
-			if has_data and col_on and sec_on:
-				doc_html += section_html + html + "</div>"
-
-			elif has_data and not col_on and sec_on:
-				doc_html += f"""
-					<br>
-					<div class='row'>
-						<div class='col-md-12 col-sm-12'>
-							<b>{section_label}</b>
-						</div>
-					</div>
-					<div class='row'>
-						<div class='col-md-12 col-sm-12'>
-							{section_html} {html}
-						</div>
-					</div>
-				"""
-
-			# close divs for columns
-			while col_on:
-				doc_html += "</div>"
-				col_on -= 1
-
-			sec_on = True
-			has_data = False
-			col_on = 0
-			section_html = html = ""
-
-			if df.label:
-				section_label = df.label
+			flush_section()
+			section_label = df.label or ""
 			continue
 
-		# on column break append html to section html or doc html
 		if df.fieldtype == "Column Break":
-			if sec_on and not col_on and has_data:
-				section_html += f"""
-					<br>
-					<div class='row'>
-						<div class='col-md-12 col-sm-12'>
-							<b>{section_label}</b>
-						</div>
-					</div>
-					<div class='row'>
-						<div class='col-md-4 col-sm-4'>
-							{html}
-						</div>
-				"""
-			elif col_on == 1 and has_data:
-				section_html += "<div class='col-md-4 col-sm-4'>" + html + "</div>"
-			elif col_on > 1 and has_data:
-				doc_html += "<div class='col-md-4 col-sm-4'>" + html + "</div>"
-			else:
-				doc_html += f"""
-					<div class='row'>
-						<div class='col-md-12 col-sm-12'>
-							{html}
-						</div>
-					</div>
-				"""
-
-			html = ""
-			col_on += 1
-
-			if df.label:
-				html += "<br>" + df.label
 			continue
 
-		# on table iterate through items and create table
-		# based on the in_list_view property
-		# append to section html or doc html
 		if df.fieldtype == "Table":
 			items = doc.get(df.fieldname)
 			if not items:
 				continue
 			child_meta = frappe.get_meta(df.options)
+			columns = [field for field in child_meta.fields if field.in_list_view]
+			if not columns:
+				continue
 
-			if not has_data:
-				has_data = True
-			table_head = table_row = ""
-			create_head = True
-
-			for item in items:
-				table_row += "<tr>"
-				for cdf in child_meta.fields:
-					if cdf.in_list_view:
-						if create_head:
-							table_head += "<th class='text-muted'>" + cdf.label + "</th>"
-						if item.get(cdf.fieldname):
-							table_row += "<td>" + cstr(item.get(cdf.fieldname)) + "</td>"
-						else:
-							table_row += "<td></td>"
-
-				create_head = False
-				table_row += "</tr>"
-
-			if sec_on:
-				section_html += f"""
-					<table class='table table-condensed bordered'>
-						{table_head} {table_row}
-					</table>
-				"""
-			else:
-				html += f"""
-					<table class='table table-condensed table-bordered'>
-						{table_head} {table_row}
-					</table>
-				"""
+			table_head = "".join(
+				f"<th>{frappe.utils.escape_html(field.label or field.fieldname)}</th>" for field in columns
+			)
+			table_rows = "".join(
+				"<tr>"
+				+ "".join(
+					f"<td>{frappe.utils.escape_html(cstr(item.get(field.fieldname) or ''))}</td>"
+					for field in columns
+				)
+				+ "</tr>"
+				for item in items
+			)
+			fields.append(
+				f"<div class='ph-document-table-block'>"
+				f"<div class='ph-document-field-label'>{frappe.utils.escape_html(df.label or df.fieldname)}</div>"
+				f"<div class='ph-document-table-scroll'><table><thead><tr>{table_head}</tr></thead>"
+				f"<tbody>{table_rows}</tbody></table></div></div>"
+			)
 			continue
 
-		# on any other field type add label and value to html
 		if (
 			not df.hidden
 			and not df.print_hide
@@ -1567,22 +1508,20 @@ def render_doc_as_html(doctype: str, docname: str, exclude_fields: str | list | 
 			and df.fieldname not in exclude_fields
 		):
 			formatted_value = format_value(doc.get(df.fieldname), meta.get_field(df.fieldname), doc)
-			html += f"<br>{df.label or df.fieldname} : {formatted_value}"
+			field_type_class = (
+				" is-long"
+				if df.fieldtype
+				in ("Text", "Small Text", "Long Text", "Text Editor", "Markdown Editor", "Code")
+				else ""
+			)
+			fields.append(
+				f"<div class='ph-document-field{field_type_class}'>"
+				f"<span class='ph-document-field-label'>{frappe.utils.escape_html(df.label or df.fieldname)}</span>"
+				f"<div class='ph-document-field-value'>{formatted_value}</div></div>"
+			)
 
-			if not has_data:
-				has_data = True
-
-	if sec_on and col_on and has_data:
-		doc_html += section_html + html + "</div></div>"
-	elif sec_on and not col_on and has_data:
-		doc_html += f"""
-			<div class='col-md-12 col-sm-12'>
-				<div class='col-md-12 col-sm-12'>
-					{section_html} {html}
-				</div>
-			</div>
-		"""
-	return {"html": doc_html}
+	flush_section()
+	return {"html": "".join(sections)}
 
 
 def create_healthcare_service_unit_tree_root(doc, method=None):

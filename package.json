@@ -6,8 +6,12 @@
     "workspaces": ["patient_portal", "frappe-ui"],
     "scripts": {
         "postinstall": "cd patient_portal && yarn install --check-files",
-        "build": "cd patient_portal && yarn build",
-        "test": "cd patient_portal && yarn test"
+        "build": "yarn build:patient-portal && yarn build:patient-history",
+        "build:patient-portal": "cd patient_portal && yarn build",
+        "test": "yarn test:patient-portal && yarn test:patient-history",
+        "test:patient-portal": "cd patient_portal && yarn test",
+        "test:patient-history": "vitest run --config healthcare/public/js/patient_history/vitest.config.js",
+        "build:patient-history": "vite build --config healthcare/public/js/patient_history/vite.config.js"
     },
     "main": "commitlint.config.js",
     "keywords": [],
