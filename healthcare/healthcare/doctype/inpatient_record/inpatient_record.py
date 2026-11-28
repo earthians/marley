@@ -28,10 +28,7 @@ from healthcare.healthcare.doctype.nursing_task.nursing_task import NursingTask
 from healthcare.healthcare.doctype.patient_insurance_coverage.patient_insurance_coverage import (
 	make_insurance_coverage as generate_insurance_coverage,
 )
-from healthcare.healthcare.utils import (
-	get_appointment_billing_item_and_rate,
-	validate_nursing_tasks,
-)
+from healthcare.healthcare.utils import validate_nursing_tasks
 
 
 class InpatientRecord(Document):
@@ -315,14 +312,12 @@ class InpatientRecord(Document):
 				frappe.throw(_("Claim already created for all Inpatient Occupancies"))
 
 	def make_insurance_coverage(self, service_unit_type, qty):
-		billing_detail = get_appointment_billing_item_and_rate(self)
 		return generate_insurance_coverage(
 			patient=self.patient,
 			policy=self.insurance_policy,
 			company=self.company,
 			template_dt="Healthcare Service Unit Type",
 			template_dn=service_unit_type,
-			item_code=billing_detail.get("service_item"),
 			qty=qty,
 		)
 
