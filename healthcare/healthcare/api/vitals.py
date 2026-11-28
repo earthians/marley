@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 
 from healthcare.healthcare.api.nursing_common import ChartAccess, default_company, has_value
+from healthcare.healthcare.doctype.observation.observation import set_observation_status
 
 VITAL_SIGNS_CATEGORY = "Vital Signs"
 
@@ -23,16 +24,63 @@ class VitalsRecorder:
 
 	def record(self, readings):
 		"""Takes {observation_template: value} and returns the observations created."""
-		return [
-			self.record_reading(template, value) for template, value in readings.items() if has_value(value)
-		]
+		valid_readings = {template: value for template, value in readings.items() if has_value(value)}
+		self.validate_templates(valid_readings)
+		return [self.record_reading(template, value) for template, value in valid_readings.items()]
+
+	def validate_templates(self, templates):
+		template_names = list(templates)
+		if not template_names:
+			return
+
+		vital_templates = set(
+			frappe.get_all(
+				"Observation Template",
+				filters={
+					"name": ["in", template_names],
+					"observation_category": VITAL_SIGNS_CATEGORY,
+				},
+				pluck="name",
+			)
+		)
+		non_vitals = [name for name in template_names if name not in vital_templates]
+		if non_vitals:
+			frappe.throw(
+				_("Only {0} templates can be recorded here: {1}").format(
+					VITAL_SIGNS_CATEGORY, ", ".join(non_vitals)
+				)
+			)
 
 	def record_reading(self, template, value):
 		observation = frappe.new_doc("Observation")
 		observation.update(self.observation_defaults(template))
 		self.set_result(observation, value)
 		observation.insert()
+		if (
+			not observation.get("consumables")
+			and not observation.has_component
+			and observation.is_ready_for_approval()
+			and self._has_valid_select_choice(observation)
+			and observation.has_permission("submit")
+		):
+			set_observation_status(observation.name, "Approved")
 		return observation.name
+
+	def _has_valid_select_choice(self, observation):
+		if observation.get("permitted_data_type") != "Select":
+			return True
+
+		raw_options = observation.get("options")
+		if raw_options is None and observation.observation_template:
+			raw_options = frappe.get_cached_value(
+				"Observation Template", observation.observation_template, "options"
+			)
+
+		if not raw_options:
+			return True
+
+		allowed = {opt.strip() for opt in str(raw_options).splitlines() if opt.strip()}
+		return not allowed or str(observation.result).strip() in allowed
 
 	def observation_defaults(self, template):
 		return {

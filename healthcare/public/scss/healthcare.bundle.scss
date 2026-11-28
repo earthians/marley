@@ -218,9 +218,10 @@ $nursing-pane-top: 0.85rem;
 		display: none;
 	}
 
-	.nursing-rail-item {
+	.nursing-rail .nursing-rail-item {
 		width: auto;
 		white-space: nowrap;
+		padding-inline-start: 0.5rem;
 		border: 1px solid var(--border-color);
 		border-radius: var(--radius-full);
 	}
@@ -236,9 +237,13 @@ $nursing-pane-top: 0.85rem;
 	letter-spacing: 0.06em;
 	color: var(--text-muted);
 	padding: 0.75rem 0.5rem 0.25rem;
+	margin-top: 0.5rem;
+	border-top: 1px solid var(--border-color);
 
 	&:first-child {
 		padding-top: 0;
+		margin-top: 0;
+		border-top: none;
 	}
 }
 
@@ -251,6 +256,7 @@ $nursing-pane-top: 0.85rem;
 	text-align: left;
 	gap: 0.5rem;
 	padding: 0.25rem 0.5rem;
+	padding-inline-start: 1.1rem;
 	margin-bottom: 1px;
 	border: none;
 	border-radius: 8px;
