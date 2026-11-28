@@ -9,11 +9,12 @@ from frappe.utils import flt, today
 
 from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 
-from healthcare.healthcare.utils import validate_nursing_tasks
+from healthcare.healthcare.utils import validate_nursing_tasks, validate_sessions
 
 
 class TherapyPlan(Document):
 	def validate(self):
+		validate_sessions(self, "therapy_plan_details")
 		self.set_totals()
 		self.set_status()
 
@@ -72,9 +73,10 @@ def make_therapy_session(
 	tp_doc = None
 	if not service_request and therapy_plan:
 		tp_doc = frappe.get_cached_doc("Therapy Plan", therapy_plan)
-		service_request = frappe.db.exists(
-			"Service Request", {"template_dn": therapy_type, "order_group": tp_doc.order_group}
-		)
+		if tp_doc.order_group:
+			service_request = frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": tp_doc.order_group}
+			)
 
 	sr_doc = None
 	if service_request:
