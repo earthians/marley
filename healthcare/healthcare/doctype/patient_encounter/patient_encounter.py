@@ -21,15 +21,15 @@ from healthcare.healthcare.doctype.medication_alert_log.medication_alert_log imp
 	get_allergy_flagged,
 	log_document_alerts,
 )
-from healthcare.healthcare.utils import get_medical_codes
+from healthcare.healthcare.utils import get_medical_codes, validate_sessions
 
 
 class PatientEncounter(Document):
 	def validate(self):
 		self.set_title()
 		self.validate_medications()
-		self.validate_sessions("therapies", "Therapies")
-		self.validate_sessions("procedure_prescription", "Clinical Procedures")
+		validate_sessions(self, "therapies", "Therapies")
+		validate_sessions(self, "procedure_prescription", "Clinical Procedures")
 		self.validate_observations()
 		set_codification_table_from_diagnosis(self)
 		if not self.is_new() and self.submit_orders_on_save:
@@ -205,15 +205,6 @@ class PatientEncounter(Document):
 
 	def validate_medication_safety(self):
 		check_document(self, [row.medication for row in self.drug_prescription])
-
-	def validate_sessions(self, table, label):
-		"""validate sessions in child tables"""
-		if not getattr(self, table, None):
-			return
-
-		for row in getattr(self, table):
-			if not row.no_of_sessions or row.no_of_sessions <= 0:
-				frappe.throw(_(f"Row #{row.idx} ({label}): Number of Sessions should be at least 1"))
 
 	def validate_observations(self):
 		if not self.lab_test_prescription:
