@@ -55,11 +55,11 @@
   "result_flag",
   "result_flag_color",
   "options",
-  "time_of_result",
-  "time_of_approval",
   "column_break_zrac",
   "interpretation_template",
   "result_interpretation",
+  "time_of_result",
+  "time_of_approval",
   "observation_method",
   "reference_section",
   "reference",
@@ -379,7 +379,7 @@
   },
   {
    "fieldname": "column_break_zrac",
-   "fieldtype": "Column Break"
+   "fieldtype": "Section Break"
   },
   {
    "fetch_from": "observation_template.method",
