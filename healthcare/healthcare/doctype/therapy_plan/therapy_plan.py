@@ -9,14 +9,12 @@ from frappe.utils import flt, today
 
 from erpnext.stock.get_item_details import ItemDetailsCtx, get_item_details
 
-from healthcare.healthcare.utils import validate_nursing_tasks
+from healthcare.healthcare.utils import validate_nursing_tasks, validate_sessions
 
 
 class TherapyPlan(Document):
 	def validate(self):
-		for row in self.therapy_plan_details:
-			if not row.no_of_sessions or row.no_of_sessions <= 0:
-				frappe.throw(_("Row #{0}: Number of Sessions should be at least 1").format(row.idx))
+		validate_sessions(self, "therapy_plan_details")
 		self.set_totals()
 		self.set_status()
 

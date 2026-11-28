@@ -1597,6 +1597,17 @@ def create_healthcare_service_unit_tree_root(doc, method=None):
 	insert_record(record)
 
 
+def validate_sessions(doc, table, label=None):
+	"""Validate that each row in a child table has at least one session."""
+	for row in doc.get(table) or []:
+		if cint(row.no_of_sessions) < 1:
+			if label:
+				message = _("Row #{0} ({1}): Number of Sessions should be at least 1").format(row.idx, label)
+			else:
+				message = _("Row #{0}: Number of Sessions should be at least 1").format(row.idx)
+			frappe.throw(message)
+
+
 def validate_nursing_tasks(document):
 	if not frappe.db.get_single_value("Healthcare Settings", "validate_nursing_checklists"):
 		return True
