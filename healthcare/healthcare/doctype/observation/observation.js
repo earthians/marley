@@ -30,7 +30,7 @@ frappe.ui.form.on("Observation", {
 		set_service_unit_query(frm);
 		healthcare.ConsumablesReview.set_batch_query(frm);
 		healthcare.ConsumablesReview.ask_once_before_submit(frm);
-		render_period_control(frm);
+		frm.trigger("set_result_control");
 	},
 	after_save: function (frm) {
 		frm._saved_patient_for_template = frm.doc.patient;
@@ -38,10 +38,6 @@ frappe.ui.form.on("Observation", {
 	before_save: function () {
 		return frappe.after_ajax();
 	},
-	onload_post_render: function (frm) {
-		frm.trigger("set_result_control");
-	},
-
 	permitted_data_type: function (frm) {
 		frm.trigger("set_result_control");
 	},
@@ -178,8 +174,11 @@ function apply_imaging_template(frm, template_field, result_field) {
 // set_result_control above.
 var rebuild_result_control = function (frm, fieldtype, options) {
 	const field = frm.fields_dict.result;
+	// Navigation rebinds df to the destination document, but keeps the widget.
+	const control_class = frappe.ui.form["Control" + fieldtype.replace(/ /g, "")];
 
 	if (
+		field.constructor === control_class &&
 		field.df.fieldtype === fieldtype &&
 		(field.df.options || "") === (options || "")
 	) {
