@@ -75,9 +75,10 @@ def make_therapy_session(
 	tp_doc = None
 	if not service_request and therapy_plan:
 		tp_doc = frappe.get_cached_doc("Therapy Plan", therapy_plan)
-		service_request = frappe.db.exists(
-			"Service Request", {"template_dn": therapy_type, "order_group": tp_doc.order_group}
-		)
+		if tp_doc.order_group:
+			service_request = frappe.db.exists(
+				"Service Request", {"template_dn": therapy_type, "order_group": tp_doc.order_group}
+			)
 
 	sr_doc = None
 	if service_request:
