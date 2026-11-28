@@ -17,26 +17,6 @@ pull_request_rules:
         message: |
           @{{author}}, thanks for the contribution, but we do not accept pull requests on a stable branch. Please raise PR on an appropriate hotfix branch or the develop branch.
 
-  - name: Automatic merge on CI success and review
-    conditions:
-      - label!=dont-merge
-      - label!=squash
-      - "#approved-reviews-by>=1"
-    actions:
-      merge:
-        method: merge
-
-  - name: Automatic squash on CI success and review
-    conditions:
-      - label!=dont-merge
-      - label=squash
-      - "#approved-reviews-by>=1"
-    actions:
-      merge:
-        method: squash
-        commit_message_format:
-          title: pr-title
-          body: pr-body
   - name: backport to develop
     conditions:
       - label="backport develop"
